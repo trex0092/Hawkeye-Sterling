@@ -1,0 +1,64 @@
+name: Weekly Operational Logs
+
+# Every Friday at 18:00 Asia/Dubai (14:00 UTC), after the weekly MLRO
+# report and the weekly filings summary. Produces three audit logs:
+# training summary, dormant file review, escalation log.
+
+on:
+  schedule:
+    - cron: "0 14 * * 5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+concurrency:
+  group: weekly-ops-logs
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+      - working-directory: scripts
+        run: npm install --omit=dev
+      - working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_TO: ${{ secrets.GMAIL_TO }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node weekly-ops-logs.mjs
+      - if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Weekly ops logs: $(date -u +%Y-W%V)"
+            git push origin main
+          fi

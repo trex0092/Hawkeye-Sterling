@@ -1,0 +1,77 @@
+name: Quarterly Operational Logs
+
+# First business day of April, July, October and January at 10:30
+# Asia/Dubai (06:30 UTC). Produces typology library update and
+# beneficial ownership clarity report.
+
+on:
+  schedule:
+    - cron: "30 6 1-3 1,4,7,10 *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+concurrency:
+  group: quarterly-ops-logs
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: First business day gate
+        id: check
+        run: |
+          dom=$(date -u +%d); dow=$(date -u +%u)
+          if [ "$dom" = "01" ] && [ "$dow" -le "5" ]; then echo "run=true" >> $GITHUB_OUTPUT
+          elif [ "$dom" = "02" ] && [ "$dow" = "1" ]; then echo "run=true" >> $GITHUB_OUTPUT
+          elif [ "$dom" = "03" ] && [ "$dow" = "1" ]; then echo "run=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "run=true" >> $GITHUB_OUTPUT
+          else echo "run=false" >> $GITHUB_OUTPUT
+          fi
+      - if: steps.check.outputs.run == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+      - if: steps.check.outputs.run == 'true'
+        working-directory: scripts
+        run: npm install --omit=dev
+      - if: steps.check.outputs.run == 'true'
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_TO: ${{ secrets.GMAIL_TO }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node quarterly-ops-logs.mjs
+      - if: steps.check.outputs.run == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Quarterly ops logs: $(date -u +%Y)-Q$(( ($(date -u +%-m)-1) / 3 ))"
+            git push origin main
+          fi
