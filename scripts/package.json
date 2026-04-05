@@ -1,0 +1,17 @@
+{
+  "name": "hawkeye-sterling-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Automation scripts for Hawkeye-Sterling (daily Asana priorities, etc.)",
+  "scripts": {
+    "daily-priorities": "node daily-priorities.mjs",
+    "daily-priorities:dry": "DRY_RUN=true node daily-priorities.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
