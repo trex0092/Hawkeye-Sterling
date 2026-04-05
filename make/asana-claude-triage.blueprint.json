@@ -1,0 +1,159 @@
+{
+  "name": "Asana → Claude Triage → Comment",
+  "flow": [
+    {
+      "id": 1,
+      "module": "asana:watchTasksOrSubtasks",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": "REPLACE_WITH_YOUR_ASANA_CONNECTION_ID",
+        "limit": 10,
+        "projectId": "REPLACE_WITH_YOUR_ASANA_PROJECT_ID",
+        "watch": "createdAt"
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "My Asana connection",
+              "data": { "scoped": "true", "connection": "asana" }
+            },
+            "watch": { "label": "By Creation Date" }
+          }
+        },
+        "expect": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:asana",
+            "label": "Connection",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "type": "select",
+            "label": "Project ID",
+            "required": true
+          },
+          {
+            "name": "limit",
+            "type": "uinteger",
+            "label": "Limit"
+          },
+          {
+            "name": "watch",
+            "type": "select",
+            "label": "Watch"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "anthropic-claude:createPrompt",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": "REPLACE_WITH_YOUR_ANTHROPIC_CONNECTION_ID"
+      },
+      "mapper": {
+        "model": "claude-sonnet-4-5",
+        "max_tokens": "1024",
+        "effort_level": "medium",
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are an assistant that helps triage Asana tasks. Summarize the following task in 3 short bullet points, then suggest the single most important next action. Respond in plain text, no markdown headers.\n\nTitle: {{1.name}}\nDescription: {{1.notes}}\nAssignee: {{1.assignee.name}}\nDue date: {{1.due_on}}\nCompleted: {{1.completed}}"
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "My Anthropic Claude connection",
+              "data": { "scoped": "true", "connection": "anthropic-claude" }
+            }
+          },
+          "mapper": {
+            "model": { "label": "Claude Sonnet 4.5" },
+            "effort_level": { "label": "Medium" }
+          }
+        },
+        "expect": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:anthropic-claude",
+            "label": "Connection",
+            "required": true
+          },
+          { "name": "model", "type": "select", "label": "Model", "required": true },
+          { "name": "max_tokens", "type": "uinteger", "label": "Max Tokens", "required": true },
+          { "name": "effort_level", "type": "select", "label": "Effort Level" },
+          { "name": "messages", "type": "array", "label": "Messages", "required": true }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "module": "asana:createComment",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": "REPLACE_WITH_YOUR_ASANA_CONNECTION_ID"
+      },
+      "mapper": {
+        "taskId": "{{1.gid}}",
+        "text": "🤖 Claude triage:\n\n{{2.content[].text}}"
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "My Asana connection",
+              "data": { "scoped": "true", "connection": "asana" }
+            }
+          }
+        },
+        "expect": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:asana",
+            "label": "Connection",
+            "required": true
+          },
+          { "name": "taskId", "type": "text", "label": "Task ID", "required": true },
+          { "name": "text", "type": "text", "label": "Comment Text", "required": true }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] },
+    "zone": "eu1.make.com",
+    "notes": [
+      "Flow: Asana Watch Tasks (1) -> Anthropic Claude Create Prompt (2) -> Asana Create Comment (3).",
+      "Before running, reconnect Asana and Anthropic in the imported scenario and select your Asana project.",
+      "On first activation, set the starting point to 'From now on' so it does not re-process every historical task."
+    ]
+  }
+}
