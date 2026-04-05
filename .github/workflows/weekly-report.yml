@@ -6,6 +6,10 @@ name: Weekly Compliance Pattern Report
 # "📌 Today's Priorities" task inside the SCREENINGS project so there is a
 # single weekly narrative covering the whole compliance portfolio.
 #
+# Also archives the weekly report to history/weekly/YYYY-Www.txt and
+# commits the archive back to main so the 10-year retention obligation
+# under Federal Decree-Law No. 10 of 2025 is satisfied.
+#
 # Can also be triggered manually with a Dry Run toggle.
 
 on:
@@ -26,6 +30,9 @@ concurrency:
   group: weekly-report
   cancel-in-progress: false
 
+permissions:
+  contents: write
+
 jobs:
   run:
     name: Weekly pattern report
@@ -35,6 +42,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -62,3 +72,16 @@ jobs:
           GMAIL_TO: ${{ secrets.GMAIL_TO }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node weekly-report.mjs
+
+      - name: Commit history archive
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Weekly compliance archive: $(date -u +%Y-W%V)"
+            git push origin main
+          else
+            echo "No new history files to commit."
+          fi
