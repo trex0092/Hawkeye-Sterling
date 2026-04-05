@@ -4,6 +4,11 @@ name: Daily Asana Priorities
 # in every Asana project and posts the list as a comment on a pinned
 # "📌 Today's Priorities" task inside each project.
 #
+# Also archives every generated artefact under history/daily/YYYY-MM-DD/
+# and commits the archive back to main so the 10-year retention
+# obligation under Federal Decree-Law No. 10 of 2025 is satisfied by the
+# repository's own history.
+#
 # Schedule: every weekday (Mon–Fri) at 09:00 Asia/Dubai (05:00 UTC).
 # Can also be triggered manually from the Actions tab with a Dry Run option.
 
@@ -25,6 +30,9 @@ concurrency:
   group: daily-priorities
   cancel-in-progress: false
 
+permissions:
+  contents: write
+
 jobs:
   run:
     name: Prioritize and comment
@@ -34,6 +42,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -61,3 +72,16 @@ jobs:
           GMAIL_TO: ${{ secrets.GMAIL_TO }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node daily-priorities.mjs
+
+      - name: Commit history archive
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Daily compliance archive: $(date -u +%Y-%m-%d)"
+            git push origin main
+          else
+            echo "No new history files to commit."
+          fi
