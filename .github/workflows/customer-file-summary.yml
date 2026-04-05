@@ -1,0 +1,71 @@
+name: Single-Customer File Summary (on demand)
+
+# On-demand utility the MLRO triggers when an auditor or an MOE
+# inspector asks for a one-page summary of a specific customer or
+# counterparty file. The Asana task GID is provided as a required
+# input. The generated summary is posted as a comment on the source
+# task and archived to history/on-demand/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_gid:
+        description: "Asana task GID of the customer or counterparty file"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run (do not post as comment)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: customer-file-summary
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+      - working-directory: scripts
+        run: npm install --omit=dev
+      - working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_TO: ${{ secrets.GMAIL_TO }}
+          TASK_GID: ${{ github.event.inputs.task_gid }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node customer-file-summary.mjs
+      - if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Customer file summary: $(date -u +%Y-%m-%d)"
+            git push origin main
+          fi
