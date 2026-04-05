@@ -1,0 +1,110 @@
+name: Quarterly MLRO Report
+
+# First business day of April, July, October and January. Consolidates
+# the three monthly MLRO reports of the completed quarter and the
+# weekly pattern reports for the period into a single formal quarterly
+# report from the MLRO to Senior Management and the Board.
+#
+# The cron fires on the 1st, 2nd and 3rd of April, July, October and
+# January at 05:00 UTC, and the shell gate in the job runs the script
+# only once on the first Monday-to-Friday in that range.
+
+on:
+  schedule:
+    - cron: "0 5 1-3 1,4,7,10 *"
+  workflow_dispatch:
+    inputs:
+      target_quarter:
+        description: "Target quarter (YYYY-Qn, default: previous quarter)"
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: "Dry run (no comments posted)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: quarterly-mlro-report
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    name: Quarterly MLRO report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Skip if not first business day of the quarter
+        id: check
+        run: |
+          dom=$(date -u +%d)
+          dow=$(date -u +%u)
+          if [ "$dom" = "01" ] && [ "$dow" -le "5" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          elif [ "$dom" = "02" ] && [ "$dow" = "1" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          elif [ "$dom" = "03" ] && [ "$dow" = "1" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        if: steps.check.outputs.run == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+
+      - name: Install dependencies
+        if: steps.check.outputs.run == 'true'
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Run quarterly MLRO report
+        if: steps.check.outputs.run == 'true'
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_TO: ${{ secrets.GMAIL_TO }}
+          TARGET_QUARTER: ${{ github.event.inputs.target_quarter }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node quarterly-mlro-report.mjs
+
+      - name: Commit history archive
+        if: steps.check.outputs.run == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Quarterly MLRO report: $(date -u +%Y)-Q$(( ($(date -u +%-m)-1) / 3 ))"
+            git push origin main
+          else
+            echo "No new history files to commit."
+          fi
