@@ -34,6 +34,7 @@ import {
   writeDailyPerProject,
   writeDailyPortfolio,
 } from "./history-writer.mjs";
+import { upsertFromTasks } from "./counterparty-register.mjs";
 
 const {
   ASANA_TOKEN,
@@ -73,6 +74,49 @@ function slugifyShort(input) {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
     .slice(0, 6);
+}
+
+/**
+ * Heuristic extraction of counterparty candidates from an Asana task. Looks
+ * for trading-name patterns (LLC, FZ LLC, DMCC, Trading, Bullion, Metals,
+ * etc.) in the task name and the first 500 characters of the notes. This
+ * is intentionally conservative; the MLRO can edit the register by hand
+ * after review. The compliance function never invents a counterparty name
+ * that is not literally present in the input.
+ */
+const COUNTERPARTY_PATTERNS = [
+  /[A-Z][A-Za-z&.\- ]{2,}?\s+(?:FZ\s*LLC|FZE|DMCC|LLC|LLP|Ltd\.?|Limited|Trading|Bullion|Metals|Jewellery|Jewelry)\b/g,
+];
+const TYPOLOGY_KEYWORDS = [
+  ["sanctions", ["sanctioned", "UNSC", "Local Terrorist", "sanction"]],
+  ["recycled gold", ["recycled gold", "recycling", "scrap"]],
+  ["cash intensity", ["high cash", "cash intensity", "cash purchase"]],
+  ["PEP", ["PEP", "politically exposed", "political office"]],
+  ["cross-border", ["cross-border", "cross border", "smuggling", "trade-based"]],
+  ["structuring", ["structuring", "linked transaction", "aggregation"]],
+  ["CDD exemption", ["CDD exemption", "cdd avoidance"]],
+  ["hawala", ["hawala"]],
+];
+
+function extractCounterpartiesFromTask(task) {
+  const text = `${task.name ?? ""}\n${(task.notes ?? "").slice(0, 600)}`;
+  const names = new Set();
+  for (const pattern of COUNTERPARTY_PATTERNS) {
+    const matches = text.matchAll(pattern);
+    for (const m of matches) {
+      const name = m[0].trim();
+      if (name.length >= 6 && name.length <= 120) names.add(name);
+    }
+  }
+  const typologies = new Set();
+  const lower = text.toLowerCase();
+  for (const [label, keywords] of TYPOLOGY_KEYWORDS) {
+    if (keywords.some((k) => lower.includes(k.toLowerCase()))) typologies.add(label);
+  }
+  return {
+    names: [...names],
+    typologies: [...typologies],
+  };
 }
 
 /* ─── Asana client ──────────────────────────────────────────────────────── */
@@ -520,6 +564,7 @@ async function main() {
     errors: [],
     perProject: [], // [{projectName, priorities}] for portfolio digest
   };
+  const counterpartyObservations = [];
   let portfolioPinnedGid = null;
   let portfolioProjectName = null;
 
@@ -605,6 +650,23 @@ async function main() {
         console.warn(`    ⚠  failed to archive: ${archiveErr.message}`);
       }
 
+      // Collect counterparty observations for the cross-entity register.
+      // We only look at the candidates sent to Claude (at-risk + top due
+      // date + recent) to keep the extraction targeted.
+      for (const t of candidates) {
+        const extracted = extractCounterpartiesFromTask(t);
+        for (const name of extracted.names) {
+          counterpartyObservations.push({
+            name,
+            entity: project.name,
+            typologies: extracted.typologies,
+            taskGid: t.gid,
+            jurisdiction: null,
+            today,
+          });
+        }
+      }
+
       // Keep a lean version of the priorities for the portfolio digest
       // (strip GID annotations; they'd be noise for the cross-entity call).
       results.perProject.push({
@@ -680,6 +742,28 @@ async function main() {
     console.log(
       `\n(Only 1 project succeeded — skipping portfolio digest, need at least 2.)`,
     );
+  }
+
+  /* ─── Counterparty register ────────────────────────────────────────── */
+
+  if (counterpartyObservations.length > 0) {
+    console.log(`\n📒 Updating cross-entity counterparty register with ${counterpartyObservations.length} observation(s)…`);
+    try {
+      const registerResult = await upsertFromTasks(counterpartyObservations);
+      console.log(
+        `    added ${registerResult.added}, updated ${registerResult.updated}, cross-entity entries: ${registerResult.crossEntityHits.length}`,
+      );
+      if (registerResult.crossEntityHits.length > 0) {
+        console.log(`    cross-entity counterparties currently in the register:`);
+        for (const e of registerResult.crossEntityHits.slice(0, 10)) {
+          console.log(`      - ${e.counterparty_name} (${e.entities_touching}) [${e.risk_rating}]`);
+        }
+      }
+    } catch (err) {
+      console.warn(`    ⚠  counterparty register update failed: ${err.message}`);
+    }
+  } else {
+    console.log(`\n📒 No counterparty candidates extracted from today's tasks.`);
   }
 
   /* ─── Summary ──────────────────────────────────────────────────────── */
