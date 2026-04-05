@@ -134,7 +134,12 @@ The incoming MLRO should sign this document on the line below as acknowledgement
   const projects = await listProjects();
   const portfolio = await findPortfolioPinned(projects);
   if (portfolio && !env.DRY_RUN) {
-    await postComment(portfolio.taskGid, document);
+    try {
+      const __doc = document.length > 60000 ? document.slice(0, 60000) + "\n\n[TRUNCATED — full document archived under history/]" : document;
+      await postComment(portfolio.taskGid, __doc);
+    } catch (__err) {
+      console.warn(`⚠  Asana post failed: ${__err.message}. Document remains in history/ archive.`);
+    }
     console.log(`\n✓ posted to "${portfolio.projectName}"`);
   }
 

@@ -1,0 +1,25 @@
+{
+  "sources": [
+    {
+      "id": "unsc-consolidated",
+      "name": "UN Security Council Consolidated List",
+      "url": "https://scsanctions.un.org/resources/xml/en/consolidated.xml",
+      "format": "xml",
+      "authority": "United Nations Security Council",
+      "notes": "Official UN consolidated list. Aggregates all active UNSC sanctions regimes."
+    },
+    {
+      "id": "uae-local",
+      "name": "UAE Local Terrorist List",
+      "url": "",
+      "format": "manual",
+      "authority": "Executive Office for Control and Non-Proliferation (EOCN)",
+      "notes": "The UAE Local Terrorist List is published by the Cabinet of the UAE and maintained by EOCN. When a machine-readable endpoint is confirmed by the MLRO, add the URL here. Until then, an MLRO-maintained CSV at history/registers/uae-local-list.csv is used as the source of truth."
+    }
+  ],
+  "match": {
+    "minNameLength": 4,
+    "normalise": true,
+    "caseSensitive": false
+  }
+}

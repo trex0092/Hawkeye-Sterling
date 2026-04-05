@@ -109,6 +109,29 @@ export function createAsanaClient(env) {
     });
   }
 
+  /**
+   * Upload a file as an attachment on an Asana task.
+   * `fileBuffer` must be a Node Buffer or Uint8Array.
+   * `fileName` is the name the attachment will carry inside Asana.
+   * `mimeType` defaults to application/octet-stream.
+   */
+  async function attachFile(taskGid, fileBuffer, fileName, mimeType = "application/octet-stream") {
+    const form = new FormData();
+    const blob = new Blob([fileBuffer], { type: mimeType });
+    form.append("parent", taskGid);
+    form.append("file", blob, fileName);
+    const res = await fetch(`https://app.asana.com/api/1.0/tasks/${taskGid}/attachments`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.ASANA_TOKEN}` },
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Asana attachment upload ${res.status} ${res.statusText}: ${body}`);
+    }
+    return res.json();
+  }
+
   async function findPortfolioPinned(projects) {
     for (const project of projects) {
       if (!project.name.toLowerCase().includes(env.PORTFOLIO_PROJECT_NAME.toLowerCase())) continue;
@@ -126,7 +149,7 @@ export function createAsanaClient(env) {
     return null;
   }
 
-  return { asana, listProjects, listProjectTasks, postComment, findPortfolioPinned };
+  return { asana, listProjects, listProjectTasks, postComment, attachFile, findPortfolioPinned };
 }
 
 /* ─── Claude caller factory ─────────────────────────────────────────────── */

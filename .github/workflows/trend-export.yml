@@ -49,7 +49,7 @@ jobs:
           WINDOW_DAYS: ${{ github.event.inputs.window_days }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node trend-export.mjs
-      - if: ${{ github.event.inputs.dry_run != 'true' }}
+      - if: ${{ always() && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"

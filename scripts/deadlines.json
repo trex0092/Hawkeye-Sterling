@@ -1,0 +1,46 @@
+{
+  "deadlines": [
+    {
+      "id": "annual-risk-assessment",
+      "title": "Annual Enterprise-Wide AML/CFT Risk Assessment refresh",
+      "category": "annual-control",
+      "due": "2027-01-31",
+      "recurrence": "annual",
+      "owner": "the MLRO",
+      "notes": "Draft produced by the annual-risk-assessment workflow on 15 January each year. The MLRO finalises and signs off."
+    },
+    {
+      "id": "annual-mlro-report",
+      "title": "Annual MLRO Report to Senior Management",
+      "category": "annual-report",
+      "due": "2027-01-31",
+      "recurrence": "annual",
+      "owner": "the MLRO"
+    },
+    {
+      "id": "annual-training",
+      "title": "Annual Training Completion Report",
+      "category": "annual-report",
+      "due": "2027-01-31",
+      "recurrence": "annual",
+      "owner": "the MLRO"
+    },
+    {
+      "id": "annual-programme-effectiveness",
+      "title": "Annual Programme Effectiveness Self-Assessment",
+      "category": "annual-control",
+      "due": "2027-01-31",
+      "recurrence": "annual",
+      "owner": "the MLRO"
+    },
+    {
+      "id": "dnfbp-saq",
+      "title": "DNFBP Self-Assessment Questionnaire submission to MOE",
+      "category": "regulatory-submission",
+      "due": "",
+      "recurrence": "annual",
+      "owner": "the MLRO",
+      "notes": "Due date set by MOE each year. The MLRO updates this entry when the window opens."
+    }
+  ]
+}

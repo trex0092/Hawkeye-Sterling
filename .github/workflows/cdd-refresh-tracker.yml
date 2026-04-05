@@ -1,24 +1,17 @@
-name: Weekly Compliance Pattern Report
+name: Weekly CDD Refresh Tracker
 
-# Every Friday at 16:00 Asia/Dubai (12:00 UTC). Aggregates the week's
-# activity across every active Asana project and asks Claude to write a
-# cross-entity pattern report, then posts it to the pinned
-# "📌 Today's Priorities" task inside the SCREENINGS project so there is a
-# single weekly narrative covering the whole compliance portfolio.
-#
-# Also archives the weekly report to history/weekly/YYYY-Www.txt and
-# commits the archive back to main so the 10-year retention obligation
-# under Federal Decree-Law No. 10 of 2025 is satisfied.
-#
-# Can also be triggered manually with a Dry Run toggle.
+# Runs every Monday at 05:30 UTC (09:30 Asia/Dubai). Reads the
+# counterparty register, flags records whose Customer Due Diligence
+# refresh window is approaching or lapsed based on risk rating, and
+# writes a weekly tracker report to history/registers/cdd-refresh/.
 
 on:
   schedule:
-    - cron: "0 12 * * 5"
+    - cron: "30 5 * * 1"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Dry run (no comments posted)"
+        description: "Dry run (no Asana posts)"
         required: false
         default: "false"
         type: choice
@@ -27,7 +20,7 @@ on:
           - "true"
 
 concurrency:
-  group: weekly-report
+  group: cdd-refresh-tracker
   cancel-in-progress: false
 
 permissions:
@@ -35,9 +28,9 @@ permissions:
 
 jobs:
   run:
-    name: Weekly pattern report
+    name: CDD refresh tracker
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -57,18 +50,20 @@ jobs:
         working-directory: scripts
         run: npm install --omit=dev
 
-      - name: Run weekly report
+      - name: Run CDD refresh tracker
         working-directory: scripts
         env:
           ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
           ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          MLRO_NAME: ${{ secrets.MLRO_NAME }}
+          ENTITY_LEGAL_NAME: ${{ secrets.ENTITY_LEGAL_NAME }}
           CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
           PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
           PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-        run: node weekly-report.mjs
+        run: node cdd-refresh-tracker.mjs
 
       - name: Commit history archive
         if: ${{ always() && github.event.inputs.dry_run != 'true' }}
@@ -77,7 +72,7 @@ jobs:
           git config user.email "automation@hawkeye-sterling.local"
           if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
             git add history/
-            git commit -m "Weekly compliance archive: $(date -u +%Y-W%V)"
+            git commit -m "CDD refresh tracker archive: $(date -u +%Y-%m-%d)"
             git push origin main
           else
             echo "No new history files to commit."

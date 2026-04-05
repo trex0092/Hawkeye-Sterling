@@ -56,7 +56,7 @@ jobs:
           TARGET_YEAR: ${{ github.event.inputs.target_year }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node annual-programme-effectiveness.mjs
-      - if: ${{ github.event.inputs.dry_run != 'true' }}
+      - if: ${{ always() && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"

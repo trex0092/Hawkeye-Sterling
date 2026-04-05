@@ -16,6 +16,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { writeDocx } from "./lib/docx-writer.mjs";
 
 const HISTORY_ROOT = path.resolve(process.cwd(), "..", "history");
 
@@ -64,6 +65,19 @@ export async function writeHistory(relativePath, content) {
   const absPath = path.join(HISTORY_ROOT, relativePath);
   await mkdir(path.dirname(absPath), { recursive: true });
   await writeFile(absPath, content, "utf8");
+  // Also render a .docx sibling for audit-presentable artefacts, so every
+  // narrative report exists in Word form for the MLRO and for inspectors.
+  // Only text-ish files get a .docx sibling: .txt, .md, no-extension log
+  // files. CSV and JSON registers are skipped.
+  const ext = path.extname(absPath).toLowerCase();
+  if (ext === "" || ext === ".txt" || ext === ".md") {
+    try {
+      const docxPath = absPath.replace(/\.(txt|md)$/i, "") + ".docx";
+      await writeDocx(content, docxPath);
+    } catch (err) {
+      console.warn(`  docx sibling failed for ${relativePath}: ${err.message}`);
+    }
+  }
   return absPath;
 }
 

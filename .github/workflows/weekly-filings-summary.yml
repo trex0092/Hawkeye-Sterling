@@ -52,7 +52,7 @@ jobs:
           PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node weekly-filings-summary.mjs
-      - if: ${{ github.event.inputs.dry_run != 'true' }}
+      - if: ${{ always() && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"

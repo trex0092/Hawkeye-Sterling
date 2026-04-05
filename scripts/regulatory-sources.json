@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "id": "moe-aml",
+      "name": "Ministry of Economy — AML supervision pages",
+      "url": "https://www.moec.gov.ae/en/anti-money-laundering",
+      "authority": "Ministry of Economy"
+    },
+    {
+      "id": "eocn",
+      "name": "Executive Office for Control and Non-Proliferation",
+      "url": "https://www.uaeiec.gov.ae/en-us/",
+      "authority": "Executive Office for Control and Non-Proliferation"
+    },
+    {
+      "id": "cbuae-aml",
+      "name": "Central Bank of the UAE — AML/CFT",
+      "url": "https://www.centralbank.ae/en/cbuae-amlcft",
+      "authority": "Central Bank of the UAE"
+    },
+    {
+      "id": "fatf-news",
+      "name": "FATF — News",
+      "url": "https://www.fatf-gafi.org/en/publications.html",
+      "authority": "Financial Action Task Force"
+    }
+  ]
+}

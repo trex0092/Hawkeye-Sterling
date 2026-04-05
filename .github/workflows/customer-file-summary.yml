@@ -57,7 +57,7 @@ jobs:
           TASK_GID: ${{ github.event.inputs.task_gid }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node customer-file-summary.mjs
-      - if: ${{ github.event.inputs.dry_run != 'true' }}
+      - if: ${{ always() && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"

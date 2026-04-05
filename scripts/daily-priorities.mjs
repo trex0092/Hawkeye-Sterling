@@ -637,8 +637,13 @@ async function main() {
           `    [dry-run] would post comment:\n${document.split("\n").slice(0, 20).map((l) => `      ${l}`).join("\n")}\n      ... [document continues]`,
         );
       } else {
-        await postComment(pinned.gid, document);
-        console.log(`    ✓ comment posted on pinned task`);
+        try {
+          const __doc = document.length > 60000 ? document.slice(0, 60000) + "\n\n[TRUNCATED — full document archived under history/]" : document;
+          await postComment(pinned.gid, __doc);
+          console.log(`    ✓ comment posted on pinned task`);
+        } catch (__err) {
+          console.warn(`    ⚠  Asana post failed: ${__err.message}. Document remains in history/ archive.`);
+        }
       }
 
       // Archive the full document to history/ for the ten-year retention
