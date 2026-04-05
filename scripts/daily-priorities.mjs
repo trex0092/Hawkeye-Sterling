@@ -22,10 +22,17 @@ const {
   ANTHROPIC_API_KEY,
   ASANA_WORKSPACE_ID,
   ASANA_TEAM_ID, // optional — scopes the project list to a single team
-  CLAUDE_MODEL = "claude-sonnet-4-5",
+  CLAUDE_MODEL = "claude-haiku-4-5",
   PINNED_TASK_NAME = "📌 Today's Priorities",
   DRY_RUN = "false", // set to "true" to skip posting comments
+  MAX_TASKS_PER_PROJECT = "75", // cap sent to Claude; keeps prompts under Tier-1 rate limits
+  NOTES_SNIPPET_LENGTH = "80",
+  PROJECT_DELAY_MS = "30000", // 30s between projects — Tier-1 is 30k input tokens/minute
 } = process.env;
+
+const maxTasksPerProject = Number.parseInt(MAX_TASKS_PER_PROJECT, 10);
+const notesSnippetLength = Number.parseInt(NOTES_SNIPPET_LENGTH, 10);
+const projectDelayMs = Number.parseInt(PROJECT_DELAY_MS, 10);
 
 const REQUIRED = { ASANA_TOKEN, ANTHROPIC_API_KEY, ASANA_WORKSPACE_ID };
 for (const [name, value] of Object.entries(REQUIRED)) {
@@ -82,7 +89,8 @@ async function listIncompleteTasks(projectGid) {
     project: projectGid,
     completed_since: "now", // only tasks not completed as of now
     limit: "100",
-    opt_fields: "gid,name,notes,due_on,due_at,completed,assignee.name,permalink_url",
+    opt_fields:
+      "gid,name,notes,due_on,due_at,completed,modified_at,created_at,assignee.name,permalink_url",
   });
 
   const all = [];
@@ -97,6 +105,30 @@ async function listIncompleteTasks(projectGid) {
   return all;
 }
 
+/**
+ * Pick the most relevant tasks when a project has too many.
+ * Priority:
+ *   1. Tasks with a due date (any) come before tasks with none
+ *   2. Within each group, sort by most recently modified (fresh signals first)
+ *   3. Cap at MAX_TASKS_PER_PROJECT
+ */
+function selectCandidateTasks(tasks) {
+  const withDue = [];
+  const withoutDue = [];
+  for (const t of tasks) {
+    (t.due_on || t.due_at ? withDue : withoutDue).push(t);
+  }
+  const byModifiedDesc = (a, b) =>
+    (b.modified_at || b.created_at || "").localeCompare(
+      a.modified_at || a.created_at || "",
+    );
+  withDue.sort(byModifiedDesc);
+  withoutDue.sort(byModifiedDesc);
+  return [...withDue, ...withoutDue].slice(0, maxTasksPerProject);
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function postComment(taskGid, text) {
   return asana(`/tasks/${taskGid}/stories`, {
     method: "POST",
@@ -110,7 +142,7 @@ function buildPrompt(projectName, tasks) {
     if (t.due_on) parts.push(`due ${t.due_on}`);
     if (t.assignee?.name) parts.push(`@${t.assignee.name}`);
     if (t.notes) {
-      const snippet = t.notes.replace(/\s+/g, " ").slice(0, 240);
+      const snippet = t.notes.replace(/\s+/g, " ").slice(0, notesSnippetLength);
       parts.push(`notes: ${snippet}`);
     }
     return parts.join(" — ");
@@ -142,20 +174,53 @@ ${lines.join("\n")}`;
 }
 
 async function prioritize(projectName, tasks) {
-  const msg = await anthropic.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 2000,
-    messages: [{ role: "user", content: buildPrompt(projectName, tasks) }],
-  });
+  const prompt = buildPrompt(projectName, tasks);
+  console.log(`      prompt size: ~${(prompt.length / 1024).toFixed(1)} KB`);
 
-  const text = msg.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("\n")
-    .trim();
+  // Up to 4 attempts. On 429, honor the Retry-After header (or fall back
+  // to a linear backoff) so Tier-1 token-per-minute limits don't kill us.
+  let lastErr;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const msg = await anthropic.messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }],
+      });
 
-  if (!text) throw new Error("Claude returned an empty response");
-  return text;
+      const text = msg.content
+        .filter((block) => block.type === "text")
+        .map((block) => block.text)
+        .join("\n")
+        .trim();
+
+      if (!text) throw new Error("Claude returned an empty response");
+      return text;
+    } catch (err) {
+      lastErr = err;
+      const status = err?.status ?? err?.response?.status;
+      const detail = err?.error?.message ?? err?.message ?? String(err);
+      console.warn(
+        `      attempt ${attempt}/4 failed: ${detail}${status ? ` (status ${status})` : ""}`,
+      );
+      // 4xx other than 429 are permanent — don't retry.
+      if (status && status >= 400 && status < 500 && status !== 429) break;
+      if (attempt >= 4) break;
+
+      // Prefer the server-supplied Retry-After header (seconds).
+      const retryAfterHeader =
+        err?.headers?.["retry-after"] ??
+        err?.response?.headers?.get?.("retry-after");
+      const retryAfterSec = Number.parseInt(retryAfterHeader, 10);
+      const waitMs =
+        Number.isFinite(retryAfterSec) && retryAfterSec > 0
+          ? retryAfterSec * 1000 + 1000
+          : 30000 * attempt; // 30s, 60s, 90s
+      console.warn(`      retrying in ${Math.round(waitMs / 1000)}s…`);
+      await sleep(waitMs);
+    }
+  }
+  throw lastErr;
 }
 
 async function main() {
@@ -191,8 +256,15 @@ async function main() {
         continue;
       }
 
-      console.log(`    asking Claude to prioritize ${workTasks.length} tasks…`);
-      const priorities = await prioritize(project.name, workTasks);
+      const candidates = selectCandidateTasks(workTasks);
+      if (candidates.length < workTasks.length) {
+        console.log(
+          `    narrowed ${workTasks.length} → ${candidates.length} candidate tasks (by due date, then freshness)`,
+        );
+      }
+
+      console.log(`    asking Claude to prioritize ${candidates.length} tasks…`);
+      const priorities = await prioritize(project.name, candidates);
 
       const comment = `🤖 Daily priorities — ${today}\n\n${priorities}`;
       if (isDryRun) {
@@ -203,9 +275,14 @@ async function main() {
       }
       results.processed++;
     } catch (err) {
-      console.error(`    ✗ error: ${err.message}`);
-      results.errors.push({ project: project.name, error: err.message });
+      const status = err?.status ?? err?.response?.status;
+      const detail = err?.error?.message ?? err?.message ?? String(err);
+      const suffix = status ? ` (status ${status})` : "";
+      console.error(`    ✗ error: ${detail}${suffix}`);
+      if (err?.stack) console.error(err.stack.split("\n").slice(0, 3).join("\n"));
+      results.errors.push({ project: project.name, error: `${detail}${suffix}` });
     }
+    if (projectDelayMs > 0) await sleep(projectDelayMs);
   }
 
   console.log(`\n=== Summary ===`);
