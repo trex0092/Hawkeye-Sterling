@@ -1,0 +1,131 @@
+=============================================================================
+HAWKEYE STERLING V2
+DAILY PORTFOLIO DIGEST — ALL PROGRAMMES
+=============================================================================
+
+Document reference:   HSV2-DPD-2026-0066
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:15 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Coverage:             6 of 7 programme entities. SCREENINGS skipped because
+                      the programme holds no open compliance work today.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. HEADLINE FOR TODAY
+-----------------------------------------------------------------------------
+
+The dominant exposure across the portfolio today is a variant of the
+recycled gold sanctions typology recorded on three separate programmes:
+FG BRANCH, ZOE FZE and MADISON LLC. The three files name counterparties
+with similar trading patterns and overlapping licence ranges. In the view
+of the compliance function these items should be handled as a single
+coordinated investigation track rather than as three independent reviews,
+and a named reviewer should be assigned across the three entities before
+the end of the day.
+
+One item on this track, FG BRANCH RF-R12, is already two days overdue
+and sits at the top of our risk score scale. The compliance function
+recommends that the MLRO take a first decision on that file before 12:00
+today.
+
+-----------------------------------------------------------------------------
+2. THE FIVE PORTFOLIO PRIORITIES FOR TODAY
+-----------------------------------------------------------------------------
+
+Item 1. FG BRANCH, RF-R12 Recycled Gold from Sanctioned Entities.
+The counterparty profile on this file touches the targeted financial
+sanctions framework administered by the Executive Office for Control
+and Non-Proliferation. The compliance function cannot discharge the
+name match on its own record and recommends that a Partial Name Match
+review be opened today. If the match is later confirmed, a Funds Freeze
+Report will have to follow within the timeline set by the applicable
+framework.
+
+Item 2. ZOE FZE, RF-R12 counterparty variant, Al Safwa Metals Trading.
+The counterparty on this file shares a corporate suffix and a Ras Al
+Khaimah trade licence range with the FG BRANCH entity in item 1. The
+phonetic similarity of the counterparty name to a list entry on the
+UN Security Council Consolidated List is high enough to warrant a
+Partial Name Match review. The transaction on this file has been
+suspended at branch level pending clearance.
+
+Item 3. MADISON LLC, RF-R05 Jewelry Scrap Aggregation Without CDD.
+Three linked cash purchases from the same customer dated 11 March,
+19 March and 02 April 2026 with an aggregate cash consideration of
+AED 64,000 in the rolling 30 day window. A Dealers in Precious Metals
+and Stones Report candidate review has been prepared for MLRO
+consideration.
+
+Item 4. FG BRANCH, RF-R08 Cross-Border Recycled Gold Smuggling.
+A walk-in customer sold seven recycled gold bars for AED 280,000 in
+cash on 02 April 2026 against documentation that does not reconcile
+with the declared source of the material. A Suspicious Transaction
+Report candidate review has been prepared and the underlying payment
+to the customer is on hold pending the MLRO's decision.
+
+Item 5. NAPLES LLC, NRA-RF01 High Cash Intensity Patterns.
+Two new high cash intensity events were recorded against this
+programme this week, taking the total for the month to four. The
+pattern does not yet meet the compliance function's internal
+escalation threshold, but it is the kind of shift that has preceded
+coordinated typology events in our sector in previous cycles and the
+compliance function is surfacing it on that basis.
+
+-----------------------------------------------------------------------------
+3. CROSS-ENTITY PATTERNS OBSERVED TODAY
+-----------------------------------------------------------------------------
+
+The compliance function observed two patterns across the portfolio today
+that would not be visible from a single-entity review.
+
+First, the RF-R12 typology now appears on the top ten of three separate
+entities on the same day. The counterparty names are not identical, but
+two of the three share a corporate suffix and a trade licence range in
+Ras Al Khaimah. In our view the three counterparties may be related and
+the three compliance files should be treated as one investigation track.
+A shared counterparty file has been opened in the cross-entity
+counterparty register.
+
+Second, high cash intensity red flags under NRA-RF01 are recorded
+against three entities this week, up from one the previous week. This
+is not yet a pattern we can attribute with confidence, but it is the
+kind of early warning that our weekly pattern report picks up a week
+later and by then the exposure has grown. The compliance function
+therefore prefers to surface it in today's digest rather than wait.
+
+-----------------------------------------------------------------------------
+4. RECOMMENDED ACTIONS FOR THE MLRO
+-----------------------------------------------------------------------------
+
+The compliance function respectfully asks the MLRO to take the following
+actions during the course of today.
+
+Assign a single named reviewer across FG BRANCH, ZOE FZE and MADISON LLC
+for the RF-R12 track, so that findings are reconciled at source rather
+than at the weekly cycle.
+
+Take a first decision on the FG BRANCH RF-R12 file before 12:00 today.
+If a Partial Name Match review is opened, the transaction on the file
+should remain suspended until the match is cleared or escalated to a
+Funds Freeze Report.
+
+Review the MADISON LLC Dealers in Precious Metals and Stones Report
+candidate review today and confirm whether the cash transaction
+threshold specified by the DPMSR framework has been reached. If the
+threshold is confirmed, the report should be filed through the
+Financial Intelligence Unit on the goAML platform before the end of
+the business day.
+
+-----------------------------------------------------------------------------
+5. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.

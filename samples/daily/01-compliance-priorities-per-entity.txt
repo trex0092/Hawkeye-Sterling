@@ -1,0 +1,166 @@
+=============================================================================
+HAWKEYE STERLING V2
+DAILY COMPLIANCE PRIORITIES
+FG BRANCH — COMPLIANCE PROGRAMME 2026
+=============================================================================
+
+Document reference:   HSV2-DCP-FGB-2026-0066
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:00 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Distribution:         MLRO, Deputy MLRO, Branch Compliance Lead (FG Branch)
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE OF THIS NOTE
+-----------------------------------------------------------------------------
+
+This note sets out the ten open compliance items in the FG BRANCH programme
+that, in the view of the compliance function, warrant the MLRO's attention
+today. The selection is made from the 526 open tasks currently held against
+this programme and is intended to give the MLRO a single page to read before
+the morning escalation call at 09:30.
+
+The ranking is not a substitute for the MLRO's judgement. It is a first cut
+prepared by the compliance function against the criteria set out in our
+internal prioritisation procedure. Items one to three are items on which we
+ask for a decision today.
+
+-----------------------------------------------------------------------------
+2. ITEMS AT RISK TODAY
+-----------------------------------------------------------------------------
+
+Four items on this programme are either overdue or fall due within the next
+three business days.
+
+a. RF-R12, Recycled Gold from Sanctioned Entities. The item was due on
+   03 April 2026 and is therefore two days overdue. The counterparty profile
+   on the file touches the targeted financial sanctions framework and the
+   compliance function is not able to discharge the review on its own record.
+   We ask the MLRO to take this file first.
+
+b. RF-R08, Cross-Border Recycled Gold Smuggling. Due tomorrow, 06 April 2026.
+   The pattern on this item is consistent with a typology the compliance
+   function tracks and we expect the MLRO to consider whether a Suspicious
+   Transaction Report candidate review is appropriate.
+
+c. NRA-RF04, FIU Typology 1 TBML in Gold Trade. Due 07 April 2026. This item
+   falls within the National Risk Assessment typology list for trade-based
+   money laundering in the gold sector.
+
+d. RF-R05, Jewelry Scrap Aggregation Without CDD. Due 08 April 2026. The
+   underlying customer has now reached our internal linked-transaction
+   threshold in the rolling 30 day window and Enhanced Due Diligence is
+   required.
+
+-----------------------------------------------------------------------------
+3. TOP TEN ITEMS FOR TODAY
+-----------------------------------------------------------------------------
+
+The risk score below is scored on a scale of zero to one hundred by the
+compliance function against the criteria set out in our prioritisation
+procedure. A score of ninety or above is treated as an item requiring
+action within one business day.
+
+Item 1. RF-R12 Recycled Gold from Sanctioned Entities. Risk score 94.
+The file sits on a counterparty whose trade licence and registered office
+do not fully reconcile with a list entry we cannot discharge on our own
+record. The evidence available to us at present is consistent with a
+Partial Name Match review and, potentially, with a Funds Freeze Report if
+the match is confirmed. We recommend that the MLRO take a first decision
+on this item before 12:00 today.
+Task link: https://app.asana.com/0/1213645083721316/1155285207862107
+
+Item 2. RF-R08 Cross-Border Recycled Gold Smuggling. Risk score 89.
+A walk-in customer sold seven recycled gold bars for AED 280,000 in cash
+on 02 April 2026. The weight certificate presented bears the letterhead
+of a refiner outside the United Arab Emirates and the declared source of
+the material is inconsistent with the certificate. The compliance function
+has placed an internal hold on the transaction. A Suspicious Transaction
+Report candidate review has been prepared and is awaiting the MLRO's
+decision to file through the Financial Intelligence Unit on goAML.
+
+Item 3. NRA-RF04 FIU Typology 1 TBML in Gold Trade. Risk score 83.
+Two invoices on this file do not reconcile with the customs declarations
+our freight partner has provided for the corresponding consignments. The
+discrepancy is small in isolation but forms part of a pattern the
+compliance function recorded against the same counterparty in February
+2026. We recommend that the MLRO assign a named reviewer to this file
+today.
+
+Item 4. RF-R05 Jewelry Scrap Aggregation Without CDD. Risk score 78.
+Three linked cash purchases from the same customer, dated 11, 19 March
+and 02 April 2026, with an aggregate consideration of AED 64,000 in the
+rolling 30 day window. The customer has a full CDD file but has not yet
+been placed under Enhanced Due Diligence. The compliance function has
+prepared a Dealers in Precious Metals and Stones Report candidate review
+and asks the MLRO to confirm the filing threshold.
+
+Item 5. RF-R16 Old Gold and Inherited Gold Verification. Risk score 64.
+The file contains a customer declaration but no corroborating evidence
+of prior ownership. The material value is modest and the risk is
+bounded, but closing the file without additional documentation would
+leave a gap our internal audit function would flag. We recommend that
+the branch manager request two additional documents before close.
+
+Item 6. RF-R09 Recycled Material CDD Exemption Abuse. Risk score 61.
+Three exemptions were claimed against our CDD procedure in the past
+seven days. Two of the three do not meet the stated exemption criteria
+on a closer reading. The compliance function recommends that the branch
+manager reverse both exemptions and reopen the customer files.
+
+Item 7. RF-R11 Recycled Gold Purity and Assay Manipulation. Risk score 55.
+The assay results on two recent intakes differ from the declared
+composition by more than three percentage points. The difference is
+within our internal tolerance band but sits at the upper end. We
+recommend a secondary assay on both batches before release.
+
+Item 8. RF-R06 Industrial Scrap Gold Processing. Risk score 49.
+Routine monitoring. The file will close on receipt of the pending
+source-of-funds evidence from the counterparty, which is expected this
+week. No action today.
+
+Item 9. RF-R10 Gold for Cash Schemes via Recycled Material. Risk score 44.
+Routine monitoring. No new red flags in the past seven days. This file
+will be reviewed again at the next weekly cycle.
+
+Item 10. RF-R17 Recycled Gold as Hawala Alternative. Risk score 41.
+Two items flagged last week are still awaiting clarification from the
+FG Branch manager. The compliance function has sent a reminder and will
+escalate if no response is received by close of business today.
+
+-----------------------------------------------------------------------------
+4. RECOMMENDED DECISIONS FOR THE MLRO TODAY
+-----------------------------------------------------------------------------
+
+The compliance function asks the MLRO to take three decisions during the
+course of today.
+
+First, on RF-R12, whether to open a Partial Name Match review on the
+counterparty and suspend any pending settlement until the match is
+cleared.
+
+Second, on RF-R08, whether to file the prepared Suspicious Transaction
+Report candidate review through the Financial Intelligence Unit on the
+goAML platform.
+
+Third, on RF-R05, whether to confirm the Dealers in Precious Metals and
+Stones Report filing threshold has been reached and whether to file the
+corresponding report through goAML.
+
+The compliance function is available to support the MLRO in all three
+decisions and will make itself available at short notice throughout the
+day.
+
+-----------------------------------------------------------------------------
+5. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.
