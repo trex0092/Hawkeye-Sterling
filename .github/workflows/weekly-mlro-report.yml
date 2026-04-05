@@ -1,0 +1,87 @@
+name: Weekly MLRO Report to Senior Management
+
+# Every Friday at 17:00 Asia/Dubai (13:00 UTC), after the daily retro has
+# recorded the closing numbers for the week. Produces the formal Weekly
+# MLRO Report issued from the MLRO (Luisa Fernanda) to Senior Management
+# of HAWKEYE STERLING V2.
+#
+# The report draws on the current week's Asana activity and on the
+# history/daily/ and history/retro/ archive written by the earlier
+# workflows during the week. The report is posted to the pinned
+# Today's Priorities task inside the SCREENINGS project and archived to
+# history/mlro-weekly/YYYY-Www.txt for the 10-year retention obligation
+# under Federal Decree-Law No. 10 of 2025.
+
+on:
+  schedule:
+    - cron: "0 13 * * 5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (no comments posted)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: weekly-mlro-report
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    name: Weekly MLRO report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Run weekly MLRO report
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_TO: ${{ secrets.GMAIL_TO }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node weekly-mlro-report.mjs
+
+      - name: Commit history archive
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Weekly MLRO report archive: $(date -u +%Y-W%V)"
+            git push origin main
+          else
+            echo "No new history files to commit."
+          fi
