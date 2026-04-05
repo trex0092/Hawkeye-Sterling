@@ -1,0 +1,202 @@
+=============================================================================
+HAWKEYE STERLING V2
+FUNDS FREEZE REPORT — CANDIDATE REVIEW
+=============================================================================
+
+Document reference:   HSV2-FFR-2026-0002
+Classification:       Confidential. For MLRO review only. Draft. Highest
+                      priority. To be handled within the applicable
+                      timeline for confirmed sanctions matches.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:55 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Source file:          ZOE FZE, RF-R12 Recycled Gold from Sanctioned Entities,
+                      follow-on from the open Partial Name Match review
+Asana task GID:       1155285207862540
+Filing channel:       Financial Intelligence Unit through the goAML platform
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. STATUS OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is a draft candidate review of a Funds Freeze Report, prepared by
+the compliance function for the personal review of the Money Laundering
+Reporting Officer. It is the most consequential draft the compliance
+function can produce. It is to be treated as the highest priority on
+the MLRO's desk the moment it lands and under no circumstances may the
+underlying material or the underlying funds move while the draft is
+open.
+
+The draft is conditional. It has been prepared on the working
+assumption that additional discriminating data received after the
+Partial Name Match Report will confirm the identity of the
+counterparty as a party listed on the UN Security Council Consolidated
+List. If that assumption holds, this draft becomes live. If the
+additional data instead clears the match, this draft is closed with
+no action and the underlying Partial Name Match Report disposition is
+recorded as cleared.
+
+-----------------------------------------------------------------------------
+2. REPORTING ENTITY
+-----------------------------------------------------------------------------
+
+Reporting entity:       HAWKEYE STERLING V2, ZOE FZE programme
+MLRO:                   Luisa Fernanda
+Reporting date:         to be set by the MLRO on filing
+
+-----------------------------------------------------------------------------
+3. SUBJECT OF THE FREEZE
+-----------------------------------------------------------------------------
+
+Counterparty name:      Al Safwa Metals Trading FZ LLC
+Trade licence number:   RAK-XXXXXX
+Country of registration: United Arab Emirates, Ras Al Khaimah
+List entry matched:     Al Safwa Metals, UN Security Council Consolidated List
+Confirmation source:    [to be inserted on the basis of the discriminating
+                        data that confirms identity]
+Confirmation date:      [to be inserted at the moment of confirmation]
+
+-----------------------------------------------------------------------------
+4. FUNDS AND ECONOMIC RESOURCES SUBJECT TO THE FREEZE
+-----------------------------------------------------------------------------
+
+The firm holds the following, attributable to or in the control of
+the counterparty, at the time of preparation of this draft.
+
+Cash amount held on behalf of the counterparty:                AED 0
+Physical material held at the ZOE FZE branch on behalf of the
+counterparty: seven recycled gold bars, stated total weight 1,950 grams,
+stated fineness 999. The material is currently retained under dual
+control in the branch safe. It has been so retained since delivery on
+25 March 2026 under the hold imposed in connection with the Partial
+Name Match review.
+
+Proposed settlement that has not been paid to the counterparty:
+AED 164,000 (one hundred and sixty four thousand UAE dirhams).
+
+Any other economic resource: none identified.
+
+On confirmation of the match, the compliance function will apply an
+immediate freeze on the AED 164,000 proposed settlement, on the
+physical material described above, and on any further relationship
+with the counterparty, in accordance with the applicable targeted
+financial sanctions framework.
+
+-----------------------------------------------------------------------------
+5. ACTIONS TAKEN OR TO BE TAKEN IMMEDIATELY ON CONFIRMATION
+-----------------------------------------------------------------------------
+
+On confirmation of the match, the compliance function will take the
+following actions without delay and in any event within the applicable
+timeline set by the targeted financial sanctions framework.
+
+a. The physical material described in section 4 will remain in the
+   branch safe under dual control. It will not be released to the
+   counterparty or to any third party.
+
+b. The proposed settlement of AED 164,000 will not be released.
+   The corresponding internal hold will be converted into a freeze.
+
+c. Any existing contract, purchase order, delivery note or other
+   instrument connecting the firm to the counterparty will be
+   suspended in writing.
+
+d. The counterparty will be informed in writing that the firm is
+   unable to continue the transaction and that the matter has been
+   referred to the competent authority. The letter will be
+   co-signed by the MLRO.
+
+e. The branch will be instructed not to communicate any further
+   information to the counterparty or to any person claiming to act
+   on the counterparty's behalf beyond the letter at point d.
+
+f. The firm's staff who handled any part of the relationship with
+   the counterparty will be informed of the freeze and of the
+   prohibition on any further engagement.
+
+g. The Funds Freeze Report will be filed through the Financial
+   Intelligence Unit on the goAML platform in the name of the MLRO
+   with the underlying evidence attached.
+
+h. The filing reference returned by goAML will be recorded on the
+   Asana task and on this document, and the ZOE FZE RF-R12 file will
+   be updated accordingly.
+
+i. The cross-entity counterparty register will be updated to reflect
+   the freeze. The FG BRANCH RF-R12 file, which tracks a related
+   counterparty, will be reviewed on the same day to determine
+   whether the same freeze applies to that counterparty.
+
+-----------------------------------------------------------------------------
+6. RECORDS RETAINED
+-----------------------------------------------------------------------------
+
+Copy of the trade licence as presented by the counterparty.
+Copy of the Emirates ID of the declared shareholder of the counterparty.
+Copy of the delivery note dated 25 March 2026.
+Photograph of the material under dual control lighting.
+Screening engine report dated 25 March 2026.
+All correspondence with the counterparty on the file, inbound and outbound.
+Branch hold memorandum dated 25 March 2026.
+Partial Name Match Report as filed (when filed).
+Asana task RF-R12 full comment history, both ZOE FZE and FG BRANCH.
+Any additional discriminating data received that informed the match
+confirmation (to be attached on confirmation).
+
+All items retained for the minimum 10 year period required by the
+applicable provision of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+7. REGULATORY BASIS
+-----------------------------------------------------------------------------
+
+This candidate review is prepared on the basis of the applicable
+targeted financial sanctions framework administered by the Executive
+Office for Control and Non-Proliferation, which requires the firm to
+freeze without delay any funds and economic resources that belong to
+or are controlled by a person listed on the UN Security Council
+Consolidated List or the UAE Local Terrorist List, and to report the
+freeze to the Financial Intelligence Unit through the goAML platform.
+The primary legal basis is the applicable provision of Federal
+Decree-Law No. 10 of 2025 on Anti-Money Laundering and Countering the
+Financing of Terrorism and Financing of Illegal Organisations.
+
+-----------------------------------------------------------------------------
+8. LIMITATIONS OF THIS DRAFT
+-----------------------------------------------------------------------------
+
+This draft is conditional on confirmation of the sanctions match.
+In the absence of confirmation, this draft is not to be filed. The
+compliance function has taken every reasonable step to ensure that
+the facts stated in this draft are accurate as at the date of
+preparation. Confirmation of the match, if it arrives, should be
+attached to this draft as a supporting document and the confirmation
+date and source should be inserted at section 3 before filing.
+
+-----------------------------------------------------------------------------
+9. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that this draft has been prepared in
+accordance with the firm's internal procedure for Funds Freeze Report
+candidate reviews, that the assets identified in section 4 are those
+currently under the firm's control in connection with the relationship
+with the counterparty, and that no other assets connected to the
+counterparty have been identified.
+
+-----------------------------------------------------------------------------
+10. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval, conditional on confirmation of
+                the sanctions match]
+Filing status: Draft, conditional. Not filed.
+
+For review and decision by the MLRO, Luisa Fernanda.
+
+[End of document]

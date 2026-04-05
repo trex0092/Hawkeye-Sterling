@@ -1,0 +1,246 @@
+=============================================================================
+HAWKEYE STERLING V2
+SUSPICIOUS TRANSACTION REPORT — CANDIDATE REVIEW
+=============================================================================
+
+Document reference:   HSV2-STR-2026-0042
+Classification:       Confidential. For MLRO review only. Draft.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:35 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Source file:          FG BRANCH, RF-R08 Cross-Border Recycled Gold Smuggling
+Asana task GID:       1155285207862111
+Filing channel:       Financial Intelligence Unit through the goAML platform
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. STATUS OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is a draft candidate review of a Suspicious Transaction Report,
+prepared by the compliance function for the personal review of the
+Money Laundering Reporting Officer. It is not a filed report. It has
+not been submitted to the Financial Intelligence Unit on the goAML
+platform. It has no legal effect until the MLRO has personally reviewed
+the underlying material, signed the filing, and submitted it through
+goAML in her own name.
+
+The compliance function has prepared this document with the express
+purpose of accelerating the MLRO's review and so that, if the MLRO
+reaches the same conclusion as the compliance function, the material
+necessary for submission is already in her hands.
+
+-----------------------------------------------------------------------------
+2. REPORTING ENTITY
+-----------------------------------------------------------------------------
+
+Reporting entity:       HAWKEYE STERLING V2
+Sector:                 Dealer in Precious Metals and Stones
+Classification:         Designated Non-Financial Business and Profession
+Supervisor:             Ministry of Economy
+MLRO:                   Luisa Fernanda
+Deputy MLRO:            [to be inserted at filing time]
+goAML registration:     [to be inserted at filing time]
+Reporting date:         to be set by the MLRO on filing
+
+-----------------------------------------------------------------------------
+3. SUBJECT PERSON
+-----------------------------------------------------------------------------
+
+Full legal name:        Khalid Omar Al Jabari
+Date of birth:          14 June 1982
+Nationality:            United Arab Emirates
+Identification type:    UAE Emirates ID
+Identification number:  784-1982-XXXXXXX-X (full value on customer file)
+Residential address:    Al Quoz 3, Dubai (as recorded at onboarding)
+Contact number on file: +971 50 XXX XXXX
+Occupation declared:    Independent jewellery trader
+Customer status:        Walk-in customer with one prior transaction
+Customer risk rating at time of transaction:   Medium
+Customer risk rating after this review:        High, pending MLRO confirmation
+
+-----------------------------------------------------------------------------
+4. TRANSACTION THE SUBJECT OF THIS REPORT
+-----------------------------------------------------------------------------
+
+Date of transaction:    02 April 2026
+Time of transaction:    14:26 Asia/Dubai
+Location:               HAWKEYE STERLING V2, Gold Souk branch
+Product:                Recycled gold bars, stated weight 2,415 grams
+                        total, stated fineness 999
+Consideration:          AED 280,000 (two hundred and eighty thousand
+                        UAE dirhams)
+Payment method:         Cash, received in AED 1,000 and AED 500 notes
+Counterparty role:      Seller to HAWKEYE STERLING V2
+Settlement status:      Suspended. Funds have not been released to the
+                        subject person. Material has not been released
+                        to resale inventory.
+
+Linked prior transaction on file:
+Date:                   18 February 2026
+Consideration:          AED 92,000 cash, same subject person, same
+                        branch, same product category
+
+Aggregate cash consideration in the rolling 60 day window ending
+02 April 2026:         AED 372,000
+
+-----------------------------------------------------------------------------
+5. GROUNDS FOR SUSPICION
+-----------------------------------------------------------------------------
+
+The compliance function has reviewed the facts set out at section 4
+above and the evidentiary material held on the FG BRANCH RF-R08 file.
+Three independent grounds for suspicion arise from that review, and
+each is stated below on the understanding that the MLRO will form her
+own view on whether any, or all three, of them support a filing.
+
+First, the documentation presented at the point of the 02 April 2026
+transaction is internally inconsistent in a way the subject person has
+not explained. The subject person stated that the material had been
+acquired through a workshop in Ajman. The weight certificate handed
+over at the counter bears the letterhead of a refiner outside the
+United Arab Emirates and the dates on the two documents do not
+reconcile. Copies of both documents are held on the file.
+
+Second, the pattern of two cash transactions from the same subject
+person in the rolling 60 day window, for a combined cash consideration
+of AED 372,000, is consistent with a typology our programme tracks
+for possible layering of precious metals through small-cap dealers.
+The compliance function does not know whether any third party is
+behind the subject person's activity, but the cadence of the two
+transactions is not consistent with an occasional walk-in sale of
+inherited or workshop material.
+
+Third, the geographic origin implied by the refiner letterhead falls
+within a jurisdiction that the compliance function classifies as
+higher risk for conflict and recycled gold sourcing. The compliance
+function is not in a position to confirm any specific sanctions
+exposure from its own record. That limitation is stated transparently
+here so the MLRO can decide whether to file on the other two grounds
+alone or to wait for further information on the jurisdiction question.
+
+Each of the three grounds is, in the view of the compliance function,
+independently sufficient to meet the standard for filing. The
+compliance function leaves to the MLRO the judgement on whether to
+rely on one ground or on all three in the filed report.
+
+-----------------------------------------------------------------------------
+6. ACTIONS TAKEN TO DATE
+-----------------------------------------------------------------------------
+
+Immediately on identifying the inconsistencies at the counter the
+compliance function placed an internal hold on the completion of the
+transaction. Payment to the subject person has not been released. The
+physical material is retained in the branch safe under dual control
+and will not move until the MLRO has taken a decision. Both documents
+presented at the counter have been photocopied and placed on the file.
+A photograph of the seven bars under dual control lighting has been
+taken and placed on the file. The subject person has been informed
+that the matter is under internal review in the ordinary course of
+our procedures and has not been informed of any suspicion or of any
+intention to report.
+
+No funds have moved. No material has moved. The subject person has
+not been served with any notice.
+
+-----------------------------------------------------------------------------
+7. RECORDS RETAINED
+-----------------------------------------------------------------------------
+
+Copy of the Emirates ID of the subject person.
+Copy of the workshop receipt presented at the counter.
+Copy of the refiner weight certificate presented at the counter.
+Photograph of the seven bars under dual control lighting.
+Internal branch movement ticket, FG Branch, dated 02 April 2026.
+Record of the 18 February 2026 prior transaction.
+Asana task RF-R08 full comment history.
+Internal hold memorandum issued 02 April 2026 at 14:41 Asia/Dubai.
+
+All items are retained in the firm's archive for the minimum 10 year
+period required by the applicable provision of Federal Decree-Law
+No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+8. REGULATORY BASIS
+-----------------------------------------------------------------------------
+
+This candidate review is prepared on the basis of the applicable
+provision of Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering
+and Countering the Financing of Terrorism and Financing of Illegal
+Organisations, which requires the firm to file a Suspicious Transaction
+Report where a reasonable suspicion of money laundering arises. The
+filing channel is the Financial Intelligence Unit through the goAML
+platform. The supervisory authority for the firm in its capacity as a
+Designated Non-Financial Business and Profession is the Ministry of
+Economy.
+
+No specific article number is cited in this draft. The compliance
+function does not have the article-by-article text of the 2025 law
+verbatim and declines to invent citations.
+
+-----------------------------------------------------------------------------
+9. PROPOSED NEXT STEPS
+-----------------------------------------------------------------------------
+
+The compliance function recommends that the MLRO take the following
+steps, in sequence, as soon as her schedule permits on 06 April 2026.
+
+Step 1. Review the facts at section 4 against the customer file held
+on the subject person, including the 18 February 2026 transaction
+record, and form an independent view on whether the pattern meets the
+standard for filing.
+
+Step 2. Take a decision on whether to file a Suspicious Transaction
+Report in respect of the 02 April 2026 transaction, in respect of the
+combined 18 February and 02 April pattern, or in respect of neither.
+
+Step 3. If the MLRO decides to file, submit the filing through the
+Financial Intelligence Unit on the goAML platform in her own name and
+record the submission reference on the Asana task and on this document.
+
+Step 4. In all cases, communicate the disposition to the FG Branch
+manager and to the compliance function so the internal hold can be
+maintained, lifted, or converted into a formal termination as the
+MLRO directs.
+
+-----------------------------------------------------------------------------
+10. LIMITATIONS OF THIS DRAFT
+-----------------------------------------------------------------------------
+
+This draft reflects the state of the file as at 09:35 on 05 April 2026.
+It does not reflect any facts, communications or documents received
+after that time. The compliance function has not independently
+verified the authenticity of the two documents presented by the
+subject person at the counter and any conclusion of this draft is
+conditional on those documents being genuine. The compliance function
+has not approached the subject person for additional information
+between the date of the transaction and the date of this draft, and
+the MLRO may wish to direct that additional questions be put to the
+subject person before filing.
+
+-----------------------------------------------------------------------------
+11. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that this draft has been prepared
+against the firm's internal procedure for the preparation of
+Suspicious Transaction Report candidate reviews, that the underlying
+evidence is held on the FG BRANCH RF-R08 file, and that no fact has
+been asserted in this draft that is not supported by material on the
+file. No facts have been invented. No assumptions have been made about
+the subject person's intent.
+
+-----------------------------------------------------------------------------
+12. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval and filing decision]
+Filing status: Draft. Not filed.
+
+For review and decision by the MLRO, Luisa Fernanda.
+
+[End of document]

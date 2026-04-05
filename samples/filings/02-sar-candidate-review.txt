@@ -1,0 +1,192 @@
+=============================================================================
+HAWKEYE STERLING V2
+SUSPICIOUS ACTIVITY REPORT — CANDIDATE REVIEW
+=============================================================================
+
+Document reference:   HSV2-SAR-2026-0011
+Classification:       Confidential. For MLRO review only. Draft.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:40 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Source file:          FG LLC, RF-R09 Recycled Material CDD Exemption Abuse
+Asana task GID:       1155285207862203
+Filing channel:       Financial Intelligence Unit through the goAML platform
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. STATUS OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is a draft candidate review of a Suspicious Activity Report,
+prepared by the compliance function for the personal review of the
+Money Laundering Reporting Officer. It is not a filed report. It
+concerns activity on an attempted onboarding that did not result in a
+completed transaction. The compliance function takes the view that the
+threshold for a Suspicious Activity Report is met even though no
+transaction occurred, because the activity itself carries the
+hallmarks of layered behaviour that warrants reporting.
+
+-----------------------------------------------------------------------------
+2. REPORTING ENTITY
+-----------------------------------------------------------------------------
+
+Reporting entity:       HAWKEYE STERLING V2, FG LLC programme
+MLRO:                   Luisa Fernanda
+Reporting date:         to be set by the MLRO on filing
+
+-----------------------------------------------------------------------------
+3. SUBJECT PERSON
+-----------------------------------------------------------------------------
+
+Full legal name:        Faris Bilal Al Shamsi (as presented)
+Identification type:    UAE Emirates ID (photocopy presented only, not the
+                        physical card)
+Identification number:  784-1989-XXXXXXX-X (as presented)
+Nationality:            United Arab Emirates (as declared)
+Attempted customer relationship: Walk-in sale of recycled jewellery scrap
+
+Note: because the subject person did not complete onboarding, the
+compliance function has not independently verified any of the facts in
+this section. The details are reported as declared and are marked as
+such.
+
+-----------------------------------------------------------------------------
+4. ACTIVITY THE SUBJECT OF THIS REPORT
+-----------------------------------------------------------------------------
+
+On 01 April 2026 the subject person attended the FG LLC branch at
+Sharjah with a quantity of mixed karat jewellery scrap of approximate
+total weight 1,180 grams. He presented himself for immediate cash
+settlement on a walk-in basis and declined to open a customer file,
+citing that the material belonged to a relative.
+
+The branch compliance officer explained that the firm's standard
+Customer Due Diligence procedure applies to any counterparty
+presenting material for sale above our internal threshold and invited
+the subject person to complete a short customer file.
+
+On being told that Customer Due Diligence was required, the subject
+person withdrew the request for cash settlement, took back the
+material and left the branch without transacting. Before leaving he
+asked the branch compliance officer whether there was any
+"alternative arrangement" the firm could offer that would not require
+a customer file. The branch compliance officer declined.
+
+Twenty-two minutes later the same subject person returned to the
+branch with a different individual, who presented himself as the
+owner of the material. The second individual also declined to open
+a customer file. Both individuals then left together without
+transacting.
+
+-----------------------------------------------------------------------------
+5. GROUNDS FOR SUSPICION
+-----------------------------------------------------------------------------
+
+The compliance function forms the view that three features of the
+activity described above, taken together, give rise to a suspicion
+that warrants reporting.
+
+First, the request for an "alternative arrangement" that would avoid
+the firm's Customer Due Diligence procedure is, in our reading, an
+explicit attempt by the subject person to obtain the proceeds of a
+sale without leaving an identifying record. This is a feature common
+to the layering stage of money laundering typologies our programme
+monitors.
+
+Second, the return of the same individual with a second individual
+claiming ownership of the material, without any documentary support
+for the change of ownership, is consistent with a common tactic used
+to defeat customer identification controls at the point of sale.
+
+Third, the refusal to complete Customer Due Diligence on being asked
+is consistent with an unwillingness to be identified, which is itself
+a feature our typology list flags.
+
+The compliance function does not draw any conclusion about the
+lawful or unlawful origin of the material. The report is concerned
+with the activity, not with a determination of its underlying cause.
+
+-----------------------------------------------------------------------------
+6. ACTIONS TAKEN TO DATE
+-----------------------------------------------------------------------------
+
+The branch compliance officer recorded the attempted transaction in
+the branch visitor log at 10:48 on 01 April 2026 and again at 11:10
+on the same day. Both entries include a description of the material
+and of the individuals. The branch CCTV footage covering the two
+visits has been preserved and is held on file.
+
+The subject person and the second individual are now on an internal
+watch list. If either returns to any branch of HAWKEYE STERLING V2,
+the branch compliance officer has instructions to inform the
+compliance function immediately and to decline any cash settlement
+without a completed customer file.
+
+-----------------------------------------------------------------------------
+7. RECORDS RETAINED
+-----------------------------------------------------------------------------
+
+Branch visitor log entries dated 01 April 2026.
+Branch CCTV footage covering the two visits.
+Compliance officer's contemporaneous note of the conversation.
+Photograph of the Emirates ID presented (photocopy only).
+Asana task RF-R09 full comment history.
+Internal watch list entry.
+
+All items retained for the minimum 10 year period required by the
+applicable provision of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+8. REGULATORY BASIS
+-----------------------------------------------------------------------------
+
+This candidate review is prepared on the basis of the applicable
+provision of Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering
+and Countering the Financing of Terrorism and Financing of Illegal
+Organisations, which requires the firm to report suspicious activity
+whether or not a transaction is completed. The filing channel is the
+Financial Intelligence Unit through the goAML platform.
+
+-----------------------------------------------------------------------------
+9. PROPOSED NEXT STEPS
+-----------------------------------------------------------------------------
+
+The compliance function recommends that the MLRO take a decision on
+filing a Suspicious Activity Report in respect of this attempted
+onboarding. The file will remain open on our internal watch list
+regardless of the MLRO's filing decision. If either individual
+returns, a fresh candidate review will be prepared.
+
+-----------------------------------------------------------------------------
+10. LIMITATIONS OF THIS DRAFT
+-----------------------------------------------------------------------------
+
+The compliance function has not verified the identity of either
+individual. The Emirates ID presented was a photocopy and the
+physical card was not offered for inspection. The declared name and
+identification number in section 3 above are presented for the
+record and are not confirmed.
+
+-----------------------------------------------------------------------------
+11. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that the narrative in section 4 is
+taken from the contemporaneous branch visitor log and the branch
+compliance officer's contemporaneous note, and that no facts have
+been inferred beyond what those sources support.
+
+-----------------------------------------------------------------------------
+12. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval and filing decision]
+Filing status: Draft. Not filed.
+
+For review and decision by the MLRO, Luisa Fernanda.
+
+[End of document]

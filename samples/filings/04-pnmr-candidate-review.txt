@@ -1,0 +1,203 @@
+=============================================================================
+HAWKEYE STERLING V2
+PARTIAL NAME MATCH REPORT — CANDIDATE REVIEW
+=============================================================================
+
+Document reference:   HSV2-PNMR-2026-0007
+Classification:       Confidential. For MLRO review only. Draft.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:50 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Source file:          ZOE FZE, RF-R12 Recycled Gold from Sanctioned Entities
+Asana task GID:       1155285207862540
+Filing channel:       Financial Intelligence Unit through the goAML platform
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. STATUS OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is a draft candidate review of a Partial Name Match Report,
+prepared by the compliance function for the personal review of the
+Money Laundering Reporting Officer. It concerns a screening hit that
+the compliance function has been unable to discharge on its own record
+and that therefore, in our view, requires the firm to notify the
+Financial Intelligence Unit in accordance with the applicable targeted
+financial sanctions framework administered by the Executive Office for
+Control and Non-Proliferation.
+
+This is a draft. It has no legal effect until the MLRO has personally
+reviewed the underlying screening evidence and filed the report.
+
+-----------------------------------------------------------------------------
+2. REPORTING ENTITY
+-----------------------------------------------------------------------------
+
+Reporting entity:       HAWKEYE STERLING V2, ZOE FZE programme
+MLRO:                   Luisa Fernanda
+Reporting date:         to be set by the MLRO on filing
+
+-----------------------------------------------------------------------------
+3. COUNTERPARTY SUBJECT OF THE SCREENING
+-----------------------------------------------------------------------------
+
+Counterparty name as presented by the counterparty:
+                      Al Safwa Metals Trading FZ LLC
+
+Trade licence number as presented:     RAK-XXXXXX
+Country of registration as declared:    United Arab Emirates, Ras Al Khaimah
+Role in the underlying transaction:     Proposed seller of recycled gold
+Value of the proposed transaction:      AED 164,000 (one hundred and sixty
+                                        four thousand UAE dirhams)
+Date of the underlying delivery:        25 March 2026
+Date of the screening that produced the match: 25 March 2026
+
+-----------------------------------------------------------------------------
+4. THE LIST ENTRY TRIGGERING THE MATCH
+-----------------------------------------------------------------------------
+
+List consulted:         UN Security Council Consolidated List, as
+                        synchronised on 25 March 2026 at 08:12 Asia/Dubai
+List entry name:        Al Safwa Metals (name only)
+List entry legal form:  not specified on the list entry
+List entry country:     not specified on the list entry
+Match score returned
+by the screening engine: 91 percent
+
+The list entry lacks the trade licence number, the registered office
+and the legal form that would allow the compliance function to
+confirm or rule out identity on its own record. The name on the list
+entry and the name of the counterparty share the three-word core
+"Al Safwa Metals", which drives the high match score.
+
+-----------------------------------------------------------------------------
+5. GROUNDS FOR FILING
+-----------------------------------------------------------------------------
+
+The compliance function cannot, on its own record, determine whether
+the counterparty and the list entry are the same legal person. The
+match score is high. The discriminating data on the list entry is
+thin. In accordance with the firm's internal sanctions procedure and
+with the applicable targeted financial sanctions framework, where a
+match cannot be discharged the firm's obligation is to notify the
+Financial Intelligence Unit and to suspend any pending settlement
+with the counterparty until the match is cleared or confirmed.
+
+The compliance function therefore recommends the filing of a Partial
+Name Match Report.
+
+-----------------------------------------------------------------------------
+6. ACTIONS TAKEN TO DATE
+-----------------------------------------------------------------------------
+
+Immediately on the match being returned by the screening engine the
+compliance function placed the underlying transaction on hold. No
+funds have been released to the counterparty. The physical material
+has not moved. The ZOE FZE branch has been instructed to treat the
+counterparty as restricted and to escalate any further communication
+from the counterparty to the compliance function.
+
+The counterparty has not been informed of the match. The counterparty
+has been told that the transaction is on hold for routine documentary
+verification in accordance with our internal procedures, and has been
+invited to provide additional identifying information for the
+beneficial owner of the counterparty. That additional information is
+awaited.
+
+The compliance function has also noted, for the record, that a
+closely related counterparty under the same corporate suffix and a
+similar trade licence range is currently under review on the FG BRANCH
+RF-R12 file. The two reviews are treated as a single cross-entity
+investigation track and progress on either file is communicated to
+the other reviewer.
+
+-----------------------------------------------------------------------------
+7. RECORDS RETAINED
+-----------------------------------------------------------------------------
+
+Copy of the trade licence as presented by the counterparty.
+Copy of the Emirates ID of the declared shareholder of the counterparty.
+Copy of the delivery note dated 25 March 2026.
+Screening engine report dated 25 March 2026 (internal document).
+Branch hold memorandum dated 25 March 2026.
+Asana task RF-R12 full comment history.
+Internal cross-reference to the FG BRANCH RF-R12 counterparty file.
+
+All items retained for the minimum 10 year period required by the
+applicable provision of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+8. REGULATORY BASIS
+-----------------------------------------------------------------------------
+
+This candidate review is prepared on the basis of the applicable
+targeted financial sanctions framework administered by the Executive
+Office for Control and Non-Proliferation, which requires the firm to
+notify the Financial Intelligence Unit and to suspend any pending
+transaction where a match against the UN Security Council Consolidated
+List or the UAE Local Terrorist List cannot be discharged on the
+firm's own record. The primary legal basis is the applicable provision
+of Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering and
+Countering the Financing of Terrorism and Financing of Illegal
+Organisations. The filing channel is the Financial Intelligence Unit
+through the goAML platform.
+
+-----------------------------------------------------------------------------
+9. PROPOSED NEXT STEPS
+-----------------------------------------------------------------------------
+
+The compliance function recommends that the MLRO take the following
+steps as soon as her schedule permits on 06 April 2026.
+
+Step 1. Review the screening evidence and the counterparty file and
+take a decision on whether the match can be discharged on the firm's
+own record at this time.
+
+Step 2. If the match cannot be discharged, file the Partial Name
+Match Report through the Financial Intelligence Unit on the goAML
+platform.
+
+Step 3. Maintain the transaction hold until the match is cleared or
+confirmed. If the match is later confirmed, escalate the matter to
+a Funds Freeze Report within the applicable timeline.
+
+Step 4. Continue to track this file together with the FG BRANCH
+RF-R12 file as a single cross-entity investigation track.
+
+-----------------------------------------------------------------------------
+10. LIMITATIONS OF THIS DRAFT
+-----------------------------------------------------------------------------
+
+The compliance function has not independently verified the
+authenticity of the trade licence or the Emirates ID presented by
+the counterparty. Any conclusion of this draft is conditional on
+those documents being genuine. The compliance function has not
+obtained an independent opinion on the identity of the list entry
+from any third party source. The MLRO may wish to direct such an
+opinion be sought before filing.
+
+-----------------------------------------------------------------------------
+11. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that the screening was performed
+against the UN Security Council Consolidated List as synchronised on
+25 March 2026 at 08:12 Asia/Dubai, that the match score reported is
+the score returned by the firm's screening engine, and that no
+attempt has been made to reduce or dismiss the match on grounds not
+supported by file evidence.
+
+-----------------------------------------------------------------------------
+12. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval and filing decision]
+Filing status: Draft. Not filed.
+
+For review and decision by the MLRO, Luisa Fernanda.
+
+[End of document]
