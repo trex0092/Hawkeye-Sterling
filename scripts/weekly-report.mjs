@@ -18,6 +18,14 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { notify } from "./notify.mjs";
+import {
+  SYSTEM_PROMPT,
+  STYLE_REMINDER,
+  CONFIRMED_REFERENCES,
+  ARTEFACT_PREFIXES,
+  validateOutput,
+} from "./regulatory-context.mjs";
+import { isoWeek, writeWeeklyPatternReport } from "./history-writer.mjs";
 
 const {
   ASANA_TOKEN,
@@ -141,34 +149,87 @@ function summarizeProjectForPrompt(projectName, tasks) {
 
 function buildWeeklyPrompt(perProjectSummaries) {
   const blocks = perProjectSummaries.map((p) => `${p.header}\n${p.body}`);
-  return `You are a compliance portfolio analyst for HAWKEYE STERLING V2.
+  return `TASK. You are drafting the analytical body of the Weekly Pattern Report for ${CONFIRMED_REFERENCES.entity.legalName}. It is Friday afternoon. The reader is the MLRO, ${CONFIRMED_REFERENCES.mlro.name}, who will read this document before writing her weekly report to Senior Management. The document control block and the sign-off block are generated programmatically and appended to your response. You are responsible for sections 1 to 7 below, in the exact order shown, using ALL CAPS section labels on their own line.
 
-It is Friday afternoon. Below is a cross-entity snapshot of every Asana compliance programme task that was created or modified in the last ${windowDays} days. Your reader is a compliance officer preparing for the Monday sync.
+INPUT. Below is a cross-entity snapshot of every task in every compliance programme that was created or modified in the last ${windowDays} days, grouped by programme entity.
 
-Write a WEEKLY PATTERN REPORT in this exact structure, plain text, no markdown headers, concise bullets:
+=== PER-ENTITY SNAPSHOT ===
+${blocks.join("\n\n")}
 
-HEADLINE
-One line: the single most important takeaway from this week across the portfolio.
+OUTPUT FORMAT. Emit the seven sections below and nothing else. Do not repeat the document control block. Do not add a sign-off line. Use continuous prose rather than bullets wherever prose is more natural, and short paragraphs rather than long ones.
 
-CROSS-ENTITY PATTERNS
-• Typologies, counterparties, jurisdictions, or red flags that appeared in MORE THAN ONE entity this week. Call out the entities by name.
-• If nothing obvious, say "None detected."
+1. PURPOSE
 
-EMERGING RISKS
-• New or escalating risk items that deserve attention next week. Prefer items tied to sanctions, PEPs, cross-border, or high-risk jurisdictions.
-• One line each.
+One short paragraph stating that this report is the internal analytical companion to the Weekly MLRO Report to Senior Management, and that it is the source of record for cross-entity typology activity for the week.
 
-STALLED INVESTIGATIONS
-• Items that have sat open for multiple weeks without progress. Name entity + task.
+2. HEADLINE FOR THE WEEK
 
-WINS OF THE WEEK
-• Tasks completed this week that materially reduced risk. Name entity + task.
+Two to three short sentences stating the single most important theme across the portfolio this week and what the compliance function recommends the MLRO do about it first.
 
-RECOMMENDED NEXT WEEK FOCUS
-Three bullets. Each one = entity, task, why it matters Monday morning.
+3. CROSS-ENTITY PATTERNS OBSERVED
 
-=== PER-ENTITY WEEKLY SNAPSHOT ===
-${blocks.join("\n\n")}`;
+One to three numbered paragraphs, each describing a pattern visible across two or more entities. Name the entities. If no pattern is visible, state that in one sentence and move on.
+
+4. EMERGING RISKS
+
+Two to four short paragraphs identifying new or escalating risks that deserve attention next week. Prefer items tied to sanctions, politically exposed persons, cross-border activity or high-risk jurisdictions. Name the entity and the task in each paragraph.
+
+5. STALLED INVESTIGATIONS
+
+One to four short paragraphs identifying items that have been open for more than fourteen calendar days without a material movement. Name the entity, name the task, and state the reason for the stall if it is visible in the data.
+
+6. WINS OF THE WEEK
+
+Two to four short paragraphs identifying tasks closed during the week that materially reduced risk. Name the entity and the closed task in each paragraph.
+
+7. RECOMMENDED FOCUS FOR THE WEEK AHEAD
+
+Three numbered paragraphs. Each paragraph names one specific focus item, the entity or entities it concerns, and one sentence stating why it matters on Monday morning. End each paragraph with a single imperative sentence.
+
+${STYLE_REMINDER}`;
+}
+
+function buildWeeklyDocument({
+  today,
+  weekId,
+  referenceId,
+  successCount,
+  claudeBody,
+}) {
+  const entity = CONFIRMED_REFERENCES.entity;
+  const mlro = CONFIRMED_REFERENCES.mlro;
+  const retentionYears = CONFIRMED_REFERENCES.recordRetention.years;
+  const primaryLaw = CONFIRMED_REFERENCES.primaryLaw.title;
+
+  return `=============================================================================
+${entity.legalName.toUpperCase()}
+WEEKLY PATTERN REPORT
+Week ${weekId}, ending ${today}
+=============================================================================
+
+Document reference:   ${referenceId}
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, ${entity.legalName}
+Prepared on:          ${today}, 16:00 Asia/Dubai
+Addressee:            ${mlro.name}, ${mlro.title}
+Coverage:             ${successCount} active compliance programme${successCount === 1 ? "" : "s"}, rolling ${windowDays} days to ${today}.
+Retention period:     ${retentionYears} years, in accordance with the applicable provision
+                      of ${primaryLaw.split(" on ")[0]}.
+
+${claudeBody}
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, ${entity.legalName}
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, ${mlro.name}.
+
+[End of document]`;
 }
 
 async function callClaude(prompt, label) {
@@ -178,7 +239,8 @@ async function callClaude(prompt, label) {
     try {
       const msg = await anthropic.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 2500,
+        max_tokens: 3000,
+        system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: prompt }],
       });
       const text = msg.content
@@ -187,6 +249,15 @@ async function callClaude(prompt, label) {
         .join("\n")
         .trim();
       if (!text) throw new Error("Claude returned an empty response");
+      const check = validateOutput(text);
+      if (!check.ok) {
+        console.warn(`attempt ${attempt}/4 produced a response that failed style validation:`);
+        for (const p of check.problems) console.warn(`  - ${p}`);
+        if (attempt < 4) {
+          await sleep(2000);
+          continue;
+        }
+      }
       return text;
     } catch (err) {
       lastErr = err;
@@ -287,16 +358,28 @@ async function main() {
   console.log(
     `\n🧠 Asking Claude for a weekly pattern report across ${perProjectSummaries.length} project(s)…`,
   );
-  const report = await callClaude(
+  const claudeBody = await callClaude(
     buildWeeklyPrompt(perProjectSummaries),
     "weekly",
   );
 
-  const comment = `📊 Weekly pattern report — week ending ${today}
+  const weekId = isoWeek();
+  const referenceId = `HSV2-WPR-${weekId}`;
+  const comment = buildWeeklyDocument({
+    today,
+    weekId,
+    referenceId,
+    successCount: perProjectSummaries.length,
+    claudeBody,
+  });
 
-Covers the last ${windowDays} days across ${perProjectSummaries.length} active programme entit${perProjectSummaries.length === 1 ? "y" : "ies"}.
-
-${report}`;
+  // Archive the weekly pattern report to history/ for 10-year retention.
+  try {
+    await writeWeeklyPatternReport(weekId, comment);
+    console.log(`✓ archived to history/weekly/${weekId}.txt`);
+  } catch (archiveErr) {
+    console.warn(`⚠  failed to archive: ${archiveErr.message}`);
+  }
 
   if (!portfolioPinnedGid) {
     console.log(
@@ -316,7 +399,7 @@ ${report}`;
   // succeeded, so you still receive the report even if Asana was down.
   if (!isDryRun) {
     await notify({
-      subject: `📊 Weekly compliance pattern report — week ending ${today}`,
+      subject: `${ARTEFACT_PREFIXES.weeklyReport} — ${weekId}`,
       body: comment,
     });
   }
