@@ -1,0 +1,68 @@
+name: Inspection Evidence Bundle (on demand)
+
+# On-demand utility that the MLRO triggers when a supervisory inspection
+# is notified. Produces a manifest covering the selected window of the
+# firm's compliance automation archive and commits it back to main so
+# that the bundle, like every other artefact, lives under the 10-year
+# retention framework of Federal Decree-Law No. 10 of 2025.
+#
+# This workflow has no schedule. It only runs when triggered manually
+# from the Actions tab.
+
+on:
+  workflow_dispatch:
+    inputs:
+      window_days:
+        description: "Window in days (default 365)"
+        required: false
+        default: "365"
+        type: string
+
+concurrency:
+  group: inspection-bundle
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    name: Prepare inspection bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Run inspection bundle
+        working-directory: scripts
+        env:
+          WINDOW_DAYS: ${{ github.event.inputs.window_days }}
+        run: node inspection-bundle.mjs
+
+      - name: Commit bundle manifest
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Inspection evidence bundle: $(date -u +%Y-%m-%d)"
+            git push origin main
+          else
+            echo "No new bundle files to commit."
+          fi
