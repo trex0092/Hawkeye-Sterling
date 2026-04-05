@@ -5,6 +5,17 @@ project can be version-controlled alongside the code.
 
 ## Scenarios
 
+### `daily-priorities-scenario.md` ⭐ current focus
+
+**Flow:** Schedule (Mon–Fri 9am) → Asana List Projects → Asana Search Tasks →
+Array Aggregator → Claude prioritize top 10 → Asana Create Comment on a pinned
+`📌 Today's Priorities` task in each project.
+
+See the markdown file for the full click-by-click build guide, cost estimates,
+and customization notes. Built manually in Make's UI rather than via a
+blueprint import (because several module IDs are not stable across Make
+versions and auto-import fails on them).
+
 ### `asana-claude-triage.blueprint.json`
 
 **Flow:** Asana (Watch Tasks) → Anthropic Claude (Create a Prompt) → Asana (Add Comment)
