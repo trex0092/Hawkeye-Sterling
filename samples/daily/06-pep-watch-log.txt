@@ -1,0 +1,135 @@
+=============================================================================
+HAWKEYE STERLING V2
+DAILY PEP WATCH LOG
+=============================================================================
+
+Document reference:   HSV2-DPL-2026-0066
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:30 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Coverage:             All customer records across the six active programmes
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This log is the firm's contemporaneous record of the Politically Exposed
+Person population as at the close of the previous business day, together
+with any movements on that population observed today. It is produced so
+that the MLRO, and any future inspector from the Ministry of Economy or
+the Financial Intelligence Unit, can see at a glance how the firm is
+discharging its Enhanced Due Diligence obligations in respect of PEPs.
+
+-----------------------------------------------------------------------------
+2. CURRENT PEP POPULATION
+-----------------------------------------------------------------------------
+
+Total identified PEP customers across all programmes:            14
+ of which classified as foreign PEPs:                             6
+ of which classified as domestic PEPs:                            5
+ of which classified as international organisation PEPs:          0
+ of which classified as family members or close associates:       3
+
+All 14 customers are currently under Enhanced Due Diligence. All 14
+customer files carry an approval by the Money Laundering Reporting
+Officer authorising the continuation of the relationship with explicit
+reference to the firm's internal PEP procedure.
+
+-----------------------------------------------------------------------------
+3. MOVEMENTS OBSERVED TODAY
+-----------------------------------------------------------------------------
+
+Three movements were recorded on the PEP population in the past 24
+hours. Each is described below.
+
+Movement 1. New PEP identification.
+Customer reference: FGB-CUST-2026-00418.
+Customer name: Samir Rashid Al Barghouti.
+Programme: FG BRANCH.
+Basis for PEP status: the customer self-declared, in the course of a
+routine CDD refresh on 04 April 2026, that he was appointed to a senior
+public role in a neighbouring jurisdiction earlier this year.
+Disposition: the compliance function has updated the customer record to
+reflect foreign PEP status, has placed the relationship on hold pending
+the MLRO's authorisation to continue, and has initiated Enhanced Due
+Diligence with specific focus on source of wealth and source of funds.
+Required action from the MLRO: explicit authorisation to continue the
+relationship in writing, in accordance with the firm's PEP procedure.
+
+Movement 2. PEP status confirmed expired.
+Customer reference: MAD-CUST-2024-00092.
+Customer name: Hala Youssef Al Mansouri.
+Programme: MADISON LLC.
+Basis for change: the subject person's term in public office ended on
+01 January 2025. The firm's PEP procedure provides for a cooling-off
+period of twelve months after which a customer may be removed from the
+PEP population if no further political exposure arises. The cooling-off
+period ended on 01 January 2026 without further exposure.
+Disposition: the compliance function has moved the customer out of the
+PEP population today. Enhanced Due Diligence is discontinued. The
+relationship continues on the customer's underlying risk rating, which
+has been recalculated and set to medium.
+Required action from the MLRO: formal acknowledgement of the change on
+the customer file.
+
+Movement 3. PEP file refresh due.
+Customer reference: ZOE-CUST-2023-00153.
+Customer name: Omar Jaber Al Shaaban.
+Programme: ZOE FZE.
+Basis for flag: the annual refresh of the Enhanced Due Diligence file on
+this customer was due on 31 March 2026 and has not been completed. The
+customer remains under EDD and the relationship continues, but the
+documentary refresh has slipped by five calendar days.
+Disposition: the compliance function has assigned the refresh to the
+ZOE FZE compliance lead and has requested completion by 08 April 2026.
+Required action from the MLRO: note the slippage and, if the refresh
+is not completed by 08 April, consider whether the relationship should
+be suspended pending refresh.
+
+-----------------------------------------------------------------------------
+4. HIGHEST PRIORITY FILES IN THE PEP POPULATION
+-----------------------------------------------------------------------------
+
+The compliance function ranks the following four files as the highest
+priority in the current PEP population for ongoing monitoring.
+
+a. FGB-CUST-2026-00418 (Samir Rashid Al Barghouti). Pending MLRO
+   authorisation to continue the relationship. Highest priority.
+
+b. ZOE-CUST-2023-00153 (Omar Jaber Al Shaaban). EDD file refresh due,
+   five days overdue. High priority.
+
+c. FGL-CUST-2022-00077 (Yasmin Ali Al Awadhi). Spouse of a foreign PEP.
+   EDD file current, next refresh due 30 June 2026. Standard priority.
+
+d. GRA-CUST-2022-00021 (Khalid Rashid Al Muhairi). Retired domestic PEP.
+   Cooling-off period ends 30 September 2026, at which point the
+   customer may be considered for removal from the PEP population if no
+   further exposure arises.
+
+-----------------------------------------------------------------------------
+5. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that every customer in the current PEP
+population is under Enhanced Due Diligence, that every customer file in
+the population carries an MLRO authorisation to continue, and that every
+PEP identification event in the past seven days has been recorded in
+the firm's PEP change log. No PEP has been removed from the population
+without a recorded basis.
+
+-----------------------------------------------------------------------------
+6. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]

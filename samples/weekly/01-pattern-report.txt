@@ -1,0 +1,155 @@
+=============================================================================
+HAWKEYE STERLING V2
+WEEKLY PATTERN REPORT
+Week ending Friday 03 April 2026
+=============================================================================
+
+Document reference:   HSV2-WPR-2026-W14
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          03 April 2026, 16:00 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Coverage:             All six active compliance programmes, 28 March to
+                      03 April 2026 inclusive.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This is the weekly pattern report prepared for the MLRO by the
+compliance function. It is an internal analytical document. It is not
+addressed to Senior Management and it is not part of the formal Weekly
+MLRO Report to Senior Management, although it is used as a source for
+that document. The pattern report is intended to give the MLRO a
+weekly synthesis of cross-entity typology activity that is harder to
+see in the daily cycle.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR THE WEEK
+-----------------------------------------------------------------------------
+
+The dominant theme of the week is the recycled gold sanctions typology
+recorded against three separate programme entities. It is the first
+time this cycle that the same typology has appeared simultaneously on
+three entities, and in our view the right response is to treat the
+three files as one investigation track with a single lead reviewer.
+
+High cash intensity activity is also rising, with nine separate high
+cash intensity events recorded across four programmes in the week,
+compared with four events across two programmes the previous week.
+The compliance function is not yet calling this an attributable
+pattern, but it is the kind of early warning we would expect to see
+a week before a coordinated event in the DPMS sector.
+
+-----------------------------------------------------------------------------
+3. CROSS-ENTITY PATTERNS OBSERVED
+-----------------------------------------------------------------------------
+
+Pattern 1. Recycled gold from possibly linked counterparties.
+Observed on FG BRANCH, ZOE FZE and MADISON LLC, each naming a
+counterparty with a Ras Al Khaimah trade licence and a shared corporate
+suffix. The compliance function has opened a shared counterparty file
+in the cross-entity counterparty register and has recommended that a
+single lead reviewer be assigned to the three files with effect from
+next week.
+
+Pattern 2. Rising high cash intensity.
+Observed on FG BRANCH, FG LLC, MADISON LLC and NAPLES LLC. The rise is
+most concentrated in NAPLES LLC, which recorded five of the nine events.
+No single customer accounts for more than two events.
+
+Pattern 3. CDD exemption claims above baseline.
+Observed on FG BRANCH and MADISON LLC. The compliance function recorded
+seven exemption claims across the two entities in the week, against a
+baseline of three to four per week across the whole portfolio. We are
+not yet concerned but we are tracking.
+
+-----------------------------------------------------------------------------
+4. EMERGING RISKS
+-----------------------------------------------------------------------------
+
+Two risks are categorised as emerging by the compliance function this
+week.
+
+First, the recycled gold sanctions exposure on the FG BRANCH, ZOE FZE
+and MADISON LLC files. If the three counterparties are confirmed to be
+related, the firm may be facing its first coordinated sanctions risk
+event of the year. We recommend that the MLRO place this item at the
+top of the agenda for the weekly compliance committee.
+
+Second, the NAPLES LLC cash intensity signal. If next week shows the
+same rate, the compliance function will recommend the MLRO open a
+formal review of the NAPLES LLC programme's cash handling controls.
+
+-----------------------------------------------------------------------------
+5. STALLED INVESTIGATIONS
+-----------------------------------------------------------------------------
+
+The compliance function reports three stalled investigations this week.
+An investigation is treated as stalled if it has been open for more
+than fourteen calendar days without a material movement in Asana.
+
+FG BRANCH, RF-R17 Recycled Gold as Hawala Alternative. Open 18 days.
+Blocked pending response from the branch manager. Two reminders sent.
+
+FG LLC, RF-R14 Recycled Gold from Conflict or Looted Sources. Open 21
+days. Blocked pending a third-party expert opinion on the material.
+The expert is due to respond on 08 April 2026.
+
+GRAMALTIN AS, RF-R20 Annual Mined and Recycled Red Flags Review.
+Open 19 days. Blocked pending the annual management review of the
+GRAMALTIN AS programme.
+
+-----------------------------------------------------------------------------
+6. WINS OF THE WEEK
+-----------------------------------------------------------------------------
+
+The compliance function records the following material wins this week.
+
+FG BRANCH closed four historical Dealers in Precious Metals and Stones
+Report candidate reviews that had been carried on the books since the
+beginning of the year. All four were filed through the Financial
+Intelligence Unit on the goAML platform during the week with the MLRO's
+approval.
+
+ZOE FZE fully refreshed the Enhanced Due Diligence file on its two
+existing PEP customers, bringing the programme back to a current
+state on PEP file maintenance.
+
+The firm completed its quarterly staff sanctions training on schedule.
+All 23 staff members whose roles expose them to sanctions risk have
+completed the module and are current on training records.
+
+-----------------------------------------------------------------------------
+7. RECOMMENDED FOCUS FOR THE WEEK AHEAD
+-----------------------------------------------------------------------------
+
+The compliance function recommends the following three focus items for
+the week of 06 to 10 April 2026.
+
+First, resolve the recycled gold sanctions track across FG BRANCH, ZOE
+FZE and MADISON LLC. Assign a single lead reviewer. Prioritise the
+collection of discriminating data on the counterparty identities.
+
+Second, set up a review of NAPLES LLC cash handling controls and record
+in the file the basis for whether a formal review is warranted at this
+stage.
+
+Third, resolve the three stalled investigations listed in section 5,
+either by bringing them to a close or by recording an explicit reason
+for continued inactivity.
+
+-----------------------------------------------------------------------------
+8. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]

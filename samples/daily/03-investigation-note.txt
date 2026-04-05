@@ -1,0 +1,201 @@
+=============================================================================
+HAWKEYE STERLING V2
+DAILY INVESTIGATION PREPARATION NOTE
+=============================================================================
+
+Document reference:   HSV2-DIN-FGB-2026-0018
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:20 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Subject file:         FG BRANCH, RF-R12 Recycled Gold from Sanctioned Entities
+Asana task GID:       1155285207862107
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This note is a preparation note for the MLRO's review of the subject file
+and is not itself a decision document. The compliance function has not
+formed a suspicion against any identified individual at this stage. The
+purpose of the note is to place in front of the MLRO the facts we have,
+the facts we still need, the applicable regulatory hooks, and a proposed
+line of inquiry, so that the MLRO can start the review without having to
+reconstruct the file from scratch.
+
+-----------------------------------------------------------------------------
+2. SUMMARY OF THE FILE
+-----------------------------------------------------------------------------
+
+The subject file was opened on 27 March 2026 following a referral from
+the FG Branch manager. The referral concerned a proposed settlement to
+a counterparty trading under the name Al Safwa Metals Trading FZ LLC,
+holding trade licence RAK-XXXXXX issued in Ras Al Khaimah. The proposed
+settlement was for AED 164,000 for the purchase of recycled gold bars
+delivered to the FG Branch office on 25 March 2026.
+
+Our internal sanctions screening on 25 March 2026 returned a 91 percent
+name match against a list entry on the UN Security Council Consolidated
+List. The list entry is "Al Safwa Metals" with no legal form and no
+country of registration attached. The compliance function cannot
+discharge the match on its own record.
+
+Since the match was raised, the settlement has been held. The physical
+material is retained in the branch safe under dual control and has not
+moved. The counterparty has not been informed of the match.
+
+-----------------------------------------------------------------------------
+3. FACTS HELD ON FILE
+-----------------------------------------------------------------------------
+
+We hold the following on the subject file at the time of preparation.
+
+a. A copy of trade licence RAK-XXXXXX showing the legal name of the
+   counterparty, its activity classification as a precious metals
+   trading company, and the name of its sole shareholder of record,
+   Mr. Yusuf Kareem Al Ashmawi.
+
+b. A copy of the Emirates ID of the sole shareholder, with identification
+   number 784-1976-XXXXXXX-X.
+
+c. A copy of the delivery note dated 25 March 2026, describing seven
+   recycled gold bars with a declared weight of 2,415 grams and a
+   declared fineness of 999.
+
+d. A photograph of the seven bars under dual control lighting taken at
+   the time of delivery.
+
+e. A weight certificate bearing the letterhead of a refiner registered
+   outside the United Arab Emirates. The certificate identifies the
+   refiner by a name that does not match our approved refiner list.
+
+f. The internal sanctions screening report dated 25 March 2026, which
+   returned the 91 percent match.
+
+g. A walk-in visitor log for 25 March 2026 recording the attendance of
+   an individual identifying himself as the shareholder of the
+   counterparty. The log matches the Emirates ID at point b.
+
+-----------------------------------------------------------------------------
+4. FACTS WE DO NOT HOLD AND NEED
+-----------------------------------------------------------------------------
+
+The compliance function has identified five pieces of information whose
+absence is currently preventing closure of the file. The MLRO may wish
+to direct their collection.
+
+a. A certified translation into Arabic or English of the refiner's
+   weight certificate, together with verifiable contact details for the
+   refiner itself.
+
+b. A confirmed beneficial ownership declaration for the counterparty,
+   signed and dated by the sole shareholder, with the prescribed
+   supporting identification documents for any person holding twenty
+   five percent or more of the counterparty or exercising ultimate
+   control.
+
+c. An independent source of wealth declaration for Mr. Yusuf Kareem
+   Al Ashmawi, supported by at least one documentary source. His
+   current Emirates ID does not evidence source of wealth.
+
+d. The counterparty's audited financial statements for the year ended
+   31 December 2025, or if unavailable, management accounts to the
+   nearest completed quarter.
+
+e. Any evidence, on its face independent of the counterparty, that
+   confirms the identity of the list entry on the UN Security Council
+   Consolidated List is distinct from the counterparty we are dealing
+   with, or alternatively that confirms the two are the same.
+
+Until items b, c and e are received, the compliance function is of the
+view that the file cannot be discharged and the settlement should not
+proceed.
+
+-----------------------------------------------------------------------------
+5. KEY CONTROL QUESTIONS A REGULATOR WOULD ASK
+-----------------------------------------------------------------------------
+
+The compliance function has drawn up the following short list of control
+questions. We expect these, or something close to them, to be asked by
+the Ministry of Economy in the course of any supervisory review of this
+file, and the MLRO may wish to answer them internally before closing the
+file.
+
+First, when was the sanctions match identified, how was it recorded, and
+what immediate action did the firm take?
+
+Second, who is the beneficial owner of the counterparty, and how is that
+beneficial ownership evidenced to a standard a supervisor would accept?
+
+Third, what is the documented source of the recycled gold material on
+the delivery of 25 March 2026, and does the firm have independent
+corroboration of that source?
+
+Fourth, is the refiner named on the weight certificate a refiner our
+programme has approved, and if not, why did the branch proceed to accept
+the material at all?
+
+Fifth, in the event the sanctions match is later confirmed, what is the
+firm's plan to freeze the assets and file a Funds Freeze Report through
+the Financial Intelligence Unit on the goAML platform, and within what
+time?
+
+-----------------------------------------------------------------------------
+6. POSSIBLE OUTCOMES OF THE REVIEW
+-----------------------------------------------------------------------------
+
+The compliance function sees four plausible outcomes for the review.
+
+Outcome A. The sanctions match is cleared on the basis of additional
+discriminating information received and the file is closed with no
+further action. The settlement proceeds.
+
+Outcome B. The sanctions match remains unconfirmed but the compliance
+function remains unable to discharge it. A Partial Name Match Report is
+filed through the Financial Intelligence Unit on the goAML platform.
+The settlement remains suspended.
+
+Outcome C. The sanctions match is confirmed. A Funds Freeze Report is
+filed through the Financial Intelligence Unit on the goAML platform.
+The underlying material and any related accounts are frozen in
+accordance with the applicable targeted financial sanctions framework.
+The relationship with the counterparty is terminated.
+
+Outcome D. The sanctions match is cleared but independent grounds for
+a Suspicious Transaction Report arise during the review. A Suspicious
+Transaction Report is filed on those independent grounds.
+
+-----------------------------------------------------------------------------
+7. PROPOSED NEXT STEP
+-----------------------------------------------------------------------------
+
+Open the review today. Commission items b, c and e from the counterparty
+and from external sources by close of business on 06 April 2026. Do not
+release the material or the payment under any circumstances while the
+review is open. Escalate to a Funds Freeze Report within 24 hours of any
+confirmed match.
+
+-----------------------------------------------------------------------------
+8. LIMITATIONS OF THIS NOTE
+-----------------------------------------------------------------------------
+
+This note reflects the state of the file as at 09:20 on 05 April 2026.
+It does not reflect any information received after that time. The
+compliance function has not independently verified the authenticity of
+the documents held on file, and any conclusion of this note is
+conditional on those documents being genuine.
+
+-----------------------------------------------------------------------------
+9. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]

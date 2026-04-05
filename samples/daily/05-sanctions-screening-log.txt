@@ -1,0 +1,147 @@
+=============================================================================
+HAWKEYE STERLING V2
+DAILY SANCTIONS SCREENING LOG
+=============================================================================
+
+Document reference:   HSV2-DSL-2026-0066
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:25 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Screening period:     00:00 to 23:59 Asia/Dubai on 05 April 2026
+Lists consulted:      UN Security Council Consolidated List, UAE Local
+                      Terrorist List
+Implementing body:    Executive Office for Control and Non-Proliferation
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This log is the firm's contemporaneous record of all targeted financial
+sanctions screening activity performed on the calendar day 05 April 2026.
+It captures the universe of names screened, the list entries consulted,
+every hit returned by the screening engine, the disposition of each hit,
+and the officer responsible for the disposition. It is intended to be
+produced on demand to an inspector of the Executive Office for Control
+and Non-Proliferation or of the Ministry of Economy and is retained for
+ten years under the applicable provision of Federal Decree-Law No. 10
+of 2025.
+
+-----------------------------------------------------------------------------
+2. LIST STATUS AT THE TIME OF SCREENING
+-----------------------------------------------------------------------------
+
+UN Security Council Consolidated List was last synchronised at
+08:47 Asia/Dubai on 05 April 2026. The synchronisation pulled no new
+entries and updated three existing entries. A short record of each
+update is held in the compliance function's change log.
+
+UAE Local Terrorist List was last synchronised at 08:47 Asia/Dubai on
+05 April 2026. The synchronisation pulled no changes on the day.
+
+Both lists were live at the time of screening and no gaps were
+observed.
+
+-----------------------------------------------------------------------------
+3. SCREENING VOLUME FOR THE DAY
+-----------------------------------------------------------------------------
+
+Customers re-screened on routine cycle:            194
+New customer onboardings screened:                  3
+Counterparties screened at transaction time:      27
+Walk-in visitors screened at branch level:          9
+Total name queries performed on the day:          233
+
+The above figures reflect unique name queries. A single natural person
+screened against two lists counts as one query. A single customer file
+re-screened against both lists on its periodic cycle also counts as
+one query.
+
+-----------------------------------------------------------------------------
+4. HITS AND DISPOSITIONS
+-----------------------------------------------------------------------------
+
+Hit 1. Counterparty Al Safwa Metals Trading FZ LLC. Referred by FG BRANCH
+in the course of the RF-R12 file. Query time 09:12. Screening engine
+returned a 91 percent match against the Consolidated List entry Al Safwa
+Metals. The list entry lacks discriminating data that would allow the
+compliance function to confirm or rule out identity on its own record.
+Disposition: partial match pending clearance. The transaction on the
+underlying file has been suspended. A Partial Name Match Report
+candidate review has been prepared and is in the MLRO's queue.
+Responsible officer: Compliance Analyst on duty, FG BRANCH.
+
+Hit 2. Walk-in visitor presenting as Mohammad Saleh Al Farid, Emirates
+ID 784-1988-XXXXXXX-X. Referred by NAPLES LLC branch screening. Query
+time 11:48. Screening engine returned an 82 percent match against a
+Local Terrorist List entry. On review, the date of birth on the list
+entry does not match the date of birth on the Emirates ID presented,
+and the middle name on the Emirates ID is absent from the list entry.
+Disposition: cleared as a false positive on the basis of two
+discriminating data points. The visitor was served and the transaction
+proceeded.
+Responsible officer: Compliance Analyst on duty, NAPLES LLC.
+
+Hit 3. Existing customer Karim Faisal Al Mutawa, Emirates ID
+784-1970-XXXXXXX-X. Referred during the routine re-screening cycle.
+Query time 16:03. Screening engine returned a 78 percent match against
+a Consolidated List entry with a similar surname and a different
+nationality. Disposition: cleared. The nationality on the Emirates ID
+and the nationality on the list entry are incompatible, and the
+matching algorithm picked up on the surname alone. The disposition has
+been recorded on the customer file and the customer relationship
+continues on its existing risk rating.
+Responsible officer: Deputy MLRO.
+
+Hit 4. New customer onboarding referred by FG LLC. Subject: Samira Noor
+Al Jabari, proposed beneficial owner of a corporate customer applying
+to trade with the firm. Query time 13:29. Screening engine returned no
+hit. Recorded here for completeness because the onboarding sits on the
+firm's internal high-risk pathway.
+Responsible officer: Deputy MLRO.
+
+-----------------------------------------------------------------------------
+5. ITEMS ESCALATED TO THE MLRO ON THE DAY
+-----------------------------------------------------------------------------
+
+Hit 1 has been escalated to the MLRO and is awaiting a decision on
+whether to file a Partial Name Match Report through the Financial
+Intelligence Unit on the goAML platform. The deadline for the MLRO's
+decision is end of business on 06 April 2026 in order to remain within
+our internal service level for sanctions matches.
+
+-----------------------------------------------------------------------------
+6. OUTSTANDING ITEMS CARRIED OVER FROM PRIOR DAYS
+-----------------------------------------------------------------------------
+
+One item from 03 April 2026 remains open and is carried over to
+tomorrow. That item is the same Hit 1 above, which was first observed
+on 03 April 2026 and has been under continuous review since. No further
+hits on that counterparty have been recorded between 03 April and
+05 April.
+
+-----------------------------------------------------------------------------
+7. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that every hit returned by the
+screening engine during the day has been recorded in this log, that
+each disposition is supported by a named responsible officer, and that
+the discriminating data cited for each cleared hit is held on file
+and is available on request. No hits have been dismissed without a
+recorded basis.
+
+-----------------------------------------------------------------------------
+8. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]

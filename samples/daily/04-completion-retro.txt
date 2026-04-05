@@ -1,0 +1,158 @@
+=============================================================================
+HAWKEYE STERLING V2
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-0066
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 17:00 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Coverage:             All six active compliance programmes for the calendar
+                      day 05 April 2026.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This note compares the list of priorities circulated at 09:00 this
+morning with the compliance work that was actually closed in Asana
+during the day, entity by entity. It is produced so that the MLRO and
+the Board can see, on any given working day, how closely the firm's
+stated priorities match the firm's actual output, and so that items
+that slipped are carried over explicitly rather than quietly.
+
+The retro is not a performance review of any individual. It is a
+programme-level record of what happened today.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR TODAY
+-----------------------------------------------------------------------------
+
+Of the 50 items placed on the morning priority lists across the six
+programmes, 31 were closed, 15 were advanced but not closed, and 4
+remain untouched. Two of the four untouched items carried a risk score
+of ninety or above and require explicit carry-over to tomorrow's list.
+One of those two, FG BRANCH RF-R12, is the recycled gold sanctions file
+and is now three business days overdue.
+
+-----------------------------------------------------------------------------
+3. COMPLETION BY PROGRAMME
+-----------------------------------------------------------------------------
+
+FG BRANCH - COMPLIANCE PROGRAMME 2026.
+Morning list of 10 items. Closed 5. Advanced 3. Untouched 2.
+The two untouched items are RF-R12, risk score 94, and RF-R17, risk
+score 41. RF-R12 must be carried over to tomorrow with the MLRO's
+explicit attention. RF-R17 remains blocked pending a response from the
+branch manager. A reminder and an escalation note have been sent.
+
+FG LLC - COMPLIANCE PROGRAMME 2026.
+Morning list of 10 items. Closed 6. Advanced 4. Untouched 0.
+The file on this programme is in a good state as at end of day.
+
+GRAMALTIN AS - COMPLIANCE PROGRAMME 2026.
+Morning list of 10 items. Closed 4. Advanced 5. Untouched 1.
+The untouched item is RF-R20, risk score 38. It will be reviewed at
+the next cycle.
+
+MADISON LLC - COMPLIANCE PROGRAMME 2026.
+Morning list of 10 items. Closed 6. Advanced 3. Untouched 1.
+The untouched item is RF-R05, risk score 78. The compliance function
+could not obtain the MLRO's confirmation on the Dealers in Precious
+Metals and Stones Report candidate review before 17:00 and the item
+is carried over with the same priority to tomorrow.
+
+NAPLES LLC - COMPLIANCE PROGRAMME 2026.
+Morning list of 5 items (shorter list because the programme has fewer
+open tasks). Closed 5. Advanced 0. Untouched 0. Programme is clean
+as at end of day.
+
+ZOE FZE - COMPLIANCE PROGRAMME 2026.
+Morning list of 5 items. Closed 5. Advanced 0. Untouched 0. The RF-R12
+variant on this programme was closed through a Partial Name Match
+review that is now awaiting the MLRO's sign-off in the shared review
+folder.
+
+-----------------------------------------------------------------------------
+4. ITEMS CARRIED OVER TO 06 APRIL 2026
+-----------------------------------------------------------------------------
+
+The compliance function will place the following items on the top of
+tomorrow's morning priority lists. They will be flagged as carry-over
+items so the distinction is visible to the MLRO.
+
+FG BRANCH, RF-R12 Recycled Gold from Sanctioned Entities. Risk score 94.
+Three days overdue as at tomorrow morning. Requires an MLRO decision
+before 12:00 on whether to open a Partial Name Match review or to
+proceed to a Funds Freeze Report.
+
+MADISON LLC, RF-R05 Jewelry Scrap Aggregation Without CDD. Risk score 78.
+Requires an MLRO decision on whether the Dealers in Precious Metals and
+Stones Report candidate review should be filed through the Financial
+Intelligence Unit on the goAML platform. The draft is in the shared
+review folder and ready for the MLRO's sign-off.
+
+-----------------------------------------------------------------------------
+5. KEY DECISIONS TAKEN BY THE MLRO TODAY
+-----------------------------------------------------------------------------
+
+The compliance function records the following decisions taken by the
+MLRO during the day, as far as they are visible to us from comments and
+task movements in Asana. This list is a contemporaneous record and will
+form part of the audit evidence for this day.
+
+09:45. FG BRANCH, RF-R08 Cross-Border Recycled Gold Smuggling. The MLRO
+approved the filing of the Suspicious Transaction Report candidate
+review through the Financial Intelligence Unit on the goAML platform.
+Filing is expected to complete tomorrow morning.
+
+11:20. FG BRANCH, RF-R12. The MLRO directed the compliance function to
+commission the three additional items identified in the preparation
+note (beneficial ownership declaration, source of wealth evidence and
+independent confirmation of the list entry identity). The settlement
+remains suspended.
+
+14:30. GRAMALTIN AS, RF-R11 Recycled Gold Purity and Assay Manipulation.
+The MLRO approved release of the two batches following the secondary
+assay results, which came back within tolerance.
+
+-----------------------------------------------------------------------------
+6. FILINGS MADE TODAY
+-----------------------------------------------------------------------------
+
+For the record, the compliance function notes that no filings were
+actually submitted through the goAML platform during the day. The
+RF-R08 Suspicious Transaction Report candidate review was approved by
+the MLRO at 09:45 and is scheduled for submission tomorrow morning.
+One Partial Name Match Report on ZOE FZE is in the MLRO's queue for
+review.
+
+-----------------------------------------------------------------------------
+7. OBSERVATIONS
+-----------------------------------------------------------------------------
+
+Completion rate today stood at 62 percent against the morning priority
+lists. The rolling seven-day average is 68 percent and the rolling
+thirty-day average is 71 percent, so today's figure sits slightly below
+trend without being materially off trend. The gap is explained by the
+RF-R12 file on FG BRANCH, which carries a large amount of compliance
+effort because of its cross-entity implications.
+
+The compliance function has no concerns to raise with the MLRO on the
+output of any individual staff member today.
+
+-----------------------------------------------------------------------------
+8. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]
