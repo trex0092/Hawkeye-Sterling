@@ -1,5 +1,5 @@
 /**
- * Regulatory context and writing-style constants for the HAWKEYE STERLING V2
+ * Regulatory context and writing-style constants for the [Reporting Entity]
  * compliance automation.
  *
  * This module is the single source of truth for every reference to UAE law
@@ -83,7 +83,15 @@ export const CONFIRMED_REFERENCES = Object.freeze({
   },
 
   entity: {
-    legalName: "HAWKEYE STERLING V2",
+    // Entity identifying fields are read from environment variables so
+    // the public repository does not hard-code the firm's legal name
+    // or any programme identifier. The generic fallbacks keep every
+    // artefact working when the variables are not set. Production
+    // deployments inject the real values through GitHub Actions secrets
+    // or a local .env file.
+    legalName: process.env.ENTITY_LEGAL_NAME && process.env.ENTITY_LEGAL_NAME.trim().length > 0
+      ? process.env.ENTITY_LEGAL_NAME.trim()
+      : "the Reporting Entity",
     sector: "Dealer in Precious Metals and Stones (DPMS)",
     classification: "Designated Non-Financial Business and Profession (DNFBP)",
     supervisor: "Ministry of Economy (MOE)",
@@ -91,9 +99,16 @@ export const CONFIRMED_REFERENCES = Object.freeze({
   },
 
   mlro: {
-    name: "Luisa Fernanda",
+    // Name is read from the MLRO_NAME environment variable so the public
+    // repository does not hard-code the MLRO's personal name. The GitHub
+    // Actions workflows can inject the real name from a repository
+    // secret if desired. The generic fallback keeps every artefact
+    // working even when the variable is not set.
+    name: process.env.MLRO_NAME && process.env.MLRO_NAME.trim().length > 0
+      ? process.env.MLRO_NAME.trim()
+      : "the Money Laundering Reporting Officer",
     title: "Money Laundering Reporting Officer (MLRO)",
-    organization: "HAWKEYE STERLING V2",
+    organization: "[Reporting Entity]",
     cite: true,
   },
 

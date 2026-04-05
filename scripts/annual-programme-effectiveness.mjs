@@ -115,7 +115,7 @@ async function main() {
 
   const body = `1. PURPOSE
 
-This self-assessment scores the HAWKEYE STERLING V2 AML and CFT programme for the year ${targetYear} against five pillars derived from the evidence held in the compliance automation archive. It is produced deterministically and contains no narrative that has not been supported by a file in history/.
+This self-assessment scores the [Reporting Entity] AML and CFT programme for the year ${targetYear} against five pillars derived from the evidence held in the compliance automation archive. It is produced deterministically and contains no narrative that has not been supported by a file in history/.
 
 The output is a DRAFT for the MLRO to review, amend, and present to the Board alongside the Annual MLRO Report and the Annual Enterprise-Wide Risk Assessment.
 

@@ -1,14 +1,14 @@
 # Ten-year compliance evidence archive
 
 This folder is the ten-year retention archive of the compliance automation
-for HAWKEYE STERLING V2, a UAE-licensed Dealer in Precious Metals and Stones
+for [Reporting Entity], a UAE-licensed Dealer in Precious Metals and Stones
 and Designated Non-Financial Business and Profession.
 
 The retention obligation is set by the applicable provision of Federal
 Decree-Law No. 10 of 2025 on Anti-Money Laundering and Countering the
 Financing of Terrorism and Financing of Illegal Organisations. The Ministry
 of Economy is the supervisory authority for the firm in its capacity as a
-DNFBP. The Money Laundering Reporting Officer, Luisa Fernanda, is
+DNFBP. The Money Laundering Reporting Officer, is
 responsible for every file below.
 
 ## What lives here
@@ -106,4 +106,4 @@ company network.
 ## Contact
 
 All questions about this folder are directed to the Money Laundering
-Reporting Officer, Luisa Fernanda.
+Reporting Officer, the MLRO.

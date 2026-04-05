@@ -8,7 +8,7 @@
  * assessment that the Ministry of Economy expects to see during a
  * supervisory visit.
  *
- * The output is a DRAFT. It is written for the MLRO, Luisa Fernanda, to
+ * The output is a DRAFT. It is written for the MLRO, to
  * review, amend as her professional judgement requires, and then present
  * to Senior Management and the Board for formal acknowledgement. The
  * automation never finalises or signs in place of the MLRO.

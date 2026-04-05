@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 WEEKLY REPORT OF THE MONEY LAUNDERING REPORTING OFFICER
 Week ending Friday 03 April 2026
 =============================================================================
@@ -7,8 +7,8 @@ Week ending Friday 03 April 2026
 Document reference:   HSV2-MLRO-WR-2026-W14
 Classification:       Confidential. For Senior Management only.
 Version:              1.0
-From:                 Luisa Fernanda, Money Laundering Reporting Officer
-To:                   Senior Management, HAWKEYE STERLING V2
+From:                 the MLRO, Money Laundering Reporting Officer
+To:                   Senior Management, [Reporting Entity]
 Issued on:            03 April 2026, 17:00 Asia/Dubai
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
@@ -18,7 +18,7 @@ Retention period:     10 years, in accordance with the applicable provision
 -----------------------------------------------------------------------------
 
 This is the weekly report of the Money Laundering Reporting Officer to
-Senior Management of HAWKEYE STERLING V2 for the week ending Friday
+Senior Management of [Reporting Entity] for the week ending Friday
 03 April 2026. It covers the firm's compliance with its obligations as
 a Designated Non-Financial Business and Profession under the applicable
 provisions of Federal Decree-Law No. 10 of 2025 on Anti-Money
@@ -39,7 +39,7 @@ years.
 
 The firm carried three material risk items during the week and took
 action on each of them. The most significant item was a suspected
-sanctions nexus on the FG BRANCH recycled gold programme, which
+sanctions nexus on the Entity Alpha recycled gold programme, which
 triggered the suspension of a proposed settlement of AED 164,000 and
 the opening of a Partial Name Match review that remains ongoing. The
 programme is under control. There are no matters on which I, in my
@@ -61,7 +61,7 @@ Partial Name Match Reports filed:                  0
 Funds Freeze Reports filed:                        0
 
 All four Dealers in Precious Metals and Stones Reports filed this week
-arose from historical cash transactions carried on the FG BRANCH books
+arose from historical cash transactions carried on the Entity Alpha books
 since the beginning of the year. The underlying cash thresholds were
 confirmed against the applicable framework and the filings discharged
 the firm's reporting obligation for those transactions.
@@ -78,18 +78,18 @@ during the first half of next week.
 The following matters are under my personal review as at 17:00 on
 Friday 03 April 2026.
 
-a. FG BRANCH RF-R12, recycled gold from a counterparty that cannot be
+a. Entity Alpha RF-R12, recycled gold from a counterparty that cannot be
    discharged against the UN Security Council Consolidated List on our
    own record. Status: settlement suspended, Partial Name Match review
    opened, awaiting collection of three specific discriminating data
    items by 06 April 2026.
 
-b. ZOE FZE RF-R12 variant, recycled gold from a counterparty sharing a
-   corporate suffix and a trade licence range with the FG BRANCH
+b. Entity Foxtrot RF-R12 variant, recycled gold from a counterparty sharing a
+   corporate suffix and a trade licence range with the Entity Alpha
    counterparty in item a. Status: transaction suspended, Partial Name
    Match Report candidate review prepared.
 
-c. MADISON LLC RF-R05, aggregation of linked cash transactions from
+c. Entity Delta RF-R05, aggregation of linked cash transactions from
    the same customer in the rolling 30 day window. Status: Dealers in
    Precious Metals and Stones Report candidate review prepared,
    awaiting my determination.
@@ -116,11 +116,11 @@ close of the week. All 14 are under Enhanced Due Diligence. All 14
 customer files carry my personal authorisation to continue the
 relationship.
 
-One new PEP was identified this week (FG BRANCH, customer reference
+One new PEP was identified this week (Entity Alpha, customer reference
 FGB-CUST-2026-00418). I am to consider the continuation of the
 relationship and will record my decision on that file at the start of
 next week. One customer moved out of the PEP population at the end of
-her twelve-month cooling-off period (MADISON LLC, customer reference
+her twelve-month cooling-off period (Entity Delta, customer reference
 MAD-CUST-2024-00092).
 
 -----------------------------------------------------------------------------
@@ -155,7 +155,7 @@ warrant an item on the agenda of the next standing meeting of Senior
 Management. I will attend to present the state of the file and answer
 any questions.
 
-Second, the rise in high cash intensity activity on NAPLES LLC warrants
+Second, the rise in high cash intensity activity on Entity Echo warrants
 a forward look at the programme's cash handling controls. I intend to
 open a formal review next week and will report in the next weekly
 report on the outcome.
@@ -169,8 +169,8 @@ will flag this explicitly if it arises.
 10. DECLARATION OF THE MONEY LAUNDERING REPORTING OFFICER
 -----------------------------------------------------------------------------
 
-I, Luisa Fernanda, in my capacity as Money Laundering Reporting Officer
-of HAWKEYE STERLING V2, confirm that the contents of this report are
+I, the MLRO, in my capacity as Money Laundering Reporting Officer
+of [Reporting Entity], confirm that the contents of this report are
 true and complete to the best of my knowledge and belief as at the
 date of issue. I further confirm that I have, during the week covered
 by this report, discharged my function in accordance with the applicable
@@ -181,7 +181,7 @@ AML and CFT programme.
 11. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Issued by:     Luisa Fernanda, Money Laundering Reporting Officer
+Issued by:     the MLRO, Money Laundering Reporting Officer
 Acknowledged:  __________________________ (Senior Management)
 Date:          __________________________
 

@@ -3,7 +3,7 @@
  *
  * Maintains a single CSV at history/registers/counterparties.csv listing
  * every counterparty the compliance automation has seen across every
- * programme in the HAWKEYE STERLING V2 portfolio. The register is
+ * programme in the [Reporting Entity] portfolio. The register is
  * human-readable (opens in Excel), machine-readable (parsed by the daily
  * and weekly runs), version-controlled in the repository, and retained
  * for 10 years in accordance with the applicable provision of

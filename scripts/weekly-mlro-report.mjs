@@ -4,7 +4,7 @@
  * Runs every Friday at 17:00 Asia/Dubai (13:00 UTC), after the daily retro
  * has recorded the final numbers for the week. Produces the formal weekly
  * report issued in the name of the Money Laundering Reporting Officer to
- * the Senior Management of HAWKEYE STERLING V2. The document mirrors the
+ * the Senior Management of [Reporting Entity]. The document mirrors the
  * structure of samples/weekly/02-mlro-report-to-senior-management.txt.
  *
  * The report is:

@@ -1,15 +1,15 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 DAILY COMPLIANCE PRIORITIES
-FG BRANCH — COMPLIANCE PROGRAMME 2026
+Entity Alpha — COMPLIANCE PROGRAMME 2026
 =============================================================================
 
 Document reference:   HSV2-DCP-FGB-2026-0066
 Classification:       Confidential. For MLRO review only.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:00 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Addressee:            the MLRO, Money Laundering Reporting Officer
 Distribution:         MLRO, Deputy MLRO, Branch Compliance Lead (FG Branch)
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
@@ -18,7 +18,7 @@ Retention period:     10 years, in accordance with the applicable provision
 1. PURPOSE OF THIS NOTE
 -----------------------------------------------------------------------------
 
-This note sets out the ten open compliance items in the FG BRANCH programme
+This note sets out the ten open compliance items in the Entity Alpha programme
 that, in the view of the compliance function, warrant the MLRO's attention
 today. The selection is made from the 526 open tasks currently held against
 this programme and is intended to give the MLRO a single page to read before
@@ -159,8 +159,8 @@ day.
 5. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval]
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.

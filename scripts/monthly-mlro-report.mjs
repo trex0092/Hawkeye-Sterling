@@ -5,8 +5,8 @@
  * (05:00 UTC). Consolidates the four weekly MLRO reports issued during
  * the previous month, the four weekly pattern reports, the ~22 daily
  * retros and the ~22 daily portfolio digests into a single formal
- * monthly report addressed from the MLRO (Luisa Fernanda) to Senior
- * Management and the Board of HAWKEYE STERLING V2.
+ * monthly report addressed from the MLRO to Senior
+ * Management and the Board of [Reporting Entity].
  *
  * The report is archived to history/mlro-monthly/YYYY-MM.txt and
  * posted as a comment on the pinned Today's Priorities task inside the

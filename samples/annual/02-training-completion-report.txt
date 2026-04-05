@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 ANNUAL AML AND CFT TRAINING COMPLETION REPORT
 Year ending 31 December 2025
 =============================================================================
@@ -7,8 +7,8 @@ Year ending 31 December 2025
 Document reference:   HSV2-TCR-2025
 Classification:       Confidential. For Senior Management and the Board.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Prepared by:          Compliance function, [Reporting Entity]
+Addressee:            the MLRO, Money Laundering Reporting Officer
 Prepared on:          20 January 2026
 Coverage period:      01 January 2025 to 31 December 2025 inclusive
 Retention period:     10 years, in accordance with the applicable provision
@@ -19,7 +19,7 @@ Retention period:     10 years, in accordance with the applicable provision
 -----------------------------------------------------------------------------
 
 This report records the AML and CFT training delivered to staff of
-HAWKEYE STERLING V2 during the calendar year 2025, the population of
+[Reporting Entity] during the calendar year 2025, the population of
 staff to whom each module was delivered, the completion rate, and the
 competence assessment outcome. It is produced in discharge of the
 firm's obligation to maintain an annual training programme for staff
@@ -108,8 +108,8 @@ d. goAML filing workflow refresher, delivered on 05 December 2026.
    branch compliance officers.
 
 e. On demand, a targeted refresher on the recycled gold sanctions
-   typology, once the current investigation track on FG BRANCH, ZOE
-   FZE and MADISON LLC has closed, using the closed file as a
+   typology, once the current investigation track on Entity Alpha, ZOE
+   FZE and Entity Delta has closed, using the closed file as a
    worked example. Delivered to all branch cashiers and branch
    compliance officers. Expected to be delivered during the third
    quarter of 2026.
@@ -145,11 +145,11 @@ and are not aggregated here.
 7. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:       Compliance function, HAWKEYE STERLING V2
+Prepared by:       Compliance function, [Reporting Entity]
 Reviewed by:       [awaiting MLRO review]
 Approved by:       [awaiting MLRO approval]
 Noted by Board on: __________________________ (Board minute reference)
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.
 
 [End of document]

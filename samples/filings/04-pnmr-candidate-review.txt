@@ -1,15 +1,15 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 PARTIAL NAME MATCH REPORT — CANDIDATE REVIEW
 =============================================================================
 
 Document reference:   HSV2-PNMR-2026-0007
 Classification:       Confidential. For MLRO review only. Draft.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:50 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
-Source file:          ZOE FZE, RF-R12 Recycled Gold from Sanctioned Entities
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Source file:          Entity Foxtrot, RF-R12 Recycled Gold from Sanctioned Entities
 Asana task GID:       1155285207862540
 Filing channel:       Financial Intelligence Unit through the goAML platform
 Retention period:     10 years, in accordance with the applicable provision
@@ -35,8 +35,8 @@ reviewed the underlying screening evidence and filed the report.
 2. REPORTING ENTITY
 -----------------------------------------------------------------------------
 
-Reporting entity:       HAWKEYE STERLING V2, ZOE FZE programme
-MLRO:                   Luisa Fernanda
+Reporting entity:       [Reporting Entity], Entity Foxtrot programme
+MLRO:                   the MLRO
 Reporting date:         to be set by the MLRO on filing
 
 -----------------------------------------------------------------------------
@@ -95,7 +95,7 @@ Name Match Report.
 Immediately on the match being returned by the screening engine the
 compliance function placed the underlying transaction on hold. No
 funds have been released to the counterparty. The physical material
-has not moved. The ZOE FZE branch has been instructed to treat the
+has not moved. The Entity Foxtrot branch has been instructed to treat the
 counterparty as restricted and to escalate any further communication
 from the counterparty to the compliance function.
 
@@ -108,7 +108,7 @@ awaited.
 
 The compliance function has also noted, for the record, that a
 closely related counterparty under the same corporate suffix and a
-similar trade licence range is currently under review on the FG BRANCH
+similar trade licence range is currently under review on the Entity Alpha
 RF-R12 file. The two reviews are treated as a single cross-entity
 investigation track and progress on either file is communicated to
 the other reviewer.
@@ -123,7 +123,7 @@ Copy of the delivery note dated 25 March 2026.
 Screening engine report dated 25 March 2026 (internal document).
 Branch hold memorandum dated 25 March 2026.
 Asana task RF-R12 full comment history.
-Internal cross-reference to the FG BRANCH RF-R12 counterparty file.
+Internal cross-reference to the Entity Alpha RF-R12 counterparty file.
 
 All items retained for the minimum 10 year period required by the
 applicable provision of Federal Decree-Law No. 10 of 2025.
@@ -163,7 +163,7 @@ Step 3. Maintain the transaction hold until the match is cleared or
 confirmed. If the match is later confirmed, escalate the matter to
 a Funds Freeze Report within the applicable timeline.
 
-Step 4. Continue to track this file together with the FG BRANCH
+Step 4. Continue to track this file together with the Entity Alpha
 RF-R12 file as a single cross-entity investigation track.
 
 -----------------------------------------------------------------------------
@@ -193,11 +193,11 @@ supported by file evidence.
 12. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval and filing decision]
 Filing status: Draft. Not filed.
 
-For review and decision by the MLRO, Luisa Fernanda.
+For review and decision by the MLRO.
 
 [End of document]

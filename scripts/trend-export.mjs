@@ -241,7 +241,7 @@ async function main() {
     .join("\n");
 
   const preamble = [
-    `# HAWKEYE STERLING V2 — Historical Trend Export`,
+    `# [Reporting Entity] — Historical Trend Export`,
     `# Generated: ${today}`,
     `# Window: ${start ? `${start} to ${today}` : "full history"}`,
     `# Retention period: ${CONFIRMED_REFERENCES.recordRetention.years} years under Federal Decree-Law No. 10 of 2025`,

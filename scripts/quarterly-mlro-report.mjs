@@ -6,8 +6,8 @@
  * script consolidates the three Monthly MLRO Consolidation Reports of the
  * completed quarter, the corresponding Weekly Pattern Reports and the
  * current counterparty register into a single formal quarterly report
- * issued from the MLRO (Luisa Fernanda) to Senior Management and the
- * Board of HAWKEYE STERLING V2.
+ * issued from the MLRO to Senior Management and the
+ * Board of [Reporting Entity].
  *
  * Archived to history/mlro-quarterly/YYYY-Qn.txt and posted as a comment
  * on the pinned Today's Priorities task inside the SCREENINGS project.

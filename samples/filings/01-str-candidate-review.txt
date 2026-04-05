@@ -1,15 +1,15 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 SUSPICIOUS TRANSACTION REPORT — CANDIDATE REVIEW
 =============================================================================
 
 Document reference:   HSV2-STR-2026-0042
 Classification:       Confidential. For MLRO review only. Draft.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:35 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
-Source file:          FG BRANCH, RF-R08 Cross-Border Recycled Gold Smuggling
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Source file:          Entity Alpha, RF-R08 Cross-Border Recycled Gold Smuggling
 Asana task GID:       1155285207862111
 Filing channel:       Financial Intelligence Unit through the goAML platform
 Retention period:     10 years, in accordance with the applicable provision
@@ -36,11 +36,11 @@ necessary for submission is already in her hands.
 2. REPORTING ENTITY
 -----------------------------------------------------------------------------
 
-Reporting entity:       HAWKEYE STERLING V2
+Reporting entity:       [Reporting Entity]
 Sector:                 Dealer in Precious Metals and Stones
 Classification:         Designated Non-Financial Business and Profession
 Supervisor:             Ministry of Economy
-MLRO:                   Luisa Fernanda
+MLRO:                   the MLRO
 Deputy MLRO:            [to be inserted at filing time]
 goAML registration:     [to be inserted at filing time]
 Reporting date:         to be set by the MLRO on filing
@@ -67,13 +67,13 @@ Customer risk rating after this review:        High, pending MLRO confirmation
 
 Date of transaction:    02 April 2026
 Time of transaction:    14:26 Asia/Dubai
-Location:               HAWKEYE STERLING V2, Gold Souk branch
+Location:               [Reporting Entity], Gold Souk branch
 Product:                Recycled gold bars, stated weight 2,415 grams
                         total, stated fineness 999
 Consideration:          AED 280,000 (two hundred and eighty thousand
                         UAE dirhams)
 Payment method:         Cash, received in AED 1,000 and AED 500 notes
-Counterparty role:      Seller to HAWKEYE STERLING V2
+Counterparty role:      Seller to [Reporting Entity]
 Settlement status:      Suspended. Funds have not been released to the
                         subject person. Material has not been released
                         to resale inventory.
@@ -91,7 +91,7 @@ Aggregate cash consideration in the rolling 60 day window ending
 -----------------------------------------------------------------------------
 
 The compliance function has reviewed the facts set out at section 4
-above and the evidentiary material held on the FG BRANCH RF-R08 file.
+above and the evidentiary material held on the Entity Alpha RF-R08 file.
 Three independent grounds for suspicion arise from that review, and
 each is stated below on the understanding that the MLRO will form her
 own view on whether any, or all three, of them support a filing.
@@ -227,7 +227,7 @@ subject person before filing.
 The compliance function confirms that this draft has been prepared
 against the firm's internal procedure for the preparation of
 Suspicious Transaction Report candidate reviews, that the underlying
-evidence is held on the FG BRANCH RF-R08 file, and that no fact has
+evidence is held on the Entity Alpha RF-R08 file, and that no fact has
 been asserted in this draft that is not supported by material on the
 file. No facts have been invented. No assumptions have been made about
 the subject person's intent.
@@ -236,11 +236,11 @@ the subject person's intent.
 12. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval and filing decision]
 Filing status: Draft. Not filed.
 
-For review and decision by the MLRO, Luisa Fernanda.
+For review and decision by the MLRO.
 
 [End of document]

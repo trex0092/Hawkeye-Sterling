@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 ANNUAL ENTERPRISE-WIDE AML AND CFT RISK ASSESSMENT — DRAFT
 Year ending 31 December 2025
 =============================================================================
@@ -7,8 +7,8 @@ Year ending 31 December 2025
 Document reference:   HSV2-EWRA-2025
 Classification:       Confidential. For Senior Management and the Board.
 Version:              1.0 (draft for MLRO review)
-Prepared by:          Compliance function, HAWKEYE STERLING V2
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer,
+Prepared by:          Compliance function, [Reporting Entity]
+Addressee:            the MLRO, Money Laundering Reporting Officer,
                       for review and onward presentation to Senior
                       Management and the Board.
 Drafted on:           15 January 2026
@@ -26,7 +26,7 @@ of the firm's obligation under the applicable provisions of Federal
 Decree-Law No. 10 of 2025 to maintain a documented risk assessment
 covering the full scope of the firm's Money Laundering and Terrorism
 Financing risk. The document is intended to be read, amended and
-signed off by the Money Laundering Reporting Officer, Luisa Fernanda,
+signed off by the Money Laundering Reporting Officer,
 and subsequently presented to Senior Management and to the Board for
 acknowledgement.
 
@@ -42,13 +42,13 @@ function.
 2. BUSINESS OVERVIEW
 -----------------------------------------------------------------------------
 
-HAWKEYE STERLING V2 is a UAE-licensed Dealer in Precious Metals and
+[Reporting Entity] is a UAE-licensed Dealer in Precious Metals and
 Stones and is classified as a Designated Non-Financial Business and
 Profession. The firm's supervisory authority for the purposes of
 Anti-Money Laundering and Countering the Financing of Terrorism is
 the Ministry of Economy. The firm operates six active compliance
-programmes across six legally distinct entities (FG BRANCH, FG LLC,
-GRAMALTIN AS, MADISON LLC, NAPLES LLC and ZOE FZE) and a seventh
+programmes across six legally distinct entities (Entity Alpha, Entity Bravo,
+Entity Charlie, Entity Delta, Entity Echo and Entity Foxtrot) and a seventh
 programme devoted to screening (SCREENINGS). The firm holds physical
 branches in Dubai, Sharjah, Abu Dhabi and Ras Al Khaimah.
 
@@ -208,7 +208,7 @@ programme.
 -----------------------------------------------------------------------------
 
 Taking the five pillars together, the compliance function assesses
-the overall residual AML and CFT risk of HAWKEYE STERLING V2 for the
+the overall residual AML and CFT risk of [Reporting Entity] for the
 year 2025 as medium to high. The principal drivers of this rating
 are the customer risk and the product and service risk, both of
 which reflect the recycled gold and jewellery scrap business lines.
@@ -232,7 +232,7 @@ a. Strengthen the acceptance criteria for recycled gold material to
 b. Review the internal approved refiner list quarterly rather than
    annually, starting in the second quarter of 2026.
 
-c. Open a formal review of cash handling controls on the NAPLES LLC
+c. Open a formal review of cash handling controls on the Entity Echo
    programme in the first half of April 2026.
 
 d. Introduce a dedicated cross-entity counterparty file for any
@@ -269,11 +269,11 @@ be re-read if and when new supervisory guidance is published.
 11. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:       Compliance function, HAWKEYE STERLING V2
+Prepared by:       Compliance function, [Reporting Entity]
 Reviewed by:       [awaiting MLRO review]
 Approved by:       [awaiting MLRO approval]
 Noted by Board on: __________________________ (Board minute reference)
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.
 
 [End of document]

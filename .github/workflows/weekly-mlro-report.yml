@@ -2,8 +2,8 @@ name: Weekly MLRO Report to Senior Management
 
 # Every Friday at 17:00 Asia/Dubai (13:00 UTC), after the daily retro has
 # recorded the closing numbers for the week. Produces the formal Weekly
-# MLRO Report issued from the MLRO (Luisa Fernanda) to Senior Management
-# of HAWKEYE STERLING V2.
+# MLRO Report issued from the MLRO to Senior Management
+# of [Reporting Entity].
 #
 # The report draws on the current week's Asana activity and on the
 # history/daily/ and history/retro/ archive written by the earlier

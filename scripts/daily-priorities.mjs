@@ -267,7 +267,7 @@ function buildDailyPrompt(projectName, tasks, stats) {
     return parts.join(" — ");
   });
 
-  return `TASK. You are drafting the analytical body of the Daily Compliance Priorities memo for the Asana project "${projectName}" within the HAWKEYE STERLING V2 programme. The document control block, the purpose note, the at-risk section and the sign-off block are generated programmatically and appended to your response. You are responsible for sections 3 and 4 only, using the exact labels and format below.
+  return `TASK. You are drafting the analytical body of the Daily Compliance Priorities memo for the Asana project "${projectName}" within the [Reporting Entity] programme. The document control block, the purpose note, the at-risk section and the sign-off block are generated programmatically and appended to your response. You are responsible for sections 3 and 4 only, using the exact labels and format below.
 
 CONTEXT NUMBERS (use these verbatim where referenced):
 - Total open tasks in the programme today: ${stats.totalOpen}

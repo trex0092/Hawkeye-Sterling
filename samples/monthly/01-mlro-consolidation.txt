@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 MONTHLY CONSOLIDATION REPORT OF THE MONEY LAUNDERING REPORTING OFFICER
 Month of March 2026
 =============================================================================
@@ -7,8 +7,8 @@ Month of March 2026
 Document reference:   HSV2-MLRO-M-2026-03
 Classification:       Confidential. For Senior Management and the Board.
 Version:              1.0
-From:                 Luisa Fernanda, Money Laundering Reporting Officer
-To:                   Senior Management and the Board of HAWKEYE STERLING V2
+From:                 the MLRO, Money Laundering Reporting Officer
+To:                   Senior Management and the Board of [Reporting Entity]
 Issued on:            01 April 2026, 09:00 Asia/Dubai
 Coverage:             01 March 2026 to 31 March 2026 inclusive
 Retention period:     10 years, in accordance with the applicable provision
@@ -19,7 +19,7 @@ Retention period:     10 years, in accordance with the applicable provision
 -----------------------------------------------------------------------------
 
 This is the monthly consolidation report of the Money Laundering
-Reporting Officer of HAWKEYE STERLING V2 for the month of March 2026.
+Reporting Officer of [Reporting Entity] for the month of March 2026.
 It is prepared for Senior Management and for the Board of HAWKEYE
 STERLING V2 in support of the continuing duty of the firm to maintain
 a Money Laundering Reporting Officer and to ensure the governing body
@@ -40,7 +40,7 @@ themes. The first was the emergence of a recycled gold sanctions
 typology that now touches three separate programme entities. That
 exposure is under active management and is expected to result in at
 least one regulator-facing filing during April 2026. The second was
-a modest rise in high cash intensity activity on the NAPLES LLC
+a modest rise in high cash intensity activity on the Entity Echo
 programme, which I consider to be an early warning rather than an
 established pattern and which I intend to address through a formal
 review of cash handling controls in the first half of April 2026.
@@ -66,14 +66,14 @@ Funds Freeze Reports filed:                        0
 Total filings through goAML during March 2026:     15
 
 The two Suspicious Transaction Reports concerned customers of the
-FG BRANCH and GRAMALTIN AS programmes. The Suspicious Activity Report
-concerned an attempted onboarding at the MADISON LLC branch that did
+Entity Alpha and Entity Charlie programmes. The Suspicious Activity Report
+concerned an attempted onboarding at the Entity Delta branch that did
 not result in a completed transaction. The eleven Dealers in Precious
 Metals and Stones Reports were routine reports on linked cash
 transactions recorded at four of the six programme branches. The
 single Partial Name Match Report was filed on 27 March 2026 in
 connection with the recycled gold counterparty now under review on
-the ZOE FZE RF-R12 file.
+the Entity Foxtrot RF-R12 file.
 
 -----------------------------------------------------------------------------
 4. FILINGS IN PREPARATION AT MONTH-END
@@ -83,14 +83,14 @@ At the close of the month I held the following filings under personal
 review, either awaiting confirmation of facts or awaiting my decision.
 
 a. One Suspicious Transaction Report candidate review in respect of
-   the FG BRANCH RF-R08 cross-border recycled gold file.
+   the Entity Alpha RF-R08 cross-border recycled gold file.
 b. One Dealers in Precious Metals and Stones Report candidate review
-   in respect of the MADISON LLC RF-R05 linked cash transactions file.
+   in respect of the Entity Delta RF-R05 linked cash transactions file.
 c. One Partial Name Match Report candidate review in respect of the
-   ZOE FZE RF-R12 counterparty. This is a second variant related to
+   Entity Foxtrot RF-R12 counterparty. This is a second variant related to
    the Partial Name Match Report already filed on 27 March 2026.
 d. One Funds Freeze Report candidate review in draft, conditional on
-   confirmation of the ZOE FZE counterparty's identity against the
+   confirmation of the Entity Foxtrot counterparty's identity against the
    UN Security Council Consolidated List.
 
 All four are expected to be determined during the first half of
@@ -158,7 +158,7 @@ month.
 
 Two incidents are reportable for the month.
 
-On 05 March 2026 a branch cashier at MADISON LLC accepted a cash
+On 05 March 2026 a branch cashier at Entity Delta accepted a cash
 transaction that ought to have been escalated to the branch compliance
 officer under the revised linked transaction aggregation procedure.
 The transaction was reviewed on the day and was ultimately not a
@@ -194,12 +194,12 @@ I respectfully invite Senior Management and the Board to note the
 contents of this report and, in particular, to consider the following
 four items.
 
-First, the recycled gold sanctions track across FG BRANCH, ZOE FZE
-and MADISON LLC is material enough to warrant an agenda item at the
+First, the recycled gold sanctions track across Entity Alpha, Entity Foxtrot
+and Entity Delta is material enough to warrant an agenda item at the
 next Board meeting. I will attend to present the state of the files
 and answer any questions.
 
-Second, the rise in high cash intensity activity on NAPLES LLC
+Second, the rise in high cash intensity activity on Entity Echo
 warrants a forward look at the programme's cash handling controls. I
 intend to open a formal review during April 2026 and will report in
 the April monthly report on the outcome.
@@ -217,8 +217,8 @@ will flag this explicitly if and when it arises.
 12. DECLARATION OF THE MONEY LAUNDERING REPORTING OFFICER
 -----------------------------------------------------------------------------
 
-I, Luisa Fernanda, in my capacity as Money Laundering Reporting
-Officer of HAWKEYE STERLING V2, confirm that the contents of this
+I, the MLRO, in my capacity as Money Laundering Reporting
+Officer of [Reporting Entity], confirm that the contents of this
 report are true and complete to the best of my knowledge and belief
 as at the date of issue. I further confirm that I have, during the
 month of March 2026, discharged my function in accordance with the
@@ -229,7 +229,7 @@ firm's internal AML and CFT programme.
 13. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Issued by:         Luisa Fernanda, Money Laundering Reporting Officer
+Issued by:         the MLRO, Money Laundering Reporting Officer
 Acknowledged by:   __________________________ (Senior Management)
 Noted by Board on: __________________________ (Board minute reference)
 

@@ -1,15 +1,15 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 SUSPICIOUS ACTIVITY REPORT — CANDIDATE REVIEW
 =============================================================================
 
 Document reference:   HSV2-SAR-2026-0011
 Classification:       Confidential. For MLRO review only. Draft.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:40 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
-Source file:          FG LLC, RF-R09 Recycled Material CDD Exemption Abuse
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Source file:          Entity Bravo, RF-R09 Recycled Material CDD Exemption Abuse
 Asana task GID:       1155285207862203
 Filing channel:       Financial Intelligence Unit through the goAML platform
 Retention period:     10 years, in accordance with the applicable provision
@@ -32,8 +32,8 @@ hallmarks of layered behaviour that warrants reporting.
 2. REPORTING ENTITY
 -----------------------------------------------------------------------------
 
-Reporting entity:       HAWKEYE STERLING V2, FG LLC programme
-MLRO:                   Luisa Fernanda
+Reporting entity:       [Reporting Entity], Entity Bravo programme
+MLRO:                   the MLRO
 Reporting date:         to be set by the MLRO on filing
 
 -----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ such.
 4. ACTIVITY THE SUBJECT OF THIS REPORT
 -----------------------------------------------------------------------------
 
-On 01 April 2026 the subject person attended the FG LLC branch at
+On 01 April 2026 the subject person attended the Entity Bravo branch at
 Sharjah with a quantity of mixed karat jewellery scrap of approximate
 total weight 1,180 grams. He presented himself for immediate cash
 settlement on a walk-in basis and declined to open a customer file,
@@ -119,7 +119,7 @@ and of the individuals. The branch CCTV footage covering the two
 visits has been preserved and is held on file.
 
 The subject person and the second individual are now on an internal
-watch list. If either returns to any branch of HAWKEYE STERLING V2,
+watch list. If either returns to any branch of [Reporting Entity],
 the branch compliance officer has instructions to inform the
 compliance function immediately and to decline any cash settlement
 without a completed customer file.
@@ -182,11 +182,11 @@ been inferred beyond what those sources support.
 12. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval and filing decision]
 Filing status: Draft. Not filed.
 
-For review and decision by the MLRO, Luisa Fernanda.
+For review and decision by the MLRO.
 
 [End of document]

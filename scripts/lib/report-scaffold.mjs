@@ -1,5 +1,5 @@
 /**
- * Shared report-scaffold helpers for the HAWKEYE STERLING V2 compliance
+ * Shared report-scaffold helpers for the [Reporting Entity] compliance
  * automation. Extracted to cut boilerplate in the operational log and
  * long-tail report scripts. Every existing production script continues
  * to work unchanged; new scripts may opt in by importing from here.

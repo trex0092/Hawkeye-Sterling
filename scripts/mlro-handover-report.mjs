@@ -65,12 +65,18 @@ async function main() {
 
   const archiveRows = Object.entries(counts).map(([key, value]) => ({ category: key, entries: value }));
 
-  const mlroName = "Luisa Fernanda";
+  // Outgoing MLRO name is read from CONFIRMED_REFERENCES.mlro.name, which is
+  // itself sourced from the MLRO_NAME environment variable in
+  // regulatory-context.mjs. If the variable is not set, the fallback
+  // "the Money Laundering Reporting Officer" is used. The public source
+  // code carries no identifying name.
+  const { CONFIRMED_REFERENCES } = await import("./regulatory-context.mjs");
+  const mlroName = CONFIRMED_REFERENCES.mlro.name;
   const incomingName = env.INCOMING_MLRO_NAME || "[incoming MLRO]";
 
   const body = `1. PURPOSE AND STANDING OF THIS DOCUMENT
 
-This is the Money Laundering Reporting Officer handover report of HAWKEYE STERLING V2, prepared by the outgoing MLRO, ${mlroName}, for the attention of the incoming MLRO, ${incomingName}. It is an internal continuity record and is retained for ten years under Federal Decree-Law No. 10 of 2025.
+This is the Money Laundering Reporting Officer handover report of [Reporting Entity], prepared by the outgoing MLRO, ${mlroName}, for the attention of the incoming MLRO, ${incomingName}. It is an internal continuity record and is retained for ten years under Federal Decree-Law No. 10 of 2025.
 
 The report does not replace the direct verbal handover the outgoing MLRO owes the incoming MLRO. It is a structured artefact the incoming MLRO can read in the first week to understand the shape of the programme as it stood on the handover date.
 

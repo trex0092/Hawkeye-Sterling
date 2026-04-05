@@ -5,7 +5,7 @@
  * most recent Weekly MLRO Report, the most recent Monthly MLRO
  * Consolidation, the last two Weekly Pattern Reports and the current
  * counterparty register into a Board-ready AML pack addressed from the
- * MLRO (Luisa Fernanda) to the Board of HAWKEYE STERLING V2.
+ * MLRO to the Board of the Reporting Entity.
  *
  * Mirrors the format of samples/on-demand/02-board-meeting-aml-pack.txt.
  */

@@ -1,14 +1,14 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 DNFBP SELF-ASSESSMENT QUESTIONNAIRE — PRE-FILLED DRAFT FOR MLRO REVIEW
 =============================================================================
 
 Document reference:   HSV2-DNFBP-SAQ-2026-Q1
 Classification:       Confidential. Pre-filing draft. For MLRO review only.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Addressee:            the MLRO, Money Laundering Reporting Officer
 Intended recipient
 after MLRO sign-off:  Ministry of Economy (supervisory authority for
                       Designated Non-Financial Businesses and Professions)
@@ -41,13 +41,13 @@ submission.
 2. FIRM IDENTIFICATION
 -----------------------------------------------------------------------------
 
-Legal name of the reporting entity:   HAWKEYE STERLING V2
+Legal name of the reporting entity:   [Reporting Entity]
 Sector:                               Dealer in Precious Metals and Stones
 Classification:                       Designated Non-Financial Business
                                       and Profession
 Number of active branches:            6 programme branches plus head office
 Head office location:                 Dubai, United Arab Emirates
-MLRO name:                            Luisa Fernanda
+MLRO name:                            the MLRO
 Deputy MLRO name:                     [to be inserted]
 Board composition:                    [to be inserted at filing time]
 
@@ -173,7 +173,7 @@ scrap business lines.
 
 The firm recorded two reportable incidents during March 2026:
 
-a. On 05 March 2026 a branch cashier at MADISON LLC accepted a cash
+a. On 05 March 2026 a branch cashier at Entity Delta accepted a cash
    transaction that ought to have been escalated under the revised
    linked transaction aggregation procedure. The transaction was
    reviewed on the day and was ultimately not a linked transaction
@@ -200,11 +200,11 @@ name.
 12. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:       Compliance function, HAWKEYE STERLING V2
+Prepared by:       Compliance function, [Reporting Entity]
 Reviewed by:       [awaiting MLRO review]
 Approved by:       [awaiting MLRO approval and onward submission]
 Filing status:     Draft. Not submitted to the Ministry of Economy.
 
-For review and onward submission by the MLRO, Luisa Fernanda.
+For review and onward submission by the MLRO.
 
 [End of document]

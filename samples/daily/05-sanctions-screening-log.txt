@@ -1,14 +1,14 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 DAILY SANCTIONS SCREENING LOG
 =============================================================================
 
 Document reference:   HSV2-DSL-2026-0066
 Classification:       Confidential. For MLRO review only.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:25 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Addressee:            the MLRO, Money Laundering Reporting Officer
 Screening period:     00:00 to 23:59 Asia/Dubai on 05 April 2026
 Lists consulted:      UN Security Council Consolidated List, UAE Local
                       Terrorist List
@@ -64,7 +64,7 @@ one query.
 4. HITS AND DISPOSITIONS
 -----------------------------------------------------------------------------
 
-Hit 1. Counterparty Al Safwa Metals Trading FZ LLC. Referred by FG BRANCH
+Hit 1. Counterparty Al Safwa Metals Trading FZ LLC. Referred by Entity Alpha
 in the course of the RF-R12 file. Query time 09:12. Screening engine
 returned a 91 percent match against the Consolidated List entry Al Safwa
 Metals. The list entry lacks discriminating data that would allow the
@@ -72,10 +72,10 @@ compliance function to confirm or rule out identity on its own record.
 Disposition: partial match pending clearance. The transaction on the
 underlying file has been suspended. A Partial Name Match Report
 candidate review has been prepared and is in the MLRO's queue.
-Responsible officer: Compliance Analyst on duty, FG BRANCH.
+Responsible officer: Compliance Analyst on duty, Entity Alpha.
 
 Hit 2. Walk-in visitor presenting as Mohammad Saleh Al Farid, Emirates
-ID 784-1988-XXXXXXX-X. Referred by NAPLES LLC branch screening. Query
+ID 784-1988-XXXXXXX-X. Referred by Entity Echo branch screening. Query
 time 11:48. Screening engine returned an 82 percent match against a
 Local Terrorist List entry. On review, the date of birth on the list
 entry does not match the date of birth on the Emirates ID presented,
@@ -83,7 +83,7 @@ and the middle name on the Emirates ID is absent from the list entry.
 Disposition: cleared as a false positive on the basis of two
 discriminating data points. The visitor was served and the transaction
 proceeded.
-Responsible officer: Compliance Analyst on duty, NAPLES LLC.
+Responsible officer: Compliance Analyst on duty, Entity Echo.
 
 Hit 3. Existing customer Karim Faisal Al Mutawa, Emirates ID
 784-1970-XXXXXXX-X. Referred during the routine re-screening cycle.
@@ -96,7 +96,7 @@ been recorded on the customer file and the customer relationship
 continues on its existing risk rating.
 Responsible officer: Deputy MLRO.
 
-Hit 4. New customer onboarding referred by FG LLC. Subject: Samira Noor
+Hit 4. New customer onboarding referred by Entity Bravo. Subject: Samira Noor
 Al Jabari, proposed beneficial owner of a corporate customer applying
 to trade with the firm. Query time 13:29. Screening engine returned no
 hit. Recorded here for completeness because the onboarding sits on the
@@ -138,10 +138,10 @@ recorded basis.
 8. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval]
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.
 
 [End of document]

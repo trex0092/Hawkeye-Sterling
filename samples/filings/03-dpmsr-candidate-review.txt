@@ -1,15 +1,15 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 DEALERS IN PRECIOUS METALS AND STONES REPORT — CANDIDATE REVIEW
 =============================================================================
 
 Document reference:   HSV2-DPMSR-2026-0018
 Classification:       Confidential. For MLRO review only. Draft.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:45 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
-Source file:          MADISON LLC, RF-R05 Jewelry Scrap Aggregation Without CDD
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Source file:          Entity Delta, RF-R05 Jewelry Scrap Aggregation Without CDD
 Asana task GID:       1155285207862239
 Filing channel:       Financial Intelligence Unit through the goAML platform
 Retention period:     10 years, in accordance with the applicable provision
@@ -31,11 +31,11 @@ the goAML platform.
 2. REPORTING ENTITY
 -----------------------------------------------------------------------------
 
-Reporting entity:       HAWKEYE STERLING V2, MADISON LLC programme
+Reporting entity:       [Reporting Entity], Entity Delta programme
 Sector:                 Dealer in Precious Metals and Stones
 Classification:         Designated Non-Financial Business and Profession
 Supervisor:             Ministry of Economy
-MLRO:                   Luisa Fernanda
+MLRO:                   the MLRO
 
 -----------------------------------------------------------------------------
 3. SUBJECT PERSON
@@ -59,7 +59,7 @@ Customer risk rating after this review: High
 The compliance function has aggregated the following cash purchases of
 jewellery scrap from the subject person during the rolling 30 day
 window ending 04 April 2026. All three transactions occurred at the
-MADISON LLC Sharjah branch. All three were handled by the same
+Entity Delta Sharjah branch. All three were handled by the same
 cashier.
 
 Transaction 1.
@@ -224,11 +224,11 @@ internal procedure on linked transaction aggregation.
 13. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval and filing decision]
 Filing status: Draft. Not filed.
 
-For review and decision by the MLRO, Luisa Fernanda.
+For review and decision by the MLRO.
 
 [End of document]

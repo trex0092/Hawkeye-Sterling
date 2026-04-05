@@ -1,8 +1,8 @@
 # Compliance automation sample outputs
 
 This folder contains fully worked example outputs of every artefact the
-HAWKEYE STERLING V2 compliance automation will produce. The files live in
-the repository so the Money Laundering Reporting Officer, Luisa Fernanda,
+[Reporting Entity] compliance automation will produce. The files live in
+the repository so the Money Laundering Reporting Officer,
 and any reviewer can see the exact format, tone and structure of each
 report before the automation runs against live Asana data.
 

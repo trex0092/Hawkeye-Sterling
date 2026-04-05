@@ -4,9 +4,9 @@
  * Produces a pre-filled draft of the self-assessment questionnaire the
  * Ministry of Economy periodically collects from Designated Non-Financial
  * Businesses and Professions in the firm's capacity as a Dealer in
- * Precious Metals and Stones. The draft is addressed to the MLRO,
- * Luisa Fernanda, for review and onward submission through the MOE
- * supervisory portal in her own name.
+ * Precious Metals and Stones. The draft is addressed to the MLRO for
+ * review and onward submission through the MOE supervisory portal in
+ * the MLRO's own name.
  *
  * The compliance function does not hold the current MOE questionnaire
  * template verbatim. The draft therefore uses generic field names that

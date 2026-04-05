@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 INSPECTION EVIDENCE BUNDLE — MANIFEST
 Bundle covering the 12 months ending 31 March 2026
 =============================================================================
@@ -10,9 +10,9 @@ Classification:       Confidential. Prepared for production to the
                       Control and Non-Proliferation on demand during a
                       supervisory inspection.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, on demand
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Addressee:            the MLRO, Money Laundering Reporting Officer
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
 
@@ -163,10 +163,10 @@ curated subset of it.
 5. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review before production to the inspector]
 Approved by:   [awaiting MLRO approval to release to the inspector]
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.
 
 [End of document]

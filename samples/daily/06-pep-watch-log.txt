@@ -1,14 +1,14 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 DAILY PEP WATCH LOG
 =============================================================================
 
 Document reference:   HSV2-DPL-2026-0066
 Classification:       Confidential. For MLRO review only.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:30 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Addressee:            the MLRO, Money Laundering Reporting Officer
 Coverage:             All customer records across the six active programmes
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
@@ -49,7 +49,7 @@ hours. Each is described below.
 Movement 1. New PEP identification.
 Customer reference: FGB-CUST-2026-00418.
 Customer name: Samir Rashid Al Barghouti.
-Programme: FG BRANCH.
+Programme: Entity Alpha.
 Basis for PEP status: the customer self-declared, in the course of a
 routine CDD refresh on 04 April 2026, that he was appointed to a senior
 public role in a neighbouring jurisdiction earlier this year.
@@ -63,7 +63,7 @@ relationship in writing, in accordance with the firm's PEP procedure.
 Movement 2. PEP status confirmed expired.
 Customer reference: MAD-CUST-2024-00092.
 Customer name: Hala Youssef Al Mansouri.
-Programme: MADISON LLC.
+Programme: Entity Delta.
 Basis for change: the subject person's term in public office ended on
 01 January 2025. The firm's PEP procedure provides for a cooling-off
 period of twelve months after which a customer may be removed from the
@@ -79,13 +79,13 @@ the customer file.
 Movement 3. PEP file refresh due.
 Customer reference: ZOE-CUST-2023-00153.
 Customer name: Omar Jaber Al Shaaban.
-Programme: ZOE FZE.
+Programme: Entity Foxtrot.
 Basis for flag: the annual refresh of the Enhanced Due Diligence file on
 this customer was due on 31 March 2026 and has not been completed. The
 customer remains under EDD and the relationship continues, but the
 documentary refresh has slipped by five calendar days.
 Disposition: the compliance function has assigned the refresh to the
-ZOE FZE compliance lead and has requested completion by 08 April 2026.
+Entity Foxtrot compliance lead and has requested completion by 08 April 2026.
 Required action from the MLRO: note the slippage and, if the refresh
 is not completed by 08 April, consider whether the relationship should
 be suspended pending refresh.
@@ -126,10 +126,10 @@ without a recorded basis.
 6. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval]
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.
 
 [End of document]

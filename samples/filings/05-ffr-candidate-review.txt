@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 FUNDS FREEZE REPORT — CANDIDATE REVIEW
 =============================================================================
 
@@ -8,10 +8,10 @@ Classification:       Confidential. For MLRO review only. Draft. Highest
                       priority. To be handled within the applicable
                       timeline for confirmed sanctions matches.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:55 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
-Source file:          ZOE FZE, RF-R12 Recycled Gold from Sanctioned Entities,
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Source file:          Entity Foxtrot, RF-R12 Recycled Gold from Sanctioned Entities,
                       follow-on from the open Partial Name Match review
 Asana task GID:       1155285207862540
 Filing channel:       Financial Intelligence Unit through the goAML platform
@@ -43,8 +43,8 @@ recorded as cleared.
 2. REPORTING ENTITY
 -----------------------------------------------------------------------------
 
-Reporting entity:       HAWKEYE STERLING V2, ZOE FZE programme
-MLRO:                   Luisa Fernanda
+Reporting entity:       [Reporting Entity], Entity Foxtrot programme
+MLRO:                   the MLRO
 Reporting date:         to be set by the MLRO on filing
 
 -----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ The firm holds the following, attributable to or in the control of
 the counterparty, at the time of preparation of this draft.
 
 Cash amount held on behalf of the counterparty:                AED 0
-Physical material held at the ZOE FZE branch on behalf of the
+Physical material held at the Entity Foxtrot branch on behalf of the
 counterparty: seven recycled gold bars, stated total weight 1,950 grams,
 stated fineness 999. The material is currently retained under dual
 control in the branch safe. It has been so retained since delivery on
@@ -122,11 +122,11 @@ g. The Funds Freeze Report will be filed through the Financial
    with the underlying evidence attached.
 
 h. The filing reference returned by goAML will be recorded on the
-   Asana task and on this document, and the ZOE FZE RF-R12 file will
+   Asana task and on this document, and the Entity Foxtrot RF-R12 file will
    be updated accordingly.
 
 i. The cross-entity counterparty register will be updated to reflect
-   the freeze. The FG BRANCH RF-R12 file, which tracks a related
+   the freeze. The Entity Alpha RF-R12 file, which tracks a related
    counterparty, will be reviewed on the same day to determine
    whether the same freeze applies to that counterparty.
 
@@ -142,7 +142,7 @@ Screening engine report dated 25 March 2026.
 All correspondence with the counterparty on the file, inbound and outbound.
 Branch hold memorandum dated 25 March 2026.
 Partial Name Match Report as filed (when filed).
-Asana task RF-R12 full comment history, both ZOE FZE and FG BRANCH.
+Asana task RF-R12 full comment history, both Entity Foxtrot and Entity Alpha.
 Any additional discriminating data received that informed the match
 confirmation (to be attached on confirmation).
 
@@ -191,12 +191,12 @@ counterparty have been identified.
 10. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval, conditional on confirmation of
                 the sanctions match]
 Filing status: Draft, conditional. Not filed.
 
-For review and decision by the MLRO, Luisa Fernanda.
+For review and decision by the MLRO.
 
 [End of document]

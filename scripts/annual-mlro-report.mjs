@@ -5,7 +5,7 @@
  * Asia/Dubai (05:00 UTC). Consolidates the four quarterly MLRO reports
  * of the completed year, plus the twelve monthly reports and the
  * current counterparty register, into a single formal annual report
- * from the MLRO (Luisa Fernanda) to Senior Management and the Board.
+ * from the MLRO to Senior Management and the Board.
  *
  * The annual report supports the Board's year-end discussion on the
  * effectiveness of the AML and CFT programme.

@@ -1,15 +1,15 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 DAILY INVESTIGATION PREPARATION NOTE
 =============================================================================
 
 Document reference:   HSV2-DIN-FGB-2026-0018
 Classification:       Confidential. For MLRO review only.
 Version:              1.0
-Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared by:          Compliance function, [Reporting Entity]
 Prepared on:          05 April 2026, 09:20 Asia/Dubai
-Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
-Subject file:         FG BRANCH, RF-R12 Recycled Gold from Sanctioned Entities
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Subject file:         Entity Alpha, RF-R12 Recycled Gold from Sanctioned Entities
 Asana task GID:       1155285207862107
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
@@ -192,10 +192,10 @@ conditional on those documents being genuine.
 9. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Prepared by:   Compliance function, HAWKEYE STERLING V2
+Prepared by:   Compliance function, [Reporting Entity]
 Reviewed by:   [awaiting MLRO review]
 Approved by:   [awaiting MLRO approval]
 
-For review by the MLRO, Luisa Fernanda.
+For review by the MLRO.
 
 [End of document]

@@ -1,4 +1,4 @@
-# HAWKEYE STERLING V2 — compliance automation scripts
+# [Reporting Entity] — compliance automation scripts
 
 This folder holds every Node.js script that runs the firm's AML and CFT
 compliance automation. Each script is designed to run unattended on a
@@ -7,10 +7,10 @@ artefact produced is archived under `history/` for the ten-year
 retention obligation set by the applicable provision of Federal
 Decree-Law No. 10 of 2025.
 
-The entity is HAWKEYE STERLING V2, a UAE-licensed Dealer in Precious
+The entity is [Reporting Entity], a UAE-licensed Dealer in Precious
 Metals and Stones classified as a Designated Non-Financial Business
 and Profession, supervised by the Ministry of Economy. The Money
-Laundering Reporting Officer is Luisa Fernanda.
+Laundering Reporting Officer is the MLRO.
 
 ## Complete script catalogue
 
@@ -93,8 +93,8 @@ All times are Asia/Dubai.
 Every Claude call in every narrative script uses the same `SYSTEM_PROMPT`
 exported from `regulatory-context.mjs`. That system prompt:
 
-- Establishes the voice of the compliance function of HAWKEYE STERLING V2
-  drafting material for the attention of the MLRO, Luisa Fernanda.
+- Establishes the voice of the compliance function of [Reporting Entity]
+  drafting material for the attention of the MLRO.
 - Lists the only legal references that may be cited verbatim: Federal
   Decree-Law No. 10 of 2025, the Ministry of Economy as DNFBP supervisor,
   the Executive Office for Control and Non-Proliferation as sanctions
@@ -108,7 +108,7 @@ exported from `regulatory-context.mjs`. That system prompt:
   "I hope this helps", short sentences, first person plural for the
   compliance function, first person singular for the MLRO.
 - Requires an explicit imperative next-action line at the end of every
-  analytical section and a final `For review by the MLRO, Luisa Fernanda.`
+  analytical section and a final `For review by the MLRO.`
   line on every document.
 
 Every response is passed through `validateOutput()` before archival. The
@@ -187,4 +187,4 @@ automation during real runs. See `history/README.md` for the full rules.
 ## Contact
 
 All questions about these scripts go to the Money Laundering Reporting
-Officer, Luisa Fernanda.
+Officer, the MLRO.

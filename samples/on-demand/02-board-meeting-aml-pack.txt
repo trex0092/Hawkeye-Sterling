@@ -1,5 +1,5 @@
 =============================================================================
-HAWKEYE STERLING V2
+[Reporting Entity]
 BOARD MEETING AML PACK
 For the standing Board meeting scheduled for 15 April 2026
 =============================================================================
@@ -7,8 +7,8 @@ For the standing Board meeting scheduled for 15 April 2026
 Document reference:   HSV2-BOARD-AML-2026-04
 Classification:       Confidential. For Board members only.
 Version:              1.0
-From:                 Luisa Fernanda, Money Laundering Reporting Officer
-To:                   The Board of HAWKEYE STERLING V2
+From:                 the MLRO, Money Laundering Reporting Officer
+To:                   The Board of [Reporting Entity]
 Issued on:            10 April 2026
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
@@ -35,10 +35,10 @@ looking recommendations that require Board attention.
 
 The firm is carrying one materially elevated AML and CFT exposure
 into April 2026. That exposure is the recycled gold sanctions track
-on FG BRANCH, ZOE FZE and MADISON LLC. The track is under active
+on Entity Alpha, Entity Foxtrot and Entity Delta. The track is under active
 management. The MLRO considers that the firm's control framework is
 adequate for the current state of the track, but the Board should
-be aware that, if the match on the FG BRANCH counterparty is later
+be aware that, if the match on the Entity Alpha counterparty is later
 confirmed, the firm will be required to file a Funds Freeze Report
 and to freeze the underlying material and proposed settlement. The
 MLRO invites the Board to note this and to endorse the approach.
@@ -73,7 +73,7 @@ March 2026 total filings through goAML: 15 (as reported in the March
 At the date of this pack the firm holds four open sanctions reviews,
 all of them connected to the recycled gold sanctions track.
 
-The principal file is the FG BRANCH RF-R12 counterparty, on which
+The principal file is the Entity Alpha RF-R12 counterparty, on which
 the compliance function has been unable to discharge a 91 percent
 match against the UN Security Council Consolidated List on its own
 record. The underlying settlement of AED 164,000 is suspended and
@@ -89,7 +89,7 @@ a. Hold the settlement and the material under dual control until
    the match is cleared or confirmed.
 b. Escalate to a Funds Freeze Report within the applicable timeline
    if the match is confirmed.
-c. Treat the FG BRANCH, ZOE FZE and MADISON LLC files as a single
+c. Treat the Entity Alpha, Entity Foxtrot and Entity Delta files as a single
    cross-entity investigation track with a single lead reviewer.
 
 -----------------------------------------------------------------------------
@@ -116,11 +116,11 @@ Open Dealers in Precious Metals and Stones Report
 The MLRO invites the Board to acknowledge the following five items
 at the meeting. None requires a Board resolution at this stage.
 
-a. The recycled gold sanctions track on FG BRANCH, ZOE FZE and
-   MADISON LLC is material and is under active MLRO management.
+a. The recycled gold sanctions track on Entity Alpha, Entity Foxtrot and
+   Entity Delta is material and is under active MLRO management.
 
 b. The MLRO will open a formal review of cash handling controls on
-   the NAPLES LLC programme during April 2026.
+   the Entity Echo programme during April 2026.
 
 c. The firm will refresh its enterprise-wide AML and CFT risk
    assessment during the second quarter of 2026, with a draft
@@ -138,8 +138,8 @@ e. The MLRO will attend every standing Board meeting during 2026
 7. DECLARATION OF THE MONEY LAUNDERING REPORTING OFFICER
 -----------------------------------------------------------------------------
 
-I, Luisa Fernanda, in my capacity as Money Laundering Reporting
-Officer of HAWKEYE STERLING V2, confirm that the contents of this
+I, the MLRO, in my capacity as Money Laundering Reporting
+Officer of [Reporting Entity], confirm that the contents of this
 pack are true and complete to the best of my knowledge and belief
 as at the date of issue, and that I have, during the period covered
 by the pack, discharged my function in accordance with the applicable
@@ -150,7 +150,7 @@ internal AML and CFT programme.
 8. DOCUMENT SIGN-OFF
 -----------------------------------------------------------------------------
 
-Issued by:            Luisa Fernanda, Money Laundering Reporting Officer
+Issued by:            the MLRO, Money Laundering Reporting Officer
 Board minute:         __________________________ (to be completed)
 Date of acknowledgement: __________________________
 
