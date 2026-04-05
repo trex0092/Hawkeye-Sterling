@@ -55,6 +55,37 @@ The report is posted once, as a comment on the pinned `📌 Today's Priorities`
 task inside the `PORTFOLIO_PROJECT_NAME` project. This lets one place hold
 both the daily tactical digests and the weekly strategic narrative.
 
+## Email notifications (opt-in)
+
+Both scripts share `notify.mjs`, which sends the daily portfolio digest and
+the weekly pattern report to an email address via Gmail SMTP. No npm
+dependency — it talks to `smtp.gmail.com:465` directly over Node's built-in
+TLS socket.
+
+The feature is strictly opt-in: if the Gmail secrets below are not set, the
+scripts log `ℹ  notify: Gmail not configured (skipping)` and the workflow
+still succeeds. Adding email later does not require changing any code.
+
+### Setup — 3 minutes
+
+1. You need a Google account with **2-Step Verification turned on**.
+   - If not, enable it at <https://myaccount.google.com/security>.
+2. Create a **Google app password** at <https://myaccount.google.com/apppasswords>.
+   - App name: `Hawkeye Sterling Automation` (any label works)
+   - Google returns a 16-character password like `abcd efgh ijkl mnop`.
+   - **Copy it immediately** — Google will not show it again.
+3. Add 2–3 new GitHub repository secrets at
+   <https://github.com/trex0092/hawkeye-sterling/settings/secrets/actions>:
+
+| Secret | Value |
+|---|---|
+| `GMAIL_USER` | the Gmail address that will *send* the emails, e.g. `trex051192@gmail.com` |
+| `GMAIL_APP_PASSWORD` | the 16-character app password (no spaces needed, but leaving them in works too) |
+| `GMAIL_TO` | *optional* — recipient. Defaults to `GMAIL_USER` if unset (i.e. you email yourself) |
+
+That's it. Next time either workflow runs you'll get an email with the same
+content as the Asana comment, plus a deep link back to the pinned task.
+
 ### Local usage
 
 ```bash

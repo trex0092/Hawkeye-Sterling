@@ -17,6 +17,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { notify } from "./notify.mjs";
 
 const {
   ASANA_TOKEN,
@@ -302,18 +303,23 @@ ${report}`;
       `\n⚠  no "${PINNED_TASK_NAME}" task found in a project matching "${PORTFOLIO_PROJECT_NAME}" — printing report to log only`,
     );
     console.log("\n" + comment);
-    return;
-  }
-
-  if (isDryRun) {
+  } else if (isDryRun) {
     console.log(
       `\n[dry-run] would post weekly report to "${portfolioProjectName}":\n${comment.split("\n").map((l) => `  ${l}`).join("\n")}`,
     );
-    return;
+  } else {
+    await postComment(portfolioPinnedGid, comment);
+    console.log(`\n✓ weekly report posted to "${portfolioProjectName}"`);
   }
 
-  await postComment(portfolioPinnedGid, comment);
-  console.log(`\n✓ weekly report posted to "${portfolioProjectName}"`);
+  // Email notification (Gmail). Runs regardless of whether the Asana post
+  // succeeded, so you still receive the report even if Asana was down.
+  if (!isDryRun) {
+    await notify({
+      subject: `📊 Weekly compliance pattern report — week ending ${today}`,
+      body: comment,
+    });
+  }
 }
 
 main().catch((err) => {

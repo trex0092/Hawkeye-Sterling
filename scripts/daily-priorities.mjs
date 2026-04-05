@@ -21,6 +21,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { notify } from "./notify.mjs";
 
 const {
   ASANA_TOKEN,
@@ -469,6 +470,14 @@ async function main() {
       } else {
         await postComment(portfolioPinnedGid, portfolioComment);
         console.log(`    ✓ portfolio digest posted to "${portfolioProjectName}"`);
+      }
+
+      // Email notification (Gmail), in parallel with the Asana post.
+      if (!isDryRun) {
+        await notify({
+          subject: `🎯 Portfolio digest — ${today}`,
+          body: portfolioComment,
+        });
       }
     } catch (err) {
       const detail = err?.error?.message ?? err?.message ?? String(err);
