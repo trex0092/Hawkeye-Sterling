@@ -1,0 +1,25 @@
+{
+  "name": "hawkeye-sterling-screening",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Unified sanctions + PEP + adverse-media screening engine with fuzzy matching, hash-chained audit log, and MCP interface.",
+  "bin": {
+    "hawkeye-screen": "./bin/screen.mjs",
+    "hawkeye-refresh": "./bin/refresh.mjs",
+    "hawkeye-verify": "./bin/verify.mjs",
+    "hawkeye-mcp": "./bin/mcp-server.mjs"
+  },
+  "scripts": {
+    "refresh": "node bin/refresh.mjs",
+    "refresh:force": "node bin/refresh.mjs --force",
+    "screen": "node bin/screen.mjs",
+    "verify": "node bin/verify.mjs",
+    "mcp": "node bin/mcp-server.mjs",
+    "smoke": "node test/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {}
+}
