@@ -1,0 +1,210 @@
+=============================================================================
+HAWKEYE STERLING V2
+DNFBP SELF-ASSESSMENT QUESTIONNAIRE — PRE-FILLED DRAFT FOR MLRO REVIEW
+=============================================================================
+
+Document reference:   HSV2-DNFBP-SAQ-2026-Q1
+Classification:       Confidential. Pre-filing draft. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Intended recipient
+after MLRO sign-off:  Ministry of Economy (supervisory authority for
+                      Designated Non-Financial Businesses and Professions)
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. STATUS OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is a draft of the DNFBP self-assessment questionnaire that the
+firm, in its capacity as a Dealer in Precious Metals and Stones, is
+required to complete periodically for its supervisory authority, the
+Ministry of Economy. The draft has been pre-filled by the compliance
+function using the current state of the firm's AML and CFT programme,
+the counterparty register, the training records and the recent filing
+activity. It is not a filed document. It has no standing until the
+MLRO has reviewed and corrected every answer, signed the declaration
+at the end, and submitted the completed questionnaire through the
+supervisory portal in her own name.
+
+The field wording below is generic because the compliance function
+does not have the current Ministry of Economy questionnaire template
+verbatim. On receipt of the actual template the compliance function
+will map each pre-filled answer below onto the corresponding field in
+the official form, and the MLRO will validate the mapping before
+submission.
+
+-----------------------------------------------------------------------------
+2. FIRM IDENTIFICATION
+-----------------------------------------------------------------------------
+
+Legal name of the reporting entity:   HAWKEYE STERLING V2
+Sector:                               Dealer in Precious Metals and Stones
+Classification:                       Designated Non-Financial Business
+                                      and Profession
+Number of active branches:            6 programme branches plus head office
+Head office location:                 Dubai, United Arab Emirates
+MLRO name:                            Luisa Fernanda
+Deputy MLRO name:                     [to be inserted]
+Board composition:                    [to be inserted at filing time]
+
+-----------------------------------------------------------------------------
+3. GOVERNANCE AND AML FUNCTION
+-----------------------------------------------------------------------------
+
+The firm has a designated Money Laundering Reporting Officer appointed
+by the Board, with direct reporting to Senior Management and with
+unrestricted access to the books and records of the firm. The MLRO
+is supported by a compliance function that operates across all six
+programme branches.
+
+The Board reviews and approves the firm's AML and CFT policy and
+procedures at least annually. The last Board approval was on [to be
+inserted].
+
+Senior Management receives a weekly report from the MLRO and a
+monthly consolidation report. The MLRO attends Board meetings on
+standing invitation when AML and CFT items are on the agenda.
+
+-----------------------------------------------------------------------------
+4. CUSTOMER DUE DILIGENCE PROGRAMME
+-----------------------------------------------------------------------------
+
+The firm applies Customer Due Diligence at the opening of every
+customer relationship, at the point of any occasional transaction
+above the firm's internal threshold, and at periodic refresh intervals
+set by the customer risk rating. The firm applies Enhanced Due
+Diligence to all Politically Exposed Persons, to all customers on the
+firm's internal high-risk pathway, and to any customer on whose file
+the compliance function has formed a view that EDD is appropriate.
+
+The firm's current identified PEP population is 14 customers. All 14
+are under Enhanced Due Diligence. All 14 customer files carry explicit
+MLRO authorisation to continue the relationship.
+
+The firm's Customer Due Diligence procedure was last updated on 12
+March 2026 in respect of linked cash transaction aggregation.
+
+-----------------------------------------------------------------------------
+5. TARGETED FINANCIAL SANCTIONS PROGRAMME
+-----------------------------------------------------------------------------
+
+The firm performs daily screening against the UN Security Council
+Consolidated List and the UAE Local Terrorist List, as administered
+by the Executive Office for Control and Non-Proliferation, on its
+full active customer population and on every counterparty at
+transaction time.
+
+During the most recent monthly reporting period the firm performed
+4,821 unique name queries and returned 47 hits, of which 43 were
+cleared as false positives on documented discriminating data and 4
+remain under review on the recycled gold sanctions track described
+in the weekly MLRO report.
+
+The firm has filed 1 Partial Name Match Report during the most
+recent monthly reporting period and has no confirmed matches as at
+the date of this draft.
+
+-----------------------------------------------------------------------------
+6. REPORTING OBLIGATIONS AND GOAML ACTIVITY
+-----------------------------------------------------------------------------
+
+The firm is registered on the Financial Intelligence Unit's goAML
+platform. Its MLRO and Deputy MLRO are both registered on the
+platform with access rights appropriate to their roles.
+
+The firm's recent goAML activity is as follows (most recent complete
+month, March 2026):
+
+  Suspicious Transaction Reports filed:              2
+  Suspicious Activity Reports filed:                 1
+  Dealers in Precious Metals and Stones Reports:     11
+  Partial Name Match Reports filed:                  1
+  Funds Freeze Reports filed:                        0
+  Total filings through goAML during the month:      15
+
+The compliance function maintains a candidate review folder for
+filings in preparation, which is open for MLRO inspection at any
+time.
+
+-----------------------------------------------------------------------------
+7. RECORD KEEPING
+-----------------------------------------------------------------------------
+
+The firm retains all Customer Due Diligence records, transaction
+records, sanctions screening logs, training records and reporting
+files for a minimum period of 10 years in accordance with the
+applicable provision of Federal Decree-Law No. 10 of 2025. The
+firm's archive is held in electronic form in a version-controlled
+repository and in hard copy at head office where hard copies exist.
+
+-----------------------------------------------------------------------------
+8. TRAINING
+-----------------------------------------------------------------------------
+
+The firm delivered four scheduled training modules and two refresher
+sessions during 2025, covering a total of 41 unique members of staff.
+All staff members whose duties expose them to Money Laundering or
+Terrorism Financing risk completed the modules required for their
+role by the end of 2025. The training records and the attendance
+sheets are retained in the firm's archive for 10 years.
+
+-----------------------------------------------------------------------------
+9. RISK ASSESSMENT
+-----------------------------------------------------------------------------
+
+The firm maintains an annual enterprise-wide AML and CFT risk
+assessment covering customer risk, product and service risk,
+geographic risk, delivery channel risk and typology exposure. The
+assessment for the year 2025 is currently in draft and is expected
+to be signed off by the MLRO and presented to Senior Management and
+the Board during the second quarter of 2026.
+
+The firm assesses its residual AML and CFT risk for 2025 as medium
+to high, principally driven by the recycled gold and jewellery
+scrap business lines.
+
+-----------------------------------------------------------------------------
+10. INCIDENTS AND EXCEPTIONS
+-----------------------------------------------------------------------------
+
+The firm recorded two reportable incidents during March 2026:
+
+a. On 05 March 2026 a branch cashier at MADISON LLC accepted a cash
+   transaction that ought to have been escalated under the revised
+   linked transaction aggregation procedure. The transaction was
+   reviewed on the day and was ultimately not a linked transaction
+   on the correct reading. The cashier was informed of the expected
+   process in writing.
+
+b. On 18 March 2026 the firm's sanctions screening engine failed to
+   synchronise the UN Security Council Consolidated List at the
+   08:00 cycle. The failure was detected at 08:22 and resolved at
+   08:31. No customer query ran against a stale list during the gap.
+
+-----------------------------------------------------------------------------
+11. PROPOSED NEXT STEPS
+-----------------------------------------------------------------------------
+
+On receipt of the official Ministry of Economy questionnaire template
+the compliance function will map each of the answers above onto the
+corresponding field in the template. The MLRO will review and correct
+each mapped answer, sign the declaration at the end, and submit the
+completed questionnaire through the supervisory portal in her own
+name.
+
+-----------------------------------------------------------------------------
+12. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:       Compliance function, HAWKEYE STERLING V2
+Reviewed by:       [awaiting MLRO review]
+Approved by:       [awaiting MLRO approval and onward submission]
+Filing status:     Draft. Not submitted to the Ministry of Economy.
+
+For review and onward submission by the MLRO, Luisa Fernanda.
+
+[End of document]

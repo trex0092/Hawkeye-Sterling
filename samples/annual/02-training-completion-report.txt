@@ -1,0 +1,155 @@
+=============================================================================
+HAWKEYE STERLING V2
+ANNUAL AML AND CFT TRAINING COMPLETION REPORT
+Year ending 31 December 2025
+=============================================================================
+
+Document reference:   HSV2-TCR-2025
+Classification:       Confidential. For Senior Management and the Board.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Prepared on:          20 January 2026
+Coverage period:      01 January 2025 to 31 December 2025 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS REPORT
+-----------------------------------------------------------------------------
+
+This report records the AML and CFT training delivered to staff of
+HAWKEYE STERLING V2 during the calendar year 2025, the population of
+staff to whom each module was delivered, the completion rate, and the
+competence assessment outcome. It is produced in discharge of the
+firm's obligation to maintain an annual training programme for staff
+whose functions expose them to Money Laundering or Terrorism Financing
+risk, and to maintain records of that training for 10 years under the
+applicable provision of Federal Decree-Law No. 10 of 2025.
+
+The report is prepared for the MLRO's review and subsequent
+presentation to Senior Management and the Board.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR THE YEAR
+-----------------------------------------------------------------------------
+
+During 2025 the firm delivered four scheduled training modules and
+two refresher sessions, covering a total of 41 unique members of
+staff across the six active programme branches and the head office.
+All 41 staff members completed the modules required for their role
+by the end of the year. The overall completion rate on required
+modules was 100 percent. No staff member carried an outstanding
+training requirement into 2026.
+
+-----------------------------------------------------------------------------
+3. TRAINING MODULES DELIVERED DURING THE YEAR
+-----------------------------------------------------------------------------
+
+Module 1. AML and CFT Foundations for Dealers in Precious Metals and
+Stones.
+Delivered on 10 March 2025. In-person, head office, full day. Required
+for all staff. Attendees: 38. Completion rate: 100 percent.
+Competence assessment: short written test, pass mark 70 percent.
+Pass rate: 100 percent (38 of 38).
+
+Module 2. Targeted Financial Sanctions, including UN Security Council
+Consolidated List and UAE Local Terrorist List.
+Delivered on 05 June 2025. In-person, head office, half day. Required
+for all staff in customer-facing or transaction-handling roles.
+Attendees: 23. Completion rate: 100 percent. Competence assessment:
+scenario walkthrough. Pass rate: 100 percent (23 of 23).
+
+Module 3. Customer Due Diligence and Enhanced Due Diligence refresher.
+Delivered on 14 September 2025. In-person, head office, half day.
+Required for all branch compliance officers and branch managers.
+Attendees: 14. Completion rate: 100 percent. Competence assessment:
+written case study. Pass rate: 100 percent (14 of 14).
+
+Module 4. Sanctions Screening and the goAML Filing Workflow.
+Delivered on 05 December 2025. In-person, head office, full day.
+Required for the MLRO, the Deputy MLRO, the compliance function, and
+all branch compliance officers. Attendees: 12. Completion rate: 100
+percent. Competence assessment: end-to-end mock filing. Pass rate:
+100 percent (12 of 12).
+
+Refresher 1. Red Flag Recognition for the Recycled Gold Business Line.
+Delivered on 21 July 2025. In-person, delivered at each programme
+branch over the course of one week. Required for branch cashiers and
+branch compliance officers. Attendees: 29 across the six branches.
+Completion rate: 100 percent.
+
+Refresher 2. Linked Transaction Aggregation under the revised internal
+procedure.
+Delivered on 21 March 2025. In-person, head office, one hour. Required
+for branch cashiers. Attendees: 19. Completion rate: 100 percent.
+
+-----------------------------------------------------------------------------
+4. SCHEDULED 2026 TRAINING PROGRAMME
+-----------------------------------------------------------------------------
+
+The compliance function has drafted the following training programme
+for 2026, for the MLRO's approval.
+
+a. Quarterly sanctions training module, delivered on 25 March 2026,
+   25 June 2026, 25 September 2026 and 15 December 2026. Required
+   for all 23 staff in customer-facing or transaction-handling
+   roles.
+
+b. AML and CFT annual foundations module, delivered on 15 April 2026.
+   Required for all 41 staff.
+
+c. Customer Due Diligence half-day refresher, delivered on 15 July
+   2026. Required for all 14 branch compliance officers and branch
+   managers.
+
+d. goAML filing workflow refresher, delivered on 05 December 2026.
+   Required for the MLRO, Deputy MLRO, compliance function, and all
+   branch compliance officers.
+
+e. On demand, a targeted refresher on the recycled gold sanctions
+   typology, once the current investigation track on FG BRANCH, ZOE
+   FZE and MADISON LLC has closed, using the closed file as a
+   worked example. Delivered to all branch cashiers and branch
+   compliance officers. Expected to be delivered during the third
+   quarter of 2026.
+
+-----------------------------------------------------------------------------
+5. RECORDS RETAINED
+-----------------------------------------------------------------------------
+
+For each training event delivered during 2025 the compliance function
+retains the following records for ten years in accordance with the
+applicable provision of Federal Decree-Law No. 10 of 2025.
+
+a. Signed attendance sheet for the session.
+b. Copy of the training material as delivered on the day.
+c. Competence assessment materials and each attendee's individual
+   result.
+d. A short summary prepared by the trainer of any questions raised by
+   attendees during the session and the answers given.
+e. Any correspondence with external trainers where the session was
+   delivered by a third party.
+
+-----------------------------------------------------------------------------
+6. LIMITATIONS OF THIS REPORT
+-----------------------------------------------------------------------------
+
+This report covers scheduled AML and CFT training delivered during the
+calendar year 2025. It does not record informal conversations, memos
+or short briefings delivered to individual staff members in the course
+of supervision. Those are recorded in supervisor records separately
+and are not aggregated here.
+
+-----------------------------------------------------------------------------
+7. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:       Compliance function, HAWKEYE STERLING V2
+Reviewed by:       [awaiting MLRO review]
+Approved by:       [awaiting MLRO approval]
+Noted by Board on: __________________________ (Board minute reference)
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]

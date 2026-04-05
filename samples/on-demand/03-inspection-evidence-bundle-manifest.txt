@@ -1,0 +1,172 @@
+=============================================================================
+HAWKEYE STERLING V2
+INSPECTION EVIDENCE BUNDLE — MANIFEST
+Bundle covering the 12 months ending 31 March 2026
+=============================================================================
+
+Document reference:   HSV2-IEB-2026-03
+Classification:       Confidential. Prepared for production to the
+                      Ministry of Economy or the Executive Office for
+                      Control and Non-Proliferation on demand during a
+                      supervisory inspection.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, on demand
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE OF THIS MANIFEST
+-----------------------------------------------------------------------------
+
+This manifest is the index to the Inspection Evidence Bundle prepared
+by the compliance function for the 12 months ending 31 March 2026.
+The bundle itself is a complete copy of every artefact produced by
+the firm's compliance automation during that period, together with
+the supporting files held on the compliance records. It is intended
+to be produced, in full, to the Ministry of Economy or to the
+Executive Office for Control and Non-Proliferation on demand during
+a supervisory inspection, so that the firm's evidence trail is
+immediately accessible and verifiable.
+
+The bundle is held in electronic form in the repository and can also
+be exported to a portable storage device for presentation in person.
+Every file in the bundle is version-controlled and every change is
+attributable to a commit in the repository history.
+
+-----------------------------------------------------------------------------
+2. BUNDLE CONTENTS
+-----------------------------------------------------------------------------
+
+Folder: mlro-weekly/
+52 Weekly MLRO Reports to Senior Management, one per week from the
+week ending 05 April 2025 to the week ending 27 March 2026 inclusive.
+Each report is signed by the MLRO and was acknowledged by Senior
+Management on the business day following issue.
+
+Folder: mlro-monthly/
+12 Monthly MLRO Consolidation Reports, one per month from April 2025
+to March 2026 inclusive. Each report is signed by the MLRO and
+includes the Board minute reference for the subsequent Board meeting
+at which the report was noted.
+
+Folder: weekly-pattern/
+52 Weekly Pattern Reports, the internal analytical companions to the
+Weekly MLRO Reports, covering the same weeks.
+
+Folder: daily/
+252 daily folders, one per working day, each containing:
+ - the per-project compliance priorities for each of the six active
+   programmes,
+ - the daily portfolio digest,
+ - the daily sanctions screening log,
+ - the daily PEP watch log,
+ - any investigation preparation notes issued that day.
+
+Folder: retro/
+252 daily completion retros, one per working day, recording the hit
+rate against the morning priority lists and the carry-over items.
+
+Folder: filings/
+A chronological record of every filing candidate review prepared by
+the compliance function during the 12 month period, whether filed
+or not, together with the goAML submission reference for each
+actual filing. The folder contains:
+ - 23 Suspicious Transaction Report candidate reviews, of which 17
+   were filed through the Financial Intelligence Unit on the goAML
+   platform;
+ - 7 Suspicious Activity Report candidate reviews, of which 5 were
+   filed;
+ - 149 Dealers in Precious Metals and Stones Report candidate
+   reviews, of which 144 were filed;
+ - 6 Partial Name Match Report candidate reviews, of which 4 were
+   filed;
+ - 0 Funds Freeze Report candidate reviews filed. 1 draft prepared
+   and held conditional on confirmation of a match that was
+   subsequently cleared.
+
+Folder: registers/
+The cross-entity counterparty register as a CSV file, with a full
+change history held in the repository. The current version records
+415 counterparty entries covering all six programmes.
+
+Folder: training/
+The annual training completion report for 2025 and the quarterly
+sanctions training records for 2025. Attendance sheets for each
+session, competence assessment results for each attendee, and copies
+of the training material as delivered on the day.
+
+Folder: risk-assessment/
+The annual enterprise-wide AML and CFT risk assessment for 2025 in
+its signed form, and the draft for 2026 with change markings
+showing the updates since 2025.
+
+Folder: incidents/
+A log of all compliance incidents recorded during the 12 month
+period, with the corrective action taken and the date closed.
+
+Folder: policies/
+The current version of every internal AML and CFT policy, procedure
+and control document in force during the period, with a change log
+showing when each document was last updated and by whom.
+
+-----------------------------------------------------------------------------
+3. HOW TO READ THE BUNDLE DURING AN INSPECTION
+-----------------------------------------------------------------------------
+
+For an inspector reading this bundle for the first time the
+compliance function suggests the following short order of reading.
+
+Read first, in order: the most recent Monthly MLRO Consolidation
+Report, the most recent Weekly MLRO Report to Senior Management, and
+the annual enterprise-wide risk assessment for 2025. Together these
+three documents give the inspector a current picture of the firm's
+programme from the top.
+
+Read second: any filing candidate review of interest, together with
+the underlying customer file referenced in it. The bundle supports
+this cross-reference by document reference, Asana task GID and
+customer reference.
+
+Read third: the daily sanctions screening log for the period covered
+by the inspection window, and the cross-entity counterparty register,
+for evidence that the firm operates its targeted financial sanctions
+programme on a continuing basis.
+
+Read fourth: the training completion report and the attendance
+sheets, for evidence that the firm meets its annual training
+obligation.
+
+Read fifth, only if the inspection is specifically interested in a
+named customer or counterparty: the relevant entries in the
+counterparty register and the corresponding filing candidate reviews.
+
+-----------------------------------------------------------------------------
+4. EVIDENTIARY INTEGRITY STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that every file in the bundle is a
+true and complete copy of the corresponding file held in the firm's
+production archive, that no file has been edited for the purpose of
+this bundle, and that any edit made to any file in the production
+archive during the 12 month period is visible in the repository
+history with the date and the identity of the editor. The compliance
+function further confirms that no file has been removed from the
+production archive to the bundle, that the production archive
+continues to hold the complete 10 year record required by the
+applicable provision of Federal Decree-Law No. 10 of 2025, and that
+the bundle is a snapshot of that production archive rather than a
+curated subset of it.
+
+-----------------------------------------------------------------------------
+5. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review before production to the inspector]
+Approved by:   [awaiting MLRO approval to release to the inspector]
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]
