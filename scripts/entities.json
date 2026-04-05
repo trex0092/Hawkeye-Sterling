@@ -1,4 +1,11 @@
 {
-  "_comment": "Optional mapping from reporting entity name to one or more Asana project names. If this file lists no entities, daily-entity-report.mjs treats every Asana project as its own entity, which is the usual 1:1 case. Use this file only when a single reporting entity is represented by several projects in Asana and the daily per-entity report needs to consolidate them into one document. The MLRO edits this file by hand. Entity names printed here flow into every generated report, so use the exact legal name.",
-  "entities": []
+  "_comment": "Reporting entity codes supervised by the MLRO. Every generated artefact that mentions an entity uses the matching code. Asana project names are matched against these codes (word-boundary, case-insensitive) so a project named 'FB Compliance' or 'FB - Screenings' is classified as entity FB. Projects that do not match any code are classified as UNASSIGNED and the MLRO is asked to rename them or populate the projects list below with exact project names.",
+  "entities": [
+    { "name": "FB", "projects": [] },
+    { "name": "FL", "projects": [] },
+    { "name": "ML", "projects": [] },
+    { "name": "NL", "projects": [] },
+    { "name": "GM", "projects": [] },
+    { "name": "ZF", "projects": [] }
+  ]
 }

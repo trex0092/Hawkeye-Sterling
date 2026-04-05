@@ -106,11 +106,20 @@ export const CONFIRMED_REFERENCES = Object.freeze({
     // working even when the variable is not set.
     name: process.env.MLRO_NAME && process.env.MLRO_NAME.trim().length > 0
       ? process.env.MLRO_NAME.trim()
-      : "the Money Laundering Reporting Officer",
+      : "LF",
     title: "Money Laundering Reporting Officer (MLRO)",
     organization: "[Reporting Entity]",
     cite: true,
   },
+
+  /**
+   * Short codes for the reporting entities the MLRO supervises. These are
+   * matched against Asana project names so every task gets assigned to
+   * the correct entity in generated artefacts. The list is confidential
+   * but disclosed to the automation for the sole purpose of labelling
+   * compliance output with the correct entity.
+   */
+  entityCodes: ["FB", "FL", "ML", "NL", "GM", "ZF"],
 
   /**
    * Report types the compliance function may prepare drafts of. Claude may
