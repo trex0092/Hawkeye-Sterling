@@ -78,7 +78,7 @@ All times are Asia/Dubai.
 | `history-writer.mjs` | Deterministic paths under `history/`, `isoDate()`, `isoWeek()`, category-specific write helpers |
 | `counterparty-register.mjs` | CSV read/write and `upsertFromTasks()` with cross-entity flagging |
 | `filing-drafts.mjs` | STR / SAR / DPMSR / PNMR / FFR detection and draft generator, driven by `filing-mode.json` |
-| `notify.mjs` | Optional Gmail SMTP notification layer, zero npm dependencies |
+| `notify.mjs` | No-op notification stub retained so existing `import { notify }` statements keep resolving |
 | `lib/report-scaffold.mjs` | Shared scaffolding: Asana client factory, Claude caller, `wrapDocument()`, `renderTable()`, typology classifier |
 
 ### Configuration files
@@ -175,7 +175,8 @@ node weekly-mlro-report.mjs
 | `CLAUDE_MODEL` | optional | Default `claude-haiku-4-5` |
 | `PINNED_TASK_NAME` | optional | Default `📌 Today's Priorities` |
 | `PORTFOLIO_PROJECT_NAME` | optional | Default `SCREENINGS` |
-| `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `GMAIL_TO` | optional | Enable Gmail notification |
+| `MLRO_NAME` | optional | Overrides the generic `the Money Laundering Reporting Officer` label in generated documents |
+| `ENTITY_LEGAL_NAME` | optional | Overrides the generic `the Reporting Entity` label in generated documents |
 | `DRY_RUN` | optional | Set to `true` to log without posting |
 
 ## Samples vs history
