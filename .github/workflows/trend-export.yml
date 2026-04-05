@@ -1,0 +1,63 @@
+name: Historical Trend Export (on demand)
+
+# On-demand utility that walks the history/ archive and produces a
+# spreadsheet-friendly CSV snapshot of the firm's compliance automation
+# activity for external charting. Pure aggregation, no Claude call.
+
+on:
+  workflow_dispatch:
+    inputs:
+      window_days:
+        description: "Window in days (blank = full history)"
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: "Dry run"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: trend-export
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+      - working-directory: scripts
+        run: npm install --omit=dev
+      - working-directory: scripts
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_TO: ${{ secrets.GMAIL_TO }}
+          WINDOW_DAYS: ${{ github.event.inputs.window_days }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node trend-export.mjs
+      - if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Trend export: $(date -u +%Y-%m-%d)"
+            git push origin main
+          fi
