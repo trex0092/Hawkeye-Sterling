@@ -1,0 +1,114 @@
+name: Sanctions Refresh & Counterparty Screening
+
+# Refreshes every enabled sanctions/PEP source (OpenSanctions, UN, OFAC
+# SDN, UK OFSI) and then re-screens every open counterparty in the
+# register against the updated store. Every refresh, every screening
+# decision, and the daily audit-chain head are committed back to the
+# repository so the chain is anchored in Git history — a cheap, robust
+# tamper-evident anchor that an auditor can verify against the public
+# commit log.
+#
+# Schedule: twice a day at 06:00 and 18:00 UTC. Publishers typically
+# update once a day; twice-daily refresh keeps hits fresh while the
+# conditional-request cache means unchanged lists cost one round-trip.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force refresh (bypass cache TTL)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: screening-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Refresh sources and screen counterparties
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      # The screening module has zero runtime dependencies, but we
+      # install scripts/ deps so the counterparty-register integration
+      # can run in the same job.
+      - name: Install scripts dependencies
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Refresh sanctions + PEP sources
+        working-directory: screening
+        env:
+          HAWKEYE_SCREENING_DIR: ${{ github.workspace }}/.screening
+          FORCE: ${{ github.event.inputs.force || 'false' }}
+        run: |
+          if [ "$FORCE" = "true" ]; then
+            node bin/refresh.mjs --force --verify
+          else
+            node bin/refresh.mjs --verify
+          fi
+
+      - name: Screen active counterparties
+        working-directory: scripts
+        env:
+          HAWKEYE_SCREENING_DIR: ${{ github.workspace }}/.screening
+        run: node screen-counterparties.mjs
+        continue-on-error: true
+
+      - name: Verify audit chain
+        working-directory: screening
+        env:
+          HAWKEYE_SCREENING_DIR: ${{ github.workspace }}/.screening
+        run: node bin/verify.mjs
+
+      - name: Compute daily audit anchor
+        id: anchor
+        working-directory: screening
+        env:
+          HAWKEYE_SCREENING_DIR: ${{ github.workspace }}/.screening
+        run: |
+          ANCHOR=$(node -e "
+            import('./index.js').then(async (S) => {
+              await S.default.init();
+              const h = S.default.stats().auditHead;
+              console.log('seq=' + h.seq + ' hash=' + h.hash);
+            });
+          ")
+          echo "anchor=$ANCHOR" >> "$GITHUB_OUTPUT"
+
+      - name: Commit register updates and audit anchor
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/registers/ 2>/dev/null)" ]; then
+            git add history/registers/
+            git commit -m "Screening refresh: ${{ steps.anchor.outputs.anchor }}
+
+            HAWKEYE-AUDIT-ANCHOR ${{ steps.anchor.outputs.anchor }}"
+            git push origin HEAD:${GITHUB_REF#refs/heads/}
+          else
+            echo "No register changes to commit."
+          fi

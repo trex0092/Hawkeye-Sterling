@@ -21,3 +21,6 @@ Thumbs.db
 
 # Netlify
 .netlify/
+
+# Screening module runtime data (entity store, HTTP cache, audit log)
+.screening/
