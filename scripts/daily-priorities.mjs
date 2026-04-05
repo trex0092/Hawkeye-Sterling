@@ -35,6 +35,7 @@ import {
   writeDailyPortfolio,
 } from "./history-writer.mjs";
 import { upsertFromTasks } from "./counterparty-register.mjs";
+import { detectAndDraft } from "./filing-drafts.mjs";
 
 const {
   ASANA_TOKEN,
@@ -165,7 +166,7 @@ async function listIncompleteTasks(projectGid) {
     completed_since: "now",
     limit: "100",
     opt_fields:
-      "gid,name,notes,due_on,due_at,completed,modified_at,created_at,assignee.name,permalink_url",
+      "gid,name,notes,due_on,due_at,completed,modified_at,created_at,assignee.name,permalink_url,tags.name",
   });
 
   const all = [];
@@ -648,6 +649,29 @@ async function main() {
         console.log(`    ✓ archived to history/daily/${today}/per-project/`);
       } catch (archiveErr) {
         console.warn(`    ⚠  failed to archive: ${archiveErr.message}`);
+      }
+
+      // Run the goAML filing detection pass on the work tasks. Flags
+      // STR / SAR / DPMSR / PNMR / FFR candidates. Drafts are produced
+      // only when scripts/filing-mode.json puts the type into "automatic"
+      // mode, or when the individual task carries the hsv2:draft-now tag.
+      try {
+        const filingSummary = await detectAndDraft({
+          anthropic,
+          tasks: workTasks,
+          projectName: project.name,
+          postComment,
+          isDryRun,
+        });
+        const flaggedTotal = Object.values(filingSummary.flagged).reduce((a, b) => a + b, 0);
+        const draftedTotal = Object.values(filingSummary.drafted).reduce((a, b) => a + b, 0);
+        if (flaggedTotal > 0) {
+          console.log(
+            `    🧭 filing detection: ${flaggedTotal} candidate(s) flagged (${JSON.stringify(filingSummary.flagged)}), ${draftedTotal} drafted, ${filingSummary.skippedManual} held in manual mode`,
+          );
+        }
+      } catch (err) {
+        console.warn(`    ⚠  filing detection failed: ${err.message}`);
       }
 
       // Collect counterparty observations for the cross-entity register.
