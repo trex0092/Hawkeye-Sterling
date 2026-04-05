@@ -6,7 +6,9 @@
   "description": "Automation scripts for Hawkeye-Sterling (daily Asana priorities, etc.)",
   "scripts": {
     "daily-priorities": "node daily-priorities.mjs",
-    "daily-priorities:dry": "DRY_RUN=true node daily-priorities.mjs"
+    "daily-priorities:dry": "DRY_RUN=true node daily-priorities.mjs",
+    "weekly-report": "node weekly-report.mjs",
+    "weekly-report:dry": "DRY_RUN=true node weekly-report.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0"

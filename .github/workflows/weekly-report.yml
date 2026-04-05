@@ -1,0 +1,61 @@
+name: Weekly Compliance Pattern Report
+
+# Every Friday at 16:00 Asia/Dubai (12:00 UTC). Aggregates the week's
+# activity across every active Asana project and asks Claude to write a
+# cross-entity pattern report, then posts it to the pinned
+# "📌 Today's Priorities" task inside the SCREENINGS project so there is a
+# single weekly narrative covering the whole compliance portfolio.
+#
+# Can also be triggered manually with a Dry Run toggle.
+
+on:
+  schedule:
+    - cron: "0 12 * * 5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (no comments posted)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: weekly-report
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Weekly pattern report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Run weekly report
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node weekly-report.mjs

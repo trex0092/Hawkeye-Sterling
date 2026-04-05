@@ -14,13 +14,46 @@ Every weekday morning, for every active Asana project in the
 1. Fetches all **incomplete** tasks in the project.
 2. Finds a pinned task named `📌 Today's Priorities`. If the project does
    not have one, it is **skipped** — the pinned task acts as an opt-in list.
-3. Sends the remaining tasks to Claude with a compliance-aware prompt.
-4. Claude returns a ranked top-10 list with a one-sentence justification per
-   task, weighted by regulatory severity, due dates, and dependencies.
-5. Posts that list as a new comment on the `📌 Today's Priorities` task.
+3. Flags **at-risk** tasks (overdue or due within `AT_RISK_DAYS` — default
+   3 business days) and surfaces them as a dedicated `⚠️ AT RISK` section
+   at the top of the comment with direct Asana links.
+4. Sends a curated shortlist (at-risk first, then due-date, then freshness)
+   to Claude with a compliance-aware prompt.
+5. Claude returns a ranked top-10 list with a one-sentence justification per
+   task, weighted by regulatory severity, due dates, and dependencies. Each
+   line is rewritten with a clickable Asana permalink.
+6. Posts the enriched comment on the `📌 Today's Priorities` task.
 
-Scrolling the comment history of the pinned task gives you a day-by-day log
-of AI-suggested priorities per project.
+After processing every project, the script also calls Claude once more with
+all per-project top-10s and generates a **cross-entity portfolio digest**
+(`TOP 5 PORTFOLIO PRIORITIES` + `CROSS-ENTITY PATTERNS`). This single
+comment is posted to the pinned `📌 Today's Priorities` task inside the
+project named by `PORTFOLIO_PROJECT_NAME` (default `SCREENINGS`), so you
+get one page to read for "what matters today across the whole group" on top
+of the per-entity drill-downs.
+
+Scrolling the comment history of any pinned task gives you a day-by-day log
+of AI-suggested priorities.
+
+## `weekly-report.mjs`
+
+**What it does**
+
+Every Friday at 16:00 Asia/Dubai, pulls every task modified in the last 7
+days across every active Asana project and asks Claude to write a single
+**weekly pattern report** with this structure:
+
+- `HEADLINE` — the single most important takeaway for the week
+- `CROSS-ENTITY PATTERNS` — typologies/counterparties/jurisdictions that
+  appeared in more than one entity
+- `EMERGING RISKS` — new or escalating items that deserve attention next week
+- `STALLED INVESTIGATIONS` — items sitting open for multiple weeks
+- `WINS OF THE WEEK` — tasks closed that materially reduced risk
+- `RECOMMENDED NEXT WEEK FOCUS` — three bullets to walk into Monday with
+
+The report is posted once, as a comment on the pinned `📌 Today's Priorities`
+task inside the `PORTFOLIO_PROJECT_NAME` project. This lets one place hold
+both the daily tactical digests and the weekly strategic narrative.
 
 ### Local usage
 
@@ -50,8 +83,14 @@ npm run daily-priorities
 | `ANTHROPIC_API_KEY` | ✅ | — | API key from https://console.anthropic.com (needs a few USD of credit) |
 | `ASANA_WORKSPACE_ID` | ✅ | — | Numeric workspace ID, e.g. `1213645083721316` |
 | `ASANA_TEAM_ID` | optional | — | Scope to one team. Recommended: `HAWKEYE STERLING V2` team ID |
-| `CLAUDE_MODEL` | optional | `claude-sonnet-4-5` | Any Claude model ID. `claude-haiku-4-5-20251001` is ~10× cheaper |
-| `PINNED_TASK_NAME` | optional | `📌 Today's Priorities` | Exact task name to post the comment on |
+| `CLAUDE_MODEL` | optional | `claude-haiku-4-5` | Any Claude model ID. Switch to `claude-sonnet-4-5` for higher quality once you are past Anthropic Tier 1 |
+| `PINNED_TASK_NAME` | optional | `📌 Today's Priorities` | Exact task name to post per-project comments on |
+| `PORTFOLIO_PROJECT_NAME` | optional | `SCREENINGS` | Case-insensitive substring match; the pinned task inside the matched project receives the portfolio digest and weekly report |
+| `MAX_TASKS_PER_PROJECT` | optional | `75` | How many tasks to send Claude per project. Lower it on Tier-1 Anthropic accounts |
+| `NOTES_SNIPPET_LENGTH` | optional | `80` | Characters of task description sent to Claude per task |
+| `PROJECT_DELAY_MS` | optional | `30000` | Pause between projects so we stay under the Tier-1 rate limit (30k input tokens/min) |
+| `AT_RISK_DAYS` | optional | `3` | A task is flagged at-risk if overdue or due within this many days |
+| `WEEKLY_WINDOW_DAYS` | optional | `7` | How far back `weekly-report.mjs` looks for activity |
 | `DRY_RUN` | optional | `false` | Set to `true` to log without posting |
 
 ### Pre-requisites in Asana
@@ -71,11 +110,17 @@ are silently skipped.
 
 ## Automation: GitHub Actions
 
-The workflow at `.github/workflows/daily-priorities.yml` runs this script:
+Two workflows live in `.github/workflows/`:
 
+### `daily-priorities.yml`
 - **Schedule:** Monday–Friday at 09:00 Asia/Dubai (05:00 UTC).
-- **Manual:** `Actions` tab → `Daily Asana Priorities` → `Run workflow`. You
-  can tick the "Dry run" option to test without posting.
+- **Manual:** `Actions` tab → `Daily Asana Priorities` → `Run workflow`.
+  You can tick the "Dry run" option to test without posting.
+
+### `weekly-report.yml`
+- **Schedule:** every Friday at 16:00 Asia/Dubai (12:00 UTC).
+- **Manual:** `Actions` tab → `Weekly Compliance Pattern Report` → `Run
+  workflow`. Has the same Dry run toggle.
 
 ### One-time setup
 
