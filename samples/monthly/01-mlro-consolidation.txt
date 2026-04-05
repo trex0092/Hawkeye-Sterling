@@ -1,0 +1,236 @@
+=============================================================================
+HAWKEYE STERLING V2
+MONTHLY CONSOLIDATION REPORT OF THE MONEY LAUNDERING REPORTING OFFICER
+Month of March 2026
+=============================================================================
+
+Document reference:   HSV2-MLRO-M-2026-03
+Classification:       Confidential. For Senior Management and the Board.
+Version:              1.0
+From:                 Luisa Fernanda, Money Laundering Reporting Officer
+To:                   Senior Management and the Board of HAWKEYE STERLING V2
+Issued on:            01 April 2026, 09:00 Asia/Dubai
+Coverage:             01 March 2026 to 31 March 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS REPORT
+-----------------------------------------------------------------------------
+
+This is the monthly consolidation report of the Money Laundering
+Reporting Officer of HAWKEYE STERLING V2 for the month of March 2026.
+It is prepared for Senior Management and for the Board of HAWKEYE
+STERLING V2 in support of the continuing duty of the firm to maintain
+a Money Laundering Reporting Officer and to ensure the governing body
+is informed of the operation of the firm's AML and CFT programme. It
+is an internal report. It has not been filed with any supervisory
+authority. It is retained in the firm's archive for 10 years.
+
+The report consolidates the four weekly MLRO reports issued during the
+month and adds a monthly trend narrative, a filings summary, and a
+set of recommendations to Senior Management.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR THE MONTH
+-----------------------------------------------------------------------------
+
+The firm's compliance programme in March 2026 was dominated by two
+themes. The first was the emergence of a recycled gold sanctions
+typology that now touches three separate programme entities. That
+exposure is under active management and is expected to result in at
+least one regulator-facing filing during April 2026. The second was
+a modest rise in high cash intensity activity on the NAPLES LLC
+programme, which I consider to be an early warning rather than an
+established pattern and which I intend to address through a formal
+review of cash handling controls in the first half of April 2026.
+
+There are no matters on which I, in my capacity as MLRO, have been
+unable to obtain the resources or the authority I need to discharge
+my function during March 2026.
+
+-----------------------------------------------------------------------------
+3. FILINGS MADE THROUGH THE GOAML PLATFORM DURING THE MONTH
+-----------------------------------------------------------------------------
+
+The firm filed, through the Financial Intelligence Unit on the goAML
+platform, the following reports during the month of March 2026. Each
+filing was made on the basis of my personal review of the underlying
+material and on my signature.
+
+Suspicious Transaction Reports filed:              2
+Suspicious Activity Reports filed:                 1
+Dealers in Precious Metals and Stones Reports:     11
+Partial Name Match Reports filed:                  1
+Funds Freeze Reports filed:                        0
+Total filings through goAML during March 2026:     15
+
+The two Suspicious Transaction Reports concerned customers of the
+FG BRANCH and GRAMALTIN AS programmes. The Suspicious Activity Report
+concerned an attempted onboarding at the MADISON LLC branch that did
+not result in a completed transaction. The eleven Dealers in Precious
+Metals and Stones Reports were routine reports on linked cash
+transactions recorded at four of the six programme branches. The
+single Partial Name Match Report was filed on 27 March 2026 in
+connection with the recycled gold counterparty now under review on
+the ZOE FZE RF-R12 file.
+
+-----------------------------------------------------------------------------
+4. FILINGS IN PREPARATION AT MONTH-END
+-----------------------------------------------------------------------------
+
+At the close of the month I held the following filings under personal
+review, either awaiting confirmation of facts or awaiting my decision.
+
+a. One Suspicious Transaction Report candidate review in respect of
+   the FG BRANCH RF-R08 cross-border recycled gold file.
+b. One Dealers in Precious Metals and Stones Report candidate review
+   in respect of the MADISON LLC RF-R05 linked cash transactions file.
+c. One Partial Name Match Report candidate review in respect of the
+   ZOE FZE RF-R12 counterparty. This is a second variant related to
+   the Partial Name Match Report already filed on 27 March 2026.
+d. One Funds Freeze Report candidate review in draft, conditional on
+   confirmation of the ZOE FZE counterparty's identity against the
+   UN Security Council Consolidated List.
+
+All four are expected to be determined during the first half of
+April 2026.
+
+-----------------------------------------------------------------------------
+5. SANCTIONS SCREENING AND TARGETED FINANCIAL SANCTIONS
+-----------------------------------------------------------------------------
+
+During March 2026 the firm performed 4,821 unique name queries
+against the UN Security Council Consolidated List and the UAE Local
+Terrorist List, as administered by the Executive Office for Control
+and Non-Proliferation. The screening engine returned 47 hits during
+the month. Forty-three of the forty-seven hits were cleared as false
+positives on documented discriminating data. Four remain under
+review at month-end, and all four are connected to the recycled
+gold sanctions track described in section 2 above. No funds have
+been released to any counterparty while a match is under review at
+any point during the month.
+
+-----------------------------------------------------------------------------
+6. CUSTOMER DUE DILIGENCE AND PEP POPULATION
+-----------------------------------------------------------------------------
+
+The firm maintained 14 customers in the identified PEP population
+throughout the month. One new PEP was identified on 04 April 2026,
+which falls in the reporting period of the April 2026 monthly report,
+and is mentioned here only so that the Board has context.
+
+During March 2026 the firm completed scheduled Customer Due Diligence
+refreshes on 38 customer files across the six programmes. Four files
+slipped the refresh deadline and were completed in the week ending
+28 March 2026. No file is more than seven days past its refresh
+deadline at month-end.
+
+-----------------------------------------------------------------------------
+7. TRAINING AND COMPETENCE
+-----------------------------------------------------------------------------
+
+The firm completed its quarterly sanctions training module on
+25 March 2026. All 23 staff members whose duties expose them to
+sanctions risk completed the module. In addition, the firm delivered
+a short refresher on Customer Due Diligence procedures to all branch
+staff during the week ending 21 March 2026, attended by 37 members
+of staff. All training attendance is recorded.
+
+-----------------------------------------------------------------------------
+8. INTERNAL POLICY AND PROCEDURE CHANGES DURING THE MONTH
+-----------------------------------------------------------------------------
+
+The firm's internal procedure on linked cash transaction aggregation
+was updated on 12 March 2026 to reflect the rolling 30 day window
+methodology. The previous procedure applied a calendar month window,
+which could in theory allow a customer to structure across two
+adjacent calendar months. The change was approved by Senior
+Management on the same day. The new procedure is now in force at
+all six programme branches.
+
+No other internal policy or procedure changes were made during the
+month.
+
+-----------------------------------------------------------------------------
+9. INCIDENTS AND EXCEPTIONS
+-----------------------------------------------------------------------------
+
+Two incidents are reportable for the month.
+
+On 05 March 2026 a branch cashier at MADISON LLC accepted a cash
+transaction that ought to have been escalated to the branch compliance
+officer under the revised linked transaction aggregation procedure.
+The transaction was reviewed on the day and was ultimately not a
+linked transaction on the correct reading, but the escalation should
+still have occurred. The cashier was informed of the expected process
+in writing. The relevant compliance training module has been refreshed.
+
+On 18 March 2026 the firm's sanctions screening engine failed to
+synchronise the UN Security Council Consolidated List at the 08:00
+cycle. The failure was detected by the compliance function at 08:22.
+The list was synchronised manually at 08:31. No customer queries
+ran against a stale list at any point during the gap. The vendor of
+the screening engine has been contacted and has issued a patch,
+which has been applied.
+
+-----------------------------------------------------------------------------
+10. RISK ASSESSMENT AND PROGRAMME HEALTH
+-----------------------------------------------------------------------------
+
+In my view the firm's compliance with its obligations under Federal
+Decree-Law No. 10 of 2025 during March 2026 has been satisfactory.
+The recycled gold sanctions track is a material risk event but is
+being managed within the firm's procedures. Resources are adequate
+at current activity levels. I have the authority I need. No material
+weakness has been identified by the compliance function or by the
+internal audit function during the month.
+
+-----------------------------------------------------------------------------
+11. RECOMMENDATIONS TO SENIOR MANAGEMENT AND THE BOARD
+-----------------------------------------------------------------------------
+
+I respectfully invite Senior Management and the Board to note the
+contents of this report and, in particular, to consider the following
+four items.
+
+First, the recycled gold sanctions track across FG BRANCH, ZOE FZE
+and MADISON LLC is material enough to warrant an agenda item at the
+next Board meeting. I will attend to present the state of the files
+and answer any questions.
+
+Second, the rise in high cash intensity activity on NAPLES LLC
+warrants a forward look at the programme's cash handling controls. I
+intend to open a formal review during April 2026 and will report in
+the April monthly report on the outcome.
+
+Third, the firm should plan to refresh its enterprise-wide AML and
+CFT risk assessment during the second quarter of 2026. I will prepare
+a draft for Senior Management review by the end of May 2026.
+
+Fourth, the compliance resources of the firm are adequate for current
+activity but should be reviewed if the recycled gold sanctions track
+escalates into a coordinated investigation across three entities. I
+will flag this explicitly if and when it arises.
+
+-----------------------------------------------------------------------------
+12. DECLARATION OF THE MONEY LAUNDERING REPORTING OFFICER
+-----------------------------------------------------------------------------
+
+I, Luisa Fernanda, in my capacity as Money Laundering Reporting
+Officer of HAWKEYE STERLING V2, confirm that the contents of this
+report are true and complete to the best of my knowledge and belief
+as at the date of issue. I further confirm that I have, during the
+month of March 2026, discharged my function in accordance with the
+applicable provisions of Federal Decree-Law No. 10 of 2025 and the
+firm's internal AML and CFT programme.
+
+-----------------------------------------------------------------------------
+13. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Issued by:         Luisa Fernanda, Money Laundering Reporting Officer
+Acknowledged by:   __________________________ (Senior Management)
+Noted by Board on: __________________________ (Board minute reference)
+
+[End of document]

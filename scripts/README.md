@@ -1,131 +1,163 @@
-# Hawkeye-Sterling automation scripts
+# HAWKEYE STERLING V2 — compliance automation scripts
 
-Small Node.js scripts that automate repetitive compliance-workflow tasks
-against Asana and other tools. They are designed to run from the command line
-locally or on a schedule from GitHub Actions.
+This folder holds the Node.js scripts that run the firm's AML and CFT
+compliance automation. Each script is designed to run unattended on a
+GitHub Actions schedule, and every artefact produced is archived under
+`history/` for the ten-year retention obligation set by the applicable
+provision of Federal Decree-Law No. 10 of 2025.
 
-## `daily-priorities.mjs`
+The entity is HAWKEYE STERLING V2, a UAE-licensed Dealer in Precious
+Metals and Stones classified as a Designated Non-Financial Business
+and Profession, supervised by the Ministry of Economy. The Money
+Laundering Reporting Officer is Luisa Fernanda.
 
-**What it does**
+## Script catalogue
 
-Every weekday morning, for every active Asana project in the
-`HAWKEYE STERLING V2` workspace:
+| Script | Schedule | Purpose | Archive |
+|---|---|---|---|
+| `daily-priorities.mjs` | Mon–Fri 09:00 Asia/Dubai | Per-entity top-10 priorities with risk scoring, portfolio digest, counterparty register update, goAML filing detection | `history/daily/`, `history/filings/`, `history/registers/` |
+| `weekly-report.mjs` | Friday 16:00 Asia/Dubai | Weekly cross-entity pattern report for the MLRO | `history/weekly/` |
+| `weekly-mlro-report.mjs` | Friday 17:00 Asia/Dubai | Formal Weekly MLRO Report to Senior Management | `history/mlro-weekly/` |
+| `daily-retro.mjs` | Mon–Fri 17:00 Asia/Dubai | End-of-day completion retro comparing morning priorities to closures | `history/retro/` |
+| `inspection-bundle.mjs` | On demand | Inspection evidence bundle manifest for supervisory visits | `history/inspections/` |
+| `counterparty-register.mjs` | Library module | CSV-backed cross-entity counterparty register. Called by `daily-priorities.mjs`. | `history/registers/counterparties.csv` |
+| `filing-drafts.mjs` | Library module | goAML filing detection and draft generator (STR, SAR, DPMSR, PNMR, FFR). Called by `daily-priorities.mjs`. | `history/filings/` |
+| `notify.mjs` | Library module | Optional Gmail notification for the daily portfolio digest and weekly reports | — |
+| `regulatory-context.mjs` | Library module | UAE legal framework constants and 0% AI-tells style rules used by every Claude call | — |
+| `history-writer.mjs` | Library module | Deterministic file paths under `history/` | — |
 
-1. Fetches all **incomplete** tasks in the project.
-2. Finds a pinned task named `📌 Today's Priorities`. If the project does
-   not have one, it is **skipped** — the pinned task acts as an opt-in list.
-3. Sends the remaining tasks to Claude with a compliance-aware prompt.
-4. Claude returns a ranked top-10 list with a one-sentence justification per
-   task, weighted by regulatory severity, due dates, and dependencies.
-5. Posts that list as a new comment on the `📌 Today's Priorities` task.
+## Shared regulatory framing
 
-Scrolling the comment history of the pinned task gives you a day-by-day log
-of AI-suggested priorities per project.
+Every Claude call in every script uses the same `SYSTEM_PROMPT` exported
+from `regulatory-context.mjs`. That system prompt:
 
-### Local usage
+- Establishes the voice of the compliance function of HAWKEYE STERLING V2
+  drafting material for the attention of the MLRO, Luisa Fernanda.
+- Lists the only legal references that may be cited verbatim: Federal
+  Decree-Law No. 10 of 2025, the Ministry of Economy as DNFBP supervisor,
+  the Executive Office for Control and Non-Proliferation as sanctions
+  implementing body, the Financial Intelligence Unit and the goAML
+  platform, the 10-year retention obligation.
+- Forbids citing Federal Decree-Law No. 20 of 2018, any invented article
+  number, any invented Cabinet Decision number and any specific AED
+  threshold that the MLRO has not confirmed.
+- Enforces a 0% AI-tells writing style: formal UAE compliance register,
+  no em-dashes, no markdown hash headings, no "as an AI" / "let me" /
+  "I hope this helps", short sentences, first person plural for the
+  compliance function, first person singular for the MLRO.
+- Requires an explicit imperative next-action line at the end of every
+  analytical section and a final `For review by the MLRO, Luisa Fernanda.`
+  line on every document.
+
+Every response is passed through `validateOutput()` before archival. A
+response that cites the 2018 law, contains an em-dash or uses a forbidden
+AI phrase is rejected and retried.
+
+## goAML filing mode
+
+`scripts/filing-mode.json` controls draft generation for the five filing
+types. Default is `manual` across the board, because the MLRO is in
+charge of all filings. The automation never submits to goAML.
+
+```json
+{
+  "STR":   "manual",
+  "SAR":   "manual",
+  "DPMSR": "manual",
+  "PNMR":  "manual",
+  "FFR":   "manual"
+}
+```
+
+In `manual` mode the daily run flags candidate tasks and nothing else.
+To produce a draft narrative for a specific flagged task, add the tag
+`hsv2:draft-now` to the task in Asana. The next daily run will pick up
+the tag, generate the draft, post it as a comment on the task and
+archive it under `history/filings/`.
+
+In `automatic` mode the daily run generates a draft for every detected
+candidate of that type. Flip a single type to `automatic` only after the
+MLRO is confident in the detector for that type.
+
+## Local usage
 
 ```bash
 cd scripts
 npm install
 
-export ASANA_TOKEN=1/...                  # Asana personal access token
-export ANTHROPIC_API_KEY=sk-ant-...        # Anthropic API key with credit
-export ASANA_WORKSPACE_ID=1213645083721316 # from the Asana URL or API
-export ASANA_TEAM_ID=1213645083721318      # optional — HAWKEYE STERLING V2
-export CLAUDE_MODEL=claude-sonnet-4-5      # optional, default sonnet-4-5
-export PINNED_TASK_NAME="📌 Today's Priorities"  # optional, default as shown
+export ASANA_TOKEN=1/...                   # Asana personal access token
+export ANTHROPIC_API_KEY=sk-ant-...         # Anthropic API key with credit
+export ASANA_WORKSPACE_ID=1213645083721316  # Compliance Tasks workspace
+export ASANA_TEAM_ID=1213645083721318       # optional: HAWKEYE STERLING V2 team
 
-# Dry run first — logs what would be posted but doesn't touch Asana
+# Dry runs log what would be posted and archived but do not touch Asana
+# or the history folder.
 npm run daily-priorities:dry
+npm run weekly-report:dry
 
-# Real run
+# Real runs
 npm run daily-priorities
+npm run weekly-report
+node daily-retro.mjs
+node weekly-mlro-report.mjs
+node inspection-bundle.mjs
 ```
 
-### Environment variables
+## Environment variables
 
-| Variable | Required | Default | Description |
+| Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `ASANA_TOKEN` | ✅ | — | Asana personal access token. Create at https://app.asana.com/0/my-apps |
-| `ANTHROPIC_API_KEY` | ✅ | — | API key from https://console.anthropic.com (needs a few USD of credit) |
-| `ASANA_WORKSPACE_ID` | ✅ | — | Numeric workspace ID, e.g. `1213645083721316` |
-| `ASANA_TEAM_ID` | optional | — | Scope to one team. Recommended: `HAWKEYE STERLING V2` team ID |
-| `CLAUDE_MODEL` | optional | `claude-sonnet-4-5` | Any Claude model ID. `claude-haiku-4-5-20251001` is ~10× cheaper |
-| `PINNED_TASK_NAME` | optional | `📌 Today's Priorities` | Exact task name to post the comment on |
+| `ASANA_TOKEN` | yes | — | Asana personal access token |
+| `ANTHROPIC_API_KEY` | yes | — | Anthropic API key with credit |
+| `ASANA_WORKSPACE_ID` | yes | — | Asana workspace ID |
+| `ASANA_TEAM_ID` | optional | — | Team ID for HAWKEYE STERLING V2 |
+| `CLAUDE_MODEL` | optional | `claude-haiku-4-5` | Any Claude model ID |
+| `PINNED_TASK_NAME` | optional | `📌 Today's Priorities` | Pinned task name each programme uses |
+| `PORTFOLIO_PROJECT_NAME` | optional | `SCREENINGS` | Case-insensitive substring for the portfolio target project |
+| `MAX_TASKS_PER_PROJECT` | optional | `75` | Cap tasks sent to Claude per project |
+| `NOTES_SNIPPET_LENGTH` | optional | `80` | Characters of task notes included in the prompt |
+| `PROJECT_DELAY_MS` | optional | `30000` | Pause between projects to stay under Anthropic Tier-1 rate limits |
+| `AT_RISK_DAYS` | optional | `3` | Days until due that counts as at-risk |
+| `WEEKLY_WINDOW_DAYS` | optional | `7` | Rolling window for the weekly scripts |
+| `WINDOW_DAYS` | optional | `365` | Window for the inspection bundle |
 | `DRY_RUN` | optional | `false` | Set to `true` to log without posting |
+| `GMAIL_USER` | optional | — | Gmail sender for notification email |
+| `GMAIL_APP_PASSWORD` | optional | — | 16-character Google app password |
+| `GMAIL_TO` | optional | `GMAIL_USER` | Notification recipient |
 
-### Pre-requisites in Asana
+## GitHub Actions workflows
 
-In every project you want prioritized, create a single task named **exactly**
-`📌 Today's Priorities` (copy the emoji to avoid encoding issues). Pin it to
-the top, no assignee, no due date, not completed. Projects without this task
-are silently skipped.
+| Workflow | File | Schedule |
+|---|---|---|
+| Daily Asana Priorities | `.github/workflows/daily-priorities.yml` | Mon–Fri 09:00 Asia/Dubai |
+| Daily Completion Retro | `.github/workflows/daily-retro.yml` | Mon–Fri 17:00 Asia/Dubai |
+| Weekly Compliance Pattern Report | `.github/workflows/weekly-report.yml` | Friday 16:00 Asia/Dubai |
+| Weekly MLRO Report to Senior Management | `.github/workflows/weekly-mlro-report.yml` | Friday 17:00 Asia/Dubai |
+| Inspection Evidence Bundle | `.github/workflows/inspection-bundle.yml` | On demand |
 
-### Cost
+Every workflow:
 
-- **GitHub Actions:** free tier covers this easily (~2 minutes per run × 22
-  runs/month ≈ 44 minutes of the 2,000 free minutes/month).
-- **Anthropic API:** ~\$1–3/month with Sonnet 4.5 for 6 projects × 22 days.
-  Switch `CLAUDE_MODEL` to `claude-haiku-4-5-20251001` for ~10× cheaper.
-- **Asana API:** free.
+1. Checks out the repository at full depth with write credentials.
+2. Installs the Anthropic SDK via `npm install --omit=dev` (no other
+   runtime dependency).
+3. Runs the relevant script with the secrets forwarded as environment
+   variables.
+4. Commits any new files under `history/` back to `main` with a dated
+   message. Dry runs skip the commit step.
 
-## Automation: GitHub Actions
+## Samples vs history
 
-The workflow at `.github/workflows/daily-priorities.yml` runs this script:
+The repository contains two parallel folders that must not be confused.
 
-- **Schedule:** Monday–Friday at 09:00 Asia/Dubai (05:00 UTC).
-- **Manual:** `Actions` tab → `Daily Asana Priorities` → `Run workflow`. You
-  can tick the "Dry run" option to test without posting.
+`samples/` contains format reference documents with **fictitious** data.
+Use it to see what each artefact will look like before it runs against
+live data. Nothing under `samples/` is evidence.
 
-### One-time setup
+`history/` contains the live 10-year evidence archive written by the
+automation during real runs. Treat it with the same care as any other
+compliance record. See `history/README.md` for the full rules.
 
-1. Push this branch to GitHub.
-2. In the repo, go to **Settings → Secrets and variables → Actions → New
-   repository secret** and add:
-   - `ASANA_TOKEN` → your Asana personal access token
-   - `ANTHROPIC_API_KEY` → your Anthropic API key
-   - `ASANA_WORKSPACE_ID` → `1213645083721316`
-   - `ASANA_TEAM_ID` → *(optional)* your HAWKEYE STERLING V2 team ID
-3. *(Optional)* Under **Variables** (same page), add:
-   - `CLAUDE_MODEL` — e.g. `claude-haiku-4-5-20251001` if you want cheaper
-   - `PINNED_TASK_NAME` — if you want a different pinned task name
-4. Open the **Actions** tab, find **Daily Asana Priorities**, click
-   **Run workflow** → set Dry run to `true` → Run. Verify the logs look sane.
-5. Run it again with Dry run `false` to post real comments.
-6. From that point on it runs automatically every weekday at 09:00 Dubai time.
+## Contact
 
-### Getting the Asana workspace/team IDs
-
-The workspace ID is visible in any Asana URL — the number after `/0/` or in
-the project URL path. You can also fetch it from the API:
-
-```bash
-curl -H "Authorization: Bearer $ASANA_TOKEN" \
-  https://app.asana.com/api/1.0/workspaces
-```
-
-For this repo the workspace is `[Workspace] Compliance Tasks` with ID
-`1213645083721316`.
-
-### Getting a personal access token
-
-1. Go to https://app.asana.com/0/my-apps
-2. Click **+ Create new token**.
-3. Name it e.g. `hawkeye-sterling-daily-priorities`.
-4. Copy the token (you'll only see it once) and paste it into the GitHub
-   secret `ASANA_TOKEN`.
-
-## Troubleshooting
-
-- **"Missing required env var"** — one of the three required secrets is not
-  set. Check the repo secrets page.
-- **Asana 401** — `ASANA_TOKEN` is wrong, revoked, or missing the scope for
-  your workspace.
-- **Asana 403 on `/projects`** — the token's user is not a member of the
-  workspace, or the `ASANA_TEAM_ID` is from a different workspace.
-- **`no "📌 Today's Priorities" task — skipping`** — the project does not
-  have the pinned task. Create it in Asana (row 1 of the project list) with
-  the exact name including the emoji. Only enable the projects you want.
-- **Anthropic 401** — bad API key.
-- **Anthropic 429 / credit exhausted** — add credit at
-  https://console.anthropic.com/settings/billing.
+All questions about these scripts are directed to the Money Laundering
+Reporting Officer, Luisa Fernanda.

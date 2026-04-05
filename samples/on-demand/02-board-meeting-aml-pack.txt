@@ -1,0 +1,157 @@
+=============================================================================
+HAWKEYE STERLING V2
+BOARD MEETING AML PACK
+For the standing Board meeting scheduled for 15 April 2026
+=============================================================================
+
+Document reference:   HSV2-BOARD-AML-2026-04
+Classification:       Confidential. For Board members only.
+Version:              1.0
+From:                 Luisa Fernanda, Money Laundering Reporting Officer
+To:                   The Board of HAWKEYE STERLING V2
+Issued on:            10 April 2026
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS PACK
+-----------------------------------------------------------------------------
+
+This pack is prepared for the standing Board meeting scheduled for
+15 April 2026 in discharge of my continuing obligation as Money
+Laundering Reporting Officer to keep the Board informed of the
+operation of the firm's AML and CFT programme. It is intended to be
+read ahead of the meeting by every Board member and to serve as the
+basis for any AML and CFT item on the agenda.
+
+It consolidates the first two weekly reports of April 2026, the
+most recent monthly consolidation for March 2026, the current state
+of the recycled gold sanctions track, and a small set of forward-
+looking recommendations that require Board attention.
+
+-----------------------------------------------------------------------------
+2. KEY MESSAGE FOR THE BOARD
+-----------------------------------------------------------------------------
+
+The firm is carrying one materially elevated AML and CFT exposure
+into April 2026. That exposure is the recycled gold sanctions track
+on FG BRANCH, ZOE FZE and MADISON LLC. The track is under active
+management. The MLRO considers that the firm's control framework is
+adequate for the current state of the track, but the Board should
+be aware that, if the match on the FG BRANCH counterparty is later
+confirmed, the firm will be required to file a Funds Freeze Report
+and to freeze the underlying material and proposed settlement. The
+MLRO invites the Board to note this and to endorse the approach.
+
+There are no matters on which the MLRO has been unable to obtain
+the resources or authority she needs to discharge her function as
+at the date of this pack.
+
+-----------------------------------------------------------------------------
+3. FILINGS SUMMARY FOR THE CURRENT PERIOD
+-----------------------------------------------------------------------------
+
+The firm's goAML filing activity for the current period is as
+follows.
+
+Period:                               01 to 10 April 2026
+Suspicious Transaction Reports filed: 1 (to be filed by end of day)
+Suspicious Activity Reports filed:    0
+Dealers in Precious Metals and Stones
+  Reports filed:                      2
+Partial Name Match Reports filed:     1 (on 27 March 2026, carried)
+Funds Freeze Reports filed:           0
+Total filings through goAML:          3 filed plus 1 pending
+
+March 2026 total filings through goAML: 15 (as reported in the March
+2026 monthly consolidation report).
+
+-----------------------------------------------------------------------------
+4. SANCTIONS EXPOSURE
+-----------------------------------------------------------------------------
+
+At the date of this pack the firm holds four open sanctions reviews,
+all of them connected to the recycled gold sanctions track.
+
+The principal file is the FG BRANCH RF-R12 counterparty, on which
+the compliance function has been unable to discharge a 91 percent
+match against the UN Security Council Consolidated List on its own
+record. The underlying settlement of AED 164,000 is suspended and
+the physical material is retained in the branch safe under dual
+control. A Partial Name Match Report has been filed. A Funds Freeze
+Report candidate review has been prepared in draft, conditional on
+confirmation of the match.
+
+The MLRO invites the Board to note the exposure and to endorse the
+following approach:
+
+a. Hold the settlement and the material under dual control until
+   the match is cleared or confirmed.
+b. Escalate to a Funds Freeze Report within the applicable timeline
+   if the match is confirmed.
+c. Treat the FG BRANCH, ZOE FZE and MADISON LLC files as a single
+   cross-entity investigation track with a single lead reviewer.
+
+-----------------------------------------------------------------------------
+5. PROGRAMME HEALTH INDICATORS
+-----------------------------------------------------------------------------
+
+The following short set of indicators is provided for the Board's
+situational awareness.
+
+Active customer population across the six programmes:     3,104
+PEP population under Enhanced Due Diligence:                 14
+Staff with current AML and sanctions training:             41 of 41
+Customer files overdue for CDD refresh at month-end:          0
+Sanctions screening engine uptime in March 2026:        99.97 percent
+Open Suspicious Transaction Report candidate reviews:         1
+Open Partial Name Match Report candidate reviews:             1
+Open Dealers in Precious Metals and Stones Report
+  candidate reviews:                                          1
+
+-----------------------------------------------------------------------------
+6. RECOMMENDATIONS FOR BOARD ACKNOWLEDGEMENT
+-----------------------------------------------------------------------------
+
+The MLRO invites the Board to acknowledge the following five items
+at the meeting. None requires a Board resolution at this stage.
+
+a. The recycled gold sanctions track on FG BRANCH, ZOE FZE and
+   MADISON LLC is material and is under active MLRO management.
+
+b. The MLRO will open a formal review of cash handling controls on
+   the NAPLES LLC programme during April 2026.
+
+c. The firm will refresh its enterprise-wide AML and CFT risk
+   assessment during the second quarter of 2026, with a draft
+   presented to the Board by the end of May 2026.
+
+d. The compliance resources of the firm are adequate for current
+   activity but will be reviewed if the sanctions track escalates
+   into a coordinated investigation across three entities.
+
+e. The MLRO will attend every standing Board meeting during 2026
+   on an open invitation, and will attend ad hoc meetings on
+   request.
+
+-----------------------------------------------------------------------------
+7. DECLARATION OF THE MONEY LAUNDERING REPORTING OFFICER
+-----------------------------------------------------------------------------
+
+I, Luisa Fernanda, in my capacity as Money Laundering Reporting
+Officer of HAWKEYE STERLING V2, confirm that the contents of this
+pack are true and complete to the best of my knowledge and belief
+as at the date of issue, and that I have, during the period covered
+by the pack, discharged my function in accordance with the applicable
+provisions of Federal Decree-Law No. 10 of 2025 and the firm's
+internal AML and CFT programme.
+
+-----------------------------------------------------------------------------
+8. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Issued by:            Luisa Fernanda, Money Laundering Reporting Officer
+Board minute:         __________________________ (to be completed)
+Date of acknowledgement: __________________________
+
+[End of document]

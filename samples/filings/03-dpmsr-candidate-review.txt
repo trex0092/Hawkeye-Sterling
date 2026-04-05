@@ -1,0 +1,234 @@
+=============================================================================
+HAWKEYE STERLING V2
+DEALERS IN PRECIOUS METALS AND STONES REPORT — CANDIDATE REVIEW
+=============================================================================
+
+Document reference:   HSV2-DPMSR-2026-0018
+Classification:       Confidential. For MLRO review only. Draft.
+Version:              1.0
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Prepared on:          05 April 2026, 09:45 Asia/Dubai
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer
+Source file:          MADISON LLC, RF-R05 Jewelry Scrap Aggregation Without CDD
+Asana task GID:       1155285207862239
+Filing channel:       Financial Intelligence Unit through the goAML platform
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. STATUS OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is a draft candidate review of a Dealers in Precious Metals and
+Stones Report. It has been prepared by the compliance function for the
+personal review of the Money Laundering Reporting Officer. It is not a
+filed report and it has no legal effect until the MLRO has confirmed
+that the applicable cash transaction threshold has been reached, signed
+the filing and submitted it through the Financial Intelligence Unit on
+the goAML platform.
+
+-----------------------------------------------------------------------------
+2. REPORTING ENTITY
+-----------------------------------------------------------------------------
+
+Reporting entity:       HAWKEYE STERLING V2, MADISON LLC programme
+Sector:                 Dealer in Precious Metals and Stones
+Classification:         Designated Non-Financial Business and Profession
+Supervisor:             Ministry of Economy
+MLRO:                   Luisa Fernanda
+
+-----------------------------------------------------------------------------
+3. SUBJECT PERSON
+-----------------------------------------------------------------------------
+
+Full legal name:        Noor Suleiman Al Barghouti
+Date of birth:          11 March 1975
+Nationality:            United Arab Emirates
+Identification type:    UAE Emirates ID
+Identification number:  784-1975-XXXXXXX-X (full value on customer file)
+Residential address:    Al Nahda 2, Sharjah (as recorded at onboarding)
+Occupation declared:    Jewellery retailer, independent
+Relationship with firm: Recurring customer since 11 March 2026
+Customer risk rating at time of each transaction: Medium
+Customer risk rating after this review: High
+
+-----------------------------------------------------------------------------
+4. AGGREGATED LINKED CASH TRANSACTIONS
+-----------------------------------------------------------------------------
+
+The compliance function has aggregated the following cash purchases of
+jewellery scrap from the subject person during the rolling 30 day
+window ending 04 April 2026. All three transactions occurred at the
+MADISON LLC Sharjah branch. All three were handled by the same
+cashier.
+
+Transaction 1.
+Date and time:      11 March 2026, 12:14 Asia/Dubai
+Product:            Jewellery scrap, mixed karat, stated weight 640 grams
+Consideration:      AED 18,500 (eighteen thousand five hundred UAE dirhams)
+Payment method:     Cash
+
+Transaction 2.
+Date and time:      19 March 2026, 15:47 Asia/Dubai
+Product:            Jewellery scrap, 18 carat, stated weight 710 grams
+Consideration:      AED 21,200 (twenty one thousand two hundred UAE dirhams)
+Payment method:     Cash
+
+Transaction 3.
+Date and time:      02 April 2026, 10:31 Asia/Dubai
+Product:            Jewellery scrap, mixed karat, stated weight 830 grams
+Consideration:      AED 24,300 (twenty four thousand three hundred UAE dirhams)
+Payment method:     Cash
+
+Aggregate cash consideration in the rolling 30 day window ending
+04 April 2026:    AED 64,000 (sixty four thousand UAE dirhams)
+
+The three transactions are treated as linked by the compliance function
+on the basis of the common customer identity, the common branch, the
+common product category and the cadence of the transactions. In our
+internal procedure linked transactions are aggregated for the purpose
+of assessing whether the DPMSR filing trigger has been reached.
+
+-----------------------------------------------------------------------------
+5. CUSTOMER DUE DILIGENCE STATUS
+-----------------------------------------------------------------------------
+
+A full Customer Due Diligence file was opened for the subject person
+at the first transaction on 11 March 2026. The file contains a copy of
+the Emirates ID, the declared occupation, a declared source of funds,
+a signed customer declaration and a standard CDD questionnaire.
+
+Enhanced Due Diligence has not been applied to date because no single
+transaction reached the firm's internal Enhanced Due Diligence trigger.
+The compliance function notes that, on a linked-transaction view, the
+aggregate now sits above our internal monitoring threshold, and
+recommends to the MLRO that Enhanced Due Diligence be applied to the
+subject person's file with immediate effect, regardless of the filing
+decision on this draft.
+
+-----------------------------------------------------------------------------
+6. BASIS FOR THE REPORT
+-----------------------------------------------------------------------------
+
+This candidate review is prepared on the basis of the positive
+reporting obligation that applies to Dealers in Precious Metals and
+Stones in respect of cash purchases, or linked series of cash
+purchases, at or above the cash transaction threshold specified by
+the DPMSR framework applicable to the firm.
+
+The compliance function has not formed a suspicion of money laundering
+against the subject person. This draft does not rely on any suspicion
+and should not be confused with a Suspicious Transaction Report. The
+purpose of this draft is to ensure the firm's positive reporting
+obligation is discharged in a timely manner if the MLRO confirms that
+the aggregate cash consideration of AED 64,000 in the rolling 30 day
+window reaches the cash transaction threshold that applies to the
+firm.
+
+The compliance function is aware that the cash transaction threshold
+applicable to the firm has not been verbatim confirmed to it and
+therefore expressly asks the MLRO to verify the threshold before
+filing. If the threshold has not been reached on the MLRO's
+determination, this draft should be closed without filing and the
+customer relationship should be maintained on the firm's ongoing
+monitoring list.
+
+-----------------------------------------------------------------------------
+7. ACTIONS TAKEN TO DATE
+-----------------------------------------------------------------------------
+
+The compliance function flagged the aggregation pattern on the
+completion of transaction 3. The subject person has not been informed
+of the flag. Transaction 3 was settled in full at the time, before
+the aggregation was performed. The firm is therefore carrying the
+subject person as an active customer on ordinary monitoring.
+
+The compliance function has placed a monitoring note on the customer
+file to the effect that the next three cash transactions from the
+subject person, regardless of size, are to be escalated to the
+compliance function at the time of settlement.
+
+-----------------------------------------------------------------------------
+8. RECORDS RETAINED
+-----------------------------------------------------------------------------
+
+Customer Due Diligence file for the subject person, opened 11 March 2026.
+Three branch till receipts dated 11, 19 March and 02 April 2026.
+Three physical movement tickets matching the till receipts.
+Branch CCTV footage covering the three visits.
+Asana task RF-R05 full comment history.
+
+All items retained for the minimum 10 year period required by the
+applicable provision of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+9. REGULATORY BASIS
+-----------------------------------------------------------------------------
+
+This candidate review is prepared on the basis of the applicable
+provision of Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering
+and Countering the Financing of Terrorism and Financing of Illegal
+Organisations, together with the cash transaction threshold specified
+by the DPMSR framework applicable to the firm, which the MLRO is asked
+to verify before filing. The filing channel is the Financial
+Intelligence Unit through the goAML platform.
+
+-----------------------------------------------------------------------------
+10. PROPOSED NEXT STEPS
+-----------------------------------------------------------------------------
+
+The compliance function recommends that the MLRO take the following
+steps in sequence.
+
+Step 1. Verify the cash transaction threshold that currently applies
+to the firm's Dealers in Precious Metals and Stones Report filing
+obligation.
+
+Step 2. Apply the verified threshold to the aggregate cash
+consideration of AED 64,000 in the rolling 30 day window set out at
+section 4.
+
+Step 3. If the threshold has been reached, approve and file the
+Dealers in Precious Metals and Stones Report through the Financial
+Intelligence Unit on the goAML platform in the MLRO's own name. If
+the threshold has not been reached, close this draft and retain it
+on the customer file as evidence that the aggregation was performed
+and considered.
+
+Step 4. In both cases, apply Enhanced Due Diligence to the customer
+file with immediate effect.
+
+-----------------------------------------------------------------------------
+11. LIMITATIONS OF THIS DRAFT
+-----------------------------------------------------------------------------
+
+This draft relies on the transaction records held by the firm at
+17:00 on 04 April 2026 and does not reflect any transactions recorded
+after that time. The compliance function has not formed a suspicion
+against the subject person and the absence of suspicion in this draft
+should not be taken as a positive assurance that no grounds for
+suspicion exist.
+
+-----------------------------------------------------------------------------
+12. QUALITY ASSURANCE STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that the three transactions in
+section 4 are recorded on the firm's point of sale system at the
+dates and times shown, that the cash nature of each transaction is
+supported by the corresponding till receipts held on file, and that
+the aggregation method applied is the method set out in the firm's
+internal procedure on linked transaction aggregation.
+
+-----------------------------------------------------------------------------
+13. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, HAWKEYE STERLING V2
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval and filing decision]
+Filing status: Draft. Not filed.
+
+For review and decision by the MLRO, Luisa Fernanda.
+
+[End of document]

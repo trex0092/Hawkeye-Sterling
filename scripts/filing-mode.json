@@ -1,0 +1,8 @@
+{
+  "STR": "manual",
+  "SAR": "manual",
+  "DPMSR": "manual",
+  "PNMR": "manual",
+  "FFR": "manual",
+  "_comment": "Each filing type may be set to 'manual' or 'automatic'. Manual: detection flags candidates but no draft is generated until the MLRO adds the tag hsv2:draft-now to the Asana task. Automatic: a draft is generated on every detection. The MLRO is in charge of all filings and no draft is ever submitted to goAML by the automation; this file controls only whether the draft narrative is generated."
+}

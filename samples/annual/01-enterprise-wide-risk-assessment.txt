@@ -1,0 +1,279 @@
+=============================================================================
+HAWKEYE STERLING V2
+ANNUAL ENTERPRISE-WIDE AML AND CFT RISK ASSESSMENT — DRAFT
+Year ending 31 December 2025
+=============================================================================
+
+Document reference:   HSV2-EWRA-2025
+Classification:       Confidential. For Senior Management and the Board.
+Version:              1.0 (draft for MLRO review)
+Prepared by:          Compliance function, HAWKEYE STERLING V2
+Addressee:            Luisa Fernanda, Money Laundering Reporting Officer,
+                      for review and onward presentation to Senior
+                      Management and the Board.
+Drafted on:           15 January 2026
+Coverage period:      01 January 2025 to 31 December 2025 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This is the draft annual enterprise-wide risk assessment of HAWKEYE
+STERLING V2 for the calendar year 2025. It is prepared in discharge
+of the firm's obligation under the applicable provisions of Federal
+Decree-Law No. 10 of 2025 to maintain a documented risk assessment
+covering the full scope of the firm's Money Laundering and Terrorism
+Financing risk. The document is intended to be read, amended and
+signed off by the Money Laundering Reporting Officer, Luisa Fernanda,
+and subsequently presented to Senior Management and to the Board for
+acknowledgement.
+
+The risk assessment covers five risk pillars. For each pillar the
+document sets out the relevant facts about the firm, the residual
+risk rating assigned by the compliance function on a scale from low
+to high, the principal controls in place, and the compliance
+function's conclusions. The MLRO is invited to amend the risk ratings
+where her professional judgement differs from the compliance
+function.
+
+-----------------------------------------------------------------------------
+2. BUSINESS OVERVIEW
+-----------------------------------------------------------------------------
+
+HAWKEYE STERLING V2 is a UAE-licensed Dealer in Precious Metals and
+Stones and is classified as a Designated Non-Financial Business and
+Profession. The firm's supervisory authority for the purposes of
+Anti-Money Laundering and Countering the Financing of Terrorism is
+the Ministry of Economy. The firm operates six active compliance
+programmes across six legally distinct entities (FG BRANCH, FG LLC,
+GRAMALTIN AS, MADISON LLC, NAPLES LLC and ZOE FZE) and a seventh
+programme devoted to screening (SCREENINGS). The firm holds physical
+branches in Dubai, Sharjah, Abu Dhabi and Ras Al Khaimah.
+
+The firm's product and service offering consists of the buying and
+selling of gold in the forms of bullion, jewellery scrap, old gold
+and inherited gold, alongside recycled and refined material. The
+firm does not currently offer custody services, safe deposit boxes,
+loans against precious metals, or investment products, and this
+assessment assumes that these product lines remain out of scope for
+the period covered.
+
+-----------------------------------------------------------------------------
+3. PILLAR 1 — CUSTOMER RISK
+-----------------------------------------------------------------------------
+
+The firm's customer population during 2025 consisted of approximately
+3,100 unique customer files across the six programmes. Of these, 14
+are classified as Politically Exposed Persons and are under Enhanced
+Due Diligence. A further 87 customers are classified as medium to
+high risk on the basis of their activity patterns, jurisdiction of
+residence or source of funds. The balance of the population is
+classified as standard risk.
+
+The compliance function considers customer risk to be materially
+driven by the recurring walk-in population on the recycled gold
+business lines, where source-of-material evidence is sometimes weak
+and where linked-transaction aggregation has materialised in
+Dealers in Precious Metals and Stones Reports in multiple months of
+the year.
+
+Residual customer risk rating: medium to high.
+
+Principal controls in place: Customer Due Diligence at onboarding,
+Enhanced Due Diligence for all PEPs and all customers on the
+internal high-risk pathway, documented source of funds and source
+of wealth for all customers above the firm's internal threshold,
+linked transaction aggregation on a rolling 30 day window, and a
+watch list of individuals who have failed or refused CDD in the
+past.
+
+-----------------------------------------------------------------------------
+4. PILLAR 2 — PRODUCT AND SERVICE RISK
+-----------------------------------------------------------------------------
+
+The firm's exposure is concentrated in the recycled gold and
+jewellery scrap product lines. These product lines account for
+approximately 62 percent of the firm's transaction volume by count
+and approximately 48 percent by value during the year. The compliance
+function regards these product lines as the highest risk within the
+firm's current offering on the basis of published sector typologies
+for Dealers in Precious Metals and Stones and on the basis of the
+firm's own filing history during 2025.
+
+Bullion and refined-material product lines are lower risk as the
+material is typically acquired through approved refiners and the
+source-of-material evidence is stronger.
+
+Residual product and service risk rating: medium to high.
+
+Principal controls in place: acceptance criteria for recycled gold
+material, internal approved refiner list, secondary assay on flagged
+batches, physical dual control in all branch safes, and a formal
+escalation path from branch cashier to branch compliance officer to
+the compliance function.
+
+-----------------------------------------------------------------------------
+5. PILLAR 3 — GEOGRAPHIC RISK
+-----------------------------------------------------------------------------
+
+The firm's branches are located inside the United Arab Emirates,
+which is the firm's primary jurisdiction. Cross-border exposure
+arises where recycled gold material is evidenced by refiner
+certificates originating outside the United Arab Emirates. During
+2025 the firm recorded 41 transactions with a stated cross-border
+refiner origin. Of these, 9 were from jurisdictions the compliance
+function classifies as higher risk for conflict or recycled gold
+sourcing.
+
+The compliance function regards cross-border risk as a secondary but
+growing exposure for the firm.
+
+Residual geographic risk rating: medium.
+
+Principal controls in place: refusal to accept material without a
+verifiable origin, refiner verification against the firm's internal
+approved refiner list, rejection of jurisdictions on the firm's
+internal high-risk country list, and sanctions screening at the
+transaction level against the UN Security Council Consolidated
+List and the UAE Local Terrorist List.
+
+-----------------------------------------------------------------------------
+6. PILLAR 4 — DELIVERY CHANNEL RISK
+-----------------------------------------------------------------------------
+
+The firm does not offer remote onboarding. All customer relationships
+are opened face to face at a branch. The firm's principal delivery
+channel is the in-branch, walk-in and recurring-customer channel.
+The firm does not currently process any transaction online, by
+courier, or through intermediaries.
+
+The compliance function regards delivery channel risk as low on the
+basis of the exclusively in-branch model. The principal residual
+risk in this pillar is the recurring walk-in customer, who can
+attempt to defeat linked transaction aggregation by visiting different
+branches on different days. This risk is mitigated by the firm's
+enterprise-wide customer record.
+
+Residual delivery channel risk rating: low to medium.
+
+Principal controls in place: in-branch identification at every
+transaction, shared enterprise-wide customer record, linked
+transaction aggregation across branches, and an internal watch list
+maintained across the six programmes.
+
+-----------------------------------------------------------------------------
+7. PILLAR 5 — TYPOLOGY EXPOSURE
+-----------------------------------------------------------------------------
+
+During 2025 the firm filed 148 reports through the Financial
+Intelligence Unit on the goAML platform (133 Dealers in Precious
+Metals and Stones Reports, 9 Suspicious Transaction Reports, 3
+Suspicious Activity Reports and 3 Partial Name Match Reports). The
+filings distribute across the firm's typology catalogue in the
+following way.
+
+Linked cash transaction aggregation: 133 filings, all Dealers in
+Precious Metals and Stones Reports.
+
+Recycled gold sourcing and certification: 6 Suspicious Transaction
+Reports and 2 Partial Name Match Reports.
+
+Cross-border smuggling indicators: 2 Suspicious Transaction Reports
+and 1 Partial Name Match Report.
+
+Attempted onboarding without Customer Due Diligence: 3 Suspicious
+Activity Reports.
+
+Sanctions nexus: 0 Funds Freeze Reports. No match against either
+list has been confirmed during the year.
+
+The compliance function regards the recycled gold sourcing typology
+as the firm's most material typology exposure for 2025. The compliance
+function also regards the first quarter of 2026 as showing early
+signs of a coordinated recycled gold sanctions exposure, which
+warrants elevated attention during the period in which this risk
+assessment will be in force.
+
+Residual typology exposure rating: medium to high.
+
+Principal controls in place: the firm's internal typology catalogue,
+the weekly pattern report, the cross-entity counterparty register,
+the MLRO's personal review of every filing, and the annual training
+programme.
+
+-----------------------------------------------------------------------------
+8. OVERALL RESIDUAL RISK
+-----------------------------------------------------------------------------
+
+Taking the five pillars together, the compliance function assesses
+the overall residual AML and CFT risk of HAWKEYE STERLING V2 for the
+year 2025 as medium to high. The principal drivers of this rating
+are the customer risk and the product and service risk, both of
+which reflect the recycled gold and jewellery scrap business lines.
+The compliance function considers that the firm's existing control
+framework is adequate at current activity levels but notes that the
+recycled gold sanctions track in early 2026 has the potential to
+change the rating materially if it escalates into a confirmed match.
+
+-----------------------------------------------------------------------------
+9. PROPOSED ACTIONS ARISING FROM THIS ASSESSMENT
+-----------------------------------------------------------------------------
+
+The compliance function recommends the following eight actions arising
+from this assessment, for the MLRO's consideration and, on her
+approval, for submission to Senior Management.
+
+a. Strengthen the acceptance criteria for recycled gold material to
+   require a verifiable origin certificate from an approved refiner
+   for every batch above an internal threshold.
+
+b. Review the internal approved refiner list quarterly rather than
+   annually, starting in the second quarter of 2026.
+
+c. Open a formal review of cash handling controls on the NAPLES LLC
+   programme in the first half of April 2026.
+
+d. Introduce a dedicated cross-entity counterparty file for any
+   counterparty that appears on the compliance records of two or
+   more entities in the same rolling 30 day window.
+
+e. Refresh the firm's internal typology catalogue during the second
+   quarter of 2026 to reflect the recycled gold sanctions track and
+   any related typologies observed during the year.
+
+f. Refresh the annual sanctions training module to include a worked
+   example drawn from the March 2026 Partial Name Match activity,
+   once the file is closed and the facts are stable.
+
+g. Review the firm's resourcing of the compliance function in light
+   of the expected workload from the recycled gold sanctions track.
+
+h. Present this risk assessment to the Board at the next standing
+   meeting with a specific request that the Board formally
+   acknowledge the recycled gold sanctions track as an agenda item.
+
+-----------------------------------------------------------------------------
+10. LIMITATIONS OF THIS ASSESSMENT
+-----------------------------------------------------------------------------
+
+This assessment covers the calendar year 2025 and the opening weeks
+of 2026. It reflects the activity recorded on the firm's internal
+systems and the typology catalogue maintained by the compliance
+function. It does not reflect any non-public intelligence received
+from supervisory authorities after the date of drafting and should
+be re-read if and when new supervisory guidance is published.
+
+-----------------------------------------------------------------------------
+11. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:       Compliance function, HAWKEYE STERLING V2
+Reviewed by:       [awaiting MLRO review]
+Approved by:       [awaiting MLRO approval]
+Noted by Board on: __________________________ (Board minute reference)
+
+For review by the MLRO, Luisa Fernanda.
+
+[End of document]

@@ -1,20 +1,16 @@
-name: Daily Asana Priorities
+name: Daily Completion Retro
 
-# Runs the daily-priorities script that asks Claude to pick the top 10 tasks
-# in every Asana project and posts the list as a comment on a pinned
-# "📌 Today's Priorities" task inside each project.
-#
-# Also archives every generated artefact under history/daily/YYYY-MM-DD/
-# and commits the archive back to main so the 10-year retention
-# obligation under Federal Decree-Law No. 10 of 2025 is satisfied by the
-# repository's own history.
-#
-# Schedule: every weekday (Mon–Fri) at 09:00 Asia/Dubai (05:00 UTC).
-# Can also be triggered manually from the Actions tab with a Dry Run option.
+# Runs every weekday at 17:00 Asia/Dubai (13:00 UTC). Compares today's
+# Asana completion activity against the morning priority archive written
+# by the daily-priorities workflow, asks Claude for a formal completion
+# retro in the HSV2 register, posts the retro to the pinned Today's
+# Priorities task inside the SCREENINGS project, and archives the retro
+# to history/retro/YYYY-MM-DD.txt for the 10-year retention obligation
+# under Federal Decree-Law No. 10 of 2025.
 
 on:
   schedule:
-    - cron: "0 5 * * 1-5"
+    - cron: "0 13 * * 1-5"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -27,7 +23,7 @@ on:
           - "true"
 
 concurrency:
-  group: daily-priorities
+  group: daily-retro
   cancel-in-progress: false
 
 permissions:
@@ -35,7 +31,7 @@ permissions:
 
 jobs:
   run:
-    name: Prioritize and comment
+    name: Daily completion retro
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -57,7 +53,7 @@ jobs:
         working-directory: scripts
         run: npm install --omit=dev
 
-      - name: Run daily priorities
+      - name: Run daily retro
         working-directory: scripts
         env:
           ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
@@ -71,7 +67,7 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           GMAIL_TO: ${{ secrets.GMAIL_TO }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-        run: node daily-priorities.mjs
+        run: node daily-retro.mjs
 
       - name: Commit history archive
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -80,7 +76,7 @@ jobs:
           git config user.email "automation@hawkeye-sterling.local"
           if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
             git add history/
-            git commit -m "Daily compliance archive: $(date -u +%Y-%m-%d)"
+            git commit -m "Daily retro archive: $(date -u +%Y-%m-%d)"
             git push origin main
           else
             echo "No new history files to commit."
