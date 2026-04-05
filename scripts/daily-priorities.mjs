@@ -22,12 +22,12 @@ const {
   ANTHROPIC_API_KEY,
   ASANA_WORKSPACE_ID,
   ASANA_TEAM_ID, // optional — scopes the project list to a single team
-  CLAUDE_MODEL = "claude-sonnet-4-5",
+  CLAUDE_MODEL = "claude-haiku-4-5",
   PINNED_TASK_NAME = "📌 Today's Priorities",
   DRY_RUN = "false", // set to "true" to skip posting comments
-  MAX_TASKS_PER_PROJECT = "150", // cap sent to Claude; otherwise prompts get huge
-  NOTES_SNIPPET_LENGTH = "150",
-  PROJECT_DELAY_MS = "2000", // pause between projects to avoid rate limits
+  MAX_TASKS_PER_PROJECT = "75", // cap sent to Claude; keeps prompts under Tier-1 rate limits
+  NOTES_SNIPPET_LENGTH = "80",
+  PROJECT_DELAY_MS = "30000", // 30s between projects — Tier-1 is 30k input tokens/minute
 } = process.env;
 
 const maxTasksPerProject = Number.parseInt(MAX_TASKS_PER_PROJECT, 10);
@@ -177,9 +177,10 @@ async function prioritize(projectName, tasks) {
   const prompt = buildPrompt(projectName, tasks);
   console.log(`      prompt size: ~${(prompt.length / 1024).toFixed(1)} KB`);
 
-  // Up to 3 attempts for transient network / rate-limit errors.
+  // Up to 4 attempts. On 429, honor the Retry-After header (or fall back
+  // to a linear backoff) so Tier-1 token-per-minute limits don't kill us.
   let lastErr;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const msg = await anthropic.messages.create({
         model: CLAUDE_MODEL,
@@ -200,11 +201,23 @@ async function prioritize(projectName, tasks) {
       const status = err?.status ?? err?.response?.status;
       const detail = err?.error?.message ?? err?.message ?? String(err);
       console.warn(
-        `      attempt ${attempt}/3 failed: ${detail}${status ? ` (status ${status})` : ""}`,
+        `      attempt ${attempt}/4 failed: ${detail}${status ? ` (status ${status})` : ""}`,
       );
-      // Don't retry auth/bad-request errors; they won't resolve themselves.
+      // 4xx other than 429 are permanent — don't retry.
       if (status && status >= 400 && status < 500 && status !== 429) break;
-      if (attempt < 3) await sleep(2000 * attempt);
+      if (attempt >= 4) break;
+
+      // Prefer the server-supplied Retry-After header (seconds).
+      const retryAfterHeader =
+        err?.headers?.["retry-after"] ??
+        err?.response?.headers?.get?.("retry-after");
+      const retryAfterSec = Number.parseInt(retryAfterHeader, 10);
+      const waitMs =
+        Number.isFinite(retryAfterSec) && retryAfterSec > 0
+          ? retryAfterSec * 1000 + 1000
+          : 30000 * attempt; // 30s, 60s, 90s
+      console.warn(`      retrying in ${Math.round(waitMs / 1000)}s…`);
+      await sleep(waitMs);
     }
   }
   throw lastErr;
