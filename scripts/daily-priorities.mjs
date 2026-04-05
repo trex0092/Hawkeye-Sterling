@@ -22,6 +22,18 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { notify } from "./notify.mjs";
+import {
+  SYSTEM_PROMPT,
+  STYLE_REMINDER,
+  CONFIRMED_REFERENCES,
+  ARTEFACT_PREFIXES,
+  validateOutput,
+} from "./regulatory-context.mjs";
+import {
+  isoDate,
+  writeDailyPerProject,
+  writeDailyPortfolio,
+} from "./history-writer.mjs";
 
 const {
   ASANA_TOKEN,
@@ -54,6 +66,14 @@ for (const [name, value] of Object.entries(REQUIRED)) {
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 const isDryRun = DRY_RUN === "true";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Short project slug for document references (first 3 alphanumerics). */
+function slugifyShort(input) {
+  return String(input)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 6);
+}
 
 /* ─── Asana client ──────────────────────────────────────────────────────── */
 
@@ -186,15 +206,15 @@ function formatAtRiskSection(tasks) {
 
 /* ─── Claude prompting ──────────────────────────────────────────────────── */
 
-function buildDailyPrompt(projectName, tasks) {
+function buildDailyPrompt(projectName, tasks, stats) {
   const lines = tasks.map((t, i) => {
     const parts = [`${i + 1}. ${t.name}`];
     parts.push(`id:${t.gid}`);
     if (t.due_on || t.due_at) {
       const due = t.due_on || t.due_at.slice(0, 10);
-      parts.push(`due:${due}${isAtRisk(t) ? "⚠️" : ""}`);
+      parts.push(`due:${due}${isAtRisk(t) ? " (AT RISK)" : ""}`);
     }
-    if (t.assignee?.name) parts.push(`@${t.assignee.name}`);
+    if (t.assignee?.name) parts.push(`assignee:${t.assignee.name}`);
     if (t.notes) {
       const snippet = t.notes.replace(/\s+/g, " ").slice(0, notesSnippetLength);
       parts.push(`notes: ${snippet}`);
@@ -202,62 +222,73 @@ function buildDailyPrompt(projectName, tasks) {
     return parts.join(" — ");
   });
 
-  return `You are a compliance program prioritization assistant for HAWKEYE STERLING V2.
+  return `TASK. You are drafting the analytical body of the Daily Compliance Priorities memo for the Asana project "${projectName}" within the HAWKEYE STERLING V2 programme. The document control block, the purpose note, the at-risk section and the sign-off block are generated programmatically and appended to your response. You are responsible for sections 3 and 4 only, using the exact labels and format below.
 
-Below is a curated list of incomplete tasks from the Asana project "${projectName}". These are AML/KYC risk typologies, red-flag reviews, and compliance monitoring items.
+CONTEXT NUMBERS (use these verbatim where referenced):
+- Total open tasks in the programme today: ${stats.totalOpen}
+- Candidate tasks reviewed in detail: ${stats.candidates}
+- Tasks currently at risk (overdue or due within ${atRiskDays} days): ${stats.atRiskCount}
 
-Pick the TOP 10 tasks to work on TODAY, ranked highest to lowest priority.
-
-Ranking criteria, in order of importance:
-1. Items marked ⚠️ (overdue or due within ${atRiskDays} days) — always rank first
-2. Regulatory severity (sanctions, PEPs, cross-border, high-risk jurisdictions)
-3. Investigation dependencies (items that unblock others)
-4. Quick wins where the effort is clearly small
-5. Freshness (newer items before long-stalled ones)
-
-Return ONLY a numbered list (1 to 10) in this exact format, nothing else, no preamble, no headers, no markdown:
-
-1. [Task name] — [one-sentence reason] [id:GID]
-2. [Task name] — [one-sentence reason] [id:GID]
-...
-
-ALWAYS include the [id:GID] at the end of each line — copy the GID from the input list verbatim.
-
-If fewer than 10 tasks exist, return only what is available.
+INPUT. Below is the curated candidate list. Each line shows the task, a stable id, an optional due date, an optional assignee and a truncated notes snippet.
 
 === PROJECT TASKS ===
-${lines.join("\n")}`;
+${lines.join("\n")}
+
+OUTPUT FORMAT. Emit the two sections below and nothing else. Do not repeat the document control block. Do not repeat the at-risk section. Do not add a sign-off line. Use ALL CAPS section labels followed by a blank line, then continuous prose where the content justifies prose, and a numbered list for the ten items in section 3.
+
+3. TOP TEN ITEMS FOR TODAY
+
+For each of the top ten items, write one numbered paragraph with:
+- the task name verbatim as it appears in the input,
+- a risk score from 0 to 100 on the compliance function's internal scale (90-100 immediate regulatory risk, 70-89 high risk, 50-69 moderate, 30-49 routine, 0-29 informational),
+- two to four sentences of analysis in the formal UAE compliance register explaining the basis for the score and the specific regulatory hook if any,
+- a single imperative next action on its own sentence at the end of the paragraph,
+- the GID in square brackets at the very end of the paragraph in the form [id:GID], copied verbatim from the input.
+
+Example of the expected shape (not the content):
+
+Item 1. [Task name verbatim]. Risk score 94. Two to four sentences of analysis. Single imperative next action. [id:1234567890]
+
+Return between three and ten items depending on how many are present in the input. If the input has fewer than three substantive items, return only what is substantive and explain in one sentence why the list is short.
+
+4. RECOMMENDED DECISIONS FOR THE MLRO TODAY
+
+Two to four short paragraphs identifying specific decisions the compliance function is asking the MLRO to take today. Each decision should reference the item number from section 3 that it concerns. End each paragraph with a single imperative sentence.
+
+${STYLE_REMINDER}`;
 }
 
 function buildPortfolioPrompt(perProjectResults) {
   const blocks = perProjectResults.map(({ projectName, priorities }) => {
-    return `### ${projectName}\n${priorities}`;
+    return `ENTITY: ${projectName}\n${priorities}`;
   });
 
-  return `You are a compliance portfolio analyst for HAWKEYE STERLING V2.
+  return `TASK. You are drafting the analytical body of the Daily Portfolio Digest for ${CONFIRMED_REFERENCES.entity.legalName}. The document control block at the top and the sign-off block at the bottom are generated programmatically and appended to your response. You are responsible for sections 1 to 4 below, using the exact labels and order.
 
-Below are today's top-10 priority lists from each compliance programme entity. Each list was generated independently by project.
+INPUT. Below are the per-entity top-ten lists produced earlier today by the compliance function, already in the formal register. Your job is to synthesise them into a single cross-entity view for the attention of the MLRO.
 
-Your job:
-1. Pick the TOP 5 tasks across the ENTIRE portfolio that deserve attention first today, regardless of which entity they belong to.
-2. Identify any CROSS-ENTITY PATTERNS — if two or more entities have similar typologies or share a counterparty, call it out.
-3. Keep it short. Compliance officers read this on their phone.
+=== PER-ENTITY TOP TEN LISTS ===
+${blocks.join("\n\n")}
 
-Return in this exact format, no markdown headers:
+OUTPUT FORMAT. Emit the four sections below and nothing else. Do not repeat the document control block. Do not add a sign-off. Use ALL CAPS section labels on their own line followed by a blank line, then continuous prose.
 
-TOP 5 PORTFOLIO PRIORITIES
-1. [Entity] — [Task name] — [one-sentence reason]
-2. ...
-3. ...
-4. ...
-5. ...
+1. HEADLINE FOR TODAY
 
-CROSS-ENTITY PATTERNS
-• [one-line pattern if any; otherwise "None detected today."]
-• [additional patterns if any]
+Two to three short sentences summarising the single most important risk theme across the portfolio today, and what the compliance function is asking the MLRO to do about it first.
 
-=== PER-ENTITY TOP 10 ===
-${blocks.join("\n\n")}`;
+2. THE FIVE PORTFOLIO PRIORITIES FOR TODAY
+
+Five numbered paragraphs. Each paragraph names the entity, names the task, and explains in two to three sentences why the item deserves to appear in the portfolio top five, including any specific regulatory hook such as a sanctions nexus, a DPMSR trigger, a possible STR or SAR candidacy, or a PEP consideration.
+
+3. CROSS-ENTITY PATTERNS OBSERVED TODAY
+
+One to three short paragraphs describing patterns visible across two or more entities. A pattern may be a typology, a counterparty overlap, a jurisdiction concentration or a control-breakdown signal. If no cross-entity pattern is visible on today's data, state that explicitly in one sentence and move on.
+
+4. RECOMMENDED ACTIONS FOR THE MLRO
+
+Two to four short paragraphs listing the specific decisions the compliance function is asking the MLRO to take during the course of today. Each paragraph ends with a single imperative sentence.
+
+${STYLE_REMINDER}`;
 }
 
 async function callClaude(prompt, label) {
@@ -268,7 +299,8 @@ async function callClaude(prompt, label) {
     try {
       const msg = await anthropic.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 2000,
+        max_tokens: 3000,
+        system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: prompt }],
       });
 
@@ -279,6 +311,24 @@ async function callClaude(prompt, label) {
         .trim();
 
       if (!text) throw new Error("Claude returned an empty response");
+
+      // Validate the response against the 0% AI-tells rules. Rejections are
+      // treated as a transient failure and retried on the same prompt, which
+      // usually clears the issue because the model regenerates.
+      const check = validateOutput(text);
+      if (!check.ok) {
+        console.warn(
+          `      attempt ${attempt}/4 produced a response that failed style validation:`,
+        );
+        for (const p of check.problems) console.warn(`        - ${p}`);
+        if (attempt < 4) {
+          await sleep(2000);
+          continue;
+        }
+        // On the last attempt, accept the response anyway rather than fail
+        // the whole run. The problems will be visible in the log for the
+        // MLRO to act on.
+      }
       return text;
     } catch (err) {
       lastErr = err;
@@ -325,19 +375,128 @@ function linkifyPriorities(claudeOutput, tasks) {
     .join("\n");
 }
 
-function buildDailyComment({ today, atRiskSection, linkedPriorities }) {
-  return `🤖 Daily priorities — ${today}
+/**
+ * Assemble the full formal Daily Compliance Priorities document for one
+ * project. Sections 1, 2 and 5 are generated programmatically so the
+ * document always has the correct document control block, the correct
+ * at-risk section populated from real data, and the correct MLRO sign-off
+ * line. Sections 3 and 4 are filled in by the Claude call, which returns
+ * the analytical body only and never the scaffolding.
+ */
+function buildDailyDocument({
+  today,
+  projectName,
+  referenceId,
+  stats,
+  atRiskTasks,
+  linkedClaudeBody,
+}) {
+  const entity = CONFIRMED_REFERENCES.entity;
+  const mlro = CONFIRMED_REFERENCES.mlro;
+  const retentionYears = CONFIRMED_REFERENCES.recordRetention.years;
+  const primaryLaw = CONFIRMED_REFERENCES.primaryLaw.title;
 
-${atRiskSection}TOP 10 FOR TODAY
-${linkedPriorities}`;
+  const atRiskBlock = atRiskTasks.length === 0
+    ? `No tasks in this programme are currently overdue or due within the next ${atRiskDays} business days.\n`
+    : atRiskTasks
+        .sort((a, b) => (a.due_on || a.due_at || "").localeCompare(b.due_on || b.due_at || ""))
+        .slice(0, 10)
+        .map((t) => {
+          const due = t.due_on || (t.due_at ? t.due_at.slice(0, 10) : "unspecified");
+          const overdue = Date.parse(`${due}T23:59:59Z`) < Date.now() ? ", overdue" : "";
+          const link = t.permalink_url ? `\n   ${t.permalink_url}` : "";
+          return `- ${t.name}, due ${due}${overdue}.${link}`;
+        })
+        .join("\n");
+
+  return `=============================================================================
+${entity.legalName.toUpperCase()}
+DAILY COMPLIANCE PRIORITIES
+${projectName.toUpperCase()}
+=============================================================================
+
+Document reference:   ${referenceId}
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, ${entity.legalName}
+Prepared on:          ${today}, 09:00 Asia/Dubai
+Addressee:            ${mlro.name}, ${mlro.title}
+Retention period:     ${retentionYears} years, in accordance with the applicable provision
+                      of ${primaryLaw.split(" on ")[0]}.
+
+-----------------------------------------------------------------------------
+1. PURPOSE OF THIS NOTE
+-----------------------------------------------------------------------------
+
+This note sets out the compliance items in the ${projectName} programme that,
+in the view of the compliance function, warrant the MLRO's attention today.
+The selection is drawn from ${stats.totalOpen} open tasks on the programme
+and ${stats.candidates} candidate tasks reviewed in detail. ${stats.atRiskCount === 0
+  ? "No task is currently at risk on the basis of its due date."
+  : `${stats.atRiskCount} task${stats.atRiskCount === 1 ? " is" : "s are"} currently at risk on the basis of the due date or the lack thereof.`}
+
+-----------------------------------------------------------------------------
+2. ITEMS AT RISK TODAY
+-----------------------------------------------------------------------------
+
+${atRiskBlock}
+
+-----------------------------------------------------------------------------
+${linkedClaudeBody}
+
+-----------------------------------------------------------------------------
+5. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, ${entity.legalName}
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, ${mlro.name}.
+
+[End of document]`;
 }
 
-function buildPortfolioComment({ today, digest, successCount, totalProjects }) {
-  return `🎯 Portfolio digest — ${today}
+function buildPortfolioDocument({
+  today,
+  referenceId,
+  successCount,
+  totalProjects,
+  claudeBody,
+}) {
+  const entity = CONFIRMED_REFERENCES.entity;
+  const mlro = CONFIRMED_REFERENCES.mlro;
+  const retentionYears = CONFIRMED_REFERENCES.recordRetention.years;
+  const primaryLaw = CONFIRMED_REFERENCES.primaryLaw.title;
 
-Aggregated across ${successCount} of ${totalProjects} programme entities.
+  return `=============================================================================
+${entity.legalName.toUpperCase()}
+DAILY PORTFOLIO DIGEST — ALL PROGRAMMES
+=============================================================================
 
-${digest}`;
+Document reference:   ${referenceId}
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, ${entity.legalName}
+Prepared on:          ${today}, 09:15 Asia/Dubai
+Addressee:            ${mlro.name}, ${mlro.title}
+Coverage:             ${successCount} of ${totalProjects} programme entities.
+Retention period:     ${retentionYears} years, in accordance with the applicable provision
+                      of ${primaryLaw.split(" on ")[0]}.
+
+${claudeBody}
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, ${entity.legalName}
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, ${mlro.name}.
+
+[End of document]`;
 }
 
 /* ─── Main ──────────────────────────────────────────────────────────────── */
@@ -405,22 +564,45 @@ async function main() {
       }
 
       console.log(`    asking Claude to prioritize ${candidates.length} tasks…`);
+      const stats = {
+        totalOpen: tasks.length,
+        candidates: candidates.length,
+        atRiskCount,
+      };
       const rawPriorities = await callClaude(
-        buildDailyPrompt(project.name, candidates),
+        buildDailyPrompt(project.name, candidates, stats),
         "daily",
       );
 
-      const linkedPriorities = linkifyPriorities(rawPriorities, candidates);
-      const atRiskSection = formatAtRiskSection(workTasks);
-      const comment = buildDailyComment({ today, atRiskSection, linkedPriorities });
+      const linkedClaudeBody = linkifyPriorities(rawPriorities, candidates);
+      const atRiskTasks = workTasks.filter(isAtRisk);
+      const referenceId = `HSV2-DCP-${slugifyShort(project.name)}-${today}`;
+      const document = buildDailyDocument({
+        today,
+        projectName: project.name,
+        referenceId,
+        stats,
+        atRiskTasks,
+        linkedClaudeBody,
+      });
 
       if (isDryRun) {
         console.log(
-          `    [dry-run] would post comment:\n${comment.split("\n").map((l) => `      ${l}`).join("\n")}`,
+          `    [dry-run] would post comment:\n${document.split("\n").slice(0, 20).map((l) => `      ${l}`).join("\n")}\n      ... [document continues]`,
         );
       } else {
-        await postComment(pinned.gid, comment);
+        await postComment(pinned.gid, document);
         console.log(`    ✓ comment posted on pinned task`);
+      }
+
+      // Archive the full document to history/ for the ten-year retention
+      // requirement. Writes a plain UTF-8 text file; the GitHub workflow
+      // commits the history folder at the end of the run.
+      try {
+        await writeDailyPerProject(today, project.name, document);
+        console.log(`    ✓ archived to history/daily/${today}/per-project/`);
+      } catch (archiveErr) {
+        console.warn(`    ⚠  failed to archive: ${archiveErr.message}`);
       }
 
       // Keep a lean version of the priorities for the portfolio digest
@@ -450,11 +632,13 @@ async function main() {
         buildPortfolioPrompt(results.perProject),
         "portfolio",
       );
-      const portfolioComment = buildPortfolioComment({
+      const portfolioReferenceId = `HSV2-DPD-${today}`;
+      const portfolioComment = buildPortfolioDocument({
         today,
-        digest,
+        referenceId: portfolioReferenceId,
         successCount: results.perProject.length,
         totalProjects: projects.length,
+        claudeBody: digest,
       });
 
       if (!portfolioPinnedGid) {
@@ -472,10 +656,18 @@ async function main() {
         console.log(`    ✓ portfolio digest posted to "${portfolioProjectName}"`);
       }
 
+      // Archive the portfolio digest to history/ for ten-year retention.
+      try {
+        await writeDailyPortfolio(today, portfolioComment);
+        console.log(`    ✓ archived to history/daily/${today}/portfolio-digest.txt`);
+      } catch (archiveErr) {
+        console.warn(`    ⚠  failed to archive: ${archiveErr.message}`);
+      }
+
       // Email notification (Gmail), in parallel with the Asana post.
       if (!isDryRun) {
         await notify({
-          subject: `🎯 Portfolio digest — ${today}`,
+          subject: `${ARTEFACT_PREFIXES.dailyPortfolio} — ${today}`,
           body: portfolioComment,
         });
       }
