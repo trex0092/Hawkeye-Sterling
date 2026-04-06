@@ -1,0 +1,356 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY TRAINING AND ATTESTATION SUMMARY
+Week 2026-W15
+=============================================================================
+
+Document reference:   HSV2-WTS-2026-W15
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 18:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Week ending 2026-04-06
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This summary records every task in the Asana base that references AML or CFT training activity for the week ending 2026-04-06. It is produced directly from the task base and is intended to support the MLRO's tracking of attendance and competence.
+
+2. ACTIVITY OBSERVED
+
+Training-related tasks touched this week: 312
+
+3. ENTRIES
+
+PROGRAMME                       TASK                                        ASSIGNEE        STATUS
+------------------------------  ------------------------------------------  --------------  ------
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF10 | MOE Inspection Preparedness Gaps  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  FIU-RF06 | Administrative Penalty Warning…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RK-01 | Record Retention Policy (5-Year M…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  POL-03 | Regulatory Change Impact Assessm…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  POL-04 | RACI Matrix for Compliance Funct…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  POL-05 | Compliance Programme Effectivene…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  FIU-08 | Quarterly FIU Feedback Review      Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] REG-04 | CNMR Terminology and Proc…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] REG-09 | EOCN Grievance and Deli…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-14 | CT-001: Foundational AML…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-15 | CT-002: Advanced Transac…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-16 | CT-003: Responsible Sour…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-17 | CT-004: Anti-Corruption,…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-19 | Annex A: Annual Evaluati…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-20 | Annex B: Compliance Cale…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] ACEP-24 | Training Register and …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] ACEP-25 | 10-KPI Compliance Moni…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] MOE-02 | Compliance Officer Ap…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] MOE-09 | Tipping-Off Prevention Co…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] MOE-10 | Standing Inspection Rea…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] MOE-13 | Annual Mock MOE Inspect…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-31 | Speak Up Awareness Tr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-42 | Annual Training Calen…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-43 | The Integrity Minute: Mon…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-44 | Compliance Champions Netw…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-45 | Role-Specific Training Mo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] OEC-46 | Compliance & Ethics Wee…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] OEC-47 | Training Effectiveness …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔵 M-01 | Staff Training Completion Track…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  CO Annual Report: FINE GOLD BRANCH          Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔵 OPS-56 | Annual Compliance Training Ne…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🟡 GRP-05 | Group Training Standardizatio…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-08 | RBA and NRA Alignment Training     Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-11 | Senior Management Governance Tra…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-32 | Training Effectiveness Review an…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-10 | Tipping-Off Prohibition Training   Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF10 | MOE Inspection Preparedness Gaps  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  FIU-RF06 | Administrative Penalty Warning…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RK-01 | Record Retention Policy (5-Year M…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  POL-03 | Regulatory Change Impact Assessm…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  POL-04 | RACI Matrix for Compliance Funct…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  POL-05 | Compliance Programme Effectivene…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  FIU-08 | Quarterly FIU Feedback Review      Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] REG-04 | CNMR Terminology and Proc…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] REG-09 | EOCN Grievance and Deli…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-14 | CT-001: Foundational AML…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-15 | CT-002: Advanced Transac…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-16 | CT-003: Responsible Sour…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-17 | CT-004: Anti-Corruption,…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-19 | Annex A: Annual Evaluati…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-20 | Annex B: Compliance Cale…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] ACEP-24 | Training Register and …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] ACEP-25 | 10-KPI Compliance Moni…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] MOE-02 | Compliance Officer Ap…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] MOE-09 | Tipping-Off Prevention Co…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] MOE-10 | Standing Inspection Rea…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] MOE-13 | Annual Mock MOE Inspect…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-31 | Speak Up Awareness Tr…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-42 | Annual Training Calen…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-43 | The Integrity Minute: Mon…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-44 | Compliance Champions Netw…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-45 | Role-Specific Training Mo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] OEC-46 | Compliance & Ethics Wee…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] OEC-47 | Training Effectiveness …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🟡 H-08 | Board and Senior Management Qua…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🟢 R-04 | Senior Management Compliance At…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔵 M-05 | Data Retention and Records Dest…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔵 M-01 | Staff Training Completion Track…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  GAP-008 | Conduct Annual AML/CFT Training…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 C-03 | Proliferation Financing Risk As…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  CO Annual Report: MADISON JEWELLERY TRADI…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔵 OPS-56 | Training Needs Assessment       Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🟡 GRP-05 | Training Standardization/Benc…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TRN-11 | Senior Management Governance Tra…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TRN-08 | RBA and NRA Alignment Training     Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TRN-32 | Training Effectiveness Review      Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TRN-10 | Tipping-Off Prohibition Training   Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF10 | MOE Inspection Preparedness Gaps  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  FIU-RF06 | Administrative Penalty Warning…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RK-01 | Record Retention Policy (5-Year M…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  POL-03 | Regulatory Change Impact Assessm…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  POL-04 | RACI Matrix for Compliance Funct…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  POL-05 | Compliance Programme Effectivene…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  FIU-08 | Quarterly FIU Feedback Review      Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] REG-04 | CNMR Terminology and Proc…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] REG-09 | EOCN Grievance and Deli…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-14 | CT-001: Foundational AML…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-15 | CT-002: Advanced Transac…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-16 | CT-003: Responsible Sour…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-17 | CT-004: Anti-Corruption,…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-19 | Annex A: Annual Evaluati…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-20 | Annex B: Compliance Cale…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] ACEP-24 | Training Register and …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] ACEP-25 | 10-KPI Compliance Moni…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] MOE-02 | Compliance Officer Ap…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] MOE-09 | Tipping-Off Prevention Co…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] MOE-10 | Standing Inspection Rea…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] MOE-13 | Annual Mock MOE Inspect…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-31 | Speak Up Awareness Tr…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-42 | Annual Training Calen…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-43 | The Integrity Minute: Mon…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-44 | Compliance Champions Netw…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-45 | Role-Specific Training Mo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] OEC-46 | Compliance & Ethics Wee…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] OEC-47 | Training Effectiveness …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🟢 R-04 | Senior Management Compliance At…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🟡 H-08 | Board and Senior Management Qua…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔵 M-01 | Staff Training Completion Track…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  GAP-008 | Conduct Annual AML/CFT Training…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔵 M-05 | Data Retention and Records Dest…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  CO Annual Report: GRAMALTIN AS              Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔵 OPS-56 | Training Needs Assessment       Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🟡 GRP-05 | Training Standardization        Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-08 | RBA and NRA Alignment Training     Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-11 | Senior Management Governance Tra…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-10 | Tipping-Off Prohibition Training   Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-32 | Training Effectiveness Review      Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF10 | MOE Inspection Preparedness Gaps  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  FIU-RF06 | Administrative Penalty Warning…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RK-01 | Record Retention Policy (5-Year M…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  POL-03 | Regulatory Change Impact Assessm…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  POL-04 | RACI Matrix for Compliance Funct…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  POL-05 | Compliance Programme Effectivene…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  FIU-08 | Quarterly FIU Feedback Review      Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] REG-04 | CNMR Terminology and Proc…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] REG-09 | EOCN Grievance and Deli…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-14 | CT-001: Foundational AML…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-15 | CT-002: Advanced Transac…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-16 | CT-003: Responsible Sour…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-17 | CT-004: Anti-Corruption,…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-19 | Annex A: Annual Evaluati…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-20 | Annex B: Compliance Cale…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] ACEP-24 | Training Register and …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] ACEP-25 | 10-KPI Compliance Moni…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] MOE-02 | Compliance Officer Ap…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] MOE-09 | Tipping-Off Prevention Co…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] MOE-10 | Standing Inspection Rea…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] MOE-13 | Annual Mock MOE Inspect…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-31 | Speak Up Awareness Tr…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-42 | Annual Training Calen…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-43 | The Integrity Minute: Mon…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-44 | Compliance Champions Netw…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-45 | Role-Specific Training Mo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] OEC-46 | Compliance & Ethics Wee…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] OEC-47 | Training Effectiveness …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔵 M-01 | Staff Training Completion Track…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟡 H-08 | Board and Senior Management Qua…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟡 H-03 | LBMA RGG Steps 1-4 Compliance A…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔵 M-05 | Data Retention and Records Dest…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟢 R-04 | Senior Management Compliance At…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 C-03 | Proliferation Financing Risk As…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  GAP-008 | Conduct Annual AML/CFT Training…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  CO Annual Report: NAPLES LLC                Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔵 OPS-56 | Annual Compliance Training Ne…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟡 GRP-05 | Group Training Standardizatio…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TRN-08 | RBA and NRA Alignment Training     Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TRN-32 | Training Effectiveness Review      Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TRN-10 | Tipping-Off Prohibition Training   Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TRN-11 | Senior Management Governance Tra…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF10 | MOE Inspection Preparedness Gaps  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  FIU-RF06 | Administrative Penalty Warning…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RK-01 | Record Retention Policy (5-Year M…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  POL-03 | Regulatory Change Impact Assessm…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  POL-04 | RACI Matrix for Compliance Funct…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  POL-05 | Compliance Programme Effectivene…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  FIU-08 | Quarterly FIU Feedback Review      Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] REG-04 | CNMR Terminology and Proc…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] REG-09 | EOCN Grievance and Deli…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-14 | CT-001: Foundational AML…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-15 | CT-002: Advanced Transac…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-16 | CT-003: Responsible Sour…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-17 | CT-004: Anti-Corruption,…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-19 | Annex A: Annual Evaluati…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-20 | Annex B: Compliance Cale…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] ACEP-24 | Training Register and …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] ACEP-25 | 10-KPI Compliance Moni…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] MOE-02 | Compliance Officer Ap…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] MOE-09 | Tipping-Off Prevention Co…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] MOE-10 | Standing Inspection Rea…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] MOE-13 | Annual Mock MOE Inspect…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-31 | Speak Up Awareness Tr…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-42 | Annual Training Calen…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-43 | The Integrity Minute: Mon…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-44 | Compliance Champions Netw…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-45 | Role-Specific Training Mo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] OEC-46 | Compliance & Ethics Wee…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] OEC-47 | Training Effectiveness …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🟢 R-04 | Senior Management Compliance At…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  MILESTONE | Phase 2 Close - All High Gaps…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  GAP-008 | Conduct Annual AML/CFT Training…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🟡 H-08 | Board and Senior Management Qua…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔵 M-01 | Staff Training Completion Track…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔵 M-05 | Data Retention and Records Dest…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  CO Annual Report: ZOE FZE                   Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔵 OPS-56 | Training Needs Assessment       Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🟡 GRP-05 | Training Standardization        Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-32 | Training Effectiveness Review      Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-11 | Senior Management Governance Tra…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-08 | RBA and NRA Alignment Training     Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-10 | Tipping-Off Prohibition Training   Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF10 | MOE Inspection Preparedness Gaps  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  FIU-RF06 | Administrative Penalty Warning…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RK-01 | Record Retention Policy (5-Year M…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  POL-03 | Regulatory Change Impact Assessm…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  POL-04 | RACI Matrix for Compliance Funct…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  POL-05 | Compliance Programme Effectivene…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  FIU-08 | Quarterly FIU Feedback Review      Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  MA-08 | Compliance Budget and Resource Al…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-05 | Responsible AI Policy for Compli…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-02 | AML/CFT Training Needs Assessment…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-08 | Compliance Training Effectiveness…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-10 | Compliance Culture Assessment and…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] REG-04 | CNMR Terminology and Proc…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] REG-09 | EOCN Grievance and Deli…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-14 | CT-001: Foundational AML…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-15 | CT-002: Advanced Transac…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-16 | CT-003: Responsible Sour…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-17 | CT-004: Anti-Corruption,…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-19 | Annex A: Annual Evaluati…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-20 | Annex B: Compliance Cale…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] ACEP-24 | Training Register and …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] ACEP-25 | 10-KPI Compliance Moni…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] MOE-02 | Compliance Officer Ap…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] MOE-09 | Tipping-Off Prevention Co…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] MOE-10 | Standing Inspection Rea…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] MOE-13 | Annual Mock MOE Inspect…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-31 | Speak Up Awareness Tr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-42 | Annual Training Calen…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-43 | The Integrity Minute: Mon…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-44 | Compliance Champions Netw…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-45 | Role-Specific Training Mo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] OEC-46 | Compliance & Ethics Wee…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] OEC-47 | Training Effectiveness …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔵 M-01 | Staff Training Completion Track…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 TM-06 | Monthly TM Quality Review        Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  CO Annual Report: FINE GOLD LLC             Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  GAP-008 | Conduct Annual AML/CFT Training   Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔵 OPS-56 | Annual Compliance Training Ne…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟡 GRP-05 | Group Training Standardizatio…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-32 | Training Effectiveness Review an…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-08 | RBA and NRA Alignment Training     Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-10 | Tipping-Off Prohibition Training   Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-11 | Senior Management Governance Tra…  Luisa Fernanda  open  
+
+4. MLRO ACTION
+
+Reconcile the list above against the firm's internal training log. Any training event not in Asana should be added to the log separately.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

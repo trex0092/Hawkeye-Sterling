@@ -1,0 +1,247 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY ESCALATION LOG
+Week 2026-W15
+=============================================================================
+
+Document reference:   HSV2-WEL-2026-W15
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 18:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Week ending 2026-04-06
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every task in the Asana base that carries language indicating an escalation to the MLRO during the week. It is a contemporaneous index of escalations for the MLRO's own review and for the weekly MLRO report.
+
+2. ACTIVITY
+
+Escalations identified this week: 203
+
+3. ENTRIES
+
+PROGRAMME                     TASK                                      ASSIGNEE        STATUS
+----------------------------  ----------------------------------------  --------------  ------
+FG BRANCH - COMPLIANCE PROG…  TM-03 | MLRO Escalation and Filing Dete…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  TM-08 | Manual Transaction Review Proce…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  RF-M01 | CAHRA Origin Identification an…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  CDD-08 | Ongoing Due Diligence and Peri…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  FIU-05 | goAML Message Board Monitoring…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  LBMA-03 | Step 3: Supply Chain DD Design  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  RF-04 | Geographic and Jurisdictional R…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [Critical] REG-02 | HRC/HRCA Reporting …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [Critical] REG-03 | FIU RFI Response Pr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] REG-05 | Weekend and Holiday TFS…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] REG-07 | Simplified Due Diligenc…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [Medium] REG-10 | AIF/AIFT Supplementar…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [Critical] ACEP-02 | Annex C: Staff Ack…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] ACEP-13 | IM-001 to IM-010: Inte…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [Medium] ACEP-24 | Training Register an…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] MOE-06 | Regulatory Corresponden…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  [High] OEC-50 | Group Disclosure Manage…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  🔴 Define Compliance Failure Escalation…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  🔴 TM-01 | Alert Triage Procedure         Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROG…  TRN-20 | Internal Escalation and Whistl…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  TM-03 | MLRO Escalation and Filing Dete…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  TM-08 | Manual Transaction Review Proce…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  RF-M01 | CAHRA Origin Identification an…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  CDD-08 | Ongoing Due Diligence and Peri…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  RF-04 | Geographic and Jurisdictional R…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  FIU-05 | goAML Message Board Monitoring…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  LBMA-03 | Step 3: Supply Chain DD Design  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [Critical] REG-02 | HRC/HRCA Reporting …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [Critical] REG-03 | FIU RFI Response Pr…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] REG-05 | Weekend and Holiday TFS…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] REG-07 | Simplified Due Diligenc…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [Medium] REG-10 | AIF/AIFT Supplementar…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [Critical] ACEP-02 | Annex C: Staff Ack…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] ACEP-13 | IM-001 to IM-010: Inte…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [Medium] ACEP-24 | Training Register an…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] MOE-06 | Regulatory Corresponden…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  [High] OEC-50 | Group Disclosure Manage…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  🟡 H-04 | Supplier and Refinery Due Dil…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  🟡 H-02 | PEP Screening Programme and P…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  🔴 Define Compliance Failure Escalation…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  🔴 TM-01 | Alert Triage Procedure         Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PR…  TRN-20 | Internal Escalation and Whistl…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  TM-03 | MLRO Escalation and Filing Dete…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  TM-08 | Manual Transaction Review Proce…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  RF-M01 | CAHRA Origin Identification an…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  CDD-08 | Ongoing Due Diligence and Peri…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  FIU-05 | goAML Message Board Monitoring…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  LBMA-03 | Step 3: Supply Chain DD Design  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  RF-04 | Geographic and Jurisdictional R…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [Critical] REG-02 | HRC/HRCA Reporting …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [Critical] REG-03 | FIU RFI Response Pr…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] REG-05 | Weekend and Holiday TFS…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] REG-07 | Simplified Due Diligenc…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [Medium] REG-10 | AIF/AIFT Supplementar…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [Critical] ACEP-02 | Annex C: Staff Ack…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] ACEP-13 | IM-001 to IM-010: Inte…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [Medium] ACEP-24 | Training Register an…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] MOE-06 | Regulatory Corresponden…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  [High] OEC-50 | Group Disclosure Manage…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  🟡 H-04 | Supplier and Refinery Due Dil…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  🟡 H-02 | PEP Screening Programme and P…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  🔴 Define Compliance Failure Escalation…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  🔴 TM-01 | Alert Triage Procedure         Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE P…  TRN-20 | Internal Escalation and Whistl…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  TM-03 | MLRO Escalation and Filing Dete…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  TM-08 | Manual Transaction Review Proce…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  CDD-08 | Ongoing Due Diligence and Peri…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  RF-M01 | CAHRA Origin Identification an…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  FIU-05 | goAML Message Board Monitoring…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  LBMA-03 | Step 3: Supply Chain DD Design  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [Critical] REG-02 | HRC/HRCA Reporting …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [Critical] REG-03 | FIU RFI Response Pr…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] REG-05 | Weekend and Holiday TFS…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] REG-07 | Simplified Due Diligenc…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [Medium] REG-10 | AIF/AIFT Supplementar…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [Critical] ACEP-02 | Annex C: Staff Ack…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] ACEP-13 | IM-001 to IM-010: Inte…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [Medium] ACEP-24 | Training Register an…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] MOE-06 | Regulatory Corresponden…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  [High] OEC-50 | Group Disclosure Manage…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  🟡 H-04 | Supplier and Refinery Due Dil…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  🟡 H-02 | PEP Screening Programme and P…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  🔴 Define Compliance Failure Escalation…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  🔴 TM-01 | Alert Triage Procedure         Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PRO…  TRN-20 | Internal Escalation and Whistl…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  TM-03 | MLRO Escalation and Filing Dete…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  TM-08 | Manual Transaction Review Proce…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  RF-M01 | CAHRA Origin Identification an…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  CDD-08 | Ongoing Due Diligence and Peri…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  RF-04 | Geographic and Jurisdictional R…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  FIU-05 | goAML Message Board Monitoring…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  LBMA-03 | Step 3: Supply Chain DD Design  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [Critical] REG-02 | HRC/HRCA Reporting …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [Critical] REG-03 | FIU RFI Response Pr…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] REG-05 | Weekend and Holiday TFS…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] REG-07 | Simplified Due Diligenc…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [Medium] REG-10 | AIF/AIFT Supplementar…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [Critical] ACEP-02 | Annex C: Staff Ack…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] ACEP-13 | IM-001 to IM-010: Inte…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [Medium] ACEP-24 | Training Register an…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] MOE-06 | Regulatory Corresponden…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  [High] OEC-50 | Group Disclosure Manage…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  🟡 H-04 | Supplier and Refinery Due Dil…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  🟡 H-02 | PEP Screening Programme and P…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  🔴 Define Compliance Failure Escalation…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  🔴 TM-01 | Alert Triage Procedure         Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRA…  TRN-20 | Internal Escalation and Whistl…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TM-03 | MLRO Escalation and Filing Dete…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TM-08 | Manual Transaction Review Proce…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  RF-M01 | CAHRA Origin Identification an…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  CDD-08 | Ongoing Due Diligence and Peri…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  RF-04 | Geographic and Jurisdictional R…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  FIU-05 | goAML Message Board Monitoring…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  LBMA-03 | Step 3: Supply Chain DD Design  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  HR-04 | Whistleblower Protection and In…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [Critical] REG-02 | HRC/HRCA Reporting …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [Critical] REG-03 | FIU RFI Response Pr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] REG-05 | Weekend and Holiday TFS…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] REG-07 | Simplified Due Diligenc…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [Medium] REG-10 | AIF/AIFT Supplementar…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [Critical] ACEP-02 | Annex C: Staff Ack…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] ACEP-13 | IM-001 to IM-010: Inte…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [Medium] ACEP-24 | Training Register an…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] MOE-06 | Regulatory Corresponden…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  [High] OEC-50 | Group Disclosure Manage…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  🔴 TM-01 | Alert Triage Procedure         Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  🔴 Define Compliance Failure Escalation…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TRN-24 | Beneficial Ownership and Compl…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TRN-20 | Internal Escalation and Whistl…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAM…  TRN-12 | Role-Based AML/CFT Responsibil…  Luisa Fernanda  open  
+
+4. MLRO ACTION
+
+Confirm that every escalation listed above has been acknowledged in the MLRO's review queue, and that the corresponding disposition is recorded on the Asana task.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

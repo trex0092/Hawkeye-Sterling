@@ -1,0 +1,43 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY DORMANT FILE REVIEW REMINDER
+Week 2026-W15
+=============================================================================
+
+Document reference:   HSV2-WDR-2026-W15
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 18:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Open tasks with no modification in the last 60 days
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This reminder lists every open Asana task that has had no modification in the last 60 calendar days. A dormant file is not a problem by itself, but it is an item the MLRO should actively review or formally close.
+
+2. POPULATION
+
+Dormant files identified: 0
+
+3. ENTRIES
+
+No open tasks have been dormant for more than 60 days.
+
+4. MLRO ACTION
+
+For each dormant file above, the MLRO should decide whether to reactivate, reassign or formally close the task. A dormant file left open without a documented reason is precisely the kind of item an MOE inspector flags during a supervisory visit.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
