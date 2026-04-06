@@ -1,0 +1,186 @@
+=============================================================================
+[Reporting Entity]                                          No:  08
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: April
+EVALUATION 2026 | ANNUAL COMPLIANCE REVIEW                 Audience: Compliance
+                                                            Leads, MLRO
+Schedule: Week 8                                            Training Session: 08
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  ANNUAL MLRO REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the Annual MLRO Report is the most           [    ]
+senior compliance document produced by the firm and that
+it is addressed to Senior Management and the Board.
+
+I know that the report consolidates four quarterly             [    ]
+reports, provides a year-in-review narrative, a quarter-
+by-quarter filing trend, and recommendations for the
+coming year.
+
+I understand the MLRO's declaration, which confirms that       [    ]
+the MLRO has had unrestricted access to the books,
+records, staff and resources of the firm during the year.
+
+I know that the annual MLRO report is aligned with FATF        [    ]
+Recommendation 28 (regulation and supervision of DNFBPs)
+and supports the Ministry of Economy's assessment of the
+firm's programme governance.
+
+
+-----------------------------------------------------------------------------
+2.  ENTERPRISE-WIDE RISK ASSESSMENT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the firm's obligation under Federal               [    ]
+Decree-Law No. 10 of 2025 to maintain a documented
+enterprise-wide risk assessment covering the full scope
+of its ML/TF risk.
+
+I know the five risk pillars used in the assessment            [    ]
+(customer risk, product and service risk, geographic
+risk, delivery channel risk, internal controls risk)
+and I can explain what each pillar covers.
+
+I understand that the risk assessment methodology is           [    ]
+aligned with the FATF risk-based approach as set out in
+FATF Recommendation 22 and Recommendation 28.
+
+I know that the MLRO reviews and signs off the risk            [    ]
+assessment and that it is presented to the Board for
+acknowledgement.
+
+I am aware that the Ministry of Economy may review the         [    ]
+enterprise-wide risk assessment during a supervisory
+inspection and that it must be current and accurate.
+
+
+-----------------------------------------------------------------------------
+3.  PROGRAMME EFFECTIVENESS SELF-ASSESSMENT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the five-pillar scoring framework used to         [    ]
+assess programme effectiveness (governance, daily
+discipline, weekly intelligence, filing drafts,
+counterparty intelligence).
+
+I know the rating scale (strong, satisfactory, adequate,       [    ]
+weak, unsatisfactory) and what each level means for the
+firm's programme health.
+
+I understand that the assessment is deterministic (based       [    ]
+on artefact counts, not narrative judgement) and that the
+MLRO may challenge any score where professional judgement
+differs from the arithmetic.
+
+
+-----------------------------------------------------------------------------
+4.  ANNUAL TRAINING REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Annual Training Completion Report records      [    ]
+all AML/CFT training delivered during the year, including
+completion rates and competence assessment outcomes.
+
+I understand that the training programme is designed in        [    ]
+alignment with FATF Recommendation 22 (CDD for DNFBPs)
+and Recommendation 23 (other measures for DNFBPs).
+
+I know that training records must be retained for 10           [    ]
+years under Federal Decree-Law No. 10 of 2025 and FATF
+Recommendation 11 (record-keeping).
+
+
+-----------------------------------------------------------------------------
+5.  ANNUAL CUSTOMER EXIT REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the difference between a "cleared" exit and       [    ]
+an "escalated" exit and I know what triggers each.
+
+I know that the Annual Customer Exit Report is reviewed        [    ]
+by the MLRO and retained for 10 years as part of the
+firm's compliance archive.
+
+I understand that an escalated exit may involve a filing       [    ]
+with the Financial Intelligence Unit (STR, SAR, or FFR)
+and that the MLRO makes the filing decision.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 08 — ANNUAL COMPLIANCE REVIEW
+=============================================================================

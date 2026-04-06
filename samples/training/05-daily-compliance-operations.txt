@@ -1,0 +1,173 @@
+=============================================================================
+[Reporting Entity]                                          No:  05
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: March
+EVALUATION 2026 | DAILY COMPLIANCE OPERATIONS              Audience: All Staff
+Schedule: Week 5                                            Training Session: 05
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  DAILY COMPLIANCE PRIORITIES
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the Daily Compliance               [    ]
+Priorities report and I know that it presents the ten
+highest-priority open items to the MLRO each morning.
+
+I know how items are risk-scored (on a scale of zero to        [    ]
+one hundred) and that a score of ninety or above requires
+action within one business day.
+
+I understand the difference between the per-entity             [    ]
+priorities report and the portfolio digest, and I know
+that the portfolio digest provides a cross-entity view.
+
+I know that the daily priorities process includes              [    ]
+counterparty register updates and goAML filing detection,
+and I understand how these are triggered.
+
+I can explain how the daily priorities report supports         [    ]
+the firm's risk-based approach under FATF Recommendation
+22 by focusing the MLRO's attention on the highest-risk
+items each day.
+
+
+-----------------------------------------------------------------------------
+2.  DAILY OPERATIONAL LOGS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I can name the four daily operational logs (sanctions           [    ]
+screening, PEP watch, cash transaction, high-risk
+counterparty) and I understand the purpose of each.
+
+I know that the daily logs are factual data extracts with      [    ]
+no narrative judgement and that they are produced at close
+of business.
+
+I understand the QA statement at the end of each log and       [    ]
+I know that it confirms the log represents the complete
+data set for the business day.
+
+I know where the daily logs are archived and for how           [    ]
+long they must be retained (10 years under Federal
+Decree-Law No. 10 of 2025).
+
+
+-----------------------------------------------------------------------------
+3.  DAILY COMPLETION RETRO AND ENTITY REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the Daily Completion Retro         [    ]
+and I know that it compares the morning priorities against
+actual closures at end of day.
+
+I know that the per-entity compliance report provides an       [    ]
+exposure snapshot, typology distribution, overdue items
+and analytical commentary for each programme entity.
+
+I understand that if the retro shows a completion rate         [    ]
+below the firm's internal target, the compliance function
+must report the shortfall to the MLRO.
+
+I know that overdue items identified in the entity report      [    ]
+are tracked until resolved and that the MLRO receives a
+daily view of all overdue items across all entities.
+
+
+-----------------------------------------------------------------------------
+4.  ESCALATION AND DECISION PROTOCOL
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know the firm's escalation procedure when a daily            [    ]
+priority item carries a sanctions tag and the MLRO is
+unavailable.
+
+I understand that items requiring MLRO decision before         [    ]
+end of day are listed separately in the daily report and
+that the compliance function tracks whether the decision
+was taken.
+
+I know that the daily process is the foundation for the        [    ]
+weekly, monthly and quarterly reporting cycle and that
+gaps in daily coverage weaken the firm's audit trail.
+
+I understand that the Ministry of Economy may review the       [    ]
+firm's daily compliance records during a supervisory
+inspection and that complete, accurate records are
+essential for demonstrating operational discipline.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 05 — DAILY COMPLIANCE OPERATIONS
+=============================================================================

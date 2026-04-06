@@ -1,0 +1,158 @@
+=============================================================================
+[Reporting Entity]                                          No:  06
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: March
+EVALUATION 2026 | WEEKLY REPORTING AND                     Audience: All Staff
+PATTERN ANALYSIS
+Schedule: Week 6                                            Training Session: 06
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  WEEKLY PATTERN REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the Weekly Pattern Report is an internal     [    ]
+analytical document prepared for the MLRO and that it is
+not part of the formal Weekly MLRO Report to Senior
+Management.
+
+I know that the pattern report identifies cross-entity         [    ]
+typology activity that is harder to see in the daily
+cycle and that it synthesises trends across all programme
+entities.
+
+I can explain what a cross-entity pattern is (the same         [    ]
+typology appearing on multiple entities simultaneously)
+and why it matters for the firm's risk assessment.
+
+
+-----------------------------------------------------------------------------
+2.  WEEKLY MLRO REPORT TO SENIOR MANAGEMENT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the formal Weekly MLRO Report is             [    ]
+addressed to Senior Management and represents the MLRO's
+personal assessment of the week's compliance activity.
+
+I know the key sections of the weekly MLRO report              [    ]
+(headline, filings, matters under review, sanctions
+activity, PEP movement, recommendations).
+
+I understand that the weekly MLRO report is retained for       [    ]
+10 years under Federal Decree-Law No. 10 of 2025 and
+forms part of the firm's evidence of governance
+oversight, consistent with FATF Recommendation 28.
+
+
+-----------------------------------------------------------------------------
+3.  WEEKLY FILINGS SUMMARY
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Weekly Filings Summary counts all goAML        [    ]
+filing drafts produced during the week (STR, SAR, DPMSR,
+PNMR, FFR) and highlights notable drafts for the MLRO.
+
+I understand that all filing types remain in manual mode       [    ]
+and that no draft is submitted to the Financial
+Intelligence Unit without the MLRO's express instruction.
+
+I know the difference between a filing draft and a filed       [    ]
+report, and I understand that drafts are held for MLRO
+review regardless of urgency.
+
+
+-----------------------------------------------------------------------------
+4.  WEEKLY OPERATIONAL LOGS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I can name the three weekly operational logs (training          [    ]
+summary, dormant file reminder, escalation log) and I
+understand the purpose of each.
+
+I know that a dormant file is one that has not been            [    ]
+updated for more than 60 calendar days and that the MLRO
+must decide whether to reactivate, reassign or close it.
+
+I understand that weekly escalations are logged and that       [    ]
+the MLRO must confirm receipt and take personal charge of
+any escalated file.
+
+I know that incomplete training records identified in the      [    ]
+weekly training summary must be resolved before the
+quarterly deadline and reported to the MLRO.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 06 — WEEKLY REPORTING AND PATTERN ANALYSIS
+=============================================================================

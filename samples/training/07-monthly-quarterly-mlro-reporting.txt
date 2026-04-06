@@ -1,0 +1,183 @@
+=============================================================================
+[Reporting Entity]                                          No:  07
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: April
+EVALUATION 2026 | MONTHLY AND QUARTERLY                    Audience: Compliance
+MLRO REPORTING                                              Leads, MLRO
+Schedule: Week 7                                            Training Session: 07
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  MONTHLY MLRO CONSOLIDATION REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the Monthly MLRO Report consolidates         [    ]
+the four weekly MLRO reports and adds a monthly trend
+narrative, filings summary, and recommendations to Senior
+Management and the Board.
+
+I know the key sections of the monthly report (headline,       [    ]
+filings made, filings in preparation, sanctions activity,
+PEP population, training, recommendations).
+
+I understand that the monthly report is a formal document      [    ]
+from the MLRO to Senior Management and the Board and that
+it is retained for 10 years under Federal Decree-Law No.
+10 of 2025.
+
+
+-----------------------------------------------------------------------------
+2.  MONTHLY INCIDENT LOG
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know what constitutes an incident under the firm's           [    ]
+compliance framework (refused transactions, declined
+onboardings, compliance exceptions, corrective actions).
+
+I understand that the Monthly Incident Log records every       [    ]
+incident with date, programme, category, description,
+corrective action and status.
+
+I know that the compliance function searches for               [    ]
+incidents using specific keywords (refused, declined,
+exception, breach, corrective action, failure) and that
+the MLRO is invited to add any incidents not captured.
+
+I understand that incident trends are tracked and that an      [    ]
+increase in incidents may indicate improved detection
+rather than a deterioration in controls.
+
+
+-----------------------------------------------------------------------------
+3.  QUARTERLY MLRO REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the Quarterly MLRO Report is a formal        [    ]
+Board-level document with 12 sections covering filings,
+trends, sanctions, PEP, training, policy changes,
+incidents, risk assessment and recommendations.
+
+I know that the quarterly report consolidates three            [    ]
+monthly reports and adds a quarterly trend analysis,
+consistent with the FATF risk-based approach and FATF
+Recommendation 28 (supervision of DNFBPs).
+
+I understand the MLRO's declaration at the end of the          [    ]
+quarterly report and I know that it represents the MLRO's
+personal confirmation of programme health.
+
+
+-----------------------------------------------------------------------------
+4.  QUARTERLY JURISDICTION HEATMAP
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Quarterly Jurisdiction Heatmap shows the       [    ]
+geographic distribution of the firm's counterparty
+population by jurisdiction, with risk ratings and
+cross-entity exposure counts.
+
+I understand that the heatmap incorporates the FATF list       [    ]
+of jurisdictions under increased monitoring and the FATF
+list of high-risk jurisdictions subject to a call for
+action.
+
+I know how to interpret the heatmap table (total, critical,    [    ]
+high, cross-entity, under review columns) and I
+understand what a concentration in a single jurisdiction
+means for the firm's risk profile.
+
+
+-----------------------------------------------------------------------------
+5.  QUARTERLY OPERATIONAL LOGS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Quarterly Typology Library Update ranks        [    ]
+all observed red-flag typologies by frequency and that
+the MLRO uses this to prioritise compliance resources.
+
+I understand that the Quarterly Beneficial Ownership            [    ]
+Clarity Report identifies corporate counterparties
+without a recorded beneficial owner and that the MLRO
+must instruct the compliance function to obtain this
+information.
+
+I know that the quarterly operational logs are retained        [    ]
+for 10 years and form part of the evidence the Ministry
+of Economy may review during a supervisory inspection.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 07 — MONTHLY AND QUARTERLY MLRO REPORTING
+=============================================================================

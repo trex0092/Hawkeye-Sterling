@@ -1,0 +1,182 @@
+=============================================================================
+[Reporting Entity]                                          No:  04
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: February
+EVALUATION 2026 | TRANSACTION MONITORING AND               Audience: All Staff
+SUSPICIOUS REPORTING
+Schedule: Week 4                                            Training Session: 04
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  TRANSACTION MONITORING
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the firm's nine transaction detection rules       [    ]
+(DPMSR trigger, structuring, round amounts, high-risk
+jurisdiction, all-cash settlement, same-day aggregation,
+rapid frequency, unusual payment method, rolling 30-day
+aggregation) and I can explain the purpose of each.
+
+I know what the Transaction Monitoring Report contains         [    ]
+and I understand the difference between an alert and a
+confirmed suspicious transaction.
+
+I can identify a structuring pattern (multiple                 [    ]
+transactions just below the firm's internal threshold)
+and I know why structuring is a red flag for money
+laundering.
+
+I understand that the rolling 30-day aggregation rule          [    ]
+calculates the cumulative value of all transactions with
+the same customer over a rolling window, and that a
+breach of the threshold triggers a DPMSR review.
+
+I know what action to take when the Transaction                [    ]
+Monitoring Report flags an alert on a customer I am
+responsible for.
+
+
+-----------------------------------------------------------------------------
+2.  SUSPICIOUS TRANSACTION AND ACTIVITY REPORTS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the difference between a Suspicious               [    ]
+Transaction Report (STR) and a Suspicious Activity Report
+(SAR), and I know when each type is appropriate.
+
+I know that the firm's obligation to file an STR arises        [    ]
+under Federal Decree-Law No. 10 of 2025 and is aligned
+with FATF Recommendation 20 (reporting of suspicious
+transactions).
+
+I understand that suspicion is a subjective standard and       [    ]
+that I must report any transaction or activity that gives
+me reasonable grounds to suspect it may be related to
+money laundering or terrorism financing.
+
+I know that the STR Quality Score report assesses each         [    ]
+draft against a 12-point rubric and that the MLRO uses
+this score to determine whether a draft is ready for
+filing.
+
+I understand that tipping off a customer about a               [    ]
+suspicious report is a criminal offence under UAE law.
+
+
+-----------------------------------------------------------------------------
+3.  DPMSR AND LINKED CASH TRANSACTIONS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know what a Dealers in Precious Metals and Stones            [    ]
+Report (DPMSR) is and I understand the circumstances
+under which the firm must prepare one for filing with the
+Financial Intelligence Unit.
+
+I understand the concept of linked cash transactions and       [    ]
+I know that the firm aggregates cash transactions from
+the same customer over a rolling period to determine
+whether the DPMSR threshold has been reached.
+
+I know that the Weekly Filings Summary counts all              [    ]
+filing drafts produced during the week and that the MLRO
+reviews each draft personally before any submission.
+
+I understand that filing mode for all five goAML filing        [    ]
+types is set to manual and that no draft is submitted
+automatically by the compliance function.
+
+
+-----------------------------------------------------------------------------
+4.  FILING QUALITY AND RECORD-KEEPING
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the 12-point quality rubric used to assess        [    ]
+STR drafts (subject ID, nationality, address, transaction
+date, amount, description, red-flag narrative, typology,
+evidence, CDD status, MLRO decision, regulatory hook).
+
+I know that every filing draft is archived under the           [    ]
+firm's 10-year retention obligation in accordance with
+Federal Decree-Law No. 10 of 2025 and FATF
+Recommendation 11 (record-keeping).
+
+I understand that the MLRO is the only person authorised       [    ]
+to submit a filing through the goAML platform, and that
+the compliance function's role is limited to preparing
+draft material for the MLRO's review.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 04 — TRANSACTION MONITORING AND SUSPICIOUS REPORTING
+=============================================================================

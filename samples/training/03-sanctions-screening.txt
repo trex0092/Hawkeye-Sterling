@@ -1,0 +1,174 @@
+=============================================================================
+[Reporting Entity]                                          No:  03
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: February
+EVALUATION 2026 | SANCTIONS SCREENING AND                  Audience: All Staff
+TARGETED FINANCIAL SANCTIONS
+Schedule: Week 3                                            Training Session: 03
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  SANCTIONS FRAMEWORK
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the UAE targeted financial sanctions              [    ]
+framework and the firm's obligation to screen all
+counterparties against the UN Security Council
+Consolidated List and the UAE Local Terrorist List.
+
+I know that the Executive Office for Control and               [    ]
+Non-Proliferation (EOCN) is the UAE authority responsible
+for implementing targeted financial sanctions.
+
+I understand the difference between exact, high, medium        [    ]
+and low confidence screening matches, and I know that
+exact and high confidence matches require immediate action.
+
+I know that the firm screens its entire counterparty           [    ]
+population daily and that the Daily Sanctions Screening
+Log records every match and resolution.
+
+I understand that the FATF list of high-risk jurisdictions     [    ]
+subject to a call for action and the FATF list of
+jurisdictions under increased monitoring are used by the
+firm for geographic risk assessment in the screening
+process.
+
+
+-----------------------------------------------------------------------------
+2.  PEP SCREENING AND MONITORING
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know what a Politically Exposed Person (PEP) is and          [    ]
+I can identify the categories of persons who qualify as
+PEPs under UAE AML/CFT legislation.
+
+I understand that all PEP relationships must be placed         [    ]
+under Enhanced Due Diligence and that the PEP population
+is tracked daily through the PEP Watch Log.
+
+I know that new PEP designations, PEP de-classifications      [    ]
+and changes to the PEP population are reported to the
+MLRO through the quarterly MLRO report.
+
+I understand that a PEP file that falls outside its EDD        [    ]
+refresh cycle is a compliance exception that must be
+escalated to the MLRO immediately.
+
+
+-----------------------------------------------------------------------------
+3.  FILING OBLIGATIONS FROM SCREENING
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know what a Partial Name Match Report (PNMR) is and I       [    ]
+understand when the MLRO must file one with the Financial
+Intelligence Unit through the goAML platform.
+
+I know what a Funds Freeze Report (FFR) is and I               [    ]
+understand the circumstances under which the firm must
+freeze a counterparty's assets and file an FFR.
+
+I understand that the MLRO is the only person authorised       [    ]
+to submit any filing to the Financial Intelligence Unit,
+and that the compliance function prepares drafts only.
+
+I know that the audit chain maintained by the screening        [    ]
+engine is tamper-evident and supports the firm's
+compliance with FATF Recommendation 11 (record-keeping)
+and the 10-year retention requirement under Federal
+Decree-Law No. 10 of 2025.
+
+
+-----------------------------------------------------------------------------
+4.  ADVERSE MEDIA MONITORING
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the firm monitors publicly available         [    ]
+news sources for adverse media indicators on all active
+counterparties.
+
+I know that a new adverse media article about a                [    ]
+counterparty must be reviewed by the MLRO to determine
+whether it affects the counterparty's risk rating or
+requires a filing decision.
+
+I understand how the adverse media monitoring report           [    ]
+uses hash-based change detection to identify new or
+changed coverage, and I know what to do when a change is
+flagged.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 03 — SANCTIONS SCREENING AND TARGETED FINANCIAL SANCTIONS
+=============================================================================
