@@ -1,0 +1,38 @@
+name: Auto-Create Red Flag Tasks
+on:
+  schedule:
+    - cron: "30 13 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (list but do not create)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+concurrency:
+  group: auto-create-tasks
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0, persist-credentials: true }
+      - uses: actions/setup-node@v5
+        with: { node-version: "22", cache: "npm", cache-dependency-path: scripts/package.json }
+      - run: npm install --omit=dev
+        working-directory: scripts
+      - name: Auto-create tasks
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          MLRO_NAME: ${{ secrets.MLRO_NAME }}
+          ENTITY_LEGAL_NAME: ${{ secrets.ENTITY_LEGAL_NAME }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node auto-create-tasks.mjs

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Screening</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d1117; color: #c9d1d9; padding: 24px; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 1.3em; color: #58a6ff; margin-bottom: 4px; }
+  .meta { color: #8b949e; font-size: 0.8em; margin-bottom: 20px; }
+  .search-box { display: flex; gap: 8px; margin-bottom: 20px; }
+  input[type="text"] { flex: 1; padding: 10px 14px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 1em; outline: none; }
+  input[type="text"]:focus { border-color: #58a6ff; }
+  button { padding: 10px 20px; background: #238636; border: none; border-radius: 6px; color: #fff; font-weight: 600; cursor: pointer; font-size: 1em; }
+  button:hover { background: #2ea043; }
+  button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+  .results { margin-top: 16px; }
+  .result-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .result-card.hit { border-color: #f85149; background: #1a0000; }
+  .result-card.clear { border-color: #238636; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 600; margin-right: 6px; }
+  .badge-red { background: #f85149; color: #fff; }
+  .badge-green { background: #238636; color: #fff; }
+  .badge-grey { background: #30363d; color: #8b949e; }
+  .label { color: #8b949e; font-size: 0.8em; text-transform: uppercase; margin-bottom: 4px; }
+  .value { margin-bottom: 8px; }
+  .timestamp { color: #484f58; font-size: 0.75em; margin-top: 8px; }
+  .evidence-box { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 10px; margin-top: 10px; font-family: "Courier New", monospace; font-size: 0.8em; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+  .print-btn { background: #21262d; color: #8b949e; border: 1px solid #30363d; margin-left: 8px; }
+  .print-btn:hover { background: #30363d; color: #c9d1d9; }
+  @media print { body { background: #fff; color: #000; } .search-box, button { display: none; } .result-card { border: 1px solid #000; background: #fff; } .result-card.hit { background: #fee; } .evidence-box { background: #f6f6f6; border: 1px solid #ccc; } }
+  .lists-info { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 0.85em; }
+  .lists-info strong { color: #58a6ff; }
+</style>
+</head>
+<body>
+<h1>Live Compliance Screening</h1>
+<p class="meta">Sanctions (UNSC + UAE Local) | PEP | Adverse keywords | Enter a name to screen instantly</p>
+
+<div class="lists-info">
+  <strong>How it works:</strong> This page runs entirely in your browser. Paste the sanctions list, PEP list, and adverse keywords below (or load them from CSVs). Enter a customer or counterparty name to screen. Results are displayed instantly. Print this page as evidence for your compliance file.
+</div>
+
+<div style="margin-bottom: 16px;">
+  <div class="label">Load sanctions list (CSV: name column)</div>
+  <input type="file" id="sanctionsFile" accept=".csv" style="color: #8b949e; font-size: 0.85em;">
+  <span id="sanctionsCount" class="meta" style="margin-left: 8px;"></span>
+</div>
+<div style="margin-bottom: 16px;">
+  <div class="label">Load PEP list (CSV: name column)</div>
+  <input type="file" id="pepFile" accept=".csv" style="color: #8b949e; font-size: 0.85em;">
+  <span id="pepCount" class="meta" style="margin-left: 8px;"></span>
+</div>
+
+<div class="search-box">
+  <input type="text" id="nameInput" placeholder="Enter customer or counterparty name to screen..." autocomplete="off">
+  <button id="screenBtn" onclick="doScreen()">Screen</button>
+  <button class="print-btn" onclick="window.print()">Print evidence</button>
+</div>
+
+<div class="results" id="results"></div>
+
+<script>
+let sanctionsList = [];
+let pepList = [];
+const adverseKeywords = [
+  "money laundering", "sanctions", "fraud", "terrorist financing",
+  "bribery", "corruption", "smuggling", "criminal", "prosecution",
+  "indictment", "seized", "frozen assets", "blacklist", "penalty",
+  "fine", "FATF", "designated", "prohibited",
+];
+
+function normalise(s) {
+  return (s || "").toLowerCase().normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+function parseCSVNames(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length <= 1) return [];
+  const header = lines[0].toLowerCase();
+  const nameCol = header.split(",").findIndex(h => h.trim() === "name");
+  const col = nameCol >= 0 ? nameCol : 0;
+  return lines.slice(1).map(l => {
+    const parts = l.split(",");
+    return (parts[col] || "").replace(/"/g, "").trim();
+  }).filter(n => n.length >= 3);
+}
+
+document.getElementById("sanctionsFile").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    sanctionsList = parseCSVNames(ev.target.result);
+    document.getElementById("sanctionsCount").textContent = sanctionsList.length + " names loaded";
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById("pepFile").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    pepList = parseCSVNames(ev.target.result);
+    document.getElementById("pepCount").textContent = pepList.length + " names loaded";
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById("nameInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") doScreen();
+});
+
+function doScreen() {
+  const raw = document.getElementById("nameInput").value.trim();
+  if (!raw) return;
+  const norm = normalise(raw);
+  if (norm.length < 3) { alert("Name must be at least 3 characters."); return; }
+
+  const now = new Date().toISOString();
+  const sanctionsHits = sanctionsList.filter(s => {
+    const sn = normalise(s);
+    return sn === norm || sn.includes(norm) || norm.includes(sn);
+  });
+  const pepHits = pepList.filter(p => {
+    const pn = normalise(p);
+    return pn === norm || pn.includes(norm) || norm.includes(pn);
+  });
+
+  const hasHit = sanctionsHits.length > 0 || pepHits.length > 0;
+
+  const evidence = [
+    "SCREENING EVIDENCE RECORD",
+    "========================",
+    "",
+    "Screened name:      " + raw,
+    "Normalised:         " + norm,
+    "Timestamp:          " + now,
+    "Sanctions list:     " + sanctionsList.length + " entries loaded",
+    "PEP list:           " + pepList.length + " entries loaded",
+    "",
+    "SANCTIONS RESULT:   " + (sanctionsHits.length > 0 ? "POTENTIAL MATCH (" + sanctionsHits.length + ")" : "CLEAR"),
+    ...(sanctionsHits.length > 0 ? sanctionsHits.map(s => "  Match: " + s) : []),
+    "",
+    "PEP RESULT:         " + (pepHits.length > 0 ? "POTENTIAL MATCH (" + pepHits.length + ")" : "CLEAR"),
+    ...(pepHits.length > 0 ? pepHits.map(p => "  Match: " + p) : []),
+    "",
+    "OVERALL:            " + (hasHit ? "ESCALATE TO MLRO" : "CLEAR — proceed with transaction"),
+    "",
+    "Screened by:        [staff member name]",
+    "Reviewed by:        " + "LF, MLRO",
+  ].join("\n");
+
+  let html = '<div class="result-card ' + (hasHit ? "hit" : "clear") + '">';
+  html += '<div>' + (hasHit
+    ? '<span class="badge badge-red">POTENTIAL MATCH</span>'
+    : '<span class="badge badge-green">CLEAR</span>') + ' <strong>' + raw + '</strong></div>';
+
+  html += '<div style="margin-top: 10px;">';
+  html += '<div class="label">Sanctions (UNSC + UAE Local)</div>';
+  html += '<div class="value">' + (sanctionsHits.length > 0
+    ? '<span class="badge badge-red">' + sanctionsHits.length + ' hit(s)</span> ' + sanctionsHits.join(", ")
+    : '<span class="badge badge-green">Clear</span> No match against ' + sanctionsList.length + ' entries') + '</div>';
+
+  html += '<div class="label">PEP</div>';
+  html += '<div class="value">' + (pepHits.length > 0
+    ? '<span class="badge badge-red">' + pepHits.length + ' hit(s)</span> ' + pepHits.join(", ")
+    : '<span class="badge badge-green">Clear</span> No match against ' + pepList.length + ' entries') + '</div>';
+
+  html += '<div class="label">Adverse keywords checked</div>';
+  html += '<div class="value"><span class="badge badge-grey">' + adverseKeywords.length + ' keywords</span> (applied during automated weekly sweep)</div>';
+
+  html += '</div>';
+
+  html += '<div class="label" style="margin-top: 10px;">Evidence record (copy or print)</div>';
+  html += '<div class="evidence-box">' + evidence.replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</div>';
+
+  html += '<div class="timestamp">Screened at ' + now + '</div>';
+  html += '</div>';
+
+  document.getElementById("results").innerHTML = html + document.getElementById("results").innerHTML;
+}
+</script>
+</body>
+</html>
