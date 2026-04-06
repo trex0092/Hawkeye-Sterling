@@ -1,0 +1,55 @@
+=============================================================================
+THE REPORTING ENTITY
+ANNUAL PROGRAMME EFFECTIVENESS SELF-ASSESSMENT
+Year 2025
+=============================================================================
+
+Document reference:   HSV2-APE-2025
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 10:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             01 January 2025 to 31 December 2025
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This self-assessment scores the [Reporting Entity] AML and CFT programme for the year 2025 against five pillars derived from the evidence held in the compliance automation archive. It is produced deterministically and contains no narrative that has not been supported by a file in history/.
+
+The output is a DRAFT for the MLRO to review, amend, and present to the Board alongside the Annual MLRO Report and the Annual Enterprise-Wide Risk Assessment.
+
+2. OVERALL SCORE
+
+Overall programme effectiveness score: 14/100 (unsatisfactory)
+
+3. SCORES BY PILLAR
+
+PILLAR                                  SCORE  RATING          EVIDENCE                                          
+--------------------------------------  -----  --------------  --------------------------------------------------
+Governance and MLRO reporting           0      unsatisfactory  Monthly reports 0/12, quarterly reports 0/4       
+Daily operational discipline            0      unsatisfactory  Daily folders 0                                   
+Weekly pattern intelligence             0      unsatisfactory  Weekly pattern reports 0/52                       
+Filing drafts prepared for MLRO review  40     weak            Filing drafts in archive: 0                       
+Counterparty intelligence               30     weak            Counterparty register rows: 0; high or critical: 0
+
+4. INTERPRETATION
+
+The score in section 2 is an internal indicator only. It reflects the presence of archived artefacts in the repository, not the underlying quality of the decisions the MLRO recorded in those artefacts. The Board and the MLRO may reach a different view after reading the referenced documents.
+
+5. MLRO ACTION
+
+Review each pillar score above, read the referenced artefacts for any pillar scoring below 70, and record the MLRO's own rating in the space below on the final document. Any difference between the automation score and the MLRO rating is a useful audit signal and should be noted in the Board pack.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
