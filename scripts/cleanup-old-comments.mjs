@@ -101,6 +101,7 @@ async function main() {
         const text = story.text ?? "";
         // Match ALL automation-generated comments broadly.
         // The MLRO wants a clean slate — delete anything the automation posted.
+        // Covers both the old format ("Daily priorities") and the new HSV2 format.
         if (
           text.startsWith("HSV2") ||
           text.startsWith("====") ||
@@ -113,13 +114,26 @@ async function main() {
           text.includes("hawkeye-sterling") ||
           text.includes("Today's Priorities") ||
           text.includes("Compliance Priorities") ||
+          text.includes("Daily priorities") ||
+          text.includes("Daily Compliance") ||
+          text.includes("TOP 10 FOR TODAY") ||
+          text.includes("TOP TEN") ||
+          text.includes("Top Ten") ||
+          text.includes("top ten") ||
           text.includes("Portfolio Digest") ||
           text.includes("Task Compliance Pack") ||
           text.includes("Sanctions Screening") ||
           text.includes("Regulatory Update") ||
           text.includes("CDD Refresh") ||
           text.includes("Deadline Calendar") ||
-          text.includes("Retention period:")
+          text.includes("Retention period:") ||
+          text.includes("risk score") ||
+          text.includes("Risk score") ||
+          text.includes("RECOMMENDED DECISIONS") ||
+          text.includes("imperative next action") ||
+          text.includes("regulatory risk") ||
+          text.includes("MLRO TODAY") ||
+          text.includes("compliance priorities")
         ) {
           toDelete.push({ gid: story.gid, preview: text.slice(0, 80) });
         }
