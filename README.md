@@ -50,6 +50,10 @@ All narrative output cites only the confirmed UAE AML and CFT framework:
   the UAE Local Terrorist List.
 - Financial Intelligence Unit via the goAML platform for STR, SAR,
   DPMSR, PNMR, FFR.
+- Financial Action Task Force (FATF) Recommendations 11, 20, 22, 23
+  and 28 as the international standard underpinning UAE AML/CFT law.
+  FATF jurisdiction lists (increased monitoring and high-risk) for
+  geographic risk assessment.
 - Ten-year record retention.
 
 Every Claude call uses the same `SYSTEM_PROMPT` and passes through a

@@ -110,6 +110,10 @@ The audit chain is append-only and tamper-evident. Each screening event
 is linked to the previous event by hash. The MLRO may verify the chain
 integrity at any time using the verify_audit tool.
 
+The audit chain supports the firm's compliance with FATF Recommendation
+11 (record-keeping) and the equivalent provisions of Federal Decree-Law
+No. 10 of 2025.
+
 -----------------------------------------------------------------------------
 8. MLRO DECISION
 -----------------------------------------------------------------------------

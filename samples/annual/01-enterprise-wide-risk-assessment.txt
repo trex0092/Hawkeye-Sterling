@@ -38,6 +38,13 @@ function's conclusions. The MLRO is invited to amend the risk ratings
 where her professional judgement differs from the compliance
 function.
 
+The methodology is aligned with the Financial Action Task Force (FATF)
+risk-based approach as set out in FATF Recommendation 22 (customer
+due diligence for DNFBPs) and Recommendation 28 (regulation and
+supervision of DNFBPs). The geographic risk dimension incorporates
+the FATF list of jurisdictions under increased monitoring and the
+FATF list of high-risk jurisdictions subject to a call for action.
+
 -----------------------------------------------------------------------------
 2. BUSINESS OVERVIEW
 -----------------------------------------------------------------------------

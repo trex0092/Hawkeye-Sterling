@@ -92,6 +92,24 @@ See `screening/README.md` for full documentation.
 5. The workflow commits any new files in history/ back to the repository
 6. The script posts a summary comment on the relevant Asana task
 
+## Regulatory alignment
+
+The system is designed to comply with:
+
+- **Federal Decree-Law No. 10 of 2025** (UAE primary AML/CFT statute)
+- **Ministry of Economy (MOE)** supervision of DNFBPs
+- **Executive Office for Control and Non-Proliferation (EOCN)** for
+  targeted financial sanctions
+- **Financial Intelligence Unit (FIU)** reporting via goAML
+- **Financial Action Task Force (FATF) Recommendations**, in particular:
+  - Rec 11 (record-keeping) — 10-year archive, hash-chained audit trail
+  - Rec 20 (suspicious transaction reporting) — STR/SAR draft generation
+  - Rec 22 (DNFBPs: customer due diligence) — CDD refresh tracker, EDD monitoring
+  - Rec 23 (DNFBPs: other measures) — training programme, filing obligations
+  - Rec 28 (regulation and supervision of DNFBPs) — inspection bundles, SAQ
+- **FATF jurisdiction lists** — integrated into quarterly heatmap and
+  screening engine for geographic risk assessment
+
 ## Security model
 
 - Entity names and MLRO identity are GitHub Actions secrets, never in source

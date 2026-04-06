@@ -105,6 +105,13 @@ All samples cite only the following, verbatim, as instructed by the MLRO:
 - Record retention obligation: 10 years minimum for customer due diligence
   records, transaction records, sanctions screening logs, training records,
   reporting files and supporting evidence.
+- International standards: the Financial Action Task Force (FATF), in
+  particular Recommendation 22 (DNFBPs: customer due diligence),
+  Recommendation 23 (DNFBPs: other measures), Recommendation 28
+  (regulation and supervision of DNFBPs), Recommendation 20 (suspicious
+  transaction reporting), and Recommendation 11 (record-keeping). The firm
+  monitors the FATF list of jurisdictions under increased monitoring and
+  the FATF list of high-risk jurisdictions subject to a call for action.
 
 Federal Decree-Law No. 20 of 2018 is not cited anywhere. It is not in
 force for the purposes of this programme.
