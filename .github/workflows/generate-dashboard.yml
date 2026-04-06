@@ -1,0 +1,34 @@
+name: Generate Compliance Dashboard
+on:
+  schedule:
+    - cron: "30 5 * * 1-5"
+  workflow_dispatch: {}
+concurrency:
+  group: dashboard
+  cancel-in-progress: false
+permissions:
+  contents: write
+  pages: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0, persist-credentials: true }
+      - uses: actions/setup-node@v5
+        with: { node-version: "22", cache: "npm", cache-dependency-path: scripts/package.json }
+      - run: npm install --omit=dev
+        working-directory: scripts
+      - name: Generate dashboard
+        working-directory: scripts
+        run: node generate-dashboard.mjs
+      - name: Commit and push
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain docs/ history/ 2>/dev/null)" ]; then
+            git add docs/ history/
+            git commit -m "Dashboard update: $(date -u +%Y-%m-%d)"
+            git push origin main
+          fi

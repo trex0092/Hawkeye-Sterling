@@ -386,16 +386,36 @@ export function renderTable(rows, columns) {
 /* ─── Keyword classifier used by multiple operational logs ──────────────── */
 
 export const TYPOLOGY_KEYWORDS = Object.freeze({
-  sanctions: ["sanction", "unsc", "consolidated list", "local terrorist", "eocn"],
-  pep: ["pep ", "politically exposed", "pep_", "pep-", "public office"],
-  cash: ["cash", "aed ", "bank notes", "walk-in", "walkin"],
-  crossBorder: ["cross-border", "cross border", "smuggling", "trade-based", "export", "import"],
-  recycledGold: ["recycled gold", "scrap", "jewellery scrap", "jewelry scrap", "old gold"],
-  dpmsrTrigger: ["dpmsr", "linked cash", "rolling 30 day", "aggregation"],
-  cddGap: ["cdd exemption", "refused cdd", "declined cdd", "missing cdd", "cdd refresh", "cdd slipped"],
-  stalled: ["stalled", "no response", "overdue", "blocked"],
-  training: ["training", "refresher", "attendance", "module delivered"],
-  escalation: ["escalated", "escalation", "mlro review", "awaiting mlro"],
+  // Sanctions and targeted financial sanctions
+  sanctions: ["sanction", "unsc", "consolidated list", "local terrorist", "eocn", "embargo", "designated person", "asset freeze", "travel ban", "un listed"],
+  // Politically Exposed Persons
+  pep: ["pep ", "politically exposed", "pep_", "pep-", "public office", "senior official", "government minister", "state-owned", "diplomatic"],
+  // Cash-intensive and structuring indicators (DPMS-specific)
+  cash: ["cash", "aed ", "bank notes", "walk-in", "walkin", "cash deposit", "cash payment", "cash settlement", "structured", "structuring", "split transaction", "just below threshold"],
+  // Cross-border and trade-based patterns
+  crossBorder: ["cross-border", "cross border", "smuggling", "trade-based", "export", "import", "free zone", "freezone", "re-export", "transit", "transshipment", "hawala", "informal value transfer"],
+  // Recycled gold and precious metals specific
+  recycledGold: ["recycled gold", "scrap", "jewellery scrap", "jewelry scrap", "old gold", "melted gold", "unrefined", "unknown origin", "undocumented source", "conflict mineral", "artisanal", "small-scale mining"],
+  // DPMSR trigger conditions
+  dpmsrTrigger: ["dpmsr", "linked cash", "rolling 30 day", "aggregation", "threshold", "cash transaction report", "15000", "55000", "single transaction"],
+  // CDD and EDD gaps
+  cddGap: ["cdd exemption", "refused cdd", "declined cdd", "missing cdd", "cdd refresh", "cdd slipped", "expired id", "expired passport", "incomplete kyc", "beneficial owner unknown", "nominee", "shell company", "complex structure"],
+  // Stalled or blocked items
+  stalled: ["stalled", "no response", "overdue", "blocked", "unresolved", "pending response", "awaiting documentation"],
+  // Training and awareness
+  training: ["training", "refresher", "attendance", "module delivered", "e-learning", "awareness session", "competency"],
+  // Escalation and MLRO items
+  escalation: ["escalated", "escalation", "mlro review", "awaiting mlro", "urgent", "immediate attention", "regulatory deadline"],
+  // Invoice and valuation fraud (DPMS-specific)
+  invoiceFraud: ["over-invoiced", "under-invoiced", "mispriced", "inflated value", "deflated value", "fake invoice", "fictitious", "valuation discrepancy", "assay mismatch", "carat mismatch"],
+  // Third-party and layering patterns
+  thirdParty: ["third party", "third-party", "intermediary", "broker", "agent payment", "paying on behalf", "receiving on behalf", "layering", "round-tripping", "back-to-back"],
+  // Geographic risk indicators
+  highRiskJurisdiction: ["high-risk jurisdiction", "fatf grey list", "grey-listed", "iran", "north korea", "dprk", "myanmar", "somalia", "yemen", "syria", "afghanistan", "non-cooperative"],
+  // Precious stones specific
+  preciousStones: ["diamond", "emerald", "ruby", "sapphire", "gemstone", "precious stone", "kimberley", "conflict diamond", "blood diamond", "rough diamond", "polished stone"],
+  // Unusual transaction patterns
+  unusualPattern: ["unusual", "no economic rationale", "no apparent purpose", "inconsistent with profile", "rapid movement", "dormant then active", "sudden spike", "atypical", "out of character"],
 });
 
 /**

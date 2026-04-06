@@ -1,0 +1,37 @@
+name: Weekly Archive Integrity Manifest
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch: {}
+concurrency:
+  group: hash-manifest
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0, persist-credentials: true }
+      - uses: actions/setup-node@v5
+        with: { node-version: "22", cache: "npm", cache-dependency-path: scripts/package.json }
+      - run: npm install --omit=dev
+        working-directory: scripts
+      - name: Run hash manifest
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+        run: node hash-manifest.mjs
+      - name: Commit history archive
+        if: ${{ always() }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
+            git add history/
+            git commit -m "Archive integrity manifest: $(date -u +%Y-%m-%d)"
+            git push origin main
+          fi
