@@ -186,6 +186,7 @@ export function createClaudeCaller(env) {
             await sleep(2000);
             continue;
           }
+        console.warn("  ⚠  all 4 validation attempts failed — returning best-effort text with warning");
         }
         return text;
       } catch (err) {

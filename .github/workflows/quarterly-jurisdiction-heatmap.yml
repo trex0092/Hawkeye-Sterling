@@ -70,12 +70,12 @@ jobs:
           TARGET_QUARTER: ${{ github.event.inputs.target_quarter }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: node quarterly-jurisdiction-heatmap.mjs
-      - if: steps.check.outputs.run == 'true' && github.event.inputs.dry_run != 'true'
+      - if: ${{ always() && steps.check.outputs.run == 'true' && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"
           if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
             git add history/
             git commit -m "Quarterly jurisdiction heatmap: $(date -u +%Y)-Q$(( ($(date -u +%-m)-1) / 3 ))"
-            git push origin main
+            git push origin "${GITHUB_REF#refs/heads/}"
           fi

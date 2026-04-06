@@ -94,14 +94,14 @@ jobs:
         run: node monthly-mlro-report.mjs
 
       - name: Commit history archive
-        if: steps.check.outputs.run == 'true' && github.event.inputs.dry_run != 'true'
+        if: ${{ always() && steps.check.outputs.run == 'true' && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"
           if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
             git add history/
             git commit -m "Monthly MLRO consolidation archive: $(date -u +%Y-%m)"
-            git push origin main
+            git push origin "${GITHUB_REF#refs/heads/}"
           else
             echo "No new history files to commit."
           fi

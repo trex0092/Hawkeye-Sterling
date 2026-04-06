@@ -178,6 +178,7 @@ async function callClaude(prompt, label) {
           await sleep(2000);
           continue;
         }
+        console.warn("  ⚠  all 4 validation attempts failed — returning best-effort text with warning");
       }
       return text;
     } catch (err) {
@@ -314,9 +315,13 @@ For review by the MLRO, ${mlro.name}.
 /* ─── Main ──────────────────────────────────────────────────────────────── */
 
 async function main() {
-  const year = TARGET_YEAR
-    ? Number.parseInt(TARGET_YEAR, 10)
+  const year = TARGET_YEAR && TARGET_YEAR.trim()
+    ? Number.parseInt(TARGET_YEAR.trim(), 10)
     : new Date().getUTCFullYear() - 1;
+  if (Number.isNaN(year)) {
+    console.error("❌ TARGET_YEAR is not a valid integer");
+    process.exit(1);
+  }
 
   console.log(`▶  Annual Risk Assessment — ${new Date().toISOString()}`);
   console.log(`   target year: ${year}`);
@@ -359,7 +364,10 @@ async function main() {
     console.log(`\n[dry-run] would post risk assessment draft to "${portfolio.projectName}"`);
   } else {
     try {
-      const __doc = document.length > 60000 ? document.slice(0, 60000) + "\n\n[TRUNCATED — full document archived under history/]" : document;
+      const __doc = document.length > 60000
+        ? (console.warn(`⚠  document truncated from ${document.length} to 60000 chars for Asana post`),
+           document.slice(0, 60000) + "\n\n[TRUNCATED — full document archived under history/]")
+        : document;
       await postComment(portfolio.taskGid, __doc);
     } catch (__err) {
       console.warn(`⚠  Asana post failed: ${__err.message}. Document remains in history/ archive.`);

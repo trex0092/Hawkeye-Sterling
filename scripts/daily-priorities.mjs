@@ -373,6 +373,7 @@ async function callClaude(prompt, label) {
         // On the last attempt, accept the response anyway rather than fail
         // the whole run. The problems will be visible in the log for the
         // MLRO to act on.
+        console.warn("  ⚠  all 4 validation attempts failed — returning best-effort text with warning");
       }
       return text;
     } catch (err) {

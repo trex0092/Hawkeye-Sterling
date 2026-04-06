@@ -231,7 +231,13 @@ For review by the MLRO, ${mlro.name}.
 }
 
 async function main() {
-  const year = TARGET_YEAR ? Number.parseInt(TARGET_YEAR, 10) : new Date().getUTCFullYear() - 1;
+  const year = TARGET_YEAR && TARGET_YEAR.trim()
+    ? Number.parseInt(TARGET_YEAR.trim(), 10)
+    : new Date().getUTCFullYear() - 1;
+  if (Number.isNaN(year)) {
+    console.error("❌ TARGET_YEAR is not a valid integer");
+    process.exit(1);
+  }
   console.log(`▶  Annual Training Completion Report — ${new Date().toISOString()}`);
   console.log(`   year: ${year}`);
   if (isDryRun) console.log("   DRY RUN");

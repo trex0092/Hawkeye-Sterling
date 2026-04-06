@@ -130,8 +130,8 @@ completed the module and are current on training records.
 The compliance function recommends the following three focus items for
 the week of 06 to 10 April 2026.
 
-First, resolve the recycled gold sanctions track across Entity Alpha, ZOE
-FZE and Entity Delta. Assign a single lead reviewer. Prioritise the
+First, resolve the recycled gold sanctions track across Entity Alpha, Entity
+Foxtrot and Entity Delta. Assign a single lead reviewer. Prioritise the
 collection of discriminating data on the counterparty identities.
 
 Second, set up a review of Entity Echo cash handling controls and record
