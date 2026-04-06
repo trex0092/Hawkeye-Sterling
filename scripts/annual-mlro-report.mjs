@@ -166,6 +166,7 @@ async function callClaude(prompt, label) {
           await sleep(2000);
           continue;
         }
+        console.warn("  ⚠  all 4 validation attempts failed — returning best-effort text with warning");
       }
       return text;
     } catch (err) {
@@ -284,9 +285,13 @@ Noted by Board on:   __________________________ (Board minute reference)
 /* ─── Main ──────────────────────────────────────────────────────────────── */
 
 async function main() {
-  const year = TARGET_YEAR
-    ? Number.parseInt(TARGET_YEAR, 10)
+  const year = TARGET_YEAR && TARGET_YEAR.trim()
+    ? Number.parseInt(TARGET_YEAR.trim(), 10)
     : new Date().getUTCFullYear() - 1;
+  if (Number.isNaN(year)) {
+    console.error("❌ TARGET_YEAR is not a valid integer");
+    process.exit(1);
+  }
 
   console.log(`▶  Annual MLRO Report — ${new Date().toISOString()}`);
   console.log(`   target year: ${year}`);
