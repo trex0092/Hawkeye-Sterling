@@ -1,0 +1,43 @@
+=============================================================================
+THE REPORTING ENTITY
+ANNUAL CUSTOMER EXIT REPORT
+Year 2025
+=============================================================================
+
+Document reference:   HSV2-CXR-2025
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 10:30 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Cross-entity counterparty register
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This record lists every counterparty in the cross-entity counterparty register whose status was set to "cleared" or "escalated" during the year 2025. A status of "cleared" indicates a relationship the firm exited after review, and a status of "escalated" indicates a relationship the firm escalated out of the ordinary monitoring track. Both are material for the annual audit and for the firm's continuing obligations under Federal Decree-Law No. 10 of 2025.
+
+2. POPULATION
+
+Total counterparties exited or escalated during 2025: 0
+
+3. ENTRIES
+
+No counterparties were exited or escalated during the year.
+
+4. MLRO ACTION
+
+Review each entry above against the firm's internal customer exit log and confirm that the reason for exit is documented. Any entry in the register that is missing an exit rationale should have the rationale added to the mlro_notes column of history/registers/counterparties.csv before the Board meeting at which this record is presented.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
