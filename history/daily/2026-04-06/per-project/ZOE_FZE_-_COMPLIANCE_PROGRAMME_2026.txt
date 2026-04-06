@@ -1,0 +1,64 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLIANCE PRIORITIES
+ZOE FZE - COMPLIANCE PROGRAMME 2026
+=============================================================================
+
+Document reference:   HSV2-DCP-ZOEFZE-2026-04-06
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 09:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE OF THIS NOTE
+-----------------------------------------------------------------------------
+
+This note sets out the compliance items in the ZOE FZE - COMPLIANCE PROGRAMME 2026 programme that,
+in the view of the compliance function, warrant the MLRO's attention today.
+The selection is drawn from 526 open tasks on the programme
+and 75 candidate tasks reviewed in detail. No task is currently at risk on the basis of its due date.
+
+-----------------------------------------------------------------------------
+2. ITEMS AT RISK TODAY
+-----------------------------------------------------------------------------
+
+No tasks in this programme are currently overdue or due within the next 3 business days.
+
+
+-----------------------------------------------------------------------------
+3. TOP TEN ITEMS FOR TODAY
+
+(Note: this list was generated without Claude due to an API error.
+The items are ranked by due date and at-risk status. The MLRO is
+asked to review each item and apply her own risk assessment.)
+
+Item 1. TRN-11 | Senior Management Governance Training. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907530742668
+Item 2. TRN-28 | Grievance Mechanisms and Whistleblower Policy. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907465320011
+Item 3. TRN-12 | Role-Based AML/CFT Responsibilities. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907307440280
+Item 4. TRN-17 | Cash-Free Policy and Virtual Asset Prohibition. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213919381587158
+Item 5. TRN-22 | STR/SAR Filing and Audit Readiness. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907382336348
+Item 6. TRN-14 | Ethical Sourcing Framework. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907382340542
+Item 7. TRN-15 | Responsible Mining and Cultural Heritage. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907465328944
+Item 8. TRN-09 | PEP and UBO Identification Training. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213919381627953
+Item 9. TRN-31 | Year-End Review, ESG and Continuous Improvement. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907530712016
+Item 10. TRN-32 | Training Effectiveness Review. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213908828069020/task/1213907382293849
+
+4. RECOMMENDED DECISIONS FOR THE MLRO TODAY
+
+The compliance function was unable to produce an AI-assisted analysis for ZOE FZE - COMPLIANCE PROGRAMME 2026 today due to a temporary API issue. The top ten items above are sorted by urgency. Review each item and direct the compliance function on any that require immediate action.
+
+-----------------------------------------------------------------------------
+5. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

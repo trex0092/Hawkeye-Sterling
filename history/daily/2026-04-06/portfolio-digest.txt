@@ -1,0 +1,39 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY PORTFOLIO DIGEST — ALL PROGRAMMES
+=============================================================================
+
+Document reference:   HSV2-DPD-2026-04-06
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 09:15 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             6 of 7 programme entities.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. HEADLINE FOR TODAY
+
+The cross-entity portfolio digest could not be generated with Claude due to a temporary API issue. The per-entity priority lists were posted to each project individually. The MLRO is asked to review them directly.
+
+2. ENTITIES COVERED
+
+- FG BRANCH - COMPLIANCE PROGRAMME 2026: see per-entity report
+- MADISON LLC - COMPLIANCE PROGRAMME 2026: see per-entity report
+- GRAMALTIN AS - COMPLIANCE PROGRAMME 2026: see per-entity report
+- NAPLES LLC - COMPLIANCE PROGRAMME 2026: see per-entity report
+- ZOE FZE - COMPLIANCE PROGRAMME 2026: see per-entity report
+- FG LLC - COMPLIANCE PROGRAMME 2026: see per-entity report
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

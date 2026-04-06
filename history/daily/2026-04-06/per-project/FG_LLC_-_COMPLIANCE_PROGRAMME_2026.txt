@@ -1,0 +1,64 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLIANCE PRIORITIES
+FG LLC - COMPLIANCE PROGRAMME 2026
+=============================================================================
+
+Document reference:   HSV2-DCP-FGLLCC-2026-04-06
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 09:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE OF THIS NOTE
+-----------------------------------------------------------------------------
+
+This note sets out the compliance items in the FG LLC - COMPLIANCE PROGRAMME 2026 programme that,
+in the view of the compliance function, warrant the MLRO's attention today.
+The selection is drawn from 526 open tasks on the programme
+and 75 candidate tasks reviewed in detail. No task is currently at risk on the basis of its due date.
+
+-----------------------------------------------------------------------------
+2. ITEMS AT RISK TODAY
+-----------------------------------------------------------------------------
+
+No tasks in this programme are currently overdue or due within the next 3 business days.
+
+
+-----------------------------------------------------------------------------
+3. TOP TEN ITEMS FOR TODAY
+
+(Note: this list was generated without Claude due to an API error.
+The items are ranked by due date and at-risk status. The MLRO is
+asked to review each item and apply her own risk assessment.)
+
+Item 1. TRN-15 | Responsible Mining and Cultural Heritage. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907465276045
+Item 2. TRN-30 | Remuneration, Traceability and Non-Retaliation. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907465273444
+Item 3. TRN-17 | Cash-Free Policy and Virtual Asset Prohibition. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907442048708
+Item 4. TRN-11 | Senior Management Governance Training. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907465275917
+Item 5. TRN-22 | STR/SAR Filing and Audit Readiness. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907465275851
+Item 6. TRN-16 | EDD and High-Risk Countries. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907530671073
+Item 7. TRN-23 | DPMS Reporting and Regulatory Obligations. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907530670976
+Item 8. TRN-12 | Role-Based AML/CFT Responsibilities. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907465273635
+Item 9. TRN-08 | RBA and NRA Alignment Training. Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907307378932
+Item 10. TRN-21 | Understanding Risk Assessments (BWRA/EWRA). Due 2026-10-03, assigned to Luisa Fernanda. Review this item and confirm the next action required. → https://app.asana.com/1/1213645083721316/project/1213909833048586/task/1213907382277571
+
+4. RECOMMENDED DECISIONS FOR THE MLRO TODAY
+
+The compliance function was unable to produce an AI-assisted analysis for FG LLC - COMPLIANCE PROGRAMME 2026 today due to a temporary API issue. The top ten items above are sorted by urgency. Review each item and direct the compliance function on any that require immediate action.
+
+-----------------------------------------------------------------------------
+5. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
