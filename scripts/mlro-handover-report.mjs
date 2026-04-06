@@ -24,7 +24,7 @@ import {
 import { writeHistory, isoDate } from "./history-writer.mjs";
 import { notify } from "./notify.mjs";
 
-const env = readCommonEnv({ INCOMING_MLRO_NAME: process.env.INCOMING_MLRO_NAME ?? "" });
+const env = readCommonEnv({ requireClaude: false, INCOMING_MLRO_NAME: process.env.INCOMING_MLRO_NAME ?? "" });
 const { listProjects, postComment, findPortfolioPinned } = createAsanaClient(env);
 const today = isoDate();
 

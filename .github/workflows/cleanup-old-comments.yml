@@ -1,0 +1,48 @@
+name: Cleanup Old Automation Comments (one-time)
+
+# Manual-only. Deletes all automation comments (starting with "HSV2 /")
+# from every pinned task across all projects. This resets the pinned
+# tasks to a clean state so the automation starts fresh.
+#
+# Run this ONCE to clear old output, then never again.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (list comments but do not delete)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+concurrency:
+  group: cleanup
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Cleanup old comments
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Run cleanup
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+        run: node cleanup-old-comments.mjs

@@ -21,7 +21,7 @@ import {
 import { writeHistory } from "./history-writer.mjs";
 import { notify } from "./notify.mjs";
 
-const env = readCommonEnv({ TARGET_YEAR: process.env.TARGET_YEAR ?? "" });
+const env = readCommonEnv({ requireClaude: false, TARGET_YEAR: process.env.TARGET_YEAR ?? "" });
 const { listProjects, postComment, findPortfolioPinned } = createAsanaClient(env);
 const targetYear = env.TARGET_YEAR
   ? Number.parseInt(env.TARGET_YEAR, 10)
