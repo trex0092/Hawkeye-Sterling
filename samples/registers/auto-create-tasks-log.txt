@@ -1,0 +1,94 @@
+=============================================================================
+[Reporting Entity]
+AUTOMATED TASK CREATION LOG
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-ACT-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:10 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 22
+                      (DNFBPs: customer due diligence); Recommendation 28
+                      (regulation and supervision of DNFBPs).
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This log records every compliance task automatically created in Asana
+by the compliance function on 05 April 2026. Tasks are created when the
+daily monitoring reports (sanctions screening, PEP watch, CDD refresh,
+transaction monitoring) identify alerts that require individual follow-up.
+Each created task is assigned to the appropriate programme entity,
+given a priority level, and linked to the source alert.
+
+-----------------------------------------------------------------------------
+2. SUMMARY
+-----------------------------------------------------------------------------
+
+Tasks created today:              4
+Source: sanctions screening       1
+Source: PEP watch                 0
+Source: CDD refresh tracker       2
+Source: transaction monitoring    1
+
+-----------------------------------------------------------------------------
+3. TASKS CREATED
+-----------------------------------------------------------------------------
+
+a. Entity Alpha. Source: sanctions screening.
+   Task name: "Review medium-confidence UNSC match on Al Rashid Metal
+   Recyclers (SCR-2026-04-05-001)"
+   Priority: High
+   Due date: 07 April 2026
+   Assignee: Luisa Fernanda
+   Linked alert: Daily Sanctions Screening Log, 05 April 2026
+   Asana task GID: [created at runtime]
+
+b. Entity Alpha. Source: CDD refresh tracker.
+   Task name: "CDD refresh overdue: Al Rashid Trading (CR-0047)"
+   Priority: Critical
+   Due date: 06 April 2026
+   Assignee: Luisa Fernanda
+   Linked alert: CDD Refresh Tracker, 05 April 2026, overdue bucket
+   Asana task GID: [created at runtime]
+
+c. Entity Bravo. Source: CDD refresh tracker.
+   Task name: "CDD refresh overdue: Gulf Commodities FZE (CR-0112)"
+   Priority: Critical
+   Due date: 06 April 2026
+   Assignee: Luisa Fernanda
+   Linked alert: CDD Refresh Tracker, 05 April 2026, overdue bucket
+   Asana task GID: [created at runtime]
+
+d. Entity Echo. Source: transaction monitoring.
+   Task name: "Review DPMSR trigger: Customer EC-0194 same-day cash
+   transactions AED 147,000 (TXM-2026-04-05)"
+   Priority: High
+   Due date: 07 April 2026
+   Assignee: Luisa Fernanda
+   Linked alert: Transaction Monitoring Report, 05 April 2026, alert (a)
+   Asana task GID: [created at runtime]
+
+-----------------------------------------------------------------------------
+4. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. The MLRO is asked to review the four tasks created today and confirm
+   that the assigned priorities and due dates are appropriate.
+
+2. The two critical-priority CDD refresh tasks should be actioned before
+   close of business on 06 April 2026.
+
+3. The sanctions screening task on Entity Alpha should be reviewed in
+   conjunction with the open RF-R12 file.
+
+
+=============================================================================
+END OF AUTOMATED TASK CREATION LOG — 05 APRIL 2026
+=============================================================================

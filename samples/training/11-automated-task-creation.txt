@@ -1,0 +1,162 @@
+=============================================================================
+[Reporting Entity]                                          No:  11
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: June
+EVALUATION 2026 | AUTOMATED TASK CREATION                  Audience: All Staff
+AND ALERT MANAGEMENT
+Schedule: Week 11                                           Training Session: 11
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  AUTOMATED TASK CREATION
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the automated task creation        [    ]
+process and I know that it converts alerts from the daily
+monitoring reports (sanctions screening, PEP watch, CDD
+refresh, transaction monitoring) into individual Asana
+tasks for follow-up.
+
+I know that each created task is assigned to the               [    ]
+appropriate programme entity, given a priority level
+(critical or high), and linked to the source alert.
+
+I understand the priority levels: critical-priority tasks      [    ]
+must be actioned within one business day, and high-priority
+tasks must be actioned within two business days.
+
+I know that the MLRO reviews the Automated Task Creation       [    ]
+Log daily and may adjust the assigned priorities, due
+dates, or assignees.
+
+I understand that the automated task creation process          [    ]
+supports the firm's risk-based approach under FATF
+Recommendation 22 (customer due diligence for DNFBPs) by
+ensuring that every alert receives a tracked follow-up
+action.
+
+
+-----------------------------------------------------------------------------
+2.  ALERT SOURCES AND RESPONSE
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I can identify the four alert sources that trigger             [    ]
+automated task creation: sanctions screening matches,
+PEP watch changes, CDD refresh overdue or critical
+items, and transaction monitoring alerts.
+
+I know what action to take when I am assigned an               [    ]
+automated task: review the linked alert, assess the
+underlying risk, and either resolve the task or escalate
+it to the MLRO.
+
+I understand that a sanctions-related automated task           [    ]
+must be reviewed in conjunction with any open red-flag
+files on the same counterparty.
+
+I know that CDD refresh tasks rated critical indicate          [    ]
+that a counterparty file is overdue for Customer Due
+Diligence review and must be actioned before close of
+the next business day.
+
+I understand that transaction monitoring tasks may             [    ]
+require a linked-transaction aggregation check and that
+the outcome may trigger a Dealers in Precious Metals
+and Stones Report draft.
+
+
+-----------------------------------------------------------------------------
+3.  RECORD-KEEPING AND GOVERNANCE
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Automated Task Creation Log is retained        [    ]
+for 10 years under Federal Decree-Law No. 10 of 2025
+and FATF Recommendation 11 (record-keeping).
+
+I understand that the log provides an audit trail              [    ]
+demonstrating that every alert identified by the firm's
+monitoring systems received a tracked compliance response.
+
+I know that the Ministry of Economy may review the             [    ]
+firm's alert response records during a supervisory
+inspection and that complete, timely records are
+essential for demonstrating operational discipline.
+
+I am aware that the Executive Office for Control and           [    ]
+Non-Proliferation (EOCN) expects the firm to act on
+sanctions screening alerts without unnecessary delay.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 11 — AUTOMATED TASK CREATION AND ALERT MANAGEMENT
+=============================================================================
