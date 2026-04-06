@@ -22,6 +22,9 @@ jobs:
         working-directory: scripts
       - name: Generate dashboard
         working-directory: scripts
+        env:
+          MLRO_NAME: ${{ secrets.MLRO_NAME }}
+          ENTITY_LEGAL_NAME: ${{ secrets.ENTITY_LEGAL_NAME }}
         run: node generate-dashboard.mjs
       - name: Commit and push
         if: ${{ always() }}

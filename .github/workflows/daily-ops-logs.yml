@@ -46,6 +46,8 @@ jobs:
           ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
           ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
           CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          MLRO_NAME: ${{ secrets.MLRO_NAME }}
+          ENTITY_LEGAL_NAME: ${{ secrets.ENTITY_LEGAL_NAME }}
           PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
           PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}

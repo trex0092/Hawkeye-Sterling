@@ -106,7 +106,7 @@ export const CONFIRMED_REFERENCES = Object.freeze({
     // working even when the variable is not set.
     name: process.env.MLRO_NAME && process.env.MLRO_NAME.trim().length > 0
       ? process.env.MLRO_NAME.trim()
-      : "LF",
+      : "the MLRO",
     title: "Money Laundering Reporting Officer (MLRO)",
     organization: "[Reporting Entity]",
     cite: true,
