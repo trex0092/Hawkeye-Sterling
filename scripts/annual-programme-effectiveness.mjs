@@ -26,9 +26,13 @@ import { notify } from "./notify.mjs";
 
 const env = readCommonEnv({ requireClaude: false, TARGET_YEAR: process.env.TARGET_YEAR ?? "" });
 const { listProjects, postComment, findPortfolioPinned } = createAsanaClient(env);
-const targetYear = env.TARGET_YEAR
-  ? Number.parseInt(env.TARGET_YEAR, 10)
+const targetYear = env.TARGET_YEAR && env.TARGET_YEAR.trim()
+  ? Number.parseInt(env.TARGET_YEAR.trim(), 10)
   : new Date().getUTCFullYear() - 1;
+if (Number.isNaN(targetYear)) {
+  console.error("❌ TARGET_YEAR is not a valid integer");
+  process.exit(1);
+}
 
 async function countFilesInDir(dir, yearPrefix) {
   try {
