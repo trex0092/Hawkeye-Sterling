@@ -1,0 +1,104 @@
+=============================================================================
+THE REPORTING ENTITY
+MONTHLY EDD CASE TRACKER
+Month 2026-04
+=============================================================================
+
+Document reference:   HSV2-EDD-2026-04
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, 10:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Counterparty register + Asana PEP-tagged tasks
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This tracker lists every counterparty currently on the firm's Enhanced Due Diligence pathway, drawn from two sources: the cross-entity counterparty register and the Asana tasks tagged with PEP language. It supports the MLRO's monthly review of the EDD population.
+
+2. POPULATION
+
+Counterparty register entries on EDD pathway: 0
+PEP-tagged Asana tasks touched recently:      55
+
+3. COUNTERPARTIES UNDER EDD
+
+No counterparties are currently on the EDD pathway in the register.
+
+4. PEP FILES CURRENTLY TRACKED IN THE ASANA TASK BASE
+
+PROGRAMME                       FILE                                        ASSIGNEE      
+------------------------------  ------------------------------------------  --------------
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF09 | NRA: PEP Exposure in DPMS        Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-29 | Government Official Hospi…  Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  🟡 H-02 | PEP Screening Programme and Pos…  Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  🟡 OPS-22 | PEP Ongoing Monitoring and En…  Luisa Fernanda
+FG BRANCH - COMPLIANCE PROGRA…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  NRA-RF09 | NRA: PEP Exposure in DPMS        Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-29 | Government Official Hospi…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  🔵 M-04 | NPO and Politically Connected E…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  🟡 H-05 | New Customer Onboarding Checkli…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  🟡 H-02 | PEP Screening Programme and Pos…  Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  🟡 OPS-22 | PEP Ongoing Monitoring          Luisa Fernanda
+MADISON LLC - COMPLIANCE PROG…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF09 | NRA: PEP Exposure in DPMS        Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-29 | Government Official Hospi…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  🟡 H-05 | New Customer Onboarding Checkli…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  🟡 H-02 | PEP Screening Programme and Pos…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  🔵 M-04 | NPO and Politically Connected E…  Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  🟡 OPS-22 | PEP Ongoing Monitoring          Luisa Fernanda
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF09 | NRA: PEP Exposure in DPMS        Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-29 | Government Official Hospi…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  🔵 M-04 | NPO and Politically Connected E…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  🟡 H-05 | New Customer Onboarding Checkli…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  🟡 H-02 | PEP Screening Programme and Pos…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  🟡 OPS-22 | PEP Ongoing Monitoring and En…  Luisa Fernanda
+NAPLES LLC - COMPLIANCE PROGR…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF09 | NRA: PEP Exposure in DPMS        Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-29 | Government Official Hospi…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  🔵 M-04 | NPO and Politically Connected E…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  🟡 H-05 | New Customer Onboarding Checkli…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  🟡 H-02 | PEP Screening Programme and Pos…  Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  🟡 OPS-22 | PEP Ongoing Monitoring          Luisa Fernanda
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF09 | NRA: PEP Exposure in DPMS        Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  RF-08 | PEP-Specific Red Flags for DPMS T…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-18 | CT-005: Sanctions, TFS a…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-29 | Government Official Hospi…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  🟡 H-02 | PEP Screening Programme and Pos…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  🟡 OPS-22 | PEP Ongoing Monitoring and En…  Luisa Fernanda
+FG LLC - COMPLIANCE PROGRAMME…  TRN-09 | PEP and UBO Identification Train…  Luisa Fernanda
+
+5. MLRO ACTION
+
+For each entry above, confirm that the current EDD file is up to date, that the next review date is recorded in the firm's internal procedure log, and that any open question is assigned to a named reviewer.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
