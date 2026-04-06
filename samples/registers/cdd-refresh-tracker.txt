@@ -1,0 +1,101 @@
+=============================================================================
+[Reporting Entity]
+CDD REFRESH TRACKER
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-CDD-T-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:15 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+This report tracks the Customer Due Diligence refresh status for all 87
+active counterparties on the firm's counterparty register. Refresh
+windows are: 12 months for high and critical risk, 24 months for medium
+risk, 36 months for low risk. The compliance function compares the last
+recorded CDD date against the applicable window to identify overdue,
+critical, and approaching files.
+
+-----------------------------------------------------------------------------
+2. SUMMARY
+-----------------------------------------------------------------------------
+
+BUCKET                          COUNT
+-----------------------------   -----
+Overdue (past refresh date)         3
+Critical (due within 7 days)        2
+Warning (due within 8-30 days)      5
+Approaching (31-90 days)            9
+On schedule                        64
+Missing baseline date               4
+                                  ---
+Total                              87
+
+-----------------------------------------------------------------------------
+3. OVERDUE
+-----------------------------------------------------------------------------
+
+COUNTERPARTY                  JURISDICTION   RATING    LAST CDD     DAYS OVER
+----------------------------  ------------   -------   ----------   ---------
+Al Rashid Metal Recyclers     RAK, UAE       Critical  12 Mar 2025      389
+Gulf Commodities FZE          JAFZA, UAE     High      28 Mar 2025      373
+CDD-047 Al Rashid Trading     RAK, UAE       High      01 Apr 2025      369
+
+-----------------------------------------------------------------------------
+4. CRITICAL (DUE WITHIN 7 DAYS)
+-----------------------------------------------------------------------------
+
+COUNTERPARTY                  JURISDICTION   RATING    LAST CDD     DAYS LEFT
+----------------------------  ------------   -------   ----------   ---------
+Precious Refining AG          Zurich, CH     High      12 Apr 2025        7
+Emirates Scrap Metals LLC     Dubai, UAE     High      14 Apr 2025        9
+
+-----------------------------------------------------------------------------
+5. WARNING (DUE WITHIN 8-30 DAYS)
+-----------------------------------------------------------------------------
+
+COUNTERPARTY                  JURISDICTION   RATING    LAST CDD     DAYS LEFT
+----------------------------  ------------   -------   ----------   ---------
+Palm Trading Group LLC        Dubai, UAE     High      20 Apr 2025       15
+Al Noor Gold Recycling        Ajman, UAE     Critical  22 Apr 2025       17
+Atlas Gold FZE                RAK, UAE       High      28 Apr 2025       23
+Al Falak Jewellery Co         Sharjah, UAE   Medium    05 May 2024       30
+Meridian Bullion DMCC         Dubai, UAE     High      05 May 2025       30
+
+-----------------------------------------------------------------------------
+6. MISSING BASELINE
+-----------------------------------------------------------------------------
+
+The following counterparties have no recorded CDD date:
+
+COUNTERPARTY                  JURISDICTION   RATING
+----------------------------  ------------   -------
+RAK Precious LLC              RAK, UAE       Medium
+Dubai Gold Souk Traders       Dubai, UAE     Medium
+Al Furjan Jewellery Co        Sharjah, UAE   Medium
+Emirates Commodities Ltd      Dubai, UAE     Medium
+
+-----------------------------------------------------------------------------
+7. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. Prioritise the three overdue files. The MLRO should instruct the
+   compliance function to initiate CDD refresh immediately.
+
+2. Schedule CDD refresh for the two critical files before 12 April 2026.
+
+3. Obtain baseline CDD dates for the four counterparties with missing
+   records and update the counterparty register.
+
+
+=============================================================================
+END OF CDD REFRESH TRACKER — 05 APRIL 2026
+=============================================================================

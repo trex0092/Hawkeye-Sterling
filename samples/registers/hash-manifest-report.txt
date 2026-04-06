@@ -1,0 +1,73 @@
+=============================================================================
+[Reporting Entity]
+ARCHIVE INTEGRITY MANIFEST
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-HMF-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:30 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+We computed the SHA256 fingerprint of every file in the history/ archive
+today. This manifest is itself archived so that any future inspection
+can verify the integrity of the archive at any prior point in time.
+
+If any file in history/ is modified after the fact, the next manifest
+run will detect the mismatch and report it below.
+
+-----------------------------------------------------------------------------
+2. PURPOSE
+-----------------------------------------------------------------------------
+
+The firm is required to retain compliance records for a minimum of 10
+years under the applicable provision of Federal Decree-Law No. 10 of
+2025. This integrity check supports the MLRO's ability to demonstrate
+to any supervisory authority that the archive has not been tampered
+with since the date of each manifest.
+
+-----------------------------------------------------------------------------
+3. INTEGRITY CHECK RESULT
+-----------------------------------------------------------------------------
+
+Status:               PASS
+Files scanned:        820
+Hash mismatches:        0
+Deleted files:          0
+New files since
+  last manifest:        6
+
+The six new files are the artefacts produced by the daily automation
+on 04 April 2026 (daily priorities for 6 entities). All new files
+have been fingerprinted and recorded in today's manifest.
+
+-----------------------------------------------------------------------------
+4. HASH MISMATCHES
+-----------------------------------------------------------------------------
+
+None.
+
+-----------------------------------------------------------------------------
+5. DELETED FILES
+-----------------------------------------------------------------------------
+
+None.
+
+-----------------------------------------------------------------------------
+6. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+No action required. The archive integrity check passed without issue.
+
+
+=============================================================================
+END OF ARCHIVE INTEGRITY MANIFEST — 05 APRIL 2026
+=============================================================================

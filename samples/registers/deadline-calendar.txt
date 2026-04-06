@@ -1,0 +1,81 @@
+=============================================================================
+[Reporting Entity]
+REGULATORY DEADLINE CALENDAR
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-DLC-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:20 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+This report lists all regulatory and internal compliance deadlines
+tracked by the firm. The source is the deadline calendar maintained by
+the MLRO at scripts/deadlines.json. Deadlines are grouped by urgency.
+
+-----------------------------------------------------------------------------
+2. SUMMARY
+-----------------------------------------------------------------------------
+
+BUCKET                          COUNT
+-----------------------------   -----
+Overdue                             0
+Critical (due within 7 days)        1
+Warning (due within 8-30 days)      2
+Approaching (31-90 days)            4
+Scheduled (beyond 90 days)         11
+Unscheduled (no date)               0
+                                  ---
+Total                              18
+
+-----------------------------------------------------------------------------
+3. CRITICAL (DUE WITHIN 7 DAYS)
+-----------------------------------------------------------------------------
+
+DEADLINE                               DUE DATE       OWNER
+-------------------------------------  -----------    ----------------
+Q1 2026 DPMSR filing reconciliation    10 Apr 2026    MLRO
+
+-----------------------------------------------------------------------------
+4. WARNING (DUE WITHIN 8-30 DAYS)
+-----------------------------------------------------------------------------
+
+DEADLINE                               DUE DATE       OWNER
+-------------------------------------  -----------    ----------------
+Entity Charlie Q1 AML refresher        15 Apr 2026    Branch lead
+Entity Delta Q1 AML refresher          15 Apr 2026    Branch lead
+
+-----------------------------------------------------------------------------
+5. APPROACHING (31-90 DAYS)
+-----------------------------------------------------------------------------
+
+DEADLINE                               DUE DATE       OWNER
+-------------------------------------  -----------    ----------------
+MOE DNFBP annual return                30 Jun 2026    MLRO
+Board AML policy review                30 Jun 2026    Board / MLRO
+H1 2026 sanctions list reconciliation  30 Jun 2026    Compliance
+Entity Echo cash controls review       30 Apr 2026    MLRO
+
+-----------------------------------------------------------------------------
+6. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. Complete the Q1 2026 DPMSR filing reconciliation before 10 April 2026.
+
+2. Confirm that Entity Charlie and Entity Delta are on track for Q1 AML
+   refresher training completion by 15 April 2026.
+
+3. Begin preparation for the MOE DNFBP annual return due 30 June 2026.
+
+
+=============================================================================
+END OF REGULATORY DEADLINE CALENDAR — 05 APRIL 2026
+=============================================================================

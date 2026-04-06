@@ -19,10 +19,12 @@ Reporting Officer".
 
 | Folder | Contents |
 |---|---|
-| `scripts/` | The 24 Node.js scripts that drive the automation, plus `lib/report-scaffold.mjs` shared helpers and `regulatory-context.mjs` single source of truth for the UAE legal framework. See `scripts/README.md`. |
-| `.github/workflows/` | The 24 GitHub Actions workflows that schedule and dispatch each script. |
+| `scripts/` | 44 Node.js scripts that drive the automation, plus `lib/report-scaffold.mjs` shared helpers and `regulatory-context.mjs` single source of truth for the UAE legal framework. See `scripts/README.md`. |
+| `.github/workflows/` | 39 GitHub Actions workflows that schedule and dispatch each script. |
+| `screening/` | Unified sanctions, PEP and adverse media screening engine with fuzzy matching, hash-chained audit trail and MCP server interface. |
 | `samples/` | Format-reference artefacts with fictitious data. Used to anchor the house style. |
 | `history/` | The live ten-year evidence archive written by the automation during real runs. See `history/README.md`. |
+| `docs/` | Operator documentation: architecture overview, configuration guide and troubleshooting. |
 
 ## Cadences covered
 
