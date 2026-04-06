@@ -743,8 +743,13 @@ async function main() {
           `    [dry-run] would post portfolio digest to "${portfolioProjectName}":\n${portfolioComment.split("\n").map((l) => `      ${l}`).join("\n")}`,
         );
       } else {
-        await postComment(portfolioPinnedGid, portfolioComment);
-        console.log(`    ✓ portfolio digest posted to "${portfolioProjectName}"`);
+        try {
+          const __pDoc = portfolioComment.length > 60000 ? portfolioComment.slice(0, 60000) + "\n\n[TRUNCATED — full document archived under history/]" : portfolioComment;
+          await postComment(portfolioPinnedGid, __pDoc);
+          console.log(`    ✓ portfolio digest posted to "${portfolioProjectName}"`);
+        } catch (__err) {
+          console.warn(`    ⚠  Asana post failed: ${__err.message}. Document remains in history/ archive.`);
+        }
       }
 
       // Archive the portfolio digest to history/ for ten-year retention.
@@ -804,7 +809,10 @@ async function main() {
   if (results.errors.length > 0) {
     console.log("\nErrors:");
     for (const e of results.errors) console.log(`  - ${e.project}: ${e.error}`);
-    process.exit(1);
+    // Do not exit(1) — the archive commit step must still run, and
+    // partial success (some projects processed, some failed due to
+    // rate limits) is better than no output at all.
+    if (results.processed === 0) process.exit(1);
   }
 }
 
