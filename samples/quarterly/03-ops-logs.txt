@@ -13,6 +13,9 @@ Addressee:            the MLRO, Money Laundering Reporting Officer
 Coverage:             01 January 2026 to 31 March 2026 inclusive
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 28
+                      (regulation and supervision of DNFBPs) and
+                      Recommendation 11 (record-keeping).
 
 This file contains two quarterly operational logs produced by the compliance
 function at the start of the new quarter.

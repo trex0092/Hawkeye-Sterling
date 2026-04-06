@@ -14,6 +14,8 @@ after MLRO sign-off:  Ministry of Economy (supervisory authority for
                       Designated Non-Financial Businesses and Professions)
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 28
+                      (regulation and supervision of DNFBPs).
 
 -----------------------------------------------------------------------------
 1. STATUS OF THIS DOCUMENT

@@ -12,6 +12,8 @@ Addressee:            the MLRO, Money Laundering Reporting Officer
 Coverage:             All customer records across the six active programmes
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendations.
+                      FATF Recommendation 22 (DNFBPs: customer due diligence).
 
 -----------------------------------------------------------------------------
 1. PURPOSE

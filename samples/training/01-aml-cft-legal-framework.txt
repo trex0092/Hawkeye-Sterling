@@ -1,0 +1,238 @@
+=============================================================================
+[Reporting Entity]                                          No:  01
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: January
+EVALUATION 2026 | AML/CFT LEGAL FRAMEWORK                  Audience: All Staff
+AND LAW TRANSITION
+Schedule: Week 1                                            Training Session: 01
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  UAE LEGAL FRAMEWORK
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I have read and understood the purpose of Federal              [    ]
+Decree-Law No. 10 of 2025 on AML/CFT/CPF, and I know
+that it replaces Federal Decree-Law No. 20 of 2018.
+
+I understand the material changes introduced by the 2025      [    ]
+law, including the expanded scope for Dealers in Precious
+Metals and Stones classified as Designated Non-Financial
+Businesses and Professions.
+
+I know that the Executive Regulations issued under Federal     [    ]
+Decree-Law No. 10 of 2025 govern how the firm implements
+its AML/CFT obligations in practice.
+
+I am familiar with the key findings of the UAE National        [    ]
+Risk Assessment and understand that DPMS entities carry
+an elevated risk rating under that assessment.
+
+I understand that the Financial Action Task Force (FATF)       [    ]
+Recommendations are the international standard that
+underpins UAE AML/CFT legislation, and that the UAE is a
+FATF member subject to mutual evaluation.
+
+
+-----------------------------------------------------------------------------
+2.  INDIVIDUAL OBLIGATIONS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand my personal obligations under Federal             [    ]
+Decree-Law No. 10 of 2025, including the duty to report
+suspicions, maintain records, and cooperate fully with
+competent authorities.
+
+I know that personal criminal liability may arise for          [    ]
+staff who tip off a customer, act with wilful blindness,
+or deliberately fail to meet their compliance duties.
+
+I know the escalation steps within the firm for reporting      [    ]
+a compliance concern, and I understand that concerns must
+be raised without unnecessary delay.
+
+I understand that the Money Laundering Reporting Officer        [    ]
+(MLRO) is the designated person responsible for receiving
+internal reports and deciding whether to file with the
+Financial Intelligence Unit.
+
+I am aware that the firm files Suspicious Transaction          [    ]
+Reports, Suspicious Activity Reports, Dealers in Precious
+Metals and Stones Reports, Partial Name Match Reports and
+Funds Freeze Reports through the goAML platform operated
+by the Financial Intelligence Unit.
+
+
+-----------------------------------------------------------------------------
+3.  RISK-BASED APPROACH (RBA)
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand what the Risk-Based Approach means in             [    ]
+practice, and I know that it is a legal requirement under
+Federal Decree-Law No. 10 of 2025 and FATF
+Recommendation 22 (customer due diligence for DNFBPs).
+
+I know that the firm must maintain an Enterprise-Wide          [    ]
+Risk Assessment aligned with the National Risk Assessment
+and updated whenever circumstances change materially.
+
+I can apply RBA principles to day-to-day decisions,            [    ]
+including how much due diligence to conduct on a customer
+and when to apply Enhanced Due Diligence.
+
+I understand that the Ministry of Economy reviews RBA          [    ]
+documentation during inspections and that our records must
+support the decisions we have made.
+
+I know that the FATF list of jurisdictions under increased     [    ]
+monitoring and the FATF list of high-risk jurisdictions
+subject to a call for action are used by the firm to
+assess geographic risk in its counterparty population.
+
+
+-----------------------------------------------------------------------------
+4.  MOE SUPERVISORY EXPECTATIONS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Ministry of Economy is the competent           [    ]
+authority that supervises the firm as a DPMS entity for
+AML/CFT purposes.
+
+I understand how the MOE classifies inspection findings        [    ]
+by severity and what the consequences are for each
+category of non-compliance identified.
+
+I am aware that the firm must keep all policies,               [    ]
+procedures, and records current and accurate at all times,
+not only in preparation for an announced inspection.
+
+I know the consequences of non-compliance found during a       [    ]
+MOE inspection, including licence suspension, financial
+penalties, and referral to the Public Prosecution.
+
+
+-----------------------------------------------------------------------------
+5.  TARGETED FINANCIAL SANCTIONS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Executive Office for Control and               [    ]
+Non-Proliferation (EOCN) is the UAE implementing authority
+for targeted financial sanctions.
+
+I understand the firm's obligation to screen its               [    ]
+counterparties against the UN Security Council Consolidated
+List and the UAE Local Terrorist List on a daily basis.
+
+I know what a Funds Freeze Report is and under what            [    ]
+circumstances the firm must file one with the Financial
+Intelligence Unit.
+
+I understand that a Partial Name Match Report must be          [    ]
+filed when a screening result produces a match that the
+MLRO cannot confirm or discharge on the available evidence.
+
+
+-----------------------------------------------------------------------------
+6.  POLICIES, RECORDS AND AUDIT READINESS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know where to find the firm's Compliance Manual and I        [    ]
+refer to it when I have a question about a procedure that
+applies to my role.
+
+I understand that AML/CFT records must be kept for a           [    ]
+minimum of 10 years under Federal Decree-Law No. 10 of
+2025, in accordance with FATF Recommendation 11
+(record-keeping).
+
+I document all compliance decisions clearly, including the     [    ]
+rationale, so that any reviewer can understand what was
+done and why.
+
+I know that internal policies must remain consistent with      [    ]
+Federal Decree-Law No. 10 of 2025 and that I must flag
+any apparent inconsistency to the MLRO.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 01 — AML/CFT LEGAL FRAMEWORK AND LAW TRANSITION
+=============================================================================

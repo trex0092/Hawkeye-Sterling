@@ -1,0 +1,197 @@
+=============================================================================
+[Reporting Entity]                                          No:  09
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: May
+EVALUATION 2026 | ON-DEMAND COMPLIANCE                     Audience: Compliance
+FUNCTIONS                                                   Leads, MLRO
+Schedule: Week 9                                            Training Session: 09
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  INSPECTION BUNDLE AND SUPERVISORY READINESS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the Inspection Evidence Bundle Manifest      [    ]
+is produced on demand to prepare for a supervisory visit
+by the Ministry of Economy.
+
+I know that the bundle references artefacts already held       [    ]
+in the firm's history archive and that it does not create
+new evidence; it indexes what already exists.
+
+I understand the Ministry of Economy's supervisory             [    ]
+approach, including how findings are classified by
+severity, and I know the consequences of non-compliance.
+
+I am aware that FATF Recommendation 28 requires effective      [    ]
+supervision of DNFBPs and that the firm's inspection
+readiness supports this requirement.
+
+
+-----------------------------------------------------------------------------
+2.  BOARD AML PACK
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Board AML Pack is produced on demand           [    ]
+ahead of a standing Board meeting and provides a
+board-ready extract of the firm's compliance status.
+
+I understand that the Board has a governance obligation        [    ]
+to be informed of the firm's AML/CFT programme and that
+the Board pack supports this obligation under Federal
+Decree-Law No. 10 of 2025.
+
+I know what information the Board pack contains               [    ]
+(filings summary, risk exposure, open matters,
+recommendations) and who is responsible for presenting
+it.
+
+
+-----------------------------------------------------------------------------
+3.  DNFBP SELF-ASSESSMENT QUESTIONNAIRE
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the DNFBP Self-Assessment Questionnaire      [    ]
+is a regulatory form required by the Ministry of Economy
+and that the compliance function pre-fills it for the
+MLRO's review.
+
+I know that the MLRO must personally review, correct and       [    ]
+sign every answer before the questionnaire is submitted
+to the supervisory portal.
+
+I understand that the questionnaire covers governance,         [    ]
+CDD, screening, training, record-keeping and filing
+activity, and that it must reflect the firm's actual
+practices.
+
+
+-----------------------------------------------------------------------------
+4.  CUSTOMER FILE SUMMARY
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Customer File Summary is a one-page            [    ]
+document produced on demand for a specific compliance
+file, and that it consolidates all relevant information
+for the MLRO's review.
+
+I understand the seven sections of the summary (file           [    ]
+identification, customer/counterparty, transactions,
+regulatory hooks, actions taken, current status, MLRO
+view requested).
+
+I know that the summary supports the MLRO's ability to        [    ]
+make a filing or escalation decision without having to
+read the entire Asana task history.
+
+
+-----------------------------------------------------------------------------
+5.  MLRO HANDOVER REPORT
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the MLRO Handover Report and       [    ]
+I know that it is produced to support the continuity of
+the MLRO function when the role is transferred.
+
+I know the key sections (archive state, counterparty           [    ]
+register state, filing mode, outstanding matters,
+contacts and credentials, acknowledgement).
+
+I understand that the incoming MLRO must sign the              [    ]
+acknowledgement and that the handover report is retained
+for 10 years as part of the firm's compliance archive.
+
+
+-----------------------------------------------------------------------------
+6.  TREND EXPORT AND REGULATORY DEADLINE CALENDAR
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Trend Export produces a CSV snapshot of         [    ]
+historical compliance metrics for external charting and
+analysis.
+
+I understand that the Regulatory Deadline Calendar tracks      [    ]
+all regulatory and internal deadlines and that overdue
+deadlines are escalated to the MLRO.
+
+I am aware that missing a regulatory deadline (such as the     [    ]
+MOE DNFBP annual return) may result in supervisory action
+and that the calendar is monitored daily.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 09 — ON-DEMAND COMPLIANCE FUNCTIONS
+=============================================================================

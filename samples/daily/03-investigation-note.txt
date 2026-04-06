@@ -13,6 +13,8 @@ Subject file:         Entity Alpha, RF-R12 Recycled Gold from Sanctioned Entitie
 Asana task GID:       1155285207862107
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendations.
+                      FATF Recommendation 20 (suspicious transaction reporting).
 
 -----------------------------------------------------------------------------
 1. PURPOSE

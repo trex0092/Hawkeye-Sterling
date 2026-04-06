@@ -85,6 +85,17 @@ samples/
     04-customer-file-summary.txt               single-customer one-page file summary for MLRO review
     05-mlro-handover-report.txt                MLRO handover continuity snapshot for role transition
     06-trend-export.csv                        historical trend export CSV for external charting
+  training/
+    01-aml-cft-legal-framework.txt             evaluation: UAE legal framework, law transition, FATF alignment
+    02-customer-due-diligence.txt              evaluation: CDD, EDD, counterparty register, customer exits
+    03-sanctions-screening.txt                 evaluation: sanctions, PEP, EOCN, adverse media, filing obligations
+    04-transaction-monitoring-and-reporting.txt evaluation: transaction rules, STR/SAR, DPMSR, filing quality
+    05-daily-compliance-operations.txt         evaluation: daily priorities, ops logs, retro, entity reports
+    06-weekly-reporting.txt                    evaluation: pattern analysis, MLRO report, filings summary, ops logs
+    07-monthly-quarterly-mlro-reporting.txt    evaluation: monthly/quarterly MLRO reports, incidents, heatmap
+    08-annual-compliance-review.txt            evaluation: annual MLRO report, risk assessment, effectiveness
+    09-on-demand-compliance-functions.txt      evaluation: inspection bundle, board pack, SAQ, handover
+    10-record-keeping-and-archive-integrity.txt evaluation: retention, hash manifest, dashboard, regulatory watcher
 ```
 
 ## Legal framing used across the samples

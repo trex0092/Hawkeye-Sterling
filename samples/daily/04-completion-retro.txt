@@ -13,6 +13,8 @@ Coverage:             All six active compliance programmes for the calendar
                       day 05 April 2026.
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendations.
+                      FATF Recommendation 11 (record-keeping).
 
 -----------------------------------------------------------------------------
 1. PURPOSE

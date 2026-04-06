@@ -1,0 +1,168 @@
+=============================================================================
+[Reporting Entity]                                          No:  10
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: May
+EVALUATION 2026 | RECORD-KEEPING AND                       Audience: All Staff
+ARCHIVE INTEGRITY
+Schedule: Week 10                                           Training Session: 10
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  RECORD RETENTION OBLIGATIONS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the firm's obligation under Federal               [    ]
+Decree-Law No. 10 of 2025 to retain all AML/CFT records
+for a minimum of 10 years.
+
+I know the scope of records covered by the retention           [    ]
+obligation: CDD records, EDD records, transaction records,
+sanctions screening logs, training records, STR and
+supporting evidence, and MLRO reports.
+
+I understand that FATF Recommendation 11 (record-keeping)      [    ]
+requires the firm to maintain records that are sufficient
+to permit reconstruction of individual transactions and
+to provide evidence for prosecution of criminal activity.
+
+I know that all compliance artefacts are archived as           [    ]
+plain-text UTF-8 files in the firm's repository and that
+this format is chosen for regulator transparency.
+
+
+-----------------------------------------------------------------------------
+2.  ARCHIVE INTEGRITY AND HASH MANIFEST
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the Archive Integrity Manifest     [    ]
+and I know that it computes a SHA256 fingerprint of every
+file in the history archive.
+
+I know that the hash manifest is itself archived, creating     [    ]
+a chain that allows any future inspection to verify the
+integrity of the archive at any prior point in time.
+
+I understand that a hash mismatch indicates that a file        [    ]
+has been modified after the fact and that this must be
+reported to the MLRO immediately.
+
+I know that the screening engine's audit chain is              [    ]
+append-only and tamper-evident, with each event linked to
+the previous event by hash.
+
+
+-----------------------------------------------------------------------------
+3.  COMPLIANCE DASHBOARD
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that the Compliance Dashboard provides a                [    ]
+traffic-light summary of the firm's 15 control cadences
+(green, amber, red) and that it is generated
+automatically from the archive data.
+
+I understand what each colour means: green indicates the       [    ]
+control is operating within tolerance, amber indicates a
+minor gap or delay, and red indicates a material gap
+requiring MLRO attention.
+
+I can identify which dashboard indicators relate to my         [    ]
+role and I know what action to take when an indicator
+I am responsible for moves to amber or red.
+
+
+-----------------------------------------------------------------------------
+4.  REGULATORY MONITORING
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand that the Regulatory Watcher monitors publicly     [    ]
+available regulatory web pages (MOE, EOCN, CBUAE, FATF)
+for changes that may affect the firm's AML/CFT programme.
+
+I know that a changed source triggers a review by the          [    ]
+MLRO to determine whether the firm's controls, risk
+ratings or counterparty assessments need updating.
+
+I understand that the firm monitors the FATF public            [    ]
+statements and jurisdiction lists and that changes to
+these lists may require immediate action on the
+counterparty register.
+
+I know that regulatory monitoring records are retained         [    ]
+for 10 years and form part of the evidence the Ministry
+of Economy may review during a supervisory inspection.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 10 — RECORD-KEEPING AND ARCHIVE INTEGRITY
+=============================================================================

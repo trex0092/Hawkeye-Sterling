@@ -1,0 +1,182 @@
+=============================================================================
+[Reporting Entity]                                          No:  02
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: January
+EVALUATION 2026 | CUSTOMER DUE DILIGENCE                   Audience: All Staff
+AND RISK-BASED APPROACH
+Schedule: Week 2                                            Training Session: 02
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  CUSTOMER DUE DILIGENCE (CDD)
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the firm's obligation under Federal               [    ]
+Decree-Law No. 10 of 2025 to apply Customer Due Diligence
+at the opening of every customer relationship, at the
+point of any occasional transaction above the firm's
+internal threshold, and at periodic refresh intervals.
+
+I know the difference between standard CDD, simplified         [    ]
+CDD and Enhanced Due Diligence (EDD), and I can identify
+which level applies to a given customer.
+
+I understand the CDD refresh windows applied by the firm:      [    ]
+12 months for high and critical risk counterparties, 24
+months for medium risk, and 36 months for low risk.
+
+I know that the CDD Refresh Tracker report identifies          [    ]
+overdue, critical, warning and approaching files, and I
+understand my responsibility when a file appears in the
+overdue category.
+
+I am aware that FATF Recommendation 22 requires DNFBPs        [    ]
+to apply customer due diligence measures and that the
+firm's CDD process is designed to meet this requirement.
+
+
+-----------------------------------------------------------------------------
+2.  ENHANCED DUE DILIGENCE (EDD)
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that Enhanced Due Diligence must be applied to          [    ]
+all Politically Exposed Persons, to all counterparties
+rated high or critical risk, and to all counterparties
+in jurisdictions on the FATF increased monitoring list.
+
+I understand that the Monthly EDD Case Tracker monitors        [    ]
+the population of EDD files across all programme entities
+and reports to the MLRO on their review status.
+
+I can identify the circumstances under which a standard        [    ]
+CDD file should be escalated to an EDD pathway, including
+adverse media indicators, sanctions screening matches,
+and unusual transaction patterns.
+
+I know that the MLRO must personally review every EDD          [    ]
+file and that the compliance function cannot discharge an
+EDD review without the MLRO's sign-off.
+
+
+-----------------------------------------------------------------------------
+3.  COUNTERPARTY REGISTER
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the firm's counterparty            [    ]
+register and I know what information it contains for each
+counterparty (name, jurisdiction, risk rating, entities
+touching, typologies, status, MLRO notes).
+
+I know how to read the counterparty register and I can         [    ]
+identify counterparties that are rated critical or high
+risk, or that have cross-entity exposure.
+
+I understand that the Quarterly Beneficial Ownership            [    ]
+Clarity Report identifies corporate counterparties
+without a recorded beneficial ownership note, and I know
+the firm's obligation to obtain this information.
+
+I am aware that the counterparty register is updated           [    ]
+daily and archived under the firm's 10-year retention
+policy in accordance with Federal Decree-Law No. 10 of
+2025 and FATF Recommendation 11.
+
+
+-----------------------------------------------------------------------------
+4.  DECLINED ONBOARDINGS AND CUSTOMER EXITS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know the circumstances under which the firm must             [    ]
+decline a customer onboarding, including failure to
+provide satisfactory identification, source of funds or
+source of material evidence.
+
+I understand the difference between a "cleared" exit           [    ]
+(relationship ended by mutual agreement) and an
+"escalated" exit (relationship terminated on compliance
+grounds).
+
+I know that the Annual Customer Exit Report records every      [    ]
+exit and escalation, and that this report is reviewed by
+the MLRO and retained for 10 years.
+
+I understand that a declined onboarding or a refused           [    ]
+transaction may require a filing with the Financial
+Intelligence Unit, and that this decision rests with the
+MLRO.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 02 — CUSTOMER DUE DILIGENCE AND RISK-BASED APPROACH
+=============================================================================
