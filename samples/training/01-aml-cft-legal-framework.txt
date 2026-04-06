@@ -33,8 +33,10 @@ STATEMENTS                                                     RATING (1-5)
                                                                Rating
                                                                ------
 I have read and understood the purpose of Federal              [    ]
-Decree-Law No. 10 of 2025 on AML/CFT/CPF, and I know
-that it replaces Federal Decree-Law No. 20 of 2018.
+Decree-Law No. 10 of 2025 on Anti-Money Laundering and
+Countering the Financing of Terrorism and Financing of
+Illegal Organisations, and I know that it is the primary
+AML/CFT statute in force in the United Arab Emirates.
 
 I understand the material changes introduced by the 2025      [    ]
 law, including the expanded scope for Dealers in Precious
