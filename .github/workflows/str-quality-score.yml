@@ -52,5 +52,5 @@ jobs:
           if [ -n "$(git status --porcelain history/ 2>/dev/null)" ]; then
             git add history/
             git commit -m "Filing quality score: $(date -u +%Y-%m-%d)"
-            git push origin main
+            git push origin "${GITHUB_REF#refs/heads/}"
           fi
