@@ -400,7 +400,44 @@ async function callClaude(prompt, label) {
   throw lastErr;
 }
 
-/* ─── Comment formatting ────────────────────────────────────────────────── */
+/**
+ * Deterministic fallback when Claude is unavailable. Produces a
+ * structured priority list from task metadata alone, no LLM needed.
+ */
+function buildFallbackPriorities(projectName, candidates) {
+  const lines = candidates.slice(0, 10).map((t, i) => {
+    const due = t.due_on || (t.due_at ? t.due_at.slice(0, 10) : "no due date");
+    const overdue = isAtRisk(t) ? " (AT RISK)" : "";
+    const assignee = t.assignee?.name ? `, assigned to ${t.assignee.name}` : "";
+    return `Item ${i + 1}. ${t.name}. Due ${due}${overdue}${assignee}. Review this item and confirm the next action required. [id:${t.gid}]`;
+  });
+  return [
+    "3. TOP TEN ITEMS FOR TODAY",
+    "",
+    "(Note: this list was generated without Claude due to an API error.",
+    "The items are ranked by due date and at-risk status. The MLRO is",
+    "asked to review each item and apply her own risk assessment.)",
+    "",
+    ...lines,
+    "",
+    "4. RECOMMENDED DECISIONS FOR THE MLRO TODAY",
+    "",
+    `The compliance function was unable to produce an AI-assisted analysis for ${projectName} today due to a temporary API issue. The top ten items above are sorted by urgency. Review each item and direct the compliance function on any that require immediate action.`,
+  ].join("\n");
+}
+
+function buildFallbackPortfolio(perProjectResults) {
+  const lines = perProjectResults.map((r) => `- ${r.projectName}: see per-entity report`);
+  return [
+    "1. HEADLINE FOR TODAY",
+    "",
+    "The cross-entity portfolio digest could not be generated with Claude due to a temporary API issue. The per-entity priority lists were posted to each project individually. The MLRO is asked to review them directly.",
+    "",
+    "2. ENTITIES COVERED",
+    "",
+    ...lines,
+  ].join("\n");
+}
 
 /**
  * After Claude returns its numbered list with [id:GID] annotations, rewrite
@@ -615,10 +652,17 @@ async function main() {
         candidates: candidates.length,
         atRiskCount,
       };
-      const rawPriorities = await callClaude(
-        buildDailyPrompt(project.name, candidates, stats),
-        "daily",
-      );
+      let rawPriorities;
+      try {
+        rawPriorities = await callClaude(
+          buildDailyPrompt(project.name, candidates, stats),
+          "daily",
+        );
+      } catch (claudeErr) {
+        const detail = claudeErr?.error?.message ?? claudeErr?.message ?? String(claudeErr);
+        console.warn(`    ⚠  Claude failed: ${detail}. Using deterministic fallback.`);
+        rawPriorities = buildFallbackPriorities(project.name, candidates);
+      }
 
       const linkedClaudeBody = linkifyPriorities(rawPriorities, candidates);
       const atRiskTasks = workTasks.filter(isAtRisk);
@@ -719,10 +763,17 @@ async function main() {
   if (results.perProject.length >= 2) {
     console.log(`\n🎯 Generating cross-entity portfolio digest…`);
     try {
-      const digest = await callClaude(
-        buildPortfolioPrompt(results.perProject),
-        "portfolio",
-      );
+      let digest;
+      try {
+        digest = await callClaude(
+          buildPortfolioPrompt(results.perProject),
+          "portfolio",
+        );
+      } catch (claudeErr) {
+        const detail = claudeErr?.error?.message ?? claudeErr?.message ?? String(claudeErr);
+        console.warn(`    ⚠  Claude failed for portfolio: ${detail}. Using deterministic fallback.`);
+        digest = buildFallbackPortfolio(results.perProject);
+      }
       const portfolioReferenceId = `HSV2-DPD-${today}`;
       const portfolioComment = buildPortfolioDocument({
         today,
@@ -807,12 +858,8 @@ async function main() {
   console.log(`Skipped:   ${results.skipped}`);
   console.log(`Errors:    ${results.errors.length}`);
   if (results.errors.length > 0) {
-    console.log("\nErrors:");
+    console.log("\nErrors (non-fatal, archive still committed):");
     for (const e of results.errors) console.log(`  - ${e.project}: ${e.error}`);
-    // Do not exit(1) — the archive commit step must still run, and
-    // partial success (some projects processed, some failed due to
-    // rate limits) is better than no output at all.
-    if (results.processed === 0) process.exit(1);
   }
 }
 
