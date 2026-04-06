@@ -39,6 +39,7 @@ import { writeHistory, slugify, isoDate } from "./history-writer.mjs";
 import { renderDocxBuffer } from "./lib/docx-writer.mjs";
 
 const env = readCommonEnv({
+  requireClaude: false,
   MAX_TASKS_PER_PROJECT: Number.parseInt(process.env.MAX_TASKS_PER_PROJECT ?? "500", 10),
   THROTTLE_MS: Number.parseInt(process.env.THROTTLE_MS ?? "150", 10),
 });

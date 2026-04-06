@@ -26,7 +26,7 @@ import {
 import { writeHistory, isoDate } from "./history-writer.mjs";
 import { renderDocxBuffer } from "./lib/docx-writer.mjs";
 
-const env = readCommonEnv();
+const env = readCommonEnv({ requireClaude: false });
 const today = isoDate();
 const asanaClient = createAsanaClient(env);
 

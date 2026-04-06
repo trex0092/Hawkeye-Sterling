@@ -25,7 +25,7 @@ import {
 import { writeHistory, isoDate } from "./history-writer.mjs";
 import { notify } from "./notify.mjs";
 
-const env = readCommonEnv();
+const env = readCommonEnv({ requireClaude: false });
 const { listProjects, listProjectTasks, postComment, findPortfolioPinned } = createAsanaClient(env);
 const today = isoDate();
 const yearMonth = today.slice(0, 7);

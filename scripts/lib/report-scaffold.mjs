@@ -35,7 +35,15 @@ export function readCommonEnv(extra = {}) {
     DRY_RUN: process.env.DRY_RUN === "true",
     ...extra,
   };
-  for (const key of ["ASANA_TOKEN", "ANTHROPIC_API_KEY", "ASANA_WORKSPACE_ID"]) {
+  // ASANA_TOKEN and ASANA_WORKSPACE_ID are always required.
+  // ANTHROPIC_API_KEY is only required for scripts that call Claude;
+  // deterministic scripts (sanctions-screening, cdd-refresh-tracker,
+  // deadline-calendar, regulatory-watcher, task-pack, ops-logs, etc.)
+  // never call Claude and pass { requireClaude: false } in extra.
+  const requireClaude = env.requireClaude !== false;
+  const required = ["ASANA_TOKEN", "ASANA_WORKSPACE_ID"];
+  if (requireClaude) required.push("ANTHROPIC_API_KEY");
+  for (const key of required) {
     if (!env[key]) {
       console.error(`❌ Missing required env var: ${key}`);
       process.exit(1);
