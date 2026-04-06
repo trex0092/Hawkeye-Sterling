@@ -1,0 +1,129 @@
+=============================================================================
+THE REPORTING ENTITY
+INSPECTION EVIDENCE BUNDLE — MANIFEST
+Bundle covering the 365 days ending 2026-04-06
+=============================================================================
+
+Document reference:   HSV2-IEB-2026-04-06
+Classification:       Confidential. Prepared for production to the Ministry
+                      of Economy, the Executive Office for Control and
+                      Non-Proliferation or the Financial Intelligence Unit
+                      on demand during a supervisory inspection.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-06, on demand
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE OF THIS MANIFEST
+-----------------------------------------------------------------------------
+
+This manifest is the index to the Inspection Evidence Bundle prepared by
+the compliance function for the 365 days ending 2026-04-06. The
+bundle is a complete copy of every artefact produced by the firm's
+compliance automation during that period that is held in the
+repository's history archive. It is intended to be produced, in full,
+to the Ministry of Economy, the Executive Office for Control and
+Non-Proliferation or the Financial Intelligence Unit on demand during a
+supervisory inspection.
+
+The bundle is held in electronic form in the repository and can also be
+exported to a portable storage device for presentation in person. Every
+file in the bundle is version-controlled and every change is
+attributable to a commit in the repository history.
+
+-----------------------------------------------------------------------------
+2. BUNDLE SUMMARY
+-----------------------------------------------------------------------------
+
+Total files in the bundle:    6
+Total size:                   33.3 KB
+MLRO weekly reports:          0
+Weekly pattern reports:       0
+Daily artefacts:              0
+Daily completion retros:      0
+Filing candidate reviews:     0
+Registers:                    6
+
+-----------------------------------------------------------------------------
+3. BUNDLE CONTENTS (file by file)
+-----------------------------------------------------------------------------
+
+Folder: mlro-weekly/
+  (no files in the window)
+
+Folder: weekly/
+  (no files in the window)
+
+Folder: daily/
+  (no files in the window)
+
+Folder: retro/
+  (no files in the window)
+
+Folder: filings/
+  (no files in the window)
+
+Folder: registers/
+  registers/deadlines/2026-04-06.docx   14.9 KB   2026-04-06
+  registers/deadlines/2026-04-06.md   2.4 KB   2026-04-06
+  registers/regulatory-cache/eocn__2026-04-06.hash   65 B   2026-04-06
+  registers/regulatory-cache/moe-aml__2026-04-06.hash   65 B   2026-04-06
+  registers/regulatory-updates/2026-04-06.docx   13.2 KB   2026-04-06
+  registers/regulatory-updates/2026-04-06.md   2.7 KB   2026-04-06
+
+-----------------------------------------------------------------------------
+4. HOW TO READ THE BUNDLE DURING AN INSPECTION
+-----------------------------------------------------------------------------
+
+For an inspector reading this bundle for the first time the compliance
+function suggests the following short order of reading.
+
+Read first, in order: the most recent Weekly MLRO Report to Senior
+Management (mlro-weekly/), the most recent Weekly Pattern Report
+(weekly/), and the counterparty register (registers/). Together these
+three documents give the inspector a current picture of the firm's
+programme from the top.
+
+Read second: any filing candidate review of interest, together with
+the underlying Asana task referenced in it. The manifest supports this
+cross-reference by file name.
+
+Read third: the daily sanctions screening logs and PEP watch logs for
+the period covered by the inspection window, for evidence that the
+firm operates its targeted financial sanctions programme and its PEP
+programme on a continuing basis.
+
+Read fourth: the daily completion retros, for evidence of programme
+velocity and contemporaneous record keeping.
+
+-----------------------------------------------------------------------------
+5. EVIDENTIARY INTEGRITY STATEMENT
+-----------------------------------------------------------------------------
+
+The compliance function confirms that every file in the bundle is a
+true and complete copy of the corresponding file held in the firm's
+production archive under the repository's history/ folder, that no
+file has been edited for the purpose of this bundle, and that any edit
+made to any file in the production archive during the window is
+visible in the repository history with the date and the identity of
+the editor. The compliance function further confirms that no file has
+been removed from the production archive to the bundle, that the
+production archive continues to hold the complete ten year record
+required by the applicable provision of Federal Decree-Law No. 10 of
+2025, and that the bundle is a snapshot of that production archive
+rather than a curated subset of it.
+
+-----------------------------------------------------------------------------
+6. DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review before production to the inspector]
+Approved by:   [awaiting MLRO approval to release to the inspector]
+
+For review by the MLRO, LF.
+
+[End of document]
