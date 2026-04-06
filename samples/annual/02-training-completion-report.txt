@@ -25,7 +25,12 @@ competence assessment outcome. It is produced in discharge of the
 firm's obligation to maintain an annual training programme for staff
 whose functions expose them to Money Laundering or Terrorism Financing
 risk, and to maintain records of that training for 10 years under the
-applicable provision of Federal Decree-Law No. 10 of 2025.
+applicable provision of Federal Decree-Law No. 10 of 2025. The
+training programme is designed in alignment with the Financial Action
+Task Force (FATF) Recommendations, in particular Recommendation 22
+(customer due diligence for DNFBPs) and Recommendation 23 (other
+measures for DNFBPs), which require ongoing training on ML/TF risks
+and obligations.
 
 The report is prepared for the MLRO's review and subsequent
 presentation to Senior Management and the Board.

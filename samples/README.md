@@ -68,6 +68,16 @@ samples/
     05-ffr-candidate-review.txt                sample of item 5, FFR draft
   registers/
     counterparties.csv                         sample of item 37, cross-entity counterparty register
+    transaction-monitoring-report.txt          daily transaction monitoring alerts and flagged transactions
+    adverse-media-report.txt                   daily adverse media monitoring for counterparties
+    cdd-refresh-tracker.txt                    CDD refresh status tracker with overdue/critical/warning buckets
+    deadline-calendar.txt                      regulatory and internal compliance deadline calendar
+    regulatory-watcher.txt                     regulatory web page change detection report
+    hash-manifest-report.txt                   archive integrity manifest with SHA256 fingerprinting
+    str-quality-score.txt                      STR draft quality assessment against 12-point rubric
+    task-pack.txt                              per-task compliance pack with 9-section structured review
+    screening-result.txt                       unified sanctions and PEP screening result with audit chain
+    dashboard-sample.html                      single-page HTML compliance dashboard (traffic-light format)
   on-demand/
     01-dnfbp-self-assessment-questionnaire.txt sample of item 11, MOE SAQ draft
     02-board-meeting-aml-pack.txt              sample of item 38, board pack extract
@@ -95,6 +105,13 @@ All samples cite only the following, verbatim, as instructed by the MLRO:
 - Record retention obligation: 10 years minimum for customer due diligence
   records, transaction records, sanctions screening logs, training records,
   reporting files and supporting evidence.
+- International standards: the Financial Action Task Force (FATF), in
+  particular Recommendation 22 (DNFBPs: customer due diligence),
+  Recommendation 23 (DNFBPs: other measures), Recommendation 28
+  (regulation and supervision of DNFBPs), Recommendation 20 (suspicious
+  transaction reporting), and Recommendation 11 (record-keeping). The firm
+  monitors the FATF list of jurisdictions under increased monitoring and
+  the FATF list of high-risk jurisdictions subject to a call for action.
 
 Federal Decree-Law No. 20 of 2018 is not cited anywhere. It is not in
 force for the purposes of this programme.

@@ -1,0 +1,76 @@
+=============================================================================
+[Reporting Entity]
+REGULATORY WATCHER REPORT
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-RGW-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:25 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+This report monitors publicly available regulatory web pages for changes
+that may affect the firm's AML and CFT programme. The compliance function
+checks each page daily using content hashing and reports any new or
+changed content for the MLRO's attention.
+
+Monitored sources:
+  a. Ministry of Economy (MOE) — DNFBP supervision page
+  b. Executive Office for Control and Non-Proliferation (EOCN) —
+     sanctions and local terrorist list updates
+  c. Central Bank of the UAE (CBUAE) — AML guidance (advisory only)
+  d. Financial Action Task Force (FATF) — mutual evaluations and
+     public statements
+
+-----------------------------------------------------------------------------
+2. CHANGED OR NEW SOURCES
+-----------------------------------------------------------------------------
+
+One source showed changed content since the previous scan on 04 April
+2026.
+
+a. FATF public statement page. The content hash changed from
+   a3b8c1d4... to f7e2a9b6... on 04 April 2026. The compliance function
+   identified that the FATF published an updated list of jurisdictions
+   under increased monitoring. The MLRO should review whether any
+   jurisdiction on the updated list appears in the firm's counterparty
+   register.
+
+-----------------------------------------------------------------------------
+3. UNCHANGED SOURCES
+-----------------------------------------------------------------------------
+
+  a. Ministry of Economy DNFBP page — no change detected.
+  b. Executive Office EOCN page — no change detected.
+  c. Central Bank CBUAE AML guidance — no change detected.
+
+-----------------------------------------------------------------------------
+4. FETCH ERRORS
+-----------------------------------------------------------------------------
+
+No fetch errors recorded on 05 April 2026.
+
+-----------------------------------------------------------------------------
+5. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. Review the FATF updated jurisdiction list and cross-reference against
+   the firm's counterparty register and the quarterly jurisdiction
+   heatmap.
+
+2. If any counterparty jurisdiction appears on the updated FATF list,
+   consider whether the firm's risk rating for that jurisdiction should
+   be adjusted.
+
+
+=============================================================================
+END OF REGULATORY WATCHER REPORT — 05 APRIL 2026
+=============================================================================

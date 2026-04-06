@@ -35,7 +35,11 @@ remains dominated by the United Arab Emirates, which accounts for 62
 of the 87 counterparties (71 per cent). The remaining 25 counterparties
 are distributed across 13 jurisdictions. The compliance function does
 not identify a material change in geographic concentration from the
-previous quarter.
+previous quarter. The geographic risk assessment incorporates the
+Financial Action Task Force (FATF) list of jurisdictions under
+increased monitoring and the FATF list of high-risk jurisdictions
+subject to a call for action, as updated at the most recent FATF
+plenary.
 
 -----------------------------------------------------------------------------
 3. HEATMAP TABLE

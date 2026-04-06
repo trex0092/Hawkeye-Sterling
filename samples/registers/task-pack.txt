@@ -1,0 +1,145 @@
+=============================================================================
+[Reporting Entity]
+COMPLIANCE TASK PACK
+Entity Alpha — RF-R12 Recycled Gold from Sanctioned Entities
+=============================================================================
+
+Document reference:   HSV2-TPK-2026-04-05-ALPHA-RF-R12
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+SECTION 1. TASK IDENTIFICATION
+-----------------------------------------------------------------------------
+
+Task reference:           RF-R12
+Task name:                Recycled Gold from Sanctioned Entities
+Programme:                FG BRANCH - COMPLIANCE PROGRAMME 2026
+Entity code:              FB (Entity Alpha)
+Assignee:                 Luisa Fernanda
+Status:                   Open
+Created:                  15 January 2026
+Due date:                 03 October 2026
+Tags:                     Sanctions, TFS, Recycled, Escalated
+Asana task GID:           1213964638768807
+Permalink:                https://app.asana.com/0/1213645083721316/1213964638768807
+
+-----------------------------------------------------------------------------
+SECTION 2. AUTOMATION PRE-SCREEN
+-----------------------------------------------------------------------------
+
+The compliance function ran the following automated checks on the task
+data available in the compliance programme:
+
+  Sanctions screening match:        Medium confidence (not confirmed)
+  PEP screening match:              No match
+  Adverse media indicators:         One article detected (03 Apr 2026)
+  Transaction monitoring alerts:    None on this specific task
+  CDD refresh status:               Overdue (last CDD 12 Mar 2025)
+
+-----------------------------------------------------------------------------
+SECTION 3. CUSTOMER IDENTIFICATION AND DUE DILIGENCE
+-----------------------------------------------------------------------------
+
+Counterparty name:            Al Rashid Metal Recyclers
+Registered jurisdiction:      Ras Al Khaimah, United Arab Emirates
+Trade licence number:         [to be verified by MLRO]
+Beneficial owner:             [not on file — flagged in quarterly BO report]
+Customer category:            Corporate
+Risk rating:                  Critical
+Relationship start date:      March 2024
+CDD last completed:           12 March 2025
+EDD status:                   Recommended but not yet initiated
+
+-----------------------------------------------------------------------------
+SECTION 4. TRANSACTION DETAILS
+-----------------------------------------------------------------------------
+
+The task file references a series of recycled gold purchases from this
+counterparty. Summary of transactions in the current calendar year:
+
+Total transactions:           8
+Total declared value:         AED 1,200,000 (approx.)
+Most recent transaction:      28 March 2026
+Most recent amount:           AED 240,000 (cash)
+Most recent description:      Sale of 4 recycled gold bars, 1.2 kg
+
+All transactions were settled in cash. No wire or cheque component was
+present in any transaction.
+
+-----------------------------------------------------------------------------
+SECTION 5. RED-FLAG ASSESSMENT
+-----------------------------------------------------------------------------
+
+The compliance function identified the following red flags on this file:
+
+a. The counterparty's trade licence and registered office partially
+   match an entry on the United Nations Security Council Consolidated
+   List. Match confidence: medium. Not yet confirmed or discharged.
+
+b. All transactions were settled in cash, consistent with the all-cash
+   settlement detection rule in the firm's transaction monitoring.
+
+c. The counterparty presents source-of-material certificates from a
+   refiner outside the United Arab Emirates.
+
+d. The beneficial owner of the counterparty is not on file.
+
+e. CDD is overdue by 389 days.
+
+-----------------------------------------------------------------------------
+SECTION 6. SANCTIONS AND PEP SCREENING RECORD
+-----------------------------------------------------------------------------
+
+  UNSC Consolidated List:     Medium-confidence match (not confirmed)
+  UAE Local Terrorist List:   No match
+  OFAC SDN:                   No match
+  UK OFSI:                    No match
+  OpenSanctions:              Medium-confidence match (same entity)
+  PEP databases:              No match
+
+The screening was last run on 05 April 2026. The medium-confidence
+match has been under review since 01 April 2026.
+
+-----------------------------------------------------------------------------
+SECTION 7. FILING DECISION MATRIX
+-----------------------------------------------------------------------------
+
+  STR candidate:              Yes (draft prepared 03 Apr 2026)
+  SAR candidate:              No
+  DPMSR candidate:            No (individual transactions below threshold)
+  PNMR candidate:             Yes (draft prepared 03 Apr 2026)
+  FFR candidate:              Possible (if sanctions match confirmed)
+
+The filing decision rests with the MLRO. The compliance function has
+prepared both an STR draft and a PNMR draft for the MLRO's review.
+
+-----------------------------------------------------------------------------
+SECTION 8. MLRO DECISION AND SIGN-OFF
+-----------------------------------------------------------------------------
+
+MLRO decision:                [awaiting MLRO review]
+Filing instruction:           [awaiting MLRO instruction]
+Relationship action:          [awaiting MLRO instruction]
+Date of decision:             [awaiting]
+MLRO signature:               [awaiting]
+
+-----------------------------------------------------------------------------
+SECTION 9. RETENTION AND CONFIDENTIALITY NOTE
+-----------------------------------------------------------------------------
+
+This task pack is classified as confidential and is retained for a
+minimum of 10 years under the applicable provision of Federal Decree-Law
+No. 10 of 2025. It is not to be disclosed to any person outside the
+firm's compliance function and the MLRO without the MLRO's express
+written consent. It has not been filed with any supervisory authority.
+
+
+=============================================================================
+END OF COMPLIANCE TASK PACK — RF-R12 ENTITY ALPHA
+=============================================================================

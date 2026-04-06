@@ -1,0 +1,84 @@
+=============================================================================
+[Reporting Entity]
+ADVERSE MEDIA MONITORING REPORT
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-ADV-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:10 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+This report covers adverse media monitoring for all 87 active
+counterparties on the firm's counterparty register as at 05 April 2026.
+The compliance function searched publicly available news sources for
+each counterparty name and compared the results against a hash-based
+change detection cache to surface new or changed coverage.
+
+-----------------------------------------------------------------------------
+2. SUMMARY
+-----------------------------------------------------------------------------
+
+Counterparties screened:      87
+Counterparties with new
+  adverse media indicators:    2
+Search results unchanged
+  from previous scan:         83
+Search errors (source
+  unavailable):                2
+
+-----------------------------------------------------------------------------
+3. COUNTERPARTIES WITH ADVERSE MEDIA INDICATORS
+-----------------------------------------------------------------------------
+
+a. Al Rashid Metal Recyclers (RAK, UAE). Critical-rated counterparty.
+   One new article detected on 03 April 2026 in a regional business
+   publication referencing a regulatory inquiry into recycled gold
+   sourcing practices at a facility in Ras Al Khaimah. The article
+   does not name the firm directly but describes a facility consistent
+   with the counterparty's registered address. The compliance function
+   recommends that the MLRO review this article in conjunction with the
+   open RF-R12 file on the Entity Alpha and Entity Foxtrot programmes.
+
+b. Silk Road Commodities Ltd (Singapore). High-rated counterparty.
+   One new article detected on 01 April 2026 in an international
+   commodities trade publication referencing a Singapore-based gold
+   trading firm under investigation by the Monetary Authority of
+   Singapore. The article names "Silk Road Commodities" directly. The
+   compliance function recommends that the MLRO review this article
+   and determine whether the firm's Enhanced Due Diligence on this
+   counterparty should be escalated.
+
+-----------------------------------------------------------------------------
+4. CHANGED SEARCH RESULTS
+-----------------------------------------------------------------------------
+
+No other counterparties showed materially changed search results
+compared to the previous scan on 04 April 2026.
+
+-----------------------------------------------------------------------------
+5. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. Review the adverse media article on Al Rashid Metal Recyclers and
+   determine whether it affects the filing decision on the RF-R12 file.
+
+2. Review the adverse media article on Silk Road Commodities Ltd and
+   confirm whether the EDD pathway on Entity Foxtrot should be
+   escalated to an immediate review.
+
+3. Investigate the two search errors and confirm whether the affected
+   sources should be retried or replaced.
+
+
+=============================================================================
+END OF ADVERSE MEDIA MONITORING REPORT — 05 APRIL 2026
+=============================================================================

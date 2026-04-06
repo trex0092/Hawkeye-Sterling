@@ -82,6 +82,30 @@ export const CONFIRMED_REFERENCES = Object.freeze({
     cite: true,
   },
 
+  fatf: {
+    name: "Financial Action Task Force",
+    shortName: "FATF",
+    role:
+      "International standard-setting body for anti-money laundering and " +
+      "countering the financing of terrorism. The UAE is a member of FATF " +
+      "and subject to mutual evaluation",
+    recommendations:
+      "The FATF Recommendations, in particular Recommendation 22 (DNFBPs: " +
+      "customer due diligence), Recommendation 23 (DNFBPs: other measures), " +
+      "Recommendation 28 (regulation and supervision of DNFBPs), " +
+      "Recommendation 20 (suspicious transaction reporting), " +
+      "and Recommendation 11 (record-keeping)",
+    jurisdictionLists:
+      "FATF list of jurisdictions under increased monitoring and FATF " +
+      "list of high-risk jurisdictions subject to a call for action",
+    cite: true,
+    note:
+      "FATF Recommendations are cited as the international standard that " +
+      "underpins UAE AML/CFT legislation. Do not cite specific FATF " +
+      "Recommendation numbers unless listed here. Do not cite the text " +
+      "of any FATF Recommendation verbatim.",
+  },
+
   entity: {
     // Entity identifying fields are read from environment variables so
     // the public repository does not hard-code the firm's legal name
@@ -154,6 +178,8 @@ export const CONFIRMED_REFERENCES = Object.freeze({
     moeCirculars: "Do not cite any MOE circular by number or date.",
     eocnCirculars: "Do not cite any EOCN circular by number or date.",
     fiuGuidance: "Do not cite any FIU guidance note by number or date.",
+    fatfRecommendationsVerbatim: "Do not quote the text of any FATF Recommendation verbatim. Refer to recommendation numbers only where listed in CONFIRMED_REFERENCES.fatf.recommendations.",
+    fatfMutualEvaluation: "Generic phrasing only: 'the FATF mutual evaluation of the United Arab Emirates'. Do not cite specific paragraphs, page numbers, or ratings from any FATF mutual evaluation report.",
   },
 });
 
@@ -171,6 +197,7 @@ Supervisory authority for DNFBPs: the ${CONFIRMED_REFERENCES.supervisoryAuthorit
 Targeted financial sanctions: the UN Security Council Consolidated List and the UAE Local Terrorist List, implemented by the ${CONFIRMED_REFERENCES.sanctionsAuthority.name} (${CONFIRMED_REFERENCES.sanctionsAuthority.shortName}).
 Reporting: the ${CONFIRMED_REFERENCES.financialIntelligenceUnit.name} (${CONFIRMED_REFERENCES.financialIntelligenceUnit.shortName}) through the ${CONFIRMED_REFERENCES.financialIntelligenceUnit.platform} platform, for Suspicious Transaction Reports, Suspicious Activity Reports, Dealers in Precious Metals and Stones Reports, Partial Name Match Reports and Funds Freeze Reports.
 Record retention: ${CONFIRMED_REFERENCES.recordRetention.years} years as a minimum, covering ${CONFIRMED_REFERENCES.recordRetention.scope}.
+International standards: the ${CONFIRMED_REFERENCES.fatf.name} (${CONFIRMED_REFERENCES.fatf.shortName}). ${CONFIRMED_REFERENCES.fatf.recommendations}. The firm monitors the ${CONFIRMED_REFERENCES.fatf.jurisdictionLists} for geographic risk assessment purposes.
 
 You must not cite Federal Decree-Law No. 20 of 2018. It is no longer applicable. Any draft that names it is a failure and must be redrafted.
 

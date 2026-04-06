@@ -1,0 +1,101 @@
+=============================================================================
+[Reporting Entity]
+STR QUALITY SCORE REPORT
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-QAS-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:35 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+This report scores the quality of Suspicious Transaction Report drafts
+produced by the compliance function. Each draft is assessed against a
+12-point rubric covering the completeness of the information required
+for a goAML submission.
+
+-----------------------------------------------------------------------------
+2. GRADING SCALE
+-----------------------------------------------------------------------------
+
+  A    90 to 100 per cent    All material fields complete
+  B    75 to 89 per cent     Minor gaps, submittable with MLRO review
+  C    60 to 74 per cent     Gaps present, requires supplementation
+  D    40 to 59 per cent     Material gaps, not ready for submission
+  F    Below 40 per cent     Incomplete, requires full rework
+
+-----------------------------------------------------------------------------
+3. SUMMARY
+-----------------------------------------------------------------------------
+
+Drafts assessed:          2
+Average score:           83 per cent (Grade B)
+Highest score:           92 per cent (Grade A)
+Lowest score:            75 per cent (Grade B)
+
+-----------------------------------------------------------------------------
+4. DETAIL
+-----------------------------------------------------------------------------
+
+Draft 1. STR-2026-04-03-ALPHA-RF-R12.
+Entity Alpha, RF-R12 Recycled Gold from Sanctioned Entities.
+Score: 92 per cent. Grade: A.
+
+CRITERION                       STATUS     NOTES
+------------------------------  --------   -------------------------
+1. Subject identification       Present    Trade licence on file
+2. Subject nationality          Present    UAE
+3. Subject address              Present    RAK registered office
+4. Transaction date             Present    28 March 2026
+5. Transaction amount           Present    AED 240,000
+6. Transaction description      Present    Sale of 4 recycled gold bars
+7. Red-flag narrative           Present    Sanctions match described
+8. Typology classification      Present    RF-R12
+9. Supporting evidence          Present    Weight certificate, UNSC match
+10. CDD status                  Present    CDD on file, EDD recommended
+11. MLRO decision               Absent     Awaiting MLRO first review
+12. Regulatory hook              Present    PNMR / FFR reference included
+
+Draft 2. STR-2026-04-01-ECHO-NRA-RF01.
+Entity Echo, NRA-RF01 High Cash Intensity Patterns.
+Score: 75 per cent. Grade: B.
+
+CRITERION                       STATUS     NOTES
+------------------------------  --------   -------------------------
+1. Subject identification       Present    Customer ID on file
+2. Subject nationality          Present    UAE
+3. Subject address              Present    Dubai residence
+4. Transaction date             Present    01 April 2026
+5. Transaction amount           Present    AED 195,000
+6. Transaction description      Present    Walk-in recycled gold sale
+7. Red-flag narrative           Present    High cash intensity noted
+8. Typology classification      Present    NRA-RF01
+9. Supporting evidence          Partial    Missing source-of-material cert
+10. CDD status                  Absent     CDD not on file for walk-in
+11. MLRO decision               Absent     Awaiting MLRO review
+12. Regulatory hook              Present    DPMSR threshold reference
+
+-----------------------------------------------------------------------------
+5. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. Draft 1 (Grade A): ready for MLRO review once the MLRO decision
+   field is populated. No supplementation required.
+
+2. Draft 2 (Grade B): the compliance function should obtain the
+   source-of-material certificate from the branch before the MLRO
+   reviews the draft. The CDD status field should be updated once the
+   walk-in customer's identification is verified.
+
+
+=============================================================================
+END OF STR QUALITY SCORE REPORT — 05 APRIL 2026
+=============================================================================

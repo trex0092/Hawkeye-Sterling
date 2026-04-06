@@ -1,0 +1,100 @@
+=============================================================================
+[Reporting Entity]
+TRANSACTION MONITORING REPORT
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-TXM-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:05 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SCOPE
+-----------------------------------------------------------------------------
+
+This report covers all transactions recorded in the firm's transaction
+register on 04 April 2026 across all six programme entities. The
+compliance function applied nine detection rules to identify transactions
+that may require further review or reporting.
+
+-----------------------------------------------------------------------------
+2. DETECTION RULES APPLIED
+-----------------------------------------------------------------------------
+
+Rule 1.  DPMSR trigger (linked cash transactions above internal threshold)
+Rule 2.  Structuring (multiple transactions just below threshold)
+Rule 3.  Round amounts (cash payments in exact round figures)
+Rule 4.  High-risk jurisdiction (counterparty jurisdiction flagged)
+Rule 5.  All-cash settlement (no wire or cheque component)
+Rule 6.  Same-day aggregation (multiple transactions same customer same day)
+Rule 7.  Rapid frequency (more than 3 transactions in 7 days)
+Rule 8.  Unusual payment method (crypto, third-party wire, bearer cheque)
+Rule 9.  Rolling 30-day aggregation (cumulative value above threshold)
+
+-----------------------------------------------------------------------------
+3. SUMMARY
+-----------------------------------------------------------------------------
+
+Transactions scanned:         47
+Alerts generated:              6
+Rules triggered:               4 of 9
+Entities with alerts:          3
+
+-----------------------------------------------------------------------------
+4. ALERTS BY RULE TYPE
+-----------------------------------------------------------------------------
+
+RULE                          ALERTS    ENTITIES
+----------------------------  ------    ----------------
+Rule 1 DPMSR trigger              2    Echo, Bravo
+Rule 5 All-cash settlement        2    Alpha, Echo
+Rule 7 Rapid frequency            1    Delta
+Rule 9 Rolling 30-day             1    Alpha
+
+-----------------------------------------------------------------------------
+5. FLAGGED TRANSACTIONS
+-----------------------------------------------------------------------------
+
+a. Entity Echo. Customer EC-0194, walk-in customer. Two transactions on
+   04 April 2026: sale of recycled gold for AED 85,000 cash and sale of
+   old gold jewellery for AED 62,000 cash. Combined value AED 147,000.
+   Triggered: Rule 1 (DPMSR), Rule 5 (all-cash), Rule 6 (same-day).
+
+b. Entity Bravo. Customer BR-0312, regular customer. Rolling 30-day
+   aggregation reached AED 210,000 on 04 April 2026. Fourth transaction
+   in the window. Triggered: Rule 1 (DPMSR).
+
+c. Entity Alpha. Customer AL-0087, regular customer. Three transactions
+   within the last 7 calendar days, all settled in cash. Most recent
+   transaction AED 48,000 on 04 April 2026. Triggered: Rule 5
+   (all-cash), Rule 9 (rolling 30-day aggregation).
+
+d. Entity Delta. Customer DL-0156, regular customer. Four transactions
+   in the last 7 calendar days. Individual amounts range from AED 12,000
+   to AED 18,000. No individual transaction exceeds the internal
+   threshold but the frequency is above normal. Triggered: Rule 7
+   (rapid frequency).
+
+-----------------------------------------------------------------------------
+6. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+1. Review the two DPMSR-triggered alerts on Entity Echo and Entity
+   Bravo and confirm whether a Dealers in Precious Metals and Stones
+   Report draft should be prepared for each.
+
+2. Review the rapid frequency alert on Entity Delta and determine
+   whether the pattern warrants a structuring review.
+
+3. Confirm that the rolling 30-day aggregation on Entity Alpha customer
+   AL-0087 is being tracked for the next daily cycle.
+
+
+=============================================================================
+END OF TRANSACTION MONITORING REPORT — 05 APRIL 2026
+=============================================================================

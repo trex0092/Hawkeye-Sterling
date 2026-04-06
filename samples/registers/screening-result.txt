@@ -1,0 +1,133 @@
+=============================================================================
+[Reporting Entity]
+SANCTIONS AND PEP SCREENING RESULT
+=============================================================================
+
+Document reference:   HSV2-SCR-2026-04-05-001
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026
+Screening engine:     Hawkeye-Sterling Unified Screening Engine v1.0
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. SUBJECT SCREENED
+-----------------------------------------------------------------------------
+
+Subject name:             Al Rashid Metal Recyclers
+Subject type:             Entity (corporate)
+Jurisdiction:             Ras Al Khaimah, United Arab Emirates
+Screening requested by:   Compliance function (automated daily batch)
+Screening date:           05 April 2026, 09:00 Asia/Dubai
+
+-----------------------------------------------------------------------------
+2. SOURCES CHECKED
+-----------------------------------------------------------------------------
+
+SOURCE                          STATUS      LAST REFRESHED
+------------------------------  ----------  ----------------
+UN Security Council
+  Consolidated List             Available   05 April 2026
+UAE Local Terrorist List        Available   05 April 2026
+OFAC SDN                        Available   04 April 2026
+UK OFSI                         Available   04 April 2026
+OpenSanctions (consolidated)    Available   05 April 2026
+GDELT (adverse media)           Available   05 April 2026
+
+All sources were available at the time of screening.
+
+-----------------------------------------------------------------------------
+3. SCREENING RESULTS
+-----------------------------------------------------------------------------
+
+SOURCE                    MATCH         SCORE    THRESHOLD     ACTION
+------------------------  -----------   -----    ----------    ----------
+UN Security Council       Medium        0.87     0.82          Review
+OpenSanctions             Medium        0.84     0.82          Review
+OFAC SDN                  No match      0.41     0.82          Clear
+UK OFSI                   No match      0.38     0.82          Clear
+UAE Local Terrorist List  No match      0.22     0.82          Clear
+GDELT adverse media       1 article     n/a      n/a           Review
+
+-----------------------------------------------------------------------------
+4. MATCH DETAIL — UN SECURITY COUNCIL
+-----------------------------------------------------------------------------
+
+List entry:               [REDACTED — fictitious list entry]
+Listed name:              Al Rasheed Metal Trading
+Listed jurisdiction:      Iraq
+Match components:
+  Fuzzy name match:       0.89 (Levenshtein)
+  Phonetic match:         0.91 (Double Metaphone)
+  Token-set match:        0.84
+  Composite score:        0.87
+
+The composite score of 0.87 falls in the medium confidence band (0.82
+to 0.92). The compliance function cannot confirm or discharge this
+match on its own record. The match requires the MLRO's personal
+assessment.
+
+Differences noted:
+  a. Listed name uses "Rasheed" (double e); subject uses "Rashid"
+  b. Listed jurisdiction is Iraq; subject jurisdiction is UAE
+  c. Listed entity is described as a trading company; subject is
+     described as a metal recycler
+
+These differences are not sufficient to discharge the match without
+the MLRO's review.
+
+-----------------------------------------------------------------------------
+5. MATCH DETAIL — OPENSANCTIONS
+-----------------------------------------------------------------------------
+
+The OpenSanctions match references the same underlying UN Security
+Council list entry. The composite score of 0.84 is consistent with the
+direct UN list match above. No additional information is available from
+the OpenSanctions consolidated dataset that would change the assessment.
+
+-----------------------------------------------------------------------------
+6. ADVERSE MEDIA
+-----------------------------------------------------------------------------
+
+One article detected via GDELT on 03 April 2026 in a regional business
+publication. The article references a regulatory inquiry into recycled
+gold sourcing at a facility in Ras Al Khaimah. See the adverse media
+monitoring report (HSV2-ADV-2026-04-05) for full details.
+
+-----------------------------------------------------------------------------
+7. AUDIT CHAIN
+-----------------------------------------------------------------------------
+
+Screening event ID:       SCR-2026-04-05-001
+Hash of screening input:  sha256:a7c3f1...
+Hash of screening output: sha256:d4e8b2...
+Previous chain hash:      sha256:91f6c0...
+Current chain hash:       sha256:b3d7a5...
+
+The audit chain is append-only and tamper-evident. Each screening event
+is linked to the previous event by hash. The MLRO may verify the chain
+integrity at any time using the verify_audit tool.
+
+The audit chain supports the firm's compliance with FATF Recommendation
+11 (record-keeping) and the equivalent provisions of Federal Decree-Law
+No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+8. MLRO DECISION
+-----------------------------------------------------------------------------
+
+Decision:                 [awaiting MLRO review]
+Outcome:                  [confirm match / discharge as false positive /
+                           request additional information]
+Filing action:            [awaiting — PNMR or FFR if confirmed]
+Date of decision:         [awaiting]
+Recorded by:              [awaiting]
+
+For review by the MLRO.
+
+
+=============================================================================
+END OF SCREENING RESULT — AL RASHID METAL RECYCLERS
+=============================================================================
