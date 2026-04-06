@@ -24,6 +24,7 @@ jobs:
         working-directory: scripts
         run: node generate-dashboard.mjs
       - name: Commit and push
+        if: ${{ always() }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"

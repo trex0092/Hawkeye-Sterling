@@ -100,6 +100,7 @@ jobs:
           echo "anchor=$ANCHOR" >> "$GITHUB_OUTPUT"
 
       - name: Commit register updates and audit anchor
+        if: ${{ always() }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"

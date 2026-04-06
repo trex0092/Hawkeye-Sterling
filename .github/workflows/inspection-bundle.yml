@@ -56,6 +56,7 @@ jobs:
         run: node inspection-bundle.mjs
 
       - name: Commit bundle manifest
+        if: ${{ always() }}
         run: |
           git config user.name "hawkeye-sterling-automation"
           git config user.email "automation@hawkeye-sterling.local"
