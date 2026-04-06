@@ -67,17 +67,26 @@ async function main() {
   let totalDeleted = 0;
 
   for (const project of projects) {
+    // List ALL tasks in this project (not just pinned) so we also
+    // clean up task-pack comments uploaded to every task.
+    const allTasks = [];
     const taskParams = new URLSearchParams({
       project: project.gid,
       limit: "100",
-      opt_fields: "gid,name",
+      opt_fields: "gid,name,completed",
     });
-    const taskPage = await asana(`/tasks?${taskParams}`);
-    const pinned = taskPage.data.find((t) => t.name.trim() === PINNED_TASK_NAME.trim());
-    if (!pinned) continue;
+    let taskOffset;
+    do {
+      if (taskOffset) taskParams.set("offset", taskOffset);
+      const taskPage = await asana(`/tasks?${taskParams}`);
+      allTasks.push(...taskPage.data);
+      taskOffset = taskPage.next_page?.offset;
+    } while (taskOffset);
 
-    console.log(`\n▶ ${project.name} → pinned task ${pinned.gid}`);
+    const openTasks = allTasks.filter((t) => !t.completed);
+    console.log(`\n▶ ${project.name} — ${openTasks.length} open tasks`);
 
+    for (const task of openTasks) {
     const storiesParams = new URLSearchParams({
       limit: "100",
       opt_fields: "gid,text,type,resource_subtype,created_by.name",
@@ -86,17 +95,31 @@ async function main() {
     const toDelete = [];
     do {
       if (storyOffset) storiesParams.set("offset", storyOffset);
-      const page = await asana(`/tasks/${pinned.gid}/stories?${storiesParams}`);
+      const page = await asana(`/tasks/${task.gid}/stories?${storiesParams}`);
       for (const story of page.data) {
         if (story.resource_subtype !== "comment_added") continue;
         const text = story.text ?? "";
+        // Match ALL automation-generated comments broadly.
+        // The MLRO wants a clean slate — delete anything the automation posted.
         if (
-          text.startsWith("HSV2 /") ||
-          text.startsWith("HSV2 / Daily") ||
-          text.startsWith("HSV2 / Task Compliance") ||
-          text.includes("hawkeye-sterling") ||
+          text.startsWith("HSV2") ||
+          text.startsWith("====") ||
+          text.includes("HSV2") ||
+          text.includes("For review by the MLRO") ||
+          text.includes("compliance function") ||
+          text.includes("Document reference:") ||
+          text.includes("Federal Decree-Law") ||
           text.includes("compliance-pack") ||
-          text.includes("For review by the MLRO")
+          text.includes("hawkeye-sterling") ||
+          text.includes("Today's Priorities") ||
+          text.includes("Compliance Priorities") ||
+          text.includes("Portfolio Digest") ||
+          text.includes("Task Compliance Pack") ||
+          text.includes("Sanctions Screening") ||
+          text.includes("Regulatory Update") ||
+          text.includes("CDD Refresh") ||
+          text.includes("Deadline Calendar") ||
+          text.includes("Retention period:")
         ) {
           toDelete.push({ gid: story.gid, preview: text.slice(0, 80) });
         }
@@ -104,23 +127,25 @@ async function main() {
       storyOffset = page.next_page?.offset;
     } while (storyOffset);
 
-    console.log(`  automation comments found: ${toDelete.length}`);
+    if (toDelete.length > 0) {
+      console.log(`    ${task.name.slice(0, 50)}: ${toDelete.length} automation comment(s)`);
+    }
 
     for (const story of toDelete) {
       if (isDryRun) {
-        console.log(`  (dry) would delete story ${story.gid}: ${story.preview}`);
+        console.log(`    (dry) would delete story ${story.gid}: ${story.preview}`);
       } else {
         try {
           await asana(`/stories/${story.gid}`, { method: "DELETE" });
-          console.log(`  ✓ deleted ${story.gid}`);
           totalDeleted++;
         } catch (err) {
-          console.warn(`  ⚠  delete failed for ${story.gid}: ${err.message}`);
+          console.warn(`    ⚠  delete failed for ${story.gid}: ${err.message}`);
         }
         await new Promise((r) => setTimeout(r, 100));
       }
     }
-  }
+    } // end task loop
+  } // end project loop
 
   console.log(`\n✓ done. deleted=${totalDeleted}`);
 }
