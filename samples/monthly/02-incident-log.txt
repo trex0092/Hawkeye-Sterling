@@ -1,0 +1,167 @@
+=============================================================================
+[Reporting Entity]
+MONTHLY INCIDENT LOG
+Month of March 2026
+=============================================================================
+
+Document reference:   HSV2-INC-2026-03
+Classification:       Confidential. For Senior Management and the Board.
+Version:              1.0
+From:                 Compliance function, [Reporting Entity]
+To:                   the MLRO, Money Laundering Reporting Officer, and
+                      Senior Management
+Issued on:            01 April 2026, 10:00 Asia/Dubai
+Coverage:             01 March 2026 to 31 March 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This is the monthly incident log prepared by the compliance function
+for the month of March 2026. It records every instance in which the
+firm refused a transaction, declined an onboarding, identified a
+compliance exception, or recorded a corrective action during the
+month. The log is maintained as a permanent record and is retained
+for a minimum of 10 years.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR THE MONTH
+-----------------------------------------------------------------------------
+
+The compliance function recorded 5 incidents during March 2026. Two
+were refused transactions, one was a declined onboarding, and two were
+compliance exceptions identified during routine review. None of the
+incidents resulted in a regulatory notification beyond the filing
+activity already recorded in the monthly MLRO consolidation report.
+
+-----------------------------------------------------------------------------
+3. INCIDENT ENTRIES
+-----------------------------------------------------------------------------
+
+a. 04 March 2026. Entity Delta. Category: refused transaction.
+   A walk-in customer presented 12 recycled gold bars for sale,
+   total declared weight 3.6 kilograms, with a declared value of
+   approximately AED 720,000. The customer was unable to produce a
+   valid source-of-material certificate or a purchase invoice for
+   the material. The branch compliance lead at Entity Delta refused
+   the transaction at the point of sale. The customer was informed
+   of the reason for the refusal. No payment was made and no gold
+   changed hands. The compliance function recorded the refusal in
+   the transaction refusal register and notified the MLRO on the
+   same day. The MLRO determined that no filing was required on the
+   basis that the transaction did not complete.
+
+b. 11 March 2026. Entity Alpha. Category: declined onboarding.
+   A corporate customer applied to open a trading account with
+   Entity Alpha for the purpose of purchasing bullion for export.
+   During the Customer Due Diligence process the compliance function
+   identified that the beneficial owner of the applicant company is
+   resident in a jurisdiction that the firm classifies as high risk.
+   The applicant was unable to provide satisfactory evidence of the
+   source of funds for the proposed initial purchase. The compliance
+   function recommended that the onboarding be declined. The MLRO
+   reviewed the file and approved the decline on 12 March 2026.
+   The applicant was informed by letter on 13 March 2026.
+
+c. 17 March 2026. Entity Echo. Category: compliance exception.
+   During a routine review of the Entity Echo cash transaction log,
+   the compliance function identified that a linked-transaction
+   aggregation for one customer had crossed the firm's internal
+   reporting threshold on 14 March 2026 but that the Dealers in
+   Precious Metals and Stones Report draft was not prepared until
+   17 March 2026, a delay of three business days against the firm's
+   internal target of one business day. The compliance function
+   recorded the exception, prepared the draft, and notified the MLRO.
+   The MLRO reviewed and filed the report on 18 March 2026. No
+   regulatory deadline was missed. Corrective action: the compliance
+   function has added an automated alert to the Entity Echo cash
+   monitoring workflow to prevent recurrence.
+
+d. 22 March 2026. Entity Bravo. Category: refused transaction.
+   A regular customer of Entity Bravo attempted to sell old gold
+   jewellery for AED 48,000 in cash. During the transaction the
+   branch identified that the customer's identification document
+   on file had expired. The transaction was paused and the customer
+   was asked to present a valid identification document. The customer
+   left the branch without completing the transaction and without
+   presenting updated identification. The compliance function
+   recorded the refusal and updated the customer file. The MLRO
+   was notified on the same day. No filing was considered necessary.
+
+e. 28 March 2026. Entity Alpha. Category: compliance exception.
+   The compliance function identified that a PEP-tagged customer
+   file on the Entity Alpha programme had not been reviewed within
+   the firm's Enhanced Due Diligence refresh cycle. The file was
+   due for review on 15 March 2026 and was 13 days overdue at the
+   point of detection. The compliance function escalated the file
+   to the MLRO. The MLRO completed the EDD review on 30 March 2026.
+   Corrective action: the compliance function has added the file to
+   the weekly dormant file review reminder to prevent recurrence.
+
+-----------------------------------------------------------------------------
+4. TRENDS AND PATTERNS
+-----------------------------------------------------------------------------
+
+The compliance function does not identify a cross-incident pattern in
+the five incidents recorded during March 2026. The two refused
+transactions occurred at different branches and involved different
+customers with different fact patterns. The two compliance exceptions
+are procedural in nature and have been addressed through corrective
+actions.
+
+The compliance function notes that the frequency of incidents in March
+2026 (five) is slightly above the baseline of three to four per month
+observed in the previous quarter. The increase is attributable to the
+two compliance exceptions, which reflect the compliance function's
+improved detection capability rather than a deterioration in the firm's
+control environment.
+
+-----------------------------------------------------------------------------
+5. RECOMMENDED FOLLOW-UP
+-----------------------------------------------------------------------------
+
+1. Confirm that the automated alert added to the Entity Echo cash
+   monitoring workflow is functioning correctly by the end of the
+   second week of April 2026.
+
+2. Confirm that the PEP file on Entity Alpha that was 13 days overdue
+   has been restored to the regular EDD refresh cycle with a next
+   review date recorded.
+
+3. Review whether the declined onboarding at Entity Alpha on 11 March
+   2026 warrants a note in the counterparty register for future
+   reference should the same applicant approach a different branch.
+
+4. Confirm that the transaction refusal at Entity Delta on 04 March
+   2026 has been recorded in the firm's transaction refusal register.
+
+5. Review the monthly incident count against the quarterly trend at
+   the next quarterly MLRO report to determine whether the slight
+   increase warrants a process review.
+
+-----------------------------------------------------------------------------
+6. LIMITATIONS
+-----------------------------------------------------------------------------
+
+This log is prepared from the daily completion retros, the monthly MLRO
+consolidation report, and the filing drafts produced during the month.
+The compliance function has searched for the keywords "refused",
+"declined", "exception", "breach", "corrective action" and "failure"
+across the available records. The MLRO is invited to add any incidents
+known to her that are not captured in the above list.
+
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:    Compliance function, [Reporting Entity]
+Reviewed by:    [awaiting MLRO review]
+Approved by:    [awaiting MLRO approval]
+
+
+=============================================================================
+END OF MONTHLY INCIDENT LOG — MARCH 2026
+=============================================================================

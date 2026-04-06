@@ -1,0 +1,109 @@
+=============================================================================
+[Reporting Entity]
+ANNUAL CUSTOMER EXIT REPORT
+Year ending 31 December 2025
+=============================================================================
+
+Document reference:   HSV2-CXR-2025
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          15 January 2026
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             01 January 2025 to 31 December 2025 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This report lists every counterparty on the firm's counterparty register
+whose status was changed to "cleared" (relationship ended by mutual
+agreement or natural expiry) or "escalated" (relationship terminated by
+the firm on compliance grounds) during the calendar year 2025. It is
+prepared to support the MLRO's annual review of customer exits and to
+maintain a permanent record of the circumstances under which each
+relationship ended.
+
+-----------------------------------------------------------------------------
+2. POPULATION
+-----------------------------------------------------------------------------
+
+During the calendar year 2025 the firm exited or escalated 6
+counterparty relationships.
+
+Relationships ended by mutual agreement (cleared):     4
+Relationships terminated on compliance grounds
+  (escalated):                                         2
+                                                       --
+Total exits during 2025:                               6
+
+-----------------------------------------------------------------------------
+3. ENTRIES
+-----------------------------------------------------------------------------
+
+COUNTERPARTY               JURISDICTION   RATING     STATUS      LAST SEEN
+-------------------------  ------------   --------   ---------   ----------
+Golden Sands Trading LLC   Dubai, UAE     Medium     Cleared     15 Mar 2025
+  Reason: The customer informed the branch that the business was
+  closing. All outstanding transactions were settled and the file was
+  closed on 20 March 2025.
+
+Al Furjan Jewellery Co     Sharjah, UAE   Medium     Cleared     22 May 2025
+  Reason: The customer's trade licence expired and was not renewed.
+  The relationship was closed after a 90-day grace period.
+
+Horizon Metals FZE         RAK, UAE       High       Escalated   04 Jul 2025
+  Reason: The compliance function identified a pattern of transactions
+  consistent with the gold-for-cash typology. The MLRO reviewed the
+  file and determined that the relationship should be terminated.
+  A Suspicious Transaction Report was filed on 10 July 2025. The
+  customer was informed of the termination by letter on 11 July 2025
+  without disclosure of the filing.
+
+Pacific Gold Traders Pte   Singapore      Medium     Cleared     18 Aug 2025
+  Reason: The counterparty was acquired by a third party and the
+  trading relationship was not continued under the new ownership.
+  The file was closed on 01 September 2025.
+
+Burj Al Arab Precious      Dubai, UAE     High       Escalated   02 Oct 2025
+  Reason: The compliance function identified that the beneficial owner
+  of the counterparty was added to the UAE Local Terrorist List on
+  28 September 2025. The relationship was terminated immediately. A
+  Funds Freeze Report was filed on 02 October 2025 and a Suspicious
+  Activity Report was filed on 03 October 2025. The customer's assets
+  held by the firm were frozen pending instruction from the Executive
+  Office for Control and Non-Proliferation.
+
+Dar Al Dhahab LLC          Abu Dhabi, UAE Low        Cleared     12 Nov 2025
+  Reason: The customer ceased trading in precious metals and
+  transitioned to a jewellery retail business that falls outside the
+  firm's risk appetite for counterparty relationships. The file was
+  closed by mutual agreement on 30 November 2025.
+
+-----------------------------------------------------------------------------
+4. MLRO ACTION
+-----------------------------------------------------------------------------
+
+The MLRO is asked to:
+
+a. Review the above list and confirm that it is complete. Any customer
+   exit known to the MLRO that is not captured above should be added by
+   the compliance function.
+
+b. Confirm that the two escalated exits (Horizon Metals FZE and Burj Al
+   Arab Precious) are correctly classified and that no further regulatory
+   action is required in respect of either.
+
+c. Confirm that the files for all six exited counterparties should be
+   retained in the firm's archive for the full 10-year retention period.
+
+d. Note whether any of the cleared exits should have been classified as
+   escalated, in light of any information known to the MLRO that was
+   not available to the compliance function at the time of exit.
+
+
+=============================================================================
+END OF ANNUAL CUSTOMER EXIT REPORT — 2025
+=============================================================================

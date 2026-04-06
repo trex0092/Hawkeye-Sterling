@@ -1,0 +1,59 @@
+# =============================================================================
+# [Reporting Entity]
+# HISTORICAL TREND EXPORT
+# Generated: 05 April 2026
+# Window: 01 January 2026 to 05 April 2026
+# Retention: 10 years under Federal Decree-Law No. 10 of 2025
+# MLRO: the MLRO
+# Classification: Confidential. For MLRO review only.
+# Reference: HSV2-TRX-2026-04-05
+# =============================================================================
+
+# TABLE A: DAILY METRICS
+date,type,projects_reported,portfolio_digest_size_bytes,retro_size_bytes,portfolio_has_sanctions_signal,portfolio_has_dpmsr_signal,portfolio_has_pep_signal,retro_completed_count,retro_touched_count
+2026-01-05,daily,6,2841,1923,false,true,true,8,12
+2026-01-06,daily,6,2756,1847,false,true,false,7,11
+2026-01-07,daily,6,2912,2014,false,true,true,9,14
+2026-01-08,daily,6,2688,1756,false,false,false,6,10
+2026-01-09,daily,6,3021,2187,false,true,true,10,15
+2026-01-12,daily,6,2894,1943,false,true,false,8,13
+2026-01-13,daily,6,2763,1812,false,false,true,7,11
+2026-01-14,daily,6,2945,2056,false,true,true,9,14
+2026-03-30,daily,6,3456,2543,true,true,true,11,18
+2026-03-31,daily,6,3521,2612,true,true,true,12,19
+2026-04-01,daily,6,3687,2734,true,true,true,10,17
+2026-04-02,daily,6,3542,2651,true,true,true,11,18
+2026-04-03,daily,6,3612,2698,true,true,true,12,19
+2026-04-05,daily,6,3478,2587,true,true,true,10,16
+
+# TABLE B: FILING METRICS
+date,type,str_drafts,sar_drafts,dpmsr_drafts,pnmr_drafts,ffr_drafts,total_drafts
+2026-01-09,filing,0,0,2,0,0,2
+2026-01-16,filing,0,1,3,0,0,4
+2026-01-23,filing,1,0,2,1,0,4
+2026-01-30,filing,0,0,1,0,0,1
+2026-02-06,filing,0,0,3,0,0,3
+2026-02-13,filing,1,0,4,0,0,5
+2026-02-20,filing,0,0,2,0,0,2
+2026-02-27,filing,0,0,3,0,0,3
+2026-03-06,filing,0,0,3,0,0,3
+2026-03-13,filing,1,0,2,0,0,3
+2026-03-20,filing,0,1,3,0,0,4
+2026-03-27,filing,1,0,3,1,0,5
+2026-04-03,filing,1,0,3,1,0,5
+
+# TABLE C: WEEKLY METRICS
+date,type,weekly_pattern_size_bytes,mentions_sanctions,mentions_pep,mentions_cross_border,mentions_stalled
+2026-01-09,weekly,4521,false,true,false,false
+2026-01-16,weekly,4387,false,false,true,false
+2026-01-23,weekly,4612,false,true,false,true
+2026-01-30,weekly,4234,false,false,false,false
+2026-02-06,weekly,4756,false,true,true,false
+2026-02-13,weekly,4891,false,false,false,false
+2026-02-20,weekly,4543,false,true,false,true
+2026-02-27,weekly,4678,false,false,true,false
+2026-03-06,weekly,5012,true,true,false,false
+2026-03-13,weekly,5234,true,false,true,false
+2026-03-20,weekly,5456,true,true,true,true
+2026-03-27,weekly,5687,true,true,true,false
+2026-04-03,weekly,5812,true,true,true,true

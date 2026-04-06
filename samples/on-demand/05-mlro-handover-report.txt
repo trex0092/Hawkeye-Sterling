@@ -1,0 +1,183 @@
+=============================================================================
+[Reporting Entity]
+MLRO HANDOVER REPORT — CONTINUITY SNAPSHOT
+=============================================================================
+
+Document reference:   HSV2-MHR-2026-04-05
+Classification:       Confidential. For outgoing and incoming MLRO only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026
+Addressee:            Outgoing MLRO and incoming MLRO
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS DOCUMENT
+-----------------------------------------------------------------------------
+
+This document is a continuity snapshot prepared by the compliance
+function to support the handover of the Money Laundering Reporting
+Officer role at [Reporting Entity]. It is not a formal appointment
+letter. The appointment of the incoming MLRO is a matter for the Board.
+This document records the operational state of the firm's AML and CFT
+programme at the point of handover so that the incoming MLRO can take
+up the role with a clear understanding of what is in place, what is
+outstanding, and what requires immediate attention.
+
+-----------------------------------------------------------------------------
+2. STATE OF THE HISTORY ARCHIVE AT HANDOVER
+-----------------------------------------------------------------------------
+
+The firm's compliance archive is held in the repository under the
+history/ directory. The following table summarises the volume of
+archived artefacts at the date of this report.
+
+CATEGORY                                    ENTRIES
+------------------------------------------  -------
+Daily compliance priorities                     248
+Daily completion retros                         248
+Weekly pattern reports                           50
+Weekly MLRO reports                              50
+Monthly MLRO consolidation reports               12
+Quarterly MLRO reports                            4
+Annual MLRO report                                1
+Annual enterprise-wide risk assessment            1
+Annual training completion report                 1
+Annual programme effectiveness assessment         1
+Annual customer exit report                       1
+Filing drafts (all types)                       142
+Counterparty register snapshots                  52
+Inspection evidence bundles                       1
+On-demand reports                                 8
+                                               ----
+Total archived artefacts                        820
+
+The archive covers the period from 01 January 2025 to 05 April 2026.
+All artefacts are plain-text UTF-8 files committed to the repository
+with git timestamps.
+
+-----------------------------------------------------------------------------
+3. STATE OF THE COUNTERPARTY REGISTER AT HANDOVER
+-----------------------------------------------------------------------------
+
+Total active counterparties:                    87
+Counterparties rated critical:                   4
+Counterparties rated high:                      13
+Counterparties with cross-entity exposure:      10
+Counterparties under active review:              9
+Counterparties on EDD pathway:                   9
+Corporate counterparties without a recorded
+  beneficial ownership note:                     7
+
+The counterparty register is maintained as a CSV file in the repository
+under history/registers/. It is updated by the compliance function on
+each business day.
+
+-----------------------------------------------------------------------------
+4. FILING MODE CONFIGURATION AT HANDOVER
+-----------------------------------------------------------------------------
+
+All five goAML filing types are configured in manual mode:
+
+Filing type                                    Mode
+-------------------------------------------    ------
+Suspicious Transaction Report (STR)            Manual
+Suspicious Activity Report (SAR)               Manual
+Dealers in Precious Metals and Stones
+  Report (DPMSR)                               Manual
+Partial Name Match Report (PNMR)              Manual
+Funds Freeze Report (FFR)                      Manual
+
+Manual mode means that the compliance function prepares draft filings
+but does not submit any filing to the Financial Intelligence Unit
+without the MLRO's express instruction. The incoming MLRO may change
+the filing mode by editing the configuration file at
+scripts/filing-mode.json.
+
+-----------------------------------------------------------------------------
+5. OUTSTANDING MATTERS THE INCOMING MLRO SHOULD EXPECT IN THE FIRST WEEK
+-----------------------------------------------------------------------------
+
+The following matters require the incoming MLRO's attention within the
+first week of assuming the role:
+
+a. RF-R12, Recycled Gold from Sanctioned Entities. Open on Entity Alpha,
+   Entity Foxtrot and Entity Delta. The outgoing MLRO was in the process
+   of making a filing decision. An STR draft and a PNMR draft are
+   prepared and awaiting review.
+
+b. Entity Echo cash intensity. The outgoing MLRO planned a formal review
+   of cash handling controls at Entity Echo during April 2026. The
+   review has not yet commenced.
+
+c. Weekly filings summary for the week ending 03 April 2026. Five
+   drafts are awaiting MLRO review.
+
+d. Entity Charlie and Entity Delta have not completed the Q1 AML
+   refresher training. The deadline was discussed as mid-April 2026.
+
+e. Seven corporate counterparties on the register do not have a recorded
+   beneficial ownership note. The outgoing MLRO was aware of this gap.
+
+[The compliance function invites the outgoing MLRO to add any matters
+not captured above before the handover date.]
+
+-----------------------------------------------------------------------------
+6. CONTACTS AND CREDENTIALS THE INCOMING MLRO WILL NEED
+-----------------------------------------------------------------------------
+
+The incoming MLRO will require access to the following systems and
+contacts:
+
+a. goAML platform credentials. The outgoing MLRO's credentials will be
+   deactivated. The incoming MLRO must apply for new credentials through
+   the Financial Intelligence Unit.
+   Contact: [to be inserted by the outgoing MLRO]
+
+b. Asana workspace. The incoming MLRO will need an Asana account with
+   access to the firm's workspace and all seven projects.
+   Workspace ID: [configured as a GitHub Actions secret]
+
+c. Ministry of Economy supervisory portal. The incoming MLRO must be
+   registered as the firm's MLRO with the Ministry of Economy.
+   Contact: [to be inserted by the outgoing MLRO]
+
+d. Executive Office for Control and Non-Proliferation. For targeted
+   financial sanctions matters and freeze instructions.
+   Contact: [to be inserted by the outgoing MLRO]
+
+e. GitHub repository access. The incoming MLRO will need read access to
+   the Hawkeye-Sterling repository to review the compliance archive.
+
+f. Anthropic API key. Configured as a GitHub Actions secret. The
+   incoming MLRO should confirm that the key is active and has
+   sufficient credit.
+
+[The outgoing MLRO is invited to add any contacts or credentials not
+captured above.]
+
+-----------------------------------------------------------------------------
+7. ACKNOWLEDGEMENT
+-----------------------------------------------------------------------------
+
+I, the incoming Money Laundering Reporting Officer, acknowledge receipt
+of this handover report and confirm that I have read and understood
+the contents. I accept responsibility for the firm's AML and CFT
+programme with effect from the date of my appointment by the Board.
+
+Signed:     [awaiting incoming MLRO signature]
+Date:       [awaiting signature date]
+Name:       [incoming MLRO name]
+
+
+Witnessed by the outgoing MLRO:
+
+Signed:     [awaiting outgoing MLRO signature]
+Date:       [awaiting signature date]
+Name:       the MLRO, Money Laundering Reporting Officer
+
+
+=============================================================================
+END OF MLRO HANDOVER REPORT
+=============================================================================

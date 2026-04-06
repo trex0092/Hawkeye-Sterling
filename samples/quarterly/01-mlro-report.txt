@@ -1,0 +1,245 @@
+=============================================================================
+[Reporting Entity]
+QUARTERLY REPORT OF THE MONEY LAUNDERING REPORTING OFFICER
+First Quarter 2026 (January to March)
+=============================================================================
+
+Document reference:   HSV2-MLRO-Q-2026-Q1
+Classification:       Confidential. For Senior Management and the Board.
+Version:              1.0
+From:                 the MLRO, Money Laundering Reporting Officer
+To:                   Senior Management and the Board of [Reporting Entity]
+Issued on:            05 April 2026, 09:00 Asia/Dubai
+Coverage:             01 January 2026 to 31 March 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS REPORT
+-----------------------------------------------------------------------------
+
+This is the quarterly report of the Money Laundering Reporting Officer
+of [Reporting Entity] for the first quarter of 2026. It is prepared
+for Senior Management and for the Board in support of the continuing
+duty of the firm to maintain a Money Laundering Reporting Officer and
+to ensure the governing body is informed of the operation of the firm's
+AML and CFT programme. It is an internal report. It has not been filed
+with any supervisory authority. It is retained in the firm's archive
+for 10 years.
+
+This report consolidates the three monthly MLRO reports issued during
+the quarter and adds a quarterly trend narrative, a filings summary,
+and a set of recommendations to Senior Management and the Board.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR THE QUARTER
+-----------------------------------------------------------------------------
+
+The firm's compliance programme during the first quarter of 2026 was
+characterised by steady operational throughput and one emerging risk
+that will require sustained attention into the second quarter. The
+emerging risk is the recycled gold sanctions typology that appeared on
+three programme entities in March 2026 and which is expected to result
+in at least one regulator-facing filing during April 2026. I am
+satisfied that the compliance function identified the risk promptly
+and that the matter is under appropriate management.
+
+There are no matters on which I, in my capacity as MLRO, have been
+unable to obtain the resources or the authority I need to discharge
+my function during the first quarter of 2026.
+
+-----------------------------------------------------------------------------
+3. QUARTERLY FILINGS SUMMARY
+-----------------------------------------------------------------------------
+
+The firm filed, through the Financial Intelligence Unit on the goAML
+platform, the following reports during the first quarter of 2026:
+
+Suspicious Transaction Reports filed:              4
+Suspicious Activity Reports filed:                 2
+Dealers in Precious Metals and Stones Reports:     31
+Partial Name Match Reports filed:                  2
+Funds Freeze Reports filed:                        0
+                                                   --
+Total filings through goAML during Q1 2026:        39
+
+The filing volume is consistent with the quarterly baseline established
+in the second half of 2025 (35 to 42 filings per quarter). The four
+Suspicious Transaction Reports concerned recycled gold counterparties
+on the Entity Alpha, Entity Charlie and Entity Delta programmes. The
+two Suspicious Activity Reports concerned attempted onboardings that
+did not result in completed transactions.
+
+-----------------------------------------------------------------------------
+4. QUARTERLY TREND NARRATIVE
+-----------------------------------------------------------------------------
+
+January 2026 was a routine month. The firm processed standard volume
+across all six programmes and there were no material incidents. February
+2026 saw an increase in the number of Dealers in Precious Metals and
+Stones Reports, reflecting seasonal trading activity at the Entity Echo
+and Entity Bravo branches. March 2026 saw the emergence of the recycled
+gold sanctions typology on three entities and a modest rise in high
+cash intensity activity at Entity Echo.
+
+Month-by-month filings:
+
+                                Jan     Feb     Mar     Q1 Total
+Suspicious Transaction Reports    1       1       2        4
+Suspicious Activity Reports       1       0       1        2
+DPMSR                             8      12      11       31
+Partial Name Match Reports        1       0       1        2
+Funds Freeze Reports              0       0       0        0
+                                 --      --      --       --
+Total                            11      13      15       39
+
+The upward trend in monthly filings from 11 to 15 is attributable
+primarily to the DPMSR volume and to the sanctions-related filings in
+March. I do not consider this trend to be a cause for concern at this
+stage.
+
+-----------------------------------------------------------------------------
+5. MATTERS UNDER REVIEW AT QUARTER-END
+-----------------------------------------------------------------------------
+
+a. The recycled gold sanctions exposure on the Entity Alpha, Entity
+   Foxtrot and Entity Delta files. The counterparties may be related.
+   If so, this will be the firm's first coordinated sanctions risk event
+   of the year. I expect to reach a filing decision during the first
+   two weeks of April 2026.
+
+b. The high cash intensity activity at Entity Echo. I intend to conduct
+   a formal review of cash handling controls at the Entity Echo branch
+   during the first half of April 2026.
+
+c. One PEP file on Entity Alpha that fell outside its EDD refresh cycle
+   during March 2026. The review was completed on 30 March 2026 and the
+   file has been restored to the regular cycle.
+
+-----------------------------------------------------------------------------
+6. SANCTIONS SCREENING ACTIVITY FOR THE QUARTER
+-----------------------------------------------------------------------------
+
+The firm screened its counterparty register and active customer
+population against the United Nations Security Council Consolidated
+List and the UAE Local Terrorist List on each business day of the
+quarter. No confirmed matches were identified. Three medium-confidence
+matches were reviewed and resolved as false positives. One medium-
+confidence match (the RF-R12 counterparty) remains under review at
+quarter-end.
+
+-----------------------------------------------------------------------------
+7. PEP POPULATION MOVEMENT DURING THE QUARTER
+-----------------------------------------------------------------------------
+
+The PEP population at 31 March 2026 stands at 14 files across 6
+programmes. One new PEP designation was made during the quarter
+(Entity Foxtrot, PEP-014, Silk Road Partners, designated in February
+2026 on the basis of publicly available information). No PEP files
+were closed or de-classified during the quarter.
+
+All 14 PEP files are under Enhanced Due Diligence. The compliance
+function confirms that 13 of the 14 files are within their EDD refresh
+cycle. One file (PEP-002, Entity Alpha) fell outside the cycle during
+March 2026, was reviewed on 30 March 2026, and has been restored.
+
+-----------------------------------------------------------------------------
+8. TRAINING DELIVERED DURING THE QUARTER
+-----------------------------------------------------------------------------
+
+The firm delivered the following AML and CFT training during the
+first quarter of 2026:
+
+a. Q1 2026 AML Refresher Training. Completed by staff at Entity Alpha,
+   Entity Bravo, Entity Echo and Entity Foxtrot. Entity Charlie and
+   Entity Delta are scheduled for completion by mid-April 2026.
+
+b. Sanctions Awareness Module 2026. Completed by Entity Alpha staff
+   in March 2026. Scheduled for remaining entities during April and
+   May 2026.
+
+c. One new joiner induction at Entity Echo, covering the firm's AML
+   and CFT policies and the new joiner's obligations under the
+   applicable provisions of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+9. INTERNAL POLICY OR PROCEDURE CHANGES DURING THE QUARTER
+-----------------------------------------------------------------------------
+
+No changes were made to the firm's AML and CFT policies during the
+first quarter of 2026. One procedural change was implemented: the
+compliance function added an automated alert to the Entity Echo cash
+monitoring workflow in March 2026 following a compliance exception
+identified in the monthly incident log.
+
+-----------------------------------------------------------------------------
+10. MATERIAL INCIDENTS OR EXCEPTIONS DURING THE QUARTER
+-----------------------------------------------------------------------------
+
+The compliance function recorded a total of 12 incidents during the
+quarter (4 in January, 3 in February, 5 in March). Of these, 5 were
+refused transactions, 3 were declined onboardings, and 4 were
+compliance exceptions. None resulted in a regulatory notification
+beyond the filing activity already recorded above. Full details are
+set out in the monthly incident logs for each month.
+
+-----------------------------------------------------------------------------
+11. RISK ASSESSMENT AND PROGRAMME HEALTH
+-----------------------------------------------------------------------------
+
+I consider the firm's AML and CFT programme to be operating at a
+satisfactory level for the first quarter of 2026. The compliance
+function is identifying risks in a timely manner and the filing
+throughput is consistent with the quarterly baseline. The one area
+that requires my sustained attention in the coming quarter is the
+recycled gold sanctions exposure, which I will address as a priority.
+
+I confirm that I have had unrestricted access to the books, records,
+staff and resources of the firm during the quarter. I have not been
+prevented from discharging any part of my function.
+
+-----------------------------------------------------------------------------
+12. RECOMMENDATIONS TO SENIOR MANAGEMENT AND THE BOARD
+-----------------------------------------------------------------------------
+
+1. Note the recycled gold sanctions exposure on three entities and the
+   fact that a filing decision is expected during April 2026.
+
+2. Note the high cash intensity activity at Entity Echo and the planned
+   review of cash handling controls at that branch.
+
+3. Confirm that Entity Charlie and Entity Delta should complete the Q1
+   AML refresher training by mid-April 2026.
+
+4. Note the quarterly filing volume of 39 and confirm that Senior
+   Management is satisfied with the current level of compliance
+   activity.
+
+5. Approve the continuation of manual filing mode for all five goAML
+   filing types.
+
+-----------------------------------------------------------------------------
+DECLARATION
+-----------------------------------------------------------------------------
+
+I confirm that this report represents my honest and complete assessment
+of the firm's AML and CFT programme for the first quarter of 2026.
+
+Signed:     [awaiting MLRO signature]
+Date:       [awaiting signature date]
+Name:       the MLRO, Money Laundering Reporting Officer
+
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:    Compliance function, [Reporting Entity]
+Reviewed by:    [awaiting MLRO review]
+Signed by:      [awaiting MLRO signature]
+Presented to:   [awaiting Board acknowledgement]
+
+
+=============================================================================
+END OF QUARTERLY MLRO REPORT — Q1 2026
+=============================================================================

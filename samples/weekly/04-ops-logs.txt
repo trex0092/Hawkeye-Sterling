@@ -1,0 +1,111 @@
+=============================================================================
+[Reporting Entity]
+WEEKLY OPERATIONAL LOGS
+Week ending Friday 03 April 2026
+=============================================================================
+
+Document reference:   HSV2-WOL-2026-W14
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          03 April 2026, 17:30 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             28 March 2026 to 03 April 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+This file contains three weekly operational logs produced by the compliance
+function at close of the weekly cycle. Each log is a factual data extract.
+No narrative judgement has been applied.
+
+
+=============================================================================
+LOG 1 OF 3 — WEEKLY TRAINING AND ATTESTATION SUMMARY
+Reference: HSV2-WTS-2026-W14
+=============================================================================
+
+Purpose. This log records every compliance task tagged as a training or
+attestation item that was active during the week. It supports the firm's
+obligation to demonstrate that staff receive ongoing AML and CFT training
+and that training completion is recorded.
+
+Activity observed. The compliance function identified 6 training-related
+tasks across 4 programmes during the week ending 03 April 2026.
+
+PROGRAMME          TASK                                    ASSIGNEE          STATUS
+-----------------  --------------------------------------  ----------------  ----------
+Entity Alpha       AML Refresher Training Q1 2026          Luisa Fernanda    Completed
+Entity Bravo       AML Refresher Training Q1 2026          Luisa Fernanda    Completed
+Entity Charlie     AML Refresher Training Q1 2026          Luisa Fernanda    Open
+Entity Delta       AML Refresher Training Q1 2026          Luisa Fernanda    Open
+Entity Alpha       Sanctions Awareness Module 2026         Luisa Fernanda    Completed
+Entity Echo        New Joiner Induction AML Module         Luisa Fernanda    Open
+
+MLRO action. The MLRO is asked to confirm that Entity Charlie and Entity
+Delta are on track to complete the Q1 AML refresher training before the
+quarterly deadline. The MLRO is also asked to confirm that the new joiner
+induction at Entity Echo has been scheduled.
+
+
+=============================================================================
+LOG 2 OF 3 — WEEKLY DORMANT FILE REVIEW REMINDER
+Reference: HSV2-WDR-2026-W14
+=============================================================================
+
+Purpose. This log identifies compliance tasks that have not been updated
+for more than 60 calendar days. Dormant files may indicate stalled
+investigations, forgotten review obligations, or items that should be
+formally closed.
+
+Population. The compliance function identified 8 tasks across 5
+programmes that have been dormant for more than 60 days as at
+03 April 2026.
+
+PROGRAMME          TASK                                    ASSIGNEE          DAYS DORMANT
+-----------------  --------------------------------------  ----------------  ------------
+Entity Alpha       CDD-047 Al Rashid Trading Refresh       Luisa Fernanda    94
+Entity Bravo       CDD-112 Gulf Precious FZE Refresh       Luisa Fernanda    87
+Entity Charlie     RF-R15 Recycling Facility Due            Luisa Fernanda    82
+                   Diligence Gaps
+Entity Delta       CDD-203 Emirates Gold LLC Refresh        Luisa Fernanda    79
+Entity Alpha       NRA-RF07 Misuse of Legal Persons         Luisa Fernanda    74
+Entity Delta       RF-R16 Old Gold and Inherited Gold       Luisa Fernanda    71
+                   Verification
+Entity Echo        CDD-301 Silk Road Commodities Refresh   Luisa Fernanda    68
+Entity Foxtrot     RF-R14 Recycled Gold from Conflict       Luisa Fernanda    63
+                   Sources
+
+MLRO action. The MLRO is asked to decide for each item above whether the
+file should be reactivated with a new review date, reassigned to a
+different reviewer, or formally closed with a recorded reason.
+
+
+=============================================================================
+LOG 3 OF 3 — WEEKLY ESCALATION LOG
+Reference: HSV2-WEL-2026-W14
+=============================================================================
+
+Purpose. This log records every compliance task that was tagged for
+escalation during the week. An escalation tag indicates that the
+assigned reviewer considers the item beyond the scope of routine
+compliance review and requires the MLRO's direct attention.
+
+Escalations identified. The compliance function recorded 2 escalation-
+tagged tasks during the week ending 03 April 2026.
+
+PROGRAMME          TASK                                    ASSIGNEE          STATUS
+-----------------  --------------------------------------  ----------------  ----------
+Entity Alpha       RF-R12 Recycled Gold from Sanctioned    Luisa Fernanda    Escalated
+                   Entities
+Entity Foxtrot     RF-R12 Recycled Gold from Sanctioned    Luisa Fernanda    Escalated
+                   Entities
+
+MLRO action. Both escalations concern the same counterparty group. The
+MLRO is asked to confirm receipt of the escalation and to take personal
+charge of the review on both files. The compliance function will not
+take further action on these files without the MLRO's instruction.
+
+
+=============================================================================
+END OF WEEKLY OPERATIONAL LOGS — WEEK ENDING 03 APRIL 2026
+=============================================================================

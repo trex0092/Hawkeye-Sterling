@@ -1,0 +1,104 @@
+=============================================================================
+[Reporting Entity]
+QUARTERLY OPERATIONAL LOGS
+First Quarter 2026 (January to March)
+=============================================================================
+
+Document reference:   HSV2-QOL-2026-Q1
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 10:00 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             01 January 2026 to 31 March 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+This file contains two quarterly operational logs produced by the compliance
+function at the start of the new quarter.
+
+
+=============================================================================
+LOG 1 OF 2 — QUARTERLY TYPOLOGY LIBRARY UPDATE
+Reference: HSV2-QTU-2026-Q1
+=============================================================================
+
+Purpose. This log summarises the observed frequency of each red-flag
+typology across the firm's compliance programmes during the first quarter
+of 2026. It is produced to support the MLRO's assessment of which
+typologies are active in the firm's business and to inform the annual
+enterprise-wide risk assessment.
+
+TYPOLOGY                                              OCCURRENCES
+----------------------------------------------------  -----------
+RF-R12  Recycled Gold from Sanctioned Entities              18
+NRA-RF01 High Cash Intensity Patterns                       16
+RF-R08  Cross-Border Recycled Gold Smuggling                14
+RF-R05  Jewelry Scrap Aggregation Without CDD               12
+NRA-RF04 FIU Typology 1 TBML in Gold Trade                  11
+RF-R10  Gold-for-Cash Schemes via Recycled Material          9
+NRA-RF08 DPMSR Threshold Structuring                         8
+RF-R06  Industrial Scrap Gold Processing                     7
+NRA-RF09 PEP Exposure in DPMS                                7
+RF-R19  Recycled Gold Documentation Gaps                     6
+NRA-RF06 FIU Typology 3 Gold/Cash Smuggling                  5
+RF-R07  Recycled Gold from Theft or Proceeds of Crime        5
+NRA-RF07 Misuse of Legal Persons/Nominees                    4
+RS-RF01 Step 1 Failure No Management System                  4
+RF-R15  Recycling Facility Due Diligence Gaps                3
+NRA-RF11 TF via DPMS Sector                                  3
+RF-R14  Recycled Gold from Conflict/Looted Sources           2
+RF-R16  Old Gold and Inherited Gold Verification             2
+NRA-RF02 Cross-Border Trade Exploitation                     2
+NRA-RF03 Weak Responsible Sourcing                           2
+RF-R11  Recycled Gold Purity and Assay Manipulation          1
+NRA-RF10 Virtual Asset / Crypto-to-Gold                      1
+NRA-RF12 Proliferation Financing via DPMS                    1
+RF-R09  Recycled Material CDD Exemption Abuse                1
+NRA-RF05 FIU Typology 2 Foreign Currency Exchange ML         1
+RF-R13  Mixed Mined/Recycled Without Segregation             1
+RF-R17  Recycled Gold as Hawala Alternative                  0
+RF-R18  Dental and Medical Gold Recycling Anomalies          0
+RF-R20  Annual Mined/Recycled Red Flags Review               0
+
+MLRO action. The MLRO is asked to review the frequency ranking above
+and to confirm whether any typology with zero occurrences should be
+retired from active monitoring or retained in the library for the next
+quarter.
+
+
+=============================================================================
+LOG 2 OF 2 — QUARTERLY BENEFICIAL OWNERSHIP CLARITY REPORT
+Reference: HSV2-QBO-2026-Q1
+=============================================================================
+
+Purpose. This log identifies corporate counterparties on the firm's
+counterparty register for which the compliance function does not hold
+a recorded beneficial ownership note. Beneficial ownership transparency
+is a requirement under the applicable provisions of Federal Decree-Law
+No. 10 of 2025.
+
+Population. The counterparty register at 31 March 2026 contains 52
+corporate counterparties. Of these, 7 do not have a recorded beneficial
+ownership note.
+
+COUNTERPARTY                  JURISDICTION    RATING     ENTITIES
+----------------------------  ------------    --------   ----------------
+Atlas Gold FZE                RAK, UAE        High       Foxtrot
+Gulf Commodities FZE          JAFZA, UAE      High       Bravo
+Palm Trading Group LLC        Dubai, UAE      High       Delta
+Emirates Scrap Metals LLC     Dubai, UAE      High       Charlie
+RAK Precious LLC              RAK, UAE        Medium     Charlie
+Al Falak Jewellery Co         Sharjah, UAE    Medium     Bravo
+Meridian Bullion DMCC         Dubai, UAE      High       Alpha, Bravo
+
+MLRO action. The MLRO is asked to instruct the compliance function to
+obtain beneficial ownership information for each counterparty listed
+above. Priority should be given to the high-rated counterparties. The
+compliance function will update the counterparty register on receipt
+of the relevant documentation.
+
+
+=============================================================================
+END OF QUARTERLY OPERATIONAL LOGS — Q1 2026
+=============================================================================

@@ -1,0 +1,136 @@
+=============================================================================
+[Reporting Entity]
+WEEKLY FILINGS SUMMARY
+Week ending Friday 03 April 2026
+=============================================================================
+
+Document reference:   HSV2-WFS-2026-W14
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          03 April 2026, 17:00 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             28 March 2026 to 03 April 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This document is the weekly summary of goAML filing drafts produced by
+the compliance function during the week ending 03 April 2026. It is
+prepared for the MLRO to facilitate the review of draft filings before
+any submission is made to the Financial Intelligence Unit through the
+goAML platform. No draft in this summary has been filed. Filing remains
+a manual act performed by the MLRO on her personal authority.
+
+-----------------------------------------------------------------------------
+2. FILINGS PRODUCED THIS WEEK (BY TYPE)
+-----------------------------------------------------------------------------
+
+The compliance function produced the following draft filings during the
+week:
+
+Suspicious Transaction Report drafts:              1
+Suspicious Activity Report drafts:                 0
+Dealers in Precious Metals and Stones Report
+  drafts:                                          3
+Partial Name Match Report drafts:                  1
+Funds Freeze Report drafts:                        0
+                                                   --
+Total drafts produced during the week:             5
+
+The volume of drafts this week is consistent with the recent weekly
+average of four to six. The single Suspicious Transaction Report draft
+is materially above the baseline for any single week and reflects the
+recycled gold sanctions exposure that the compliance function has been
+tracking on the Entity Alpha and Entity Foxtrot programmes since mid-March.
+
+-----------------------------------------------------------------------------
+3. NOTABLE DRAFTS
+-----------------------------------------------------------------------------
+
+1. STR draft, Entity Alpha, RF-R12. This draft was triggered by the
+   recycled gold counterparty whose trade licence and registered office
+   have not been reconciled with the available sanctions list data. The
+   compliance function prepared this draft on the basis that, if the
+   match is confirmed, the MLRO may wish to file a Suspicious Transaction
+   Report rather than a Partial Name Match Report. The MLRO is invited to
+   review the underlying evidence and determine the appropriate filing
+   type.
+
+2. DPMSR draft, Entity Echo, linked cash transactions. Three customers
+   of the Entity Echo programme reached the firm's internal linked-
+   transaction threshold in the rolling 30-day window during the week.
+   The compliance function prepared a single consolidated Dealers in
+   Precious Metals and Stones Report draft covering all three customers.
+   The MLRO is invited to confirm whether a consolidated report or three
+   individual reports is the correct approach for submission.
+
+3. DPMSR draft, Entity Bravo, walk-in customer. A walk-in customer
+   sold recycled gold for AED 195,000 in cash on 01 April 2026. The
+   transaction was above the firm's internal reporting threshold and
+   the compliance function prepared a routine Dealers in Precious Metals
+   and Stones Report draft.
+
+4. DPMSR draft, Entity Alpha, periodic aggregation. The rolling 30-day
+   aggregation for one regular customer of the Entity Alpha programme
+   crossed the firm's internal linked-transaction threshold on 02 April
+   2026. A routine Dealers in Precious Metals and Stones Report draft
+   has been prepared.
+
+5. PNMR draft, Entity Foxtrot, RF-R12. The counterparty on the Entity
+   Foxtrot RF-R12 file produced a medium-confidence match against a
+   name on the United Nations Security Council Consolidated List. The
+   compliance function has prepared a Partial Name Match Report draft
+   for the MLRO's review. The MLRO may wish to read this draft in
+   conjunction with the STR draft noted at item 1 above, as both
+   concern the same counterparty group.
+
+-----------------------------------------------------------------------------
+4. REMINDER ON FILING MODE
+-----------------------------------------------------------------------------
+
+All five filing types remain in manual mode. No draft produced by the
+compliance function is filed automatically. Every draft is held for
+the MLRO's personal review and, where the MLRO is satisfied that filing
+is appropriate, submission is carried out by the MLRO through the goAML
+platform using her own credentials. The compliance function will not
+submit any filing without the MLRO's express instruction.
+
+-----------------------------------------------------------------------------
+5. RECOMMENDED NEXT STEPS FOR THE MLRO
+-----------------------------------------------------------------------------
+
+1. Review the STR draft on Entity Alpha RF-R12 and determine whether a
+   Suspicious Transaction Report or a Partial Name Match Report is the
+   correct filing type for this exposure.
+
+2. Review the PNMR draft on Entity Foxtrot RF-R12 in conjunction with
+   the STR draft noted above and determine whether a single or dual
+   filing approach is warranted.
+
+3. Confirm whether the three linked-transaction customers on Entity Echo
+   should be reported as a single consolidated DPMSR or as three
+   individual reports.
+
+4. Review and approve or reject the two routine DPMSR drafts for Entity
+   Bravo and Entity Alpha before the weekly deadline.
+
+5. Confirm that filing mode for all five filing types should remain set
+   to manual for the coming week.
+
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:    Compliance function, [Reporting Entity]
+Reviewed by:    [awaiting MLRO review]
+Approved by:    [awaiting MLRO approval]
+
+
+=============================================================================
+END OF WEEKLY FILINGS SUMMARY — WEEK ENDING 03 APRIL 2026
+=============================================================================
