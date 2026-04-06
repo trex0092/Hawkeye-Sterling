@@ -1,0 +1,89 @@
+=============================================================================
+[Reporting Entity]
+COMMENT CLEANUP LOG
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-CCL-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 18:30 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 11
+                      (record-keeping).
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This log records every Asana comment deleted by the compliance function's
+automated cleanup process on 05 April 2026. The cleanup removes
+superseded automation-generated comments from Asana tasks to maintain
+readability while preserving the authoritative archive under history/.
+Only comments matching the automation prefix pattern ("HSV2 /") and
+older than the configured retention window are removed.
+
+The full text of every deleted comment remains in the firm's git-backed
+history/ archive. No compliance record is lost. The cleanup affects
+only the Asana display, not the permanent record.
+
+-----------------------------------------------------------------------------
+2. SUMMARY
+-----------------------------------------------------------------------------
+
+Comments scanned:             312
+Comments matching pattern:     87
+Comments within retention
+  window (kept):               62
+Comments deleted:              25
+Tasks affected:                14
+Programmes affected:            5
+
+-----------------------------------------------------------------------------
+3. COMMENTS DELETED
+-----------------------------------------------------------------------------
+
+PROGRAMME          TASK                         COMMENT DATE    PREFIX
+-----------------  ---------------------------  ------------    ---------------
+Entity Alpha       RF-R12 Recycled Gold         12 Feb 2026     HSV2 / Daily
+Entity Alpha       RF-R12 Recycled Gold         13 Feb 2026     HSV2 / Daily
+Entity Alpha       RF-R12 Recycled Gold         14 Feb 2026     HSV2 / Daily
+Entity Alpha       NRA-RF01 High Cash           10 Feb 2026     HSV2 / Daily
+Entity Alpha       NRA-RF01 High Cash           11 Feb 2026     HSV2 / Daily
+Entity Bravo       CDD-112 Gulf Precious        08 Feb 2026     HSV2 / Daily
+Entity Bravo       CDD-112 Gulf Precious        09 Feb 2026     HSV2 / Daily
+Entity Bravo       NRA-RF04 FIU Typology        07 Feb 2026     HSV2 / Daily
+Entity Charlie     PEP-006 Al Ain Precious      05 Feb 2026     HSV2 / Daily
+Entity Charlie     PEP-006 Al Ain Precious      06 Feb 2026     HSV2 / Daily
+Entity Delta       RF-R16 Old Gold              03 Feb 2026     HSV2 / Daily
+Entity Delta       NRA-RF08 DPMSR Threshold     04 Feb 2026     HSV2 / Daily
+Entity Echo        NRA-RF01 High Cash           01 Feb 2026     HSV2 / Daily
+Entity Echo        NRA-RF01 High Cash           02 Feb 2026     HSV2 / Daily
+(remaining 11 comments follow the same pattern)
+
+-----------------------------------------------------------------------------
+4. ARCHIVE CONFIRMATION
+-----------------------------------------------------------------------------
+
+The compliance function confirms that the full text of every comment
+listed above is preserved in the firm's history/ archive under the
+corresponding daily archive date. No compliance record has been
+deleted from the permanent archive. The cleanup affects only the Asana
+comment thread display.
+
+-----------------------------------------------------------------------------
+5. NEXT ACTIONS
+-----------------------------------------------------------------------------
+
+No action required. This log is retained for audit purposes to
+demonstrate that the cleanup process operates within the firm's
+record-keeping obligations under Federal Decree-Law No. 10 of 2025
+and FATF Recommendation 11.
+
+
+=============================================================================
+END OF COMMENT CLEANUP LOG — 05 APRIL 2026
+=============================================================================

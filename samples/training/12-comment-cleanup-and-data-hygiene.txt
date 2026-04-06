@@ -1,0 +1,153 @@
+=============================================================================
+[Reporting Entity]                                          No:  12
+Non-Manufactured Precious                                   Version: 001
+Metal Trading (DPMS)
+                                                            Month: June
+EVALUATION 2026 | COMMENT CLEANUP AND                      Audience: All Staff
+DATA HYGIENE
+Schedule: Week 12                                           Training Session: 12
+=============================================================================
+
+Name: ____________________________  Department / Position: _________________
+
+Evaluation Date: __________________  Evaluated by: _________________________
+
+-----------------------------------------------------------------------------
+RATING SCALE
+-----------------------------------------------------------------------------
+
+  1 = Strongly Disagree / Do Not Understand
+  2 = Disagree / Understand Somewhat
+  3 = Neutral / Understand Adequately
+  4 = Agree / Understand Well
+  5 = Strongly Agree / Fully Understand
+
+=============================================================================
+STATEMENTS                                                     RATING (1-5)
+=============================================================================
+
+
+-----------------------------------------------------------------------------
+1.  COMMENT CLEANUP PROCESS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the purpose of the comment cleanup process        [    ]
+and I know that it removes superseded automation-generated
+comments from Asana tasks to maintain readability.
+
+I know that the cleanup only removes comments matching         [    ]
+the automation prefix pattern ("HSV2 /") and older than
+the configured retention window. Manual comments and
+MLRO notes are never deleted.
+
+I understand that the full text of every deleted comment        [    ]
+is preserved in the firm's git-backed history/ archive
+and that no compliance record is lost when the cleanup
+runs.
+
+I know that the Comment Cleanup Log records every              [    ]
+deletion with the programme, task, comment date and
+prefix, providing an audit trail for the process.
+
+
+-----------------------------------------------------------------------------
+2.  RECORD-KEEPING OBLIGATIONS
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I understand the difference between the Asana display          [    ]
+(working copy, subject to cleanup) and the history/
+archive (permanent record, retained for 10 years under
+Federal Decree-Law No. 10 of 2025).
+
+I know that the firm's record retention obligation under       [    ]
+FATF Recommendation 11 (record-keeping) is satisfied by
+the git-backed history/ archive, not by the Asana comment
+thread.
+
+I understand that the Archive Integrity Manifest               [    ]
+(hash-manifest) provides tamper-evident verification
+that no file in the history/ archive has been modified
+after the fact.
+
+I am aware that the Ministry of Economy may request            [    ]
+access to the firm's compliance records during a
+supervisory inspection, and that the history/ archive is
+the authoritative source for all retained artefacts.
+
+
+-----------------------------------------------------------------------------
+3.  DATA HYGIENE BEST PRACTICES
+-----------------------------------------------------------------------------
+                                                               Rating
+                                                               ------
+I know that I must not manually delete any Asana comment       [    ]
+that may constitute a compliance record without first
+confirming that the comment is preserved in the history/
+archive.
+
+I understand that the cleanup process runs on a defined        [    ]
+schedule and that I should not attempt to run it
+manually without the MLRO's instruction.
+
+I know that if I notice a compliance record missing from       [    ]
+both Asana and the history/ archive, I must report this
+to the MLRO immediately as a potential integrity issue.
+
+I understand that data hygiene supports the firm's             [    ]
+ability to respond to supervisory requests efficiently
+and that cluttered or disorganised records may delay the
+firm's response to a Ministry of Economy inspection.
+
+
+=============================================================================
+FINAL REMARKS
+=============================================================================
+
+What challenges do you face in applying this training subject in your
+daily work?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+What additional support or tools would help you apply this knowledge
+more effectively?
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+RECOMMENDATIONS
+=============================================================================
+
+To further strengthen compliance awareness and risk management in this
+subject area, the following is recommended:
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+___________________________________________________________________________
+
+
+=============================================================================
+SIGN-OFF
+=============================================================================
+
+Full Name: _________________________  Signature: _________________________
+
+Date: _________________________
+
+
+=============================================================================
+END OF EVALUATION 12 — COMMENT CLEANUP AND DATA HYGIENE
+=============================================================================

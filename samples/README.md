@@ -96,6 +96,12 @@ samples/
     08-annual-compliance-review.txt            evaluation: annual MLRO report, risk assessment, effectiveness
     09-on-demand-compliance-functions.txt      evaluation: inspection bundle, board pack, SAQ, handover
     10-record-keeping-and-archive-integrity.txt evaluation: retention, hash manifest, dashboard, regulatory watcher
+    11-automated-task-creation.txt             evaluation: automated alert-to-task conversion, priority management
+    12-comment-cleanup-and-data-hygiene.txt    evaluation: comment cleanup, record-keeping, archive vs display
+  registers/
+    ...
+    auto-create-tasks-log.txt                  automated task creation log from daily monitoring alerts
+    cleanup-old-comments-log.txt               comment cleanup log with archive confirmation
 ```
 
 ## Legal framing used across the samples
