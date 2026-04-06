@@ -39,14 +39,27 @@ samples/
     04-completion-retro.txt                    sample of item 17, end-of-day hit-rate review
     05-sanctions-screening-log.txt             sample of item 18, daily UNSC and Local List screening log
     06-pep-watch-log.txt                       sample of item 19, daily PEP customer tracker
+    07-ops-logs.txt                            daily operational logs: sanctions, PEP, cash, high-risk counterparty
+    08-entity-report.txt                       daily per-entity compliance report with analytical commentary
   weekly/
     01-pattern-report.txt                      sample of item 22, internal analytical weekly
     02-mlro-report-to-senior-management.txt    sample of item 6, formal weekly from MLRO to Senior Management
+    03-filings-summary.txt                     weekly goAML filing drafts summary for MLRO review
+    04-ops-logs.txt                            weekly training summary, dormant file reminder, escalation log
   monthly/
     01-mlro-consolidation.txt                  sample of item 7, monthly MLRO consolidation for the Board
+    02-incident-log.txt                        monthly incident log: refused transactions, declines, exceptions
+    03-ops-logs.txt                            monthly CDD refresh reminder and EDD case tracker
+  quarterly/
+    01-mlro-report.txt                         quarterly MLRO report to Senior Management and the Board
+    02-jurisdiction-heatmap.txt                quarterly jurisdiction exposure heatmap from counterparty register
+    03-ops-logs.txt                            quarterly typology library update and beneficial ownership clarity
   annual/
     01-enterprise-wide-risk-assessment.txt     sample of item 10, annual risk assessment draft
     02-training-completion-report.txt          sample of item 12, annual training report
+    03-mlro-report.txt                         annual MLRO report to Senior Management and the Board
+    04-programme-effectiveness.txt             annual five-pillar programme effectiveness self-assessment
+    05-customer-exit-report.txt                annual customer exit and escalation report
   filings/
     01-str-candidate-review.txt                sample of item 1, STR draft
     02-sar-candidate-review.txt                sample of item 2, SAR draft
@@ -59,6 +72,9 @@ samples/
     01-dnfbp-self-assessment-questionnaire.txt sample of item 11, MOE SAQ draft
     02-board-meeting-aml-pack.txt              sample of item 38, board pack extract
     03-inspection-evidence-bundle-manifest.txt sample of item 36, on-demand inspection bundle index
+    04-customer-file-summary.txt               single-customer one-page file summary for MLRO review
+    05-mlro-handover-report.txt                MLRO handover continuity snapshot for role transition
+    06-trend-export.csv                        historical trend export CSV for external charting
 ```
 
 ## Legal framing used across the samples

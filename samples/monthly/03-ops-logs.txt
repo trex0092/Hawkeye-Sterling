@@ -1,0 +1,116 @@
+=============================================================================
+[Reporting Entity]
+MONTHLY OPERATIONAL LOGS
+Month of March 2026
+=============================================================================
+
+Document reference:   HSV2-MOL-2026-03
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          01 April 2026, 09:30 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             01 March 2026 to 31 March 2026 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+This file contains two monthly operational logs produced by the compliance
+function at the start of the new month. Each log is a factual data extract.
+No narrative judgement has been applied.
+
+
+=============================================================================
+LOG 1 OF 2 — MONTHLY CDD REFRESH REMINDER
+Reference: HSV2-CDD-2026-03
+=============================================================================
+
+Purpose. This log identifies Customer Due Diligence files across all
+programmes that are due for periodic refresh during the coming month
+(April 2026). It is produced to support the firm's obligation to
+maintain up-to-date CDD records on all active customer relationships.
+
+Population. The compliance function identified 14 CDD refresh tasks
+due for completion during April 2026 across 5 programmes.
+
+PROGRAMME          TASK                                    ASSIGNEE
+-----------------  --------------------------------------  ----------------
+Entity Alpha       CDD-047 Al Rashid Trading Refresh       Luisa Fernanda
+Entity Alpha       CDD-051 Meridian Bullion DMCC Refresh   Luisa Fernanda
+Entity Alpha       CDD-058 Dubai Gold Souk Traders          Luisa Fernanda
+                   Refresh
+Entity Bravo       CDD-112 Gulf Precious FZE Refresh       Luisa Fernanda
+Entity Bravo       CDD-119 Al Falak Jewellery Refresh      Luisa Fernanda
+Entity Bravo       CDD-124 Emirates Commodities Ltd         Luisa Fernanda
+                   Refresh
+Entity Charlie     CDD-167 Sharjah Gold Centre Refresh     Luisa Fernanda
+Entity Charlie     CDD-173 RAK Precious LLC Refresh         Luisa Fernanda
+Entity Delta       CDD-203 Emirates Gold LLC Refresh        Luisa Fernanda
+Entity Delta       CDD-211 Al Noor Recycling Refresh        Luisa Fernanda
+Entity Delta       CDD-218 Palm Trading Group Refresh       Luisa Fernanda
+Entity Echo        CDD-289 Gulf Refining Corp Refresh       Luisa Fernanda
+Entity Echo        CDD-301 Silk Road Commodities Refresh   Luisa Fernanda
+Entity Foxtrot     CDD-344 Atlas Gold FZE Refresh           Luisa Fernanda
+
+MLRO action. The MLRO is asked to reconcile the above list against the
+customer file index maintained by the compliance function and to confirm
+that the refresh schedule for April 2026 is complete. Any file not on
+the above list that the MLRO believes is due for refresh should be
+added to the compliance programme by the end of the first week of April.
+
+
+=============================================================================
+LOG 2 OF 2 — MONTHLY EDD CASE TRACKER
+Reference: HSV2-EDD-2026-03
+=============================================================================
+
+Purpose. This log tracks the population of customer and counterparty
+files currently under Enhanced Due Diligence across all programmes.
+It draws from two sources: the counterparty register (for counterparties
+on an EDD pathway) and the compliance programme (for PEP-tagged tasks).
+
+Population. As at 31 March 2026 the compliance function records:
+  Counterparty register entries on EDD pathway:     9
+  PEP-tagged tasks across all programmes:          14
+
+Table A. Counterparties on EDD pathway (from counterparty register):
+
+COUNTERPARTY                  JURISDICTION    RATING     ENTITIES
+----------------------------  ------------    --------   ----------------
+Al Rashid Metal Recyclers     RAK, UAE        Critical   Alpha, Foxtrot
+Goldmark Trading FZE          Sharjah, UAE    High       Alpha
+Precious Refining AG          Zurich, CH      High       Bravo, Delta
+Emirates Scrap Metals LLC     Dubai, UAE      High       Charlie
+Al Noor Gold Recycling        Ajman, UAE      Critical   Delta, Echo
+Silk Road Commodities Ltd     Singapore       High       Foxtrot
+Palm Trading Group LLC        Dubai, UAE      High       Delta
+Gulf Commodities FZE          JAFZA, UAE      High       Bravo
+Atlas Gold FZE                RAK, UAE        High       Foxtrot
+
+Table B. PEP-tagged tasks across programmes:
+
+PROGRAMME          FILE                                    ASSIGNEE
+-----------------  --------------------------------------  ----------------
+Entity Alpha       PEP-001 Al Maktoum Trading Group        Luisa Fernanda
+Entity Alpha       PEP-002 Rashid Gold Investments          Luisa Fernanda
+Entity Alpha       PEP-003 Al Dhaheri Holdings              Luisa Fernanda
+Entity Bravo       PEP-004 Gulf Commodities FZE             Luisa Fernanda
+Entity Bravo       PEP-005 Al Falak Investments             Luisa Fernanda
+Entity Charlie     PEP-006 Al Ain Precious Metals LLC       Luisa Fernanda
+Entity Charlie     PEP-007 Sharjah Gold Holdings            Luisa Fernanda
+Entity Delta       PEP-008 Emirates Bullion Exchange         Luisa Fernanda
+Entity Delta       PEP-009 Al Noor Group                    Luisa Fernanda
+Entity Delta       PEP-010 Palm Trading Directors            Luisa Fernanda
+Entity Echo        PEP-011 Gulf Refining Shareholders       Luisa Fernanda
+Entity Echo        PEP-012 RAK Gold Trust                   Luisa Fernanda
+Entity Foxtrot     PEP-013 Atlas Gold Board                  Luisa Fernanda
+Entity Foxtrot     PEP-014 Silk Road Partners               Luisa Fernanda
+
+MLRO action. The MLRO is asked to confirm that each EDD file listed
+above has a recorded next review date and that no file is overdue. The
+MLRO is also asked to confirm that the PEP population is complete and
+that no PEP relationship has been omitted from the compliance programme.
+
+
+=============================================================================
+END OF MONTHLY OPERATIONAL LOGS — MARCH 2026
+=============================================================================

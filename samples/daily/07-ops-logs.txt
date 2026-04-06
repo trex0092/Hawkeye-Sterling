@@ -1,0 +1,138 @@
+=============================================================================
+[Reporting Entity]
+DAILY OPERATIONAL LOGS
+Entity Alpha — COMPLIANCE PROGRAMME 2026
+Date: 05 April 2026
+=============================================================================
+
+Document reference:   HSV2-DSL-2026-04-05
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 18:00 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+This file contains four daily operational logs produced by the compliance
+function at close of business. Each log is a factual data extract. No
+narrative judgement has been applied. The MLRO is invited to review each
+log and take the action noted at the end of the relevant section.
+
+
+=============================================================================
+LOG 1 OF 4 — DAILY SANCTIONS SCREENING LOG
+Reference: HSV2-DSL-2026-04-05
+=============================================================================
+
+Purpose. This log records every compliance task that carried a sanctions-
+related tag at any point during the business day. It is maintained for
+the purpose of demonstrating to the firm's supervisory authority and to
+the Executive Office for Control and Non-Proliferation that the firm
+screens its exposure to the United Nations Security Council Consolidated
+List and the UAE Local Terrorist List on a daily basis.
+
+Activity observed. The compliance function identified 3 tasks across 2
+programmes carrying a sanctions-related tag on 05 April 2026.
+
+PROGRAMME          TASK                                    ASSIGNEE          STATUS
+-----------------  --------------------------------------  ----------------  ----------
+Entity Alpha       RF-R12 Recycled Gold from Sanctioned    Luisa Fernanda    Open
+                   Entities
+Entity Alpha       NRA-RF11 TF via DPMS Sector             Luisa Fernanda    Open
+Entity Foxtrot     RF-R12 Recycled Gold from Sanctioned    Luisa Fernanda    Open
+                   Entities
+
+QA statement. The compliance function confirms that the above table
+represents the complete set of sanctions-tagged tasks visible in the
+compliance programme at close of business on 05 April 2026. No tasks
+were removed from scope and no tasks were excluded from the log.
+
+
+=============================================================================
+LOG 2 OF 4 — DAILY PEP WATCH LOG
+Reference: HSV2-DPL-2026-04-05
+=============================================================================
+
+Purpose. This log records the current population of customer files tagged
+as Politically Exposed Persons across the firm's compliance programmes.
+It is maintained to support the firm's obligation to apply Enhanced Due
+Diligence to all PEP relationships and to report to the MLRO any change
+in the PEP population.
+
+Population. The compliance function records 14 active PEP-tagged customer
+files across all programmes as at 05 April 2026. No new PEP designations
+were recorded today. No PEP files were closed or de-classified today.
+
+PROGRAMME          FILE                                    ASSIGNEE          STATUS
+-----------------  --------------------------------------  ----------------  ----------
+Entity Alpha       PEP-001 Al Maktoum Trading Group        Luisa Fernanda    Under EDD
+Entity Alpha       PEP-002 Rashid Gold Investments          Luisa Fernanda    Under EDD
+Entity Bravo       PEP-003 Gulf Commodities FZE             Luisa Fernanda    Under EDD
+Entity Charlie     PEP-004 Al Ain Precious Metals LLC       Luisa Fernanda    Under EDD
+Entity Delta       PEP-005 Emirates Bullion Exchange         Luisa Fernanda    Under EDD
+
+(Remaining 9 PEP files are unchanged from the previous business day and
+are on file in the PEP register maintained by the compliance function.)
+
+QA statement. The compliance function confirms that this log reflects the
+complete PEP population as at close of business on 05 April 2026.
+
+
+=============================================================================
+LOG 3 OF 4 — DAILY CASH TRANSACTION LOG
+Reference: HSV2-DCT-2026-04-05
+=============================================================================
+
+Purpose. This log records every compliance task flagged with a high cash
+intensity indicator during the business day. It supports the firm's
+obligation to monitor cash transactions and to prepare Dealers in
+Precious Metals and Stones Reports where linked cash transactions reach
+the applicable threshold.
+
+Activity observed. The compliance function identified 4 tasks across 3
+programmes carrying a cash transaction indicator on 05 April 2026.
+
+PROGRAMME          TASK                                    ASSIGNEE          STATUS
+-----------------  --------------------------------------  ----------------  ----------
+Entity Alpha       NRA-RF01 High Cash Intensity Patterns    Luisa Fernanda    Open
+Entity Bravo       NRA-RF01 High Cash Intensity Patterns    Luisa Fernanda    Open
+Entity Echo        NRA-RF01 High Cash Intensity Patterns    Luisa Fernanda    Open
+Entity Echo        RF-R10 Gold-for-Cash Schemes via         Luisa Fernanda    Open
+                   Recycled Material
+
+MLRO action. The MLRO is asked to review whether any of the above tasks
+require a linked-transaction aggregation check before the next business
+day.
+
+
+=============================================================================
+LOG 4 OF 4 — DAILY HIGH-RISK COUNTERPARTY DIGEST
+Reference: HSV2-HRC-2026-04-05
+=============================================================================
+
+Purpose. This digest lists every counterparty on the firm's counterparty
+register that is currently rated critical or high risk, together with an
+indication of which programme entities have exposure to that counterparty.
+
+Population. As at 05 April 2026 the counterparty register contains 7
+counterparties rated critical or high risk. Of these, 3 are flagged as
+touching more than one programme entity.
+
+COUNTERPARTY                  JURISDICTION    RATING     ENTITIES           STATUS
+----------------------------  ------------    --------   ----------------   -----------
+Al Rashid Metal Recyclers     RAK, UAE        Critical   Alpha, Foxtrot     Under review
+Goldmark Trading FZE          Sharjah, UAE    High       Alpha              Under review
+Precious Refining AG          Zurich, CH      High       Bravo, Delta       Under review
+Emirates Scrap Metals LLC     Dubai, UAE      High       Charlie            Active
+Al Noor Gold Recycling        Ajman, UAE      Critical   Delta, Echo        Under review
+Silk Road Commodities Ltd     Singapore       High       Foxtrot            Active
+Meridian Bullion DMCC          Dubai, UAE      High       Alpha, Bravo       Active
+
+MLRO action. The MLRO is asked to confirm that no counterparty in the
+above table requires an immediate escalation or a freeze instruction.
+
+
+=============================================================================
+END OF DAILY OPERATIONAL LOGS — 05 APRIL 2026
+=============================================================================

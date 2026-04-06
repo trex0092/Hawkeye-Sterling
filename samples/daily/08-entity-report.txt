@@ -1,0 +1,165 @@
+=============================================================================
+[Reporting Entity]
+DAILY COMPLIANCE REPORT
+Entity Alpha — COMPLIANCE PROGRAMME 2026
+=============================================================================
+
+Document reference:   HSV2-DER-2026-04-05-ALPHA
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 18:00 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. ENTITY IDENTIFICATION
+-----------------------------------------------------------------------------
+
+Legal entity:         Entity Alpha (FG Branch)
+Sector:               Dealer in Precious Metals and Stones
+Classification:       Designated Non-Financial Business and Profession
+Supervisory authority: Ministry of Economy
+Programme:            FG BRANCH - COMPLIANCE PROGRAMME 2026
+
+-----------------------------------------------------------------------------
+2. OPEN EXPOSURE SNAPSHOT
+-----------------------------------------------------------------------------
+
+The following table sets out the current state of the Entity Alpha
+compliance programme as at close of business on 05 April 2026.
+
+METRIC                                          COUNT
+----------------------------------------------  -----
+Total open tasks on programme                     526
+Tasks overdue as at today                          12
+Tasks at risk within next 48 hours                  4
+Tasks closed in last 24 hours                       3
+Tasks opened in last 24 hours                       2
+Tasks carrying a sanctions-related tag              2
+Tasks carrying a PEP tag                            3
+Tasks carrying a high cash intensity tag            1
+
+-----------------------------------------------------------------------------
+3. TYPOLOGY DISTRIBUTION TODAY
+-----------------------------------------------------------------------------
+
+The following table shows the distribution of open tasks by typology
+category for Entity Alpha.
+
+TYPOLOGY CATEGORY                               TASK COUNT
+----------------------------------------------  ----------
+Recycled gold red flags (RF-R series)                16
+National risk assessment red flags (NRA-RF)          12
+Responsible sourcing red flags (RS-RF)                8
+Customer due diligence items                          6
+Sanctions screening items                             2
+PEP monitoring items                                  3
+Other compliance items                              479
+
+-----------------------------------------------------------------------------
+4. OVERDUE ITEMS REQUIRING ATTENTION
+-----------------------------------------------------------------------------
+
+The following items on the Entity Alpha programme are overdue as at
+05 April 2026. They are listed in order of the number of days overdue,
+most overdue first.
+
+DUE DATE       TASK                                       ASSIGNEE
+-----------    -----------------------------------------  ----------------
+01 Apr 2026    RF-R12 Recycled Gold from Sanctioned        Luisa Fernanda
+               Entities
+02 Apr 2026    NRA-RF01 High Cash Intensity Patterns       Luisa Fernanda
+02 Apr 2026    RF-R08 Cross-Border Recycled Gold            Luisa Fernanda
+               Smuggling
+03 Apr 2026    NRA-RF04 FIU Typology 1 TBML in Gold        Luisa Fernanda
+               Trade
+03 Apr 2026    RF-R05 Jewelry Scrap Aggregation Without    Luisa Fernanda
+               CDD
+03 Apr 2026    PEP-002 Rashid Gold Investments             Luisa Fernanda
+04 Apr 2026    RS-RF01 Step 1 Failure No Management         Luisa Fernanda
+               System
+04 Apr 2026    NRA-RF09 PEP Exposure in DPMS               Luisa Fernanda
+04 Apr 2026    RF-R10 Gold-for-Cash Schemes via Recycled    Luisa Fernanda
+               Material
+04 Apr 2026    NRA-RF08 DPMSR Threshold Structuring        Luisa Fernanda
+04 Apr 2026    RF-R19 Recycled Gold Documentation Gaps      Luisa Fernanda
+04 Apr 2026    RF-R06 Industrial Scrap Gold Processing      Luisa Fernanda
+
+-----------------------------------------------------------------------------
+5. RED-FLAG ITEMS RAISED OR OPEN
+-----------------------------------------------------------------------------
+
+The following items carry one or more red-flag typology tags and remain
+open on the Entity Alpha programme as at 05 April 2026.
+
+TASK                                       TYPOLOGY FLAGS                DUE
+-----------------------------------------  ----------------------------  -----------
+RF-R12 Recycled Gold from Sanctioned       Sanctions, TFS, Recycled     01 Apr 2026
+Entities
+RF-R08 Cross-Border Recycled Gold          TBML, Cross-border,          02 Apr 2026
+Smuggling                                  Recycled
+NRA-RF04 FIU Typology 1 TBML in Gold      TBML, NRA                    03 Apr 2026
+Trade
+RF-R05 Jewelry Scrap Aggregation Without   CDD, Recycled, Linked-txn    03 Apr 2026
+CDD
+NRA-RF01 High Cash Intensity Patterns      Cash, NRA                    02 Apr 2026
+RF-R10 Gold-for-Cash Schemes via Recycled  Cash, Recycled               04 Apr 2026
+Material
+NRA-RF11 TF via DPMS Sector               TF, Sanctions, NRA           06 Apr 2026
+RF-R07 Recycled Gold from Theft or         Recycled, Proceeds           06 Apr 2026
+Proceeds of Crime
+NRA-RF06 FIU Typology 3 Gold/Cash          Cash, Cross-border, NRA      06 Apr 2026
+Smuggling
+
+-----------------------------------------------------------------------------
+6. ANALYTICAL COMMENTARY
+-----------------------------------------------------------------------------
+
+The Entity Alpha programme carries 526 open tasks, of which 12 are now
+past their due dates. The overdue concentration is in the recycled gold
+red flag series and the national risk assessment series, which together
+account for 10 of the 12 overdue items. This is consistent with the
+pattern the compliance function has observed across the past three
+business days: the recycled gold workstream is absorbing the available
+review capacity and lower-priority items in the same series are falling
+behind.
+
+The sanctions exposure on the RF-R12 file remains the most significant
+open item on this programme. The counterparty named in the file has a
+Ras Al Khaimah trade licence and a registered office that the compliance
+function has not been able to reconcile with the information held on the
+United Nations Security Council Consolidated List. Until the MLRO
+completes a first review of this file, the compliance function is unable
+to determine whether a Partial Name Match Report or a Funds Freeze Report
+is required.
+
+The cash intensity indicator on the NRA-RF01 file has been present for
+three consecutive business days. The compliance function recommends that
+the MLRO consider whether a linked-transaction aggregation review is
+appropriate on this file before the weekly cycle closes on Friday.
+
+-----------------------------------------------------------------------------
+7. ITEMS REQUIRING MLRO DECISION BEFORE END OF DAY
+-----------------------------------------------------------------------------
+
+The compliance function asks the MLRO to take a position on the following
+items before close of business today:
+
+a. RF-R12, Recycled Gold from Sanctioned Entities. First review required.
+   The compliance function is unable to discharge this file without the
+   MLRO's personal assessment of the sanctions match.
+
+b. NRA-RF01, High Cash Intensity Patterns. The compliance function
+   recommends that the MLRO confirm whether the current activity level
+   on this file requires a linked-transaction aggregation check.
+
+c. PEP-002, Rashid Gold Investments. The Enhanced Due Diligence review
+   on this file was due on 03 April 2026 and is now two days overdue.
+   The compliance function asks the MLRO to confirm the next step.
+
+
+=============================================================================
+END OF DAILY COMPLIANCE REPORT — ENTITY ALPHA — 05 APRIL 2026
+=============================================================================

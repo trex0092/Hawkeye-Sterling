@@ -1,0 +1,127 @@
+=============================================================================
+[Reporting Entity]
+CUSTOMER FILE SUMMARY — ONE-PAGE FORMAT
+=============================================================================
+
+Document reference:   HSV2-CFS-2026-04-05-RF-R12-ALPHA
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+FILE HEADER
+-----------------------------------------------------------------------------
+
+Task reference:       RF-R12
+Task name:            Recycled Gold from Sanctioned Entities
+Programme:            FG BRANCH - COMPLIANCE PROGRAMME 2026
+                      (Entity Alpha)
+Assignee:             Luisa Fernanda
+Status:               Open
+Created:              15 January 2026
+Due date:             03 October 2026
+Last updated:         04 April 2026
+Tags:                 Sanctions, TFS, Recycled, Escalated
+Task link:            https://app.asana.com/0/1213645083721316/1213964638768807
+
+-----------------------------------------------------------------------------
+1. FILE IDENTIFICATION
+-----------------------------------------------------------------------------
+
+This is a one-page summary of the compliance file held against task
+RF-R12 on the Entity Alpha programme. It is prepared at the request of
+the MLRO to provide a consolidated view of the file before a decision
+is taken on the appropriate regulatory response.
+
+-----------------------------------------------------------------------------
+2. CUSTOMER OR COUNTERPARTY
+-----------------------------------------------------------------------------
+
+Counterparty name:        Al Rashid Metal Recyclers
+Registered jurisdiction:  Ras Al Khaimah, United Arab Emirates
+Trade licence number:     [DATA NOT ON FILE]
+Beneficial owner:         [DATA NOT ON FILE]
+Risk rating:              Critical
+Relationship start date:  March 2024
+Last transaction date:    28 March 2026
+Counterparty register
+  reference:              CR-0042
+
+-----------------------------------------------------------------------------
+3. TRANSACTIONS OR ACTIVITY ON FILE
+-----------------------------------------------------------------------------
+
+The file records a series of recycled gold purchases from this
+counterparty over a period of approximately 24 months. The total
+declared value of transactions during the current calendar year is
+approximately AED 1,200,000 across 8 separate transactions. The
+most recent transaction on 28 March 2026 was a sale of 4 recycled
+gold bars, declared weight 1.2 kilograms, for AED 240,000 in cash.
+
+The compliance function notes that the counterparty has presented
+source-of-material certificates from a refiner outside the United
+Arab Emirates for each transaction, but that the certificates bear
+a corporate name that partially matches an entry on the United
+Nations Security Council Consolidated List.
+
+-----------------------------------------------------------------------------
+4. REGULATORY HOOKS
+-----------------------------------------------------------------------------
+
+Typology:             Recycled gold from sanctioned entities (RF-R12)
+Sanctions exposure:   Medium-confidence match against UNSC Consolidated
+                      List. Match not yet confirmed or discharged.
+PEP exposure:         None identified.
+Filing obligations:   Potential Partial Name Match Report. Potential
+                      Suspicious Transaction Report if the match is
+                      confirmed and the underlying activity is
+                      considered suspicious.
+
+-----------------------------------------------------------------------------
+5. ACTIONS TAKEN
+-----------------------------------------------------------------------------
+
+a. The compliance function placed a hold on new transactions with this
+   counterparty on 01 April 2026.
+
+b. The compliance function prepared an STR draft and a PNMR draft for
+   the MLRO's review (both included in the weekly filings summary for
+   the week ending 03 April 2026).
+
+c. The file was escalated to the MLRO on 01 April 2026.
+
+d. The counterparty register entry was updated to reflect the critical
+   risk rating on 01 April 2026.
+
+-----------------------------------------------------------------------------
+6. CURRENT STATUS AND OPEN POINTS
+-----------------------------------------------------------------------------
+
+The file is open and under the MLRO's direct review. The hold on new
+transactions remains in place. The compliance function is awaiting the
+MLRO's decision on the filing type (STR, PNMR, or both) and on whether
+the relationship should be terminated.
+
+Open points for the MLRO:
+
+a. Confirm or discharge the sanctions match.
+b. Determine the appropriate filing type.
+c. Decide whether to terminate the counterparty relationship.
+d. Instruct the compliance function on whether to extend the hold or
+   lift it.
+
+-----------------------------------------------------------------------------
+7. MLRO VIEW REQUESTED
+-----------------------------------------------------------------------------
+
+The compliance function asks the MLRO to take a first decision on this
+file before close of business on 06 April 2026.
+
+
+=============================================================================
+END OF CUSTOMER FILE SUMMARY — RF-R12 ENTITY ALPHA
+=============================================================================

@@ -1,0 +1,272 @@
+=============================================================================
+[Reporting Entity]
+ANNUAL REPORT OF THE MONEY LAUNDERING REPORTING OFFICER
+Year ending 31 December 2025
+=============================================================================
+
+Document reference:   HSV2-MLRO-A-2025
+Classification:       Confidential. For Senior Management and the Board.
+Version:              1.0
+From:                 the MLRO, Money Laundering Reporting Officer
+To:                   Senior Management and the Board of [Reporting Entity]
+Issued on:            15 January 2026, 09:00 Asia/Dubai
+Coverage:             01 January 2025 to 31 December 2025 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND STANDING OF THIS REPORT
+-----------------------------------------------------------------------------
+
+This is the annual report of the Money Laundering Reporting Officer
+of [Reporting Entity] for the calendar year 2025. It is prepared for
+Senior Management and for the Board in discharge of my obligation to
+report on the operation of the firm's AML and CFT programme at least
+annually. It is an internal report. It has not been filed with any
+supervisory authority. It is retained in the firm's archive for 10 years.
+
+This report consolidates the four quarterly MLRO reports issued during
+the year and adds an annual narrative, a filings summary, and a set of
+recommendations for the coming year.
+
+-----------------------------------------------------------------------------
+2. HEADLINE FOR THE YEAR
+-----------------------------------------------------------------------------
+
+The firm's AML and CFT programme operated at a satisfactory level
+throughout 2025. Filing throughput was consistent across all four
+quarters. The compliance function identified and escalated risks in
+a timely manner, and no regulatory action was taken against the firm
+during the year. One supervisory visit was conducted by the Ministry
+of Economy in September 2025, which did not result in any finding or
+remedial order.
+
+The most significant compliance event of the year was the recycled
+gold sanctions typology that emerged in the fourth quarter across
+three programme entities. That matter was resolved by year-end with
+the filing of one Suspicious Transaction Report and two Partial Name
+Match Reports.
+
+-----------------------------------------------------------------------------
+3. ANNUAL FILINGS SUMMARY
+-----------------------------------------------------------------------------
+
+The firm filed, through the Financial Intelligence Unit on the goAML
+platform, the following reports during the calendar year 2025:
+
+Suspicious Transaction Reports filed:             12
+Suspicious Activity Reports filed:                 6
+Dealers in Precious Metals and Stones Reports:   118
+Partial Name Match Reports filed:                  5
+Funds Freeze Reports filed:                        1
+                                                  ---
+Total filings through goAML during 2025:         142
+
+The total of 142 filings represents an increase of 11 per cent over
+the 128 filings made during 2024. The increase is attributable to the
+rise in Dealers in Precious Metals and Stones Reports, which in turn
+reflects increased trading volume on the Entity Echo and Entity Bravo
+programmes during the second half of the year.
+
+-----------------------------------------------------------------------------
+4. QUARTER-BY-QUARTER TREND
+-----------------------------------------------------------------------------
+
+                                Q1      Q2      Q3      Q4      Total
+Suspicious Transaction Reports    2       3       3       4       12
+Suspicious Activity Reports       2       1       1       2        6
+DPMSR                            26      28      31      33      118
+Partial Name Match Reports        1       1       1       2        5
+Funds Freeze Reports              0       0       0       1        1
+                                 --      --      --      --      ---
+Total                            31      33      36      42      142
+
+The upward trend in quarterly filings from 31 to 42 reflects increased
+business volume and improved detection capability. I do not consider
+the trend to indicate a deterioration in the firm's control environment.
+
+-----------------------------------------------------------------------------
+5. OPEN MATTERS AT YEAR-END
+-----------------------------------------------------------------------------
+
+a. The recycled gold sanctions typology on three entities was resolved
+   before year-end. No residual exposure remains open from this matter.
+
+b. Two PEP files required Enhanced Due Diligence refresh during January
+   2026. Both were on schedule at year-end.
+
+c. One counterparty (Precious Refining AG, Switzerland) remains under
+   enhanced monitoring following a transaction pattern identified in
+   the third quarter. No filing has been considered necessary.
+
+-----------------------------------------------------------------------------
+6. SANCTIONS SCREENING PROGRAMME FOR THE YEAR
+-----------------------------------------------------------------------------
+
+The firm screened its counterparty register and active customer
+population on each business day of 2025 against the United Nations
+Security Council Consolidated List and the UAE Local Terrorist List.
+The total number of screening events during the year was approximately
+62,400 (87 counterparties multiplied by approximately 250 business days,
+plus ad hoc screenings of new relationships).
+
+Confirmed matches:                0
+Matches resolved as false positive: 11
+Matches under review at year-end:   0
+
+One Funds Freeze Report was filed in Q4 2025 in connection with a
+counterparty that was added to the UAE Local Terrorist List during
+the quarter. The relationship was terminated immediately.
+
+-----------------------------------------------------------------------------
+7. PEP POPULATION MOVEMENT DURING THE YEAR
+-----------------------------------------------------------------------------
+
+PEP files at 01 January 2025:    12
+New PEP designations during year:  3
+PEP files closed during year:      1
+PEP files at 31 December 2025:   14
+
+All 14 PEP files were under Enhanced Due Diligence at year-end. The
+compliance function confirms that all EDD reviews were completed
+within the firm's refresh cycle during the year, with the exception
+of one file that was two days late in Q3 2025 and was addressed
+through a corrective action.
+
+-----------------------------------------------------------------------------
+8. TRAINING PROGRAMME FOR THE YEAR
+-----------------------------------------------------------------------------
+
+The firm delivered the following AML and CFT training during 2025:
+
+a. Quarterly AML refresher training across all six programmes. Four
+   cycles completed. Completion rate: 97 per cent across all staff.
+
+b. Annual sanctions awareness module. Completed by all staff across
+   all six programmes.
+
+c. Three new joiner inductions covering AML and CFT obligations.
+
+d. One specialist training session on trade-based money laundering
+   typologies, delivered to the compliance function in Q3 2025.
+
+The 3 per cent gap in quarterly refresher completion reflects two
+staff members on extended leave during Q2 2025. Both completed the
+training on return.
+
+-----------------------------------------------------------------------------
+9. INTERNAL POLICY AND PROCEDURE CHANGES
+-----------------------------------------------------------------------------
+
+Two procedural changes were implemented during 2025:
+
+a. In Q2 2025, the compliance function introduced an automated linked-
+   transaction aggregation alert to reduce the delay between threshold
+   breach and draft preparation.
+
+b. In Q3 2025, the compliance function introduced a dormant file
+   review reminder to identify stalled investigations.
+
+No changes were made to the firm's AML and CFT policies during 2025.
+The annual policy review was completed by the Board in December 2025.
+
+-----------------------------------------------------------------------------
+10. MATERIAL INCIDENTS AND EXCEPTIONS
+-----------------------------------------------------------------------------
+
+The compliance function recorded 41 incidents during 2025 (quarterly
+breakdown: 9, 10, 11, 11). Of these:
+
+Refused transactions:         18
+Declined onboardings:          9
+Compliance exceptions:        14
+
+No incident resulted in a regulatory notification beyond the filing
+activity already recorded above. The compliance function is satisfied
+that each incident was recorded, investigated and, where applicable,
+resolved through corrective action.
+
+-----------------------------------------------------------------------------
+11. MLRO VIEW OF PROGRAMME HEALTH
+-----------------------------------------------------------------------------
+
+I consider the firm's AML and CFT programme to be operating at a
+satisfactory level. The compliance function has grown in capability
+during the year, as reflected in improved detection rates and the
+introduction of two procedural improvements. The filing throughput
+is proportionate to the firm's business volume. The sanctions
+screening programme is running without interruption. The PEP
+monitoring programme is current.
+
+I confirm that I have had unrestricted access to the books, records,
+staff and resources of the firm during the year. I have not been
+prevented from discharging any part of my function. There are no
+matters that I consider necessary to bring to the attention of the
+supervisory authority at this time.
+
+-----------------------------------------------------------------------------
+12. KEY RISKS CARRIED INTO NEXT YEAR
+-----------------------------------------------------------------------------
+
+a. The recycled gold typology remains the firm's highest-priority risk
+   area. The compliance function expects this typology to remain active
+   in 2026.
+
+b. High cash intensity at Entity Echo requires continued monitoring
+   and may warrant a formal review of cash handling controls in Q1 2026.
+
+c. The geographic concentration in the UAE, particularly in Ras Al
+   Khaimah, warrants continued monitoring through the quarterly
+   jurisdiction heatmap.
+
+-----------------------------------------------------------------------------
+13. RECOMMENDATIONS TO SENIOR MANAGEMENT AND THE BOARD FOR NEXT YEAR
+-----------------------------------------------------------------------------
+
+1. Approve the continuation of the current AML and CFT programme
+   structure for 2026.
+
+2. Note the key risks identified above and the compliance function's
+   plan to address them.
+
+3. Consider whether additional compliance resource is required to
+   support the Entity Echo programme, given the rising cash intensity
+   activity.
+
+4. Approve the annual policy review schedule for 2026.
+
+5. Confirm that filing mode for all five goAML filing types should
+   remain set to manual for 2026.
+
+-----------------------------------------------------------------------------
+14. CLOSING
+-----------------------------------------------------------------------------
+
+I thank Senior Management and the Board for their continued support
+of the firm's AML and CFT programme during 2025.
+
+-----------------------------------------------------------------------------
+DECLARATION
+-----------------------------------------------------------------------------
+
+I confirm that this report represents my honest and complete assessment
+of the firm's AML and CFT programme for the calendar year 2025.
+
+Signed:     [awaiting MLRO signature]
+Date:       [awaiting signature date]
+Name:       the MLRO, Money Laundering Reporting Officer
+
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:    Compliance function, [Reporting Entity]
+Reviewed by:    [awaiting MLRO review]
+Signed by:      [awaiting MLRO signature]
+Presented to:   [awaiting Board acknowledgement]
+
+
+=============================================================================
+END OF ANNUAL MLRO REPORT — 2025
+=============================================================================

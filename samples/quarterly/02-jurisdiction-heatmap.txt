@@ -1,0 +1,153 @@
+=============================================================================
+[Reporting Entity]
+QUARTERLY JURISDICTION HEATMAP
+First Quarter 2026 (January to March)
+=============================================================================
+
+Document reference:   HSV2-QJH-2026-Q1
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          05 April 2026, 09:30 Asia/Dubai
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             Counterparty register as at 31 March 2026
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This document presents the quarterly jurisdiction heatmap derived from
+the firm's counterparty register as at 31 March 2026. It is produced
+to support the MLRO's assessment of geographic concentration risk
+across the firm's counterparty population. The heatmap is not a risk
+assessment in its own right. It is a data input for the MLRO's
+professional judgement.
+
+-----------------------------------------------------------------------------
+2. OVERALL OBSERVATION
+-----------------------------------------------------------------------------
+
+The counterparty register at 31 March 2026 contains 87 active
+counterparties across 14 jurisdictions. Geographic concentration
+remains dominated by the United Arab Emirates, which accounts for 62
+of the 87 counterparties (71 per cent). The remaining 25 counterparties
+are distributed across 13 jurisdictions. The compliance function does
+not identify a material change in geographic concentration from the
+previous quarter.
+
+-----------------------------------------------------------------------------
+3. HEATMAP TABLE
+-----------------------------------------------------------------------------
+
+JURISDICTION         TOTAL    CRITICAL    HIGH    CROSS-ENTITY    UNDER REVIEW
+-------------------  -----    --------    ----    ------------    ------------
+UAE - Dubai            28        1          4          3               2
+UAE - Sharjah          12        0          2          1               1
+UAE - RAK               9        2          1          2               2
+UAE - Ajman             7        1          1          1               1
+UAE - Abu Dhabi         6        0          0          0               0
+Switzerland             5        0          2          2               1
+India                   4        0          1          0               0
+Singapore               3        0          1          1               1
+Turkey                  3        0          0          0               0
+United Kingdom          2        0          0          0               0
+Hong Kong               2        0          0          0               0
+South Africa            2        0          0          0               0
+Panama                  2        0          1          0               1
+Thailand                2        0          0          0               0
+                      ---       ---        ---        ---             ---
+Total                  87        4         13         10               9
+
+-----------------------------------------------------------------------------
+4. JURISDICTIONS OF HIGHEST CONCERN
+-----------------------------------------------------------------------------
+
+1. UAE, Ras Al Khaimah. Two critical-rated counterparties and one high-
+   rated counterparty, with cross-entity exposure on two. The critical
+   ratings relate to the Al Rashid Metal Recyclers counterparty and the
+   Atlas Gold FZE counterparty. Both are under active review.
+
+2. UAE, Ajman. One critical-rated counterparty (Al Noor Gold Recycling)
+   with cross-entity exposure touching Entity Delta and Entity Echo.
+   The counterparty is under review in connection with the recycled
+   gold red flag series.
+
+3. Switzerland. Two high-rated counterparties (Precious Refining AG
+   and one other), both with cross-entity exposure touching two
+   programmes. The exposure is consistent with the firm's refining
+   supply chain and is not new this quarter.
+
+4. Panama. One high-rated counterparty with an under-review status.
+   The counterparty was added to the register in February 2026 and
+   is being assessed under Enhanced Due Diligence.
+
+5. Singapore. One high-rated counterparty (Silk Road Commodities Ltd)
+   with cross-entity exposure on Entity Foxtrot. The counterparty is
+   under monitoring but not currently under active review.
+
+-----------------------------------------------------------------------------
+5. CROSS-ENTITY CONCENTRATION BY JURISDICTION
+-----------------------------------------------------------------------------
+
+Ten counterparties are flagged as touching more than one programme
+entity. Their distribution by jurisdiction is:
+
+UAE - Dubai:        3 cross-entity counterparties
+UAE - RAK:          2 cross-entity counterparties
+Switzerland:        2 cross-entity counterparties
+UAE - Ajman:        1 cross-entity counterparty
+UAE - Sharjah:      1 cross-entity counterparty
+Singapore:          1 cross-entity counterparty
+
+The compliance function considers the UAE cross-entity concentration to
+be expected given the firm's branch network. The Switzerland cross-entity
+concentration reflects the firm's refining relationships and is stable.
+
+-----------------------------------------------------------------------------
+6. CHANGE FROM THE PREVIOUS QUARTER
+-----------------------------------------------------------------------------
+
+Compared to Q4 2025:
+
+  New jurisdictions added:               0
+  Jurisdictions removed:                 0
+  New counterparties added:              4 (Panama 1, UAE-RAK 1,
+                                            Singapore 1, UAE-Dubai 1)
+  Counterparties removed:                1 (UAE-Abu Dhabi, relationship
+                                            ended December 2025)
+  Net change in critical-rated:         +1 (Al Noor Gold Recycling,
+                                            upgraded from high to
+                                            critical in March 2026)
+  Net change in high-rated:             +1 (Panama counterparty added
+                                            February 2026)
+
+-----------------------------------------------------------------------------
+7. RECOMMENDED ACTIONS FOR THE MLRO
+-----------------------------------------------------------------------------
+
+1. Review the two critical-rated counterparties in RAK and confirm
+   whether the current review track is progressing at an acceptable
+   pace.
+
+2. Review the Panama counterparty added in February 2026 and confirm
+   that the EDD assessment is on track for completion before the end
+   of April 2026.
+
+3. Consider whether the cross-entity concentration in Switzerland
+   warrants a consolidated review of the firm's refining supply chain
+   relationships.
+
+4. Confirm that the geographic concentration profile is consistent
+   with the risk appetite expressed in the annual enterprise-wide
+   risk assessment.
+
+5. Note the net increase in critical and high-rated counterparties and
+   confirm that the firm's risk appetite remains within acceptable
+   bounds.
+
+
+=============================================================================
+END OF QUARTERLY JURISDICTION HEATMAP — Q1 2026
+=============================================================================

@@ -1,0 +1,136 @@
+=============================================================================
+[Reporting Entity]
+ANNUAL PROGRAMME EFFECTIVENESS SELF-ASSESSMENT
+Year ending 31 December 2025
+=============================================================================
+
+Document reference:   HSV2-APE-2025
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, [Reporting Entity]
+Prepared on:          31 January 2026
+Addressee:            the MLRO, Money Laundering Reporting Officer
+Coverage:             01 January 2025 to 31 December 2025 inclusive
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+-----------------------------------------------------------------------------
+1. PURPOSE
+-----------------------------------------------------------------------------
+
+This is the annual programme effectiveness self-assessment for the
+calendar year 2025. It scores the firm's AML and CFT programme against
+five operational pillars, using a deterministic method based on the
+count and completeness of artefacts produced by the compliance function
+during the year. Each pillar is scored out of 20, giving a maximum
+total of 100.
+
+This assessment does not rely on narrative judgement. It is a factual
+count of what the compliance function produced and archived. The MLRO
+is invited to review the scores and the evidence cited for each pillar,
+and to challenge any score where her professional judgement differs from
+the arithmetic.
+
+-----------------------------------------------------------------------------
+2. OVERALL SCORE
+-----------------------------------------------------------------------------
+
+Total score:          82 out of 100
+Rating:               SATISFACTORY
+
+The rating scale used by the compliance function is:
+
+  90 to 100           Strong
+  75 to 89            Satisfactory
+  60 to 74            Adequate
+  40 to 59            Weak
+  Below 40            Unsatisfactory
+
+-----------------------------------------------------------------------------
+3. SCORES BY PILLAR
+-----------------------------------------------------------------------------
+
+PILLAR                              SCORE    RATING          EVIDENCE
+----------------------------------  -----    -----------     -------------------------
+1. Governance and MLRO reporting    18/20    Strong          4 quarterly MLRO reports,
+                                                             12 monthly consolidations,
+                                                             1 annual MLRO report, all
+                                                             archived. Deducted 2 for
+                                                             one monthly report issued
+                                                             one day late (February).
+
+2. Daily operational discipline     17/20    Satisfactory    248 daily priority sets
+                                                             produced out of 250
+                                                             business days. 248 daily
+                                                             retros completed. 2 days
+                                                             missed due to public
+                                                             holiday calendar error.
+
+3. Weekly pattern intelligence      16/20    Satisfactory    50 weekly pattern reports
+                                                             produced out of 52 weeks.
+                                                             50 weekly MLRO reports
+                                                             produced. 2 weeks missed
+                                                             during Eid al-Fitr break.
+                                                             Deducted 2 for each
+                                                             missed week.
+
+4. Filing drafts prepared for       15/20    Satisfactory    142 filing drafts prepared
+   MLRO review                                               and archived during the
+                                                             year. All 142 were reviewed
+                                                             by the MLRO. Deducted 5
+                                                             for 3 instances where draft
+                                                             preparation exceeded the
+                                                             internal target of 1
+                                                             business day.
+
+5. Counterparty intelligence        16/20    Satisfactory    Counterparty register
+                                                             maintained with 87 active
+                                                             entries. 4 quarterly
+                                                             jurisdiction heatmaps
+                                                             produced. 4 quarterly
+                                                             beneficial ownership
+                                                             reports produced. Deducted
+                                                             4 for 7 corporate
+                                                             counterparties without
+                                                             a beneficial ownership
+                                                             note at year-end.
+
+-----------------------------------------------------------------------------
+4. INTERPRETATION
+-----------------------------------------------------------------------------
+
+The overall score of 82 places the firm's programme in the satisfactory
+range. The strongest pillar is governance and MLRO reporting, which
+reflects the consistent production of monthly and quarterly reports
+throughout the year. The weakest pillar is filing draft preparation,
+where three instances of delayed drafts reduced the score. The
+compliance function has already addressed this gap through the
+automated linked-transaction aggregation alert introduced in Q2 2025.
+
+No pillar scored below 15. This indicates that the programme is
+operating consistently across all five dimensions. The compliance
+function does not recommend any structural change to the programme
+for 2026.
+
+-----------------------------------------------------------------------------
+5. MLRO ACTION
+-----------------------------------------------------------------------------
+
+The MLRO is asked to:
+
+a. Review each pillar score and confirm or amend the rating.
+
+b. Note the deductions and confirm that the corrective actions already
+   taken (automated alerts, calendar correction) are sufficient.
+
+c. Confirm that the five-pillar framework remains appropriate for 2026
+   or instruct the compliance function to add or modify a pillar.
+
+d. Determine whether the overall score of 82 should be communicated
+   to the Board as part of the annual MLRO report or retained as an
+   internal compliance document.
+
+
+=============================================================================
+END OF ANNUAL PROGRAMME EFFECTIVENESS SELF-ASSESSMENT — 2025
+=============================================================================
