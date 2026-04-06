@@ -13,6 +13,9 @@ Coverage:             6 of 7 programme entities. SCREENINGS skipped because
                       the programme holds no open compliance work today.
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendations.
+                      FATF Recommendation 22 (DNFBPs: customer due diligence);
+                      Recommendation 28 (regulation and supervision of DNFBPs).
 
 -----------------------------------------------------------------------------
 1. HEADLINE FOR TODAY

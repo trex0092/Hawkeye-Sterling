@@ -14,6 +14,8 @@ Asana task GID:       1155285207862540
 Filing channel:       Financial Intelligence Unit through the goAML platform
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 20
+                      (suspicious transaction reporting).
 
 -----------------------------------------------------------------------------
 1. STATUS OF THIS DOCUMENT

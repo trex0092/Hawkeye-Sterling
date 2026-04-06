@@ -11,6 +11,8 @@ Prepared on:          05 April 2026
 Addressee:            Outgoing MLRO and incoming MLRO
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 11
+                      (record-keeping).
 
 -----------------------------------------------------------------------------
 1. PURPOSE AND STANDING OF THIS DOCUMENT

@@ -13,6 +13,8 @@ Prepared on:          05 April 2026, 18:00 Asia/Dubai
 Addressee:            the MLRO, Money Laundering Reporting Officer
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendations.
+                      FATF Recommendation 11 (record-keeping).
 
 This file contains four daily operational logs produced by the compliance
 function at close of business. Each log is a factual data extract. No
