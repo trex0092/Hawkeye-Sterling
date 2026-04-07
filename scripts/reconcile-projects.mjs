@@ -197,11 +197,12 @@ async function main() {
 
     let renamed = 0;
     let created = 0;
+    let skipped = 0;
 
     // For each FG BRANCH task
     for (const refTask of refTasks) {
       // Skip entity-specific FG BRANCH tasks
-      if (isEntitySpecific(refTask.name)) continue;
+      if (isEntitySpecific(refTask.name)) { skipped++; continue; }
 
       const refCode = extractCode(refTask.name);
       const refName = refTask.name;
@@ -218,6 +219,34 @@ async function main() {
           continue;
         }
       }
+
+      // No code match found — try fuzzy match by first few words
+      // e.g. "🔴 MOE-01 | DPMS Registration" vs "🔴 MOE-01 | DPMS Registration and Annual Renewal (Ministry of Economy)"
+      let fuzzyMatched = false;
+      if (refCode) {
+        for (const t of tasks) {
+          const tCode = extractCode(t.name);
+          if (tCode === refCode && t.name !== refName && !isEntitySpecific(t.name)) {
+            // Already handled above, skip
+            fuzzyMatched = true;
+            break;
+          }
+        }
+      }
+      if (!fuzzyMatched && !refCode) {
+        // Try matching by first 20 chars (for tasks without extractable codes)
+        const refStart = refName.replace(/^[^\w]*/u, "").substring(0, 20);
+        for (const t of tasks) {
+          const tStart = t.name.replace(/^[^\w]*/u, "").substring(0, 20);
+          if (refStart === tStart && t.name !== refName) {
+            console.log(`  RENAME (fuzzy): "${t.name}" → "${refName}"`);
+            if (await renameTask(t.gid, refName)) renamed++;
+            fuzzyMatched = true;
+            break;
+          }
+        }
+      }
+      if (fuzzyMatched) continue;
 
       // Genuinely missing → create
       console.log(`  CREATE: ${refName}`);
