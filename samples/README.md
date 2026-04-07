@@ -85,6 +85,10 @@ samples/
     04-customer-file-summary.txt               single-customer one-page file summary for MLRO review
     05-mlro-handover-report.txt                MLRO handover continuity snapshot for role transition
     06-trend-export.csv                        historical trend export CSV for external charting
+  policies/
+    01-aml-cft-policy.txt                      master AML/CFT policy document
+    02-responsible-sourcing-policy.txt          responsible sourcing policy (LBMA RGG/OECD)
+    03-cdd-procedures-manual.txt               CDD/EDD/SDD procedures manual
   training/
     01-aml-cft-legal-framework.txt             evaluation: UAE legal framework, law transition, FATF alignment
     02-customer-due-diligence.txt              evaluation: CDD, EDD, counterparty register, customer exits

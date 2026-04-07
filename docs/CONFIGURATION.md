@@ -33,6 +33,13 @@ or in the workflow YAML for GitHub Actions.
 | `DRY_RUN` | `false` | Set to `true` to log without posting to Asana |
 | `TARGET_YEAR` | current year | Override for annual scripts |
 | `AUTO_CREATE_TASKS` | `false` | Allow transaction-monitor to auto-create Asana tasks |
+| `INCOMING_MLRO_NAME` | — | Name of incoming MLRO (used by mlro-handover-report) |
+| `MAX_TASKS_PER_PROJECT` | `50` | Maximum tasks fetched per project (used by task-pack) |
+| `TARGET_DATE` | today | Override target date (used by str-quality-score) |
+| `THROTTLE_MS` | `100` | Rate limit delay in ms for Asana API calls |
+| `WINDOW_DAYS` | — | Lookback window in days (used by trend-export and inspection-bundle) |
+| `BACKUP_PASSPHRASE` | — | Encryption passphrase for backup-register workflow (secret) |
+| `SLACK_WEBHOOK_URL` | — | Slack incoming webhook URL for notify-on-failure workflow (secret) |
 
 ## Filing mode (scripts/filing-mode.json)
 
