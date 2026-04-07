@@ -1,0 +1,441 @@
+=============================================================================
+[Reporting Entity]
+AML AND CFT POLICY
+=============================================================================
+
+Document reference:   POL-AML-001
+Classification:       Confidential. For the Board, Senior Management,
+                      the MLRO, and all staff.
+Version:              1.0
+Prepared by:          the MLRO, [Reporting Entity]
+Addressee:            All directors, officers, employees, and any person
+                      acting on behalf of [Reporting Entity].
+Approved by:          Board of Directors, [Reporting Entity]
+Approval date:        [DD Month YYYY]
+Effective date:       [DD Month YYYY]
+Next review date:     [DD Month YYYY] (no later than twelve months
+                      from the approval date)
+Retention period:     10 years from the date of last revision, in
+                      accordance with Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Federal Decree-Law No. 10 of 2025 on Anti-Money
+                      Laundering and Combating the Financing of Terrorism
+                      and Illegal Organisations; FATF Recommendations 22,
+                      23 and 28; applicable Cabinet Decisions and
+                      Implementing Regulations issued thereunder.
+
+=============================================================================
+TABLE OF CONTENTS
+=============================================================================
+
+1.  Purpose and Scope
+2.  Regulatory Framework
+3.  Governance Structure
+4.  Customer Due Diligence
+5.  Ongoing Monitoring and Transaction Monitoring
+6.  Suspicious Transaction Reporting
+7.  Targeted Financial Sanctions
+8.  PEP Screening and Enhanced Due Diligence
+9.  Record-Keeping
+10. Training and Awareness
+11. Internal Controls and Compliance Testing
+12. Policy Review and Approval
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND SCOPE
+-----------------------------------------------------------------------------
+
+1.1  This document sets out the policy of [Reporting Entity] for the
+     prevention of money laundering, the financing of terrorism, and
+     the financing of illegal organisations. It applies to every
+     director, officer, employee, agent, and third party acting on
+     behalf of the firm across all services, business lines, and
+     jurisdictions in which the firm operates.
+
+1.2  The purpose of this policy is to establish clear obligations,
+     controls, and procedures so that the firm identifies, assesses,
+     mitigates, and manages its exposure to money laundering and
+     terrorist financing risk. It is the master policy document to
+     which all supporting procedures, guidelines, and operational
+     manuals are subordinate.
+
+1.3  Every person to whom this policy is addressed must read it in
+     full, confirm understanding, and comply with it at all times.
+     Failure to comply may result in disciplinary action and may
+     expose the individual and the firm to criminal and regulatory
+     sanctions.
+
+-----------------------------------------------------------------------------
+2. REGULATORY FRAMEWORK
+-----------------------------------------------------------------------------
+
+2.1  This policy is issued in compliance with the following laws,
+     regulations, standards, and supervisory requirements:
+
+     (a) Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering
+         and Combating the Financing of Terrorism and Illegal
+         Organisations, together with all Cabinet Decisions and
+         Implementing Regulations made thereunder.
+
+     (b) FATF Recommendation 22 (Customer Due Diligence for Designated
+         Non-Financial Businesses and Professions), Recommendation 23
+         (Other Measures for DNFBPs), and Recommendation 28 (Regulation
+         and Supervision of DNFBPs).
+
+     (c) All directives, guidance, and circulars issued by the Ministry
+         of Economy (MOE), acting as the supervisory authority for
+         Designated Non-Financial Businesses and Professions (DNFBPs)
+         in the United Arab Emirates.
+
+     (d) Reporting obligations to the Financial Intelligence Unit (FIU)
+         of the United Arab Emirates, including the requirement to file
+         reports through the goAML platform.
+
+     (e) Obligations arising from United Nations Security Council
+         Resolutions, the UAE Local Terrorist List, and all notices
+         issued by the Executive Office of the Committee for Goods and
+         Materials Subject to Import and Export Control (EOCN) relating
+         to targeted financial sanctions.
+
+2.2  Where any provision of this policy conflicts with an applicable
+     law or regulation, the law or regulation shall prevail, and the
+     MLRO shall amend this policy accordingly without delay.
+
+-----------------------------------------------------------------------------
+3. GOVERNANCE STRUCTURE
+-----------------------------------------------------------------------------
+
+3.1  Board of Directors
+
+     The Board carries ultimate responsibility for the firm's AML and
+     CFT programme. The Board shall approve this policy and any
+     material amendments, allocate adequate resources to the
+     compliance function, receive periodic reports from the MLRO, and
+     satisfy itself that the programme is effective.
+
+3.2  Senior Management
+
+     Senior Management is responsible for the day-to-day implementation
+     of the controls described in this policy. Senior Management shall
+     ensure that the MLRO has the authority, independence, and access
+     to information needed to discharge the role, and shall act
+     promptly on any recommendations or escalations from the MLRO.
+
+3.3  Money Laundering Reporting Officer (the MLRO)
+
+     The MLRO is the designated officer responsible for overseeing
+     compliance with this policy and with all applicable AML and CFT
+     laws and regulations. The MLRO shall:
+
+     (a) Maintain and update the enterprise-wide risk assessment.
+     (b) Oversee the customer due diligence programme.
+     (c) Receive, investigate, and where appropriate file suspicious
+         transaction reports and other mandatory reports with the FIU
+         through goAML.
+     (d) Administer targeted financial sanctions screening.
+     (e) Deliver or arrange training and awareness programmes.
+     (f) Report periodically to Senior Management and the Board on the
+         state of the AML and CFT programme.
+     (g) Act as the primary point of contact with the MOE and the FIU.
+
+3.4  All Staff
+
+     Every member of staff has a personal obligation to comply with
+     this policy, to complete all required training, and to report
+     any knowledge or suspicion of money laundering or terrorist
+     financing to the MLRO promptly and confidentially.
+
+-----------------------------------------------------------------------------
+4. CUSTOMER DUE DILIGENCE
+-----------------------------------------------------------------------------
+
+4.1  Standard Due Diligence (SDD)
+
+     Before establishing a business relationship or carrying out an
+     occasional transaction above the applicable threshold, the firm
+     shall identify and verify the identity of the customer, any
+     beneficial owner, and any person acting on behalf of the customer.
+     The firm shall understand the purpose and intended nature of the
+     business relationship and obtain sufficient information to build
+     a risk profile.
+
+4.2  Simplified Due Diligence
+
+     Where the enterprise-wide risk assessment and the individual risk
+     assessment of a customer demonstrate that the risk of money
+     laundering or terrorist financing is low, the MLRO may authorise
+     the application of simplified measures. The firm shall document
+     the rationale and retain it on file. Simplified due diligence
+     shall never be applied where there is a suspicion of money
+     laundering or terrorist financing.
+
+4.3  Enhanced Due Diligence (EDD)
+
+     The firm shall apply enhanced due diligence measures where the
+     risk is assessed as higher than normal. Circumstances requiring
+     EDD include, but are not limited to, customers who are politically
+     exposed persons, customers from or in high-risk jurisdictions,
+     complex or unusual ownership structures, and any situation where
+     the MLRO determines that the standard measures are not sufficient
+     to manage the risk.
+
+4.4  The firm shall not establish or continue a business relationship
+     where it is unable to complete due diligence to the standard
+     required by this policy and by applicable law. Where due diligence
+     cannot be completed on an existing customer, the firm shall
+     consider filing a suspicious transaction report and shall exit
+     the relationship in an orderly manner.
+
+-----------------------------------------------------------------------------
+5. ONGOING MONITORING AND TRANSACTION MONITORING
+-----------------------------------------------------------------------------
+
+5.1  The firm shall conduct ongoing monitoring of every business
+     relationship to ensure that transactions are consistent with the
+     firm's knowledge of the customer, the customer's business, the
+     customer's risk profile, and, where applicable, the source of
+     funds and source of wealth.
+
+5.2  The firm shall maintain transaction monitoring arrangements that
+     are proportionate to the nature, size, and complexity of the
+     firm's business. These arrangements shall be capable of detecting
+     transactions that are unusual, have no apparent lawful purpose,
+     or are inconsistent with the customer's known profile.
+
+5.3  Where ongoing monitoring or transaction monitoring identifies
+     activity that gives rise to a suspicion, the matter shall be
+     escalated to the MLRO immediately.
+
+5.4  The MLRO shall review the firm's monitoring rules and thresholds
+     at least annually, and more frequently where the risk environment
+     changes, to ensure that they remain effective.
+
+-----------------------------------------------------------------------------
+6. SUSPICIOUS TRANSACTION REPORTING
+-----------------------------------------------------------------------------
+
+6.1  Any member of staff who knows, suspects, or has reasonable grounds
+     to suspect that a transaction, attempted transaction, or funds
+     are related to money laundering, the financing of terrorism, or
+     the financing of illegal organisations shall report the matter
+     to the MLRO without delay.
+
+6.2  The MLRO shall assess every internal report and, where the
+     suspicion is maintained after investigation, shall file the
+     appropriate report with the FIU through the goAML platform. The
+     report types include:
+
+     (a) Suspicious Transaction Report (STR).
+     (b) Suspicious Activity Report (SAR).
+     (c) Disposal of Property related to Money Laundering, Suspicion
+         Report (DPMSR).
+     (d) Proliferation of Nuclear Weapons and their Means of Delivery
+         Report (PNMR).
+     (e) Funds Freezing Report (FFR).
+
+6.3  The MLRO shall file the report with the FIU promptly and within
+     any time limits prescribed by law or by the FIU. The firm shall
+     not carry out or complete a transaction where the FIU has
+     instructed a hold, except with the written consent of the FIU.
+
+6.4  Tipping off is a criminal offence. No person shall disclose to
+     the customer, or to any third party not authorised to receive
+     the information, that a report has been filed or that an
+     investigation is underway.
+
+6.5  The MLRO shall maintain a confidential register of all internal
+     disclosures received and all reports filed with the FIU,
+     including the outcome and any feedback received.
+
+-----------------------------------------------------------------------------
+7. TARGETED FINANCIAL SANCTIONS
+-----------------------------------------------------------------------------
+
+7.1  The firm shall comply fully with all obligations arising from
+     United Nations Security Council (UNSC) Resolutions relating to
+     the freezing of assets, the prohibition on making funds or
+     economic resources available to designated persons or entities,
+     and the prohibition on facilitating travel.
+
+7.2  The firm shall screen all customers, beneficial owners, connected
+     parties, and counterparties against the following lists, at a
+     minimum:
+
+     (a) The UNSC Consolidated Sanctions List.
+     (b) The UAE Local Terrorist List.
+     (c) Any list or notice issued by the Executive Office of the
+         Committee for Goods and Materials Subject to Import and
+         Export Control (EOCN).
+
+7.3  Screening shall be performed at the point of onboarding, upon
+     any change in customer information, and on an ongoing basis when
+     lists are updated. The MLRO shall ensure that list updates are
+     applied without undue delay.
+
+7.4  Where a match is confirmed, the firm shall freeze the relevant
+     funds or assets immediately, without prior notice to the customer,
+     and shall notify the EOCN and the FIU in accordance with the
+     applicable procedures and time limits. The MLRO shall file an
+     FFR through goAML where required.
+
+7.5  The firm shall not take any action that would result in the
+     release or transfer of frozen funds except with the written
+     authorisation of the competent authority.
+
+-----------------------------------------------------------------------------
+8. PEP SCREENING AND ENHANCED DUE DILIGENCE
+-----------------------------------------------------------------------------
+
+8.1  The firm shall maintain reasonable measures to determine whether
+     a customer, a beneficial owner, or a person connected to the
+     customer is a Politically Exposed Person (PEP), whether foreign,
+     domestic, or holding a prominent position in an international
+     organisation.
+
+8.2  Where a PEP is identified, the firm shall, in addition to
+     standard due diligence:
+
+     (a) Obtain approval from the MLRO (or Senior Management, as the
+         case may be) before establishing or continuing the business
+         relationship.
+     (b) Take reasonable measures to establish the source of wealth
+         and the source of funds.
+     (c) Conduct enhanced ongoing monitoring of the relationship.
+
+8.3  PEP status does not, by itself, mean that a customer is involved
+     in criminal activity. The enhanced measures are applied to manage
+     the higher inherent risk associated with the position held.
+
+8.4  The firm shall continue to treat a customer as a PEP for a
+     period determined by the risk assessment after the person ceases
+     to hold the relevant position, and in any event for not less than
+     the period prescribed by applicable law or guidance.
+
+-----------------------------------------------------------------------------
+9. RECORD-KEEPING
+-----------------------------------------------------------------------------
+
+9.1  The firm shall retain all records obtained through customer due
+     diligence, including identification documents, verification
+     records, and the results of any analysis undertaken, for a period
+     of not less than ten (10) years from the date on which the
+     business relationship ended or the occasional transaction was
+     carried out.
+
+9.2  The firm shall retain all transaction records for a period of not
+     less than ten (10) years from the date on which the transaction
+     was completed.
+
+9.3  Records relating to suspicious transaction reports, internal
+     disclosures, and correspondence with the FIU shall be retained
+     for a period of not less than ten (10) years from the date of
+     the report or disclosure.
+
+9.4  All records shall be maintained in a manner that allows them to
+     be retrieved promptly and provided to the MOE, the FIU, or any
+     other competent authority upon request.
+
+9.5  The retention periods stated in this section are minimum periods.
+     Where the MLRO considers it prudent, or where a matter is under
+     investigation, records shall be retained for a longer period.
+
+-----------------------------------------------------------------------------
+10. TRAINING AND AWARENESS
+-----------------------------------------------------------------------------
+
+10.1 The firm shall provide AML and CFT training to all staff at the
+     time of joining and at least annually thereafter. Training shall
+     cover, at a minimum:
+
+     (a) The legal and regulatory framework, including the obligations
+         arising under Federal Decree-Law No. 10 of 2025.
+     (b) The firm's policies, procedures, and controls.
+     (c) How to identify and report suspicious activity.
+     (d) Targeted financial sanctions obligations.
+     (e) The consequences of non-compliance for the individual and
+         for the firm.
+
+10.2 Staff in roles with direct customer contact or higher exposure
+     to ML and TF risk shall receive additional, role-specific
+     training as determined by the MLRO.
+
+10.3 The MLRO shall maintain a training register recording the date
+     of each session, the topics covered, the attendees, and the
+     results of any assessment. This register shall be available for
+     inspection by the MOE at any time.
+
+10.4 The MLRO shall assess the effectiveness of the training
+     programme at least annually and shall update the content to
+     reflect changes in law, regulation, typologies, and the firm's
+     own risk profile.
+
+-----------------------------------------------------------------------------
+11. INTERNAL CONTROLS AND COMPLIANCE TESTING
+-----------------------------------------------------------------------------
+
+11.1 The firm shall maintain internal controls that are proportionate
+     to the nature, size, and risk profile of its business. These
+     controls shall be documented in supporting procedures and shall
+     cover, at a minimum, customer due diligence, transaction
+     monitoring, sanctions screening, reporting, and record-keeping.
+
+11.2 The MLRO shall conduct, or arrange for the conduct of, an
+     independent compliance review at least annually to assess
+     whether the controls set out in this policy and in the
+     supporting procedures are operating effectively.
+
+11.3 The findings of each compliance review shall be reported to
+     Senior Management and to the Board, together with recommended
+     remedial actions and target dates for completion.
+
+11.4 Any deficiencies identified shall be remediated promptly. The
+     MLRO shall track open items and report on progress at each
+     subsequent review cycle.
+
+11.5 The firm shall cooperate fully with any inspection, examination,
+     or inquiry by the MOE or any other competent authority, and
+     shall provide all requested documents and information within the
+     time frames specified.
+
+-----------------------------------------------------------------------------
+12. POLICY REVIEW AND APPROVAL
+-----------------------------------------------------------------------------
+
+12.1 This policy shall be reviewed by the MLRO at least once every
+     twelve months, or sooner if there is a material change in the
+     law, the regulatory environment, the firm's business model, or
+     the firm's risk profile.
+
+12.2 Any amendments to this policy shall be submitted to the Board
+     for approval before they take effect.
+
+12.3 Following each review, whether or not amendments are made, the
+     MLRO shall record the date of the review, the outcome, and the
+     rationale for any changes in the policy review log.
+
+12.4 This policy and all amendments shall be communicated to every
+     person to whom it is addressed within a reasonable time of
+     approval.
+
+
+=============================================================================
+APPROVAL
+=============================================================================
+
+Approved by the Board of Directors of [Reporting Entity]
+
+Name:       ________________________________________
+Title:      Chairperson / Authorised Director
+Signature:  ________________________________________
+Date:       ________________________________________
+
+
+Acknowledged by the MLRO
+
+Name:       ________________________________________
+Title:      Money Laundering Reporting Officer
+Signature:  ________________________________________
+Date:       ________________________________________
+
+=============================================================================
+END OF DOCUMENT
+=============================================================================

@@ -1,0 +1,332 @@
+=============================================================================
+[Reporting Entity]
+CUSTOMER DUE DILIGENCE PROCEDURES MANUAL
+=============================================================================
+
+Document reference:   HSV2-POL-CDD-2026-01
+Classification:       Confidential. Internal procedures manual.
+Version:              1.0
+Approved by:          The Board of [Reporting Entity]
+Owner:                the MLRO, Money Laundering Reporting Officer
+Effective date:       01 January 2026
+Next review date:     01 January 2027
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 22
+                      (customer due diligence for DNFBPs, including dealers
+                      in precious metals and stones).
+
+=============================================================================
+
+This manual sets out the customer due diligence (CDD) procedures that
+every director, officer, employee, contractor and agent of
+[Reporting Entity] must follow when establishing or maintaining a
+business relationship or carrying out an occasional transaction.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND SCOPE
+-----------------------------------------------------------------------------
+
+The purpose of this manual is to provide clear, step-by-step procedures
+for identifying and verifying customers, understanding the nature of
+their business, assessing the risks they present and keeping that
+information current throughout the life of the relationship.
+
+These procedures apply to every customer of [Reporting Entity], whether
+the customer is a natural person, a legal person, a legal arrangement
+or any other form of entity. They apply equally to one-off transactions
+and to continuing business relationships. They apply regardless of
+the value of the transaction unless a specific threshold is stated in
+this manual.
+
+No business relationship may be established and no transaction may be
+executed until the applicable CDD requirements described in this manual
+have been completed to the satisfaction of the MLRO or, in the case of
+standard CDD, to the satisfaction of the front-office staff member and
+the compliance officer assigned to the file.
+
+-----------------------------------------------------------------------------
+2. REGULATORY FRAMEWORK
+-----------------------------------------------------------------------------
+
+These procedures are grounded in the following regulatory instruments.
+
+Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering and
+Countering the Financing of Terrorism and Financing of Illegal
+Organisations. This is the primary AML/CFT statute in force in the
+United Arab Emirates. It sets out the obligation to conduct CDD, the
+circumstances in which simplified or enhanced measures apply, and the
+penalties for non-compliance.
+
+Cabinet Decision No. 10 of 2019 Concerning the Implementing Regulation
+of Federal Decree-Law No. 20 of 2018 (as may be amended or replaced
+under the new Decree-Law), which provides detailed requirements on
+identification, verification, beneficial ownership, record-keeping and
+related matters.
+
+FATF Recommendation 22, which requires countries to ensure that dealers
+in precious metals and stones are subject to CDD requirements when they
+engage in cash transactions at or above the applicable threshold, and
+which encourages the application of CDD to all transactions as a matter
+of good practice.
+
+Guidance issued from time to time by the Ministry of Economy as the
+supervisory authority for DNFBPs in the UAE.
+
+Where a conflict exists between these instruments, the firm will apply
+the stricter requirement.
+
+-----------------------------------------------------------------------------
+3. STANDARD CDD REQUIREMENTS
+-----------------------------------------------------------------------------
+
+Standard CDD is the baseline that applies to every customer unless the
+risk assessment indicates that simplified or enhanced measures are
+warranted.
+
+Natural persons.
+
+For a customer who is a natural person, the firm will collect and verify
+the following information before establishing a business relationship or
+executing a transaction.
+
+Full legal name as it appears on the identity document. Date and place
+of birth. Nationality and, where different, country of residence.
+Current residential address. Occupation or nature of business activity.
+A clear copy of a valid, government-issued photo identification document
+such as a passport, national identity card or Emirates ID. A second
+form of identification or address verification where the risk profile
+warrants it.
+
+Verification will be carried out against the original document or a
+certified copy. Where the customer is not physically present, the firm
+will use reliable electronic verification methods and will apply the
+additional safeguards described in the enhanced due diligence section
+of this manual.
+
+Legal persons.
+
+For a customer that is a legal person, the firm will collect and verify
+the following information.
+
+Full legal name and any trading names. Legal form and proof of
+existence, such as a certificate of incorporation, a trade licence or
+equivalent registration document. Registered office address and, where
+different, the principal place of business. The names of the directors,
+partners or equivalent officers. The powers that regulate and bind the
+legal person, as set out in the articles of association, partnership
+agreement or equivalent governing document. The names and identification
+details of the individuals authorised to act on behalf of the legal
+person in the proposed business relationship.
+
+The firm will obtain a copy of the constitutional documents and will
+verify the registration details against the relevant commercial
+register or licensing authority.
+
+-----------------------------------------------------------------------------
+4. SIMPLIFIED DUE DILIGENCE
+-----------------------------------------------------------------------------
+
+Simplified due diligence (SDD) may be applied only where the firm's
+risk assessment has established that the customer, the product, the
+delivery channel and the geography all present a demonstrably lower
+risk of money laundering or terrorist financing. SDD does not mean no
+due diligence. It means that the extent, timing or frequency of certain
+CDD measures may be reduced.
+
+The MLRO must approve the application of SDD to any customer category
+before it takes effect. The approval must be documented and must state
+the specific CDD measures that have been reduced and the rationale for
+the reduction.
+
+Examples of situations where SDD may be considered include transactions
+with regulated financial institutions in jurisdictions with effective
+AML/CFT regimes, and transactions with government entities in the UAE.
+
+Even where SDD is applied, the firm will still collect sufficient
+information to identify the customer and will still monitor the
+relationship for unusual or suspicious activity. If at any point the
+risk profile changes, the firm will upgrade the customer to standard
+CDD or enhanced due diligence as appropriate.
+
+-----------------------------------------------------------------------------
+5. ENHANCED DUE DILIGENCE
+-----------------------------------------------------------------------------
+
+Enhanced due diligence (EDD) applies whenever the firm's risk
+assessment identifies a higher risk of money laundering or terrorist
+financing. EDD is mandatory in the situations described below. It may
+also be applied to any other situation at the discretion of the MLRO.
+
+Triggers for mandatory EDD.
+
+Customers who are politically exposed persons (PEPs) or family members
+or close associates of PEPs. Customers from, or transactions involving,
+jurisdictions identified by the FATF as high-risk or under increased
+monitoring. Non-face-to-face business relationships where the customer
+has not been physically present for identification. Complex or unusually
+large transactions, or unusual patterns of transactions, that have no
+apparent economic or lawful purpose. Correspondent relationships. Any
+other situation where the firm has reason to believe that the risk of
+money laundering or terrorist financing is elevated.
+
+Politically exposed persons.
+
+When a customer, a beneficial owner or a person authorised to act on
+behalf of the customer is identified as a PEP, the firm will take the
+following additional steps. Obtain senior management approval before
+establishing or continuing the business relationship. Establish the
+source of wealth and the source of funds. Conduct enhanced ongoing
+monitoring of the business relationship for the duration of the PEP
+status and for a reasonable period after the person ceases to hold the
+qualifying public function.
+
+PEP status will be determined through screening against commercially
+available PEP databases and through direct enquiry of the customer
+where the screening results are inconclusive.
+
+High-risk jurisdictions.
+
+When a customer is resident in, incorporated in or conducts significant
+business through a jurisdiction that appears on the FATF list of high-
+risk jurisdictions subject to a call for action or on the FATF list of
+jurisdictions under increased monitoring, the firm will apply
+countermeasures proportionate to the risk. These may include collecting
+additional information about the customer, the nature of the business
+relationship and the intended purpose of the transactions, increasing
+the frequency of ongoing monitoring, and requiring the first payment to
+be made through an account in the customer's name at a regulated bank.
+
+-----------------------------------------------------------------------------
+6. BENEFICIAL OWNERSHIP IDENTIFICATION
+-----------------------------------------------------------------------------
+
+For every customer that is a legal person or a legal arrangement, the
+firm will identify and take reasonable measures to verify the identity
+of the beneficial owner or owners.
+
+A beneficial owner is any natural person who ultimately owns or controls
+the customer, whether through direct or indirect ownership or control,
+or any natural person on whose behalf a transaction is being conducted.
+Ownership of twenty-five per cent or more of the shares, voting rights
+or capital of a legal person is treated as an indicator of beneficial
+ownership, but the firm will look beyond formal ownership structures to
+identify the natural person who exercises actual control.
+
+If, after taking all reasonable measures, the firm is unable to identify
+a beneficial owner through ownership or control, it will identify the
+senior managing official of the legal person and document the steps
+taken and the reasons why no beneficial owner could be identified.
+
+The firm will not rely solely on the customer's self-declaration of
+beneficial ownership. It will verify the information using independent
+sources such as commercial registers, annual returns, shareholder
+registers and, where available, central beneficial ownership registers.
+
+-----------------------------------------------------------------------------
+7. SOURCE OF FUNDS AND SOURCE OF WEALTH
+-----------------------------------------------------------------------------
+
+The firm will establish the source of funds for every transaction and
+the source of wealth for the business relationship.
+
+Source of funds refers to the origin of the specific funds used in the
+transaction. The firm will collect documentary evidence such as bank
+statements, sale contracts, loan agreements, payroll records or other
+documents that demonstrate where the funds came from.
+
+Source of wealth refers to the origin of the customer's overall
+financial standing. It encompasses the activities that have generated
+the customer's net worth over time. The firm will collect information
+about the customer's occupation, business activities, investments,
+inheritances and any other material sources of wealth. The depth of
+enquiry will be proportionate to the risk profile of the customer.
+
+Where the customer is unable or unwilling to provide satisfactory
+evidence of source of funds or source of wealth, the firm will not
+proceed with the transaction and will consider whether a suspicious
+transaction report should be filed with the Financial Intelligence Unit.
+
+-----------------------------------------------------------------------------
+8. ONGOING DUE DILIGENCE AND PERIODIC REVIEW
+-----------------------------------------------------------------------------
+
+CDD does not end at onboarding. The firm will conduct ongoing due
+diligence throughout the life of every business relationship.
+
+Transaction monitoring. The firm will monitor transactions carried out
+within the business relationship to confirm that they are consistent
+with the firm's knowledge of the customer, the customer's business, the
+risk profile and the stated source of funds. Transactions that fall
+outside the expected pattern will be investigated and documented.
+
+Periodic review. The firm will review and update the CDD file for
+every customer at intervals determined by the customer's risk rating.
+High-risk customers will be reviewed at least once every twelve months.
+Medium-risk customers will be reviewed at least once every twenty-four
+months. Low-risk customers will be reviewed at least once every thirty-
+six months.
+
+Event-driven review. A review will also be triggered outside the normal
+cycle by any of the following events: a material change in the
+customer's ownership or control structure, a significant change in the
+nature or volume of the customer's transactions, adverse media or
+screening alerts relating to the customer or its beneficial owners,
+a request from law enforcement or the supervisory authority, or any
+other event that causes the firm to question the accuracy of the
+information on file.
+
+During each review the firm will confirm that the identification
+documents remain valid, that the beneficial ownership information is
+still accurate, that the risk rating is still appropriate and that
+there is no reason to file a suspicious transaction report.
+
+-----------------------------------------------------------------------------
+9. CDD FAILURE AND RELATIONSHIP EXIT
+-----------------------------------------------------------------------------
+
+If the firm is unable to complete the applicable CDD requirements, it
+will take the following steps.
+
+It will not open the account, establish the business relationship or
+carry out the transaction. If the business relationship has already
+been established, it will terminate the relationship in an orderly
+manner as soon as reasonably practicable.
+
+The MLRO will assess whether the CDD failure, taken together with any
+other information available, gives rise to a suspicion of money
+laundering or terrorist financing. If so, the MLRO will file a
+suspicious transaction report with the Financial Intelligence Unit
+before or at the time of termination.
+
+The firm will document the reasons for the CDD failure and the steps
+taken, including any decision to file or not to file a suspicious
+transaction report. This documentation will be retained in the
+customer file for the full retention period.
+
+The firm will take care not to alert the customer to the fact that a
+suspicious transaction report has been or may be filed (tipping-off
+prohibition).
+
+-----------------------------------------------------------------------------
+10. RECORD-KEEPING
+-----------------------------------------------------------------------------
+
+All CDD records will be retained for a minimum of ten years from the
+date of the transaction or the date on which the business relationship
+ended, whichever is later. This retention period is consistent with
+the requirement of Federal Decree-Law No. 10 of 2025.
+
+Records include, but are not limited to, copies of identification
+documents, verification results, beneficial ownership records, source
+of funds and source of wealth documentation, risk assessments, ongoing
+monitoring records, periodic review notes, screening results and all
+internal correspondence relating to the CDD file.
+
+Records will be stored securely and in a manner that allows them to be
+retrieved promptly and provided to the supervisory authority, the
+Financial Intelligence Unit or law enforcement upon request.
+
+=============================================================================
+End of document.
+=============================================================================

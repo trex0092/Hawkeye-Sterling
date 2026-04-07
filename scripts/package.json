@@ -84,7 +84,15 @@
     "screen-counterparties": "node screen-counterparties.mjs",
     "screen-counterparties:dry": "DRY_RUN=true node screen-counterparties.mjs",
     "update-task-descriptions": "node update-task-descriptions.mjs",
-    "reconcile-projects": "node reconcile-projects.mjs"
+    "reconcile-projects": "node reconcile-projects.mjs",
+    "fatf-list-check": "node fatf-list-check.mjs",
+    "mlro-decision-tracker": "node mlro-decision-tracker.mjs",
+    "mlro-decision-tracker:dry": "DRY_RUN=true node mlro-decision-tracker.mjs",
+    "training-record-tracker": "node training-record-tracker.mjs",
+    "training-record-tracker:dry": "DRY_RUN=true node training-record-tracker.mjs",
+    "regulatory-change-impact": "node regulatory-change-impact.mjs",
+    "regulatory-change-impact:dry": "DRY_RUN=true node regulatory-change-impact.mjs",
+    "test": "node test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0"

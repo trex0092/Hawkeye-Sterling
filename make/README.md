@@ -1,7 +1,53 @@
-# Make.com automations
+# Make.com Scenario Activation Guide
 
 This folder stores Make.com scenario blueprints so the automations around this
 project can be version-controlled alongside the code.
+
+## Scenarios
+
+### 1. Daily Priorities Scenario (`daily-priorities-scenario.md`)
+
+A click-by-click guide for building the daily priorities scenario in
+Make.com. This scenario triggers on the GitHub Actions webhook and
+distributes the daily compliance priorities to the MLRO via email
+and Slack.
+
+**Activation steps:**
+1. Create a new scenario in Make.com
+2. Follow the step-by-step guide in `daily-priorities-scenario.md`
+3. Configure the webhook trigger URL in GitHub Actions secrets as `MAKE_WEBHOOK_URL`
+4. Test with a manual workflow_dispatch run
+5. Enable the scenario schedule
+
+### 2. Asana-Claude Triage (`asana-claude-triage.blueprint.json`)
+
+An importable blueprint that auto-summarises new Asana tasks using
+Claude and posts the summary as a comment on the task.
+
+**Activation steps:**
+1. In Make.com, go to Scenarios > Import Blueprint
+2. Upload `asana-claude-triage.blueprint.json`
+3. Configure the Asana connection with your personal access token
+4. Configure the Anthropic connection with your API key
+5. Set the Asana workspace filter to match your workspace ID
+6. Enable the scenario
+
+## Required Make.com Connections
+
+| Connection | Required Credentials |
+|------------|---------------------|
+| Asana | Personal access token (same as ASANA_TOKEN) |
+| Anthropic | API key (same as ANTHROPIC_API_KEY) |
+| Slack (optional) | Webhook URL for notifications |
+| Email (optional) | SMTP credentials for MLRO notifications |
+
+## Regulatory Note
+
+All Make.com scenarios must comply with the firm's data handling
+requirements under Federal Decree-Law No. 10 of 2025. Customer
+data processed through Make.com must not be stored outside the
+firm's approved infrastructure. The MLRO must approve any new
+Make.com scenario before activation.
 
 ## Scenarios
 
