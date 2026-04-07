@@ -30,6 +30,9 @@ on:
       - "Annual Programme Effectiveness"
       - "Annual Customer Exit Report"
       - "Sanctions Refresh & Counterparty Screening"
+      - "FATF Jurisdiction List Check"
+      - "Weekly Register Backup"
+      - "Deploy Compliance Dashboard to GitHub Pages"
     types:
       - completed
 
@@ -40,7 +43,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Send Slack notification
-        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
