@@ -84,19 +84,43 @@ async function createTask(name, projectGid) {
  */
 function extractCode(name) {
   // Strip leading emoji / special chars
-  const stripped = name.replace(/^[^\w[(-]*/u, "").trim();
+  let stripped = name.replace(/^[^\w[(-]*/u, "").trim();
+
+  // Strip priority tags: [Critical], [High], [Medium]
+  stripped = stripped.replace(/^\[(Critical|High|Medium)\]\s*/i, "").trim();
 
   // Standard codes: "XXX-NN | description" or "XXX-XXNN | description"
   const m = stripped.match(/^([A-Z][\w/]+-[\w]+\d+)\s*\|/);
   if (m) return m[1];
 
-  // GAP tasks: "GAP-001", "GAP-002 (Execution)"
-  const m3 = stripped.match(/^(GAP-\d+(?:\s*\([^)]+\))?)\s*\|/);
+  // Single-letter codes: "C-01", "M-01", "H-01", "R-01"
+  const m2 = stripped.match(/^([A-Z]-\d+)\s*\|/);
+  if (m2) return m2[1];
+
+  // GAP tasks: "GAP-001", "GAP-002 (Execution)", "GAP-003/004"
+  const m3 = stripped.match(/^(GAP-[\d/]+(?:\s*\([^)]+\))?)\s*\|/);
   if (m3) return m3[1];
 
   // TRN tasks
   const m4 = stripped.match(/^(TRN-\d+)\s*\|/);
   if (m4) return m4[1];
+
+  // MILESTONE tasks — use key phrase after pipe
+  if (stripped.startsWith("MILESTONE")) {
+    const mm = stripped.match(/MILESTONE\s*\|\s*(.+)/);
+    if (mm) {
+      // Normalize: take first meaningful words, ignore suffixes like "- Final Report Received"
+      const key = mm[1].replace(/\s*[-–].+$/, "").trim();
+      return "MILESTONE|" + key;
+    }
+    return null;
+  }
+
+  // CDD-CRITICAL
+  if (name.includes("CDD-CRITICAL")) return "CDD-CRITICAL";
+
+  // Pinned task
+  if (name.includes("Today's Priorities") || name.includes("📌")) return "PINNED";
 
   return null;
 }
