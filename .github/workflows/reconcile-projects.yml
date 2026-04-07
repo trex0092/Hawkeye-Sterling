@@ -23,4 +23,11 @@ jobs:
         working-directory: scripts
         env:
           ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
-        run: node reconcile-projects.mjs
+        run: node reconcile-projects.mjs 2>&1 | tee /tmp/reconcile-report.txt
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconcile-report
+          path: /tmp/reconcile-report.txt

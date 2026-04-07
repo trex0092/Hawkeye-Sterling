@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 /**
- * Asana Task Reconciliation Script — v2
+ * Asana Task Reconciliation Script — v3
  *
- * Phase 1: DELETE all tasks created on or after 2026-04-06 (cleanup duplicates
- *          created by the reconciliation attempts). This restores each project
- *          to its original pre-reconciliation state.
- *
- * Phase 2: For each project, compare task names against FG BRANCH (reference).
- *          For tasks that share the same code prefix (e.g. MOE-01) but have
- *          different descriptive text, RENAME the target task to match FG BRANCH.
- *          For tasks genuinely missing, CREATE them.
- *
- * Phase 3: Verify all projects have the same count as FG BRANCH.
+ * For each target project, compares against FG BRANCH (reference at 478 tasks).
+ * - Tasks matching by exact name: skip (already aligned)
+ * - Tasks matching by code prefix but different description: RENAME to FG BRANCH version
+ * - Tasks in FG BRANCH but not in target (no code or name match): CREATE
+ * - Logs every action and unmatched task for debugging
  *
  * Usage:
  *   export ASANA_TOKEN=1/...
@@ -36,9 +31,8 @@ const PROJECTS = {
 const ASSIGNEE = "1213645083721304";
 const WORKSPACE = "1213645083721316";
 const DUE_DATE = "2026-10-03";
-const CLEANUP_CUTOFF = "2026-04-06T00:00:00.000Z";
 
-// Entity-specific name fragments to skip when comparing across projects
+// Entity-specific name fragments — these tasks are unique per project
 const ENTITY_NAMES = [
   "FINE GOLD", "Fine Gold", "NAPLES", "Naples",
   "MADISON", "Madison", "GRAMALTIN", "Gramaltin",
@@ -55,14 +49,6 @@ async function fetchAllTasks(projectGid) {
     url = json.next_page ? json.next_page.uri : null;
   }
   return tasks;
-}
-
-async function deleteTask(gid) {
-  const res = await fetch(`${BASE}/tasks/${gid}`, {
-    method: "DELETE",
-    headers: HEADERS,
-  });
-  return res.ok;
 }
 
 async function renameTask(gid, newName) {
@@ -93,46 +79,24 @@ async function createTask(name, projectGid) {
 }
 
 /**
- * Extract a normalised code from a task name for matching purposes.
- * Examples:
- *   "🔴 MOE-01 | DPMS Registration and Annual Renewal (Ministry of Economy)"
- *     → "MOE-01"
- *   "MILESTONE | LBMA Audit Complete - Final Report Received"
- *     → "MILESTONE-LBMA Audit Complete"
- *   "CO Annual Report: FINE GOLD BRANCH"
- *     → "CO-ANNUAL" (entity-specific, handled separately)
+ * Extract a normalised code prefix for matching.
+ * Returns null if no code can be extracted.
  */
 function extractCode(name) {
   // Strip leading emoji / special chars
-  const stripped = name.replace(/^[^A-Za-z[(\u2460-\u24FF]*/u, "").trim();
+  const stripped = name.replace(/^[^\w[(-]*/u, "").trim();
 
-  // Standard code: "XXX-NN | description"
-  const m = stripped.match(/^([A-Z][\w/]+-\d+)\s*\|/);
+  // Standard codes: "XXX-NN | description" or "XXX-XXNN | description"
+  const m = stripped.match(/^([A-Z][\w/]+-[\w]+\d+)\s*\|/);
   if (m) return m[1];
-
-  // Codes like "RF-R05", "NRA-RF01", "FIU-RF01"
-  const m2 = stripped.match(/^([A-Z]+-[A-Z]*\d+)\s*\|/);
-  if (m2) return m2[1];
 
   // GAP tasks: "GAP-001", "GAP-002 (Execution)"
   const m3 = stripped.match(/^(GAP-\d+(?:\s*\([^)]+\))?)\s*\|/);
   if (m3) return m3[1];
 
-  // MILESTONE tasks
-  if (name.includes("MILESTONE")) {
-    const mm = name.match(/MILESTONE\s*\|\s*(\w[\w\s]+?)(?:\s*[-–]|$)/);
-    return mm ? "MILESTONE-" + mm[1].trim() : "MILESTONE";
-  }
-
   // TRN tasks
   const m4 = stripped.match(/^(TRN-\d+)\s*\|/);
   if (m4) return m4[1];
-
-  // Special
-  if (name.includes("CDD-CRITICAL")) return "CDD-CRITICAL";
-  if (name.includes("CO Annual Report")) return "CO-ANNUAL";
-  if (name.includes("COMPLIANCE MANUAL")) return "COMPLIANCE-MANUAL";
-  if (name.includes("Today's Priorities") || name.includes("📌")) return "PINNED";
 
   return null;
 }
@@ -142,108 +106,95 @@ function isEntitySpecific(name) {
 }
 
 async function main() {
-  // ===================== PHASE 1: CLEANUP =====================
-  console.log("=== PHASE 1: Delete tasks created on/after 2026-04-06 (cleanup) ===\n");
+  console.log("=== Fetching all tasks from all projects ===\n");
 
-  for (const [key, proj] of Object.entries(PROJECTS)) {
-    if (key === "fg_branch") continue;
-
-    const tasks = await fetchAllTasks(proj.gid);
-    const toDelete = tasks.filter(t =>
-      new Date(t.created_at) >= new Date(CLEANUP_CUTOFF) &&
-      !t.name.includes("📌") // never delete the pinned task
-    );
-
-    console.log(`${proj.name}: ${tasks.length} tasks, ${toDelete.length} created after cutoff`);
-    let deleted = 0;
-    for (const t of toDelete) {
-      console.log(`  DELETE: ${t.name} (created ${t.created_at})`);
-      if (await deleteTask(t.gid)) deleted++;
-    }
-    console.log(`  Deleted ${deleted} tasks\n`);
-  }
-
-  // ===================== PHASE 2: RECONCILE =====================
-  console.log("=== PHASE 2: Reconcile each project to match FG BRANCH ===\n");
-
-  // Re-fetch FG BRANCH (reference)
+  // Fetch reference
   const refTasks = await fetchAllTasks(PROJECTS.fg_branch.gid);
-  console.log(`FG BRANCH reference: ${refTasks.length} tasks\n`);
+  console.log(`FG BRANCH (reference): ${refTasks.length} tasks\n`);
 
-  // Build reference map: code → task name
+  // Build reference maps
   const refByCode = new Map();
   const refByName = new Set();
+  const refNoCode = []; // Tasks we can't extract a code from
+
   for (const t of refTasks) {
-    const code = extractCode(t.name);
-    if (code) refByCode.set(code, t.name);
     refByName.add(t.name);
+    const code = extractCode(t.name);
+    if (code) {
+      refByCode.set(code, t.name);
+    } else {
+      refNoCode.push(t.name);
+    }
   }
 
+  console.log(`  ${refByCode.size} tasks with extractable codes`);
+  console.log(`  ${refNoCode.length} tasks without codes:`);
+  for (const n of refNoCode) {
+    console.log(`    - ${n}`);
+  }
+  console.log();
+
+  // Process each target project
   for (const [key, proj] of Object.entries(PROJECTS)) {
     if (key === "fg_branch") continue;
 
-    console.log(`--- ${proj.name} ---`);
+    console.log(`\n=== ${proj.name} ===`);
     const tasks = await fetchAllTasks(proj.gid);
     console.log(`  Current: ${tasks.length} tasks`);
 
-    // Build target map: code → task
+    // Build target maps
     const targetByCode = new Map();
     const targetByName = new Set();
     for (const t of tasks) {
+      targetByName.add(t.name);
       const code = extractCode(t.name);
       if (code) targetByCode.set(code, t);
-      targetByName.add(t.name);
     }
 
     let renamed = 0;
     let created = 0;
-    let skipped = 0;
+    let alreadyMatch = 0;
+    let entitySkipped = 0;
 
-    // For each FG BRANCH task
     for (const refTask of refTasks) {
-      // Skip entity-specific FG BRANCH tasks
-      if (isEntitySpecific(refTask.name)) { skipped++; continue; }
-
-      const refCode = extractCode(refTask.name);
       const refName = refTask.name;
 
+      // Skip entity-specific FG BRANCH tasks
+      if (isEntitySpecific(refName)) { entitySkipped++; continue; }
+
       // Already exists with exact same name
-      if (targetByName.has(refName)) continue;
+      if (targetByName.has(refName)) { alreadyMatch++; continue; }
+
+      const refCode = extractCode(refName);
 
       // Same code exists but different name → rename
       if (refCode && targetByCode.has(refCode)) {
         const existing = targetByCode.get(refCode);
-        if (existing.name !== refName && !isEntitySpecific(existing.name)) {
+        if (!isEntitySpecific(existing.name)) {
           console.log(`  RENAME: "${existing.name}" → "${refName}"`);
-          if (await renameTask(existing.gid, refName)) renamed++;
+          if (await renameTask(existing.gid, refName)) {
+            renamed++;
+            targetByName.add(refName); // Track so we don't create it too
+          }
           continue;
         }
       }
 
-      // No code match found — try fuzzy match by first few words
-      // e.g. "🔴 MOE-01 | DPMS Registration" vs "🔴 MOE-01 | DPMS Registration and Annual Renewal (Ministry of Economy)"
+      // No code match — try matching first 25 chars (stripped of emoji)
+      const refStripped = refName.replace(/^[^\w]*/u, "").substring(0, 25);
       let fuzzyMatched = false;
-      if (refCode) {
-        for (const t of tasks) {
-          const tCode = extractCode(t.name);
-          if (tCode === refCode && t.name !== refName && !isEntitySpecific(t.name)) {
-            // Already handled above, skip
-            fuzzyMatched = true;
-            break;
+      for (const t of tasks) {
+        if (isEntitySpecific(t.name)) continue;
+        if (targetByName.has(t.name) && t.name === refName) continue; // exact match handled above
+        const tStripped = t.name.replace(/^[^\w]*/u, "").substring(0, 25);
+        if (refStripped === tStripped && t.name !== refName) {
+          console.log(`  RENAME (fuzzy): "${t.name}" → "${refName}"`);
+          if (await renameTask(t.gid, refName)) {
+            renamed++;
+            targetByName.add(refName);
           }
-        }
-      }
-      if (!fuzzyMatched && !refCode) {
-        // Try matching by first 20 chars (for tasks without extractable codes)
-        const refStart = refName.replace(/^[^\w]*/u, "").substring(0, 20);
-        for (const t of tasks) {
-          const tStart = t.name.replace(/^[^\w]*/u, "").substring(0, 20);
-          if (refStart === tStart && t.name !== refName) {
-            console.log(`  RENAME (fuzzy): "${t.name}" → "${refName}"`);
-            if (await renameTask(t.gid, refName)) renamed++;
-            fuzzyMatched = true;
-            break;
-          }
+          fuzzyMatched = true;
+          break;
         }
       }
       if (fuzzyMatched) continue;
@@ -254,19 +205,19 @@ async function main() {
       if (gid) created++;
     }
 
-    console.log(`  Renamed: ${renamed}, Created: ${created}`);
+    console.log(`  Summary: ${alreadyMatch} matched, ${renamed} renamed, ${created} created, ${entitySkipped} entity-specific skipped`);
 
     // Final count
     const final = await fetchAllTasks(proj.gid);
-    console.log(`  Final: ${final.length} tasks\n`);
+    console.log(`  Final: ${final.length} tasks`);
   }
 
-  // ===================== PHASE 3: VERIFY =====================
-  console.log("=== PHASE 3: FINAL COUNTS ===\n");
+  // Final verification
+  console.log("\n=== FINAL COUNTS ===\n");
   for (const [key, proj] of Object.entries(PROJECTS)) {
     const tasks = await fetchAllTasks(proj.gid);
     const status = tasks.length === refTasks.length ? "✓" : "✗";
-    console.log(`${status} ${proj.name}: ${tasks.length} tasks`);
+    console.log(`${status} ${proj.name}: ${tasks.length} tasks (target: ${refTasks.length})`);
   }
 }
 
