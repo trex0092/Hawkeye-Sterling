@@ -18,7 +18,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: scripts
-        run: npm ci
+        run: npm install --omit=dev
 
       - name: Run compliance test suite
         working-directory: scripts
@@ -26,6 +26,8 @@ jobs:
 
       - name: Run screening smoke tests
         working-directory: screening
+        env:
+          HAWKEYE_SCREENING_DIR: /tmp/screening-test
         run: node test/smoke.mjs
 
       - name: Check for forbidden law citations
