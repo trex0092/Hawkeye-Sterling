@@ -57,7 +57,7 @@ async function fetchFatfPage() {
 }
 
 function hashContent(text) {
-  return createHash("sha256").update(text).digest("hex").slice(0, 16);
+  return createHash("sha256").update(text).digest("hex");
 }
 
 async function readCache() {

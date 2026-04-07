@@ -13,8 +13,9 @@ Next review date:     01 January 2027
 Retention period:     10 years, in accordance with the applicable provision
                       of Federal Decree-Law No. 10 of 2025.
 Regulatory alignment: Financial Action Task Force (FATF) Recommendation 22
-                      (customer due diligence for DNFBPs, including dealers
-                      in precious metals and stones).
+                      (customer due diligence for DNFBPs); Recommendation 20
+                      (suspicious transaction reporting). Reporting channel:
+                      Financial Intelligence Unit via the goAML platform.
 
 =============================================================================
 
