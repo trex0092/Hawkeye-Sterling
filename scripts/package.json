@@ -82,7 +82,9 @@
     "task-pack": "node task-pack.mjs",
     "task-pack:dry": "DRY_RUN=true node task-pack.mjs",
     "screen-counterparties": "node screen-counterparties.mjs",
-    "screen-counterparties:dry": "DRY_RUN=true node screen-counterparties.mjs"
+    "screen-counterparties:dry": "DRY_RUN=true node screen-counterparties.mjs",
+    "update-task-descriptions": "node update-task-descriptions.mjs",
+    "reconcile-projects": "node reconcile-projects.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0"
