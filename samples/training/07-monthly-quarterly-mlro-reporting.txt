@@ -6,6 +6,12 @@ Metal Trading (DPMS)
 EVALUATION 2026 | MONTHLY AND QUARTERLY                    Audience: Compliance
 MLRO REPORTING                                              Leads, MLRO
 Schedule: Week 7                                            Training Session: 07
+Regulatory basis:     Federal Decree-Law No. 10 of 2025; FATF
+                      Recommendation 20 (suspicious transaction reporting);
+                      FATF Recommendation 28 (regulation and supervision
+                      of DNFBPs)
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
 =============================================================================
 
 Name: ____________________________  Department / Position: _________________
