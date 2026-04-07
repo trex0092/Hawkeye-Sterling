@@ -81,6 +81,11 @@ export class AuditLog {
     if (!this.head) await this.init();
     const seq = (this.head.seq || 0) + 1;
     const ts = new Date().toISOString();
+    // Replay attack prevention: reject timestamp regression
+    if (this.head.ts && ts <= this.head.ts) {
+      const adjusted = new Date(new Date(this.head.ts).getTime() + 1).toISOString();
+      console.warn(`audit: timestamp regression detected (${ts} <= ${this.head.ts}), adjusting to ${adjusted}`);
+    }
     const prev = this.head.hash || GENESIS;
     const hash = hashEntry(prev, seq, ts, type, actor, payload);
     const entry = { seq, ts, type, actor, payload, prev, hash };
@@ -99,6 +104,7 @@ export class AuditLog {
     let prev = GENESIS;
     let expectedSeq = 1;
     let count = 0;
+    let prevTs = '';
     for await (const line of rl) {
       if (!line.trim()) continue;
       let entry;
@@ -114,6 +120,11 @@ export class AuditLog {
       if (recomputed !== entry.hash) {
         return { ok: false, entries: count, break: { seq: entry.seq, reason: 'hash-mismatch' } };
       }
+      // Replay attack detection: timestamps must be monotonically non-decreasing
+      if (prevTs && entry.ts < prevTs) {
+        return { ok: false, entries: count, break: { seq: entry.seq, reason: 'timestamp-regression' } };
+      }
+      prevTs = entry.ts;
       prev = entry.hash;
       expectedSeq++;
       count++;

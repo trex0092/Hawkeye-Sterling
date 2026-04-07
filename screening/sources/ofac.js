@@ -78,7 +78,7 @@ function schemaFromType(t) {
 // "DOB 12 Mar 1965; POB Tehran, Iran; nationality Iran; Passport A1234567 (Iran)".
 const DOB_RE = /DOB\s+([0-9]{1,2}\s+\w+\s+[0-9]{4}|[0-9]{4}(?:-[0-9]{2}){0,2})/i;
 const NATIONALITY_RE = /nationality\s+([A-Z][A-Za-z ,]+?)(?:;|$)/i;
-const PASSPORT_RE = /Passport\s+([A-Z0-9\-]+)/gi;
+const PASSPORT_RE = /Passport\s+([A-Z0-9\- ]+[A-Z0-9])/gi;
 
 function monthIndex(name) {
   const m = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };

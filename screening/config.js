@@ -127,8 +127,10 @@ export const CACHE_TTL_MS = {
 
 /**
  * Map ISO jurisdictions → FATF list (high-risk / increased-monitoring).
- * Sourced from the FATF February 2025 statement. Update when FATF
- * publishes a new plenary outcome (three times per year).
+ * Sourced from the FATF February 2025 statement. MUST be verified against
+ * the latest FATF plenary outcome before each screening cycle. FATF publishes
+ * updates three times per year (typically February, June, October).
+ * Last verified: February 2025. Next verification due: check fatf-gafi.org.
  */
 export const FATF_LISTS = {
   blacklist: ['IR', 'KP', 'MM'],                 // Iran, DPRK, Myanmar
