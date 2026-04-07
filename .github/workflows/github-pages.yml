@@ -1,0 +1,106 @@
+name: Deploy Compliance Dashboard to GitHub Pages
+
+# Runs daily at 06:00 UTC (10:00 Asia/Dubai), after the dashboard
+# generation workflow (which runs at 05:30 UTC on weekdays). Also
+# supports manual dispatch for ad-hoc deployments.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  generate:
+    name: Generate and upload dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          ref: ${{ github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: scripts/package.json
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Generate dashboard
+        working-directory: scripts
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          ASANA_TEAM_ID: ${{ secrets.ASANA_TEAM_ID }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-4-5' }}
+          PINNED_TASK_NAME: ${{ vars.PINNED_TASK_NAME || '📌 Today''s Priorities' }}
+          PORTFOLIO_PROJECT_NAME: ${{ vars.PORTFOLIO_PROJECT_NAME || 'SCREENINGS' }}
+          DRY_RUN: "true"
+        run: node generate-dashboard.mjs
+
+      - name: Verify dashboard output
+        run: |
+          if [ ! -f "docs/index.html" ]; then
+            echo "❌ docs/index.html not found after generation"
+            exit 1
+          fi
+          echo "✓ docs/index.html ready ($(stat -c%s docs/index.html) bytes)"
+
+      - name: Commit dashboard updates
+        if: ${{ always() }}
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain docs/ history/ 2>/dev/null)" ]; then
+            git add docs/ history/
+            git commit -m "Dashboard deploy: $(date -u +%Y-%m-%d)"
+            git push origin "${GITHUB_REF#refs/heads/}"
+          else
+            echo "No changes to commit."
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Report deployment status
+        if: ${{ always() }}
+        run: |
+          echo "Deployment completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Branch: ${GITHUB_REF#refs/heads/}"
+          echo "URL: ${{ steps.deployment.outputs.page_url }}"

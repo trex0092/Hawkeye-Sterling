@@ -1,0 +1,62 @@
+name: Notify on Workflow Failure
+
+# This workflow monitors all other workflows and sends a notification
+# when any compliance automation workflow fails. The MLRO must be
+# informed immediately if a scheduled compliance task does not complete.
+#
+# Configure SLACK_WEBHOOK_URL or NOTIFICATION_EMAIL in repository secrets
+# to enable notifications.
+
+on:
+  workflow_run:
+    workflows:
+      - "Daily Asana Priorities"
+      - "Daily Operational Logs"
+      - "Daily Entity Report"
+      - "Daily Completion Retro"
+      - "Weekly Pattern Report"
+      - "Weekly MLRO Report"
+      - "Weekly Filings Summary"
+      - "Weekly Operational Logs"
+      - "Monthly MLRO Report"
+      - "Monthly Incident Log"
+      - "Monthly Operational Logs"
+      - "Quarterly MLRO Report"
+      - "Quarterly Jurisdiction Heatmap"
+      - "Quarterly Operational Logs"
+      - "Annual MLRO Report"
+      - "Annual Risk Assessment"
+      - "Annual Training Report"
+      - "Annual Programme Effectiveness"
+      - "Annual Customer Exit Report"
+      - "Sanctions Refresh & Counterparty Screening"
+    types:
+      - completed
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send Slack notification
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"text\": \"⚠ COMPLIANCE WORKFLOW FAILURE\\n\\nWorkflow: ${{ github.event.workflow_run.name }}\\nBranch: ${{ github.event.workflow_run.head_branch }}\\nStatus: ${{ github.event.workflow_run.conclusion }}\\nURL: ${{ github.event.workflow_run.html_url }}\\n\\nThe MLRO must be informed. This compliance automation task did not complete.\"
+            }"
+
+      - name: Log failure (always)
+        run: |
+          echo "::error::Compliance workflow failed: ${{ github.event.workflow_run.name }}"
+          echo "  Branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "  Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "  URL: ${{ github.event.workflow_run.html_url }}"
+          echo ""
+          echo "The MLRO must be informed immediately when any compliance"
+          echo "automation task fails to complete. This event should be"
+          echo "recorded in the monthly incident log."

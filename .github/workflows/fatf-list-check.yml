@@ -1,0 +1,43 @@
+name: FATF Jurisdiction List Check
+
+on:
+  # Run after each FATF plenary (Feb, Jun, Oct) — check on the 15th
+  schedule:
+    - cron: "0 8 15 2,6,10 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm ci
+
+      - name: Run FATF list check
+        working-directory: scripts
+        run: node fatf-list-check.mjs
+
+      - name: Commit report
+        if: always()
+        run: |
+          git config user.name "hawkeye-sterling-automation"
+          git config user.email "automation@hawkeye-sterling.local"
+          if [ -n "$(git status --porcelain history/registers/ 2>/dev/null)" ]; then
+            git add history/registers/
+            git commit -m "FATF jurisdiction list verification: $(date +%Y-%m-%d)"
+            git push origin "${GITHUB_REF#refs/heads/}"
+          fi

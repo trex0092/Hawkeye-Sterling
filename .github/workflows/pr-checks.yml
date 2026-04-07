@@ -1,0 +1,51 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install --omit=dev
+
+      - name: Run compliance test suite
+        working-directory: scripts
+        run: node test.mjs
+
+      - name: Run screening smoke tests
+        working-directory: screening
+        env:
+          HAWKEYE_SCREENING_DIR: /tmp/screening-test
+        run: node test/smoke.mjs
+
+      - name: Check for forbidden law citations
+        run: |
+          FOUND=$(grep -r "Decree-Law No. 20 of 2018" samples/ --include='*.txt' | grep -v README || true)
+          if [ -n "$FOUND" ]; then
+            echo "FORBIDDEN: Federal Decree-Law No. 20 of 2018 found in samples:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "No forbidden citations found."
+
+      - name: Verify FATF references in all samples
+        run: |
+          MISSING=$(grep -rL "FATF" samples/ --include='*.txt' || true)
+          if [ -n "$MISSING" ]; then
+            echo "MISSING FATF reference in:"
+            echo "$MISSING"
+            exit 1
+          fi
+          echo "All samples have FATF references."

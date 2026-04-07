@@ -1,0 +1,175 @@
+=============================================================================
+[Reporting Entity]
+RESPONSIBLE SOURCING POLICY
+=============================================================================
+
+Document reference:   HSV2-POL-RSRC-2026-01
+Classification:       Confidential. Internal policy document.
+Version:              1.0
+Approved by:          The Board of [Reporting Entity]
+Owner:                the MLRO, Money Laundering Reporting Officer
+Effective date:       01 January 2026
+Next review date:     01 January 2027
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+Regulatory alignment: Financial Action Task Force (FATF) Recommendation 22
+                      (customer due diligence for DNFBPs, including dealers
+                      in precious metals and stones).
+
+=============================================================================
+
+This policy applies to every director, officer, employee, contractor and
+agent of [Reporting Entity] who is involved in the sourcing, purchasing,
+refining, trading or selling of precious metals and precious stones, or
+who performs any compliance or operational function touching the supply
+chain.
+
+-----------------------------------------------------------------------------
+1. PURPOSE AND SCOPE
+-----------------------------------------------------------------------------
+
+The purpose of this policy is to set out the principles and practical
+steps that [Reporting Entity] will follow to source precious metals and
+precious stones responsibly. It exists to prevent the firm from
+contributing, directly or through its supply chain, to money laundering,
+terrorist financing, conflict financing, serious human rights abuses,
+bribery or corruption.
+
+This policy covers all materials that pass through the firm's custody
+at every stage of the supply chain from mine or recycling source to
+end customer. All staff must read, understand and apply it.
+
+-----------------------------------------------------------------------------
+2. REGULATORY FRAMEWORK
+-----------------------------------------------------------------------------
+
+This policy rests on three foundations. First, the OECD Due Diligence
+Guidance for Responsible Supply Chains of Minerals from Conflict-
+Affected and High-Risk Areas, which provides the internationally
+accepted five-step framework for mineral supply chain due diligence.
+Second, the LBMA Responsible Gold Guidance (RGG), version 9, which
+translates the five OECD steps into requirements specific to gold
+refiners and trading houses. Third, Federal Decree-Law No. 10 of 2025
+on Anti-Money Laundering and Countering the Financing of Terrorism
+and Financing of Illegal Organisations, the primary AML/CFT statute
+in the United Arab Emirates. Where one framework is stricter than
+another, the firm will follow the stricter standard.
+
+-----------------------------------------------------------------------------
+3. MANAGEMENT SYSTEMS (STEP 1)
+-----------------------------------------------------------------------------
+
+The firm will maintain management systems that support responsible
+sourcing. These include this policy document, approved by the Board
+and communicated to every supplier and counterparty; a compliance
+team led by the MLRO with authority to suspend or terminate any
+relationship where supply chain risks cannot be managed; a supplier
+due diligence procedure requiring know-your-counterparty information
+before any new supply relationship and periodic refreshes based on
+risk; a grievance mechanism through which employees, suppliers and
+other stakeholders may raise sourcing concerns to the MLRO or through
+the firm's confidential reporting channel; and a record-keeping system
+that preserves all supply chain due diligence documentation for at
+least ten years.
+
+-----------------------------------------------------------------------------
+4. RISK IDENTIFICATION (STEP 2)
+-----------------------------------------------------------------------------
+
+The firm will identify and assess supply chain risks on a continuing
+basis by mapping the chain from extraction or recycling to the firm's
+own operations, screening every counterparty against sanctions lists,
+adverse media databases and internal watch lists at onboarding and at
+least every six months, and identifying red flags such as materials
+from conflict-affected and high-risk areas (CAHRAs), refusal to
+provide origin documentation, unusually complex structures, pricing
+that deviates from the market rate, and links to artisanal mining
+operations where forced or child labour has been reported. Identified
+risks will be recorded in a supply chain risk register maintained by
+the MLRO and reviewed by the Board at least annually.
+
+-----------------------------------------------------------------------------
+5. SUPPLY CHAIN DUE DILIGENCE (STEP 3)
+-----------------------------------------------------------------------------
+
+Where Step 2 reveals actual or potential risks the firm will design
+and carry out a response. Measures may include engaging the supplier
+for additional origin and chain-of-custody information, requiring the
+supplier to demonstrate its own OECD-aligned due diligence programme,
+reviewing independent assurance reports or LBMA Good Delivery List
+status for upstream refiners, suspending trade while the investigation
+is ongoing, or terminating the relationship and filing a suspicious
+transaction report with the Financial Intelligence Unit if the supply
+chain is found to be linked to money laundering, terrorist financing,
+conflict financing or serious human rights abuses. All mitigation
+measures and their outcomes will be documented in the risk register.
+
+-----------------------------------------------------------------------------
+6. INDEPENDENT AUDIT (STEP 4)
+-----------------------------------------------------------------------------
+
+The firm will arrange an independent third-party audit of its supply
+chain due diligence at least once every twelve months. The audit will
+cover the design and effectiveness of the management systems in Step 1,
+the completeness of the risk identification in Step 2, the adequacy
+of the mitigation in Step 3 and the accuracy of the annual report in
+Step 5. The MLRO will give the auditor unrestricted access to the risk
+register, counterparty files and transaction records. Findings and
+remediation recommendations will be presented to the Board within sixty
+days of fieldwork completion and tracked at each subsequent Board
+meeting until closed.
+
+-----------------------------------------------------------------------------
+7. ANNUAL REPORTING (STEP 5)
+-----------------------------------------------------------------------------
+
+The firm will produce an annual report on its responsible sourcing
+activities covering, at a minimum, the management systems in place,
+a summary of supply chain risks identified during the period, the
+steps taken to mitigate those risks including any relationships
+suspended or terminated, and the results of the independent audit.
+The report will be approved by the Board, made available to the
+Ministry of Economy upon request and retained for ten years.
+
+-----------------------------------------------------------------------------
+8. CAHRA IDENTIFICATION AND MONITORING
+-----------------------------------------------------------------------------
+
+The firm will maintain an up-to-date list of conflict-affected and
+high-risk areas compiled from United Nations Security Council
+resolutions, European Union restrictive measures, the FATF lists of
+jurisdictions under increased monitoring and high-risk jurisdictions
+subject to a call for action, the LBMA CAHRA list and credible non-
+governmental and media reports. The MLRO will review the list at
+least quarterly and communicate changes to the purchasing and trading
+desks within two business days. Material originating from or transiting
+through a CAHRA will be subject to enhanced due diligence before any
+trade is permitted. If enhanced due diligence cannot provide reasonable
+assurance that the material is conflict-free, the firm will not proceed.
+
+-----------------------------------------------------------------------------
+9. RECORD-KEEPING
+-----------------------------------------------------------------------------
+
+All records created under this policy will be retained for a minimum
+of ten years from the date of the transaction or the date on which the
+business relationship ended, whichever is later. Records include
+supplier onboarding files, supply chain maps, risk assessments,
+screening results, correspondence regarding origin and chain of
+custody, audit reports, remediation plans and annual reports. Records
+will be stored so that they can be retrieved promptly and provided to
+the supervisory authority or law enforcement upon request.
+
+-----------------------------------------------------------------------------
+10. POLICY REVIEW
+-----------------------------------------------------------------------------
+
+This policy will be reviewed at least once every twelve months by the
+MLRO, or sooner if there is a material change in the firm's business
+model, supply chain, regulatory environment or risk landscape. Any
+amendment requires Board approval. The MLRO will maintain a version
+history log recording the date, nature and reason for each amendment.
+
+=============================================================================
+End of document.
+=============================================================================

@@ -1,0 +1,85 @@
+name: Weekly Register Backup
+
+# Runs every Sunday at 02:00 UTC. Creates an encrypted backup of the
+# counterparty register (history/registers/counterparties.csv) and
+# uploads it as a workflow artifact. The backup is encrypted with
+# openssl using the BACKUP_PASSPHRASE repository secret.
+
+on:
+  schedule:
+    - cron: "0 2 * * 0"
+  workflow_dispatch: {}
+
+concurrency:
+  group: backup-register
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Encrypt and archive counterparty register
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate passphrase secret
+        run: |
+          if [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "❌ BACKUP_PASSPHRASE secret is not set"
+            exit 1
+          fi
+          echo "✓ BACKUP_PASSPHRASE is configured"
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+
+      - name: Verify register exists
+        run: |
+          REGISTER_PATH="history/registers/counterparties.csv"
+          if [ ! -f "$REGISTER_PATH" ]; then
+            echo "❌ Register not found at $REGISTER_PATH"
+            exit 1
+          fi
+          ROW_COUNT=$(wc -l < "$REGISTER_PATH")
+          echo "✓ Register found: $ROW_COUNT lines"
+
+      - name: Encrypt register backup
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          DATESTAMP="$(date -u +%Y-%m-%d)"
+          REGISTER_PATH="history/registers/counterparties.csv"
+          BACKUP_FILE="counterparties-backup-${DATESTAMP}.csv.enc"
+
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+            -in "$REGISTER_PATH" \
+            -out "$BACKUP_FILE" \
+            -pass env:BACKUP_PASSPHRASE
+
+          echo "✓ Encrypted backup: $BACKUP_FILE ($(stat -c%s "$BACKUP_FILE") bytes)"
+          echo "BACKUP_FILE=$BACKUP_FILE" >> "$GITHUB_ENV"
+          echo "DATESTAMP=$DATESTAMP" >> "$GITHUB_ENV"
+
+      - name: Upload encrypted backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "counterparty-register-backup-${{ env.DATESTAMP }}"
+          path: "${{ env.BACKUP_FILE }}"
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Commit backup log
+        if: ${{ always() }}
+        run: |
+          echo "Backup completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> history/registers/backup-log.txt
+          echo "  file: ${{ env.BACKUP_FILE }}" >> history/registers/backup-log.txt
+          echo "  status: success" >> history/registers/backup-log.txt
+          echo "" >> history/registers/backup-log.txt
+          echo "✓ Backup log entry written"
