@@ -84,7 +84,8 @@ export function dobScore(qDob, cDob) {
   const q = String(qDob).slice(0, 10);
   const c = String(cDob).slice(0, 10);
   if (q === c) return 1;
-  if (q.slice(0, 4) && c.slice(0, 4) && q.slice(0, 4) === c.slice(0, 4)) return 0.5;
+  // Year-only match: conservative 0.3 to reduce false positives on incomplete DOB data
+  if (q.slice(0, 4) && c.slice(0, 4) && q.slice(0, 4) === c.slice(0, 4)) return 0.3;
   return -1;
 }
 
