@@ -232,7 +232,7 @@ function handleThresholdCheck(params) {
   };
 
   if (breaches.length > 0) {
-    recordMemory('threshold_alert',
+    recordMemory('compliance_decision',
       `Threshold breach: AED ${amount_aed.toLocaleString()} (${breaches.map(b => b.type).join(', ')})`,
       entity_name, 8);
   }
@@ -371,11 +371,9 @@ function getScreeningRecommendation(result) {
 async function recordMemory(category, content, entityName, importance = 5) {
   try {
     const mem = (await import(resolve(PROJECT_ROOT, 'claude-mem', 'index.mjs'))).default;
-    const recent = mem.recentSessions(1);
-    if (recent.length === 0 || recent[0].ended_at) {
-      mem.startSession(`mcp-${Date.now().toString(36)}`);
-    }
+    mem.startSession(`mcp-${Date.now().toString(36)}`);
     mem.observe({ category, content, entityName, importance });
+    await mem.endSession();
     mem.close();
   } catch { /* memory system optional */ }
 }

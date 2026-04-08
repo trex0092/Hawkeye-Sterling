@@ -16,7 +16,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const PROJECT_ROOT = resolve(import.meta.dirname || '.', '..');
+const PROJECT_ROOT = resolve(import.meta.dirname || '.', '..', '..');
 const SNAPSHOT_DIR = resolve(PROJECT_ROOT, '.screening', 'snapshots');
 const HISTORY_DIR = resolve(PROJECT_ROOT, 'history', 'daily-ops');
 

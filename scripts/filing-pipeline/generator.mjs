@@ -57,7 +57,7 @@ const FILING_TYPES = {
     threshold: 55000,
   },
   CNMR: {
-    fullName: 'Confiscation and Non-conviction based Measures Report',
+    fullName: 'Confirmed Name Match Report',
     goamlCode: 'CNMR',
     deadlineBusinessDays: 5,
     regulation: 'Cabinet Res 74/2020 Art.4-7',
@@ -273,7 +273,7 @@ function buildNextActions(config, type, deadline) {
   }
 
   actions.push(`Submit via goAML by ${deadline.dueDate} (${deadline.remaining} business days remaining)`);
-  actions.push('Retain copy in history/filings/ for 5-year retention');
+  actions.push('Retain copy in history/filings/ for 10-year retention');
 
   if (type === 'STR' || type === 'SAR') {
     actions.push('Attach supporting documents (transaction records, screening results, CDD file)');
