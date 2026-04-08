@@ -24,3 +24,7 @@ Thumbs.db
 
 # Screening module runtime data (entity store, HTTP cache, audit log)
 .screening/
+
+# Claude memory system runtime data (SQLite DB, context cache)
+.claude-mem/
+claude-mem/node_modules/
