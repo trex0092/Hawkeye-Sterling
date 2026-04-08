@@ -23,6 +23,12 @@
       "name": "FATF — News",
       "url": "https://www.fatf-gafi.org/en/publications.html",
       "authority": "Financial Action Task Force"
+    },
+    {
+      "id": "worldmonitor-sanctions",
+      "name": "World Monitor — Sanctions & Geopolitical Intelligence",
+      "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+      "authority": "GDELT / World Monitor (aggregated OSINT)"
     }
   ]
 }

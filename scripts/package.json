@@ -92,6 +92,8 @@
     "training-record-tracker:dry": "DRY_RUN=true node training-record-tracker.mjs",
     "regulatory-change-impact": "node regulatory-change-impact.mjs",
     "regulatory-change-impact:dry": "DRY_RUN=true node regulatory-change-impact.mjs",
+    "worldmonitor-intelligence": "node worldmonitor-intelligence.mjs",
+    "worldmonitor-intelligence:dry": "DRY_RUN=true node worldmonitor-intelligence.mjs",
     "test": "node test.mjs"
   },
   "dependencies": {

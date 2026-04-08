@@ -103,6 +103,16 @@ export const SOURCES = [
     enabled: true,
     runtime: true, // queried per-subject, not bulk-ingested
   },
+  {
+    id: 'worldmonitor-intelligence',
+    name: 'World Monitor Geopolitical Intelligence Feed',
+    module: './sources/worldmonitor.js',
+    url: process.env.WORLDMONITOR_URL || 'https://api.gdeltproject.org/api/v2/doc/doc',
+    license: 'GDELT Project / World Monitor (AGPL-3.0 for self-hosted)',
+    priority: 5,
+    enabled: true,
+    runtime: true, // queried on-demand for jurisdiction briefings
+  },
 ];
 
 /**

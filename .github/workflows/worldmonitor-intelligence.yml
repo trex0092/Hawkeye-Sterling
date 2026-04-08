@@ -1,0 +1,50 @@
+name: World Monitor Intelligence Scan
+
+on:
+  schedule:
+    - cron: "0 5 * * *"  # 05:00 UTC daily (09:00 UAE time)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: scripts
+
+jobs:
+  intelligence-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install screening dependencies
+        run: cd ../screening && npm ci --ignore-scripts 2>/dev/null || true
+
+      - name: Install memory system dependencies
+        run: cd ../claude-mem && npm ci --ignore-scripts 2>/dev/null || true
+
+      - name: Run intelligence scan
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+          WORLDMONITOR_URL: ${{ secrets.WORLDMONITOR_URL }}
+        run: node worldmonitor-intelligence.mjs
+
+      - name: Commit intelligence archive
+        run: |
+          cd ..
+          git config user.name "hawkeye-bot"
+          git config user.email "bot@hawkeye-sterling.ae"
+          git add history/daily-ops/ .claude-mem/ || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Intelligence scan archive: $(date -u +%Y-%m-%d)"
+            git push
+          fi
