@@ -1,0 +1,2095 @@
+From 83f3e58d05a4a2f6eb7c6cff294720804b800594 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 8 Apr 2026 15:29:22 +0000
+Subject: [PATCH] Add persistent Claude memory system for cross-session
+ compliance context
+
+Implements a claude-mem-inspired memory system with L0/L1/L2 hierarchical
+context tiers for the Compliance Analyzer. Captures screening results,
+compliance decisions, threshold alerts, supply chain events, and MLRO
+directives across Claude Code sessions.
+
+- SQLite + FTS5 storage with 12 observation categories
+- 5 lifecycle hooks (session-start, prompt, tool-use, stop, session-end)
+- Tiered context injection (~2000 tokens at session start)
+- 3-layer search (compact index, timeline, full details)
+- Tailored for V2: AED thresholds, goAML, RBAC, supply chain detection
+---
+ .claude/commands/mem-search.md     |   7 +
+ .claude/settings.json              |  34 +++++
+ .gitignore                         |   4 +
+ CLAUDE.md                          |  39 ++++++
+ claude-mem/README.md               |  78 +++++++++++
+ claude-mem/config.mjs              |  66 ++++++++++
+ claude-mem/context/compact-cli.mjs |  62 +++++++++
+ claude-mem/context/compressor.mjs  | 117 +++++++++++++++++
+ claude-mem/context/hierarchy.mjs   | 184 ++++++++++++++++++++++++++
+ claude-mem/db/schema.sql           |  82 ++++++++++++
+ claude-mem/db/sqlite.mjs           | 201 +++++++++++++++++++++++++++++
+ claude-mem/db/verify.mjs           |  96 ++++++++++++++
+ claude-mem/hooks/on-stop.mjs       | 138 ++++++++++++++++++++
+ claude-mem/hooks/post-tool-use.mjs | 170 ++++++++++++++++++++++++
+ claude-mem/hooks/prompt-submit.mjs |  69 ++++++++++
+ claude-mem/hooks/session-end.mjs   |  48 +++++++
+ claude-mem/hooks/session-start.mjs |  29 +++++
+ claude-mem/index.mjs               |  81 ++++++++++++
+ claude-mem/package.json            |  19 +++
+ claude-mem/search/cli.mjs          |  92 +++++++++++++
+ claude-mem/search/hybrid.mjs       | 194 ++++++++++++++++++++++++++++
+ claude-mem/setup.mjs               |  85 ++++++++++++
+ 22 files changed, 1895 insertions(+)
+ create mode 100644 .claude/commands/mem-search.md
+ create mode 100644 .claude/settings.json
+ create mode 100644 claude-mem/README.md
+ create mode 100644 claude-mem/config.mjs
+ create mode 100644 claude-mem/context/compact-cli.mjs
+ create mode 100644 claude-mem/context/compressor.mjs
+ create mode 100644 claude-mem/context/hierarchy.mjs
+ create mode 100644 claude-mem/db/schema.sql
+ create mode 100644 claude-mem/db/sqlite.mjs
+ create mode 100644 claude-mem/db/verify.mjs
+ create mode 100644 claude-mem/hooks/on-stop.mjs
+ create mode 100644 claude-mem/hooks/post-tool-use.mjs
+ create mode 100644 claude-mem/hooks/prompt-submit.mjs
+ create mode 100644 claude-mem/hooks/session-end.mjs
+ create mode 100644 claude-mem/hooks/session-start.mjs
+ create mode 100644 claude-mem/index.mjs
+ create mode 100644 claude-mem/package.json
+ create mode 100644 claude-mem/search/cli.mjs
+ create mode 100644 claude-mem/search/hybrid.mjs
+ create mode 100644 claude-mem/setup.mjs
+
+diff --git a/.claude/commands/mem-search.md b/.claude/commands/mem-search.md
+new file mode 100644
+index 0000000..b45a0dd
+--- /dev/null
++++ b/.claude/commands/mem-search.md
+@@ -0,0 +1,7 @@
++Search the Claude memory system for past compliance observations.
++
++Usage: /mem-search <query>
++
++Run `node claude-mem/search/cli.mjs "<query>"` to search.
++
++Options: --category, --entity, --importance, --limit, --stats, --timeline, --details
+diff --git a/.claude/settings.json b/.claude/settings.json
+new file mode 100644
+index 0000000..674ee35
+--- /dev/null
++++ b/.claude/settings.json
+@@ -0,0 +1,34 @@
++{
++  "hooks": {
++    "SessionStart": [
++      {
++        "type": "command",
++        "command": "node claude-mem/hooks/session-start.mjs"
++      }
++    ],
++    "UserPromptSubmit": [
++      {
++        "type": "command",
++        "command": "node claude-mem/hooks/prompt-submit.mjs"
++      }
++    ],
++    "PostToolUse": [
++      {
++        "type": "command",
++        "command": "node claude-mem/hooks/post-tool-use.mjs"
++      }
++    ],
++    "Stop": [
++      {
++        "type": "command",
++        "command": "node claude-mem/hooks/on-stop.mjs"
++      }
++    ],
++    "SessionEnd": [
++      {
++        "type": "command",
++        "command": "node claude-mem/hooks/session-end.mjs"
++      }
++    ]
++  }
++}
+diff --git a/.gitignore b/.gitignore
+index 77fbdbc..0c46c6a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -46,3 +46,7 @@ __pycache__/
+ *.pyo
+ .venv/
+ *.egg-info/
++
++# Claude memory system runtime data (SQLite DB, context cache)
++.claude-mem/
++claude-mem/node_modules/
+diff --git a/CLAUDE.md b/CLAUDE.md
+index a0d75e8..fd0e10d 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -216,3 +216,42 @@ This is the single source of truth. When a regulation changes:
+ 
+ - **session-start**: Auto-updates code-review-graph on every new session
+ - **pre-commit-security**: Blocks commits with hardcoded secrets, eval(), or unsafe patterns
++
++## Memory System
++
++This project uses a persistent memory system (`claude-mem/`) that automatically
++captures compliance decisions, screening results, and regulatory observations
++across Claude Code sessions.
++
++### How it works
++
++1. **Session lifecycle hooks** (`.claude/settings.json`) trigger on session
++   start, prompt submission, tool use, response completion, and session end.
++2. Observations are stored in SQLite (`.claude-mem/memory.db`) with FTS5
++   full-text search.
++3. Context is loaded in three tiers at session start:
++   - **L0 (core)**: regulatory thresholds (AED 55K, 60K, 25% UBO, 24h freeze), legislation, constants path
++   - **L1 (session)**: recent session summaries, compliance decisions, MLRO directives
++   - **L2 (archive)**: historical observations matching a query
++
++### Searching memory
++
++Use `/mem-search` or run directly:
++```
++node claude-mem/search/cli.mjs "query"
++node claude-mem/search/cli.mjs --stats
++node claude-mem/search/cli.mjs --timeline 42,43
++```
++
++### Observation categories
++
++screening_result, compliance_decision, regulatory_observation,
++entity_interaction, filing_activity, mlro_directive, risk_assessment,
++workflow_note, error_resolution, architecture_change, threshold_alert,
++supply_chain_event
++
++### Setup
++
++```bash
++cd claude-mem && npm install && npm run setup
++```
+diff --git a/claude-mem/README.md b/claude-mem/README.md
+new file mode 100644
+index 0000000..5fc8708
+--- /dev/null
++++ b/claude-mem/README.md
+@@ -0,0 +1,78 @@
++# Claude Memory System for Compliance Analyzer (Hawkeye Sterling V2)
++
++Persistent memory system for Claude Code sessions. Captures compliance
++decisions, screening results, threshold alerts, supply chain events, and
++MLRO directives across sessions. Injects relevant context automatically.
++
++## Installation
++
++Copy the `claude-mem/` directory to your compliance-analyzer repo root:
++
++```bash
++# From inside the compliance-analyzer repo:
++cp -r /path/to/compliance-analyzer-mem claude-mem
++cd claude-mem && npm install && npm run setup
++
++# Copy settings.json to .claude/settings.json:
++mkdir -p .claude
++cp claude-mem/settings.json .claude/settings.json
++
++# Add to .gitignore:
++echo ".claude-mem/" >> .gitignore
++echo "claude-mem/node_modules/" >> .gitignore
++```
++
++## Tailored for Compliance Analyzer
++
++This version is specifically adapted for the Hawkeye Sterling V2 app:
++
++### L0 Core Context (always injected)
++- UAE AML/CFT/CPF regulatory thresholds (AED 55K, AED 60K, 25% UBO, 24h freeze)
++- Federal Decree-Law No. 10 of 2025 as primary law
++- src/domain/constants.ts as single source of truth
++- 12 quick compliance scenarios
++
++### Observation Categories (12 total)
++| Category | Triggers on |
++|----------|-------------|
++| screening_result | TFS screening, PEP checks, sanctions matches |
++| compliance_decision | Onboarding approvals, exits, blocks |
++| regulatory_observation | Law changes, constants.ts edits |
++| entity_interaction | KYC/KYS, UBO verification |
++| filing_activity | goAML exports, STR/SAR drafts |
++| mlro_directive | MLRO decisions, escalations |
++| risk_assessment | Risk ratings, gap assessments |
++| threshold_alert | AED 55K/60K breaches, cross-border |
++| supply_chain_event | Responsible sourcing, LBMA, gold origin |
++| workflow_note | General session activity |
++| error_resolution | Bugs fixed |
++| architecture_change | Service/auth/RBAC modifications |
++
++### Hook Detection Patterns
++The hooks detect compliance-analyzer-specific file paths:
++- `src/domain/constants.ts` (importance: 9)
++- `compliance-suite.js` (importance: 8)
++- `goaml-export.js` (importance: 8)
++- `threshold-monitor.js` (importance: 7)
++- `regulatory-monitor.js` (importance: 7)
++- `supply-chain.js` (importance: 6)
++- `src/risk/` (importance: 7)
++- `auth-rbac.js` (importance: 7)
++- `management-approvals.js` (importance: 6)
++
++## Context Tiers
++
++| Tier | Budget | Content |
++|------|--------|---------|
++| L0 | ~600 tokens | Thresholds, legislation, constants path, alerts |
++| L1 | ~800 tokens | Recent sessions, decisions, screenings, directives |
++| L2 | ~600 tokens | Historical observations matching a query |
++
++## 3-Layer Search
++
++```bash
++node claude-mem/search/cli.mjs "TFS screening"
++node claude-mem/search/cli.mjs --category threshold_alert
++node claude-mem/search/cli.mjs --timeline 42,43
++node claude-mem/search/cli.mjs --stats
++```
+diff --git a/claude-mem/config.mjs b/claude-mem/config.mjs
+new file mode 100644
+index 0000000..5252903
+--- /dev/null
++++ b/claude-mem/config.mjs
+@@ -0,0 +1,66 @@
++/**
++ * Configuration for the Compliance Analyzer Claude memory system.
++ *
++ * All paths default to a .claude-mem/ directory in the project root.
++ * Override with CLAUDE_MEM_DIR environment variable.
++ */
++
++import { join, dirname } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const PROJECT_ROOT = join(__dirname, '..');
++
++export const DATA_DIR = process.env.CLAUDE_MEM_DIR
++  || join(PROJECT_ROOT, '.claude-mem');
++
++export const PATHS = {
++  dataDir: DATA_DIR,
++  dbFile: join(DATA_DIR, 'memory.db'),
++  contextDir: join(DATA_DIR, 'context'),
++  summariesDir: join(DATA_DIR, 'summaries'),
++};
++
++/** Maximum tokens to inject at session start. */
++export const MAX_INJECT_TOKENS = 2000;
++
++/** Observation categories for compliance analyzer workflows. */
++export const CATEGORIES = Object.freeze([
++  'screening_result',
++  'compliance_decision',
++  'regulatory_observation',
++  'entity_interaction',
++  'filing_activity',
++  'mlro_directive',
++  'risk_assessment',
++  'workflow_note',
++  'error_resolution',
++  'architecture_change',
++  'threshold_alert',
++  'supply_chain_event',
++]);
++
++/**
++ * Context tiers (OpenViking-inspired L0/L1/L2).
++ *
++ *   L0 -- always loaded: project identity, regulatory thresholds, active alerts
++ *   L1 -- session-relevant: recent screenings, approval decisions, pending filings
++ *   L2 -- deep retrieval: historical decisions, archived reports, audit trail
++ */
++export const TIERS = Object.freeze({
++  L0: { label: 'core',    maxTokens: 600,  alwaysLoad: true  },
++  L1: { label: 'session', maxTokens: 800,  alwaysLoad: false },
++  L2: { label: 'archive', maxTokens: 600,  alwaysLoad: false },
++});
++
++/** Compression threshold: sessions with more than this many observations get compressed. */
++export const COMPRESS_THRESHOLD = 20;
++
++/** How many recent sessions to consider for L1 context. */
++export const RECENT_SESSION_COUNT = 5;
++
++/** Search result limits. */
++export const SEARCH_DEFAULTS = {
++  maxResults: 20,
++  maxDetailResults: 5,
++};
+diff --git a/claude-mem/context/compact-cli.mjs b/claude-mem/context/compact-cli.mjs
+new file mode 100644
+index 0000000..7a27840
+--- /dev/null
++++ b/claude-mem/context/compact-cli.mjs
+@@ -0,0 +1,62 @@
++#!/usr/bin/env node
++/**
++ * CLI for compressing and managing memory context.
++ *
++ * Usage:
++ *   node context/compact-cli.mjs                  # Compress all uncompressed sessions
++ *   node context/compact-cli.mjs --promote         # Promote old L1 summaries to L2
++ *   node context/compact-cli.mjs --session <id>    # Compress a specific session
++ */
++
++import * as db from '../db/sqlite.mjs';
++import { compressSession, promoteToArchive } from './compressor.mjs';
++
++const args = process.argv.slice(2);
++
++try {
++  if (args.includes('--promote')) {
++    const count = promoteToArchive(5);
++    console.log(count > 0 ? `Promoted ${count} summaries from L1 to L2.` : 'Nothing to promote.');
++    process.exit(0);
++  }
++
++  if (args.includes('--session')) {
++    const idx = args.indexOf('--session');
++    const sessionId = args[idx + 1];
++    if (!sessionId) {
++      console.error('Usage: --session <id>');
++      process.exit(1);
++    }
++    const summary = await compressSession(sessionId);
++    console.log('Compressed session:', sessionId);
++    console.log(summary);
++    process.exit(0);
++  }
++
++  // Default: compress all uncompressed sessions
++  const dbInstance = db.getDb();
++  const uncompressed = dbInstance.prepare(
++    'SELECT id FROM sessions WHERE compressed = 0 AND ended_at IS NOT NULL'
++  ).all();
++
++  if (uncompressed.length === 0) {
++    console.log('No uncompressed sessions found.');
++    process.exit(0);
++  }
++
++  console.log(`Found ${uncompressed.length} uncompressed sessions.`);
++  for (const s of uncompressed) {
++    const summary = await compressSession(s.id);
++    console.log(`\nCompressed ${s.id}:`);
++    console.log(summary);
++  }
++
++  // Also promote old summaries
++  const promoted = promoteToArchive(5);
++  if (promoted > 0) console.log(`\nPromoted ${promoted} summaries to archive tier.`);
++} catch (err) {
++  console.error(`Error: ${err.message}`);
++  process.exit(1);
++} finally {
++  db.closeDb();
++}
+diff --git a/claude-mem/context/compressor.mjs b/claude-mem/context/compressor.mjs
+new file mode 100644
+index 0000000..e55a685
+--- /dev/null
++++ b/claude-mem/context/compressor.mjs
+@@ -0,0 +1,117 @@
++/**
++ * Session compressor — distills verbose observations into concise summaries.
++ *
++ * When a session accumulates more than COMPRESS_THRESHOLD observations,
++ * this module generates a summary and stores it in the summaries table
++ * at the appropriate tier (L1 for recent, L2 for older).
++ *
++ * Compression uses a simple extractive approach (no external API call)
++ * to keep the system self-contained. High-importance observations are
++ * preserved verbatim; lower-importance ones are collapsed by category.
++ */
++
++import * as db from '../db/sqlite.mjs';
++import { CATEGORIES } from '../config.mjs';
++
++/**
++ * Compress a session's observations into a summary.
++ *
++ * @param {string} sessionId
++ * @returns {string} The generated summary text.
++ */
++export async function compressSession(sessionId) {
++  const observations = db.getObservations(sessionId);
++  if (observations.length === 0) return 'Empty session.';
++
++  const session = db.getSession(sessionId);
++
++  // Group observations by category
++  const grouped = {};
++  for (const obs of observations) {
++    if (!grouped[obs.category]) grouped[obs.category] = [];
++    grouped[obs.category].push(obs);
++  }
++
++  const lines = [];
++  const date = session?.started_at?.split('T')[0] || 'unknown';
++  lines.push(`Session ${sessionId.slice(0, 8)} (${date}): ${observations.length} observations`);
++
++  // Preserve high-importance observations verbatim
++  const critical = observations.filter(o => o.importance >= 8);
++  if (critical.length > 0) {
++    lines.push('');
++    lines.push('Critical:');
++    for (const c of critical) {
++      const entity = c.entity_name ? ` [${c.entity_name}]` : '';
++      lines.push(`- (${c.category}${entity}) ${c.content.replace(/\n/g, ' ').slice(0, 200)}`);
++    }
++  }
++
++  // Summarise each category
++  for (const cat of CATEGORIES) {
++    const items = grouped[cat];
++    if (!items || items.length === 0) continue;
++    if (cat === 'workflow_note' && items.every(i => i.importance < 5)) continue;
++
++    const highItems = items.filter(i => i.importance >= 5);
++    if (highItems.length === 0) {
++      lines.push(`- ${cat}: ${items.length} observations (all low priority)`);
++      continue;
++    }
++
++    lines.push('');
++    lines.push(`${cat} (${items.length}):`);
++    // Keep top 3 by importance
++    const top = highItems
++      .sort((a, b) => b.importance - a.importance)
++      .slice(0, 3);
++    for (const t of top) {
++      const entity = t.entity_name ? ` [${t.entity_name}]` : '';
++      lines.push(`  - ${entity}${t.content.replace(/\n/g, ' ').slice(0, 150)}`);
++    }
++    if (highItems.length > 3) {
++      lines.push(`  - ... and ${highItems.length - 3} more`);
++    }
++  }
++
++  const summary = lines.join('\n');
++
++  // Store as L1 summary (will age into L2 as newer sessions arrive)
++  db.addSummary({
++    sessionId,
++    tier: 'L1',
++    content: summary,
++    tokens: Math.ceil(summary.length / 4),
++  });
++
++  // Mark session as compressed
++  const dbInstance = db.getDb();
++  dbInstance.prepare('UPDATE sessions SET compressed = 1, token_count = ? WHERE id = ?')
++    .run(Math.ceil(summary.length / 4), sessionId);
++
++  return summary;
++}
++
++/**
++ * Promote old L1 summaries to L2 (archive tier).
++ * Call periodically to keep L1 focused on recent sessions.
++ *
++ * @param {number} [keepRecent=5] - Number of L1 summaries to keep.
++ */
++export function promoteToArchive(keepRecent = 5) {
++  const dbInstance = db.getDb();
++  const l1 = db.getSummariesByTier('L1', 100);
++
++  if (l1.length <= keepRecent) return;
++
++  const toPromote = l1.slice(keepRecent);
++  const stmt = dbInstance.prepare('UPDATE summaries SET tier = ? WHERE id = ?');
++  const tx = dbInstance.transaction(() => {
++    for (const s of toPromote) {
++      stmt.run('L2', s.id);
++    }
++  });
++  tx();
++
++  return toPromote.length;
++}
+diff --git a/claude-mem/context/hierarchy.mjs b/claude-mem/context/hierarchy.mjs
+new file mode 100644
+index 0000000..76adc40
+--- /dev/null
++++ b/claude-mem/context/hierarchy.mjs
+@@ -0,0 +1,184 @@
++/**
++ * Hierarchical context loader for Compliance Analyzer.
++ *
++ * L0 (core)    -- Always loaded. Regulatory thresholds, key legislation,
++ *                 constants architecture, active alerts. ~600 tokens.
++ * L1 (session) -- Recent session context. Screening results, approval
++ *                 workflows, filings, risk assessments. ~800 tokens.
++ * L2 (archive) -- On-demand deep retrieval. Historical decisions,
++ *                 audit trail, past screenings. ~600 tokens.
++ */
++
++import * as db from '../db/sqlite.mjs';
++import { TIERS, RECENT_SESSION_COUNT } from '../config.mjs';
++
++/**
++ * Load tiered context for Claude Code session injection.
++ */
++export function loadTieredContext({ sessionId, query } = {}) {
++  const l0 = buildL0();
++  const l1 = buildL1();
++  const l2 = buildL2(query);
++
++  const combined = [
++    '## Memory Context (auto-injected)',
++    '',
++    '### Core (L0)',
++    l0,
++    '',
++    '### Recent (L1)',
++    l1,
++    '',
++    query ? '### Retrieved (L2)' : '',
++    query ? l2 : '',
++  ].filter(Boolean).join('\n');
++
++  const tokens = estimateTokens(combined);
++
++  if (sessionId) {
++    try {
++      db.logInjection({ sessionId, tier: 'L0+L1+L2', content: combined, tokens });
++    } catch { /* non-critical */ }
++  }
++
++  return { l0, l1, l2, combined, tokens };
++}
++
++// -- L0: Core context (always loaded) --
++
++function buildL0() {
++  const parts = [];
++
++  // Project identity
++  parts.push('Project: Hawkeye Sterling V2 (Compliance Analyzer)');
++  parts.push('Focus: UAE AML/CFT/CPF compliance management suite');
++  parts.push('Stack: TypeScript/React frontend, Netlify Functions backend');
++  parts.push('Constants source of truth: src/domain/constants.ts');
++
++  // Critical regulatory thresholds
++  parts.push('');
++  parts.push('Key thresholds:');
++  parts.push('- Transaction reporting: AED 55,000');
++  parts.push('- Cross-border declaration: AED 60,000');
++  parts.push('- UBO identification: 25% ownership');
++  parts.push('- Sanctions freeze deadline: 24 hours');
++  parts.push('');
++  parts.push('Key legislation:');
++  parts.push('- Federal Decree-Law No. 10 of 2025 (primary AML/CFT)');
++  parts.push('- FORBIDDEN: Never cite Federal Decree-Law No. 20 of 2018');
++  parts.push('- Cabinet Resolution No. 10 of 2019 (implementing regulations)');
++  parts.push('- LBMA Responsible Gold Guidance');
++
++  // Active high-importance observations
++  const alerts = db.getHighImportanceObservations(8, 5);
++  if (alerts.length > 0) {
++    parts.push('');
++    parts.push('Active alerts:');
++    for (const a of alerts) {
++      parts.push(`- [${a.category}] ${truncate(a.content, 120)} (importance: ${a.importance})`);
++    }
++  }
++
++  return truncateToTokens(parts.join('\n'), TIERS.L0.maxTokens);
++}
++
++// -- L1: Session-relevant context --
++
++function buildL1() {
++  const parts = [];
++
++  // Recent session summaries
++  const sessions = db.listRecentSessions(RECENT_SESSION_COUNT);
++  if (sessions.length > 0) {
++    parts.push('Recent session summaries:');
++    for (const s of sessions) {
++      if (s.summary) {
++        const date = s.started_at.split('T')[0];
++        parts.push(`- [${date}] ${truncate(s.summary, 150)}`);
++      }
++    }
++  }
++
++  // Recent compliance decisions
++  const decisions = db.getObservationsByCategory('compliance_decision', 5);
++  if (decisions.length > 0) {
++    parts.push('');
++    parts.push('Recent compliance decisions:');
++    for (const d of decisions) {
++      parts.push(`- ${truncate(d.content, 120)}`);
++    }
++  }
++
++  // Recent screening results
++  const screenings = db.getObservationsByCategory('screening_result', 5);
++  if (screenings.length > 0) {
++    parts.push('');
++    parts.push('Recent screenings:');
++    for (const s of screenings) {
++      const entity = s.entity_name ? `[${s.entity_name}] ` : '';
++      parts.push(`- ${entity}${truncate(s.content, 100)}`);
++    }
++  }
++
++  // Threshold alerts
++  const thresholds = db.getObservationsByCategory('threshold_alert', 3);
++  if (thresholds.length > 0) {
++    parts.push('');
++    parts.push('Threshold alerts:');
++    for (const t of thresholds) {
++      parts.push(`- ${truncate(t.content, 120)}`);
++    }
++  }
++
++  // MLRO directives
++  const directives = db.getObservationsByCategory('mlro_directive', 3);
++  if (directives.length > 0) {
++    parts.push('');
++    parts.push('MLRO directives:');
++    for (const d of directives) {
++      parts.push(`- ${truncate(d.content, 120)}`);
++    }
++  }
++
++  if (parts.length === 0) {
++    return 'No recent session context available.';
++  }
++
++  return truncateToTokens(parts.join('\n'), TIERS.L1.maxTokens);
++}
++
++// -- L2: Deep archive retrieval --
++
++function buildL2(query) {
++  if (!query) return '';
++
++  const results = db.searchObservations(query, 10);
++  if (results.length === 0) return 'No matching archived observations.';
++
++  const parts = [`Query: "${query}"`, ''];
++  for (const r of results) {
++    const date = r.created_at?.split('T')[0];
++    const entity = r.entity_name ? ` [${r.entity_name}]` : '';
++    parts.push(`- [${date}] (${r.category}${entity}) ${truncate(r.content, 150)}`);
++  }
++
++  return truncateToTokens(parts.join('\n'), TIERS.L2.maxTokens);
++}
++
++// -- Helpers --
++
++function truncate(text, maxLen) {
++  if (!text) return '';
++  const clean = text.replace(/\n/g, ' ').trim();
++  return clean.length <= maxLen ? clean : clean.slice(0, maxLen - 3) + '...';
++}
++
++function estimateTokens(text) {
++  return Math.ceil((text || '').length / 4);
++}
++
++function truncateToTokens(text, maxTokens) {
++  const maxChars = maxTokens * 4;
++  if (text.length <= maxChars) return text;
++  return text.slice(0, maxChars - 3) + '...';
++}
+diff --git a/claude-mem/db/schema.sql b/claude-mem/db/schema.sql
+new file mode 100644
+index 0000000..9f16c63
+--- /dev/null
++++ b/claude-mem/db/schema.sql
+@@ -0,0 +1,82 @@
++-- Hawkeye-Sterling Claude Memory System — SQLite Schema
++-- Tracks sessions, observations, summaries, and context tiers.
++-- All timestamps are ISO-8601 UTC strings for audit-trail compatibility.
++
++CREATE TABLE IF NOT EXISTS sessions (
++  id            TEXT PRIMARY KEY,
++  started_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
++  ended_at      TEXT,
++  summary       TEXT,
++  token_count   INTEGER DEFAULT 0,
++  compressed    INTEGER DEFAULT 0
++);
++
++CREATE TABLE IF NOT EXISTS observations (
++  id            INTEGER PRIMARY KEY AUTOINCREMENT,
++  session_id    TEXT NOT NULL REFERENCES sessions(id),
++  created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
++  category      TEXT NOT NULL,
++  content       TEXT NOT NULL,
++  tool_name     TEXT,
++  file_path     TEXT,
++  entity_name   TEXT,
++  importance    INTEGER DEFAULT 5 CHECK (importance BETWEEN 1 AND 10),
++  tokens        INTEGER DEFAULT 0
++);
++
++CREATE TABLE IF NOT EXISTS summaries (
++  id            INTEGER PRIMARY KEY AUTOINCREMENT,
++  session_id    TEXT REFERENCES sessions(id),
++  created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
++  tier          TEXT NOT NULL CHECK (tier IN ('L0', 'L1', 'L2')),
++  category      TEXT,
++  content       TEXT NOT NULL,
++  tokens        INTEGER DEFAULT 0
++);
++
++CREATE TABLE IF NOT EXISTS context_injections (
++  id            INTEGER PRIMARY KEY AUTOINCREMENT,
++  session_id    TEXT NOT NULL REFERENCES sessions(id),
++  injected_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
++  tier          TEXT NOT NULL,
++  content       TEXT NOT NULL,
++  tokens        INTEGER DEFAULT 0
++);
++
++-- Indexes for fast retrieval
++CREATE INDEX IF NOT EXISTS idx_obs_session    ON observations(session_id);
++CREATE INDEX IF NOT EXISTS idx_obs_category   ON observations(category);
++CREATE INDEX IF NOT EXISTS idx_obs_entity     ON observations(entity_name);
++CREATE INDEX IF NOT EXISTS idx_obs_created    ON observations(created_at);
++CREATE INDEX IF NOT EXISTS idx_obs_importance ON observations(importance DESC);
++CREATE INDEX IF NOT EXISTS idx_sum_tier       ON summaries(tier);
++CREATE INDEX IF NOT EXISTS idx_sum_category   ON summaries(category);
++CREATE INDEX IF NOT EXISTS idx_inj_session    ON context_injections(session_id);
++
++-- FTS5 full-text search on observation content
++CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(
++  content,
++  category,
++  entity_name,
++  content=observations,
++  content_rowid=id,
++  tokenize='porter unicode61'
++);
++
++-- Triggers to keep FTS in sync
++CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON observations BEGIN
++  INSERT INTO observations_fts(rowid, content, category, entity_name)
++  VALUES (new.id, new.content, new.category, new.entity_name);
++END;
++
++CREATE TRIGGER IF NOT EXISTS obs_ad AFTER DELETE ON observations BEGIN
++  INSERT INTO observations_fts(observations_fts, rowid, content, category, entity_name)
++  VALUES ('delete', old.id, old.content, old.category, old.entity_name);
++END;
++
++CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON observations BEGIN
++  INSERT INTO observations_fts(observations_fts, rowid, content, category, entity_name)
++  VALUES ('delete', old.id, old.content, old.category, old.entity_name);
++  INSERT INTO observations_fts(rowid, content, category, entity_name)
++  VALUES (new.id, new.content, new.category, new.entity_name);
++END;
+diff --git a/claude-mem/db/sqlite.mjs b/claude-mem/db/sqlite.mjs
+new file mode 100644
+index 0000000..d65a10f
+--- /dev/null
++++ b/claude-mem/db/sqlite.mjs
+@@ -0,0 +1,201 @@
++/**
++ * SQLite storage backend for the Claude memory system.
++ *
++ * Uses better-sqlite3 for synchronous, transactional access.
++ * Automatically initialises the schema on first run.
++ */
++
++import { createRequire } from 'node:module';
++import { existsSync, mkdirSync, readFileSync } from 'node:fs';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { PATHS } from '../config.mjs';
++
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const SCHEMA_PATH = join(__dirname, 'schema.sql');
++
++let _db = null;
++
++/**
++ * Load better-sqlite3 via createRequire (CJS interop from ESM).
++ * Fails fast with a clear message if the package is missing.
++ */
++function loadSqlite() {
++  try {
++    const require = createRequire(import.meta.url);
++    return require('better-sqlite3');
++  } catch {
++    throw new Error(
++      'better-sqlite3 is not installed. Run: cd claude-mem && npm install'
++    );
++  }
++}
++
++/**
++ * Open (or create) the memory database. Idempotent.
++ * @returns {import('better-sqlite3').Database}
++ */
++export function getDb() {
++  if (_db) return _db;
++
++  // Ensure data directory exists
++  const dir = dirname(PATHS.dbFile);
++  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
++
++  const Database = loadSqlite();
++  _db = new Database(PATHS.dbFile);
++
++  // Performance pragmas
++  _db.pragma('journal_mode = WAL');
++  _db.pragma('synchronous = NORMAL');
++  _db.pragma('foreign_keys = ON');
++
++  // Run schema
++  const schema = readFileSync(SCHEMA_PATH, 'utf8');
++  _db.exec(schema);
++
++  return _db;
++}
++
++/** Close the database connection. */
++export function closeDb() {
++  if (_db) {
++    _db.close();
++    _db = null;
++  }
++}
++
++// ── Session CRUD ──────────────────────────────────────────────
++
++export function createSession(id) {
++  const db = getDb();
++  db.prepare('INSERT INTO sessions (id) VALUES (?)').run(id);
++  return id;
++}
++
++export function endSession(id, summary = null) {
++  const db = getDb();
++  db.prepare(
++    `UPDATE sessions
++       SET ended_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
++           summary  = ?
++     WHERE id = ?`
++  ).run(summary, id);
++}
++
++export function getSession(id) {
++  const db = getDb();
++  return db.prepare('SELECT * FROM sessions WHERE id = ?').get(id);
++}
++
++export function listRecentSessions(limit = 5) {
++  const db = getDb();
++  return db.prepare(
++    'SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?'
++  ).all(limit);
++}
++
++// ── Observation CRUD ──────────────────────────────────────────
++
++export function addObservation({
++  sessionId,
++  category,
++  content,
++  toolName = null,
++  filePath = null,
++  entityName = null,
++  importance = 5,
++  tokens = 0,
++}) {
++  const db = getDb();
++  const info = db.prepare(
++    `INSERT INTO observations
++       (session_id, category, content, tool_name, file_path, entity_name, importance, tokens)
++     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
++  ).run(sessionId, category, content, toolName, filePath, entityName, importance, tokens);
++  return info.lastInsertRowid;
++}
++
++export function getObservations(sessionId) {
++  const db = getDb();
++  return db.prepare(
++    'SELECT * FROM observations WHERE session_id = ? ORDER BY created_at'
++  ).all(sessionId);
++}
++
++export function getObservationsByCategory(category, limit = 50) {
++  const db = getDb();
++  return db.prepare(
++    'SELECT * FROM observations WHERE category = ? ORDER BY created_at DESC LIMIT ?'
++  ).all(category, limit);
++}
++
++export function getHighImportanceObservations(minImportance = 7, limit = 30) {
++  const db = getDb();
++  return db.prepare(
++    'SELECT * FROM observations WHERE importance >= ? ORDER BY importance DESC, created_at DESC LIMIT ?'
++  ).all(minImportance, limit);
++}
++
++export function countSessionObservations(sessionId) {
++  const db = getDb();
++  const row = db.prepare(
++    'SELECT COUNT(*) AS cnt FROM observations WHERE session_id = ?'
++  ).get(sessionId);
++  return row.cnt;
++}
++
++// ── Summary CRUD ──────────────────────────────────────────────
++
++export function addSummary({ sessionId = null, tier, category = null, content, tokens = 0 }) {
++  const db = getDb();
++  const info = db.prepare(
++    `INSERT INTO summaries (session_id, tier, category, content, tokens)
++     VALUES (?, ?, ?, ?, ?)`
++  ).run(sessionId, tier, category, content, tokens);
++  return info.lastInsertRowid;
++}
++
++export function getSummariesByTier(tier, limit = 20) {
++  const db = getDb();
++  return db.prepare(
++    'SELECT * FROM summaries WHERE tier = ? ORDER BY created_at DESC LIMIT ?'
++  ).all(tier, limit);
++}
++
++// ── Context Injection Log ─────────────────────────────────────
++
++export function logInjection({ sessionId, tier, content, tokens = 0 }) {
++  const db = getDb();
++  db.prepare(
++    `INSERT INTO context_injections (session_id, tier, content, tokens)
++     VALUES (?, ?, ?, ?)`
++  ).run(sessionId, tier, content, tokens);
++}
++
++// ── Full-Text Search ──────────────────────────────────────────
++
++export function searchObservations(query, limit = 20) {
++  const db = getDb();
++  return db.prepare(
++    `SELECT o.*, bm25(observations_fts) AS rank
++       FROM observations_fts f
++       JOIN observations o ON o.id = f.rowid
++      WHERE observations_fts MATCH ?
++      ORDER BY rank
++      LIMIT ?`
++  ).all(query, limit);
++}
++
++// ── Stats ─────────────────────────────────────────────────────
++
++export function getStats() {
++  const db = getDb();
++  const sessions = db.prepare('SELECT COUNT(*) AS cnt FROM sessions').get().cnt;
++  const observations = db.prepare('SELECT COUNT(*) AS cnt FROM observations').get().cnt;
++  const summaries = db.prepare('SELECT COUNT(*) AS cnt FROM summaries').get().cnt;
++  const categories = db.prepare(
++    'SELECT category, COUNT(*) AS cnt FROM observations GROUP BY category ORDER BY cnt DESC'
++  ).all();
++  return { sessions, observations, summaries, categories };
++}
+diff --git a/claude-mem/db/verify.mjs b/claude-mem/db/verify.mjs
+new file mode 100644
+index 0000000..eb90d27
+--- /dev/null
++++ b/claude-mem/db/verify.mjs
+@@ -0,0 +1,96 @@
++#!/usr/bin/env node
++/**
++ * Verify the integrity of the Claude memory database.
++ *
++ * Checks:
++ *   1. Database file exists and is readable
++ *   2. Schema tables are present
++ *   3. FTS index is consistent
++ *   4. Foreign key constraints hold
++ */
++
++import { existsSync } from 'node:fs';
++import { PATHS } from '../config.mjs';
++import * as db from './sqlite.mjs';
++
++console.log('Claude Memory Database Verification');
++console.log('====================================\n');
++
++let ok = true;
++
++// 1. File check
++if (!existsSync(PATHS.dbFile)) {
++  console.log('FAIL: Database file not found at', PATHS.dbFile);
++  console.log('      Run: cd claude-mem && npm run setup');
++  process.exit(1);
++}
++console.log('OK: Database file exists');
++
++// 2. Schema check
++try {
++  const dbInstance = db.getDb();
++  const tables = dbInstance.prepare(
++    "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
++  ).all().map(r => r.name);
++
++  const required = ['sessions', 'observations', 'summaries', 'context_injections', 'observations_fts'];
++  for (const t of required) {
++    if (tables.includes(t)) {
++      console.log(`OK: Table '${t}' exists`);
++    } else {
++      console.log(`FAIL: Table '${t}' missing`);
++      ok = false;
++    }
++  }
++} catch (err) {
++  console.log(`FAIL: Cannot read schema: ${err.message}`);
++  ok = false;
++}
++
++// 3. Integrity check
++try {
++  const dbInstance = db.getDb();
++  const result = dbInstance.pragma('integrity_check');
++  if (result[0]?.integrity_check === 'ok') {
++    console.log('OK: Integrity check passed');
++  } else {
++    console.log('FAIL: Integrity check failed:', result);
++    ok = false;
++  }
++} catch (err) {
++  console.log(`FAIL: Integrity check error: ${err.message}`);
++  ok = false;
++}
++
++// 4. Foreign key check
++try {
++  const dbInstance = db.getDb();
++  const fkErrors = dbInstance.pragma('foreign_key_check');
++  if (fkErrors.length === 0) {
++    console.log('OK: Foreign key constraints hold');
++  } else {
++    console.log(`FAIL: ${fkErrors.length} foreign key violations`);
++    ok = false;
++  }
++} catch (err) {
++  console.log(`FAIL: FK check error: ${err.message}`);
++  ok = false;
++}
++
++// 5. Stats
++try {
++  const stats = db.getStats();
++  console.log(`\nStats: ${stats.sessions} sessions, ${stats.observations} observations, ${stats.summaries} summaries`);
++  if (stats.categories.length > 0) {
++    console.log('Categories:');
++    for (const c of stats.categories) {
++      console.log(`  ${c.category}: ${c.cnt}`);
++    }
++  }
++} catch (err) {
++  console.log(`WARN: Could not read stats: ${err.message}`);
++}
++
++db.closeDb();
++console.log(ok ? '\nAll checks passed.' : '\nSome checks FAILED.');
++process.exit(ok ? 0 : 1);
+diff --git a/claude-mem/hooks/on-stop.mjs b/claude-mem/hooks/on-stop.mjs
+new file mode 100644
+index 0000000..5d757cd
+--- /dev/null
++++ b/claude-mem/hooks/on-stop.mjs
+@@ -0,0 +1,138 @@
++#!/usr/bin/env node
++/**
++ * Stop hook for Compliance Analyzer.
++ * Extracts compliance-significant content from Claude's responses.
++ */
++
++import mem from '../index.mjs';
++
++const sessionId = process.env.CLAUDE_SESSION_ID
++  || `session-${Date.now().toString(36)}`;
++
++try {
++  const chunks = [];
++  for await (const chunk of process.stdin) chunks.push(chunk);
++  const input = Buffer.concat(chunks).toString('utf8').trim();
++  if (!input) process.exit(0);
++
++  let response;
++  try {
++    const payload = JSON.parse(input);
++    response = payload.response || payload.message || payload.content || input;
++  } catch { response = input; }
++
++  if (!response || response.length < 20) process.exit(0);
++
++  const existing = mem.recentSessions(1);
++  if (existing.length === 0 || existing[0].ended_at) {
++    mem.startSession(sessionId);
++  }
++
++  const records = extractSignificantContent(response);
++  for (const record of records) mem.observe(record);
++
++  if (records.length > 0) {
++    console.error(`[claude-mem] Recorded ${records.length} observations from response.`);
++  }
++} catch (err) {
++  console.error(`[claude-mem] on-stop error: ${err.message}`);
++  process.exit(0);
++} finally {
++  mem.close();
++}
++
++function extractSignificantContent(response) {
++  const records = [];
++  const lower = response.toLowerCase();
++
++  // Screening conclusions
++  if (/\b(no match|true positive|false positive|potential match|hit|clear)\b/.test(lower) &&
++      /\b(screen|sanction|pep|watchlist|tfs)\b/.test(lower)) {
++    records.push({
++      category: 'screening_result',
++      content: extractSection(response, /screen|sanction|match|tfs/i, 300),
++      importance: 7,
++    });
++  }
++
++  // Filing decisions
++  if (/\b(str|sar|dpmsr|pnmr|ffr|filing|goaml)\b/.test(lower) &&
++      /\b(draft|submit|create|generate|prepare|export)\b/.test(lower)) {
++    records.push({
++      category: 'filing_activity',
++      content: extractSection(response, /filing|str|sar|goaml|export/i, 300),
++      importance: 8,
++    });
++  }
++
++  // Threshold alerts
++  if (/\b(aed\s*55|aed\s*60|threshold|cross.?border|cash.*report)\b/.test(lower)) {
++    records.push({
++      category: 'threshold_alert',
++      content: extractSection(response, /threshold|aed|cross.?border/i, 300),
++      importance: 8,
++    });
++  }
++
++  // Risk assessments (quick scenarios)
++  if (/\b(risk assessment|risk rating|high risk|low risk|medium risk|edd|cdd|gap assessment)\b/.test(lower)) {
++    records.push({
++      category: 'risk_assessment',
++      content: extractSection(response, /risk.*(?:assess|rating|high|low|medium|gap)/i, 300),
++      importance: 7,
++    });
++  }
++
++  // Supply chain / responsible sourcing
++  if (/\b(supply chain|responsible sourcing|lbma|conflict mineral|gold.*origin)\b/.test(lower)) {
++    records.push({
++      category: 'supply_chain_event',
++      content: extractSection(response, /supply.?chain|sourcing|lbma|gold.*origin/i, 300),
++      importance: 7,
++    });
++  }
++
++  // UBO / KYC determinations
++  if (/\b(ubo|ultimate beneficial|25%|kyc|kys|beneficial owner)\b/.test(lower) &&
++      /\b(identified|verified|confirmed|failed|missing)\b/.test(lower)) {
++    records.push({
++      category: 'entity_interaction',
++      content: extractSection(response, /ubo|beneficial|kyc|kys/i, 300),
++      importance: 7,
++    });
++  }
++
++  // MLRO / approval decisions
++  if (/\bmlro\b/.test(lower) &&
++      /\b(decision|directive|approve|reject|escalat)\b/.test(lower)) {
++    records.push({
++      category: 'mlro_directive',
++      content: extractSection(response, /mlro.*(?:decision|directive|approve|reject)/i, 300),
++      importance: 9,
++    });
++  }
++
++  // Compliance decisions (onboarding, exit, block)
++  if (/\b(approved|rejected|declined|onboarded|exited|blocked|closed)\b/.test(lower) &&
++      /\b(customer|entity|counterpart|account|relationship)\b/.test(lower)) {
++    records.push({
++      category: 'compliance_decision',
++      content: extractSection(response, /(?:approved|rejected|declined|onboarded|exited|blocked)/i, 300),
++      importance: 8,
++    });
++  }
++
++  return records;
++}
++
++function extractSection(text, pattern, maxLen) {
++  const match = text.match(pattern);
++  if (!match) return text.slice(0, maxLen);
++  const idx = match.index;
++  const start = Math.max(0, idx - 50);
++  const end = Math.min(text.length, idx + maxLen - 50);
++  let section = text.slice(start, end).replace(/\n{2,}/g, '\n').trim();
++  if (start > 0) section = '...' + section;
++  if (end < text.length) section = section + '...';
++  return section;
++}
+diff --git a/claude-mem/hooks/post-tool-use.mjs b/claude-mem/hooks/post-tool-use.mjs
+new file mode 100644
+index 0000000..943c32d
+--- /dev/null
++++ b/claude-mem/hooks/post-tool-use.mjs
+@@ -0,0 +1,170 @@
++#!/usr/bin/env node
++/**
++ * PostToolUse hook for Compliance Analyzer.
++ * Records significant tool interactions: edits to domain constants,
++ * compliance suite, regulatory monitor, goAML, thresholds, and services.
++ */
++
++import mem from '../index.mjs';
++
++const sessionId = process.env.CLAUDE_SESSION_ID
++  || `session-${Date.now().toString(36)}`;
++
++try {
++  const chunks = [];
++  for await (const chunk of process.stdin) chunks.push(chunk);
++  const input = Buffer.concat(chunks).toString('utf8').trim();
++  if (!input) process.exit(0);
++
++  let payload;
++  try { payload = JSON.parse(input); } catch { process.exit(0); }
++
++  const toolName = payload.tool_name || payload.tool || '';
++  const toolInput = payload.tool_input || payload.input || {};
++  const toolResult = payload.tool_result || payload.output || '';
++
++  const record = shouldRecord(toolName, toolInput, toolResult);
++  if (!record) process.exit(0);
++
++  const existing = mem.recentSessions(1);
++  if (existing.length === 0 || existing[0].ended_at) {
++    mem.startSession(sessionId);
++  }
++
++  mem.observe({
++    category: record.category,
++    content: record.content,
++    toolName,
++    filePath: record.filePath,
++    entityName: record.entityName,
++    importance: record.importance,
++  });
++
++  console.error(`[claude-mem] Tool use recorded: ${toolName} -> ${record.category}`);
++} catch (err) {
++  console.error(`[claude-mem] post-tool-use error: ${err.message}`);
++  process.exit(0);
++} finally {
++  mem.close();
++}
++
++function shouldRecord(toolName, toolInput, toolResult) {
++  const filePath = toolInput.file_path || toolInput.path || '';
++  const command = toolInput.command || '';
++  const resultStr = typeof toolResult === 'string'
++    ? toolResult : JSON.stringify(toolResult).slice(0, 1000);
++
++  // Domain constants (single source of truth)
++  if (filePath.includes('domain/constants')) {
++    return {
++      category: 'regulatory_observation',
++      content: `Constants updated via ${toolName}: ${filePath}`,
++      filePath, importance: 9,
++    };
++  }
++
++  // Compliance suite
++  if (filePath.includes('compliance-suite') || filePath.includes('compliance_suite')) {
++    return {
++      category: 'compliance_decision',
++      content: `Compliance suite modified via ${toolName}: ${filePath}`,
++      filePath, importance: 8,
++    };
++  }
++
++  // goAML export
++  if (filePath.includes('goaml') || filePath.includes('filing')) {
++    return {
++      category: 'filing_activity',
++      content: `goAML/filing change via ${toolName}: ${filePath}`,
++      filePath, importance: 8,
++    };
++  }
++
++  // Threshold monitor
++  if (filePath.includes('threshold') || filePath.includes('monitor')) {
++    return {
++      category: 'threshold_alert',
++      content: `Threshold/monitor change via ${toolName}: ${filePath}`,
++      filePath, importance: 7,
++    };
++  }
++
++  // Regulatory monitor
++  if (filePath.includes('regulatory')) {
++    return {
++      category: 'regulatory_observation',
++      content: `Regulatory monitor change via ${toolName}: ${filePath}`,
++      filePath, importance: 7,
++    };
++  }
++
++  // Supply chain
++  if (filePath.includes('supply-chain') || filePath.includes('supply_chain')) {
++    return {
++      category: 'supply_chain_event',
++      content: `Supply chain module change via ${toolName}: ${filePath}`,
++      filePath, importance: 6,
++    };
++  }
++
++  // Risk assessment
++  if (filePath.includes('risk/')) {
++    return {
++      category: 'risk_assessment',
++      content: `Risk module change via ${toolName}: ${filePath}`,
++      filePath, importance: 7,
++    };
++  }
++
++  // Auth / RBAC
++  if (filePath.includes('auth') || filePath.includes('rbac')) {
++    return {
++      category: 'architecture_change',
++      content: `Auth/RBAC change via ${toolName}: ${filePath}`,
++      filePath, importance: 7,
++    };
++  }
++
++  // Management approvals
++  if (filePath.includes('approval') || filePath.includes('management')) {
++    return {
++      category: 'compliance_decision',
++      content: `Approval workflow change via ${toolName}: ${filePath}`,
++      filePath, importance: 6,
++    };
++  }
++
++  // Services layer
++  if (filePath.includes('services/')) {
++    return {
++      category: 'architecture_change',
++      content: `Service modified: ${filePath}`,
++      filePath, importance: 5,
++    };
++  }
++
++  // Compliance-relevant bash commands
++  if (toolName === 'Bash' && command) {
++    if (/screen|sanction|filing|compliance|goaml|threshold/.test(command.toLowerCase())) {
++      return {
++        category: 'workflow_note',
++        content: `Compliance command: ${command.slice(0, 300)}`,
++        importance: 6,
++      };
++    }
++  }
++
++  // Error resolutions
++  if (resultStr.includes('Error') || resultStr.includes('error')) {
++    if (toolName === 'Edit' || toolName === 'Bash') {
++      return {
++        category: 'error_resolution',
++        content: `Error encountered in ${toolName}: ${resultStr.slice(0, 200)}`,
++        filePath, importance: 5,
++      };
++    }
++  }
++
++  return null;
++}
+diff --git a/claude-mem/hooks/prompt-submit.mjs b/claude-mem/hooks/prompt-submit.mjs
+new file mode 100644
+index 0000000..e2f4c3e
+--- /dev/null
++++ b/claude-mem/hooks/prompt-submit.mjs
+@@ -0,0 +1,69 @@
++#!/usr/bin/env node
++/**
++ * UserPromptSubmit hook for Compliance Analyzer.
++ * Detects compliance-analyzer-specific patterns (thresholds, goAML,
++ * supply chain, RBAC, approvals).
++ */
++
++import mem from '../index.mjs';
++
++const sessionId = process.env.CLAUDE_SESSION_ID
++  || `session-${Date.now().toString(36)}`;
++
++try {
++  const chunks = [];
++  for await (const chunk of process.stdin) chunks.push(chunk);
++  const input = Buffer.concat(chunks).toString('utf8').trim();
++  if (!input) process.exit(0);
++
++  let prompt;
++  try {
++    const payload = JSON.parse(input);
++    prompt = payload.prompt || payload.message || input;
++  } catch { prompt = input; }
++
++  if (!prompt || prompt.length < 3 || prompt.startsWith('/')) process.exit(0);
++
++  const existing = mem.recentSessions(1);
++  if (existing.length === 0 || existing[0].ended_at) {
++    mem.startSession(sessionId);
++  }
++
++  const category = categorisePrompt(prompt);
++  const importance = assessImportance(prompt);
++
++  mem.observe({
++    category,
++    content: `User request: ${prompt.slice(0, 500)}`,
++    importance,
++  });
++
++  console.error(`[claude-mem] Prompt recorded (${category}, importance: ${importance})`);
++} catch (err) {
++  console.error(`[claude-mem] prompt-submit error: ${err.message}`);
++  process.exit(0);
++} finally {
++  mem.close();
++}
++
++function categorisePrompt(prompt) {
++  const lower = prompt.toLowerCase();
++  if (/\b(screen|sanction|pep|watchlist|ofac|un list)\b/.test(lower)) return 'screening_result';
++  if (/\b(file|str|sar|dpmsr|goaml|filing)\b/.test(lower)) return 'filing_activity';
++  if (/\b(mlro|reporting officer|escalat)\b/.test(lower)) return 'mlro_directive';
++  if (/\b(risk|assess|cdd|edd|due diligence)\b/.test(lower)) return 'risk_assessment';
++  if (/\b(regul|law|decree|circular|fatf|lbma)\b/.test(lower)) return 'regulatory_observation';
++  if (/\b(entity|counterpart|customer|client|onboard)\b/.test(lower)) return 'entity_interaction';
++  if (/\b(threshold|aed 55|aed 60|55.?000|60.?000|cross.?border)\b/.test(lower)) return 'threshold_alert';
++  if (/\b(supply.?chain|gold|bullion|precious|dpms)\b/.test(lower)) return 'supply_chain_event';
++  if (/\b(approv|reject|close|block|decid)\b/.test(lower)) return 'compliance_decision';
++  return 'workflow_note';
++}
++
++function assessImportance(prompt) {
++  const lower = prompt.toLowerCase();
++  if (/\b(str|sar|file|block|reject|mlro|escalat|suspicious|freeze)\b/.test(lower)) return 8;
++  if (/\b(screen|sanction|risk|cdd|edd|pep|threshold)\b/.test(lower)) return 7;
++  if (/\b(regul|entity|counterpart|deadline|compliance|supply.?chain)\b/.test(lower)) return 6;
++  return 4;
++}
+diff --git a/claude-mem/hooks/session-end.mjs b/claude-mem/hooks/session-end.mjs
+new file mode 100644
+index 0000000..c6c6127
+--- /dev/null
++++ b/claude-mem/hooks/session-end.mjs
+@@ -0,0 +1,48 @@
++#!/usr/bin/env node
++/**
++ * SessionEnd hook for Compliance Analyzer.
++ */
++
++import mem from '../index.mjs';
++
++const sessionId = process.env.CLAUDE_SESSION_ID
++  || `session-${Date.now().toString(36)}`;
++
++try {
++  const recent = mem.recentSessions(1);
++  if (recent.length === 0 || recent[0].ended_at) {
++    console.error('[claude-mem] No session to close.');
++    process.exit(0);
++  }
++
++  let summary = null;
++  const chunks = [];
++  try {
++    process.stdin.setEncoding('utf8');
++    process.stdin.resume();
++    await new Promise((resolve) => {
++      const timer = setTimeout(resolve, 500);
++      process.stdin.on('data', (chunk) => chunks.push(chunk));
++      process.stdin.on('end', () => { clearTimeout(timer); resolve(); });
++    });
++    const input = chunks.join('').trim();
++    if (input) {
++      try {
++        const payload = JSON.parse(input);
++        summary = payload.summary || payload.message || null;
++      } catch { summary = input.length > 10 ? input : null; }
++    }
++  } catch { /* stdin might not be available */ }
++
++  await mem.endSession(summary);
++  const stats = mem.stats();
++  console.error(
++    `[claude-mem] Session ended. Total: ${stats.sessions} sessions, ` +
++    `${stats.observations} observations, ${stats.summaries} summaries.`
++  );
++} catch (err) {
++  console.error(`[claude-mem] session-end error: ${err.message}`);
++  process.exit(0);
++} finally {
++  mem.close();
++}
+diff --git a/claude-mem/hooks/session-start.mjs b/claude-mem/hooks/session-start.mjs
+new file mode 100644
+index 0000000..2a3080d
+--- /dev/null
++++ b/claude-mem/hooks/session-start.mjs
+@@ -0,0 +1,29 @@
++#!/usr/bin/env node
++/**
++ * SessionStart hook for Compliance Analyzer.
++ */
++
++import mem from '../index.mjs';
++import { promoteToArchive } from '../context/compressor.mjs';
++
++const sessionId = process.env.CLAUDE_SESSION_ID
++  || `session-${Date.now().toString(36)}`;
++
++try {
++  mem.startSession(sessionId);
++  try { promoteToArchive(5); } catch { /* non-critical */ }
++
++  const ctx = mem.loadContext({ sessionId });
++  console.log(ctx.combined);
++
++  if (ctx.tokens > 0) {
++    console.error(`[claude-mem] Session ${sessionId.slice(0, 8)} started. Injected ${ctx.tokens} tokens.`);
++  } else {
++    console.error(`[claude-mem] Session ${sessionId.slice(0, 8)} started. No prior context.`);
++  }
++} catch (err) {
++  console.error(`[claude-mem] session-start error: ${err.message}`);
++  process.exit(0);
++} finally {
++  mem.close();
++}
+diff --git a/claude-mem/index.mjs b/claude-mem/index.mjs
+new file mode 100644
+index 0000000..e38037b
+--- /dev/null
++++ b/claude-mem/index.mjs
+@@ -0,0 +1,81 @@
++/**
++ * Compliance Analyzer Claude Memory System -- Public API
++ *
++ * Persistent memory for Claude Code sessions. Captures compliance
++ * decisions, screening results, threshold alerts, supply chain events,
++ * and workflow notes across sessions.
++ */
++
++import { randomUUID } from 'node:crypto';
++import * as db from './db/sqlite.mjs';
++import { loadTieredContext } from './context/hierarchy.mjs';
++import { compressSession } from './context/compressor.mjs';
++import { hybridSearch } from './search/hybrid.mjs';
++import { CATEGORIES, COMPRESS_THRESHOLD } from './config.mjs';
++
++let _currentSessionId = null;
++
++const mem = {
++  startSession(id) {
++    _currentSessionId = id || randomUUID();
++    db.createSession(_currentSessionId);
++    return _currentSessionId;
++  },
++
++  get sessionId() { return _currentSessionId; },
++
++  async endSession(summary) {
++    if (!_currentSessionId) return;
++    const count = db.countSessionObservations(_currentSessionId);
++    if (count >= COMPRESS_THRESHOLD) {
++      const compressed = await compressSession(_currentSessionId);
++      summary = summary || compressed;
++    }
++    db.endSession(_currentSessionId, summary || null);
++    _currentSessionId = null;
++  },
++
++  observe({ category, content, toolName, filePath, entityName, importance = 5 }) {
++    if (!_currentSessionId) {
++      throw new Error('No active session. Call mem.startSession() first.');
++    }
++    if (!CATEGORIES.includes(category)) {
++      throw new Error(`Invalid category "${category}". Must be one of: ${CATEGORIES.join(', ')}`);
++    }
++    return db.addObservation({
++      sessionId: _currentSessionId,
++      category, content, toolName, filePath, entityName, importance,
++      tokens: Math.ceil((content || '').length / 4),
++    });
++  },
++
++  loadContext(opts = {}) {
++    return loadTieredContext({
++      sessionId: opts.sessionId || _currentSessionId,
++      query: opts.query,
++    });
++  },
++
++  search(query, opts = {}) { return hybridSearch(query, opts); },
++
++  getObservations(ids) {
++    const dbInstance = db.getDb();
++    const placeholders = ids.map(() => '?').join(',');
++    return dbInstance.prepare(
++      `SELECT * FROM observations WHERE id IN (${placeholders}) ORDER BY created_at`
++    ).all(...ids);
++  },
++
++  addSummary({ tier, content, category }) {
++    return db.addSummary({
++      sessionId: _currentSessionId, tier, category, content,
++      tokens: Math.ceil((content || '').length / 4),
++    });
++  },
++
++  stats() { return db.getStats(); },
++  recentSessions(limit = 5) { return db.listRecentSessions(limit); },
++  close() { db.closeDb(); },
++};
++
++export default mem;
+diff --git a/claude-mem/package.json b/claude-mem/package.json
+new file mode 100644
+index 0000000..37cf55a
+--- /dev/null
++++ b/claude-mem/package.json
+@@ -0,0 +1,19 @@
++{
++  "name": "compliance-analyzer-mem",
++  "version": "1.0.0",
++  "private": true,
++  "type": "module",
++  "description": "Persistent memory system for Claude Code sessions in Compliance Analyzer",
++  "engines": {
++    "node": ">=20"
++  },
++  "dependencies": {
++    "better-sqlite3": "^11.7.0"
++  },
++  "scripts": {
++    "setup": "node setup.mjs",
++    "search": "node search/cli.mjs",
++    "compact": "node context/compact-cli.mjs",
++    "verify": "node db/verify.mjs"
++  }
++}
+diff --git a/claude-mem/search/cli.mjs b/claude-mem/search/cli.mjs
+new file mode 100644
+index 0000000..0981e89
+--- /dev/null
++++ b/claude-mem/search/cli.mjs
+@@ -0,0 +1,92 @@
++#!/usr/bin/env node
++/**
++ * CLI for searching the Claude memory system.
++ *
++ * Usage:
++ *   node claude-mem/search/cli.mjs "query"
++ *   node claude-mem/search/cli.mjs "query" --category screening_result
++ *   node claude-mem/search/cli.mjs --stats
++ *   node claude-mem/search/cli.mjs --timeline 42,43,44
++ */
++
++import mem from '../index.mjs';
++import { timeline } from './hybrid.mjs';
++
++const args = process.argv.slice(2);
++
++try {
++  if (args.includes('--stats')) {
++    const stats = mem.stats();
++    console.log(JSON.stringify(stats, null, 2));
++    process.exit(0);
++  }
++
++  if (args.includes('--timeline')) {
++    const idx = args.indexOf('--timeline');
++    const ids = (args[idx + 1] || '').split(',').map(Number).filter(Boolean);
++    if (ids.length === 0) {
++      console.error('Usage: --timeline <id1,id2,...>');
++      process.exit(1);
++    }
++    const result = timeline(ids);
++    console.log(JSON.stringify(result, null, 2));
++    process.exit(0);
++  }
++
++  if (args.includes('--details')) {
++    const idx = args.indexOf('--details');
++    const ids = (args[idx + 1] || '').split(',').map(Number).filter(Boolean);
++    if (ids.length === 0) {
++      console.error('Usage: --details <id1,id2,...>');
++      process.exit(1);
++    }
++    const result = mem.getObservations(ids);
++    console.log(JSON.stringify(result, null, 2));
++    process.exit(0);
++  }
++
++  // Parse query and options
++  const query = args.find(a => !a.startsWith('--'));
++  const opts = {};
++
++  const catIdx = args.indexOf('--category');
++  if (catIdx >= 0) opts.category = args[catIdx + 1];
++
++  const entIdx = args.indexOf('--entity');
++  if (entIdx >= 0) opts.entity = args[entIdx + 1];
++
++  const impIdx = args.indexOf('--importance');
++  if (impIdx >= 0) opts.minImportance = Number(args[impIdx + 1]);
++
++  const limIdx = args.indexOf('--limit');
++  if (limIdx >= 0) opts.limit = Number(args[limIdx + 1]);
++
++  if (!query && Object.keys(opts).length === 0) {
++    console.log('Usage: node search/cli.mjs "query" [--category <cat>] [--entity <name>] [--importance <n>] [--limit <n>]');
++    console.log('       node search/cli.mjs --stats');
++    console.log('       node search/cli.mjs --timeline <id1,id2,...>');
++    console.log('       node search/cli.mjs --details <id1,id2,...>');
++    process.exit(0);
++  }
++
++  const results = mem.search(query || '', opts);
++
++  if (results.length === 0) {
++    console.log('No matching observations found.');
++  } else {
++    console.log(`Found ${results.length} results:\n`);
++    for (const r of results) {
++      const entity = r.entity ? ` [${r.entity}]` : '';
++      console.log(`  #${r.id}  ${r.date}  (${r.category}${entity})  imp:${r.importance}  score:${r.score}`);
++      console.log(`        ${r.snippet}`);
++      console.log();
++    }
++    console.log(`Tip: use --timeline ${results.slice(0, 3).map(r => r.id).join(',')} for context`);
++    console.log(`     use --details ${results.slice(0, 3).map(r => r.id).join(',')} for full content`);
++  }
++} catch (err) {
++  console.error(`Error: ${err.message}`);
++  process.exit(1);
++} finally {
++  mem.close();
++}
+diff --git a/claude-mem/search/hybrid.mjs b/claude-mem/search/hybrid.mjs
+new file mode 100644
+index 0000000..588ed6c
+--- /dev/null
++++ b/claude-mem/search/hybrid.mjs
+@@ -0,0 +1,194 @@
++/**
++ * Hybrid search — combines FTS5 keyword search with category/entity
++ * filtering and importance-weighted scoring.
++ *
++ * Implements the 3-layer search pattern from claude-mem:
++ *   1. search()           — compact index with IDs (~50-100 tokens)
++ *   2. timeline()         — chronological context around results
++ *   3. getObservations()  — full details for filtered IDs
++ *
++ * This module handles layer 1 (search) and layer 2 (timeline).
++ * Layer 3 is in the main index.mjs via mem.getObservations().
++ */
++
++import * as db from '../db/sqlite.mjs';
++import { SEARCH_DEFAULTS } from '../config.mjs';
++
++/**
++ * Layer 1: Compact search returning IDs and snippets.
++ *
++ * @param {string} query
++ * @param {object} [opts]
++ * @param {string} [opts.category]   - Filter by observation category.
++ * @param {string} [opts.entity]     - Filter by entity name.
++ * @param {number} [opts.minImportance] - Minimum importance score.
++ * @param {number} [opts.limit]      - Max results.
++ * @returns {Array<{ id: number, category: string, entity: string|null, date: string, snippet: string, importance: number, score: number }>}
++ */
++export function hybridSearch(query, opts = {}) {
++  const limit = opts.limit || SEARCH_DEFAULTS.maxResults;
++
++  // Start with FTS results
++  let results = [];
++  if (query && query.trim()) {
++    // Sanitise FTS5 query: wrap in quotes for phrase match, OR split terms
++    const ftsQuery = sanitiseFtsQuery(query);
++    try {
++      results = db.searchObservations(ftsQuery, limit * 2);
++    } catch {
++      // FTS query syntax error — fall back to LIKE
++      results = likeFallback(query, limit * 2);
++    }
++  } else {
++    // No query text — return recent high-importance observations
++    results = db.getHighImportanceObservations(opts.minImportance || 5, limit);
++  }
++
++  // Apply filters
++  if (opts.category) {
++    results = results.filter(r => r.category === opts.category);
++  }
++  if (opts.entity) {
++    const entityLower = opts.entity.toLowerCase();
++    results = results.filter(r =>
++      r.entity_name && r.entity_name.toLowerCase().includes(entityLower)
++    );
++  }
++  if (opts.minImportance) {
++    results = results.filter(r => r.importance >= opts.minImportance);
++  }
++
++  // Score and rank
++  const scored = results.map(r => ({
++    id: r.id,
++    category: r.category,
++    entity: r.entity_name,
++    date: r.created_at?.split('T')[0],
++    snippet: truncate(r.content, 100),
++    importance: r.importance,
++    score: computeScore(r, query),
++  }));
++
++  scored.sort((a, b) => b.score - a.score);
++  return scored.slice(0, limit);
++}
++
++/**
++ * Layer 2: Timeline view showing chronological context around results.
++ *
++ * @param {number[]} ids - Observation IDs from layer 1.
++ * @param {number} [windowMinutes=60] - Time window around each result.
++ * @returns {Array<object>}
++ */
++export function timeline(ids, windowMinutes = 60) {
++  if (ids.length === 0) return [];
++
++  const dbInstance = db.getDb();
++  const observations = dbInstance.prepare(
++    `SELECT * FROM observations WHERE id IN (${ids.map(() => '?').join(',')}) ORDER BY created_at`
++  ).all(...ids);
++
++  if (observations.length === 0) return [];
++
++  // Get surrounding observations within the time window
++  const windowMs = windowMinutes * 60 * 1000;
++  const allNeighbours = [];
++
++  for (const obs of observations) {
++    const t = new Date(obs.created_at).getTime();
++    const from = new Date(t - windowMs).toISOString();
++    const to = new Date(t + windowMs).toISOString();
++
++    const neighbours = dbInstance.prepare(
++      `SELECT * FROM observations
++       WHERE session_id = ? AND created_at BETWEEN ? AND ?
++       ORDER BY created_at`
++    ).all(obs.session_id, from, to);
++
++    allNeighbours.push({
++      anchor: obs.id,
++      anchorDate: obs.created_at,
++      context: neighbours.map(n => ({
++        id: n.id,
++        date: n.created_at,
++        category: n.category,
++        entity: n.entity_name,
++        content: truncate(n.content, 200),
++        isAnchor: n.id === obs.id,
++      })),
++    });
++  }
++
++  return allNeighbours;
++}
++
++// ── Internal helpers ────────────────────────────────────────
++
++/**
++ * Sanitise a user query for FTS5.
++ * Splits into tokens and joins with OR for broad matching.
++ */
++function sanitiseFtsQuery(query) {
++  const tokens = query
++    .replace(/[^\w\s-]/g, '') // Remove special chars
++    .split(/\s+/)
++    .filter(t => t.length > 1)
++    .map(t => `"${t}"`);
++
++  return tokens.length > 0 ? tokens.join(' OR ') : query;
++}
++
++/** Fallback LIKE-based search when FTS query fails. */
++function likeFallback(query, limit) {
++  const dbInstance = db.getDb();
++  const pattern = `%${query}%`;
++  return dbInstance.prepare(
++    `SELECT * FROM observations
++     WHERE content LIKE ? OR entity_name LIKE ? OR category LIKE ?
++     ORDER BY importance DESC, created_at DESC
++     LIMIT ?`
++  ).all(pattern, pattern, pattern, limit);
++}
++
++/**
++ * Compute a relevance score combining FTS rank, importance, and recency.
++ */
++function computeScore(obs, query) {
++  let score = 0;
++
++  // FTS rank (if available, lower = better match in BM25)
++  if (obs.rank != null) {
++    score += Math.max(0, 10 + obs.rank); // BM25 returns negative
++  }
++
++  // Importance boost
++  score += (obs.importance || 5) * 1.5;
++
++  // Recency boost (observations in last 7 days get up to +5)
++  if (obs.created_at) {
++    const ageMs = Date.now() - new Date(obs.created_at).getTime();
++    const ageDays = ageMs / 86400000;
++    if (ageDays < 7) score += 5 * (1 - ageDays / 7);
++  }
++
++  // Exact entity name match boost
++  if (query && obs.entity_name) {
++    if (obs.entity_name.toLowerCase().includes(query.toLowerCase())) {
++      score += 8;
++    }
++  }
++
++  // Category boost for compliance-critical categories
++  const criticalCategories = ['compliance_decision', 'mlro_directive', 'filing_activity'];
++  if (criticalCategories.includes(obs.category)) {
++    score += 3;
++  }
++
++  return Math.round(score * 100) / 100;
++}
++
++function truncate(text, maxLen) {
++  if (!text) return '';
++  const clean = text.replace(/\n/g, ' ').trim();
++  return clean.length <= maxLen ? clean : clean.slice(0, maxLen - 3) + '...';
++}
+diff --git a/claude-mem/setup.mjs b/claude-mem/setup.mjs
+new file mode 100644
+index 0000000..69b388f
+--- /dev/null
++++ b/claude-mem/setup.mjs
+@@ -0,0 +1,85 @@
++#!/usr/bin/env node
++/**
++ * Setup script for the Compliance Analyzer Claude memory system.
++ */
++
++import { existsSync, mkdirSync } from 'node:fs';
++import { PATHS } from './config.mjs';
++import * as db from './db/sqlite.mjs';
++
++console.log('Compliance Analyzer Claude Memory System -- Setup');
++console.log('=================================================\n');
++
++// 1. Check dependencies
++console.log('1. Checking dependencies...');
++try {
++  const { createRequire } = await import('node:module');
++  const require = createRequire(import.meta.url);
++  require('better-sqlite3');
++  console.log('   better-sqlite3: OK');
++} catch {
++  console.error('   better-sqlite3: NOT FOUND');
++  console.error('   Run: cd claude-mem && npm install');
++  process.exit(1);
++}
++
++// 2. Create directories
++console.log('\n2. Creating directories...');
++for (const [name, path] of Object.entries(PATHS)) {
++  if (name === 'dbFile') continue;
++  if (!existsSync(path)) {
++    mkdirSync(path, { recursive: true });
++    console.log(`   Created: ${path}`);
++  } else {
++    console.log(`   Exists:  ${path}`);
++  }
++}
++
++// 3. Initialise database
++console.log('\n3. Initialising database...');
++try {
++  db.getDb();
++  console.log(`   Database: ${PATHS.dbFile}`);
++  const stats = db.getStats();
++  console.log(`   Sessions: ${stats.sessions}`);
++  console.log(`   Observations: ${stats.observations}`);
++  console.log(`   Summaries: ${stats.summaries}`);
++} catch (err) {
++  console.error(`   Database error: ${err.message}`);
++  process.exit(1);
++} finally {
++  db.closeDb();
++}
++
++// 4. Seed L0 core context
++console.log('\n4. Seeding L0 core context...');
++try {
++  db.getDb();
++  const existing = db.getSummariesByTier('L0', 1);
++  if (existing.length === 0) {
++    db.addSummary({
++      tier: 'L0',
++      category: 'regulatory_observation',
++      content: [
++        'Hawkeye Sterling V2 (Compliance Analyzer) -- UAE AML/CFT/CPF compliance suite.',
++        'Stack: TypeScript/React frontend, Netlify Functions backend.',
++        'Constants source of truth: src/domain/constants.ts',
++        'Key thresholds: AED 55K (transaction), AED 60K (cross-border), 25% (UBO), 24h (freeze).',
++        'Primary law: Federal Decree-Law No. 10 of 2025.',
++        'NEVER cite Federal Decree-Law No. 20 of 2018 (deprecated).',
++        'Quick scenarios: AML/CFT, KYC/KYS, PEP, TFS, Responsible Sourcing, SOF/SOW, UBO, ESG.',
++      ].join('\n'),
++      tokens: 100,
++    });
++    console.log('   Seeded initial L0 compliance context.');
++  } else {
++    console.log('   L0 context already exists.');
++  }
++} catch (err) {
++  console.error(`   Seeding error: ${err.message}`);
++} finally {
++  db.closeDb();
++}
++
++console.log('\nSetup complete. Memory system is ready.');
++console.log('Hook registration is in .claude/settings.json');
+-- 
+2.43.0
+
