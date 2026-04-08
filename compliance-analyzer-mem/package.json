@@ -1,0 +1,19 @@
+{
+  "name": "compliance-analyzer-mem",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Persistent memory system for Claude Code sessions in Compliance Analyzer",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0"
+  },
+  "scripts": {
+    "setup": "node setup.mjs",
+    "search": "node search/cli.mjs",
+    "compact": "node context/compact-cli.mjs",
+    "verify": "node db/verify.mjs"
+  }
+}
