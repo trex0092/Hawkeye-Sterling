@@ -13,10 +13,12 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 import * as db from '../db/sqlite.mjs';
 import { TIERS, RECENT_SESSION_COUNT } from '../config.mjs';
 
-const PROJECT_ROOT = join(import.meta.url.replace('file://', ''), '..', '..', '..');
+const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Load tiered context for Claude Code session injection.

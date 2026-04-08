@@ -17,13 +17,9 @@ import path from 'node:path';
 import {
   readCommonEnv,
   createAsanaClient,
-  wrapDocument,
-  renderTable,
-  CONFIRMED_REFERENCES,
   tryArchive,
 } from './lib/report-scaffold.mjs';
 import { writeHistory, isoDate } from './history-writer.mjs';
-import { renderDocxBuffer } from './lib/docx-writer.mjs';
 
 const env = readCommonEnv({ requireClaude: false });
 const today = isoDate();

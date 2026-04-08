@@ -105,12 +105,17 @@ function getDeadlineStatus(dl) {
   }
 
   if (dl.frequency === 'monthly') {
-    const nextDue = new Date(today.getFullYear(), today.getMonth(), dl.dueDay || 5);
-    if (nextDue < today) nextDue.setMonth(nextDue.getMonth() + 1);
-    const days = Math.round((nextDue - today) / 86400000);
+    // Check if this month's deadline has passed without completion
+    const thisMonthDue = new Date(today.getFullYear(), today.getMonth(), dl.dueDay || 5);
+    const nextMonthDue = new Date(today.getFullYear(), today.getMonth() + 1, dl.dueDay || 5);
+    const days = Math.round((thisMonthDue - today) / 86400000);
+    // If this month's due date has passed, show as overdue until next month's due
+    if (days < 0) {
+      return { status: 'OVERDUE', nextDue: thisMonthDue.toISOString().split('T')[0], daysUntil: days };
+    }
     return {
-      status: days < 0 ? 'OVERDUE' : days <= 7 ? 'DUE_SOON' : 'CURRENT',
-      nextDue: nextDue.toISOString().split('T')[0],
+      status: days <= 7 ? 'DUE_SOON' : 'CURRENT',
+      nextDue: thisMonthDue.toISOString().split('T')[0],
       daysUntil: days,
     };
   }
