@@ -1,0 +1,48 @@
+name: CDD Refresh Engine
+
+on:
+  schedule:
+    - cron: "0 4 * * *"  # 04:00 UTC daily (08:00 UAE)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: scripts
+
+jobs:
+  cdd-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install screening dependencies
+        run: cd ../screening && npm ci --ignore-scripts 2>/dev/null || true
+
+      - name: Install memory system
+        run: cd ../claude-mem && npm ci --ignore-scripts 2>/dev/null || true
+
+      - name: Run CDD refresh
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          ASANA_WORKSPACE_ID: ${{ secrets.ASANA_WORKSPACE_ID }}
+        run: node cdd-engine/refresh-engine.mjs
+
+      - name: Commit archives
+        run: |
+          cd ..
+          git config user.name "hawkeye-bot"
+          git config user.email "bot@hawkeye-sterling.ae"
+          git add .screening/cdd-state.json history/ || true
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "CDD refresh: $(date -u +%Y-%m-%d)"
+            git push
+          fi
