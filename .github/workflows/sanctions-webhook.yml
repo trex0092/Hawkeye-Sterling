@@ -1,0 +1,39 @@
+name: Sanctions List Change Monitor
+
+on:
+  schedule:
+    - cron: "*/30 5-15 * * 0-4"  # Every 30 min, Sun-Thu 05:00-15:00 UTC (UAE business hours)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sanctions-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check for sanctions list changes
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          SMS_WEBHOOK_URL: ${{ secrets.SMS_WEBHOOK_URL }}
+          ALERT_CHANNELS: ${{ secrets.ALERT_CHANNELS || 'slack' }}
+        run: node screening/webhooks/sanctions-alert.mjs
+
+      - name: Commit state and archives
+        run: |
+          git config user.name "hawkeye-bot"
+          git config user.email "bot@hawkeye-sterling.ae"
+          git add .screening/webhook-state.json history/daily-ops/ || true
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Sanctions webhook check: $(date -u +%Y-%m-%dT%H:%M)"
+            git push
+          fi
