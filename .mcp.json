@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "compliance-copilot": {
+      "command": "node",
+      "args": ["screening/mcp/compliance-copilot.mjs"],
+      "env": {}
+    }
+  }
+}
