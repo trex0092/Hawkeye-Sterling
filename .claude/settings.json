@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node claude-mem/hooks/session-start.mjs"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "node claude-mem/hooks/prompt-submit.mjs"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "node claude-mem/hooks/post-tool-use.mjs"
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node claude-mem/hooks/on-stop.mjs"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "command": "node claude-mem/hooks/session-end.mjs"
+      }
+    ]
+  }
+}
