@@ -1,0 +1,24 @@
+{
+  "name": "Hawkeye-Sterling Compliance",
+  "short_name": "Hawkeye",
+  "description": "AML/CFT Mobile Compliance Dashboard for DNFBP Operations",
+  "start_url": "/mobile.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0f1117",
+  "background_color": "#0f1117",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M256 16L48 96v160c0 128 96 224 208 240 112-16 208-112 208-240V96Z' fill='%230f1117' stroke='%233b82f6' stroke-width='24'/%3E%3Ctext x='256' y='320' text-anchor='middle' font-family='Arial,sans-serif' font-size='260' font-weight='bold' fill='%233b82f6'%3EH%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cpath d='M96 8L18 38v60c0 48 36 84 78 90 42-6 78-42 78-90V38Z' fill='%230f1117' stroke='%233b82f6' stroke-width='10'/%3E%3Ctext x='96' y='122' text-anchor='middle' font-family='Arial,sans-serif' font-size='100' font-weight='bold' fill='%233b82f6'%3EH%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

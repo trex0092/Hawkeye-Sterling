@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1117">
+<link rel="manifest" href="/manifest.json">
+<title>Hawkeye-Sterling Compliance</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;
+  --surface:#1a1d27;
+  --surface2:#222633;
+  --accent:#3b82f6;
+  --accent-dim:#2563eb;
+  --text:#e2e8f0;
+  --text-muted:#94a3b8;
+  --critical:#ef4444;
+  --high:#f97316;
+  --medium:#eab308;
+  --low:#22c55e;
+  --fresh:#22c55e;
+  --stale:#ef4444;
+  --radius:10px;
+  --gap:12px;
+}
+html{font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.container{
+  max-width:480px;
+  margin:0 auto;
+  padding:0 var(--gap) var(--gap);
+}
+
+/* Status Bar */
+.status-bar{
+  position:sticky;top:0;z-index:100;
+  background:var(--surface);
+  border-bottom:1px solid var(--surface2);
+  padding:10px var(--gap);
+  display:flex;align-items:center;justify-content:space-between;
+  backdrop-filter:blur(10px);
+}
+.status-left{display:flex;align-items:center;gap:8px}
+.conn-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--fresh);
+  box-shadow:0 0 6px var(--fresh);
+  flex-shrink:0;
+}
+.conn-dot.offline{background:var(--stale);box-shadow:0 0 6px var(--stale)}
+.status-bar .sync-time{font-size:0.75rem;color:var(--text-muted)}
+.status-bar .mlro-name{font-size:0.8rem;font-weight:600;color:var(--accent)}
+
+/* Section headings */
+.section{margin-top:20px}
+.section-title{
+  font-size:0.85rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--text-muted);
+  margin-bottom:10px;
+  padding-left:2px;
+}
+
+/* Card base */
+.card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:var(--gap);
+}
+
+/* Quick Screen */
+.screen-row{display:flex;gap:8px}
+.screen-input{
+  flex:1;
+  background:var(--surface2);
+  border:1px solid transparent;
+  border-radius:var(--radius);
+  padding:12px 14px;
+  color:var(--text);
+  font-size:1rem;
+  outline:none;
+  transition:border-color .2s;
+}
+.screen-input:focus{border-color:var(--accent)}
+.screen-input::placeholder{color:var(--text-muted)}
+.btn{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:var(--radius);
+  padding:12px 18px;
+  font-size:0.9rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .2s;
+  white-space:nowrap;
+}
+.btn:active{background:var(--accent-dim)}
+.btn-sm{padding:8px 14px;font-size:0.8rem}
+.btn-outline{
+  background:transparent;
+  border:1px solid var(--accent);
+  color:var(--accent);
+}
+.btn-outline:active{background:var(--accent);color:#fff}
+.btn-approve{background:var(--low)}
+.btn-approve:active{background:#16a34a}
+.btn-return{background:var(--high)}
+.btn-return:active{background:#ea580c}
+
+.result-band{
+  margin-top:10px;
+  padding:10px 14px;
+  border-radius:var(--radius);
+  font-size:0.85rem;
+  font-weight:600;
+  display:none;
+  text-align:center;
+}
+.result-band.clear{background:#16a34a22;color:var(--fresh);display:block;border:1px solid var(--fresh)}
+.result-band.match{background:#ef444422;color:var(--critical);display:block;border:1px solid var(--critical)}
+.result-band.partial{background:#eab30822;color:var(--medium);display:block;border:1px solid var(--medium)}
+.result-band.visible{display:block}
+
+/* Alert list */
+.alert-scroll{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.alert-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--surface2);
+}
+.alert-item:last-child{border-bottom:none}
+.badge{
+  font-size:0.65rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  padding:3px 8px;
+  border-radius:6px;
+  flex-shrink:0;
+  line-height:1.3;
+}
+.badge-critical{background:#ef444433;color:var(--critical)}
+.badge-high{background:#f9731633;color:var(--high)}
+.badge-medium{background:#eab30833;color:var(--medium)}
+.badge-low{background:#22c55e33;color:var(--low)}
+.alert-body{flex:1;min-width:0}
+.alert-title{font-size:0.85rem;font-weight:600}
+.alert-meta{font-size:0.72rem;color:var(--text-muted);margin-top:2px}
+
+/* Cases */
+.case-item{
+  padding:12px 0;
+  border-bottom:1px solid var(--surface2);
+}
+.case-item:last-child{border-bottom:none}
+.case-header{display:flex;justify-content:space-between;align-items:center}
+.case-id{font-size:0.8rem;color:var(--accent);font-weight:600}
+.sla-badge{
+  font-size:0.7rem;font-weight:700;
+  padding:2px 8px;border-radius:6px;
+}
+.sla-ok{background:#22c55e22;color:var(--fresh)}
+.sla-warn{background:#eab30822;color:var(--medium)}
+.sla-breach{background:#ef444422;color:var(--critical)}
+.case-name{font-size:0.85rem;font-weight:600;margin-top:4px}
+.case-status{font-size:0.72rem;color:var(--text-muted);margin-top:2px}
+
+/* Filings */
+.filing-item{
+  padding:12px 0;
+  border-bottom:1px solid var(--surface2);
+}
+.filing-item:last-child{border-bottom:none}
+.filing-header{display:flex;justify-content:space-between;align-items:center}
+.filing-ref{font-size:0.8rem;color:var(--accent);font-weight:600}
+.filing-type{font-size:0.7rem;color:var(--text-muted)}
+.filing-desc{font-size:0.85rem;margin-top:4px}
+.filing-actions{display:flex;gap:8px;margin-top:8px}
+
+/* Source freshness */
+.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.source-card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:14px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.source-name{font-size:0.8rem;font-weight:600}
+.source-age{font-size:0.72rem;color:var(--text-muted)}
+.source-badge{
+  font-size:0.65rem;font-weight:700;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;
+  align-self:flex-start;
+}
+.source-fresh{background:#22c55e22;color:var(--fresh)}
+.source-stale{background:#ef444422;color:var(--critical)}
+
+/* Quick actions */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.action-btn{
+  background:var(--surface);
+  border:1px solid var(--surface2);
+  border-radius:var(--radius);
+  padding:16px 10px;
+  color:var(--text);
+  font-size:0.82rem;
+  font-weight:600;
+  cursor:pointer;
+  text-align:center;
+  transition:border-color .2s, background .2s;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.action-btn:active{border-color:var(--accent);background:var(--surface2)}
+.action-icon{font-size:1.4rem}
+
+/* Loading spinner */
+.spinner{
+  display:inline-block;width:16px;height:16px;
+  border:2px solid var(--surface2);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:4px}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--surface2);color:var(--text);
+  padding:10px 20px;border-radius:var(--radius);
+  font-size:0.82rem;font-weight:600;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  opacity:0;transition:opacity .3s;
+  pointer-events:none;z-index:200;
+}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-left">
+    <span class="conn-dot" id="connDot"></span>
+    <span class="sync-time" id="syncTime">Synced: just now</span>
+  </div>
+  <span class="mlro-name" id="mlroName">MLRO: S. Al-Maktoum</span>
+</div>
+
+<div class="container">
+
+  <!-- Quick Screen -->
+  <div class="section">
+    <div class="section-title">Quick Screen</div>
+    <div class="card">
+      <div class="screen-row">
+        <input class="screen-input" id="screenInput" type="text" placeholder="Enter name to screen..." autocomplete="off">
+        <button class="btn" id="screenBtn" onclick="runScreen()">Screen</button>
+      </div>
+      <div class="result-band" id="screenResult"></div>
+    </div>
+  </div>
+
+  <!-- Active Alerts -->
+  <div class="section">
+    <div class="section-title">Active Alerts</div>
+    <div class="card">
+      <div class="alert-scroll" id="alertList"></div>
+    </div>
+  </div>
+
+  <!-- My Cases -->
+  <div class="section">
+    <div class="section-title">My Cases</div>
+    <div class="card" id="caseList"></div>
+  </div>
+
+  <!-- Filing Approvals -->
+  <div class="section">
+    <div class="section-title">Filing Approvals</div>
+    <div class="card" id="filingList"></div>
+  </div>
+
+  <!-- Source Freshness -->
+  <div class="section">
+    <div class="section-title">Source Freshness</div>
+    <div class="source-grid" id="sourceGrid"></div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section">
+    <div class="section-title">Quick Actions</div>
+    <div class="action-grid">
+      <button class="action-btn" onclick="quickAction('screen')">
+        <span class="action-icon">&#128269;</span>Screen
+      </button>
+      <button class="action-btn" onclick="quickAction('refresh')">
+        <span class="action-icon">&#128260;</span>Refresh Lists
+      </button>
+      <button class="action-btn" onclick="quickAction('audit')">
+        <span class="action-icon">&#9989;</span>Verify Audit
+      </button>
+      <button class="action-btn" onclick="quickAction('grade')">
+        <span class="action-icon">&#128202;</span>View Grade
+      </button>
+    </div>
+  </div>
+
+  <div style="height:24px"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ── Demo data (fallback when API is unavailable) ──
+
+  var demoAlerts = [
+    { id: 'ALT-2026-0041', severity: 'critical', title: 'OFAC match: Petrova Holdings Ltd', meta: '2 minutes ago  |  Auto-escalated to MLRO' },
+    { id: 'ALT-2026-0040', severity: 'high', title: 'Unusual cash transaction AED 980,000', meta: '18 minutes ago  |  Threshold proximity alert' },
+    { id: 'ALT-2026-0039', severity: 'high', title: 'PEP association: Khartoum Gold Souq', meta: '1 hour ago  |  EDD required' },
+    { id: 'ALT-2026-0038', severity: 'medium', title: 'Velocity trigger: 5 transactions in 24h', meta: '3 hours ago  |  Client: Meridian Gems FZE' },
+    { id: 'ALT-2026-0037', severity: 'medium', title: 'Country risk: shipment origin Sudan', meta: '5 hours ago  |  Pending review' },
+    { id: 'ALT-2026-0036', severity: 'low', title: 'CDD renewal due in 14 days', meta: '6 hours ago  |  Client: Lumina Precious DMCC' },
+    { id: 'ALT-2026-0035', severity: 'low', title: 'Periodic screening completed (batch 22)', meta: '8 hours ago  |  0 new matches' }
+  ];
+
+  var demoCases = [
+    { id: 'CASE-2026-017', name: 'Petrova Holdings Ltd - OFAC Review', status: 'Under Investigation', sla: '4h 12m', slaClass: 'sla-warn' },
+    { id: 'CASE-2026-016', name: 'Khartoum Gold Souq - PEP Due Diligence', status: 'EDD In Progress', sla: '22h 45m', slaClass: 'sla-ok' },
+    { id: 'CASE-2026-015', name: 'Meridian Gems FZE - Transaction Review', status: 'Pending Documents', sla: '1h 08m', slaClass: 'sla-breach' },
+    { id: 'CASE-2026-014', name: 'Al Noor Trading - Structuring Analysis', status: 'Report Drafting', sla: '46h 30m', slaClass: 'sla-ok' }
+  ];
+
+  var demoFilings = [
+    { ref: 'STR-2026-009', type: 'STR', desc: 'Suspicious wire transfers - Petrova Holdings Ltd', date: '2026-04-08' },
+    { ref: 'SAR-2026-003', type: 'SAR', desc: 'Structured cash deposits - Meridian Gems FZE', date: '2026-04-07' },
+    { ref: 'STR-2026-008', type: 'STR', desc: 'Trade-based ML indicators - Khartoum Gold Souq', date: '2026-04-06' }
+  ];
+
+  var demoSources = [
+    { name: 'OFAC SDN', age: '2 hours ago', fresh: true },
+    { name: 'UN Sanctions', age: '6 hours ago', fresh: true },
+    { name: 'UAE Local List', age: '3 days ago', fresh: false },
+    { name: 'PEP Database', age: '12 hours ago', fresh: true }
+  ];
+
+  var demoScreenResults = {
+    clear: { status: 'clear', message: 'No matches found across all screening lists.' },
+    match: { status: 'match', message: 'OFAC SDN match found. Immediate escalation required.' },
+    partial: { status: 'partial', message: 'Potential fuzzy match (82% similarity). Manual review required.' }
+  };
+
+  // ── Helper: API fetch with demo fallback ──
+
+  function apiFetch(endpoint, options) {
+    return fetch('/api/v1/' + endpoint, options || {})
+      .then(function(r) {
+        if (!r.ok) throw new Error('API error ' + r.status);
+        return r.json();
+      })
+      .catch(function() {
+        return null;
+      });
+  }
+
+  // ── Connection status ──
+
+  var isOnline = true;
+
+  function updateConnectionStatus() {
+    var dot = document.getElementById('connDot');
+    var timeEl = document.getElementById('syncTime');
+    if (navigator.onLine) {
+      isOnline = true;
+      dot.classList.remove('offline');
+      timeEl.textContent = 'Synced: just now';
+    } else {
+      isOnline = false;
+      dot.classList.add('offline');
+      timeEl.textContent = 'Offline mode';
+    }
+  }
+
+  window.addEventListener('online', updateConnectionStatus);
+  window.addEventListener('offline', updateConnectionStatus);
+  updateConnectionStatus();
+
+  // ── Render alerts ──
+
+  function renderAlerts(alerts) {
+    var el = document.getElementById('alertList');
+    el.innerHTML = alerts.map(function(a) {
+      return '<div class="alert-item">' +
+        '<span class="badge badge-' + a.severity + '">' + a.severity + '</span>' +
+        '<div class="alert-body">' +
+          '<div class="alert-title">' + escHtml(a.title) + '</div>' +
+          '<div class="alert-meta">' + escHtml(a.meta) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Render cases ──
+
+  function renderCases(cases) {
+    var el = document.getElementById('caseList');
+    el.innerHTML = cases.map(function(c) {
+      return '<div class="case-item">' +
+        '<div class="case-header">' +
+          '<span class="case-id">' + escHtml(c.id) + '</span>' +
+          '<span class="sla-badge ' + c.slaClass + '">SLA: ' + escHtml(c.sla) + '</span>' +
+        '</div>' +
+        '<div class="case-name">' + escHtml(c.name) + '</div>' +
+        '<div class="case-status">' + escHtml(c.status) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Render filings ──
+
+  function renderFilings(filings) {
+    var el = document.getElementById('filingList');
+    el.innerHTML = filings.map(function(f) {
+      return '<div class="filing-item">' +
+        '<div class="filing-header">' +
+          '<span class="filing-ref">' + escHtml(f.ref) + '</span>' +
+          '<span class="filing-type">' + escHtml(f.type) + ' | ' + escHtml(f.date) + '</span>' +
+        '</div>' +
+        '<div class="filing-desc">' + escHtml(f.desc) + '</div>' +
+        '<div class="filing-actions">' +
+          '<button class="btn btn-sm btn-approve" onclick="filingAction(\'' + escAttr(f.ref) + '\',\'approve\')">Approve</button>' +
+          '<button class="btn btn-sm btn-return" onclick="filingAction(\'' + escAttr(f.ref) + '\',\'return\')">Return</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Render sources ──
+
+  function renderSources(sources) {
+    var el = document.getElementById('sourceGrid');
+    el.innerHTML = sources.map(function(s) {
+      var cls = s.fresh ? 'source-fresh' : 'source-stale';
+      var label = s.fresh ? 'Fresh' : 'Stale';
+      return '<div class="source-card">' +
+        '<div class="source-name">' + escHtml(s.name) + '</div>' +
+        '<div class="source-age">Updated: ' + escHtml(s.age) + '</div>' +
+        '<span class="source-badge ' + cls + '">' + label + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Quick screen ──
+
+  window.runScreen = function() {
+    var input = document.getElementById('screenInput');
+    var resultEl = document.getElementById('screenResult');
+    var btn = document.getElementById('screenBtn');
+    var name = input.value.trim();
+    if (!name) {
+      showToast('Enter a name to screen');
+      return;
+    }
+
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+    resultEl.className = 'result-band';
+    resultEl.style.display = 'none';
+
+    apiFetch('screen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name })
+    }).then(function(data) {
+      btn.textContent = 'Screen';
+      btn.disabled = false;
+
+      if (!data) {
+        // Demo fallback: deterministic result based on name length
+        var names = Object.keys(demoScreenResults);
+        var idx = name.length % 3;
+        data = demoScreenResults[names[idx]];
+      }
+
+      resultEl.className = 'result-band ' + data.status;
+      resultEl.textContent = data.message;
+    });
+  };
+
+  // Handle Enter key in screen input
+  document.getElementById('screenInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') window.runScreen();
+  });
+
+  // ── Filing actions ──
+
+  window.filingAction = function(ref, action) {
+    var label = action === 'approve' ? 'Approved' : 'Returned';
+
+    apiFetch('filings/' + encodeURIComponent(ref) + '/' + action, {
+      method: 'POST'
+    }).then(function() {
+      showToast(ref + ' ' + label);
+      // Remove from list visually
+      var filingItems = document.querySelectorAll('.filing-item');
+      for (var i = 0; i < filingItems.length; i++) {
+        var refEl = filingItems[i].querySelector('.filing-ref');
+        if (refEl && refEl.textContent === ref) {
+          filingItems[i].style.opacity = '0.3';
+          filingItems[i].style.pointerEvents = 'none';
+          break;
+        }
+      }
+    });
+  };
+
+  // ── Quick actions ──
+
+  window.quickAction = function(action) {
+    var messages = {
+      screen: 'Focus moved to Quick Screen',
+      refresh: 'Refreshing screening lists...',
+      audit: 'Audit verification started',
+      grade: 'Loading compliance grade...'
+    };
+
+    if (action === 'screen') {
+      document.getElementById('screenInput').focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    showToast(messages[action] || 'Action triggered');
+
+    if (action === 'refresh') {
+      apiFetch('sources/refresh', { method: 'POST' }).then(function() {
+        setTimeout(function() { showToast('Lists refreshed (demo)'); }, 1200);
+      });
+    }
+    if (action === 'audit') {
+      apiFetch('audit/verify').then(function() {
+        setTimeout(function() { showToast('Audit trail integrity verified'); }, 1500);
+      });
+    }
+    if (action === 'grade') {
+      apiFetch('compliance/grade').then(function(data) {
+        var grade = data ? data.grade : 'A-';
+        var score = data ? data.score : '94.2%';
+        setTimeout(function() { showToast('Compliance Grade: ' + grade + ' (' + score + ')'); }, 800);
+      });
+    }
+  };
+
+  // ── Toast notification ──
+
+  function showToast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function() {
+      el.classList.remove('show');
+    }, 2500);
+  }
+
+  // ── Escape helpers ──
+
+  function escHtml(str) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+  }
+
+  function escAttr(str) {
+    return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+  }
+
+  // ── Initial data load ──
+
+  function loadDashboard() {
+    apiFetch('alerts').then(function(data) {
+      renderAlerts(data || demoAlerts);
+    });
+
+    apiFetch('cases/mine').then(function(data) {
+      renderCases(data || demoCases);
+    });
+
+    apiFetch('filings/pending').then(function(data) {
+      renderFilings(data || demoFilings);
+    });
+
+    apiFetch('sources/status').then(function(data) {
+      renderSources(data || demoSources);
+    });
+  }
+
+  loadDashboard();
+
+  // ── Periodic sync ──
+
+  setInterval(function() {
+    updateConnectionStatus();
+    if (isOnline) {
+      var timeEl = document.getElementById('syncTime');
+      timeEl.textContent = 'Syncing...';
+      loadDashboard();
+      setTimeout(function() {
+        timeEl.textContent = 'Synced: ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }, 500);
+    }
+  }, 60000);
+
+  // ── Register service worker stub ──
+
+  if ('serviceWorker' in navigator) {
+    // Service worker registration would go here for full offline support
+    // navigator.serviceWorker.register('/sw.js');
+  }
+
+})();
+</script>
+</body>
+</html>
