@@ -60,9 +60,9 @@ jobs:
           fi
           echo ""
 
-          # Check 4: No require() in ESM files
+          # Check 4: No require() in ESM files (exclude native module loaders)
           echo "--- require() in .mjs files ---"
-          REQ_HITS=$(grep -rn 'require(' --include='*.mjs' screening/ claude-mem/ | grep -v 'node_modules' || true)
+          REQ_HITS=$(grep -rn 'require(' --include='*.mjs' screening/ claude-mem/ | grep -v 'node_modules' | grep -v 'better-sqlite3' | grep -v 'createRequire' || true)
           if [ -n "$REQ_HITS" ]; then
             echo "$REQ_HITS"
             ISSUES=$((ISSUES + $(echo "$REQ_HITS" | wc -l)))
