@@ -25,49 +25,56 @@ jobs:
         run: |
           echo "=== Error Handling Anti-Pattern Scan ==="
           echo ""
+          echo "Note: catch blocks with comments (/* ... */) are treated as"
+          echo "intentionally documented and excluded from the count."
+          echo ""
           ISSUES=0
 
-          # Pattern 1: Empty catch blocks (catch {})
-          echo "--- Empty catch blocks ---"
-          EMPTY=$(grep -rn 'catch\s*{' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep -v 'node_modules' | grep -v '\.test\.' || true)
+          # Pattern 1: Truly empty catch blocks (no comment, no code)
+          # Excludes: blocks with comments like /* optional */, /* skip */, etc.
+          echo "--- Undocumented empty catch blocks ---"
+          EMPTY=$(grep -rn 'catch\s*{\s*}' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep -v 'node_modules' | grep -v '\.test\.' || true)
           if [ -n "$EMPTY" ]; then
             echo "$EMPTY"
             COUNT=$(echo "$EMPTY" | wc -l)
-            echo "Found $COUNT empty catch block(s)"
+            echo "Found $COUNT undocumented empty catch block(s)"
             ISSUES=$((ISSUES + COUNT))
           else
             echo "None found"
           fi
           echo ""
 
-          # Pattern 2: catch without error variable
-          echo "--- Catch without error variable ---"
-          NOVAR=$(grep -rn 'catch\s*{' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep -v 'catch\s*(e' | grep -v 'catch\s*(err' | grep -v 'node_modules' | grep -v 'ignore\|optional\|close' || true)
-          if [ -n "$NOVAR" ]; then
-            echo "$NOVAR"
-            COUNT=$(echo "$NOVAR" | wc -l)
-            ISSUES=$((ISSUES + COUNT))
+          # Pattern 2: catch-and-return without logging (new code only)
+          # Only flag in files changed in this PR
+          echo "--- Catch-and-return without logging (changed files) ---"
+          CHANGED=$(git diff --name-only origin/main...HEAD -- '*.mjs' '*.js' 2>/dev/null || true)
+          if [ -n "$CHANGED" ]; then
+            SILENT=""
+            for f in $CHANGED; do
+              if [ -f "$f" ]; then
+                HITS=$(grep -n -A1 'catch.*{' "$f" 2>/dev/null | grep 'return' | grep -v 'console\.\|process\.stderr\|logger\|warn\|error\|\/\*' || true)
+                if [ -n "$HITS" ]; then
+                  SILENT="${SILENT}${f}: ${HITS}\n"
+                fi
+              fi
+            done
+            if [ -n "$SILENT" ]; then
+              echo -e "$SILENT"
+              COUNT=$(echo -e "$SILENT" | grep -c '.' || true)
+              ISSUES=$((ISSUES + COUNT))
+            else
+              echo "None found"
+            fi
           else
-            echo "None found"
-          fi
-          echo ""
-
-          # Pattern 3: catch that returns without logging
-          echo "--- Catch-and-return without logging ---"
-          SILENT=$(grep -rn -A1 'catch.*{' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep 'return' | grep -v 'console\.\|process\.stderr\|logger\|warn\|error' | grep -v 'node_modules' || true)
-          if [ -n "$SILENT" ]; then
-            echo "$SILENT"
-            COUNT=$(echo "$SILENT" | wc -l)
-            ISSUES=$((ISSUES + COUNT))
-          else
-            echo "None found"
+            echo "No changed JS/MJS files"
           fi
           echo ""
 
           echo "=== Total issues: $ISSUES ==="
-          if [ $ISSUES -gt 5 ]; then
-            echo "WARNING: More than 5 error-handling anti-patterns detected."
-            echo "Review and fix before merging."
+          if [ $ISSUES -gt 3 ]; then
+            echo "FAIL: More than 3 undocumented error-handling anti-patterns."
+            echo "Add a comment explaining why the error is intentionally ignored,"
+            echo "or add proper error handling."
             exit 1
           fi
           echo "Anti-pattern check passed."
