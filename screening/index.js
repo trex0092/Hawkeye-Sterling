@@ -43,6 +43,7 @@ import { EntityStore } from './lib/store.js';
 import { AuditLog } from './lib/audit.js';
 import { scoreMatch, DEFAULT_THRESHOLDS } from './lib/score.js';
 import { normalize } from './lib/normalize.js';
+import { enforceFreshness, checkFreshness } from './lib/staleness.mjs';
 import { createHash } from 'node:crypto';
 import { PATHS, SOURCES, THRESHOLDS, CACHE_TTL_MS } from './config.js';
 import { search as adverseSearch, scoreAdverseMedia } from './sources/adverse-media.js';
@@ -137,6 +138,8 @@ export async function refreshAll(opts = {}) {
 export async function screen(query, opts = {}) {
   await init(opts);
   if (!query || !query.name) throw new Error('screen: query.name required');
+  // Staleness circuit-breaker: block screening if lists are too old
+  await enforceFreshness({ force: opts.force, cacheDir: PATHS.cacheDir });
   const thresholds = { ...THRESHOLDS, ...(opts.thresholds || {}) };
   const type = inferType(query);
 
@@ -266,5 +269,5 @@ export { FATF_LISTS } from './config.js';
 
 // Default export for ergonomic `import Screening from '...'` usage.
 export default {
-  init, refreshOne, refreshAll, screen, batch, decision, override, verify, stats,
+  init, refreshOne, refreshAll, screen, batch, decision, override, verify, stats, checkFreshness,
 };

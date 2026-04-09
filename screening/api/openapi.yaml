@@ -1,0 +1,509 @@
+openapi: 3.0.3
+info:
+  title: Hawkeye-Sterling Screening API
+  description: |
+    AML/CFT compliance screening API for Dealers in Precious Metals and Stones.
+    Provides sanctions screening, PEP detection, adverse media monitoring,
+    and compliance filing workflow management.
+
+    Authentication: Bearer token via API key.
+    Rate limiting: Configurable per key (default 100 req/min).
+  version: 2.0.0
+  contact:
+    name: Hawkeye Sterling Compliance
+    email: support@hawkeye-sterling.com
+  license:
+    name: BSL 1.1
+    url: https://mariadb.com/bsl11/
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://api.hawkeye-sterling.com
+    description: Production
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check
+      description: Returns server status. No authentication required.
+      security: []
+      tags: [System]
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  version: { type: string, example: 2.0.0 }
+                  uptime: { type: number, example: 3600 }
+
+  /api/v1/screen:
+    post:
+      summary: Screen a subject
+      description: |
+        Screen a person or entity against sanctions, PEP, and adverse media lists.
+        Returns match score, band classification, and matched list entries.
+      tags: [Screening]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenRequest'
+      responses:
+        '200':
+          description: Screening result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          description: Screening blocked due to stale sanctions lists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/batch:
+    post:
+      summary: Batch screen multiple subjects
+      description: Screen up to 100 subjects in a single request.
+      tags: [Screening]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subjects]
+              properties:
+                subjects:
+                  type: array
+                  maxItems: 100
+                  items:
+                    $ref: '#/components/schemas/ScreenRequest'
+      responses:
+        '200':
+          description: Batch screening results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScreenResult'
+                  total: { type: integer }
+                  flagged: { type: integer }
+
+  /api/v1/decision:
+    post:
+      summary: Record a screening decision
+      description: |
+        Record an analyst or MLRO decision on a screening case.
+        Appends an immutable entry to the hash-chained audit log.
+      tags: [Decisions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caseId, outcome, reason]
+              properties:
+                caseId: { type: string, example: case_a1b2c3d4e5f6 }
+                outcome:
+                  type: string
+                  enum: [false-positive, true-positive, escalate, block, clear]
+                reason: { type: string, example: Name matches OFAC SDN list entry }
+                actor: { type: string, example: mlro }
+      responses:
+        '200':
+          description: Decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recorded: { type: boolean }
+                  auditSeq: { type: integer }
+
+  /api/v1/sources:
+    get:
+      summary: List screening sources
+      description: Returns all configured sanctions/PEP data sources and their status.
+      tags: [System]
+      responses:
+        '200':
+          description: Source list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        enabled: { type: boolean }
+                        priority: { type: integer }
+                        runtime: { type: boolean }
+
+  /api/v1/stats:
+    get:
+      summary: Store and audit statistics
+      description: Returns entity count, source breakdown, and audit log head.
+      tags: [System]
+      responses:
+        '200':
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  initialized: { type: boolean }
+                  entities: { type: integer }
+                  sources: { type: object }
+                  auditHead:
+                    type: object
+                    properties:
+                      seq: { type: integer }
+                      hash: { type: string }
+                      ts: { type: string, format: date-time }
+
+  /api/v1/refresh:
+    post:
+      summary: Trigger list refresh
+      description: Refresh all enabled sanctions/PEP sources. MLRO role required.
+      tags: [System]
+      responses:
+        '200':
+          description: Refresh results
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    total: { type: integer }
+                    added: { type: integer }
+                    removed: { type: integer }
+                    error: { type: string }
+
+  /api/v1/verify:
+    get:
+      summary: Verify audit chain
+      description: |
+        Verify the integrity of the hash-chained audit log.
+        Returns verification status and break point if tampered.
+      tags: [Audit]
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  entries: { type: integer }
+                  break:
+                    type: object
+                    nullable: true
+                    properties:
+                      seq: { type: integer }
+                      reason: { type: string }
+
+  /api/v1/freshness:
+    get:
+      summary: Check sanctions list freshness
+      description: Returns the age and staleness status of all enabled sanctions sources.
+      tags: [System]
+      responses:
+        '200':
+          description: Freshness report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  staleCount: { type: integer }
+                  totalSources: { type: integer }
+                  oldestAgeHours: { type: number }
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        status: { type: string, enum: [fresh, stale, missing, corrupt] }
+                        ageHours: { type: number }
+                        stale: { type: boolean }
+
+  /api/v1/risk:
+    post:
+      summary: Calculate entity risk score
+      description: |
+        Quantitative risk assessment using likelihood x impact matrix.
+        Returns risk score (1-25), band, CDD level, and recommendations.
+      tags: [Risk Assessment]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, country]
+              properties:
+                name: { type: string }
+                country: { type: string, description: ISO 2-letter code }
+                isPep: { type: boolean }
+                annualVolumeAed: { type: number }
+                productType: { type: string, enum: [fine_gold, gold_jewellery, precious_stones, mixed, other] }
+                channel: { type: string, enum: [cash, wire, cheque, crypto, card] }
+      responses:
+        '200':
+          description: Risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessment'
+
+  /api/v1/filings:
+    get:
+      summary: List filings
+      description: List all compliance filings, optionally filtered by state or type.
+      tags: [Filings]
+      parameters:
+        - name: state
+          in: query
+          schema: { type: string }
+        - name: type
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Filing list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Filing'
+
+    post:
+      summary: Create a filing draft
+      description: Create a new compliance filing in DRAFT state.
+      tags: [Filings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, subjectName, narrative]
+              properties:
+                type: { type: string, enum: [STR, SAR, CTR, DPMSR, CNMR] }
+                subjectName: { type: string }
+                narrative: { type: string }
+                amountAed: { type: number }
+                triggerDate: { type: string, format: date }
+      responses:
+        '201':
+          description: Filing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filing'
+
+  /api/v1/filings/{filingId}/transition:
+    post:
+      summary: Transition a filing state
+      description: |
+        Move a filing through the approval workflow.
+        State machine: draft -> analyst_review -> mlro_review -> approved -> filed
+      tags: [Filings]
+      parameters:
+        - name: filingId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newState, reason]
+              properties:
+                newState:
+                  type: string
+                  enum: [analyst_review, mlro_review, approved, filed, rejected, returned, withdrawn]
+                reason: { type: string }
+      responses:
+        '200':
+          description: Filing transitioned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filing'
+
+  /api/v1/keys:
+    get:
+      summary: List API keys (admin only)
+      tags: [Admin]
+      responses:
+        '200':
+          description: API key list (keys redacted)
+    post:
+      summary: Create API key (admin only)
+      tags: [Admin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, role]
+              properties:
+                name: { type: string }
+                role: { type: string, enum: [viewer, analyst, mlro, admin] }
+      responses:
+        '201':
+          description: API key created (shown only once)
+
+  /api/v1/tenants:
+    get:
+      summary: List tenants (admin only)
+      tags: [Admin]
+    post:
+      summary: Create tenant (admin only)
+      tags: [Admin]
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key from /api/v1/keys
+
+  schemas:
+    ScreenRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, description: Full name of subject, example: Mohammed Al-Rashid }
+        country: { type: string, description: ISO 2-letter code, example: AE }
+        type: { type: string, enum: [person, entity, vessel], default: person }
+        dob: { type: string, format: date, description: Date of birth }
+        aliases: { type: array, items: { type: string } }
+        includeAdverseMedia: { type: boolean, default: true }
+
+    ScreenResult:
+      type: object
+      properties:
+        caseId: { type: string }
+        query: { type: object }
+        decision: { type: string, enum: [clear, review, block] }
+        topBand: { type: string, enum: [reject, low, medium, high, exact] }
+        hits:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              source: { type: string }
+              matchedName: { type: string }
+              score: { type: number }
+              band: { type: string }
+        adverseMedia: { type: array, nullable: true }
+        auditSeq: { type: integer }
+
+    RiskAssessment:
+      type: object
+      properties:
+        entity: { type: string }
+        score: { type: integer, minimum: 1, maximum: 25 }
+        band: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        likelihood: { type: integer, minimum: 1, maximum: 5 }
+        impact: { type: integer, minimum: 1, maximum: 5 }
+        cddLevel: { type: string, enum: [SDD, CDD, EDD] }
+        reviewCycle: { type: string }
+        recommendations: { type: array, items: { type: string } }
+
+    Filing:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        subjectName: { type: string }
+        state: { type: string }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        mlroApproval: { type: object, nullable: true }
+        deadline: { type: string, format: date, nullable: true }
+        history: { type: array }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        hint: { type: string }
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+              retryAfter: { type: integer }
+
+tags:
+  - name: Screening
+    description: Sanctions, PEP, and adverse media screening
+  - name: Decisions
+    description: Analyst and MLRO decision recording
+  - name: Risk Assessment
+    description: Quantitative risk scoring
+  - name: Filings
+    description: Compliance filing workflow
+  - name: Audit
+    description: Audit chain verification
+  - name: System
+    description: Sources, stats, and health
+  - name: Admin
+    description: API key and tenant management

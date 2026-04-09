@@ -180,7 +180,7 @@ function detectLayering(txs) {
       }
     }
 
-    if (chain.length >= 3) {
+    if (chain.length >= 3 && chain[0]._date && chain[chain.length - 1]._date) {
       const entities = [...new Set(chain.flatMap(t => [t.from, t.to]))];
       const totalHours = (chain[chain.length - 1]._date - chain[0]._date) / 3600000;
       const amountConsistency = 1 - (stdDev(chain.map(t => t._amount)) / mean(chain.map(t => t._amount)) || 0);
@@ -477,6 +477,7 @@ function detectMismatch(txs, profiles) {
     if (!profile || !profile.expectedMonthlyVolume) continue;
 
     // Calculate actual monthly volume
+    if (entityTxs.length < 2) continue;
     const span = (entityTxs[entityTxs.length - 1]._date - entityTxs[0]._date) / 86400000;
     const months = Math.max(1, span / 30);
     const actualMonthly = entityTxs.reduce((s, t) => s + t._amount, 0) / months;
@@ -552,7 +553,7 @@ function stdDev(arr) {
 function deduplicateAlerts(alerts) {
   const seen = new Set();
   return alerts.filter(a => {
-    const key = `${a.pattern}:${a.entities.sort().join(',')}`;
+    const key = `${a.pattern}:${[...a.entities].sort().join(',')}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

@@ -1,0 +1,24 @@
+name: Daily Audit Chain Verification
+
+on:
+  schedule:
+    - cron: '0 6 * * *'    # 06:00 UTC daily (10:00 Dubai)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify audit chain integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify audit chain
+        run: node screening/bin/verify-cron.mjs
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

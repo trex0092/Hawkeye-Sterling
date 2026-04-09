@@ -1,0 +1,54 @@
+# ---------------------------------------------------------------------------
+# Hawkeye-Sterling  --  Docker Compose
+# ---------------------------------------------------------------------------
+
+services:
+  hawkeye-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      CORS_ORIGIN: "${CORS_ORIGIN:-*}"
+      RATE_LIMIT_RPM: "${RATE_LIMIT_RPM:-100}"
+      HAWKEYE_SCREENING_DIR: /app/.screening
+      NODE_ENV: "${NODE_ENV:-production}"
+      HAWKEYE_ADMIN_KEY: "${HAWKEYE_ADMIN_KEY:-}"
+      HAWKEYE_T_REJECT: "${HAWKEYE_T_REJECT:-0.62}"
+      HAWKEYE_T_LOW: "${HAWKEYE_T_LOW:-0.72}"
+      HAWKEYE_T_MEDIUM: "${HAWKEYE_T_MEDIUM:-0.82}"
+      HAWKEYE_T_HIGH: "${HAWKEYE_T_HIGH:-0.92}"
+      HAWKEYE_MAX_LIST_AGE_HOURS: "${HAWKEYE_MAX_LIST_AGE_HOURS:-24}"
+    volumes:
+      - screening-data:/app/.screening
+      - history-archive:/app/history
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  hawkeye-refresh:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["node", "screening/bin/refresh.mjs"]
+    environment:
+      HAWKEYE_SCREENING_DIR: /app/.screening
+      REFRESH_SCHEDULE: "${REFRESH_SCHEDULE:-0 */6 * * *}"
+      NODE_ENV: "${NODE_ENV:-production}"
+      EU_FSF_TOKEN: "${EU_FSF_TOKEN:-}"
+    volumes:
+      - screening-data:/app/.screening
+    depends_on:
+      hawkeye-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  screening-data:
+  history-archive:
