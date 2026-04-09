@@ -1,0 +1,79 @@
+name: Code Style Check
+
+# Zero-config JavaScript style enforcement.
+# Inspired by https://github.com/standard/standard
+
+on:
+  pull_request:
+    paths: ['**.mjs', '**.js']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  style-check:
+    name: JavaScript style check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check code style conventions
+        run: |
+          echo "=== Hawkeye-Sterling Code Style Check ==="
+          echo ""
+          ISSUES=0
+
+          # Check 1: No var declarations (use const/let)
+          echo "--- var declarations (use const/let instead) ---"
+          VAR_HITS=$(grep -rn '\bvar\s' --include='*.mjs' --include='*.js' screening/lib/ screening/analysis/ screening/api/ | grep -v 'node_modules' | grep -v '\.test\.' | grep -v '// var' || true)
+          if [ -n "$VAR_HITS" ]; then
+            echo "$VAR_HITS"
+            ISSUES=$((ISSUES + $(echo "$VAR_HITS" | wc -l)))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          # Check 2: No console.log in library code (use console.warn/error or process.stderr)
+          echo "--- console.log in library code ---"
+          LOG_HITS=$(grep -rn 'console\.log(' --include='*.mjs' --include='*.js' screening/lib/ screening/api/ | grep -v 'node_modules' | grep -v '\.test\.' || true)
+          if [ -n "$LOG_HITS" ]; then
+            echo "$LOG_HITS"
+            ISSUES=$((ISSUES + $(echo "$LOG_HITS" | wc -l)))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          # Check 3: No == or != (use === and !==)
+          echo "--- Loose equality (use === and !==) ---"
+          EQ_HITS=$(grep -rn '[^!=]=[^=]' --include='*.mjs' screening/lib/ screening/analysis/ 2>/dev/null | grep -E '\b(==|!=)[^=]' | grep -v 'node_modules' | grep -v '\.test\.' || true)
+          if [ -n "$EQ_HITS" ]; then
+            echo "$EQ_HITS"
+            ISSUES=$((ISSUES + $(echo "$EQ_HITS" | wc -l)))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          # Check 4: No require() in ESM files
+          echo "--- require() in .mjs files ---"
+          REQ_HITS=$(grep -rn 'require(' --include='*.mjs' screening/ claude-mem/ | grep -v 'node_modules' || true)
+          if [ -n "$REQ_HITS" ]; then
+            echo "$REQ_HITS"
+            ISSUES=$((ISSUES + $(echo "$REQ_HITS" | wc -l)))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          echo "=== Total issues: $ISSUES ==="
+          if [ $ISSUES -gt 0 ]; then
+            echo "Style issues detected. Please fix before merging."
+            exit 1
+          fi
+          echo "Code style check passed."
