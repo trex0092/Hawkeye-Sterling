@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hawkeye-Sterling Risk Dashboard</title>
+<style>
+:root{--bg:#0f1117;--sf:#1a1d27;--bd:#2a2d3a;--tx:#e4e4e7;--mt:#71717a;--ac:#3b82f6;--gn:#22c55e;--yl:#eab308;--or:#f97316;--rd:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
+.container{max-width:1440px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--bd);margin-bottom:24px}
+header h1{font-size:22px;font-weight:700}
+.mode-toggle{padding:6px 14px;border-radius:6px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);cursor:pointer;font-size:13px}
+.mode-toggle:hover{border-color:var(--ac)}
+.grid{display:grid;gap:16px;margin-bottom:24px}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:900px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px}
+.card h3{font-size:12px;color:var(--mt);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.card .val{font-size:32px;font-weight:700}
+.card .sub{font-size:12px;color:var(--mt);margin-top:4px}
+.spark{display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:8px}
+.spark div{width:8px;background:var(--ac);border-radius:2px;opacity:.7}
+.section{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:20px}
+.section h2{font-size:16px;margin-bottom:14px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.b-gn{background:rgba(34,197,94,.15);color:var(--gn)}.b-yl{background:rgba(234,179,8,.15);color:var(--yl)}
+.b-or{background:rgba(249,115,22,.15);color:var(--or)}.b-rd{background:rgba(239,68,68,.15);color:var(--rd)}
+.b-ac{background:rgba(59,130,246,.15);color:var(--ac)}.b-mt{background:rgba(113,113,122,.15);color:var(--mt)}
+.heatgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.hcell{padding:10px;border-radius:8px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.hcell:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(0,0,0,.4)}
+.timeline{display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto}
+.tl-item{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:8px;background:var(--bg)}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.tl-body{flex:1}.tl-body .title{font-size:13px;font-weight:600}.tl-body .meta{font-size:11px;color:var(--mt)}
+.donut-wrap{display:flex;align-items:center;gap:30px;justify-content:center}
+.legend{display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{width:120px;font-size:12px;text-align:right;color:var(--mt)}
+.bar-track{flex:1;height:22px;background:var(--bg);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s}
+.bar-val{width:30px;font-size:12px;color:var(--mt)}
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kb-col{background:var(--bg);border-radius:8px;padding:12px}
+.kb-col h4{font-size:11px;color:var(--mt);text-transform:uppercase;margin-bottom:10px;letter-spacing:.05em}
+.kb-card{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:10px;margin-bottom:8px;font-size:12px}
+.kb-card .type{font-weight:700;color:var(--ac)}
+canvas{border-radius:8px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Hawkeye-Sterling Risk Dashboard</h1>
+  <button class="mode-toggle" onclick="toggleMode()">Demo Mode</button>
+</header>
+
+<!-- KPI Cards -->
+<div class="grid grid-4">
+  <div class="card"><h3>Screenings Today</h3><div class="val" style="color:var(--ac)">247</div><div class="sub">+18% vs yesterday</div><div class="spark" id="spark1"></div></div>
+  <div class="card"><h3>Active Alerts</h3><div class="val" style="color:var(--or)">12</div><div class="sub">3 critical, 5 high</div><div class="spark" id="spark2"></div></div>
+  <div class="card"><h3>Compliance Grade</h3><div class="val" style="color:var(--gn)">A-</div><div class="sub">Score: 88% (6 pillars)</div><div class="spark" id="spark3"></div></div>
+  <div class="card"><h3>Source Status</h3><div class="val" style="color:var(--gn)">4/4</div><div class="sub">All sources fresh</div><div class="spark" id="spark4"></div></div>
+</div>
+
+<!-- Row: Heatmap + Network -->
+<div class="grid grid-2">
+  <div class="section"><h2>Jurisdiction Risk Heatmap</h2><div class="heatgrid" id="heatmap"></div></div>
+  <div class="section"><h2>Entity Network Graph</h2><canvas id="netGraph" width="600" height="340"></canvas></div>
+</div>
+
+<!-- Row: Timeline + Donut -->
+<div class="grid grid-2">
+  <div class="section"><h2>Alert Timeline</h2><div class="timeline" id="timeline"></div></div>
+  <div class="section"><h2>Screening Distribution</h2><div class="donut-wrap"><svg id="donut" width="180" height="180"></svg><div class="legend" id="donutLegend"></div></div></div>
+</div>
+
+<!-- Row: Typology + Filing Pipeline -->
+<div class="grid grid-2">
+  <div class="section"><h2>Typology Detection</h2><div class="bars" id="typoBars"></div></div>
+  <div class="section"><h2>Filing Pipeline</h2><div class="kanban" id="kanban"></div></div>
+</div>
+</div>
+
+<script>
+// ── Demo Data ──────────────────────────────────────────────
+const COUNTRIES=[
+  {c:'AE',n:'UAE',r:15},{c:'IR',n:'Iran',r:95},{c:'KP',n:'DPRK',r:98},{c:'RU',n:'Russia',r:75},
+  {c:'CN',n:'China',r:40},{c:'IN',n:'India',r:25},{c:'GB',n:'UK',r:10},{c:'US',n:'USA',r:12},
+  {c:'MM',n:'Myanmar',r:90},{c:'SY',n:'Syria',r:85},{c:'LB',n:'Lebanon',r:65},{c:'TR',n:'Turkey',r:35},
+  {c:'PK',n:'Pakistan',r:50},{c:'AF',n:'Afghanistan',r:88},{c:'NG',n:'Nigeria',r:55},{c:'ZA',n:'South Africa',r:45},
+  {c:'SA',n:'Saudi Arabia',r:20},{c:'QA',n:'Qatar',r:18},{c:'BH',n:'Bahrain',r:22},{c:'KW',n:'Kuwait',r:19}
+];
+const ALERTS=[
+  {sev:'critical',pat:'SANCTIONS_HIT',ent:'Entity Alpha FZE',conf:.96,time:'14:32'},
+  {sev:'critical',pat:'PROLIFERATION',ent:'DPRK Front Corp',conf:.91,time:'13:45'},
+  {sev:'critical',pat:'TF_INDICATOR',ent:'Unnamed Hawala',conf:.88,time:'12:10'},
+  {sev:'high',pat:'STRUCTURING',ent:'Gold Trading LLC',conf:.82,time:'11:55'},
+  {sev:'high',pat:'LAYERING',ent:'Shell Corp A->B->C',conf:.78,time:'11:20'},
+  {sev:'high',pat:'TBML',ent:'Refinery Delta',conf:.75,time:'10:40'},
+  {sev:'medium',pat:'VELOCITY_SPIKE',ent:'Jeweller Beta',conf:.65,time:'09:30'},
+  {sev:'low',pat:'DORMANCY_BREAK',ent:'Inactive DMCC Co',conf:.52,time:'08:15'}
+];
+const BANDS={exact:8,high:23,medium:47,low:89,clear:1280};
+const TYPOS=[{n:'TBML via Gold',v:14},{n:'Carousel Trading',v:8},{n:'TF Cash-Gold',v:6},{n:'Proliferation',v:4},{n:'Layered Cash',v:11},{n:'Gold-for-Drugs',v:3}];
+const FILINGS={draft:['STR-041: Alpha FZE','DPMSR-022: Beta Trading'],analyst_review:['STR-039: Delta Corp','SAR-015: Gamma Ltd'],mlro_review:['STR-038: Epsilon'],filed:['STR-037: Zeta','CTR-012: Theta','DPMSR-021: Iota']};
+const NODES=[
+  {id:'Alpha FZE',x:300,y:170,vx:0,vy:0,r:22,risk:'high',vol:5200000},
+  {id:'Beta Trading',x:150,y:100,vx:0,vy:0,r:16,risk:'medium',vol:2100000},
+  {id:'Gamma Ltd',x:450,y:120,vx:0,vy:0,r:14,risk:'low',vol:1500000},
+  {id:'Delta Corp',x:200,y:250,vx:0,vy:0,r:20,risk:'critical',vol:4800000},
+  {id:'Shell X',x:400,y:260,vx:0,vy:0,r:12,risk:'high',vol:900000},
+  {id:'Epsilon',x:350,y:60,vx:0,vy:0,r:10,risk:'low',vol:600000},
+  {id:'Hawala Y',x:100,y:200,vx:0,vy:0,r:18,risk:'critical',vol:3200000},
+  {id:'Refinery Z',x:500,y:200,vx:0,vy:0,r:15,risk:'medium',vol:1800000},
+];
+const EDGES=[[0,1],[0,3],[1,6],[3,4],[4,7],[2,5],[0,7],[3,6],[1,2]];
+
+// ── Sparklines ─────────────────────────────────────────────
+function drawSpark(id,vals){const el=document.getElementById(id);const mx=Math.max(...vals);vals.forEach(v=>{const d=document.createElement('div');d.style.height=Math.max(3,v/mx*24)+'px';el.appendChild(d);})}
+drawSpark('spark1',[180,210,195,230,220,240,247]);
+drawSpark('spark2',[8,10,7,15,11,9,12]);
+drawSpark('spark3',[82,84,85,86,87,87,88]);
+drawSpark('spark4',[4,4,3,4,4,4,4]);
+
+// ── Heatmap ────────────────────────────────────────────────
+const hm=document.getElementById('heatmap');
+COUNTRIES.forEach(c=>{const d=document.createElement('div');d.className='hcell';
+  const col=c.r>=70?'var(--rd)':c.r>=50?'var(--or)':c.r>=30?'var(--yl)':'var(--gn)';
+  d.style.background=col+'22';d.style.color=col;d.style.border=`1px solid ${col}44`;
+  d.innerHTML=`<div style="font-size:16px">${c.c}</div><div style="font-size:10px">${c.n}</div><div style="font-size:10px">${c.r}%</div>`;
+  hm.appendChild(d);
+});
+
+// ── Network Graph (Canvas) ─────────────────────────────────
+const canvas=document.getElementById('netGraph');const ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height;let dragging=null,mx=0,my=0;
+const riskCol={critical:'#ef4444',high:'#f97316',medium:'#eab308',low:'#22c55e'};
+function drawGraph(){
+  ctx.clearRect(0,0,W,H);
+  // Edges
+  ctx.strokeStyle='#2a2d3a';ctx.lineWidth=1.5;
+  EDGES.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(NODES[a].x,NODES[a].y);ctx.lineTo(NODES[b].x,NODES[b].y);ctx.stroke()});
+  // Nodes
+  NODES.forEach(n=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle=riskCol[n.risk]+'44';ctx.fill();
+    ctx.strokeStyle=riskCol[n.risk];ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#e4e4e7';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText(n.id,n.x,n.y+n.r+12);
+  });
+}
+// Simple force simulation
+function simulate(){
+  NODES.forEach((a,i)=>{NODES.forEach((b,j)=>{if(i>=j)return;
+    let dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+    const repulse=800/d/d;a.vx-=dx/d*repulse;a.vy-=dy/d*repulse;b.vx+=dx/d*repulse;b.vy+=dy/d*repulse;
+  })});
+  EDGES.forEach(([ai,bi])=>{const a=NODES[ai],b=NODES[bi];
+    let dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1;const attract=(d-120)*.01;
+    a.vx+=dx/d*attract;a.vy+=dy/d*attract;b.vx-=dx/d*attract;b.vy-=dy/d*attract;
+  });
+  NODES.forEach(n=>{if(n===dragging)return;n.vx*=.85;n.vy*=.85;n.x+=n.vx;n.y+=n.vy;
+    n.x=Math.max(n.r,Math.min(W-n.r,n.x));n.y=Math.max(n.r,Math.min(H-n.r,n.y));
+  });
+  drawGraph();requestAnimationFrame(simulate);
+}
+canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;
+  dragging=NODES.find(n=>Math.hypot(n.x-mx,n.y-my)<n.r+5)||null;});
+canvas.addEventListener('mousemove',e=>{if(!dragging)return;const r=canvas.getBoundingClientRect();dragging.x=e.clientX-r.left;dragging.y=e.clientY-r.top;});
+canvas.addEventListener('mouseup',()=>{dragging=null;});
+simulate();
+
+// ── Alert Timeline ─────────────────────────────────────────
+const tl=document.getElementById('timeline');
+const sevCol={critical:'var(--rd)',high:'var(--or)',medium:'var(--yl)',low:'var(--gn)'};
+ALERTS.forEach(a=>{const d=document.createElement('div');d.className='tl-item';
+  d.innerHTML=`<div class="tl-dot" style="background:${sevCol[a.sev]}"></div><div class="tl-body"><div class="title">${a.pat} — ${a.ent}</div><div class="meta">${a.sev.toUpperCase()} | Confidence: ${(a.conf*100).toFixed(0)}% | ${a.time}</div></div>`;
+  tl.appendChild(d);
+});
+
+// ── Donut Chart (SVG) ──────────────────────────────────────
+const svg=document.getElementById('donut');const leg=document.getElementById('donutLegend');
+const total=Object.values(BANDS).reduce((a,b)=>a+b,0);
+const bandCols={exact:'#ef4444',high:'#f97316',medium:'#eab308',low:'#3b82f6',clear:'#22c55e'};
+let cumAngle=-Math.PI/2;const cx=90,cy=90,R=70,r2=45;
+Object.entries(BANDS).forEach(([band,count])=>{
+  const angle=(count/total)*Math.PI*2;const x1=cx+R*Math.cos(cumAngle),y1=cy+R*Math.sin(cumAngle);
+  cumAngle+=angle;const x2=cx+R*Math.cos(cumAngle),y2=cy+R*Math.sin(cumAngle);
+  const large=angle>Math.PI?1:0;
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  const ix1=cx+r2*Math.cos(cumAngle-angle),iy1=cy+r2*Math.sin(cumAngle-angle);
+  const ix2=cx+r2*Math.cos(cumAngle),iy2=cy+r2*Math.sin(cumAngle);
+  path.setAttribute('d',`M${x1} ${y1} A${R} ${R} 0 ${large} 1 ${x2} ${y2} L${ix2} ${iy2} A${r2} ${r2} 0 ${large} 0 ${ix1} ${iy1} Z`);
+  path.setAttribute('fill',bandCols[band]);path.setAttribute('opacity','0.8');svg.appendChild(path);
+  leg.innerHTML+=`<div class="legend-item"><div class="legend-dot" style="background:${bandCols[band]}"></div>${band}: ${count} (${(count/total*100).toFixed(1)}%)</div>`;
+});
+
+// ── Typology Bars ──────────────────────────────────────────
+const tb=document.getElementById('typoBars');const mxT=Math.max(...TYPOS.map(t=>t.v));
+TYPOS.forEach(t=>{const pct=t.v/mxT*100;
+  tb.innerHTML+=`<div class="bar-row"><div class="bar-label">${t.n}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--ac)"></div></div><div class="bar-val">${t.v}</div></div>`;
+});
+
+// ── Kanban Pipeline ────────────────────────────────────────
+const kb=document.getElementById('kanban');
+const states=[['Draft','draft'],['Analyst Review','analyst_review'],['MLRO Review','mlro_review'],['Filed','filed']];
+const stCol={draft:'var(--mt)',analyst_review:'var(--ac)',mlro_review:'var(--yl)',filed:'var(--gn)'};
+states.forEach(([label,key])=>{
+  let html=`<div class="kb-col"><h4>${label} (${(FILINGS[key]||[]).length})</h4>`;
+  (FILINGS[key]||[]).forEach(f=>{html+=`<div class="kb-card"><span class="type">${f.split(':')[0]}</span><br>${f.split(':')[1]||''}</div>`;});
+  html+='</div>';kb.innerHTML+=html;
+});
+
+function toggleMode(){alert('Live mode requires API connection at /api/v1/. Currently showing demo data.')}
+</script>
+</body>
+</html>
