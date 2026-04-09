@@ -77,23 +77,73 @@ export function detectScript(s) {
 
 /**
  * Transliterate non-Latin scripts to Latin using the simple rule tables.
- * CJK characters are dropped (no rule table here) — callers should supply a
- * Latin alias for CJK entities.
+ * CJK characters are transliterated via Pinyin/Hangul romanization.
  */
 export function transliterate(s) {
   if (!s) return '';
   const script = detectScript(s);
   if (script === 'latin') return s;
+  if (script === 'cjk') {
+    // Dynamic import not available in sync context; use inline CJK lookup
+    return transliterateCJKInline(s);
+  }
   let out = '';
   for (const ch of s) {
     if (script === 'arabic' && ARABIC_MAP[ch] !== undefined) out += ARABIC_MAP[ch];
     else if (script === 'cyrillic' && CYRILLIC_MAP[ch.toLowerCase()] !== undefined) {
       out += CYRILLIC_MAP[ch.toLowerCase()];
     } else if (ch.match(/[\s\-']/)) out += ch;
-    else if (script === 'cjk') continue;
     else out += ch;
   }
   return out;
+}
+
+/**
+ * Inline CJK transliteration for synchronous normalize() calls.
+ * Uses a compact Pinyin table for common Chinese surname/given-name characters
+ * and algorithmic Hangul decomposition for Korean.
+ */
+function transliterateCJKInline(s) {
+  // Inline Pinyin for most common name characters
+  const PINYIN_INLINE = {
+    '\u738B': 'wang', '\u674E': 'li', '\u5F20': 'zhang', '\u5218': 'liu', '\u9648': 'chen',
+    '\u6768': 'yang', '\u8D75': 'zhao', '\u9EC4': 'huang', '\u5468': 'zhou', '\u5434': 'wu',
+    '\u5F90': 'xu', '\u5B59': 'sun', '\u80E1': 'hu', '\u6731': 'zhu', '\u9AD8': 'gao',
+    '\u6797': 'lin', '\u4F55': 'he', '\u90ED': 'guo', '\u9A6C': 'ma', '\u7F57': 'luo',
+    '\u6881': 'liang', '\u5B8B': 'song', '\u90D1': 'zheng', '\u8C22': 'xie', '\u97E9': 'han',
+    '\u5510': 'tang', '\u51AF': 'feng', '\u8463': 'dong', '\u8427': 'xiao', '\u7A0B': 'cheng',
+    '\u660E': 'ming', '\u534E': 'hua', '\u5EFA': 'jian', '\u6587': 'wen', '\u5E73': 'ping',
+    '\u6D77': 'hai', '\u5F3A': 'qiang', '\u5CF0': 'feng', '\u4F1F': 'wei', '\u519B': 'jun',
+    '\u5B66': 'xue', '\u82F1': 'ying', '\u5FB7': 'de', '\u4FE1': 'xin', '\u52C7': 'yong',
+    '\u4EAC': 'jing', '\u6E2F': 'gang', '\u516C': 'gong', '\u53F8': 'si', '\u96C6': 'ji',
+    '\u56E2': 'tuan', '\u94F6': 'yin', '\u884C': 'hang', '\u5546': 'shang', '\u8D38': 'mao',
+    '\u91D1': 'jin', '\u5929': 'tian', '\u5730': 'di', '\u4EBA': 'ren', '\u5C71': 'shan',
+    '\u6C34': 'shui', '\u4E2D': 'zhong', '\u56FD': 'guo', '\u5927': 'da', '\u5C0F': 'xiao',
+  };
+
+  // Hangul decomposition constants
+  const HB = 0xAC00, HE = 0xD7A3, MC = 21, FC = 28;
+  const INI = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+  const MED = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
+  const FIN = ['','k','kk','ks','n','nj','nh','t','l','lk','lm','lp','ls','lt','lp','lh','m','p','ps','s','ss','ng','j','ch','k','t','p','h'];
+
+  let out = '';
+  for (const ch of s) {
+    const code = ch.codePointAt(0);
+    if (code >= HB && code <= HE) {
+      const off = code - HB;
+      out += INI[Math.floor(off / (MC * FC))] + MED[Math.floor((off % (MC * FC)) / FC)] + FIN[off % FC];
+    } else if (PINYIN_INLINE[ch]) {
+      out += PINYIN_INLINE[ch];
+    } else if (ch.match(/[\s\-']/)) {
+      out += ch;
+    } else if (code >= 0x4E00 && code <= 0x9FFF) {
+      continue; // Unmapped CJK character — skip
+    } else {
+      out += ch;
+    }
+  }
+  return out.replace(/\s+/g, ' ').trim();
 }
 
 /**

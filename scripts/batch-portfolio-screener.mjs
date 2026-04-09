@@ -117,7 +117,8 @@ async function screenEntity(entity) {
       matchCount: result.matches?.length || 0,
       timestamp: new Date().toISOString(),
     };
-  } catch {
+  } catch (err) {
+    console.warn(`[portfolio-screener] screening failed for entity: ${err.message}`);
     return { score: 0, band: 'unknown', matchCount: 0, timestamp: new Date().toISOString() };
   }
 }
@@ -139,6 +140,8 @@ async function loadCounterparties() {
     const countryIdx = headers.findIndex(h => h.includes('country'));
     const typeIdx = headers.findIndex(h => h.includes('type'));
 
+    if (nameIdx < 0) { console.warn('[portfolio-screener] CSV missing name column'); return []; }
+
     return rows.slice(1).map(row => {
       const cols = row.split(',');
       return {
@@ -147,12 +150,12 @@ async function loadCounterparties() {
         type: typeIdx >= 0 ? (cols[typeIdx] || '').trim() : 'entity',
       };
     }).filter(e => e.name);
-  } catch { return []; }
+  } catch (err) { console.warn(`[portfolio-screener] failed to load counterparties: ${err.message}`); return []; }
 }
 
 async function loadPreviousState() {
   if (!existsSync(STATE_FILE)) return {};
-  try { return JSON.parse(await readFile(STATE_FILE, 'utf8')); } catch { return {}; }
+  try { return JSON.parse(await readFile(STATE_FILE, 'utf8')); } catch (err) { console.warn(`[portfolio-screener] failed to load previous state: ${err.message}`); return {}; }
 }
 
 async function saveState(results) {

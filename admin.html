@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hawkeye-Sterling Admin Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+    --text: #e4e4e7; --muted: #71717a; --accent: #3b82f6;
+    --green: #22c55e; --yellow: #eab308; --orange: #f97316; --red: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+  header h1 { font-size: 24px; font-weight: 600; }
+  header .status { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.green { background: var(--green); }
+  .dot.red { background: var(--red); }
+  .dot.yellow { background: var(--yellow); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card h3 { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .card .value { font-size: 36px; font-weight: 700; }
+  .card .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .section h2 { font-size: 18px; margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  th { color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+  tr:hover { background: rgba(59, 130, 246, 0.05); }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge.fresh { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge.stale { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge.missing { background: rgba(249,115,22,.15); color: var(--orange); }
+  .badge.low { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge.medium { background: rgba(234,179,8,.15); color: var(--yellow); }
+  .badge.high { background: rgba(249,115,22,.15); color: var(--orange); }
+  .badge.critical { background: rgba(239,68,68,.15); color: var(--red); }
+
+  .badge.draft { background: rgba(113,113,122,.15); color: var(--muted); }
+  .badge.analyst_review { background: rgba(59,130,246,.15); color: var(--accent); }
+  .badge.mlro_review { background: rgba(234,179,8,.15); color: var(--yellow); }
+  .badge.approved { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge.filed { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge.rejected { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge.returned { background: rgba(249,115,22,.15); color: var(--orange); }
+
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 14px; transition: 0.2s; }
+  .btn:hover { background: var(--border); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { opacity: 0.9; }
+  .btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  input[type="text"], input[type="password"], select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); transition: 0.2s; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text); }
+
+  .hidden { display: none; }
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+  #toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; background: var(--green); color: #fff; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 1000; }
+  #toast.show { opacity: 1; }
+  #toast.error { background: var(--red); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Hawkeye-Sterling Admin</h1>
+    <div class="status">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">Overview</div>
+    <div class="tab" data-tab="screening">Screening</div>
+    <div class="tab" data-tab="sources">Sources</div>
+    <div class="tab" data-tab="filings">Filings</div>
+    <div class="tab" data-tab="audit">Audit</div>
+    <div class="tab" data-tab="keys">API Keys</div>
+  </div>
+
+  <!-- Overview Tab -->
+  <div id="tab-overview">
+    <div class="grid">
+      <div class="card">
+        <h3>Entities in Store</h3>
+        <div class="value" id="entityCount">--</div>
+        <div class="sub" id="sourceCount">Loading...</div>
+      </div>
+      <div class="card">
+        <h3>Audit Entries</h3>
+        <div class="value" id="auditSeq">--</div>
+        <div class="sub" id="auditHash">Loading...</div>
+      </div>
+      <div class="card">
+        <h3>Source Freshness</h3>
+        <div class="value" id="freshStatus">--</div>
+        <div class="sub" id="freshDetail">Loading...</div>
+      </div>
+      <div class="card">
+        <h3>Server Uptime</h3>
+        <div class="value" id="uptime">--</div>
+        <div class="sub" id="version">Loading...</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Source Status</h2>
+      <table>
+        <thead><tr><th>Source</th><th>Status</th><th>Age</th><th>Last Fetched</th></tr></thead>
+        <tbody id="sourceTable"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Screening Tab -->
+  <div id="tab-screening" class="hidden">
+    <div class="section">
+      <h2>Screen a Subject</h2>
+      <div class="toolbar">
+        <input type="text" id="screenName" placeholder="Full name..." style="flex:1;min-width:200px">
+        <input type="text" id="screenCountry" placeholder="Country (ISO)" style="width:100px">
+        <select id="screenType"><option value="person">Person</option><option value="entity">Entity</option></select>
+        <button class="btn primary" onclick="runScreen()">Screen</button>
+      </div>
+      <div id="screenResult" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Sources Tab -->
+  <div id="tab-sources" class="hidden">
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2>Sanctions Sources</h2>
+        <button class="btn primary" onclick="refreshSources()">Refresh All</button>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Priority</th><th>Enabled</th><th>Runtime</th></tr></thead>
+        <tbody id="allSourceTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Filings Tab -->
+  <div id="tab-filings" class="hidden">
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2>Filing Workflow</h2>
+        <button class="btn primary" onclick="showCreateFiling()">New Filing</button>
+      </div>
+      <div class="toolbar">
+        <select id="filingFilter" onchange="loadFilings()">
+          <option value="">All States</option>
+          <option value="draft">Draft</option>
+          <option value="analyst_review">Analyst Review</option>
+          <option value="mlro_review">MLRO Review</option>
+          <option value="approved">Approved</option>
+          <option value="filed">Filed</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Type</th><th>Subject</th><th>State</th><th>Deadline</th><th>Updated</th></tr></thead>
+        <tbody id="filingTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Audit Tab -->
+  <div id="tab-audit" class="hidden">
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2>Audit Chain Verification</h2>
+        <button class="btn primary" onclick="verifyChain()">Verify Now</button>
+      </div>
+      <div id="verifyResult"><p style="color:var(--muted)">Click "Verify Now" to check audit chain integrity.</p></div>
+    </div>
+  </div>
+
+  <!-- API Keys Tab -->
+  <div id="tab-keys" class="hidden">
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2>API Keys</h2>
+        <button class="btn primary" onclick="showCreateKey()">Create Key</button>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>Created</th><th>Last Used</th><th>Actions</th></tr></thead>
+        <tbody id="keyTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = window.location.origin;
+let apiKey = localStorage.getItem('hawkeye_admin_key') || '';
+
+if (!apiKey) {
+  apiKey = prompt('Enter your API key:') || '';
+  if (apiKey) localStorage.setItem('hawkeye_admin_key', apiKey);
+}
+
+const headers = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${apiKey}`,
+});
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = isError ? 'show error' : 'show';
+  setTimeout(() => el.className = '', 3000);
+}
+
+async function api(path, opts = {}) {
+  try {
+    const res = await fetch(`${API}${path}`, { headers: headers(), ...opts });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || res.statusText);
+    }
+    return res.json();
+  } catch (err) {
+    toast(err.message, true);
+    throw err;
+  }
+}
+
+// Tab navigation
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+  });
+});
+
+// Load overview
+async function loadOverview() {
+  try {
+    const health = await api('/api/v1/health');
+    document.getElementById('statusDot').className = 'dot green';
+    document.getElementById('statusText').textContent = 'Connected';
+    document.getElementById('uptime').textContent = Math.round(health.uptime / 60) + 'm';
+    document.getElementById('version').textContent = `v${health.version}`;
+  } catch {
+    document.getElementById('statusDot').className = 'dot red';
+    document.getElementById('statusText').textContent = 'Disconnected';
+  }
+
+  try {
+    const stats = await api('/api/v1/stats');
+    document.getElementById('entityCount').textContent = (stats.entities || 0).toLocaleString();
+    document.getElementById('sourceCount').textContent = `${Object.keys(stats.sources || {}).length} sources`;
+    document.getElementById('auditSeq').textContent = stats.auditHead?.seq || 0;
+    document.getElementById('auditHash').textContent = stats.auditHead?.hash?.slice(0, 12) + '...' || 'N/A';
+  } catch { /* handled by api() */ }
+
+  try {
+    const fresh = await api('/api/v1/freshness');
+    document.getElementById('freshStatus').textContent = fresh.ok ? 'Fresh' : `${fresh.staleCount} Stale`;
+    document.getElementById('freshStatus').style.color = fresh.ok ? 'var(--green)' : 'var(--red)';
+    document.getElementById('freshDetail').textContent = `${fresh.totalSources} sources, oldest: ${fresh.oldestAgeHours}h`;
+
+    const rows = fresh.sources.map(s => `<tr>
+      <td>${s.name}</td>
+      <td><span class="badge ${s.status}">${s.status}</span></td>
+      <td>${s.ageHours === Infinity ? 'N/A' : s.ageHours + 'h'}</td>
+      <td>${s.fetchedAt || 'Never'}</td>
+    </tr>`).join('');
+    document.getElementById('sourceTable').innerHTML = rows || '<tr><td colspan="4">No sources</td></tr>';
+  } catch { /* handled */ }
+}
+
+async function runScreen() {
+  const name = document.getElementById('screenName').value.trim();
+  if (!name) return toast('Enter a name', true);
+  const body = {
+    name,
+    country: document.getElementById('screenCountry').value.trim() || undefined,
+    type: document.getElementById('screenType').value,
+  };
+  try {
+    const result = await api('/api/v1/screen', { method: 'POST', body: JSON.stringify(body) });
+    const el = document.getElementById('screenResult');
+    el.classList.remove('hidden');
+    const bandClass = result.topBand === 'high' || result.topBand === 'exact' ? 'critical' : result.topBand;
+    el.innerHTML = `
+      <div class="card" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h3>Result: ${result.query.name}</h3>
+            <div class="value">${result.decision.toUpperCase()}</div>
+          </div>
+          <span class="badge ${bandClass}" style="font-size:16px;padding:6px 16px">${result.topBand}</span>
+        </div>
+        <div class="sub" style="margin-top:12px">
+          Case ID: ${result.caseId} | Hits: ${result.hits?.length || 0} | Audit seq: ${result.auditSeq}
+        </div>
+        ${result.hits?.length ? `<table style="margin-top:12px">
+          <thead><tr><th>Name</th><th>Source</th><th>Score</th><th>Band</th></tr></thead>
+          <tbody>${result.hits.slice(0, 10).map(h => `<tr>
+            <td>${h.matchedName}</td><td>${h.source}</td>
+            <td>${h.score}</td><td><span class="badge ${h.band}">${h.band}</span></td>
+          </tr>`).join('')}</tbody>
+        </table>` : ''}
+      </div>`;
+  } catch { /* handled */ }
+}
+
+async function refreshSources() {
+  toast('Refreshing sources...');
+  try {
+    await api('/api/v1/refresh', { method: 'POST' });
+    toast('Sources refreshed');
+    loadOverview();
+  } catch { /* handled */ }
+}
+
+async function verifyChain() {
+  try {
+    const result = await api('/api/v1/verify');
+    const el = document.getElementById('verifyResult');
+    if (result.ok) {
+      el.innerHTML = `<div class="card" style="border-color:var(--green)">
+        <div style="color:var(--green);font-size:24px;font-weight:700">CHAIN VALID</div>
+        <div class="sub">${result.entries} entries verified. No tampering detected.</div>
+      </div>`;
+    } else {
+      el.innerHTML = `<div class="card" style="border-color:var(--red)">
+        <div style="color:var(--red);font-size:24px;font-weight:700">CHAIN BROKEN</div>
+        <div class="sub">Break at sequence ${result.break.seq}: ${result.break.reason}</div>
+        <div class="sub">${result.entries} entries verified before break.</div>
+      </div>`;
+    }
+  } catch { /* handled */ }
+}
+
+// Init
+loadOverview();
+</script>
+</body>
+</html>

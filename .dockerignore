@@ -1,0 +1,8 @@
+.git
+node_modules
+.screening
+history
+*.log
+.env
+.env.*
+!.env.example

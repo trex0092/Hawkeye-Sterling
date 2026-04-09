@@ -165,7 +165,7 @@ async function handleScreen(params) {
         const articles = await search(params.name, { limit: 10 });
         adverseMedia = scoreAdverseMedia(articles);
         adverseMedia.articles = articles.slice(0, 5).map(a => ({ title: a.title, url: a.url, tone: a.tone }));
-      } catch { /* adverse media optional */ }
+      } catch (err) { process.stderr.write(`[compliance-copilot] adverse media lookup failed: ${err.message}\n`); }
     }
 
     // Record in memory
@@ -204,7 +204,7 @@ async function handleJurisdiction(params) {
   }
 }
 
-function handleThresholdCheck(params) {
+async function handleThresholdCheck(params) {
   const { amount_aed, is_cross_border, is_cash, entity_name } = params;
   const breaches = [];
   const actions = [];
@@ -232,7 +232,7 @@ function handleThresholdCheck(params) {
   };
 
   if (breaches.length > 0) {
-    recordMemory('compliance_decision',
+    await recordMemory('compliance_decision',
       `Threshold breach: AED ${amount_aed.toLocaleString()} (${breaches.map(b => b.type).join(', ')})`,
       entity_name, 8);
   }
@@ -240,7 +240,7 @@ function handleThresholdCheck(params) {
   return result;
 }
 
-function handleEntityRisk(params) {
+async function handleEntityRisk(params) {
   const { name, country, is_pep, annual_volume_aed, product_type } = params;
 
   // Likelihood factors (1-5)
@@ -297,7 +297,7 @@ function handleEntityRisk(params) {
       : `Proceed with ${cdd_level} onboarding`,
   };
 
-  recordMemory('risk_assessment',
+  await recordMemory('risk_assessment',
     `Entity risk: ${name} (${country}) = ${score} (${rating}), CDD: ${cdd_level}`,
     name, score >= 16 ? 8 : 6);
 
@@ -320,17 +320,19 @@ async function handleFilingDraft(params) {
 }
 
 async function handleMemSearch(params) {
+  let mem;
   try {
-    const mem = (await import(resolve(PROJECT_ROOT, 'claude-mem', 'index.mjs'))).default;
+    mem = (await import(resolve(PROJECT_ROOT, 'claude-mem', 'index.mjs'))).default;
     const results = mem.search(params.query, {
       category: params.category,
       entity: params.entity,
       limit: params.limit || 20,
     });
-    mem.close();
     return { results, count: results.length };
   } catch (err) {
     return { error: err.message };
+  } finally {
+    if (mem) try { mem.close(); } catch { /* ignore close errors */ }
   }
 }
 
@@ -369,13 +371,17 @@ function getScreeningRecommendation(result) {
 }
 
 async function recordMemory(category, content, entityName, importance = 5) {
+  let mem;
   try {
-    const mem = (await import(resolve(PROJECT_ROOT, 'claude-mem', 'index.mjs'))).default;
+    mem = (await import(resolve(PROJECT_ROOT, 'claude-mem', 'index.mjs'))).default;
     mem.startSession(`mcp-${Date.now().toString(36)}`);
     mem.observe({ category, content, entityName, importance });
     await mem.endSession();
-    mem.close();
-  } catch { /* memory system optional */ }
+  } catch (err) {
+    process.stderr.write(`[compliance-copilot] memory record failed: ${err.message}\n`);
+  } finally {
+    if (mem) try { mem.close(); } catch { /* ignore close errors */ }
+  }
 }
 
 // ── MCP Protocol Handler ────────────────────────────────────
