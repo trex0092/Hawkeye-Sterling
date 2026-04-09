@@ -1,0 +1,84 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-04-09
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-09, 17:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes for the calendar day 2026-04-09.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This note compares the morning priority lists with the work actually closed on 2026-04-09, entity by entity, to establish completion rates and identify items requiring continuation.
+
+HEADLINE FOR TODAY
+
+Zero tasks were completed across all seven programmes reviewed today, despite seven tasks being touched across compliance reviews and screenings. The absence of a morning priority archive prevents us from establishing whether items carried over from prior days or were newly identified. All work requires attention on 2026-04-10.
+
+COMPLETION BY PROGRAMME
+
+FG BRANCH - COMPLIANCE PROGRAMME 2026 touched one task but completed zero. No morning priority archive was available to determine the baseline status or priority level of the untouched item. This task carries over and requires closure.
+
+MADISON LLC - COMPLIANCE PROGRAMME 2026 touched one task but completed zero. Without access to the morning priority archive, we cannot establish whether this item held a priority designation. This task carries over and requires closure.
+
+GRAMALTIN AS - COMPLIANCE PROGRAMME 2026 touched one task but completed zero. The morning priority archive was unavailable, so the status and priority of the untouched item remain undefined. This task carries over and requires closure.
+
+NAPLES LLC - COMPLIANCE PROGRAMME 2026 touched one task but completed zero. No morning priority baseline is available. This task carries over and requires closure.
+
+ZOE FZE - COMPLIANCE PROGRAMME 2026 touched one task but completed zero. The morning priority archive was not provided, limiting visibility into the item's standing. This task carries over and requires closure.
+
+FG LLC - COMPLIANCE PROGRAMME 2026 touched one task but completed zero. Without the morning priority archive, the baseline priority of this item is unknown. This task carries over and requires closure.
+
+SCREENINGS touched one task but completed zero. The morning priority archive was unavailable, so we cannot determine the priority or status of this item. This screening task carries over and requires closure.
+
+ITEMS CARRIED OVER TO TOMORROW
+
+FG BRANCH - COMPLIANCE PROGRAMME 2026 has one untouched task that carries over to 2026-04-10. Its priority standing is unknown due to the absence of the morning archive.
+
+MADISON LLC - COMPLIANCE PROGRAMME 2026 has one untouched task that carries over to 2026-04-10. Without a morning baseline, its priority cannot be confirmed.
+
+GRAMALTIN AS - COMPLIANCE PROGRAMME 2026 has one untouched task that carries over to 2026-04-10. Priority status is undefined.
+
+NAPLES LLC - COMPLIANCE PROGRAMME 2026 has one untouched task that carries over to 2026-04-10.
+
+ZOE FZE - COMPLIANCE PROGRAMME 2026 has one untouched task that carries over to 2026-04-10.
+
+FG LLC - COMPLIANCE PROGRAMME 2026 has one untouched task that carries over to 2026-04-10.
+
+SCREENINGS has one untouched task that carries over to 2026-04-10.
+
+KEY DECISIONS TAKEN BY THE MLRO TODAY
+
+No MLRO decisions were visible in today's data.
+
+FILINGS MADE TODAY
+
+No filings were visible in today's completion data.
+
+OBSERVATIONS
+
+Today's completion rate was zero per cent across all programmes. Seven tasks were touched but none were closed. This pattern, combined with the absence of the morning priority archive, prevents us from establishing whether the untouched work represents a backlog from prior days or newly identified items requiring urgent action. The lack of closure on any task is unusual and warrants immediate clarification.
+
+The absence of the morning priority archive is a material gap in the retro's analytical value. Without a baseline list, we cannot determine whether the seven items touched were morning priorities or discovered during the day. We recommend confirming that the priority list generation process is functioning correctly and that the archive is being preserved as expected.
+
+Restore the morning priority archive process and confirm the status of all seven untouched tasks with ownership by end of business 2026-04-10.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
