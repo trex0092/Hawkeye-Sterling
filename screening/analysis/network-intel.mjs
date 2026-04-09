@@ -124,7 +124,82 @@ export function buildGraph(params) {
     }
   }
 
+  // Build edges from familial relationships
+  for (const rel of (params.familyRelationships || [])) {
+    if (!nodes.has(rel.person1)) {
+      nodes.set(rel.person1, { id: rel.person1, type: 'person', connections: 0, cluster: null });
+    }
+    if (!nodes.has(rel.person2)) {
+      nodes.set(rel.person2, { id: rel.person2, type: 'person', connections: 0, cluster: null });
+    }
+    edges.push({
+      from: rel.person1,
+      to: rel.person2,
+      type: 'family',
+      relationship: rel.relationship, // spouse, child, sibling, parent
+      weight: 8,
+    });
+    nodes.get(rel.person1).connections++;
+    nodes.get(rel.person2).connections++;
+  }
+
+  // Build edges from nominee/proxy arrangements
+  for (const nom of (params.nominees || [])) {
+    if (!nodes.has(nom.nominee)) {
+      nodes.set(nom.nominee, { id: nom.nominee, type: 'person', connections: 0, cluster: null, isNominee: true });
+    }
+    if (!nodes.has(nom.principal)) {
+      nodes.set(nom.principal, { id: nom.principal, type: 'person', connections: 0, cluster: null });
+    }
+    edges.push({
+      from: nom.nominee,
+      to: nom.principal,
+      type: 'nominee',
+      arrangement: nom.arrangement || 'nominee_director',
+      weight: 10,
+    });
+    nodes.get(nom.nominee).connections++;
+    nodes.get(nom.principal).connections++;
+  }
+
+  // Detect potential familial links by surname matching
+  const personNodes = [...nodes.entries()]
+    .filter(([, n]) => n.type === 'person')
+    .map(([id, n]) => ({ id, surname: extractSurname(id) }));
+
+  for (let i = 0; i < personNodes.length; i++) {
+    for (let j = i + 1; j < personNodes.length; j++) {
+      if (personNodes[i].surname &&
+          personNodes[i].surname === personNodes[j].surname &&
+          personNodes[i].surname.length >= 3) {
+        // Check this edge doesn't already exist
+        const exists = edges.some(e =>
+          (e.from === personNodes[i].id && e.to === personNodes[j].id) ||
+          (e.from === personNodes[j].id && e.to === personNodes[i].id)
+        );
+        if (!exists) {
+          edges.push({
+            from: personNodes[i].id,
+            to: personNodes[j].id,
+            type: 'potential_family',
+            reason: `Shared surname: ${personNodes[i].surname}`,
+            weight: 3,
+          });
+        }
+      }
+    }
+  }
+
   return { nodes, edges };
+}
+
+/**
+ * Extract surname (last token) from a name string for familial matching.
+ */
+function extractSurname(name) {
+  if (!name) return '';
+  const tokens = name.toLowerCase().replace(/[^a-z\s]/g, '').trim().split(/\s+/);
+  return tokens.length > 0 ? tokens[tokens.length - 1] : '';
 }
 
 /**
