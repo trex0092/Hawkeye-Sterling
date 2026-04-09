@@ -866,3 +866,114 @@ export function formatUBOReport(result) {
 
   return lines.join('\n');
 }
+
+// ── 50% Sanctions Ownership Rule ───────────────────────────────
+
+/**
+ * SANCTIONS OWNERSHIP VALIDATION (50% Rule)
+ *
+ * Under FATF Rec.6 / OFAC 50% Rule / FDL No.10/2025 Art.12:
+ * An entity is treated as sanctioned if 50% or more of its ownership
+ * (direct or indirect, aggregated across all paths) is held by one or
+ * more sanctioned persons or entities.
+ *
+ * This is SEPARATE from UBO identification (25% threshold).
+ * The 50% rule applies even when no single sanctioned person exceeds 25%.
+ *
+ * Example: Sanctioned Person A owns 30% + Sanctioned Person B owns 25%
+ * = 55% aggregate sanctioned ownership → entity treated as designated.
+ *
+ * @param {OwnershipGraph} graph - The ownership graph
+ * @param {string} entityId - Entity to check
+ * @param {Set<string>|Array<string>} sanctionedIds - IDs of sanctioned persons/entities
+ * @param {object} [opts]
+ * @param {number} [opts.threshold] - Sanctions threshold (default: 0.50)
+ * @returns {SanctionsOwnershipResult}
+ */
+export function validateSanctionsOwnership(graph, entityId, sanctionedIds, opts = {}) {
+  const threshold = opts.threshold !== undefined ? opts.threshold : 0.50;
+  const sanctionedSet = sanctionedIds instanceof Set ? sanctionedIds : new Set(sanctionedIds);
+
+  if (!graph.nodes.has(entityId)) {
+    throw new Error(`validateSanctionsOwnership: entity "${entityId}" not found in graph`);
+  }
+
+  // Run full UBO traversal with 0% threshold (get ALL owners)
+  const uboResult = calculateUBOs(graph, entityId, { threshold: 0, maxDepth: MAX_DEPTH });
+  const allOwners = [...uboResult.ubos, ...uboResult.nonUboOwners];
+
+  // Identify sanctioned owners and aggregate their effective ownership
+  const sanctionedOwners = [];
+  let aggregateSanctionedOwnership = 0;
+
+  for (const owner of allOwners) {
+    if (sanctionedSet.has(owner.personId) || sanctionedSet.has(owner.personName)) {
+      sanctionedOwners.push({
+        personId: owner.personId,
+        personName: owner.personName,
+        country: owner.country,
+        effectiveOwnership: owner.effectiveOwnership,
+        effectiveOwnershipPct: owner.effectiveOwnershipPct,
+        chains: owner.chains,
+      });
+      aggregateSanctionedOwnership += owner.effectiveOwnership;
+    }
+  }
+
+  // Also check if any entity IN the ownership chain is sanctioned
+  // (not just terminal persons — intermediate corporate entities count too)
+  const sanctionedIntermediaries = [];
+  for (const owner of allOwners) {
+    for (const chain of owner.chains) {
+      for (const step of chain) {
+        if ((sanctionedSet.has(step.entityId) || sanctionedSet.has(step.entityName)) &&
+            !sanctionedOwners.some(s => s.personId === step.entityId)) {
+          sanctionedIntermediaries.push({
+            entityId: step.entityId,
+            entityName: step.entityName,
+            positionInChain: `Intermediary in ownership chain to ${owner.personName}`,
+          });
+        }
+      }
+    }
+  }
+
+  const breachesThreshold = aggregateSanctionedOwnership >= threshold;
+
+  let determination, action;
+  if (breachesThreshold) {
+    determination = 'DESIGNATED_BY_OWNERSHIP';
+    action = 'FREEZE immediately. Entity is treated as designated under the 50% ownership rule. ' +
+             'File CNMR within 5 business days. DO NOT notify the subject (Art.29).';
+  } else if (sanctionedOwners.length > 0) {
+    determination = 'PARTIAL_SANCTIONED_OWNERSHIP';
+    action = 'Enhanced due diligence required. Sanctioned persons hold ' +
+             `${(aggregateSanctionedOwnership * 100).toFixed(1)}% (below ${threshold * 100}% threshold). ` +
+             'Monitor for ownership changes. Escalate to MLRO.';
+  } else if (sanctionedIntermediaries.length > 0) {
+    determination = 'SANCTIONED_INTERMEDIARY_IN_CHAIN';
+    action = 'Sanctioned entity found in ownership chain (not as direct owner). ' +
+             'Investigate relationship. EDD and MLRO escalation required.';
+  } else {
+    determination = 'NO_SANCTIONS_NEXUS';
+    action = 'No sanctioned ownership identified. Standard CDD applies.';
+  }
+
+  return {
+    entityId,
+    entityName: graph.nodes.get(entityId)?.name || entityId,
+    threshold,
+    thresholdPct: `${threshold * 100}%`,
+    aggregateSanctionedOwnership: Math.round(aggregateSanctionedOwnership * 10000) / 10000,
+    aggregateSanctionedOwnershipPct: `${(aggregateSanctionedOwnership * 100).toFixed(2)}%`,
+    breachesThreshold,
+    determination,
+    action,
+    sanctionedOwners,
+    sanctionedIntermediaries,
+    totalOwnersChecked: allOwners.length,
+    sanctionedIdsChecked: sanctionedSet.size,
+    checkedAt: new Date().toISOString(),
+    regulation: 'FDL No.10/2025 Art.12 | FATF Rec.6 | OFAC 50% Ownership Rule',
+  };
+}
