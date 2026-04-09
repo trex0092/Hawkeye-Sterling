@@ -1,0 +1,66 @@
+=============================================================================
+THE REPORTING ENTITY
+REGULATORY CHANGE IMPACT ASSESSMENT
+=============================================================================
+
+Document reference:   HSV2-REG-IMPACT-2026-04-09
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-09
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Regulatory monitoring day 2026-04-09
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+SCOPE
+
+This impact assessment covers 3 regulatory change(s) detected by
+the regulatory-watcher on 2026-04-09. Each change is classified by its
+potential impact on the firm's AML/CFT controls, procedures and training
+materials. The MLRO must review each classification and record a formal
+response action where warranted.
+
+SUMMARY
+
+Classification          Count
+----------------------  -----
+High impact             2    
+Medium impact           1    
+Low impact              0    
+Total changes assessed  3    
+
+HIGH-IMPACT CHANGES
+
+Source                               Authority                  Impact  Rationale                                                             
+-----------------------------------  -------------------------  ------  ----------------------------------------------------------------------
+Executive Office for Control and No  Executive Office for Cont  high    Change from a primary sanctions or standard-setting body. May require 
+World Monitor — Sanctions & Geopoli  GDELT / World Monitor (ag  high    Change from a primary sanctions or standard-setting body. May require 
+
+MEDIUM-IMPACT CHANGES
+
+Source                               Authority            Impact  Rationale                                                             
+-----------------------------------  -------------------  ------  ----------------------------------------------------------------------
+Ministry of Economy — AML supervisi  Ministry of Economy  medium  Change from a supervisory authority. May require updates to internal p
+
+REQUIRED ACTIONS
+
+HIGH: Every high-impact change must be reviewed by the MLRO within one business day. Open a task in the compliance workspace with a clear owner, deadline and remediation plan.
+
+MEDIUM: Every medium-impact change must be reviewed within five business days. Update internal procedures, training materials or reporting templates as needed.
+
+No low-impact changes detected.
+
+Record all response actions and retain this assessment for the full ten-year retention period.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
