@@ -1,0 +1,43 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY HIGH-RISK COUNTERPARTY DIGEST
+=============================================================================
+
+Document reference:   HSV2-HRC-2026-04-09
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-09, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Cross-entity counterparty register snapshot
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This digest lists every counterparty currently carrying a high or critical risk rating in the cross-entity counterparty register as of 2026-04-09. It is a snapshot of the register filtered to the highest-severity entries so the MLRO can prioritise review.
+
+2. POPULATION
+
+Total high-risk counterparties:             0
+Counterparties touching more than one entity: 0
+
+3. ENTRIES
+
+No high-risk counterparties are currently held in the register.
+
+4. MLRO ACTION
+
+Review each entry above and confirm that the status recorded in the register matches the firm's current view of the counterparty. Any change is made by editing history/registers/counterparties.csv and committing the change in the repository.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

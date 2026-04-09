@@ -1,0 +1,401 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY SANCTIONS SCREENING LOG
+=============================================================================
+
+Document reference:   HSV2-DSL-2026-04-09
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-09, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             00:00 to 23:59 Asia/Dubai on 2026-04-09
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every sanctions-related task observed across the six active compliance programmes during the calendar day 2026-04-09. It is a contemporaneous record produced directly from the Asana task base and is intended for immediate production to the Executive Office for Control and Non-Proliferation or the Ministry of Economy on demand.
+
+2. ACTIVITY OBSERVED TODAY
+
+Total sanctions-tagged tasks touched today: 357
+Programmes covered:                         6
+
+3. LOG ENTRIES
+
+PROGRAMME                       TASK                                      ASSIGNEE        STATUS
+------------------------------  ----------------------------------------  --------------  ------
+FG BRANCH - COMPLIANCE PROGRA…  RF-R06 | Industrial Scrap Gold Processi…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-R12 | Recycled Gold from Sanctioned …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF12 | NRA: Proliferation Financing…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF06 | Mined Gold Specific Sourcing …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF07 | Recycled Gold Specific Sourci…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF08 | Intermediary and Aggregator R…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  FIU-RF04 | Free Trade Zone DPMS Red Fla…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RK-05 | Regulatory Authority Informatio…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-M03 | LSM Legitimacy Verification      Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-M05 | Armed Group Financing Through …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-M09 | State-Owned Mine and Governmen…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-R03 | Melting to Obscure Origin (Gol…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  CDD-09 | KYS - Know Your Supplier Due D…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-02 | Asset Freeze Implementation Pr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-03 | Sanctions List Update Monitori…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-05 | 5-Year Retrospective Screening…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-06 | PNMR Filing Procedure            Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-07 | CNMR Filing Procedure (formerl…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-08 | EOCN Grievance and Delisting N…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-10 | Proliferation Financing TFS Co…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RA-05 | Geographic Risk Assessment and …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  LBMA-02 | Step 2: Risk Identification     Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-09 | Terrorism Financing Red Flags i…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-10 | Proliferation Financing Red Fla…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-14 | Sanctions Evasion Red Flags Spe…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-01 | AI/ML Tool Risk Assessment for…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-01 | Pre-Employment Screening for Co…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  HR-07 | Disciplinary Framework for Comp…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] REG-11 | NAMLCFTC High-Risk Ju…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-18 | CT-005: Sanctions, TFS…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] ACEP-25 | 10-KPI Compliance Mo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] MOE-08 | Staff Fitness and Propr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-14 | Sanctions Clause Li…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-19 | Vessel Screening SO…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-23 | Compliance Clause L…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-34 | Ongoing Screening A…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] OEC-42 | Annual Training Cal…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-15 | Sanctions Clause Deploy…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-17 | Transaction Monitoring …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-20 | Flag State Risk Matrix …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] OEC-18 | De-Risking & Relation…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 C-03 | Proliferation Financing Risk …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🟢 R-02 | Semi-Annual TFS Screening Lis…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🟡 H-06 | TFS Sanctions List Update Pro…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔍 Build CAHRA and Sanctions Source Ver…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 OPS-01 | Daily TFS/Sanctions Screeni…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 OPS-32 | Proliferation Financing Tar…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🟢 MOE-20 | UAE Country Embargo and Aut…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 MOE-05 | Administrative Penalties Fr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 MOE-07 | TFS Comprehensive Programme…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 QA-04 | Sanctions Screening QA and A…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-R06 | Industrial Scrap Gold Processi…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-R12 | Recycled Gold from Sanctioned …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF12 | NRA: Proliferation Financing…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF06 | Mined Gold Specific Sourcing …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF07 | Recycled Gold Specific Sourci…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF08 | Intermediary and Aggregator R…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  FIU-RF04 | Free Trade Zone DPMS Red Fla…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RK-05 | Regulatory Authority Informatio…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-M03 | LSM Legitimacy Verification      Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-M05 | Armed Group Financing Through …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  CDD-09 | KYS - Know Your Supplier Due D…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-M09 | State-Owned Mine and Governmen…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-02 | Asset Freeze Implementation Pr…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-03 | Sanctions List Update Monitori…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-R03 | Melting to Obscure Origin (Gol…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-05 | 5-Year Retrospective Screening…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-06 | PNMR Filing Procedure            Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-07 | CNMR Filing Procedure (formerl…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-08 | EOCN Grievance and Delisting N…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-10 | Proliferation Financing TFS Co…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-09 | Terrorism Financing Red Flags i…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-10 | Proliferation Financing Red Fla…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-14 | Sanctions Evasion Red Flags Spe…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RA-05 | Geographic Risk Assessment and …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  LBMA-02 | Step 2: Risk Identification     Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-01 | AI/ML Tool Risk Assessment for…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-01 | Pre-Employment Screening for Co…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  HR-07 | Disciplinary Framework for Comp…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] REG-11 | NAMLCFTC High-Risk Ju…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-18 | CT-005: Sanctions, TFS…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] ACEP-25 | 10-KPI Compliance Mo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] MOE-08 | Staff Fitness and Propr…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-14 | Sanctions Clause Li…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-19 | Vessel Screening SO…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-23 | Compliance Clause L…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-34 | Ongoing Screening A…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] OEC-42 | Annual Training Cal…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-15 | Sanctions Clause Deploy…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-17 | Transaction Monitoring …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-20 | Flag State Risk Matrix …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] OEC-18 | De-Risking & Relation…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🟢 R-02 | Semi-Annual TFS Screening Lis…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🟡 H-06 | TFS Sanctions List Update Pro…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 C-03 | Proliferation Financing Risk …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔍 Build CAHRA and Sanctions Source Ver…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 OPS-32 | Proliferation Financing Tar…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 OPS-01 | Daily TFS/Sanctions Screeni…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🟢 MOE-20 | UAE Country Embargo and Aut…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 MOE-07 | TFS Comprehensive Programme…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 QA-04 | Sanctions Screening QA and A…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-R06 | Industrial Scrap Gold Processi…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-R12 | Recycled Gold from Sanctioned …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF12 | NRA: Proliferation Financing…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF06 | Mined Gold Specific Sourcing …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF07 | Recycled Gold Specific Sourci…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF08 | Intermediary and Aggregator R…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  FIU-RF04 | Free Trade Zone DPMS Red Fla…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RK-05 | Regulatory Authority Informatio…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-M03 | LSM Legitimacy Verification      Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-M05 | Armed Group Financing Through …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-M09 | State-Owned Mine and Governmen…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-R03 | Melting to Obscure Origin (Gol…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  CDD-09 | KYS - Know Your Supplier Due D…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-02 | Asset Freeze Implementation Pr…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-03 | Sanctions List Update Monitori…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-05 | 5-Year Retrospective Screening…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-06 | PNMR Filing Procedure            Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-07 | CNMR Filing Procedure (formerl…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-08 | EOCN Grievance and Delisting N…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-10 | Proliferation Financing TFS Co…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RA-05 | Geographic Risk Assessment and …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  LBMA-02 | Step 2: Risk Identification     Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-09 | Terrorism Financing Red Flags i…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-10 | Proliferation Financing Red Fla…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-14 | Sanctions Evasion Red Flags Spe…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-01 | AI/ML Tool Risk Assessment for…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-01 | Pre-Employment Screening for Co…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  HR-07 | Disciplinary Framework for Comp…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] REG-11 | NAMLCFTC High-Risk Ju…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-18 | CT-005: Sanctions, TFS…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] ACEP-25 | 10-KPI Compliance Mo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] MOE-08 | Staff Fitness and Propr…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-14 | Sanctions Clause Li…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-19 | Vessel Screening SO…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-23 | Compliance Clause L…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-34 | Ongoing Screening A…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] OEC-42 | Annual Training Cal…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-15 | Sanctions Clause Deploy…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-17 | Transaction Monitoring …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-20 | Flag State Risk Matrix …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] OEC-18 | De-Risking & Relation…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔴 C-03 | Proliferation Financing Risk …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🟡 H-06 | TFS Sanctions List Update Pro…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🟢 R-02 | Semi-Annual TFS Screening Lis…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔍 Build CAHRA and Sanctions Source Ver…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔴 OPS-32 | Proliferation Financing Tar…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔴 OPS-01 | Daily TFS/Sanctions Screeni…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🟢 MOE-20 | UAE Country Embargo and Aut…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔴 QA-04 | Sanctions Screening QA and A…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-R06 | Industrial Scrap Gold Processi…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-R12 | Recycled Gold from Sanctioned …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF12 | NRA: Proliferation Financing…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF06 | Mined Gold Specific Sourcing …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF07 | Recycled Gold Specific Sourci…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF08 | Intermediary and Aggregator R…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  FIU-RF04 | Free Trade Zone DPMS Red Fla…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RK-05 | Regulatory Authority Informatio…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  CDD-09 | KYS - Know Your Supplier Due D…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-M03 | LSM Legitimacy Verification      Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-02 | Asset Freeze Implementation Pr…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-M05 | Armed Group Financing Through …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-03 | Sanctions List Update Monitori…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-05 | 5-Year Retrospective Screening…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-06 | PNMR Filing Procedure            Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-M09 | State-Owned Mine and Governmen…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-07 | CNMR Filing Procedure (formerl…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-08 | EOCN Grievance and Delisting N…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-10 | Proliferation Financing TFS Co…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-R03 | Melting to Obscure Origin (Gol…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RA-05 | Geographic Risk Assessment and …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  LBMA-02 | Step 2: Risk Identification     Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-09 | Terrorism Financing Red Flags i…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-10 | Proliferation Financing Red Fla…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-14 | Sanctions Evasion Red Flags Spe…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  AIG-01 | AI/ML Tool Risk Assessment for…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  HR-01 | Pre-Employment Screening for Co…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  HR-07 | Disciplinary Framework for Comp…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] REG-11 | NAMLCFTC High-Risk Ju…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-18 | CT-005: Sanctions, TFS…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] ACEP-25 | 10-KPI Compliance Mo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] MOE-08 | Staff Fitness and Propr…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-14 | Sanctions Clause Li…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-19 | Vessel Screening SO…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-23 | Compliance Clause L…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-34 | Ongoing Screening A…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] OEC-42 | Annual Training Cal…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-15 | Sanctions Clause Deploy…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-17 | Transaction Monitoring …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-20 | Flag State Risk Matrix …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] OEC-18 | De-Risking & Relation…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟢 R-02 | Semi-Annual TFS Screening Lis…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟡 H-06 | TFS Sanctions List Update Pro…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 C-03 | Proliferation Financing Risk …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔍 Build CAHRA and Sanctions Source Ver…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  GAP-008 | Conduct Annual AML/CFT Traini…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 OPS-32 | Proliferation Financing Tar…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 OPS-01 | Daily TFS/Sanctions Screeni…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🟢 MOE-20 | UAE Country Embargo and Aut…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 MOE-07 | TFS Comprehensive Programme…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 QA-04 | Sanctions Screening QA and A…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-R06 | Industrial Scrap Gold Processi…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-R12 | Recycled Gold from Sanctioned …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF12 | NRA: Proliferation Financing…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF06 | Mined Gold Specific Sourcing …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF07 | Recycled Gold Specific Sourci…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF08 | Intermediary and Aggregator R…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  FIU-RF04 | Free Trade Zone DPMS Red Fla…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RK-05 | Regulatory Authority Informatio…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-M03 | LSM Legitimacy Verification      Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-M05 | Armed Group Financing Through …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-M09 | State-Owned Mine and Governmen…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-R03 | Melting to Obscure Origin (Gol…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  CDD-09 | KYS - Know Your Supplier Due D…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-02 | Asset Freeze Implementation Pr…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-03 | Sanctions List Update Monitori…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-05 | 5-Year Retrospective Screening…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-06 | PNMR Filing Procedure            Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-07 | CNMR Filing Procedure (formerl…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-08 | EOCN Grievance and Delisting N…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-09 | Terrorism Financing Red Flags i…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-10 | Proliferation Financing Red Fla…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-10 | Proliferation Financing TFS Co…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-14 | Sanctions Evasion Red Flags Spe…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RA-05 | Geographic Risk Assessment and …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-01 | AI/ML Tool Risk Assessment for…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  LBMA-02 | Step 2: Risk Identification     Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-01 | Pre-Employment Screening for Co…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  HR-07 | Disciplinary Framework for Comp…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] REG-11 | NAMLCFTC High-Risk Ju…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-18 | CT-005: Sanctions, TFS…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] ACEP-25 | 10-KPI Compliance Mo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] MOE-08 | Staff Fitness and Propr…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-14 | Sanctions Clause Li…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-19 | Vessel Screening SO…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-23 | Compliance Clause L…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-34 | Ongoing Screening A…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] OEC-42 | Annual Training Cal…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-15 | Sanctions Clause Deploy…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-17 | Transaction Monitoring …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-20 | Flag State Risk Matrix …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] OEC-18 | De-Risking & Relation…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔴 C-03 | Proliferation Financing Risk …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🟢 R-02 | Semi-Annual TFS Screening Lis…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🟡 H-06 | TFS Sanctions List Update Pro…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔍 Build CAHRA and Sanctions Source Ver…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔴 OPS-32 | Proliferation Financing Tar…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔴 OPS-01 | Daily TFS/Sanctions Screeni…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔴 MOE-07 | TFS Comprehensive Programme…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🟢 MOE-20 | UAE Country Embargo and Aut…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔴 QA-04 | Sanctions Screening QA and A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-R06 | Industrial Scrap Gold Processi…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-R12 | Recycled Gold from Sanctioned …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF12 | NRA: Proliferation Financing…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF06 | Mined Gold Specific Sourcing …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF07 | Recycled Gold Specific Sourci…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF08 | Intermediary and Aggregator R…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  FIU-RF04 | Free Trade Zone DPMS Red Fla…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RK-05 | Regulatory Authority Informatio…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-M03 | LSM Legitimacy Verification      Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-M05 | Armed Group Financing Through …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-M09 | State-Owned Mine and Governmen…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-R03 | Melting to Obscure Origin (Gol…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  CDD-09 | KYS - Know Your Supplier Due D…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-01 | EOCN NAS Registration and Dail…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-02 | Asset Freeze Implementation Pr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-03 | Sanctions List Update Monitori…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-04 | Weekend and Holiday TFS Screen…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-05 | 5-Year Retrospective Screening…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-06 | PNMR Filing Procedure            Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-07 | CNMR Filing Procedure (formerl…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-08 | EOCN Grievance and Delisting N…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-10 | Proliferation Financing TFS Co…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-09 | Terrorism Financing Red Flags i…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-10 | Proliferation Financing Red Fla…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-14 | Sanctions Evasion Red Flags Spe…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RA-05 | Geographic Risk Assessment and …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  LBMA-02 | Step 2: Risk Identification     Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-01 | AI/ML Tool Risk Assessment for…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-09 | AI Incident Response and Escal…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-01 | Pre-Employment Screening for Co…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  HR-07 | Disciplinary Framework for Comp…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] REG-11 | NAMLCFTC High-Risk Ju…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-04 | IC-002: Sanctions and …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-18 | CT-005: Sanctions, TFS…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] ACEP-25 | 10-KPI Compliance Mo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟡 PROC-08 | Staff Fitness and Propriet…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-14 | Sanctions Clause Li…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-19 | Vessel Screening SO…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-23 | Compliance Clause L…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-34 | Ongoing Screening A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Critical] OEC-42 | Annual Training Cal…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-15 | Sanctions Clause Deploy…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-16 | SAR/STR Filing Protocol…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-17 | Transaction Monitoring …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-20 | Flag State Risk Matrix …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-21 | Voyage Monitoring Proto…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] OEC-18 | De-Risking & Relation…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟢 R-02 | Semi-Annual TFS Screening Lis…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔵 M-02 | Regulatory Change Monitoring    Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 C-03 | Proliferation Financing Risk …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟡 H-06 | TFS Sanctions List Update Pro…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔍 Build CAHRA and Sanctions Source Ver…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 OPS-32 | Proliferation Financing Tar…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 OPS-01 | Daily TFS/Sanctions Screeni…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 QA-04 | Sanctions Screening QA and A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟢 MOE-20 | UAE Country Embargo and Aut…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 MOE-07 | TFS Comprehensive Programme…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 MOE-05 | Administrative Penalties Fr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟡 MOE-09 | MOE Circular and NAMLCFTC G…  Luisa Fernanda  open  
+
+4. QUALITY ASSURANCE STATEMENT
+
+The compliance function confirms that every sanctions-tagged task open in the Asana workspace at the time of this run is represented in the log above, that each entry references a specific Asana task GID that can be cross-checked during an inspection, and that no entry has been suppressed.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

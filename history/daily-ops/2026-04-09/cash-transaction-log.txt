@@ -1,0 +1,339 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY CASH TRANSACTION LOG
+=============================================================================
+
+Document reference:   HSV2-DCT-2026-04-09
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-09, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every task in the Asana base that references cash activity (AED amounts, walk-in purchases, linked cash transactions) as of 2026-04-09. It is produced so that any item approaching the cash transaction threshold specified by the DPMSR framework can be reviewed by the MLRO before the day ends.
+
+2. ACTIVITY OBSERVED TODAY
+
+Tasks referencing cash activity:            295
+Programmes carrying a cash file today:      6
+
+3. LOG ENTRIES
+
+PROGRAMME                       TASK                                      ASSIGNEE        STATUS
+------------------------------  ----------------------------------------  --------------  ------
+FG BRANCH - COMPLIANCE PROGRA…  RF-R05 | Jewelry Scrap Aggregation With…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-R10 | Gold-for-Cash Schemes via Recy…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF01 | NRA: High Cash Intensity Pat…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF02 | NRA: Cross-Border Trade Expl…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF05 | FIU Typology 2: Foreign Curr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF06 | FIU Typology 3: Gold/Cash Sm…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF08 | NRA: DPMSR Threshold Structu…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  NRA-RF09 | NRA: PEP Exposure in DPMS      Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF04 | Refinery: No Third-Party Audi…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  FIU-RF01 | DPMSR Filing Anomalies         Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  FIU-RF02 | Gold Souk and Retail DPMS Re…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  FIU-RF03 | Hawala and Informal Value Tr…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TM-01 | TM Rules and Scenarios Catalogue  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TM-04 | Cash Transaction Reporting and …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TM-05 | TM System Tuning and Threshold …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  ACE-02 | Gifts, Hospitality, and Entert…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-M08 | Mine-to-Refinery Chain of Cust…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-M12 | Mined Gold Volume and Pricing …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-R02 | Scrap Gold Laundering Through …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  CDD-02 | CDD SOP - Legal Persons          Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  CDD-03 | Beneficial Ownership Identific…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  CDD-05 | Enhanced Due Diligence Trigger…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RA-03 | Customer Risk Scoring Model Cal…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-01 | DPMS Cash Transaction Red Flags…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-02 | Trade-Based Money Laundering (T…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-08 | PEP-Specific Red Flags for DPMS…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-11 | Unusual Transaction Pattern Ale…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  RF-12 | Third-Party Payment Red Flags     Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-06 | IC-004: Gifts, Hospita…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-08 | IC-006: Transaction Mo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] ACEP-15 | CT-002: Advanced Trans…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] ACEP-21 | Gifts and Hospitalit…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] MOE-01 | Cash Transaction Re…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Critical] MOE-03 | UBO Register and CR…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] MOE-04 | DPMS Occasional Transac…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [Medium] MOE-12 | DPMS-Specific Red Fla…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-10 | Due Diligence Questionn…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-28 | Integrity Hub: Gifts Mo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  [High] OEC-29 | Government Official Hos…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🟢 R-01 | Quarterly goAML DPMS Activity…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 OPS-02 | Large Cash Transaction Repo…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  🔴 MOE-08 | goAML DPMS Module Full Comp…  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-23 | DPMS Reporting and Regulatory …  Luisa Fernanda  open  
+FG BRANCH - COMPLIANCE PROGRA…  TRN-17 | Cash-Free Policy and Virtual A…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  ⚠ CDD-CRITICAL: VAT Compliance for Prec…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-R05 | Jewelry Scrap Aggregation With…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-R10 | Gold-for-Cash Schemes via Recy…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF01 | NRA: High Cash Intensity Pat…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF02 | NRA: Cross-Border Trade Expl…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF05 | FIU Typology 2: Foreign Curr…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF06 | FIU Typology 3: Gold/Cash Sm…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF08 | NRA: DPMSR Threshold Structu…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  NRA-RF09 | NRA: PEP Exposure in DPMS      Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF04 | Refinery: No Third-Party Audi…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TM-01 | TM Rules and Scenarios Catalogue  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  FIU-RF01 | DPMSR Filing Anomalies         Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TM-04 | Cash Transaction Reporting and …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  FIU-RF02 | Gold Souk and Retail DPMS Re…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TM-05 | TM System Tuning and Threshold …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  FIU-RF03 | Hawala and Informal Value Tr…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  ACE-02 | Gifts, Hospitality, and Entert…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  CDD-02 | CDD SOP - Legal Persons          Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  CDD-03 | Beneficial Ownership Identific…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  CDD-05 | Enhanced Due Diligence Trigger…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-M08 | Mine-to-Refinery Chain of Cust…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-M12 | Mined Gold Volume and Pricing …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-R02 | Scrap Gold Laundering Through …  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-01 | DPMS Cash Transaction Red Flags…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-02 | Trade-Based Money Laundering (T…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-08 | PEP-Specific Red Flags for DPMS…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-11 | Unusual Transaction Pattern Ale…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RF-12 | Third-Party Payment Red Flags     Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  RA-03 | Customer Risk Scoring Model Cal…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-06 | IC-004: Gifts, Hospita…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-08 | IC-006: Transaction Mo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] ACEP-15 | CT-002: Advanced Trans…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] ACEP-21 | Gifts and Hospitalit…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] MOE-01 | Cash Transaction Re…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Critical] MOE-03 | UBO Register and CR…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] MOE-04 | DPMS Occasional Transac…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [Medium] MOE-12 | DPMS-Specific Red Fla…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-10 | Due Diligence Questionn…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-28 | Integrity Hub: Gifts Mo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  [High] OEC-29 | Government Official Hos…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  🔴 OPS-02 | Large Cash Transaction Repo…  Luisa Fernanda  open  
+MADISON LLC - COMPLIANCE PROG…  TRN-17 | Cash-Free Policy and Virtual A…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  ⚠ CDD-CRITICAL: VAT Compliance for Prec…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-R05 | Jewelry Scrap Aggregation With…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-R10 | Gold-for-Cash Schemes via Recy…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF01 | NRA: High Cash Intensity Pat…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF02 | NRA: Cross-Border Trade Expl…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF05 | FIU Typology 2: Foreign Curr…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF06 | FIU Typology 3: Gold/Cash Sm…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF08 | NRA: DPMSR Threshold Structu…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  NRA-RF09 | NRA: PEP Exposure in DPMS      Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF04 | Refinery: No Third-Party Audi…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  FIU-RF01 | DPMSR Filing Anomalies         Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  FIU-RF02 | Gold Souk and Retail DPMS Re…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  FIU-RF03 | Hawala and Informal Value Tr…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TM-01 | TM Rules and Scenarios Catalogue  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TM-04 | Cash Transaction Reporting and …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TM-05 | TM System Tuning and Threshold …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  ACE-02 | Gifts, Hospitality, and Entert…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-M08 | Mine-to-Refinery Chain of Cust…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-M12 | Mined Gold Volume and Pricing …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-R02 | Scrap Gold Laundering Through …  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  CDD-02 | CDD SOP - Legal Persons          Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  CDD-03 | Beneficial Ownership Identific…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  CDD-05 | Enhanced Due Diligence Trigger…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RA-03 | Customer Risk Scoring Model Cal…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-01 | DPMS Cash Transaction Red Flags…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-02 | Trade-Based Money Laundering (T…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-08 | PEP-Specific Red Flags for DPMS…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-11 | Unusual Transaction Pattern Ale…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  RF-12 | Third-Party Payment Red Flags     Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-06 | IC-004: Gifts, Hospita…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-08 | IC-006: Transaction Mo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] ACEP-15 | CT-002: Advanced Trans…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] ACEP-21 | Gifts and Hospitalit…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] MOE-01 | Cash Transaction Re…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Critical] MOE-03 | UBO Register and CR…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] MOE-04 | DPMS Occasional Transac…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [Medium] MOE-12 | DPMS-Specific Red Fla…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-10 | Due Diligence Questionn…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-28 | Integrity Hub: Gifts Mo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  [High] OEC-29 | Government Official Hos…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  🔴 OPS-02 | Large Cash Transaction Repo…  Luisa Fernanda  open  
+GRAMALTIN AS - COMPLIANCE PRO…  TRN-17 | Cash-Free Policy and Virtual A…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  ⚠ CDD-CRITICAL: VAT Compliance for Prec…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-R05 | Jewelry Scrap Aggregation With…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-R10 | Gold-for-Cash Schemes via Recy…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF01 | NRA: High Cash Intensity Pat…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF02 | NRA: Cross-Border Trade Expl…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF05 | FIU Typology 2: Foreign Curr…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF06 | FIU Typology 3: Gold/Cash Sm…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF08 | NRA: DPMSR Threshold Structu…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  NRA-RF09 | NRA: PEP Exposure in DPMS      Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF04 | Refinery: No Third-Party Audi…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  FIU-RF01 | DPMSR Filing Anomalies         Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  FIU-RF02 | Gold Souk and Retail DPMS Re…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  FIU-RF03 | Hawala and Informal Value Tr…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TM-01 | TM Rules and Scenarios Catalogue  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TM-04 | Cash Transaction Reporting and …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TM-05 | TM System Tuning and Threshold …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  ACE-02 | Gifts, Hospitality, and Entert…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  CDD-02 | CDD SOP - Legal Persons          Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  CDD-03 | Beneficial Ownership Identific…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  CDD-05 | Enhanced Due Diligence Trigger…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-M08 | Mine-to-Refinery Chain of Cust…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-M12 | Mined Gold Volume and Pricing …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-R02 | Scrap Gold Laundering Through …  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RA-03 | Customer Risk Scoring Model Cal…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-01 | DPMS Cash Transaction Red Flags…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-02 | Trade-Based Money Laundering (T…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-08 | PEP-Specific Red Flags for DPMS…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-11 | Unusual Transaction Pattern Ale…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  RF-12 | Third-Party Payment Red Flags     Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-06 | IC-004: Gifts, Hospita…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-08 | IC-006: Transaction Mo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] ACEP-15 | CT-002: Advanced Trans…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] ACEP-21 | Gifts and Hospitalit…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] MOE-01 | Cash Transaction Re…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Critical] MOE-03 | UBO Register and CR…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] MOE-04 | DPMS Occasional Transac…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [Medium] MOE-12 | DPMS-Specific Red Fla…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-10 | Due Diligence Questionn…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-28 | Integrity Hub: Gifts Mo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  [High] OEC-29 | Government Official Hos…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  GAP-006 | Update Transaction Monitoring…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  🔴 OPS-02 | Large Cash Transaction Repo…  Luisa Fernanda  open  
+NAPLES LLC - COMPLIANCE PROGR…  TRN-17 | Cash-Free Policy and Virtual A…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  ⚠ CDD-CRITICAL: VAT Compliance for Prec…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-R05 | Jewelry Scrap Aggregation With…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-R10 | Gold-for-Cash Schemes via Recy…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF01 | NRA: High Cash Intensity Pat…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF02 | NRA: Cross-Border Trade Expl…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF05 | FIU Typology 2: Foreign Curr…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF06 | FIU Typology 3: Gold/Cash Sm…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF08 | NRA: DPMSR Threshold Structu…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  NRA-RF09 | NRA: PEP Exposure in DPMS      Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF04 | Refinery: No Third-Party Audi…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  FIU-RF01 | DPMSR Filing Anomalies         Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  FIU-RF02 | Gold Souk and Retail DPMS Re…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  FIU-RF03 | Hawala and Informal Value Tr…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TM-01 | TM Rules and Scenarios Catalogue  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TM-04 | Cash Transaction Reporting and …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TM-05 | TM System Tuning and Threshold …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  ACE-02 | Gifts, Hospitality, and Entert…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-M08 | Mine-to-Refinery Chain of Cust…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-M12 | Mined Gold Volume and Pricing …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-R02 | Scrap Gold Laundering Through …  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  CDD-02 | CDD SOP - Legal Persons          Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  CDD-03 | Beneficial Ownership Identific…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  CDD-05 | Enhanced Due Diligence Trigger…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-01 | DPMS Cash Transaction Red Flags…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-02 | Trade-Based Money Laundering (T…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-08 | PEP-Specific Red Flags for DPMS…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-11 | Unusual Transaction Pattern Ale…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RF-12 | Third-Party Payment Red Flags     Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  RA-03 | Customer Risk Scoring Model Cal…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-06 | IC-004: Gifts, Hospita…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-08 | IC-006: Transaction Mo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] ACEP-15 | CT-002: Advanced Trans…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] ACEP-21 | Gifts and Hospitalit…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] MOE-01 | Cash Transaction Re…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Critical] MOE-03 | UBO Register and CR…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] MOE-04 | DPMS Occasional Transac…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [Medium] MOE-12 | DPMS-Specific Red Fla…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-10 | Due Diligence Questionn…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-28 | Integrity Hub: Gifts Mo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  [High] OEC-29 | Government Official Hos…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  🔴 OPS-02 | Large Cash Transaction Repo…  Luisa Fernanda  open  
+ZOE FZE - COMPLIANCE PROGRAMM…  TRN-17 | Cash-Free Policy and Virtual A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  ⚠ CDD-CRITICAL: VAT Compliance for Prec…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-R05 | Jewelry Scrap Aggregation With…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-R10 | Gold-for-Cash Schemes via Recy…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF01 | NRA: High Cash Intensity Pat…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF02 | NRA: Cross-Border Trade Expl…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF05 | FIU Typology 2: Foreign Curr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF06 | FIU Typology 3: Gold/Cash Sm…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF08 | NRA: DPMSR Threshold Structu…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  NRA-RF09 | NRA: PEP Exposure in DPMS      Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF04 | Refinery: No Third-Party Audi…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RS-RF10 | MOE Inspection Preparedness G…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  FIU-RF01 | DPMSR Filing Anomalies         Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  FIU-RF02 | Gold Souk and Retail DPMS Re…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  FIU-RF03 | Hawala and Informal Value Tr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TM-01 | TM Rules and Scenarios Catalogue  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TM-04 | Cash Transaction Reporting and …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TM-05 | TM System Tuning and Threshold …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  ACE-02 | Gifts, Hospitality, and Entert…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-M08 | Mine-to-Refinery Chain of Cust…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-M12 | Mined Gold Volume and Pricing …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-R02 | Scrap Gold Laundering Through …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  CDD-02 | CDD SOP - Legal Persons          Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  CDD-03 | Beneficial Ownership Identific…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  CDD-05 | Enhanced Due Diligence Trigger…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-01 | DPMS Cash Transaction Red Flags…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-02 | Trade-Based Money Laundering (T…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-03 | Structuring and Smurfing Detect…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TFS-09 | Sanctions Screening Tool Valid…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-08 | PEP-Specific Red Flags for DPMS…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-11 | Unusual Transaction Pattern Ale…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RF-12 | Third-Party Payment Red Flags     Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  RA-03 | Customer Risk Scoring Model Cal…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-02 | Human Oversight Protocol for A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  AIG-03 | Algorithmic Bias Monitoring fo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-06 | IC-004: Gifts, Hospita…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-08 | IC-006: Transaction Mo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] ACEP-15 | CT-002: Advanced Trans…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [Medium] ACEP-21 | Gifts and Hospitalit…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 PROC-01 | Cash Transaction Report (C…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 PROC-03 | UBO Register and CRA Form …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟡 PROC-04 | DPMS Occasional Transactio…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔵 PROC-12 | DPMS-Specific Red Flag Ind…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-10 | Due Diligence Questionn…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-28 | Integrity Hub: Gifts Mo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  [High] OEC-29 | Government Official Hos…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  GAP-006 | Update Transaction Monitoring…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟢 R-01 | Quarterly goAML DPMS Activity…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 C-01 | Deploy goAML DPMS Module and …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 OPS-02 | Large Cash Transaction Repo…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔵 OPS-41 | Master Regulatory Reporting…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 MOE-01 | DPMS Registration and Annua…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 MOE-05 | Administrative Penalties Fr…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🔴 MOE-08 | goAML DPMS Module Full Comp…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  🟡 MOE-09 | MOE Circular and NAMLCFTC G…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-17 | Cash-Free Policy and Virtual A…  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-18 | UAE FIU DPMS Typologies (2025 …  Luisa Fernanda  open  
+FG LLC - COMPLIANCE PROGRAMME…  TRN-23 | DPMS Reporting and Regulatory …  Luisa Fernanda  open  
+
+4. MLRO ACTION
+
+The MLRO is asked to verify whether any of the cash files listed above meets the DPMSR filing trigger for the rolling 30-day window on a linked transaction basis. The automation does not make that determination; the MLRO does.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
