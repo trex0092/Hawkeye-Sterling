@@ -1,0 +1,73 @@
+name: Error Handling Anti-Pattern Check
+
+# Inspired by https://github.com/thedotmack/antipattern-czar
+# Detects error-handling anti-patterns that lead to silent failures.
+
+on:
+  pull_request:
+    paths: ['**.mjs', '**.js']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  antipattern-check:
+    name: Detect error-handling anti-patterns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check for swallowed errors
+        run: |
+          echo "=== Error Handling Anti-Pattern Scan ==="
+          echo ""
+          ISSUES=0
+
+          # Pattern 1: Empty catch blocks (catch {})
+          echo "--- Empty catch blocks ---"
+          EMPTY=$(grep -rn 'catch\s*{' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep -v 'node_modules' | grep -v '\.test\.' || true)
+          if [ -n "$EMPTY" ]; then
+            echo "$EMPTY"
+            COUNT=$(echo "$EMPTY" | wc -l)
+            echo "Found $COUNT empty catch block(s)"
+            ISSUES=$((ISSUES + COUNT))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          # Pattern 2: catch without error variable
+          echo "--- Catch without error variable ---"
+          NOVAR=$(grep -rn 'catch\s*{' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep -v 'catch\s*(e' | grep -v 'catch\s*(err' | grep -v 'node_modules' | grep -v 'ignore\|optional\|close' || true)
+          if [ -n "$NOVAR" ]; then
+            echo "$NOVAR"
+            COUNT=$(echo "$NOVAR" | wc -l)
+            ISSUES=$((ISSUES + COUNT))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          # Pattern 3: catch that returns without logging
+          echo "--- Catch-and-return without logging ---"
+          SILENT=$(grep -rn -A1 'catch.*{' --include='*.mjs' --include='*.js' screening/ scripts/ claude-mem/ | grep 'return' | grep -v 'console\.\|process\.stderr\|logger\|warn\|error' | grep -v 'node_modules' || true)
+          if [ -n "$SILENT" ]; then
+            echo "$SILENT"
+            COUNT=$(echo "$SILENT" | wc -l)
+            ISSUES=$((ISSUES + COUNT))
+          else
+            echo "None found"
+          fi
+          echo ""
+
+          echo "=== Total issues: $ISSUES ==="
+          if [ $ISSUES -gt 5 ]; then
+            echo "WARNING: More than 5 error-handling anti-patterns detected."
+            echo "Review and fix before merging."
+            exit 1
+          fi
+          echo "Anti-pattern check passed."
