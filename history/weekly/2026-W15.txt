@@ -1,0 +1,71 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY PATTERN REPORT
+Week 2026-W15, ending 2026-04-10
+=============================================================================
+
+Document reference:   HSV2-WPR-2026-W15
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-10, 16:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             6 active compliance programmes, rolling 7 days to 2026-04-10.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This report is the internal analytical companion to the Weekly MLRO Report to Senior Management. It is the source of record for cross-entity typology activity and emerging compliance patterns across the Reporting Entity's regulated portfolio for the week ending Friday, 12 April 2026.
+
+HEADLINE FOR THE WEEK
+
+All six operating entities remain in open compliance build-out mode with 441 open tasks per entity and zero completions this week, indicating that the compliance framework codification programme is in the design phase rather than execution phase. The most critical finding is that one entity, GRAMALTIN AS, carries fourteen regulatory obligations to the Ministry of Economy marked as either high-priority (red) or amber priority (yellow), including core items such as DPMS Registration and Annual Renewal, Compliance Officer registration with MOE, and on-site inspection readiness, all due by 2026-10-03. The MLRO should immediately schedule a compliance status meeting with GRAMALTIN AS management to establish a remediation timeline and assign clear ownership for each MOE task.
+
+CROSS-ENTITY PATTERNS OBSERVED
+
+1. All six entities exhibit identical task architecture across Recycled Material Red Flags (RF-R05 through RF-R20), National Risk Assessment typologies (NRA-RF01 through NRA-RF12), Responsible Sourcing red flags (RS-RF01 through RS-RF10), and Transaction Monitoring components (TM-01 through TM-08). This standardized framework indicates that the compliance automation tool has deployed a templated programme across the portfolio. Record Retention tasks (RK-01 through RK-04) are also uniform across all entities. The uniformity suggests that once the first entity completes framework documentation, replication across the remaining five entities will be rapid.
+
+2. Five entities (FG BRANCH, MADISON LLC, NAPLES LLC, ZOE FZE, and FG LLC) share a single flagged item marked CDD-CRITICAL dated 2026-04-06 entitled "VAT Compliance for Precious Metals." GRAMALTIN AS carries the same item but also carries an additional MOE-12 task on VAT reverse charge compliance. This duplication and the fact that no entity has yet completed VAT due diligence documentation suggests either a shared compliance gap or misalignment between the automation tool's tagging and actual business unit needs. The MLRO should clarify whether VAT compliance falls within the AML/CFT mandate or is owned by tax/corporate function.
+
+3. GRAMALTIN AS stands apart from the five other entities by carrying thirteen distinct MOE-layer obligations (MOE-01 through MOE-13) that do not appear in the other entities' task lists. These items cover DPMS registration, MLRO registration, inspection readiness, TFS comprehensive programme, goAML module compliance, National Beneficial Ownership Register compliance, and regulatory guidance tracking. The five other entities appear to lack explicit MOE compliance tracking tasks altogether. This gap suggests that FG BRANCH, MADISON LLC, NAPLES LLC, ZOE FZE, and FG LLC may be operating without documented regulatory obligation inventories, which is a material control weakness.
+
+EMERGING RISKS
+
+1. The absence of completed MOE-layer tasks for five of six entities represents an emerging regulatory risk. Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering and Countering the Financing of Terrorism and Financing of Illegal Organisations places ongoing reporting, registration, and self-assessment obligations on all DNFBPs with the Ministry of Economy (MOE). The fact that GRAMALTIN AS has documented these obligations but the five other entities have not suggests either a gap in compliance programme design or a failure to surface core regulatory requirements into the task tracking system. Escalate to the MLRO to confirm whether the absence reflects deliberate delegation to a central compliance team or a control gap requiring immediate remediation.
+
+2. Refinery due diligence appears as a persistent red flag across all six entities under task RS-RF09. The task notes reference 32 refineries suspended by MOE in 2024 and flag entities "not on Good Delivery" and "previously delisted." This is a high-risk sourcing vulnerability under the responsible sourcing framework. The FATF Recommendations require that DNFBPs apply enhanced due diligence to high-risk counterparties and beneficial owners, particularly in precious metals supply chains. The persistence of this task across all six entities with no completion or remediation signal suggests that refinery verification procedures may not yet be in place. Issue a compliance notice requiring each entity to provide evidence of refinery authorisation status within five business days.
+
+3. Targeted financial sanctions screening is flagged in the RF-R12 task at all six entities under the header "Recycled Gold from Sanctioned Entities." The task notes cite "sanctioned refinery hallmarks" and "Russian LBMA-delisted refineries." Under the applicable targeted financial sanctions framework implemented by the Executive Office for Control and Non-Proliferation (EOCN), transactions with sanctioned entities are prohibited and must be reported as Funds Freeze Reports to the Financial Intelligence Unit (FIU) through the goAML platform. The fact that this red flag remains open at all six entities suggests that sanctions screening is either not yet operationalised or screening results are not yet integrated into transaction clearance procedures. Confirm with the MLRO that sanctions screening controls are in place before any further gold trading activity is authorised.
+
+4. Free Trade Zone risk appears at all six entities under task FIU-RF04. The notes reference "FTZ-to-FTZ USD wire settlements, no physical presence, FTZ transit for [unspecified purpose]." Free trade zones present heightened vulnerabilities for informal value transfer and gold-for-cash schemes, as documented in the UAE National Risk Assessment for the DPMS sector. Transaction monitoring rules (task TM-01) reference threshold alerts at AED 55,000 and structuring detection, but the persistence of FTZ-specific red flags suggests that either FTZ counterparties are not yet being screened against the FTZ rule set or the entity portfolio includes FTZ-based operations that have not undergone enhanced due diligence. Require documentation of FTZ transaction monitoring rules by the end of the following business week.
+
+STALLED INVESTIGATIONS
+
+No investigations are visible in the task data provided. The snapshot reflects compliance programme development tasks (policy drafting, procedure design, control implementation) rather than open case investigations. All 2,646 open tasks across the six entities (441 per entity) are due on 2026-10-03, indicating a single compliance programme deadline of six months. No task appears to have been open for more than fourteen calendar days without status update because all tasks were either created or modified in the past seven days. Once tasks move into execution and closure phase, this section will report stalled case items.
+
+WINS OF THE WEEK
+
+No completed tasks appear in the snapshot for the seven-day period ending Friday, 12 April 2026. All 441 tasks per entity remain open, and no entity recorded task completions this week. The absence of closures is not unexpected given that the portfolio is in framework design phase rather than implementation or testing phase. Completion events will become material indicators of compliance programme maturity beginning in the week of 19 April 2026. Document and report the first framework closure on transaction monitoring rules (TM-01 through TM-08) and responsible sourcing procedures (RS-RF01 through RS-RF10) as early wins in the following week's report.
+
+RECOMMENDED FOCUS FOR THE WEEK AHEAD
+
+1. MOE Regulatory Obligation Inventory. The risk that four of six entities carry no visible MOE compliance task list while GRAMALTIN AS carries thirteen distinct MOE obligations requires immediate clarification. Determine whether the five entities (FG BRANCH, MADISON LLC, NAPLES LLC, ZOE FZE, FG LLC) are subject to equivalent MOE registration, inspection, and reporting obligations and, if so, create and assign corresponding tasks with ownership and deadline. The Ministry of Economy is the supervisory authority for DNFBPs under Federal Decree-Law No. 10 of 2025, and failure to maintain documented regulatory obligations represents a control and inspection readiness risk. Schedule a forty-five-minute regulatory obligation mapping session with the MLRO and the entity points of contact on Monday morning.
+
+2. Refinery Authorization Verification. Task RS-RF09 flags refinery due diligence gaps across all six entities, with specific reference to 32 refineries suspended by MOE in 2024 and entities not on LBMA Good Delivery. This is a direct downstream control of the responsible sourcing framework and a material input to transaction clearing decisions. The FATF Recommendations on DNFBPs emphasize enhanced due diligence on high-risk counterparties. Until refinery authorization is verified against current MOE regulatory records and LBMA Good Delivery status, gold procurement activity carries elevated compliance risk. Require each entity to submit a completed Refinery Authorisation Verification Schedule (listing all current refinery counterparties, authorization status, and supporting evidence) by close of business on Wednesday.
+
+3. Sanctions Screening Operationalisation. Task RF-R12 and its correlate in the transaction monitoring framework flag the risk of gold sourced from or routed through sanctioned entities and delisted refineries. The applicable targeted financial sanctions framework, implemented by the Executive Office for Control and Non-Proliferation (EOCN), requires screening of transactions and counterparties against the UN Security Council Consolidated List and the UAE Local Terrorist List. No sanctions screening procedure is yet documented, and no screening logs appear in the snapshot. Without operational sanctions controls, the entities cannot demonstrate compliance with Federal Decree-Law No. 10 of 2025. Require evidence of sanctions screening system configuration and one full week of screening logs from each entity by end of day Thursday.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
