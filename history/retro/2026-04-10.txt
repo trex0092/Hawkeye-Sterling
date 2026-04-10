@@ -1,0 +1,72 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-04-10
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-10, 17:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes for the calendar day 2026-04-10.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This note compares the morning priority lists with the work actually closed on 2026-04-10, entity by entity, to establish completion rates and identify items requiring the MLRO's attention on the following day.
+
+HEADLINE FOR TODAY
+
+No tasks were completed across any of the seven programmes reviewed today, despite 2653 tasks being touched. The completion rate stands at zero percent. No morning priority archive was available, which prevents comparison against a baseline and obscures the intent behind the work touched.
+
+COMPLETION BY PROGRAMME
+
+FG BRANCH - COMPLIANCE PROGRAMME 2026 touched 442 tasks and completed zero. No morning priority archive was available to establish the priority baseline for this programme. All work touched carries forward pending completion.
+
+MADISON LLC - COMPLIANCE PROGRAMME 2026 touched 442 tasks and completed zero. No morning priority archive was available to establish the priority baseline for this programme. All work touched carries forward pending completion.
+
+GRAMALTIN AS - COMPLIANCE PROGRAMME 2026 touched 442 tasks and completed zero. No morning priority archive was available to establish the priority baseline for this programme. All work touched carries forward pending completion.
+
+NAPLES LLC - COMPLIANCE PROGRAMME 2026 touched 442 tasks and completed zero. No morning priority archive was available to establish the priority baseline for this programme. All work touched carries forward pending completion.
+
+ZOE FZE - COMPLIANCE PROGRAMME 2026 touched 442 tasks and completed zero. No morning priority archive was available to establish the priority baseline for this programme. All work touched carries forward pending completion.
+
+FG LLC - COMPLIANCE PROGRAMME 2026 touched 442 tasks and completed zero. No morning priority archive was available to establish the priority baseline for this programme. All work touched carries forward pending completion.
+
+SCREENINGS touched 1 task and completed zero. No morning priority archive was available to establish the priority baseline for this programme. The screening task carries forward pending completion.
+
+ITEMS CARRIED OVER TO TOMORROW
+
+No morning priority archive was available for today. Therefore, we cannot identify which of the 2653 tasks touched were flagged as morning priorities or which items should be carried forward as high-priority work. All 2653 touched tasks remain open and unresolved. Request the morning priority archive for 2026-04-11 to establish baseline priorities and to enable proper prioritisation of carryover work.
+
+KEY DECISIONS TAKEN BY THE MLRO TODAY
+
+No MLRO decisions were visible in today's data.
+
+FILINGS MADE TODAY
+
+No filings were visible in today's completion data.
+
+OBSERVATIONS
+
+The absence of any task completion across seven programmes despite 2653 tasks being touched suggests either a process issue with task closure recording, a definition mismatch between "touched" and "completed", or a genuine operational constraint preventing closure. The lack of a morning priority archive materially limits our ability to assess whether the work touched aligns with the MLRO's intended priorities or whether carryover items carry forward with their priority status intact.
+
+We note that zero completion on zero morning priorities does not necessarily indicate a problem if work was being progressed in sequence. However, without the archive, we cannot make that distinction. The consistency of the 442-task count across six of the seven programmes warrants review to confirm the data reflects actual work distribution or whether it reflects a template or system default.
+
+Provide the morning priority archive for 2026-04-10 to the compliance function and confirm the definition of task completion used by the work tracking system.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
