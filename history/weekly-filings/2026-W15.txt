@@ -1,0 +1,41 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY FILINGS SUMMARY
+Week 2026-W15, ending 2026-04-10
+=============================================================================
+
+Document reference:   HSV2-WFS-2026-W15
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-10, 17:30 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             2026-04-04 to 2026-04-10 inclusive, 0 drafts produced
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This is the weekly filings summary for the Reporting Entity for the week of 2026-04-04 to 2026-04-10 (week 2026-W15).
+
+FILINGS PRODUCED THIS WEEK
+
+No filing drafts were produced by the automation during the week. The absence of drafts does not indicate a control failure. The automation generates filing drafts only when the detector flags a transaction or activity as a candidate for reporting and the filing-mode configuration permits it to proceed. A quiet week may reflect normal business activity patterns, low-risk transactional volumes, or screening results that do not meet the threshold for escalation.
+
+MLRO REVIEW POINTS
+
+The MLRO may use this quiet week as an opportunity to verify that the detector remains active across all six detection programmes and that filing-mode.json is correctly configured to reflect her current policy intent for each programme. A brief review of detector status and filing-mode settings helps ensure that control logic is functioning as designed and that no programmes have been inadvertently disabled. Confirm detector status and filing-mode alignment with policy intent across all six programmes.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
