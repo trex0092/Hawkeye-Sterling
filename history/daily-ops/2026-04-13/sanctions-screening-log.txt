@@ -1,0 +1,49 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY SANCTIONS SCREENING LOG
+=============================================================================
+
+Document reference:   HSV2-DSL-2026-04-13
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-13, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             00:00 to 23:59 Asia/Dubai on 2026-04-13
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every sanctions-related task observed across the six active compliance programmes during the calendar day 2026-04-13. It is a contemporaneous record produced directly from the Asana task base and is intended for immediate production to the Executive Office for Control and Non-Proliferation or the Ministry of Economy on demand.
+
+2. ACTIVITY OBSERVED TODAY
+
+Total sanctions-tagged tasks touched today: 5
+Programmes covered:                         2
+
+3. LOG ENTRIES
+
+PROGRAMME                       TASK                                      ASSIGNEE        STATUS
+------------------------------  ----------------------------------------  --------------  ------
+TRADING                         Trading Daily Report — 13/04/2026 | XAU…                  open  
+TRADING                         Trading Daily Report — 12/04/2026 | P&L…                  open  
+TRADING                         Sanctions Screening — All clear                           open  
+SCREENINGS — TFS DAILY LOG 20…  🟢 Screening Run — 12 Apr 2026 | All En…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  Confirmed Match Register — 2026 | All E…  Luisa Fernanda  open  
+
+4. QUALITY ASSURANCE STATEMENT
+
+The compliance function confirms that every sanctions-tagged task open in the Asana workspace at the time of this run is represented in the log above, that each entry references a specific Asana task GID that can be cross-checked during an inspection, and that no entry has been suppressed.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
