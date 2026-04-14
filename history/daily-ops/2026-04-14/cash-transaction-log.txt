@@ -1,0 +1,66 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY CASH TRANSACTION LOG
+=============================================================================
+
+Document reference:   HSV2-DCT-2026-04-14
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-14, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every task in the Asana base that references cash activity (AED amounts, walk-in purchases, linked cash transactions) as of 2026-04-14. It is produced so that any item approaching the cash transaction threshold specified by the DPMSR framework can be reviewed by the MLRO before the day ends.
+
+2. ACTIVITY OBSERVED TODAY
+
+Tasks referencing cash activity:            22
+Programmes carrying a cash file today:      2
+
+3. LOG ENTRIES
+
+PROGRAMME                       TASK                                      ASSIGNEE        STATUS
+------------------------------  ----------------------------------------  --------------  ------
+TRADING                         Trading Daily Report — 13/04/2026 | XAU…                  open  
+TRADING                         Trading Daily Report — 12/04/2026 | P&L…                  open  
+TRADING                         AED 55K Threshold Monitor — 0 breaches …                  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | July 2026  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | August 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | Septembe…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | October …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | November…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | December…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | May 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | June …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | July …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | Augus…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | Septe…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  MADISON LLC — MLRO Monthly Report | May…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  MADISON LLC — MLRO Monthly Report | Jun…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  GRAMALTIN AS — MLRO Monthly Report | Ma…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  GRAMALTIN AS — MLRO Monthly Report | Ju…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  NAPLES LLC — MLRO Monthly Report | May …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  NAPLES LLC — MLRO Monthly Report | June…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  ZOE FZE — MLRO Monthly Report | May 2026  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  ZOE FZE — MLRO Monthly Report | June 20…  Luisa Fernanda  open  
+
+4. MLRO ACTION
+
+The MLRO is asked to verify whether any of the cash files listed above meets the DPMSR filing trigger for the rolling 30-day window on a linked transaction basis. The automation does not make that determination; the MLRO does.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
