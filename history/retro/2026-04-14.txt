@@ -1,0 +1,56 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-04-14
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-14, 17:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes for the calendar day 2026-04-14.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This Daily Completion Retro compares the morning priority lists against the work actually closed on 2026-04-14, entity by entity, to track progress across all compliance programmes and flag items requiring the MLRO's attention.
+
+HEADLINE FOR TODAY
+
+Zero tasks were completed across 15 programmes reviewed today, although four tasks were touched but remain open. The single most important item carried over is a task in the MLRO Central - Blocked Across Customers programme, which remains unresolved and requires the MLRO's immediate attention tomorrow.
+
+COMPLETION BY PROGRAMME
+
+No morning priority archive was available for today, so we work from completion activity alone and lack a baseline size for each morning list. FG BRANCH - COMPLIANCE PROGRAMME 2026, MADISON LLC - COMPLIANCE PROGRAMME 2026, GRAMALTIN AS - COMPLIANCE PROGRAMME 2026, NAPLES LLC - COMPLIANCE PROGRAMME 2026, ZOE FZE - COMPLIANCE PROGRAMME 2026, FG LLC - COMPLIANCE PROGRAMME 2026, SCREENINGS, MLRO MONTHLY REPORTS - ALL ENTITIES 2026, KYC / CDD TRACKER - ALL ENTITIES 2026, SCREENINGS - TFS DAILY LOG 2026, and GOAML / REGULATORY REPORTING - ALL ENTITIES 2026 each show no tasks touched today and no tasks completed. TRADING shows one task touched but zero tasks completed, and that task carries over. AI Governance Watchdog shows one task touched but zero tasks completed, and that task carries over. MLRO Central - Blocked Across Customers shows one task touched but zero tasks completed, and that task carries over with priority weight. Compliance Audit Log - 10-Year Retention shows one task touched but zero tasks completed, and that task carries over.
+
+ITEMS CARRIED OVER TO TOMORROW
+
+TRADING programme carries over one incomplete task. AI Governance Watchdog programme carries over one incomplete task. MLRO Central - Blocked Across Customers programme carries over one incomplete task that requires priority handling. Compliance Audit Log - 10-Year Retention programme carries over one incomplete task. Escalate all four incomplete items to the MLRO for triage and assignment of tomorrow's work queue.
+
+KEY DECISIONS TAKEN BY THE MLRO TODAY
+
+No MLRO decisions were visible in today's data.
+
+FILINGS MADE TODAY
+
+No filings were visible in today's completion data.
+
+OBSERVATIONS
+
+Today's completion rate reflects zero closed tasks across all 15 programmes. This represents a day of low throughput with no forward motion on any active workstream. Four tasks remain in progress state, concentrated in governance, customer risk management, and records retention areas, all of which are material to the compliance function's core AML/CFT obligations. The absence of a morning priority archive prevents us from assessing whether today's activity was reactive or planned, and this data gap should be corrected to restore visibility into MLRO planning. Restore the morning priority archive capture process and provide the MLRO with a revised completion retro once baseline data is available.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
