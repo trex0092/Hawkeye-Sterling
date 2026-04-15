@@ -1,0 +1,56 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-04-15
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-15, 17:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes for the calendar day 2026-04-15.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This Daily Completion Retro compares the morning priority lists with the tasks actually closed on 2026-04-15, reported by programme across the Reporting Entity. The morning priority archive was not available, so analysis proceeds from the completion activity alone.
+
+HEADLINE FOR TODAY
+
+The Reporting Entity closed 1 task across all 16 programmes reviewed, representing a completion rate of 0.3 percent of the 367 tasks touched. The single item of substance was a Brain Power Score update in the HAWKEYE tenant-a programme. All other work remained open at the close of business.
+
+COMPLETION BY PROGRAMME
+
+FG BRANCH - COMPLIANCE PROGRAMME 2026 had 1 task touched and 0 completed. MADISON LLC - COMPLIANCE PROGRAMME 2026 had 1 task touched and 0 completed. GRAMALTIN AS - COMPLIANCE PROGRAMME 2026 had no tasks touched and no completions. NAPLES LLC - COMPLIANCE PROGRAMME 2026 had 1 task touched and 0 completed. ZOE FZE - COMPLIANCE PROGRAMME 2026 had no tasks touched and no completions. FG LLC - COMPLIANCE PROGRAMME 2026 had no tasks touched and no completions. The TRADING programme had 3 tasks touched and 0 completed. AI Governance Watchdog had no tasks touched and no completions. SCREENINGS had 2 tasks touched and 0 completed. MLRO MONTHLY REPORTS, ALL ENTITIES 2026 had no tasks touched and no completions. KYC / CDD TRACKER, ALL ENTITIES 2026 had no tasks touched and no completions. SCREENINGS, TFS DAILY LOG 2026 had no tasks touched and no completions. GOAML / REGULATORY REPORTING, ALL ENTITIES 2026 had no tasks touched and no completions. The MLRO Central Blocked Across Customers programme had no tasks touched and no completions. The Compliance Audit Log 10-Year Retention programme had no tasks touched and no completions. HAWKEYE tenant-a had 359 tasks touched and 1 completed, relating to a routine Brain Power Score calculation.
+
+ITEMS CARRIED OVER TO TOMORROW
+
+Eight programmes contain tasks that were touched but not closed. FG BRANCH - COMPLIANCE PROGRAMME 2026, MADISON LLC - COMPLIANCE PROGRAMME 2026, NAPLES LLC - COMPLIANCE PROGRAMME 2026, and the TRADING programme each hold open work that requires completion. The SCREENINGS programme holds 2 open items. Without access to the morning priority archive, the nature and priority status of these items cannot be confirmed from the completion data alone. The MLRO should review the task queues of these programmes to identify any that required completion today and assess delay impact. Close this retro with instruction on priority sequencing for 2026-04-16.
+
+KEY DECISIONS TAKEN BY THE MLRO TODAY
+
+No MLRO decisions were visible in today's data.
+
+FILINGS MADE TODAY
+
+No filings were visible in today's completion data.
+
+OBSERVATIONS
+
+The completion rate of 0.3 percent reflects minimal task closure despite high touch volume. Of 367 tasks engaged across the Reporting Entity, only 1 reached closure. The absence of the morning priority archive prevents confirmation of whether this outcome reflects deliberate re-prioritization or blocked workflow. Eight active programmes carry open work forward, including core functions such as TRADING, SCREENINGS, and KYC / CDD tracking. The HAWKEYE programme shows intensive activity (359 tasks touched) but has produced only routine system output so far. The concentration of touch without closure across so many programmes in a single day warrants immediate inquiry into whether systemic constraints, resource bottlenecks or workload distribution are inhibiting progress on material compliance tasks. Request the MLRO to confirm whether the low completion rate is intentional or signals an operational issue requiring escalation to Senior Management.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
