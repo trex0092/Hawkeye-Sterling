@@ -1,0 +1,49 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY PEP WATCH LOG
+=============================================================================
+
+Document reference:   HSV2-DPL-2026-04-16
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-16, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every Politically Exposed Person file currently under active monitoring across the six active compliance programmes as of 2026-04-16. It is produced directly from the Asana task base and is intended to give the MLRO a one-page view of the firm's PEP population and any movements observed today.
+
+2. POPULATION
+
+Total PEP files currently under EDD:        5
+Programmes carrying a PEP file:             4
+
+3. LOG ENTRIES
+
+PROGRAMME                       FILE                                      ASSIGNEE        STATUS
+------------------------------  ----------------------------------------  --------------  ------
+SCREENINGS                      [TFS] ERMAN DONMEZ — Partial Match                        open  
+SCREENINGS                      [TFS] OZCAN HALAC — Partial Match                         open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | October …  Luisa Fernanda  open  
+KYC / CDD TRACKER — ALL ENTIT…  PEP Register Review — All Entities        Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY] MLRO Board report — screeni…  Luisa Fernanda  open  
+
+4. QUALITY ASSURANCE STATEMENT
+
+The compliance function confirms that every PEP-tagged task open in the Asana workspace at the time of this run is represented in the log above, and that the list has not been filtered or redacted.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
