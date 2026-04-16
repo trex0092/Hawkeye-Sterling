@@ -1,0 +1,60 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-04-16
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-16, 17:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes for the calendar day 2026-04-16.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This note compares the morning priority lists with the work actually closed on 2026-04-16, entity by entity. The morning priority archive was unavailable, so the analysis proceeds from completion activity alone.
+
+HEADLINE FOR TODAY
+
+Zero tasks were completed across all 16 programmes reviewed today, despite 470 tasks being touched. The single most significant item requiring tomorrow's attention is the one task touched but not completed in the Naples LLC Compliance Programme 2026. Assess the root cause of the zero-completion rate and determine whether system capacity or procedural obstacles are blocking progress.
+
+COMPLETION BY PROGRAMME
+
+FG Branch Compliance Programme 2026 recorded no tasks touched and zero completions. Madison LLC Compliance Programme 2026 recorded no tasks touched and zero completions. Gramaltin AS Compliance Programme 2026 recorded no tasks touched and zero completions. Naples LLC Compliance Programme 2026 touched one task and closed zero; this item carries over pending the MLRO's review. ZOE FZE Compliance Programme 2026 recorded no tasks touched and zero completions. FG LLC Compliance Programme 2026 recorded no tasks touched and zero completions. Trading recorded 18 tasks touched and zero completions; all items carry over. AI Governance Watchdog recorded no tasks touched and zero completions. Screenings recorded no tasks touched and zero completions. MLRO Monthly Reports All Entities 2026 recorded 48 tasks touched and zero completions; all items carry over. KYC/CDD Tracker All Entities 2026 recorded 17 tasks touched and zero completions; all items carry over. Screenings TFS Daily Log 2026 recorded 12 tasks touched and zero completions; all items carry over. goAML/Regulatory Reporting All Entities 2026 recorded 16 tasks touched and zero completions; all items carry over. MLRO Central Blocked Across Customers recorded no tasks touched and zero completions. Compliance Audit Log 10-Year Retention recorded no tasks touched and zero completions. Hawkeye tenant-a recorded 358 tasks touched and zero completions; all items carry over.
+
+ITEMS CARRIED OVER TO TOMORROW
+
+Naples LLC Compliance Programme 2026 carries forward one task that was touched today but not closed. Trading carries forward 18 tasks touched but not completed. MLRO Monthly Reports All Entities 2026 carries forward 48 tasks touched but not completed. KYC/CDD Tracker All Entities 2026 carries forward 17 tasks touched but not completed. Screenings TFS Daily Log 2026 carries forward 12 tasks touched but not completed. goAML/Regulatory Reporting All Entities 2026 carries forward 16 tasks touched but not completed. Hawkeye tenant-a carries forward 358 tasks touched but not completed.
+
+KEY DECISIONS TAKEN BY THE MLRO TODAY
+
+No MLRO decisions were visible in today's data.
+
+FILINGS MADE TODAY
+
+No filings were visible in today's completion data.
+
+OBSERVATIONS
+
+The zero completion rate recorded across all programmes on 2026-04-16 represents a significant departure from normal operations. While 470 tasks were touched across the portfolio, none progressed to completion. This pattern suggests either a system-level obstruction, a data recording issue, or a procedural standstill that requires immediate investigation.
+
+The largest concentration of untouched work lies in Hawkeye tenant-a, with 358 tasks touched but not closed. The second-largest concentration is in MLRO Monthly Reports, with 48 tasks touched but not closed. These two programmes alone account for 406 of the 470 touched tasks and warrant urgent attention.
+
+The absence of a morning priority archive prevents comparison between the original priority sequence and today's work flow. This limits the MLRO's ability to assess whether priorities were respected or whether the work touched reflects the intended sequence. Request that the morning priority archive be restored for tomorrow's retro, and investigate why today's completion velocity fell to zero despite sustained task handling activity.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
