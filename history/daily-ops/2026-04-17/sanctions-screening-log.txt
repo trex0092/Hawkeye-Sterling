@@ -1,0 +1,139 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY SANCTIONS SCREENING LOG
+=============================================================================
+
+Document reference:   HSV2-DSL-2026-04-17
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-17, 09:05 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             00:00 to 23:59 Asia/Dubai on 2026-04-17
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every sanctions-related task observed across the six active compliance programmes during the calendar day 2026-04-17. It is a contemporaneous record produced directly from the Asana task base and is intended for immediate production to the Executive Office for Control and Non-Proliferation or the Ministry of Economy on demand.
+
+2. ACTIVITY OBSERVED TODAY
+
+Total sanctions-tagged tasks touched today: 95
+Programmes covered:                         7
+
+3. LOG ENTRIES
+
+PROGRAMME                       TASK                                      ASSIGNEE        STATUS
+------------------------------  ----------------------------------------  --------------  ------
+TRADING                         Trading Daily Report — 16/04/2026 | XAU…                  open  
+TRADING                         Trading Daily Report — 15/04/2026 | XAU…                  open  
+TRADING                         Trading Daily Report — 14/04/2026 | XAU…                  open  
+TRADING                         Trading Daily Report — 13/04/2026 | XAU…                  open  
+TRADING                         Trading Daily Report — 12/04/2026 | P&L…                  open  
+TRADING                         XAU — BUY signal | 62% conviction | R:R…                  open  
+TRADING                         G/S RATIO — Ratio 78.4 | Monitoring for…                  open  
+TRADING                         CROSS EXCHANGE — LBMA→DMCC | Spread 0.1…                  open  
+TRADING                         Sanctions Screening — All clear                           open  
+TRADING                         Monthly Performance Report — April 2026                   open  
+TRADING                         Venue Coverage & Fee Schedule                             open  
+SCREENINGS                      [TFS] ISTANBUL GOLD REFINERY — Confirme…                  open  
+SCREENINGS                      [TFS] Bob Smith — Partial Match                           open  
+SCREENINGS                      [TFS] ERMAN DONMEZ — Partial Match                        open  
+SCREENINGS                      [TFS] OZCAN HALAC — Partial Match                         open  
+KYC / CDD TRACKER — ALL ENTIT…  April 2026 — High Risk Periodic Reviews…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  🟢 Screening Run — 12 Apr 2026 | All En…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  🟢 Screening Run — 14 Apr 2026 | All En…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  🟢 Screening Run — 15 Apr 2026 | All En…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  🟢 Screening Run — 16 Apr 2026 | All En…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  Alert Log — April 2026 | All Entities     Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  False Positive Disposal Log — April 202…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  Confirmed Match Register — 2026 | All E…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG 20…  PNMR Filed Log — April 2026 | All Entit…  Luisa Fernanda  open  
+GOAML / REGULATORY REPORTING …  FFR Tracker — All Entities | April 2026   Luisa Fernanda  open  
+GOAML / REGULATORY REPORTING …  FFR — Asset Release Requests Review       Luisa Fernanda  open  
+GOAML / REGULATORY REPORTING …  PNMR Log — FG LLC | April 2026            Luisa Fernanda  open  
+GOAML / REGULATORY REPORTING …  PNMR Log — FG BRANCH / MADISON / GRAMAL…  Luisa Fernanda  open  
+GOAML / REGULATORY REPORTING …  April 2026 — GOAML Filing Reconciliatio…  Luisa Fernanda  open  
+🚨 MLRO Central - Blocked Acr…  Freeze Protocol Registry — 24h EOCN cou…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [P0] Run sanctions screening on cust-2 …  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [P1] Add HAWKEYE_ALERT_EMAIL env var to…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [P2] Run a tabletop drill in demo mode …  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY] MLRO Board report — screeni…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [P0-CRITICAL] Appoint a backup MLRO in …  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY] Open HAWKEYE → check Live Statu…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [ANNUALLY] Full internal audit + tablet…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-10] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-28] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-13] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-09] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-05] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-03] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-30] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-08] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-05] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-19] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-20] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-15] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-08] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-03] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-23] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-15] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-04] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-01] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-01] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-18] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-07] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-08] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-14] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-24] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-02] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-11] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-16] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-26] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-06] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-22] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-26] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-12] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-04] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-10] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-12] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-07] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-02] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-21] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-18] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-19] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-09] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-11] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-29] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-06] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-25] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-27] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-17] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-06-29] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-25] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-05-22] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-13] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-07-14] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-09-01] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-10-12] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [DAILY 2026-11-30] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY 2027-01-01] MLRO Board report  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY 2026-10-01] MLRO Board report  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY 2027-04-01] MLRO Board report  Luisa Fernanda  open  
+
+4. QUALITY ASSURANCE STATEMENT
+
+The compliance function confirms that every sanctions-tagged task open in the Asana workspace at the time of this run is represented in the log above, that each entry references a specific Asana task GID that can be cross-checked during an inspection, and that no entry has been suppressed.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
