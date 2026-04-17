@@ -1,0 +1,56 @@
+=============================================================================
+THE REPORTING ENTITY
+DAILY COMPLETION RETRO
+=============================================================================
+
+Document reference:   HSV2-DCR-2026-04-17
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-17, 17:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             All active compliance programmes for the calendar day 2026-04-17.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This note compares the morning priority lists with the work actually closed today, entity by entity, to track completion rates and identify items requiring attention on the following business day.
+
+HEADLINE FOR TODAY
+
+One task was completed today across 24 programmes under review, against a morning priority list containing zero flagged items. The single item that moved to completion was the Old Gold and Inherited Gold Verification task in the Naples LLC Compliance Programme. Three hundred seventeen tasks across all programmes remain in a touched but unclosed state and carry over to tomorrow.
+
+COMPLETION BY PROGRAMME
+
+No morning priority archive was available for today. The completion activity data shows that work proceeded across 24 programmes. Of these, only the Naples LLC Compliance Programme 2026 recorded a closed task. The FG Branch, Gramaltin AS, ZOE FZE, FG LLC, AI Governance Watchdog, MLRO Monthly Reports, KYC/CDD Tracker, Screenings TFS Daily Log, goAML/Regulatory Reporting, MLRO Central, Compliance Audit Log, Hawkeye tenant-a, Compliance Assessments 2026, Hawkeye fine-gold-branch, Hawkeye gramaltin-as, Hawkeye zoe-fze, and Hawkeye fine-gold-llc all recorded no completions and no touched items. The Madison LLC Compliance Programme 2026, Trading, Screenings, and Customer Database programmes recorded touched items but no completions. Hawkeye madison-llc and Hawkeye naples-llc recorded no touched items and no completions.
+
+ITEMS CARRIED OVER TO TOMORROW
+
+Madison LLC Compliance Programme 2026 carries forward one task in touched but unclosed state. Trading carries forward two tasks in touched but unclosed state. Screenings carries forward one task in touched but unclosed state. The Customer Database programme carries forward three hundred thirteen tasks in touched but unclosed state. The absence of a morning priority archive prevents identification of priority status for these items.
+
+KEY DECISIONS TAKEN BY THE MLRO TODAY
+
+No MLRO decisions were visible in today's data.
+
+FILINGS MADE TODAY
+
+No filings were visible in today's completion data.
+
+OBSERVATIONS
+
+Throughput was minimal today, with only one task completion across all programmes. The completion rate of 0.3 per cent against total tasks touched reflects significant concentration in the Customer Database programme, which accounts for three hundred thirteen of the three hundred eighteen touched items but recorded no closure. The Naples LLC task completion on Old Gold and Inherited Gold Verification is noted as positive closure activity within the substantive compliance programmes. The absence of a morning priority archive limits the compliance function's ability to assess whether the low completion rate reflects workload prioritization or process constraint. Provide the MLRO with the morning priority archive for 2026-04-18 and confirm the expected completion target for the Customer Database programme tasks.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
