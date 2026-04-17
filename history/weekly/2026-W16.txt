@@ -1,0 +1,75 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY PATTERN REPORT
+Week 2026-W16, ending 2026-04-17
+=============================================================================
+
+Document reference:   HSV2-WPR-2026-W16
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-17, 16:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             17 active compliance programmes, rolling 7 days to 2026-04-17.
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This report is the internal analytical companion to the Weekly MLRO Report to Senior Management, covering the week ending 17 April 2026. It is the source of record for cross-entity typology activity, emerging patterns, and compliance programme health across the Reporting Entity and its portfolio of Designated Non-Financial Business and Profession operations.
+
+HEADLINE FOR THE WEEK
+
+Three entities triggered identical CDD-CRITICAL alerts on 13 April 2026 related to VAT Compliance for Precious Metals, but the compliance programme data shows no follow-up completion or clearance. This represents a significant control gap affecting Fine Gold Branch, Madison LLC, and Naples LLC. The MLRO should immediately verify that these alerts have been triaged and that the underlying VAT status has been confirmed before the 1 May 2026 deadline.
+
+CROSS-ENTITY PATTERNS OBSERVED
+
+1. Simultaneous CDD-CRITICAL alerts across three entities on the same date suggest a shared upstream event or policy change. Fine Gold Branch, Madison LLC, and Naples LLC all received identical alerts on 13 April 2026, each marked for resolution by 1 May 2026, yet none appear to have progressed to completion in the current snapshot. This pattern warrants verification that the alerts are genuine compliance obligations rather than system artifacts or automated false positives.
+
+2. The TRADING programme entity shows no operational completion activity for the week despite maintaining 24 open tasks spanning daily trading reports, spot price monitoring, and risk oversight. The programme is current and operational, with no stalling observed. However, the concentration of all operational activity in a single portfolio segment, while five compliance programme entities show near or complete closure of weekly tasks, suggests that trading platform surveillance is decoupled from entity-level compliance workflow. Monitor whether trading alerts are being escalated to entity compliance programmes through a documented route.
+
+3. Sanctions screening activity is progressing. One confirmed match (Istanbul Gold Refinery, Turkey) and two partial matches (Erman Dönmez and Özcan Halac, both individuals, both Turkish nationals) were identified during the week. All three screening events remain open pending analyst review and clearance documentation. No pattern of repeated matches from a single jurisdiction or entity is evident at this stage.
+
+EMERGING RISKS
+
+1. Madison LLC presents a bifurcated risk profile. The entity triggered a CDD-CRITICAL VAT alert on 13 April, yet simultaneously has an open Airway Bill task (AWB 176-26480473) documenting a precious metals shipment from Switzerland to the United Arab Emirates with no acquisition date or supporting provenance documentation visible in the task notes. Cross-reference the Swiss shipment with the VAT alert to confirm that no smuggling or transfer pricing avoidance scheme is indicated. Confirm the acquisition date and chain of custody for this shipment within two business days.
+
+2. The Istanbul Gold Refinery (Turkey) confirmed match against targeted financial sanctions lists requires immediate escalation. The screening event was generated on an unknown date and remains open pending analyst review. Under Federal Decree-Law No. 10 of 2025, any confirmed match triggers a mandatory freeze protocol and reporting obligations to the Executive Office for Control and Non-Proliferation. Verify whether a Freeze Protocol and Funds Freeze Report have been filed on goAML, and confirm the 24-hour EOCN countdown status.
+
+3. Two Turkish individuals, Erman Dönmez and Özcan Halac, have generated partial name match alerts. Both individuals are marked as Turkish nationals. The notes suggest these are partial matches requiring manual analyst review. Determine the customer or transaction context in which these names were encountered and whether either individual is a beneficial owner, director, or signatory on any customer account held across the portfolio entities.
+
+STALLED INVESTIGATIONS
+
+1. The VAT Compliance alerts affecting Fine Gold Branch, Madison LLC, and Naples LLC have been open since 13 April with a resolution date of 1 May 2026. No completion activity or intermediate clearance has been recorded for any of the three entities. Clarify whether these alerts represent genuine compliance deficiencies or routine periodic compliance checks, and confirm the status of VAT reporting and liability across all three entities before the deadline.
+
+2. The Istanbul Gold Refinery confirmed match (TFS2-1776419323103) has been open since an unknown date with a stated due date of 18 April 2026, which is now past. The task remains in the screening queue with no documented resolution, escalation, or freeze event. This represents a potential breach of freeze protocol timelines under the applicable targeted financial sanctions framework. Escalate to the MLRO immediately for freeze status confirmation.
+
+3. Customer database assessment tasks are uniformly open (313 open, 0 completed this week) with no visible movement on any individual customer compliance file. This appears to be a normal state for a customer reference database rather than a stall, but confirm that no customers have been flagged for exit or enhanced scrutiny that require immediate action outside the normal periodic review cycle.
+
+WINS OF THE WEEK
+
+1. Fine Gold Branch, Madison LLC, and Naples LLC completed 441 compliance programme tasks each during the week despite the three CDD-CRITICAL alerts remaining open. This indicates robust underlying compliance discipline and a high completion rate on routine tasks. The alerts appear to be exceptions rather than systemic failures.
+
+2. Sanctions screening operations are functioning and generating alerts appropriately. The Istanbul Gold Refinery confirmed match and the two Turkish partial matches demonstrate that the screening infrastructure is detecting potential exposures. Once the matches are cleared through analysis and documentation, this surveillance will have delivered protective value.
+
+RECOMMENDED FOCUS FOR THE WEEK AHEAD
+
+1. Resolve the VAT Compliance CDD-CRITICAL alerts for Fine Gold Branch, Madison LLC, and Naples LLC. Each entity has until 1 May 2026 to clear these alerts, and no completion has been logged. Request that each entity confirm its VAT registration status, liability, and reporting obligations with supporting documentation from the relevant tax authority or internal accounting records. Close out each alert with documented evidence by 24 April 2026.
+
+2. Escalate the Istanbul Gold Refinery confirmed match to the MLRO for freeze protocol activation and Funds Freeze Report preparation. The alert is now past its stated due date of 18 April 2026 and remains unresolved. File a Funds Freeze Report on goAML and initiate the 24-hour EOCN countdown notification under the applicable targeted financial sanctions framework within one business day.
+
+3. Investigate the Madison LLC Switzerland-to-UAE precious metals shipment (AWB 176-26480473) in conjunction with the VAT alert to rule out transfer pricing abuse or illicit smuggling. Obtain the acquisition date, seller identity, purchase invoice, and any inspection or certification documents from the shipper. If provenance cannot be established, escalate to the MLRO for customer risk reassessment and possible suspicious activity reporting consideration by 22 April 2026.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
