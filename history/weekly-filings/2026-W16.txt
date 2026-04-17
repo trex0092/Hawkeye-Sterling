@@ -1,0 +1,41 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY FILINGS SUMMARY
+Week 2026-W16, ending 2026-04-17
+=============================================================================
+
+Document reference:   HSV2-WFS-2026-W16
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-17, 17:30 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             2026-04-11 to 2026-04-17 inclusive, 0 drafts produced
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+PURPOSE
+
+This is the Weekly Filings Summary for the Reporting Entity for week 2026-W16, covering the period 2026-04-11 to 2026-04-17.
+
+FILINGS PRODUCED THIS WEEK
+
+No filing drafts were produced by the automation during the week. The absence of drafts does not indicate a control failure. The automation only generates filing drafts when the detector flags a candidate transaction or customer record for review and the filing-mode configuration permits a draft to be issued for that filing category.
+
+MLRO REVIEW POINTS
+
+The MLRO may use this quiet week as an opportunity to verify that the detector is active across all six filing programmes (Suspicious Transaction Reports, Suspicious Activity Reports, Dealers in Precious Metals and Stones Reports, Partial Name Match Reports, Funds Freeze Reports, and Customer Risk Updates) and that filing-mode.json reflects the current operational intent for each. Confirm detector activation and filing-mode settings within this week.
+
+For review by the MLRO, LF.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
