@@ -1,0 +1,71 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY ESCALATION LOG
+Week 2026-W16
+=============================================================================
+
+Document reference:   HSV2-WEL-2026-W16
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-17, 18:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Week ending 2026-04-17
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This log records every task in the Asana base that carries language indicating an escalation to the MLRO during the week. It is a contemporaneous index of escalations for the MLRO's own review and for the weekly MLRO report.
+
+2. ACTIVITY
+
+Escalations identified this week: 27
+
+3. ENTRIES
+
+PROGRAMME                     TASK                                      ASSIGNEE        STATUS
+----------------------------  ----------------------------------------  --------------  ------
+TRADING                       Sanctions Screening — All clear                           open  
+SCREENINGS                    [TFS] ERMAN DONMEZ — Partial Match                        open  
+SCREENINGS                    [TFS] OZCAN HALAC — Partial Match                         open  
+MLRO MONTHLY REPORTS — ALL …  FG LLC — MLRO Monthly Report | August 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG LLC — MLRO Monthly Report | Septembe…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG LLC — MLRO Monthly Report | October …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG LLC — MLRO Monthly Report | November…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG LLC — MLRO Monthly Report | December…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG BRANCH — MLRO Monthly Report | June …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG BRANCH — MLRO Monthly Report | July …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  FG BRANCH — MLRO Monthly Report | Augus…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  MADISON LLC — MLRO Monthly Report | Jun…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL …  GRAMALTIN AS — MLRO Monthly Report | Ma…  Luisa Fernanda  open  
+KYC / CDD TRACKER — ALL ENT…  EDD Open Cases — All Entities | Status …  Luisa Fernanda  open  
+KYC / CDD TRACKER — ALL ENT…  UBO Verification Refresh — 12+ Month De…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG …  Alert Log — April 2026 | All Entities     Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG …  Confirmed Match Register — 2026 | All E…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG …  Weekly Screening Summary — W/E 17 Apr 2…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG …  Weekly Screening Summary — W/E 24 Apr 2…  Luisa Fernanda  open  
+SCREENINGS — TFS DAILY LOG …  Weekly Screening Summary — W/E 30 Apr 2…  Luisa Fernanda  open  
+GOAML / REGULATORY REPORTIN…  FFR Tracker — All Entities | April 2026   Luisa Fernanda  open  
+GOAML / REGULATORY REPORTIN…  PNMR Log — FG LLC | April 2026            Luisa Fernanda  open  
+GOAML / REGULATORY REPORTIN…  PNMR Log — FG BRANCH / MADISON / GRAMAL…  Luisa Fernanda  open  
+HAWKEYE — tenant-a            [MONTHLY] Run /kpi-report → file with M…  Luisa Fernanda  open  
+HAWKEYE — tenant-a            [WEEKLY] Run /audit skill → review past…  Luisa Fernanda  open  
+HAWKEYE — tenant-a            [DAILY 2026-05-05] Open HAWKEYE → check…  Luisa Fernanda  open  
+HAWKEYE — tenant-a            [DAILY 2026-05-04] Open HAWKEYE → check…  Luisa Fernanda  open  
+
+4. MLRO ACTION
+
+Confirm that every escalation listed above has been acknowledged in the MLRO's review queue, and that the corresponding disposition is recorded on the Asana task.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]

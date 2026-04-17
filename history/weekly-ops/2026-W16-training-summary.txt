@@ -1,0 +1,69 @@
+=============================================================================
+THE REPORTING ENTITY
+WEEKLY TRAINING AND ATTESTATION SUMMARY
+Week 2026-W16
+=============================================================================
+
+Document reference:   HSV2-WTS-2026-W16
+Classification:       Confidential. For MLRO review only.
+Version:              1.0
+Prepared by:          Compliance function, the Reporting Entity
+Prepared on:          2026-04-17, 18:00 Asia/Dubai
+Addressee:            LF, Money Laundering Reporting Officer (MLRO)
+Coverage:             Week ending 2026-04-17
+Retention period:     10 years, in accordance with the applicable provision
+                      of Federal Decree-Law No. 10 of 2025.
+
+1. PURPOSE
+
+This summary records every task in the Asana base that references AML or CFT training activity for the week ending 2026-04-17. It is produced directly from the task base and is intended to support the MLRO's tracking of attendance and competence.
+
+2. ACTIVITY OBSERVED
+
+Training-related tasks touched this week: 25
+
+3. ENTRIES
+
+PROGRAMME                       TASK                                        ASSIGNEE        STATUS
+------------------------------  ------------------------------------------  --------------  ------
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | July 2026    Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | August 2026  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | September …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | October 20…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | November 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG LLC — MLRO Monthly Report | December 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | May 2026  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | June 20…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | July 20…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | August …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  FG BRANCH — MLRO Monthly Report | Septemb…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  MADISON LLC — MLRO Monthly Report | May 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  MADISON LLC — MLRO Monthly Report | June …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  GRAMALTIN AS — MLRO Monthly Report | May …  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  GRAMALTIN AS — MLRO Monthly Report | June…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  NAPLES LLC — MLRO Monthly Report | May 20…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  NAPLES LLC — MLRO Monthly Report | June 2…  Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  ZOE FZE — MLRO Monthly Report | May 2026    Luisa Fernanda  open  
+MLRO MONTHLY REPORTS — ALL EN…  ZOE FZE — MLRO Monthly Report | June 2026   Luisa Fernanda  open  
+📜 Compliance Audit Log - 10-…  FDL Art.24 Retention Kickoff — 10-year do…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY] MLRO Board report — screening…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [P0-CRITICAL] Appoint a backup MLRO in wr…  Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY 2027-01-01] MLRO Board report    Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY 2026-10-01] MLRO Board report    Luisa Fernanda  open  
+HAWKEYE — tenant-a              [QUARTERLY 2027-04-01] MLRO Board report    Luisa Fernanda  open  
+
+4. MLRO ACTION
+
+Reconcile the list above against the firm's internal training log. Any training event not in Asana should be added to the log separately.
+
+-----------------------------------------------------------------------------
+DOCUMENT SIGN-OFF
+-----------------------------------------------------------------------------
+
+Prepared by:   Compliance function, the Reporting Entity
+Reviewed by:   [awaiting MLRO review]
+Approved by:   [awaiting MLRO approval]
+
+For review by the MLRO, LF.
+
+[End of document]
