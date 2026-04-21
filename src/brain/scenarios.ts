@@ -158,6 +158,57 @@ export const SCENARIOS: Scenario[] = [
     'Post-incident review 6 weeks late; some controls adjusted informally; no tabletop since.',
     undefined,
     ['post_mortem_overdue','informal_change','exercise_gap']),
+
+  // ─── WAVE 3 ────────────────────────────────────────────────────────
+  s('dark_fleet_stss_cargo', 'Dark Fleet — STS Cargo', 'sanctions',
+    'Tanker without P&I cover conducts two overnight STS transfers off Lakonikos; AIS dark for 11 hours; vessel flag changed within 60 days.',
+    'russian_oil_attestation',
+    ['ais_gap','stss_pattern','flag_hopping','p_and_i_gap']),
+
+  s('front_company_cluster', 'Front-Company Cluster', 'sanctions',
+    'Three recently-incorporated UAE free-zone entities share registered agent, filing day, and director-of-record.',
+    'sanctions_evasion_probe',
+    ['shared_agent','formation_cluster','front_company_fingerprint']),
+
+  s('iran_gold_for_oil', 'Iran — Gold-for-Oil', 'sanctions',
+    'UAE gold refiner invoiced by Malaysian intermediary; funds settle via Hong Kong shell; pattern repeats monthly.',
+    'iran_evasion_screen',
+    ['iran_evasion_pattern','precious_metal_typology','intermediary_layering']),
+
+  s('dprk_crypto_heist_flow', 'DPRK — Crypto Heist Flow', 'vasp',
+    'Funds from a known Lazarus-linked wallet hop three bridges into privacy pools, then re-emerge at an OTC desk serving Chinese RMB settlement.',
+    'dprk_evasion_screen',
+    ['dprk_evasion_pattern','bridge_hopping','privacy_pool_exposure']),
+
+  s('chip_diversion_hub', 'Chip — Diversion Hub', 'pf',
+    'Advanced AI-GPU shipment consigned to a Dubai free-zone trader with no discernible end-user, re-exported within 9 days to a Hong Kong shell.',
+    'chip_export_screen',
+    ['chip_export_controls','diversion_risk','shell_end_user']),
+
+  s('corporate_benford_anomaly', 'Corporate — Benford Anomaly', 'ops',
+    'AP dataset of 8,400 invoices over 12 months; leading-digit distribution deviates heavily from Benford; round-numbered invoices spike at period close.',
+    'forensic_benford_screen',
+    ['benford_deviation','journal_entry_anomaly','period_close_pattern']),
+
+  s('insider_cluster_kcore', 'Market — Insider Cluster k-Core', 'market',
+    'Graph of trades reveals a 5-account k-core with temporal motifs tightly coupled to a confidential regulatory approval.',
+    'network_kcore_screen',
+    ['dense_subgraph','temporal_motif','pre_announcement_trade']),
+
+  s('peel_chain_exit', 'Crypto — Peel-Chain Exit', 'vasp',
+    'Large balance dissipates through a 26-hop peel chain to multiple exchanges over three days, with a change-address pattern.',
+    'crypto_deep_probe',
+    ['peel_chain','change_address_heuristic','cross_exchange_layering']),
+
+  s('esg_mineral_origin_laundering', 'ESG — Mineral-Origin Laundering', 'esg',
+    'Tungsten declared Rwandan-origin; smelter records and LBMA-equivalent ITSCI tags inconsistent with DRC-ASM movement pattern.',
+    'esg_greenwash_screen',
+    ['conflict_mineral_typology','provenance_mismatch','esg_false_claim']),
+
+  s('bec_linguistic_tell', 'Fraud — BEC Linguistic Tell', 'fraud',
+    'Late-Friday invoice-redirect email uses stylometric register distinct from vendor baseline; obfuscation markers and hedging cluster in the payment-instruction sentence.',
+    'linguistic_forensic_read',
+    ['stylometry_shift','obfuscation_pattern','hedging_cluster','bec_fraud']),
 ];
 
 export const SCENARIO_BY_ID: Map<string, Scenario> = new Map(

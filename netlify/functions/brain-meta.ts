@@ -8,6 +8,15 @@ import {
   SCENARIOS,
   ADVERSE_MEDIA_CATEGORIES,
   ADVERSE_MEDIA_QUERY,
+  COMBINED_SYNONYM_POOL,
+  INTELLIGENCE_KEYWORDS,
+  SCREENING_TAXONOMY,
+  countModesWithRealApply,
+  COMPLIANCE_POLICY_VERSION,
+  PROHIBITIONS,
+  MATCH_CONFIDENCE_TAXONOMY,
+  MANDATORY_OUTPUT_SECTIONS,
+  UAE_REGULATORY_ANCHORS,
 } from '../../src/brain/index.js';
 
 export const handler: Handler = async () => {
@@ -29,6 +38,10 @@ export const handler: Handler = async () => {
       adverseMediaKeywords: ADVERSE_MEDIA_CATEGORIES
         .reduce((n, c) => n + c.keywords.length, 0),
       adverseMediaQueryChars: ADVERSE_MEDIA_QUERY.length,
+      combinedSynonymPool: COMBINED_SYNONYM_POOL.length,
+      intelligenceKeywords: INTELLIGENCE_KEYWORDS.size,
+      screeningTaxonomyBuckets: Object.keys(SCREENING_TAXONOMY).length,
+      reasoningModesWithRealApply: countModesWithRealApply(),
     },
     modesByCategory,
     faculties: FACULTIES.map((f) => ({
@@ -42,6 +55,13 @@ export const handler: Handler = async () => {
       displayName: c.displayName,
       keywordCount: c.keywords.length,
     })),
+    compliancePolicy: {
+      version: COMPLIANCE_POLICY_VERSION,
+      prohibitionCount: PROHIBITIONS.length,
+      matchConfidenceTiers: MATCH_CONFIDENCE_TAXONOMY.map((t) => t.id),
+      mandatoryOutputSections: MANDATORY_OUTPUT_SECTIONS,
+      regulatoryAnchors: UAE_REGULATORY_ANCHORS,
+    },
     sourceCoverage: {
       sanctions: [
         'UN Consolidated List',
