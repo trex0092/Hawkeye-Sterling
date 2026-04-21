@@ -31,7 +31,9 @@ export type ReasoningCategory =
   | 'data_quality'
   | 'governance'
   | 'crypto_defi'
-  | 'sectoral_typology';
+  | 'sectoral_typology'
+  | 'osint'
+  | 'esg';
 
 export type Verdict =
   | 'clear'
@@ -86,7 +88,7 @@ export interface ReasoningMode {
   name: string;
   category: ReasoningCategory;
   faculties: FacultyId[];
-  wave: 1 | 2;
+  wave: 1 | 2 | 3;
   description: string;
   apply: (ctx: BrainContext) => Promise<Finding>;
 }

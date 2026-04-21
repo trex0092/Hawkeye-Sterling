@@ -57,6 +57,21 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
     }
   }
 
+  // Meta-reasoning pass — the brain auditing itself.
+  const metaFindings = introspect(findings);
+  for (const mf of metaFindings) {
+    findings.push(mf);
+    for (const faculty of mf.faculties) {
+      chain.push({
+        step: ++step,
+        modeId: mf.modeId,
+        faculty,
+        summary: `[meta] ${mf.rationale}`,
+        producedAt: mf.producedAt,
+      });
+    }
+  }
+
   const aggregate = aggregateFindings(findings);
 
   return {
@@ -70,6 +85,104 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
     recommendedActions: recommend(aggregate.outcome),
     generatedAt: Date.now(),
   };
+}
+
+// Introspection pass — examines the set of findings and emits meta-findings
+// for contradictions, under-triangulation, and confidence anomalies.
+function introspect(findings: Finding[]): Finding[] {
+  const out: Finding[] = [];
+  if (findings.length === 0) return out;
+
+  // 1. Contradiction across categories — same category carrying both 'clear'
+  //    and a non-clear verdict needs adjudication.
+  const byCategory = new Map<string, Set<string>>();
+  for (const f of findings) {
+    const set = byCategory.get(f.category) ?? new Set<string>();
+    set.add(f.verdict);
+    byCategory.set(f.category, set);
+  }
+  const contradictions: string[] = [];
+  for (const [cat, verdicts] of byCategory) {
+    const hasNeg = verdicts.has('flag') || verdicts.has('escalate') || verdicts.has('block');
+    if (verdicts.has('clear') && hasNeg) contradictions.push(cat);
+  }
+  if (contradictions.length > 0) {
+    out.push({
+      modeId: 'cross_case_triangulation',
+      category: 'causal',
+      faculties: ['introspection', 'deep_thinking'],
+      score: 0.4,
+      confidence: 0.75,
+      verdict: 'escalate',
+      rationale: `Cross-category contradiction detected in ${contradictions.length} categor${
+        contradictions.length === 1 ? 'y' : 'ies'
+      }: ${contradictions.join(', ')}. Needs adjudication.`,
+      evidence: contradictions.map((c) => `contradictory_category=${c}`),
+      producedAt: Date.now(),
+    });
+  }
+
+  // 2. Under-triangulation — too few faculties engaged for the evidence depth.
+  const facultiesTouched = new Set<FacultyId>();
+  for (const f of findings) for (const fac of f.faculties) facultiesTouched.add(fac);
+  if (facultiesTouched.size < 3 && findings.length >= 5) {
+    out.push({
+      modeId: 'cognitive_bias_audit',
+      category: 'cognitive_science',
+      faculties: ['introspection'],
+      score: 0.2,
+      confidence: 0.7,
+      verdict: 'flag',
+      rationale: `Only ${facultiesTouched.size} faculties engaged across ${findings.length} findings. Consider broadening investigation.`,
+      evidence: [`faculties=${[...facultiesTouched].join(',')}`],
+      producedAt: Date.now(),
+    });
+  }
+
+  // 3. Over-confidence on zero score — high-confidence "clear" findings with
+  //    no corroboration count as overconfidence.
+  const suspectClear = findings.filter(
+    (f) => f.verdict === 'clear' && f.confidence > 0.85 && f.score === 0,
+  );
+  if (suspectClear.length >= 3 && findings.length - suspectClear.length < 2) {
+    out.push({
+      modeId: 'overconfidence_check',
+      category: 'cognitive_science',
+      faculties: ['introspection'],
+      score: 0.2,
+      confidence: 0.65,
+      verdict: 'flag',
+      rationale: `${suspectClear.length} findings are confident-clear with zero score and little corroboration. Treat with suspicion.`,
+      evidence: suspectClear.slice(0, 5).map((f) => `suspect_clear=${f.modeId}`),
+      producedAt: Date.now(),
+    });
+  }
+
+  // 4. Confidence calibration — spread of confidence values.
+  const confidences = findings.map((f) => f.confidence).filter((c) => c > 0);
+  if (confidences.length >= 5) {
+    const mean = confidences.reduce((a, b) => a + b, 0) / confidences.length;
+    const variance =
+      confidences.reduce((a, b) => a + (b - mean) ** 2, 0) / confidences.length;
+    const sd = Math.sqrt(variance);
+    if (sd < 0.05 && mean > 0.9) {
+      out.push({
+        modeId: 'confidence_calibration',
+        category: 'cognitive_science',
+        faculties: ['introspection'],
+        score: 0.15,
+        confidence: 0.6,
+        verdict: 'flag',
+        rationale: `Confidence distribution suspiciously tight (sd=${sd.toFixed(3)}, mean=${mean.toFixed(
+          2,
+        )}). Possible calibration collapse.`,
+        evidence: [`mean=${mean.toFixed(3)}`, `sd=${sd.toFixed(3)}`, `n=${confidences.length}`],
+        producedAt: Date.now(),
+      });
+    }
+  }
+
+  return out;
 }
 
 function inferDomainsFromSubject(subject: Subject, evidence: Evidence): string[] {

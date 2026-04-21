@@ -230,6 +230,97 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     'Findings typed (isolated vs systemic)?',
     'Remediation plan and verification?',
   ], ['audit_trail_reconstruction','control_effectiveness','policy_drift']),
+
+  // ─── WAVE 3 — intelligence expansion ───────────────────────────────
+  t('osint_subject_scan', 'cdd', 'OSINT — Subject Scan', [
+    'Digital footprint, handles, historical aliases?',
+    'Associates, affiliations, cadence of public activity?',
+    'Source reliability and credibility per artefact (NATO/Admiralty grading)?',
+  ], ['socmint_scan','geoint_plausibility','humint_reliability_grade','nato_admiralty_grading','osint_chain_of_custody']),
+
+  t('sanctions_evasion_probe', 'sanctions', 'Sanctions — Evasion Probe', [
+    'Front-company fingerprints, nominee rotation, shared agents?',
+    'Flag / vessel / aircraft movement anomalies?',
+    'Sanctions-arbitrage routing across regimes?',
+  ], ['front_company_fingerprint','nominee_rotation_detection','phantom_vessel','flag_hopping','dark_fleet_pattern','sanctions_arbitrage']),
+
+  t('russian_oil_attestation', 'sanctions', 'Russian Oil — Price-Cap Attestation', [
+    'Attestation chain back to producer / loading port?',
+    'STS transfers, AIS gaps, dark-fleet exposure?',
+    'Insurer / P&I club coverage status?',
+  ], ['russian_oil_price_cap','sanctions_maritime_stss','dark_fleet_pattern','phantom_vessel']),
+
+  t('eu_14_package_walk', 'sanctions', 'EU — 14th Package Walk', [
+    'No-Russia / no-circumvention clauses in contracts?',
+    'Best-efforts obligations on subsidiaries outside EU?',
+    'Third-country diversion risk in supply chain?',
+  ], ['eu_14_package','sanctions_arbitrage','article_by_article']),
+
+  t('chip_export_screen', 'pf', 'Chip Export — End-Use Screen', [
+    'Advanced-node / AI-compute classification (BIS ECCN)?',
+    'End-user declaration and site visit?',
+    'Diversion risk via transshipment hubs?',
+  ], ['chip_export_controls','typology_catalogue','kill_chain','list_walk']),
+
+  t('iran_evasion_screen', 'sanctions', 'Iran — Evasion Screen', [
+    'Gold-for-oil, petrochemical, front-bank typologies?',
+    'UAE free-zone / Turkey / Malaysia transshipment pattern?',
+    'Counterparty linked to IRGC designations?',
+  ], ['iran_evasion_pattern','front_company_fingerprint','sanctions_arbitrage']),
+
+  t('dprk_evasion_screen', 'sanctions', 'DPRK — Evasion Screen', [
+    'Coal / fisheries / labour-export typology match?',
+    'Lazarus / APT38 crypto-proximity?',
+    'Ship-to-ship transfers off Chinese / Russian ports?',
+  ], ['dprk_evasion_pattern','chain_analysis','sanctions_maritime_stss']),
+
+  t('forensic_benford_screen', 'ops', 'Forensic — Benford / Digit Screen', [
+    'Sufficient sample size (n ≥ 30 amounts)?',
+    'Leading-digit distribution tested?',
+    'Split-payment / round-number patterns around thresholds?',
+  ], ['benford_law','split_payment_detection','journal_entry_anomaly']),
+
+  t('network_kcore_screen', 'ops', 'Network — k-Core / Motif Screen', [
+    'Densest-subgraph extraction around the subject?',
+    'Temporal motifs matching layering signatures?',
+    'Bridges / structural holes between clusters?',
+  ], ['k_core_analysis','temporal_motif','bridge_detection','structural_hole','community_detection']),
+
+  t('crypto_deep_probe', 'vasp', 'Crypto — Deep On-Chain Probe', [
+    'Peel chains, change-address clusters, dusting exposure?',
+    'Bridge-hopping velocity, cross-chain taint, privacy-pool proximity?',
+    'Address-poisoning history in wallet record?',
+  ], ['peel_chain','change_address_heuristic','chain_hopping_velocity','cross_chain_taint','privacy_pool_exposure','tornado_cash_proximity','address_poisoning','dusting_attack_pattern']),
+
+  t('esg_greenwash_screen', 'esg', 'ESG — Greenwash Screen', [
+    'Sustainability claims vs Scope 1-3 emissions evidence?',
+    'Certification authenticity and scope?',
+    'Supply-chain forced-labour / conflict-mineral exposure?',
+  ], ['greenwashing_signal','forced_labour_supply_chain','conflict_mineral_typology','carbon_fraud_pattern']),
+
+  t('linguistic_forensic_read', 'mlro', 'Linguistic — Forensic Read', [
+    'Stylometry consistency across subject communications?',
+    'Obfuscation / hedging / minimisation markers?',
+    'Domain code-words or cant?',
+  ], ['stylometry','linguistic_forensics','obfuscation_pattern','hedging_language','code_word_detection','minimisation_pattern']),
+
+  t('cover_story_interview', 'edd', 'EDD — Cover-Story Interview', [
+    'Does the narrative hold across reset, timeline, and detail probes?',
+    'Legend verification — biography cross-corroborated independently?',
+    'Honey-trap / false-flag cover-story markers?',
+  ], ['cover_story_stress','legend_verification','honey_trap_pattern','false_flag_check','deception_detection']),
+
+  t('bayesian_aggregate_review', 'mlro', 'MLRO — Bayesian Aggregate Review', [
+    'Heterogeneous evidence combined via Bayesian update?',
+    'Dempster-Shafer mass assignment on conflicting sources?',
+    'Counter-evidence weighting applied to resist confirmation bias?',
+  ], ['bayesian_update_cascade','dempster_shafer','multi_source_consistency','counter_evidence_weighting']),
+
+  t('behavioral_economics_probe', 'edd', 'EDD — Behavioural-Economics Probe', [
+    'Client decisions consistent with rational reference points?',
+    'Hyperbolic-discount signature suggesting distress or coercion?',
+    'Mental-accounting splits indicating SoW laundering?',
+  ], ['prospect_theory','hyperbolic_discount','mental_accounting','status_quo_bias','reference_point_shift']),
 ];
 
 export const QUESTION_TEMPLATE_BY_ID: Map<string, QuestionTemplate> = new Map(

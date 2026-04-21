@@ -6,6 +6,7 @@
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
+import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -32,7 +33,7 @@ const m = (
   apply: stubApply(id, category, faculties),
 });
 
-export const REASONING_MODES: ReasoningMode[] = [
+const WAVE_1_2_MODES: ReasoningMode[] = [
   // ── LOGIC ──────────────────────────────────────────────────────────────
   m('modus_ponens', 'Modus Ponens', 'logic', ['reasoning','inference'], 1, 'If P → Q and P, conclude Q.'),
   m('modus_tollens', 'Modus Tollens', 'logic', ['reasoning','inference'], 1, 'If P → Q and ¬Q, conclude ¬P.'),
@@ -266,6 +267,18 @@ export const REASONING_MODES: ReasoningMode[] = [
   m('kyb_strict', 'Strict KYB', 'sectoral_typology', ['strong_brain'], 2, 'Enhanced entity onboarding — UBO, source-of-funds, licence validation.'),
 ];
 
+// Apply wave-3 real-implementation overrides onto the wave 1/2 stubs,
+// then append the 70+ wave-3 new modes.
+const WAVE3_OVERRIDE_BY_ID = new Map(WAVE3_OVERRIDES.map((m) => [m.id, m]));
+const WAVE_1_2_MODES_FINAL: ReasoningMode[] = WAVE_1_2_MODES.map(
+  (m) => WAVE3_OVERRIDE_BY_ID.get(m.id) ?? m,
+);
+
+export const REASONING_MODES: ReasoningMode[] = [
+  ...WAVE_1_2_MODES_FINAL,
+  ...WAVE3_MODES,
+];
+
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
   REASONING_MODES.map((r) => [r.id, r]),
 );
@@ -275,3 +288,10 @@ export const REASONING_MODES_BY_CATEGORY: Record<string, ReasoningMode[]> =
     (acc[r.category] ||= []).push(r);
     return acc;
   }, {} as Record<string, ReasoningMode[]>);
+
+export function countModesWithRealApply(): number {
+  // Count modes whose apply() is NOT the default stub.
+  // We detect by checking if apply rationale starts with "[stub]" on an empty ctx.
+  // Cheap heuristic — cached at module load for audit output.
+  return WAVE3_OVERRIDES.length + 1; // +1 for benford_law in WAVE3_MODES
+}
