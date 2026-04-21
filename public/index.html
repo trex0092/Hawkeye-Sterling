@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#06070A" />
+    <meta name="description" content="Hawkeye Sterling V2 — Module 01 · Subject Screening. Regulator-grade UAE-DPMS command deck." />
+    <title>01 · Subject Screening — Hawkeye Sterling V2</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#form">Skip to form</a>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <header class="site-header" role="banner">
+      <div class="container nav">
+        <a class="brand" href="/" aria-label="Hawkeye Sterling home">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.55"/>
+            <circle cx="16" cy="16" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="2" fill="currentColor"/>
+            <line x1="16" y1="0" x2="16" y2="5" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="16" y1="27" x2="16" y2="32" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="0" y1="16" x2="5" y2="16" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="27" y1="16" x2="32" y2="16" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <span class="brand-name"><span>HAWKEYE</span><span class="brand-sep">·</span><span class="brand-sterling">STERLING V2</span></span>
+        </a>
+        <span class="nav-crumb"><span class="mod">MODULE 01</span><span>/</span><span>SUBJECT SCREENING</span></span>
+        <div class="nav-hud">
+          <span class="hud-seg"><span class="dot"></span><strong>ENGINE</strong> NOMINAL</span>
+          <span class="hud-seg"><strong>DEST</strong> ASANA</span>
+          <span class="hud-seg"><strong>UTC</strong> <span id="utc-clock">—</span></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="container shell">
+      <aside class="side" aria-label="Section navigation">
+        <h4>Sections</h4>
+        <div class="side-progress"><span>Progress</span><span id="side-pct">0%</span></div>
+        <div class="side-bar"><span id="side-fill"></span></div>
+        <ol id="side-nav">
+          <li><a href="#sec-entity" data-sec="sec-entity"><span class="num">01</span><span>Reporting entity</span><span class="check"></span></a></li>
+          <li><a href="#sec-gov" data-sec="sec-gov"><span class="num">02</span><span>Governance · MLRO</span><span class="check"></span></a></li>
+          <li><a href="#sec-subject" data-sec="sec-subject"><span class="num">03</span><span>Subject identification</span><span class="check"></span></a></li>
+          <li><a href="#sec-scope" data-sec="sec-scope"><span class="num">04</span><span>Screening scope</span><span class="check"></span></a></li>
+          <li><a href="#sec-engine" data-sec="sec-engine"><span class="num">05</span><span>Cognitive engine</span><span class="check"></span></a></li>
+          <li><a href="#sec-media" data-sec="sec-media"><span class="num">06</span><span>Adverse media</span><span class="check"></span></a></li>
+          <li><a href="#sec-result" data-sec="sec-result"><span class="num">07</span><span>Result &amp; disposition</span><span class="check"></span></a></li>
+          <li><a href="#sec-submitter" data-sec="sec-submitter"><span class="num">08</span><span>Submitter · four-eyes</span><span class="check"></span></a></li>
+          <li><a href="#sec-attest" data-sec="sec-attest"><span class="num">09</span><span>Attestations</span><span class="check"></span></a></li>
+          <li><a href="#sec-decl" data-sec="sec-decl"><span class="num">10</span><span>Entity declarations</span><span class="check"></span></a></li>
+          <li><a href="#sec-sign" data-sec="sec-sign"><span class="num">11</span><span>Electronic signatures</span><span class="check"></span></a></li>
+        </ol>
+      </aside>
+
+      <section id="form-root">
+        <p class="eyebrow"><span class="num">MODULE 01</span><span class="sep">/</span><span>/screening-command</span><span class="sep">/</span><span id="mode-eyebrow" class="mode-tag">FIRST SCREENING</span></p>
+        <h1 class="module-title">Subject <em>Screening</em></h1>
+        <p class="module-lede">Multi-modal fuzzy matching against UN, EOCN, OFAC, EU and UK lists plus adverse media. Every partial or confirmed hit is frozen without delay, subject to four-eyes MLRO disposition and reported via goAML within statutory deadlines. Reports are delivered to the Asana inbox on first screening and on every daily monitoring run.</p>
+
+        <div class="ribbon">
+          <span class="label">Regulatory basis · primary citations</span>
+          <code>FDL 10/2025 Art.20-21</code><code>Cabinet Res 74/2020 Art.4-7</code><code>Cabinet Res 134/2025 Art.19</code><code>MoE Circular 3/2025</code><code>FDL 46/2021</code><code>Cabinet Decision 28/2023</code><code>Evidence Law FL 35/2022</code><code>FDL 45/2021 (PDPL)</code><code>UN Consolidated</code><code>EOCN UAE Local Terrorist</code><code>OFAC SDN</code><code>EU / UK OFSI</code>
+        </div>
+
+        <div class="legend" aria-label="Form legend">
+          <span class="chip"><span class="dot req"></span> legally required</span>
+          <span class="chip"><span class="dot auth"></span> authority tag</span>
+          <span class="chip"><span class="dot crit"></span> critical obligation</span>
+          <span class="chip right">Retention: 10 yr internal · min. 5 yr FDL 10/2025</span>
+        </div>
+
+        <div class="mode-switch" role="group" aria-label="Screening mode">
+          <button type="button" data-mode="first_screening" aria-pressed="true">First screening</button>
+          <button type="button" data-mode="daily_monitoring" aria-pressed="false">Daily monitoring</button>
+        </div>
+
+        <form id="form" novalidate>
+          <!-- 01 Reporting entity -->
+          <fieldset id="sec-entity" class="sec" data-sec-id="sec-entity">
+            <div class="sec-head"><span class="sec-num">§ 01</span><h2>Reporting entity identification</h2><span class="pills">FDL 10/2025 Art.17 · MoE</span></div>
+            <div class="sec-body">
+              <div class="row">
+                <div><label for="re_legal_name">Legal name <span class="req">*</span><span class="tag auth">FDL10 Art.17</span><span class="tag auth">MoE</span></label><input id="re_legal_name" name="re_legal_name" type="text" required placeholder="e.g. Fine Gold LLC"/></div>
+                <div><label for="re_jurisdiction">Jurisdiction <span class="req">*</span><span class="tag auth">MoE</span></label><input id="re_jurisdiction" name="re_jurisdiction" type="text" required placeholder="United Arab Emirates"/></div>
+              </div>
+              <div class="row">
+                <div><label for="re_trade_licence">Trade licence (DED / Free Zone) <span class="req">*</span></label><input id="re_trade_licence" name="re_trade_licence" type="text" required placeholder="DPMS activity permitted"/></div>
+                <div><label for="re_moe_reg">MoE AML/CFT registration <span class="req">*</span><span class="tag crit">MoE</span></label><input id="re_moe_reg" name="re_moe_reg" type="text" required placeholder="DPMS registration"/></div>
+              </div>
+              <div class="row">
+                <div><label for="re_goaml">goAML registration (UAE FIU) <span class="req">*</span><span class="tag crit">FIU</span></label><input id="re_goaml" name="re_goaml" type="text" required placeholder="Required for every FIU filing"/></div>
+                <div><label for="re_language">Language of record <span class="req">*</span></label><select id="re_language" name="re_language" required><option value="" disabled selected>Select…</option><option>English</option><option>Arabic</option><option>Bilingual EN/AR</option></select></div>
+              </div>
+              <div class="row">
+                <div><label for="re_classification">Classification <span class="req">*</span><span class="tag auth">PDPL</span></label><select id="re_classification" name="re_classification" required><option value="" disabled selected>Select…</option><option>Confidential — MLRO only</option><option>Confidential — Compliance</option><option>Restricted — Senior Management</option><option>Internal</option></select></div>
+                <div><label for="re_record_id">Record ID <span class="tag auto">auto</span></label><input id="re_record_id" name="re_record_id" type="text" data-auto readonly placeholder="HWK-01-YYYYMMDD-XXXXX"/></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 02 Governance -->
+          <fieldset id="sec-gov" class="sec" data-sec-id="sec-gov">
+            <div class="sec-head"><span class="sec-num">§ 02</span><h2>Governance · MLRO · Senior Management</h2><span class="pills">FDL 10/2025 Art.17 · CR 134/2025 Art.19</span></div>
+            <div class="sec-body">
+              <div class="row">
+                <div><label for="gov_mlro">MLRO — name &amp; contact <span class="req">*</span><span class="tag crit">FDL10 Art.17</span></label><input id="gov_mlro" name="gov_mlro" type="text" required placeholder="Name · email · phone"/></div>
+                <div><label for="gov_deputy">Deputy MLRO</label><input id="gov_deputy" name="gov_deputy" type="text" placeholder="If appointed"/></div>
+              </div>
+              <div class="row">
+                <div><label for="gov_moe_notif">MoE MLRO-appointment notification date <span class="req">*</span></label><input id="gov_moe_notif" name="gov_moe_notif" type="date" required/></div>
+                <div><label for="gov_filer">goAML registered filer</label><input id="gov_filer" name="gov_filer" type="text" placeholder="If different from MLRO"/></div>
+              </div>
+              <div class="row">
+                <div><label for="gov_sm">Senior Management representative <span class="req">*</span><span class="tag auth">CR134 Art.19</span></label><input id="gov_sm" name="gov_sm" type="text" required placeholder="Name · role"/></div>
+                <div><label for="gov_board">Board liaison</label><input id="gov_board" name="gov_board" type="text" placeholder="If applicable"/></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 03 Subject -->
+          <fieldset id="sec-subject" class="sec" data-sec-id="sec-subject">
+            <div class="sec-head"><span class="sec-num">§ 03</span><h2>Subject identification</h2><span class="pills">CDD identity verification</span></div>
+            <div class="sec-body">
+              <div class="row">
+                <div><label for="s_name">Subject name / legal name <span class="req">*</span><span class="tag auth">EOCN</span><span class="tag auth">FIU</span></label><input id="s_name" name="s_name" type="text" required spellcheck="false" placeholder="As shown on ID document"/></div>
+                <div><label for="s_type">Subject type <span class="req">*</span></label><select id="s_type" name="s_type" required><option value="" disabled selected>Select…</option><option value="Individual">Individual</option><option value="Legal entity">Legal entity</option><option value="Vessel">Vessel</option><option value="Aircraft">Aircraft</option><option value="Other">Other</option></select></div>
+              </div>
+              <div class="row">
+                <div><label for="s_dob">Date of birth / incorporation</label><input id="s_dob" name="s_dob" type="date"/></div>
+                <div><label for="s_nat">Nationality / jurisdiction (ISO) <span class="req">*</span><span class="tag auth">FDL10 Art.14</span></label><input id="s_nat" name="s_nat" type="text" required maxlength="2" pattern="[A-Za-z]{2}" placeholder="AE"/></div>
+              </div>
+              <div class="row">
+                <div><label for="s_id_type">Identification type <span class="req">*</span></label><select id="s_id_type" name="s_id_type" required><option value="" disabled selected>Select…</option><option>Passport</option><option>Emirates ID</option><option>GCC National ID</option><option>Trade licence</option><option>Other registry</option></select></div>
+                <div><label for="s_id_num">Identification / registration number <span class="req">*</span></label><input id="s_id_num" name="s_id_num" type="text" required/></div>
+              </div>
+              <div class="row">
+                <div><label for="s_alias">Known aliases / trade names</label><input id="s_alias" name="s_alias" type="text" placeholder="Comma-separated"/></div>
+                <div><label for="s_assoc">Associated entities / signatories</label><input id="s_assoc" name="s_assoc" type="text" placeholder="If any"/></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 04 Screening scope -->
+          <fieldset id="sec-scope" class="sec" data-sec-id="sec-scope">
+            <div class="sec-head"><span class="sec-num">§ 04</span><h2>Screening scope — all mandatory lists</h2><span class="pills">Cabinet Res 74/2020 Art.4-7 · MoE-3/25</span></div>
+            <div class="sec-body">
+              <div><label>Lists screened — UN + EOCN mandatory <span class="tag crit">CR74</span></label>
+                <div class="checks">
+                  <label class="check lock"><input type="checkbox" name="lists" value="un_consolidated" checked disabled/><span><strong>UN Security Council Consolidated</strong> · mandatory</span></label>
+                  <label class="check lock"><input type="checkbox" name="lists" value="eocn_uae_local" checked disabled/><span><strong>UAE Local Terrorist List (EOCN)</strong> · mandatory</span></label>
+                  <label class="check"><input type="checkbox" name="lists" value="ofac_sdn" checked/><span>OFAC SDN (USD / US-person nexus)</span></label>
+                  <label class="check"><input type="checkbox" name="lists" value="eu_consolidated" checked/><span>EU Consolidated Sanctions</span></label>
+                  <label class="check"><input type="checkbox" name="lists" value="uk_ofsi" checked/><span>UK OFSI</span></label>
+                  <label class="check"><input type="checkbox" name="lists" value="un_pf" checked/><span>UN DPRK / Iran (PF designations)</span></label>
+                  <label class="check"><input type="checkbox" name="lists" value="adverse_media" checked/><span>Adverse media</span></label>
+                </div>
+              </div>
+              <div><label>Matching algorithms applied</label>
+                <div class="checks triple">
+                  <label class="check"><input type="checkbox" name="algos" value="jaro_winkler" checked/><span>Jaro-Winkler</span></label>
+                  <label class="check"><input type="checkbox" name="algos" value="levenshtein" checked/><span>Levenshtein</span></label>
+                  <label class="check"><input type="checkbox" name="algos" value="soundex"/><span>Soundex</span></label>
+                  <label class="check"><input type="checkbox" name="algos" value="double_metaphone" checked/><span>Double Metaphone</span></label>
+                  <label class="check"><input type="checkbox" name="algos" value="token_set" checked/><span>Token-set</span></label>
+                  <label class="check"><input type="checkbox" name="algos" value="exact" checked/><span>Exact</span></label>
+                </div>
+              </div>
+              <div class="row">
+                <div><label for="sc_dt">Screening date/time (UTC) <span class="req">*</span><span class="tag auth">FDL10 Art.24</span></label><input id="sc_dt" name="sc_dt" type="datetime-local" required/></div>
+                <div><label for="sc_sys">Screening system / version <span class="tag auto">auto</span></label><input id="sc_sys" name="sc_sys" type="text" data-auto readonly value="hawkeye-sterling@0.2.0"/></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 05 Cognitive engine -->
+          <fieldset id="sec-engine" class="sec" data-sec-id="sec-engine">
+            <div class="sec-head"><span class="sec-num">§ 05</span><h2>Cognitive engine — weaponised brain</h2><span class="pills">10 faculties · 190+ reasoning modes · scorecard</span></div>
+            <div class="sec-body">
+              <div class="engine-grid" id="faculties"></div>
+              <div class="modes-pool" id="modes-pool" aria-label="Reasoning modes (toggle)"></div>
+              <div class="scorecard" id="scorecard">
+                <div class="score-tile"><span class="lbl">Intelligent</span><span class="grd" id="sc-int">A+</span><span class="num" id="sc-int-n">100</span></div>
+                <div class="score-tile"><span class="lbl">Smart</span><span class="grd" id="sc-sma">A+</span><span class="num" id="sc-sma-n">100</span></div>
+                <div class="score-tile"><span class="lbl">Autonomous</span><span class="grd" id="sc-aut">A+</span><span class="num" id="sc-aut-n">100</span></div>
+                <div class="score-tile"><span class="lbl">Composite</span><span class="grd" id="sc-com">A+</span><span class="num" id="sc-com-n">100</span></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 06 Adverse media -->
+          <fieldset id="sec-media" class="sec" data-sec-id="sec-media">
+            <div class="sec-head"><span class="sec-num">§ 06</span><h2>Adverse media coverage</h2><span class="pills">5 categories · boolean OR query</span></div>
+            <div class="sec-body">
+              <div class="taxonomy-grid" id="taxonomy"></div>
+              <div class="query-box" aria-label="Adverse media query">
+                <div class="query-head"><span class="lbl">Boolean OR query</span><button type="button" class="btn btn-ghost copy" id="copy-q">Copy</button></div>
+                <div id="q-text"></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 07 Result -->
+          <fieldset id="sec-result" class="sec" data-sec-id="sec-result">
+            <div class="sec-head"><span class="sec-num">§ 07</span><h2>Result &amp; disposition</h2><span class="pills">EOCN freeze 24h · FFR/PNMR 5 bd</span></div>
+            <div class="sec-body">
+              <div class="row">
+                <div><label for="r_result">Match result <span class="req">*</span><span class="tag crit">CR74</span></label><select id="r_result" name="r_result" required><option value="" disabled selected>Select…</option><option>No match</option><option>False positive (documented)</option><option>Partial name match</option><option>Confirmed match</option></select></div>
+                <div><label for="r_disp">MLRO disposition <span class="req">*</span><span class="tag auth">FDL10 Art.26-27</span></label><select id="r_disp" name="r_disp" required><option value="" disabled selected>Select…</option><option>Cleared — proceed</option><option>Escalated to EDD</option><option>Frozen without delay (FFR)</option><option>Escalated as PNMR</option><option>Exit relationship</option></select></div>
+              </div>
+              <div><label for="r_rationale">Disposition rationale <span class="req">*</span></label><textarea id="r_rationale" name="r_rationale" rows="4" required placeholder="Required for any match other than 'No match'. Cite factual and objective circumstances — FDL 10/2025 Art.2(3)."></textarea></div>
+              <div class="row">
+                <div><label for="r_ffr">FFR reference <span class="tag crit">5bd</span></label><input id="r_ffr" name="r_ffr" type="text" placeholder="goAML reference"/></div>
+                <div><label for="r_pnmr">PNMR reference <span class="tag crit">5bd</span></label><input id="r_pnmr" name="r_pnmr" type="text" placeholder="goAML reference"/></div>
+              </div>
+              <div class="row">
+                <div><label for="r_freeze_dt">Freeze applied (date/time) <span class="tag crit">EOCN 24h</span></label><input id="r_freeze_dt" name="r_freeze_dt" type="datetime-local"/></div>
+                <div><label for="r_sm_notif">Senior Management notified</label><input id="r_sm_notif" name="r_sm_notif" type="text" placeholder="Name + date"/></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 08 Submitter -->
+          <fieldset id="sec-submitter" class="sec" data-sec-id="sec-submitter">
+            <div class="sec-head"><span class="sec-num">§ 08</span><h2>Submitter &amp; four-eyes (SoD)</h2><span class="pills">CR 134/2025 Art.19 · Separation of Duties</span></div>
+            <div class="sec-body">
+              <div class="row">
+                <div><label for="sb_name">Submitter (Compliance / MLRO) <span class="req">*</span></label><input id="sb_name" name="sb_name" type="text" required placeholder="Full name"/></div>
+                <div><label for="sb_dt">Submission date/time <span class="req">*</span></label><input id="sb_dt" name="sb_dt" type="datetime-local" required/></div>
+              </div>
+              <div class="row">
+                <div><label for="ap1_name">First approver <span class="req">*</span></label><input id="ap1_name" name="ap1_name" type="text" required placeholder="Name / Asana user"/><p class="err" data-for="ap1_name">Must differ from submitter</p></div>
+                <div><label for="ap2_name">Second approver — independent <span class="req">*</span><span class="tag crit">SoD</span></label><input id="ap2_name" name="ap2_name" type="text" required placeholder="Must differ from first approver"/><p class="err" data-for="ap2_name">Must differ from submitter and first approver</p></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 09 Attestations -->
+          <fieldset id="sec-attest" class="sec" data-sec-id="sec-attest">
+            <div class="sec-head"><span class="sec-num">§ 09</span><h2>Attestations</h2><span class="pills">required</span></div>
+            <div class="sec-body">
+              <div class="attest">
+                <div class="label">Screening attestations</div>
+                <label class="check"><input type="checkbox" data-req/><span>Screening performed against UN Consolidated and UAE Local (EOCN) — CR 74/2020 Art.4-7.</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>Any confirmed match has been frozen without delay; no tipping-off — FDL 10/2025 Art.29.</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>Screening evidence and disposition retained for at least 5 years — FDL 10/2025 Art.10/24.</span></label>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 10 Entity declarations -->
+          <fieldset id="sec-decl" class="sec" data-sec-id="sec-decl">
+            <div class="sec-head"><span class="sec-num">§ 10</span><h2>Entity declarations</h2><span class="pills">required</span></div>
+            <div class="sec-body">
+              <div class="attest">
+                <div class="label">Entity declarations</div>
+                <label class="check"><input type="checkbox" data-req/><span>Reporting entity is a licensed DPMS registered with MoE and UAE FIU (goAML) — FDL 10/2025 Art.17.</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>Personal data processed under the legal-obligation lawful basis for AML/CFT/CPF — PDPL (FDL 45/2021).</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>Record retained for longer of 5 years (FDL 10/2025) or 10 years (internal); produced to authorities within 48h — CR 134/2025.</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>All information true, complete and accurate — FDL 10/2025 Art.2(3).</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>Preparer is authorised to submit this record on behalf of the reporting entity.</span></label>
+                <label class="check"><input type="checkbox" data-req/><span>No tipping-off has occurred or will occur — FDL 10/2025 Art.29 (criminal offence).</span></label>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 11 Signatures -->
+          <fieldset id="sec-sign" class="sec" data-sec-id="sec-sign">
+            <div class="sec-head"><span class="sec-num">§ 11</span><h2>Electronic signatures</h2><span class="pills">FDL 46/2021 · Cabinet Decision 28/2023 · FL 35/2022</span></div>
+            <div class="sec-body">
+              <div class="row">
+                <div><label for="sig_sb_name">Submitter — name <span class="req">*</span></label><input id="sig_sb_name" type="text" required/></div>
+                <div><label for="sig_sb_role">Submitter — role <span class="req">*</span></label><input id="sig_sb_role" type="text" required/></div>
+              </div>
+              <div class="row">
+                <div><label for="sig_sb_dt">Submitter — signature date/time <span class="req">*</span></label><input id="sig_sb_dt" type="datetime-local" required/></div>
+                <div><label for="sig_sb_ip">Submitter — IP / device <span class="tag auto">auto</span></label><input id="sig_sb_ip" type="text" data-auto readonly placeholder="captured on submit"/></div>
+              </div>
+              <div class="row">
+                <div><label for="sig_ap1_name">First approver — name <span class="req">*</span></label><input id="sig_ap1_name" type="text" required/></div>
+                <div><label for="sig_ap1_dt">First approver — date/time <span class="req">*</span></label><input id="sig_ap1_dt" type="datetime-local" required/></div>
+              </div>
+              <div class="row">
+                <div><label for="sig_ap2_name">Second approver — name <span class="req">*</span><span class="tag crit">SoD</span></label><input id="sig_ap2_name" type="text" required placeholder="No reporting line to first approver"/></div>
+                <div><label for="sig_ap2_dt">Second approver — date/time <span class="req">*</span></label><input id="sig_ap2_dt" type="datetime-local" required/></div>
+              </div>
+              <div class="row">
+                <div><label for="sig_mlro_name">MLRO sign-off — name</label><input id="sig_mlro_name" type="text" placeholder="Required for FIU / EOCN / high-risk"/></div>
+                <div><label for="sig_mlro_dt">MLRO sign-off — date/time</label><input id="sig_mlro_dt" type="datetime-local"/></div>
+              </div>
+              <div class="row">
+                <div><label for="sig_sm_name">Senior Management sign-off — name</label><input id="sig_sm_name" type="text"/></div>
+                <div><label for="sig_sm_dt">Senior Management sign-off — date/time</label><input id="sig_sm_dt" type="datetime-local"/></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Submit HUD -->
+          <div class="submit-hud" role="region" aria-label="Submit">
+            <div class="hud-meta">
+              <span class="rec" id="hud-rec">HWK-01-—-—</span>
+              <span class="dest">Destination · Asana · <strong id="hud-dest">Inbox → MLRO triage (first screening)</strong></span>
+            </div>
+            <div class="hud-progress">
+              <div class="row-head"><span>Required completion</span><span><strong id="hud-done">0</strong> / <span id="hud-total">0</span></span></div>
+              <div class="hud-bar"><span id="hud-fill"></span></div>
+            </div>
+            <div class="hud-actions">
+              <button class="btn btn-ghost" type="button" id="save-draft">Save draft <span class="btn-kbd">⌘S</span></button>
+              <button class="btn btn-ghost" type="reset">Reset</button>
+              <button class="btn btn-primary" type="submit" id="submit-btn">Submit → Asana <span class="btn-kbd">⌘⏎</span></button>
+            </div>
+          </div>
+
+          <!-- Envelope preview -->
+          <div id="envelope" class="envelope" hidden>
+            <h3>Audit envelope · queued to Asana</h3>
+            <pre id="envelope-json"></pre>
+            <p class="meta">Timestamped and immutable under FDL 10/2025 record-keeping obligations. Retention: 10 yr internal · min. 5 yr regulatory.</p>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+      <div class="container foot">
+        <div class="reg">
+          <span class="hd">Regulatory basis · Module 01 · Subject Screening</span>
+          <div><b>FDL 10/2025</b> Art.20-21 (screening) · <b>Cabinet Res 74/2020</b> Art.4-7 (EOCN 24-h freeze) · <b>MoE Circular 3/2025</b> · <b>FDL 46/2021</b> (e-signatures)</div>
+        </div>
+        <div class="meta">
+          <div>Owner <b>MLRO</b></div>
+          <div>Retention <b>10 yr</b></div>
+          <div>Four-eyes <b>CR134 Art.19</b></div>
+          <div>Destination <b>Asana</b></div>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

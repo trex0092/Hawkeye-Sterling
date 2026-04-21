@@ -1,0 +1,16 @@
+{
+  "name": "hawkeye-sterling",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Regulator-grade sanctions & PEP screening platform. Built to surpass Refinitiv World-Check.",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server --directory public 8080",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
