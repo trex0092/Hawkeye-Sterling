@@ -12,5 +12,22 @@
   "devDependencies": {
     "typescript": "^5.6.3",
     "vitest": "^2.1.5"
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hawkeye Sterling — the strongest regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine in the world. Built to surpass Refinitiv World-Check.",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "brain:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/index.js').then(m=>m.auditBrain())\""
+  },
+  "devDependencies": {
+    "@netlify/functions": "^3.0.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

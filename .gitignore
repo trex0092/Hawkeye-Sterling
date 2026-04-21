@@ -9,3 +9,15 @@ coverage
 .idea
 *.log
 .netlify
+node_modules/
+dist/
+.netlify/
+.env
+.env.local
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+coverage/
+.cache/

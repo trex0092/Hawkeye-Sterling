@@ -21,4 +21,18 @@
   },
   "include": ["src/**/*.ts", "netlify/functions/**/*.ts"],
   "exclude": ["node_modules", "dist", "public"]
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*", "netlify/**/*"]
 }
