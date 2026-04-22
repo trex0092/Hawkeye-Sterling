@@ -12,6 +12,9 @@ interface BatchRow {
   aliases?: string[];
   entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
   jurisdiction?: string;
+  dob?: string;
+  gender?: string;
+  idNumber?: string;
 }
 
 interface Body {
@@ -21,7 +24,11 @@ interface Body {
 interface RowResult {
   name: string;
   entityType?: string;
+  aliases?: string[];
+  dob?: string;
+  gender?: string;
   jurisdiction?: string;
+  idNumber?: string;
   topScore: number;
   severity: string;
   hitCount: number;
@@ -101,7 +108,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         durationMs: Date.now() - t0,
       };
       if (row.entityType) row_result.entityType = row.entityType;
+      if (row.aliases && row.aliases.length) row_result.aliases = row.aliases;
+      if (row.dob) row_result.dob = row.dob;
+      if (row.gender) row_result.gender = row.gender;
       if (row.jurisdiction) row_result.jurisdiction = row.jurisdiction;
+      if (row.idNumber) row_result.idNumber = row.idNumber;
       results.push(row_result);
     } catch (err) {
       results.push({

@@ -82,9 +82,9 @@ export function NewScreeningForm({
   };
 
   return (
-    <div className="bg-bg-1 border border-hair-2 rounded-lg overflow-hidden grid" style={{ gridTemplateColumns: "260px 1fr" }}>
+    <div className="bg-white border border-hair-2 rounded-xl overflow-hidden grid" style={{ gridTemplateColumns: "260px 1fr" }}>
       {/* ── Left: Screening settings ────────────────────────────── */}
-      <aside className="bg-ink-0 text-white p-4">
+      <aside className="bg-bg-1 border-r border-hair-2 p-4">
         <SettingsHeading>Screening settings</SettingsHeading>
 
         <SettingsGroup label="Entity type">
@@ -134,7 +134,7 @@ export function NewScreeningForm({
             on={form.ongoingScreening}
             onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
           />
-          <p className="text-10.5 text-white/60 mt-2 leading-snug">
+          <p className="text-10.5 text-ink-2 mt-2 leading-snug">
             Re-screens this subject twice daily against the World-Check lists
             and appends to the audit trail.
           </p>
@@ -142,7 +142,7 @@ export function NewScreeningForm({
       </aside>
 
       {/* ── Right: Single screening form ────────────────────────── */}
-      <section className="bg-ink-0 text-white p-6">
+      <section className="bg-white p-6">
         <SettingsHeading>Single screening</SettingsHeading>
 
         <Field label="Name" required>
@@ -179,13 +179,13 @@ export function NewScreeningForm({
               {form.alternateNames.map((a, i) => (
                 <span
                   key={`${a}-${i}`}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-11"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-bg-2 text-ink-1 text-11"
                 >
                   {a}
                   <button
                     type="button"
                     onClick={() => removeAlias(i)}
-                    className="text-white/60 hover:text-white"
+                    className="text-ink-3 hover:text-ink-0"
                     aria-label={`Remove ${a}`}
                   >
                     ×
@@ -197,7 +197,7 @@ export function NewScreeningForm({
         </Field>
 
         {form.entityType === "individual" && (
-          <label className="flex items-center gap-2 mb-4 text-12 text-white/80 cursor-pointer">
+          <label className="flex items-center gap-2 mb-4 text-12 text-ink-1 cursor-pointer">
             <input
               type="checkbox"
               checked={form.enableTransposition}
@@ -242,7 +242,7 @@ export function NewScreeningForm({
                 {(["male", "female"] as const).map((g) => (
                   <label
                     key={g}
-                    className="flex items-center gap-2 text-12 text-white/80 cursor-pointer"
+                    className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -342,7 +342,7 @@ export function NewScreeningForm({
           </Field>
         )}
 
-        <details className="border border-white/15 rounded mb-4" open>
+        <details className="border border-hair-2 rounded mb-4" open>
           <summary className="px-3 py-2 text-12 font-semibold cursor-pointer select-none">
             Identification number
           </summary>
@@ -393,7 +393,7 @@ export function NewScreeningForm({
           </div>
         </details>
 
-        <div className="flex items-center justify-between pt-4 border-t border-white/15">
+        <div className="flex items-center justify-between pt-4 border-t border-hair-2">
           <div className="flex gap-2">
             <ActionBtn primary disabled={!valid} onClick={() => onScreen(form)}>
               Screen
@@ -411,11 +411,11 @@ export function NewScreeningForm({
 }
 
 const inputCls =
-  "w-full bg-white/10 border border-white/20 rounded px-2.5 py-1.5 text-13 text-white placeholder-white/40 focus:outline-none focus:border-brand focus:bg-white/15";
+  "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand focus:bg-white";
 
 function SettingsHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-11 font-semibold tracking-wide-4 uppercase text-white/60 mb-3">
+    <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-3">
       {children}
     </div>
   );
@@ -430,7 +430,7 @@ function SettingsGroup({
 }) {
   return (
     <div className="mb-5">
-      <div className="text-10.5 font-semibold tracking-wide-3 uppercase text-white/50 mb-1.5">
+      <div className="text-10.5 font-semibold tracking-wide-3 uppercase text-ink-3 mb-1.5">
         {label}
       </div>
       <div className="flex flex-col gap-1">{children}</div>
@@ -455,8 +455,8 @@ function EntityTypeRow({
       onClick={onClick}
       className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-12.5 text-left transition-colors ${
         active
-          ? "bg-brand/20 text-white border-l-2 border-brand"
-          : "text-white/70 hover:bg-white/5 border-l-2 border-transparent"
+          ? "bg-brand-dim text-brand-deep border-l-2 border-brand font-semibold"
+          : "text-ink-1 hover:bg-bg-2 border-l-2 border-transparent"
       }`}
     >
       <span>{icon}</span>
@@ -480,10 +480,10 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center justify-between px-2.5 py-1.5 rounded">
-      <div className="flex items-center gap-2 text-12.5 text-white/80">
+      <div className="flex items-center gap-2 text-12.5 text-ink-1">
         <span>{icon}</span>
         <span className="uppercase tracking-wide-1 font-medium">{label}</span>
-        {locked && <span className="text-10 text-white/40">🔒</span>}
+        {locked && <span className="text-10 text-ink-3">🔒</span>}
       </div>
       <button
         type="button"
@@ -491,7 +491,7 @@ function ToggleRow({
         aria-pressed={on}
         disabled={locked}
         className={`relative w-10 h-5 rounded-full transition-colors ${
-          on ? "bg-brand" : "bg-white/20"
+          on ? "bg-brand" : "bg-hair-3"
         } ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span
@@ -515,7 +515,7 @@ function Field({
 }) {
   return (
     <label className="block mb-4">
-      <span className="text-11 font-semibold uppercase tracking-wide-3 text-white/70 mb-1 block">
+      <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1 block">
         {label}
         {required && <span className="text-brand ml-1">*</span>}
       </span>
@@ -539,7 +539,7 @@ function ActionBtn({
     "px-4 py-1.5 text-11.5 font-semibold uppercase tracking-wide-2 rounded border transition-colors";
   const variant = primary
     ? "bg-brand border-brand text-white hover:bg-brand-hover disabled:opacity-50"
-    : "bg-transparent border-white/20 text-white/80 hover:bg-white/5 hover:text-white disabled:opacity-40";
+    : "bg-white border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2 disabled:opacity-40";
   const interact = disabled ? "cursor-not-allowed" : "cursor-pointer";
   return (
     <button

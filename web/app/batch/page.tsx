@@ -6,7 +6,11 @@ import { Header } from "@/components/layout/Header";
 interface RowResult {
   name: string;
   entityType?: string;
+  aliases?: string[];
+  dob?: string;
+  gender?: string;
   jurisdiction?: string;
+  idNumber?: string;
   topScore: number;
   severity: string;
   hitCount: number;
@@ -35,74 +39,149 @@ interface BatchResponse {
 
 interface ParsedRow {
   name: string;
-  aliases?: string[];
   entityType?: "individual" | "organisation";
+  aliases?: string[];
+  dob?: string;
+  gender?: "male" | "female" | "n/a";
   jurisdiction?: string;
+  idNumber?: string;
+}
+
+// Parse a single CSV row with RFC-4180-style quoted fields.
+function splitCsvRow(line: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      out.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out.map((c) => c.trim());
 }
 
 function parseCsv(text: string): ParsedRow[] {
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  // Strip UTF-8 BOM if present so header detection doesn't miss "name".
+  const clean = text.replace(/^﻿/, "");
+  const lines = clean.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length === 0) return [];
   const firstLine = lines[0] ?? "";
   const looksHeader = /name/i.test(firstLine);
   const rows = looksHeader ? lines.slice(1) : lines;
   const header = looksHeader
-    ? firstLine.split(",").map((h) => h.trim().toLowerCase())
+    ? splitCsvRow(firstLine).map((h) => h.toLowerCase())
     : null;
-  const idx = (h: string) => (header ? header.indexOf(h) : -1);
-  const iName = Math.max(idx("name"), 0);
-  const iType = idx("type");
-  const iJur = Math.max(idx("jurisdiction"), idx("country"));
-  const iAliases = idx("aliases");
+  const idx = (...hs: string[]): number => {
+    if (!header) return -1;
+    for (const h of hs) {
+      const i = header.indexOf(h);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+  const iName = Math.max(idx("name", "name/entity", "entity"), 0);
+  const iType = idx("type", "entity type", "entitytype");
+  const iAlias = idx("alias", "aliases", "alternate names");
+  const iDob = idx("dob", "date of birth", "date of registration", "dob/date of registration");
+  const iGender = idx("gender");
+  const iJur = idx(
+    "jurisdiction",
+    "nationality",
+    "nationality/jurisdiction",
+    "country",
+  );
+  const iId = idx("id", "id/register", "register", "identification number");
 
-  return rows.map((line) => {
-    const cols = line.split(",").map((c) => c.trim());
-    const name = cols[iName] ?? "";
-    const out: ParsedRow = { name };
-    if (iType >= 0 && cols[iType]) {
-      const t = cols[iType].toLowerCase();
-      if (t === "individual" || t === "organisation" || t === "organization") {
-        out.entityType = t === "organization" ? "organisation" : (t as "individual" | "organisation");
+  return rows
+    .map((line) => {
+      const cols = splitCsvRow(line);
+      const name = cols[iName] ?? "";
+      const out: ParsedRow = { name };
+      if (iType >= 0 && cols[iType]) {
+        const t = cols[iType].toLowerCase();
+        if (t.startsWith("ind")) out.entityType = "individual";
+        else if (t.startsWith("org")) out.entityType = "organisation";
       }
-    }
-    if (iJur >= 0 && cols[iJur]) out.jurisdiction = cols[iJur];
-    if (iAliases >= 0 && cols[iAliases]) {
-      out.aliases = cols[iAliases].split(/;|\|/).map((a) => a.trim()).filter(Boolean);
-    }
-    return out;
-  }).filter((r) => r.name);
+      if (iAlias >= 0 && cols[iAlias]) {
+        out.aliases = cols[iAlias]
+          .split(/;|\|/)
+          .map((a) => a.trim())
+          .filter(Boolean);
+      }
+      if (iDob >= 0 && cols[iDob]) out.dob = cols[iDob];
+      if (iGender >= 0 && cols[iGender]) {
+        const g = cols[iGender].toLowerCase();
+        if (g.startsWith("m")) out.gender = "male";
+        else if (g.startsWith("f")) out.gender = "female";
+        else out.gender = "n/a";
+      }
+      if (iJur >= 0 && cols[iJur]) out.jurisdiction = cols[iJur];
+      if (iId >= 0 && cols[iId]) out.idNumber = cols[iId];
+      return out;
+    })
+    .filter((r) => r.name);
+}
+
+function csvEscape(value: string | number | null | undefined): string {
+  if (value == null || value === "") return "";
+  const str = String(value);
+  return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
 function toCsv(results: RowResult[]): string {
   const header = [
-    "name",
-    "entityType",
-    "jurisdiction",
-    "severity",
-    "topScore",
-    "hitCount",
-    "listCoverage",
-    "keywordGroups",
-    "esgCategories",
-    "durationMs",
-    "error",
+    "Name",
+    "Entity Type",
+    "Alias",
+    "DOB/Date of Registration",
+    "Gender",
+    "Nationality/Jurisdiction",
+    "ID/Register",
+    "Severity",
+    "Top score",
+    "Hit count",
+    "List coverage",
+    "Keyword groups",
+    "ESG categories",
+    "Duration ms",
+    "Error",
   ].join(",");
   const rows = results.map((r) =>
     [
-      JSON.stringify(r.name),
-      r.entityType ?? "",
-      r.jurisdiction ?? "",
-      r.severity,
-      r.topScore,
-      r.hitCount,
-      JSON.stringify(r.listCoverage.join("|")),
-      JSON.stringify(r.keywordGroups.join("|")),
-      JSON.stringify(r.esgCategories.join("|")),
-      r.durationMs,
-      r.error ? JSON.stringify(r.error) : "",
+      csvEscape(r.name),
+      csvEscape(r.entityType),
+      csvEscape(r.aliases ? r.aliases.join(";") : ""),
+      csvEscape(r.dob),
+      csvEscape(r.gender),
+      csvEscape(r.jurisdiction),
+      csvEscape(r.idNumber),
+      csvEscape(r.severity),
+      csvEscape(r.topScore),
+      csvEscape(r.hitCount),
+      csvEscape(r.listCoverage.join("|")),
+      csvEscape(r.keywordGroups.join("|")),
+      csvEscape(r.esgCategories.join("|")),
+      csvEscape(r.durationMs),
+      csvEscape(r.error),
     ].join(","),
   );
-  return [header, ...rows].join("\n");
+  return [header, ...rows].join("\r\n");
 }
 
 const SEVERITY_CLS: Record<string, string> = {
@@ -164,7 +243,8 @@ export default function BatchPage() {
   const downloadCsv = () => {
     if (results.length === 0) return;
     const csv = toCsv(results);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    // UTF-8 BOM so Excel opens Cyrillic / Arabic / CJK aliases correctly.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -176,17 +256,20 @@ export default function BatchPage() {
   const sampleCsv = useMemo(
     () =>
       [
-        "name,type,jurisdiction,aliases",
-        "Wagner Group,organisation,RU,PMC Wagner;ЧВК Вагнер",
-        "Dmitri Volkov,individual,RU,Volkov D.;Дмитрий Волков",
-        "Kim Jong Un,individual,KP,Kim Jung Un",
-        "Tornado Cash,organisation,,tornado.cash",
-      ].join("\n"),
+        "Name,Entity Type,Alias,DOB/Date of Registration,Gender,Nationality/Jurisdiction,ID/Register",
+        'Wagner Group,Organisation,"PMC Wagner;ЧВК Вагнер",2014-05-01,N/A,RU,OGRN-1027700000000',
+        'Dmitri Volkov,Individual,"Volkov D.;Дмитрий Волков",1968-03-14,Male,RU,P-4567890',
+        "Kim Jong Un,Individual,Kim Jung Un,1984-01-08,Male,KP,",
+        "Tornado Cash,Organisation,tornado.cash,2019-08-15,N/A,,",
+      ].join("\r\n"),
     [],
   );
 
   const downloadSample = () => {
-    const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8" });
+    // UTF-8 BOM so Excel doesn't mangle the Cyrillic aliases.
+    const blob = new Blob(["﻿" + sampleCsv], {
+      type: "text/csv;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -220,7 +303,8 @@ export default function BatchPage() {
           className="border-2 border-dashed border-hair-3 rounded-xl p-8 bg-white text-center mb-6"
         >
           <div className="text-12 text-ink-2 mb-3">
-            Drop a CSV here, or choose a file. Header: <span className="font-mono">name,type,jurisdiction,aliases</span>
+            Drop a CSV here, or choose a file. Columns:{" "}
+            <span className="font-mono">Name · Entity Type · Alias · DOB/Date of Registration · Gender · Nationality/Jurisdiction · ID/Register</span>
           </div>
           <input
             ref={fileInput}
@@ -274,7 +358,12 @@ export default function BatchPage() {
             <div className="max-h-[180px] overflow-y-auto text-11 text-ink-2 font-mono">
               {rows.slice(0, 25).map((r, i) => (
                 <div key={i}>
-                  {r.name}{r.jurisdiction ? ` · ${r.jurisdiction}` : ""}{r.entityType ? ` · ${r.entityType}` : ""}
+                  {r.name}
+                  {r.entityType ? ` · ${r.entityType}` : ""}
+                  {r.jurisdiction ? ` · ${r.jurisdiction}` : ""}
+                  {r.dob ? ` · DOB ${r.dob}` : ""}
+                  {r.gender ? ` · ${r.gender}` : ""}
+                  {r.idNumber ? ` · ${r.idNumber}` : ""}
                 </div>
               ))}
               {rows.length > 25 && <div>…and {rows.length - 25} more</div>}
