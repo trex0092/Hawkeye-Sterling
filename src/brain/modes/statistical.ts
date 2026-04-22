@@ -252,7 +252,11 @@ export const bayesianNetworkApply = async (ctx: BrainContext): Promise<Finding> 
   }
   const pHitGivenHr = hrHit / hr;
   const pHitGivenLr = lrHit / lr;
-  const lift = pHitGivenLr > 0 ? pHitGivenHr / pHitGivenLr : 0;
+  // When the low-risk cohort has zero hits but the high-risk cohort has hits,
+  // lift is effectively infinite — that's a STRONG signal, not neutral.
+  const lift = pHitGivenLr > 0
+    ? pHitGivenHr / pHitGivenLr
+    : (pHitGivenHr > 0 ? Infinity : 0);
   const verdict: Verdict = lift > 3 ? 'flag' : 'clear';
   const lrs: LikelihoodRatio[] = [];
   if (lift > 1) {
