@@ -119,6 +119,7 @@ export interface ReasoningMode {
   id: string;
   name: string;
   faculty: Faculty;
+  taxonomyIds: readonly string[];
 }
 
 export type FacultyFilterKey = "all" | Faculty;

@@ -8,6 +8,7 @@ import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
 import { PresetsCard } from "@/components/workbench/PresetsCard";
 import { ModeGrid } from "@/components/workbench/ModeGrid";
 import { TaxonomyLibrary } from "@/components/workbench/TaxonomyLibrary";
+import { CoveragePanel } from "@/components/workbench/CoveragePanel";
 import {
   DEFAULT_SELECTED_MODE_IDS,
   FACULTY_FILTERS,
@@ -109,6 +110,7 @@ export default function WorkbenchPage() {
             onToggle={handleToggle}
             totalInFaculty={totalInFaculty}
           />
+          <CoveragePanel selectedModeIds={selectedIds} />
           <TaxonomyLibrary />
         </main>
       </div>
