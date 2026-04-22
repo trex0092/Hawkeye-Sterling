@@ -84,6 +84,15 @@ export function MultiSelect({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+            e.preventDefault();
+            setOpen(true);
+          } else if (e.key === "Escape") {
+            setOpen(false);
+          }
+        }}
+        aria-haspopup="listbox"
         aria-expanded={open}
         className={`w-full text-left bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
           selected.size === 0 ? "text-ink-3" : ""
@@ -100,24 +109,39 @@ export function MultiSelect({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-hair-2 rounded-lg shadow-lg max-h-[400px] flex flex-col overflow-hidden">
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-hair-2 rounded-lg shadow-lg max-h-[400px] flex flex-col overflow-hidden"
+        >
           <div className="p-2 border-b border-hair bg-bg-1">
             <input
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setOpen(false);
+                }
+              }}
               placeholder="Search…"
+              aria-label="Search options"
               className="w-full px-2.5 py-1.5 text-12 bg-white border border-hair-2 rounded focus:outline-none focus:border-brand"
             />
           </div>
           <div className="flex-1 overflow-y-auto p-1.5">
             {visibleGroups.length === 0 ? (
-              <div className="text-11 text-ink-3 text-center py-6 uppercase tracking-wide-2 font-mono">
+              <div
+                role="status"
+                aria-live="polite"
+                className="text-11 text-ink-3 text-center py-6 uppercase tracking-wide-2 font-mono"
+              >
                 No options match
               </div>
             ) : (
               visibleGroups.map((g) => (
-                <div key={g.title} className="mb-2 last:mb-0">
+                <div key={g.title} className="mb-2 last:mb-0" role="group" aria-label={g.title}>
                   <div className="px-2 pt-1.5 pb-1 text-10 font-mono font-semibold uppercase tracking-wide-3 text-ink-3 flex items-center gap-2">
                     <span>{g.title}</span>
                     <span className="flex-1 h-px bg-hair" />
@@ -128,6 +152,8 @@ export function MultiSelect({
                       <button
                         type="button"
                         key={o.value}
+                        role="option"
+                        aria-selected={on}
                         onClick={() => toggle(o.value)}
                         className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-12 hover:bg-brand-dim ${
                           on ? "text-brand-deep" : "text-ink-1"

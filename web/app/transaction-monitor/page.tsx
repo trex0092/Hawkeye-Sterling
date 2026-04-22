@@ -116,7 +116,14 @@ export default function TransactionMonitorPage() {
     setRunning(true);
     try {
       const res = await fetch("/api/transaction-monitor/run", { method: "POST" });
-      const data = (await res.json()) as { ok: boolean; totalAlerts?: number };
+      if (!res.ok) {
+        flashFor(`Scan failed — server ${res.status}`);
+        return;
+      }
+      const data = (await res.json().catch(() => ({ ok: false }))) as {
+        ok: boolean;
+        totalAlerts?: number;
+      };
       flashFor(
         data.ok
           ? `Scan complete — ${data.totalAlerts ?? 0} alerts`
