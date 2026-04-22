@@ -138,15 +138,35 @@ export default function ScreeningPage() {
   );
 
   const handleSubmit = (data: ScreeningFormData, screen: boolean) => {
+    let createdSubject: Subject | null = null;
     setSubjects((prev) => {
       const subject = buildSubject(data, prev);
+      createdSubject = subject;
       setSelectedId(subject.id);
       return [subject, ...prev];
     });
     setFormOpen(false);
-    // `screen` vs save distinction: both add to the queue; screening auto-runs
-    // via useQuickScreen in the detail panel. A future enhancement could defer
-    // auto-screening when the user chose Save.
+    // If the operator left "Ongoing screening" ON (default), persist the
+    // subject server-side so the twice-daily Netlify Scheduled Function
+    // reruns the brain and fires delta alerts.
+    if (data.ongoingScreening && createdSubject) {
+      const subject = createdSubject as Subject;
+      void fetch("/api/ongoing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: subject.id,
+          name: subject.name,
+          aliases: data.alternateNames,
+          entityType: data.entityType,
+          jurisdiction: data.citizenship || data.countryLocation || data.registeredCountry || "",
+          group: data.group,
+          caseId: data.caseId,
+        }),
+      }).catch(() => {
+        /* best-effort — surfacing failures is a future refinement */
+      });
+    }
     void screen;
   };
 
