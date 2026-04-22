@@ -13,6 +13,7 @@ import {
   soundex,
 } from "../../../../dist/src/brain/index.js";
 import { CANDIDATES } from "@/lib/data/candidates";
+import { classifyEsg } from "@/lib/data/esg";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +55,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const adverseMedia = mediaText
       ? classifyAdverseMedia(mediaText)
       : [];
+
+    // 3b · ESG classifier — 25 ESG-relevant categories across 5 domains,
+    //      mapped to SASB / EU Taxonomy / UN SDGs.
+    const esg = classifyEsg([mediaText, body.subject.name, (body.subject.aliases ?? []).join(" ")].join(" "));
 
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
@@ -104,6 +109,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       screen,
       pep,
       adverseMedia,
+      esg,
       jurisdiction,
       redlines,
       variants,
