@@ -24,6 +24,13 @@ export interface SuperBrainResult {
     euTaxonomy?: string;
     sdg?: string[];
   }>;
+  adverseKeywords: Array<{
+    group: string;
+    groupLabel: string;
+    term: string;
+    offset: number;
+  }>;
+  adverseKeywordGroups: Array<{ group: string; label: string; count: number }>;
   jurisdiction: {
     iso2: string;
     name: string;

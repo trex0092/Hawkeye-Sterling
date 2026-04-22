@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
+import { useNewsSearch, type NewsSearchState } from "@/lib/hooks/useNewsSearch";
 import { toQuickScreenSubject } from "@/lib/data/subjects";
 import type { AdverseMediaMatch, Subject } from "@/lib/types";
 import type {
@@ -52,6 +53,7 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
   const superBrain = useSuperBrain(qsSubject, {
     adverseMediaText: subject.adverseMedia?.name ?? subject.meta,
   });
+  const news = useNewsSearch(subject.name);
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,
@@ -216,7 +218,7 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
       </div>
 
       <SuperBrainPanel state={superBrain} />
-
+      <NewsDossierPanel state={news} />
 
     </aside>
   );
@@ -701,6 +703,26 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
         </Field>
       )}
 
+      {r.adverseKeywordGroups.length > 0 && (
+        <Field label={`Adverse-keyword signals (${r.adverseKeywords.length})`}>
+          <div className="flex flex-wrap gap-1 mb-2">
+            {r.adverseKeywordGroups.map((g) => (
+              <span
+                key={g.group}
+                className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 bg-red text-white tracking-wide-1"
+              >
+                {g.label}
+                <span className="bg-white/20 px-1 rounded-sm">{g.count}</span>
+              </span>
+            ))}
+          </div>
+          <div className="text-10.5 text-ink-3 font-mono truncate">
+            Terms: {r.adverseKeywords.slice(0, 12).map((k) => k.term).join(" · ")}
+            {r.adverseKeywords.length > 12 && ` · +${r.adverseKeywords.length - 12} more`}
+          </div>
+        </Field>
+      )}
+
       <Field label="Phonetic fingerprints">
         <div className="font-mono text-10.5 text-ink-2 flex flex-wrap gap-x-3">
           <span>soundex: <span className="text-ink-0">{r.variants.soundex}</span></span>
@@ -729,6 +751,112 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           </div>
         </Field>
       )}
+    </Section>
+  );
+}
+
+const SEVERITY_BG: Record<string, string> = {
+  clear: "bg-green-dim text-green",
+  low: "bg-blue-dim text-blue",
+  medium: "bg-amber-dim text-amber",
+  high: "bg-orange-dim text-orange",
+  critical: "bg-red-dim text-red",
+};
+
+function NewsDossierPanel({ state }: { state: NewsSearchState }) {
+  if (state.status === "idle") return null;
+  if (state.status === "loading") {
+    return (
+      <Section title="Adverse-media dossier">
+        <div className="text-11 text-ink-2">Crawling Google News for live articles…</div>
+      </Section>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <Section title="Adverse-media dossier">
+        <div className="text-11 text-ink-2 italic">
+          News fetch unavailable: {state.error}
+        </div>
+      </Section>
+    );
+  }
+  const r = state.result;
+  if (r.articleCount === 0) {
+    return (
+      <Section title="Adverse-media dossier">
+        <div className="text-11 text-ink-2">
+          No articles found for {r.subject} in Google News.
+        </div>
+      </Section>
+    );
+  }
+  return (
+    <Section title={`Adverse-media dossier (${r.articleCount})`}>
+      <div className="flex items-center gap-2 mb-2 text-10.5">
+        <span className="text-ink-2 uppercase tracking-wide-2">Top severity:</span>
+        <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono font-semibold ${SEVERITY_BG[r.topSeverity] ?? "bg-bg-2 text-ink-1"}`}>
+          {r.topSeverity}
+        </span>
+        <span className="ml-auto font-mono text-ink-3">source: {r.source}</span>
+      </div>
+
+      {r.keywordGroupCounts.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {r.keywordGroupCounts.map((g) => (
+            <span
+              key={g.group}
+              className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
+            >
+              {g.group.replace(/-/g, " ")}
+              <span className="bg-red/20 px-1 rounded-sm">{g.count}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <ul className="list-none p-0 m-0 space-y-2">
+        {r.articles.slice(0, 10).map((a, i) => (
+          <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
+            <div className="flex items-start justify-between gap-2 mb-0.5">
+              <a
+                href={a.link}
+                target="_blank"
+                rel="noreferrer"
+                className="text-11 font-semibold text-ink-0 hover:text-brand leading-snug"
+              >
+                {a.title || "(untitled)"}
+              </a>
+              <span className={`shrink-0 inline-flex items-center px-1 py-px rounded-sm font-mono text-10 ${SEVERITY_BG[a.severity] ?? "bg-bg-2 text-ink-1"}`}>
+                {a.severity}
+              </span>
+            </div>
+            <div className="text-10 text-ink-3 font-mono">
+              {a.source || "—"} · {a.pubDate ? new Date(a.pubDate).toLocaleDateString() : "—"}
+            </div>
+            {(a.keywordGroups.length > 0 || a.esgCategories.length > 0) && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {a.keywordGroups.map((g) => (
+                  <span
+                    key={`kw-${g}`}
+                    className="inline-flex items-center px-1 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
+                  >
+                    {g.replace(/-/g, " ")}
+                  </span>
+                ))}
+                {a.esgCategories.slice(0, 3).map((c) => (
+                  <span
+                    key={`esg-${c}`}
+                    className="inline-flex items-center px-1 py-px rounded-sm font-mono text-10 bg-green-dim text-green tracking-wide-1"
+                  >
+                    ESG · {c.replace(/-/g, " ")}
+                  </span>
+                ))}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </Section>
   );
 }

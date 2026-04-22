@@ -14,6 +14,30 @@ import {
 } from "../../../../dist/src/brain/index.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyEsg } from "@/lib/data/esg";
+import {
+  classifyAdverseKeywords,
+  adverseKeywordGroupCounts,
+  type AdverseKeywordGroup,
+} from "@/lib/data/adverse-keywords";
+
+// Group weight: how much each fired group should push the composite score.
+// Critical regimes (terrorism / WMD / proliferation / sanctions) dominate;
+// purely informational groups (political exposure) are near-zero.
+const KEYWORD_GROUP_WEIGHT: Record<AdverseKeywordGroup, number> = {
+  "terrorism-financing": 20,
+  "proliferation-wmd": 20,
+  "regulatory-action": 14,
+  "bribery-corruption": 14,
+  "money-laundering": 14,
+  "organised-crime": 14,
+  "human-trafficking": 12,
+  "fraud-forgery": 12,
+  "market-abuse": 10,
+  "tax-crime": 10,
+  "cybercrime": 10,
+  "law-enforcement": 6,
+  "political-exposure": 2,
+};
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +82,23 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // 3b · ESG classifier — 25 ESG-relevant categories across 5 domains,
     //      mapped to SASB / EU Taxonomy / UN SDGs.
-    const esg = classifyEsg([mediaText, body.subject.name, (body.subject.aliases ?? []).join(" ")].join(" "));
+    const fullText = [
+      mediaText,
+      body.subject.name,
+      (body.subject.aliases ?? []).join(" "),
+      body.roleText ?? "",
+    ].join(" ");
+    const esg = classifyEsg(fullText);
+
+    // 3c · Adverse-keyword classifier — the classic AML/CFT keyword set
+    //      grouped by financial-crime family. Each firing group contributes
+    //      to the composite score per KEYWORD_GROUP_WEIGHT.
+    const adverseKeywords = classifyAdverseKeywords(fullText);
+    const adverseKeywordGroups = adverseKeywordGroupCounts(adverseKeywords);
+    const adverseKeywordPenalty = adverseKeywordGroups.reduce(
+      (acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0),
+      0,
+    );
 
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
@@ -100,6 +140,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           regimesPenalty +
           redlinesPenalty +
           adverseMediaPenalty +
+          adverseKeywordPenalty +
           pepPenalty,
       ),
     );
@@ -110,6 +151,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       pep,
       adverseMedia,
       esg,
+      adverseKeywords,
+      adverseKeywordGroups,
       jurisdiction,
       redlines,
       variants,
@@ -121,6 +164,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           regimesPenalty,
           redlinesPenalty,
           adverseMediaPenalty,
+          adverseKeywordPenalty,
           pepPenalty,
         },
       },
