@@ -15,6 +15,9 @@
     "brain:weaponize": "tsc && node scripts/weaponize-brain.mjs",
     "server:brain-reason": "tsc && node server/brain-reason.mjs"
   },
+  "dependencies": {
+    "@netlify/blobs": "^8.0.0"
+  },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.6.0",

@@ -4,6 +4,44 @@
 
 import type { AdverseMediaCategory } from './types.js';
 
+// Multilingual keyword packs keyed by ISO-639-1.
+// Extend the English base with Arabic (ar), French (fr), Spanish (es),
+// Russian (ru), Mandarin (zh), Persian (fa) — covers ≈ 4.3 billion speakers
+// and the major regulator-publication and adverse-media corpora.
+const ML_PACK: Record<string, string[]> = {
+  ar: [
+    'غسل الأموال', 'تمويل الإرهاب', 'رشوة', 'فساد', 'احتيال', 'اختلاس',
+    'تهريب', 'إرهاب', 'عقوبات', 'تبييض الأموال', 'سمسرة', 'تزوير',
+    'مخدرات', 'اتجار بالبشر', 'غسيل أموال', 'تمويل إرهاب',
+  ],
+  fa: [
+    'پولشویی', 'تأمین مالی تروریسم', 'رشوه', 'فساد', 'قاچاق', 'تحریم',
+    'کلاهبرداری', 'اختلاس',
+  ],
+  fr: [
+    'blanchiment', 'blanchiment d\'argent', 'financement du terrorisme',
+    'corruption', 'fraude', 'évasion fiscale', 'détournement',
+    'escroquerie', 'sanctions', 'trafic de drogue', 'traite des êtres humains',
+    'condamné', 'arrêté', 'soupçonné', 'inculpé', 'mafia', 'pot-de-vin',
+  ],
+  es: [
+    'lavado de dinero', 'blanqueo de capitales', 'financiación del terrorismo',
+    'corrupción', 'soborno', 'fraude', 'evasión fiscal', 'narcotráfico',
+    'tráfico de personas', 'sanciones', 'condenado', 'detenido', 'procesado',
+    'extorsión', 'mafia',
+  ],
+  ru: [
+    'отмывание денег', 'финансирование терроризма', 'коррупция', 'взятка',
+    'мошенничество', 'санкции', 'незаконный', 'уголовное дело',
+    'наркоторговля', 'отмывание', 'уклонение от налогов', 'арестован',
+    'осужден',
+  ],
+  zh: [
+    '洗钱', '恐怖融资', '腐败', '贿赂', '欺诈', '制裁', '毒品走私',
+    '人口贩卖', '逃税', '被捕', '起诉', '定罪',
+  ],
+};
+
 export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
   {
     id: 'ml_financial_crime',
@@ -14,6 +52,11 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'identity theft', 'Ponzi', 'pyramid scheme', 'insider trading',
       'market manipulation', 'accounting fraud', 'asset misappropriation',
       'tax evasion', 'tax fraud', 'VAT fraud', 'cyber fraud', 'wire fraud',
+      'structuring', 'smurfing', 'trade-based laundering', 'shell company',
+      'front company', 'invoice fraud', 'carousel fraud', 'missing trader',
+      'BEC', 'business email compromise', 'APP fraud', 'synthetic identity',
+      'mule account', 'money mule', 'skimming', 'lapping', 'spoofing',
+      'wash trade', 'layering', 'placement', 'integration', 'phoenix company',
     ],
   },
   {
@@ -22,7 +65,10 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
     keywords: [
       'terrorism', 'terrorist financing', 'financing of terrorism',
       'terror funding', 'extremist', 'radicalisation', 'designated terrorist',
-      'militant',
+      'militant', 'FTO', 'foreign terrorist organisation', 'ISIS', 'ISIL',
+      'Al-Qaeda', 'Daesh', 'Hezbollah', 'Hamas', 'Al-Shabaab', 'Boko Haram',
+      'lone-wolf', 'foreign fighter', 'jihadist', 'Taliban', 'IRGC',
+      'terror cell', 'recruitment', 'indoctrination',
     ],
   },
   {
@@ -32,6 +78,11 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'proliferation financing', 'weapons of mass destruction', 'WMD',
       'dual-use', 'sanctions evasion', 'arms trafficking', 'weapons smuggling',
       'nuclear', 'chemical weapons', 'biological weapons',
+      'missile', 'ballistic', 'centrifuge', 'uranium', 'enrichment',
+      'plutonium', 'fissile material', 'precursor chemicals', 'VX',
+      'sarin', 'chip export', 'semiconductor diversion', 'end-use diversion',
+      'transshipment hub', 'nuclear proliferation', 'DPRK sanctions',
+      'Iran sanctions', 'North Korea sanctions',
     ],
   },
   {
@@ -43,6 +94,12 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'organised crime', 'drug trafficking', 'narcotics', 'cartel',
       'human trafficking', 'people smuggling', 'forced labour', 'modern slavery',
       'wildlife trafficking', 'cybercrime', 'ransomware', 'darknet',
+      'facilitation payment', 'grease payment', 'cronyism', 'nepotism',
+      'racketeering', 'RICO', 'extortion racket', 'protection money',
+      'triad', 'yakuza', 'bratva', 'crime family', 'sex trafficking',
+      'child exploitation', 'CSAM', 'illegal gambling', 'illegal mining',
+      'blood diamond', 'conflict mineral', 'ivory trade', 'poaching',
+      'dark web marketplace', 'crypto mixer',
     ],
   },
   {
@@ -53,9 +110,30 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'fined', 'guilty', 'illegal', 'imprisonment', 'jail', 'litigate',
       'murder', 'politic', 'prosecute', 'sanctions', 'theft', 'unlawful',
       'verdict', 'debarred', 'blacklisted', 'regulatory breach',
+      'indictment', 'grand jury', 'plea deal', 'settlement', 'deferred prosecution',
+      'non-prosecution agreement', 'consent order', 'cease and desist',
+      'disqualified', 'struck off', 'license revoked', 'permit revoked',
+      'FATF grey list', 'FATF black list', 'OFAC designation',
+      'SDN listed', 'asset freeze', 'travel ban', 'enforcement action',
+      'civil penalty', 'administrative penalty', 'class action',
+      'whistleblower', 'qui tam',
     ],
   },
 ];
+
+// Inject multilingual keywords into every category. We route most multilingual
+// terms into the two most regulator-relevant buckets (ml_financial_crime and
+// corruption_organised_crime) — broadening ML/TF/corruption/sanctions coverage
+// without false-positive explosion in narrower buckets.
+for (const cat of ADVERSE_MEDIA_CATEGORIES) {
+  if (cat.id === 'ml_financial_crime' || cat.id === 'corruption_organised_crime' || cat.id === 'legal_criminal_regulatory') {
+    for (const lang of Object.keys(ML_PACK)) {
+      const pack = ML_PACK[lang];
+      if (!pack) continue;
+      for (const k of pack) if (!cat.keywords.includes(k)) cat.keywords.push(k);
+    }
+  }
+}
 
 export const ADVERSE_MEDIA_CATEGORY_BY_ID: Map<string, AdverseMediaCategory> =
   new Map(ADVERSE_MEDIA_CATEGORIES.map((c) => [c.id, c]));
