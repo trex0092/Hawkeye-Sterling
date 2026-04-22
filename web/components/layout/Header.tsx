@@ -7,6 +7,7 @@ const NAV_TABS = [
   { label: "Screening", href: "/screening" },
   { label: "Cases", href: "/cases" },
   { label: "Deep reasoning", href: "/workbench" },
+  { label: "Weaponized", href: "/weaponized-brain" },
   { label: "Audit", href: "/audit-trail" },
 ] as const;
 

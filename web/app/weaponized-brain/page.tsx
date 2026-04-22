@@ -1,0 +1,338 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Header } from "@/components/layout/Header";
+
+interface Manifest {
+  product: string;
+  version: string;
+  generatedAt: string;
+  charter: {
+    prohibitions: Array<{ id: string; label: string }>;
+    matchConfidence: string[];
+    outputStructure: string[];
+    regulatoryAnchors: string[];
+    authoritativeLists: string[];
+  };
+  cognitiveCatalogue: {
+    faculties: Array<{ id: string; displayName: string; modeCount: number; describes: string }>;
+    reasoningModes: { total: number; byCategory: Record<string, number> };
+    adverseMedia: { categoryCount: number; categories: Array<{ key: string; label: string }> };
+    doctrines: { total: number; mandatory: number; list: Array<{ id: string; authority: string; title: string }> };
+    redFlags: { total: number; byTypology: Record<string, number> };
+    typologies: { total: number; list: Array<{ id: string; title: string }> };
+    sanctionRegimes: { total: number; mandatoryUAE: number; list: string[] };
+    jurisdictions: { total: number };
+    dpmsKpis: { total: number };
+    cahra: { total: number };
+    thresholds: { total: number };
+    playbooks: { total: number; list: Array<{ id: string; title: string }> };
+    redlines: { total: number };
+    fatf: { total: number };
+    dispositions: { total: number };
+    skills: { total: number; domainCounts: Record<string, number> };
+    amplifier: { total: number };
+    metaCognition: { total: number };
+  };
+  integrity: Record<string, string>;
+}
+
+interface Response {
+  ok: boolean;
+  manifest?: Manifest;
+  integrity?: {
+    charterDirectiveCount: number;
+    catalogueStats: Record<string, number>;
+  };
+  error?: string;
+  detail?: string;
+}
+
+export default function WeaponizedBrainPage() {
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "ready"; data: Required<Pick<Response, "manifest" | "integrity">> }
+    | { status: "error"; error: string }
+  >({ status: "loading" });
+
+  useEffect(() => {
+    fetch("/api/weaponized-brain")
+      .then((r) => r.json() as Promise<Response>)
+      .then((r) => {
+        if (r.ok && r.manifest && r.integrity) {
+          setState({ status: "ready", data: { manifest: r.manifest, integrity: r.integrity } });
+        } else {
+          setState({ status: "error", error: r.detail ?? r.error ?? "unknown" });
+        }
+      })
+      .catch((e: unknown) =>
+        setState({ status: "error", error: e instanceof Error ? e.message : String(e) }),
+      );
+  }, []);
+
+  return (
+    <>
+      <Header />
+      <main className="bg-bg-0 min-h-[calc(100vh-54px)] px-10 py-8">
+        <div className="mb-8">
+          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+            MODULE 06 · WEAPONIZED BRAIN
+          </div>
+          <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
+            The full <em className="italic text-brand">arsenal.</em>
+          </h1>
+          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
+            <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
+            The weaponized brain fuses the charter, faculties, reasoning modes, doctrines,
+            red flags, typologies, sanction regimes, jurisdictions, DPMS KPIs, CAHRA seed,
+            thresholds, playbooks, redlines, FATF recommendations, dispositions, skills,
+            cognitive amplifiers and meta-cognition into a single policy document every
+            downstream integration imports verbatim.
+          </p>
+        </div>
+
+        {state.status === "loading" && (
+          <div className="text-12 text-ink-2">Loading weaponized manifest…</div>
+        )}
+        {state.status === "error" && (
+          <div className="text-12 text-red bg-red-dim rounded px-3 py-2.5">
+            Failed to load: {state.error}
+          </div>
+        )}
+        {state.status === "ready" && <BrainDashboard {...state.data} />}
+      </main>
+    </>
+  );
+}
+
+function BrainDashboard({
+  manifest,
+  integrity,
+}: {
+  manifest: Manifest;
+  integrity: { charterDirectiveCount: number; catalogueStats: Record<string, number> };
+}) {
+  const c = manifest.cognitiveCatalogue;
+  return (
+    <>
+      {/* Top signature strip */}
+      <div className="bg-ink-0 text-white rounded-xl p-5 mb-8 flex flex-wrap gap-6 items-end">
+        <div>
+          <div className="text-10 uppercase tracking-wide-4 text-white/50">Product</div>
+          <div className="text-16 font-semibold">{manifest.product}</div>
+        </div>
+        <div>
+          <div className="text-10 uppercase tracking-wide-4 text-white/50">Version</div>
+          <div className="text-14 font-mono">{manifest.version}</div>
+        </div>
+        <div>
+          <div className="text-10 uppercase tracking-wide-4 text-white/50">Generated</div>
+          <div className="text-14 font-mono">{new Date(manifest.generatedAt).toLocaleString()}</div>
+        </div>
+        <div className="ml-auto flex gap-6">
+          <Stat label="Charter directives" value={integrity.charterDirectiveCount} />
+          <Stat
+            label="Catalogues fused"
+            value={Object.keys(integrity.catalogueStats).length}
+          />
+        </div>
+      </div>
+
+      {/* Charter */}
+      <Section title="Charter">
+        <Grid>
+          <Card title="Absolute prohibitions" count={manifest.charter.prohibitions.length}>
+            {manifest.charter.prohibitions.slice(0, 6).map((p) => (
+              <LineItem key={p.id} primary={p.label} secondary={p.id} />
+            ))}
+          </Card>
+          <Card
+            title="Match-confidence levels"
+            count={manifest.charter.matchConfidence.length}
+          >
+            {manifest.charter.matchConfidence.map((m) => (
+              <Tag key={m}>{m}</Tag>
+            ))}
+          </Card>
+          <Card title="Output structure" count={manifest.charter.outputStructure.length}>
+            {manifest.charter.outputStructure.map((o) => (
+              <LineItem key={o} primary={o} />
+            ))}
+          </Card>
+          <Card title="Regulatory anchors" count={manifest.charter.regulatoryAnchors.length}>
+            {manifest.charter.regulatoryAnchors.slice(0, 6).map((a) => (
+              <Tag key={a} tone="violet">
+                {a}
+              </Tag>
+            ))}
+          </Card>
+        </Grid>
+      </Section>
+
+      {/* Cognitive catalogue */}
+      <Section title="Cognitive catalogue">
+        <Grid>
+          <Card title="Faculties" count={c.faculties.length}>
+            {c.faculties.map((f) => (
+              <LineItem
+                key={f.id}
+                primary={f.displayName}
+                secondary={`${f.modeCount} modes`}
+              />
+            ))}
+          </Card>
+          <Card title="Reasoning modes" count={c.reasoningModes.total}>
+            {Object.entries(c.reasoningModes.byCategory).slice(0, 8).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
+          </Card>
+          <Card title="Skills" count={c.skills.total}>
+            {Object.entries(c.skills.domainCounts).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
+          </Card>
+          <Card
+            title="Doctrines"
+            count={c.doctrines.total}
+            badge={`${c.doctrines.mandatory} mandatory`}
+          >
+            {c.doctrines.list.slice(0, 6).map((d) => (
+              <LineItem key={d.id} primary={d.title} secondary={d.authority} />
+            ))}
+          </Card>
+          <Card title="Adverse media" count={c.adverseMedia.categoryCount}>
+            {c.adverseMedia.categories.map((a) => (
+              <LineItem key={a.key} primary={a.label} secondary={a.key} />
+            ))}
+          </Card>
+          <Card title="Typologies" count={c.typologies.total}>
+            {c.typologies.list.slice(0, 6).map((t) => (
+              <LineItem key={t.id} primary={t.title} secondary={t.id} />
+            ))}
+          </Card>
+          <Card title="Red flags" count={c.redFlags.total}>
+            {Object.entries(c.redFlags.byTypology).slice(0, 8).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
+          </Card>
+          <Card
+            title="Sanction regimes"
+            count={c.sanctionRegimes.total}
+            badge={`${c.sanctionRegimes.mandatoryUAE} UAE-mandatory`}
+          >
+            {c.sanctionRegimes.list.slice(0, 8).map((s) => (
+              <Tag key={s}>{s}</Tag>
+            ))}
+          </Card>
+          <Card title="Playbooks" count={c.playbooks.total}>
+            {c.playbooks.list.slice(0, 6).map((p) => (
+              <LineItem key={p.id} primary={p.title} secondary={p.id} />
+            ))}
+          </Card>
+          <Card title="FATF" count={c.fatf.total} />
+          <Card title="Dispositions" count={c.dispositions.total} />
+          <Card title="Thresholds" count={c.thresholds.total} />
+          <Card title="Jurisdictions" count={c.jurisdictions.total} />
+          <Card title="CAHRA" count={c.cahra.total} />
+          <Card title="DPMS KPIs" count={c.dpmsKpis.total} />
+          <Card title="Redlines" count={c.redlines.total} />
+          <Card title="Cognitive amplifier" count={c.amplifier.total} />
+          <Card title="Meta-cognition" count={c.metaCognition.total} />
+        </Grid>
+      </Section>
+
+      {/* Integrity signature */}
+      <Section title="Integrity signature">
+        <div className="bg-white border border-hair-2 rounded-xl p-4">
+          <table className="w-full text-12">
+            <tbody>
+              {Object.entries(integrity.catalogueStats).map(([k, v]) => (
+                <tr key={k} className="border-b border-hair last:border-0">
+                  <td className="py-1.5 pr-4 text-ink-2 font-medium uppercase tracking-wide-2 text-10.5">
+                    {k}
+                  </td>
+                  <td className="py-1.5 font-mono text-ink-0">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+    </>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-10">
+      <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-3">
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Grid({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
+      {children}
+    </div>
+  );
+}
+
+function Card({
+  title,
+  count,
+  badge,
+  children,
+}: {
+  title: string;
+  count: number;
+  badge?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white border border-hair-2 rounded-lg p-3">
+      <div className="flex justify-between items-baseline mb-2">
+        <div className="text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2">
+          {title}
+        </div>
+        <div className="font-mono text-16 font-semibold text-brand">{count}</div>
+      </div>
+      {badge && (
+        <div className="text-10 font-mono text-ink-3 mb-1.5">{badge}</div>
+      )}
+      {children && <div className="flex flex-wrap gap-1.5 pt-1 border-t border-hair">{children}</div>}
+    </div>
+  );
+}
+
+function LineItem({ primary, secondary }: { primary: string; secondary?: string }) {
+  return (
+    <div className="w-full flex justify-between items-baseline text-11 py-0.5">
+      <span className="text-ink-0 truncate mr-2">{primary}</span>
+      {secondary && (
+        <span className="font-mono text-10.5 text-ink-3 shrink-0">{secondary}</span>
+      )}
+    </div>
+  );
+}
+
+function Tag({ children, tone }: { children: React.ReactNode; tone?: "violet" }) {
+  const cls = tone === "violet" ? "bg-violet-dim text-violet" : "bg-bg-2 text-ink-1";
+  return (
+    <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 ${cls}`}>
+      {children}
+    </span>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="text-10 uppercase tracking-wide-4 text-white/50">{label}</div>
+      <div className="text-18 font-mono font-semibold text-brand">{value}</div>
+    </div>
+  );
+}

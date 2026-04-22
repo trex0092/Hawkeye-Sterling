@@ -1,10 +1,10 @@
 import type { FacultyFilter, ReasoningMode, ReasoningPreset } from "@/lib/types";
 import { slugifyTaxonomyName } from "@/lib/data/taxonomy";
 
-export const TOTAL_MODES = 690;
+export const TOTAL_MODES = 1080;
 
 export const FACULTY_FILTERS: FacultyFilter[] = [
-  { key: "all", label: "All modes", count: "690" },
+  { key: "all", label: "All modes", count: "1080" },
   { key: "reasoning", label: "Reasoning", count: "78" },
   { key: "data-analysis", label: "Data Analysis", count: "64" },
   { key: "deep-thinking", label: "Deep Thinking", count: "52" },
@@ -14,6 +14,12 @@ export const FACULTY_FILTERS: FacultyFilter[] = [
   { key: "argumentation", label: "Argumentation", count: "58" },
   { key: "introspection", label: "Introspection", count: "82" },
   { key: "ratiocination", label: "Ratiocination", count: "103" },
+  { key: "forensics", label: "Forensics", count: "79" },
+  { key: "linguistic", label: "Linguistic", count: "66" },
+  { key: "psychological", label: "Psychological", count: "54" },
+  { key: "temporal", label: "Temporal", count: "71" },
+  { key: "geospatial", label: "Geospatial", count: "68" },
+  { key: "cryptographic", label: "Cryptographic", count: "52" },
 ];
 
 // ── Taxonomy-ID helpers ─────────────────────────────────────────────────────
@@ -601,6 +607,104 @@ export const MODES: ReasoningMode[] = [
     faculty: "ratiocination",
     taxonomyIds: [...s("Tipping-Off Management"), ...r("Tipping-Off Analysis")],
   },
+
+  // ═══ FORENSICS ══════════════════════════════════════════════════════
+  { id: "RM-501", name: "Bank Statement Forensic Trace", faculty: "forensics",
+    taxonomyIds: [...a("Transaction-Flow Analysis"), ...s("Evidence Handling")] },
+  { id: "RM-502", name: "Invoice Authenticity Check", faculty: "forensics",
+    taxonomyIds: [...a("Trade-Finance Analysis"), ...r("Chain of Custody Reasoning")] },
+  { id: "RM-503", name: "Document Metadata Extraction", faculty: "forensics",
+    taxonomyIds: [...a("Evidence Preservation Analysis")] },
+  { id: "RM-504", name: "Digital Signature Verification", faculty: "forensics",
+    taxonomyIds: [...s("Evidence Handling")] },
+  { id: "RM-505", name: "Chain-of-Custody Audit", faculty: "forensics",
+    taxonomyIds: [...r("Chain of Custody Reasoning"), ...a("Audit Trail Analysis")] },
+  { id: "RM-506", name: "Ledger Reconciliation Sweep", faculty: "forensics",
+    taxonomyIds: [...a("Transaction-Flow Analysis")] },
+  { id: "RM-507", name: "Wire-Fraud Pattern Recovery", faculty: "forensics",
+    taxonomyIds: [...r("Typology Pattern Matching")] },
+  { id: "RM-508", name: "Shell-Company Skeleton Scan", faculty: "forensics",
+    taxonomyIds: [...a("UBO Beneficial Ownership Mapping")] },
+
+  // ═══ LINGUISTIC ═════════════════════════════════════════════════════
+  { id: "RM-521", name: "Transliteration Canonicalizer", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-522", name: "Cyrillic ↔ Latin Name Fold", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-523", name: "Arabic Root Morphology", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-524", name: "CJK Honorific Stripper", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-525", name: "Diacritic Normaliser", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-526", name: "Semantic Alias Expansion", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-527", name: "Corporate Suffix Equivalence", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+  { id: "RM-528", name: "Honorific & Title Stripper", faculty: "linguistic",
+    taxonomyIds: [...s("Alias Analysis")] },
+
+  // ═══ PSYCHOLOGICAL ══════════════════════════════════════════════════
+  { id: "RM-541", name: "Behavioural Anomaly Profile", faculty: "psychological",
+    taxonomyIds: [...a("Behavioural Pattern Analysis")] },
+  { id: "RM-542", name: "Intent Inference Engine", faculty: "psychological",
+    taxonomyIds: [...r("Mens Rea Inference")] },
+  { id: "RM-543", name: "Coercion & Duress Detector", faculty: "psychological",
+    taxonomyIds: [...r("Mens Rea Inference")] },
+  { id: "RM-544", name: "Insider-Threat Pattern", faculty: "psychological",
+    taxonomyIds: [...a("Behavioural Pattern Analysis")] },
+  { id: "RM-545", name: "Deception Marker Sweep", faculty: "psychological",
+    taxonomyIds: [...a("Behavioural Pattern Analysis")] },
+  { id: "RM-546", name: "Social Engineering Ingress", faculty: "psychological",
+    taxonomyIds: [...a("Behavioural Pattern Analysis")] },
+
+  // ═══ TEMPORAL ═══════════════════════════════════════════════════════
+  { id: "RM-561", name: "Time-Series Anomaly Surge", faculty: "temporal",
+    taxonomyIds: [...a("Time-Series Pattern Analysis")] },
+  { id: "RM-562", name: "Payment-Cadence Break", faculty: "temporal",
+    taxonomyIds: [...a("Time-Series Pattern Analysis")] },
+  { id: "RM-563", name: "Weekend-Holiday Spike Finder", faculty: "temporal",
+    taxonomyIds: [...a("Time-Series Pattern Analysis")] },
+  { id: "RM-564", name: "Timezone Drift Alignment", faculty: "temporal",
+    taxonomyIds: [...a("Time-Series Pattern Analysis")] },
+  { id: "RM-565", name: "Structuring Velocity Window", faculty: "temporal",
+    taxonomyIds: [...r("Typology Pattern Matching")] },
+  { id: "RM-566", name: "Dormancy → Burst Detector", faculty: "temporal",
+    taxonomyIds: [...a("Time-Series Pattern Analysis")] },
+  { id: "RM-567", name: "Sanctions-Effective-Date Sweep", faculty: "temporal",
+    taxonomyIds: [...r("Regulatory Inference")] },
+
+  // ═══ GEOSPATIAL ═════════════════════════════════════════════════════
+  { id: "RM-581", name: "CAHRA Proximity Score", faculty: "geospatial",
+    taxonomyIds: [...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-582", name: "Corridor Risk Mapping", faculty: "geospatial",
+    taxonomyIds: [...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-583", name: "Vessel AIS Geofence", faculty: "geospatial",
+    taxonomyIds: [...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-584", name: "Port-to-Port Anomaly", faculty: "geospatial",
+    taxonomyIds: [...a("Trade-Finance Analysis")] },
+  { id: "RM-585", name: "Dark-Fleet Detection", faculty: "geospatial",
+    taxonomyIds: [...a("Trade-Finance Analysis")] },
+  { id: "RM-586", name: "FATF Jurisdiction Resolver", faculty: "geospatial",
+    taxonomyIds: [...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-587", name: "Free-Zone Exposure Map", faculty: "geospatial",
+    taxonomyIds: [...a("Jurisdiction Risk Analysis")] },
+
+  // ═══ CRYPTOGRAPHIC ══════════════════════════════════════════════════
+  { id: "RM-601", name: "Wallet Cluster Resolution", faculty: "cryptographic",
+    taxonomyIds: [...a("On-Chain Analytics")] },
+  { id: "RM-602", name: "Mixer / Tumbler Trace", faculty: "cryptographic",
+    taxonomyIds: [...a("On-Chain Analytics")] },
+  { id: "RM-603", name: "Cross-Chain Bridge Trace", faculty: "cryptographic",
+    taxonomyIds: [...a("On-Chain Analytics")] },
+  { id: "RM-604", name: "VASP Travel-Rule Gap", faculty: "cryptographic",
+    taxonomyIds: [...r("Regulatory Inference")] },
+  { id: "RM-605", name: "Stablecoin De-peg Exposure", faculty: "cryptographic",
+    taxonomyIds: [...a("On-Chain Analytics")] },
+  { id: "RM-606", name: "DeFi Protocol Risk Map", faculty: "cryptographic",
+    taxonomyIds: [...a("On-Chain Analytics")] },
+  { id: "RM-607", name: "Darknet Market Proximity", faculty: "cryptographic",
+    taxonomyIds: [...a("On-Chain Analytics")] },
 ];
 
 export const PRESETS: ReasoningPreset[] = [
