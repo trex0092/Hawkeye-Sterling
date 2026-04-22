@@ -551,6 +551,27 @@
           </div>
         </form>
       </section>
+
+      <section class="op-surfaces" aria-labelledby="op-surfaces-title">
+        <header class="op-surfaces-head">
+          <h3 id="op-surfaces-title">Operator surfaces</h3>
+          <p class="op-surfaces-sub">Eleven regulator-grade surfaces backed by shipped TypeScript modules — click a tab to render.</p>
+        </header>
+        <nav class="op-tabs" role="tablist" aria-label="Operator surface tabs">
+          <button role="tab" class="op-tab is-active" data-surface="smurfing" aria-selected="true">Smurfing detector</button>
+          <button role="tab" class="op-tab" data-surface="sanction_delta" aria-selected="false">Sanction delta</button>
+          <button role="tab" class="op-tab" data-surface="cross_regime" aria-selected="false">Cross-regime conflict</button>
+          <button role="tab" class="op-tab" data-surface="kri_registry" aria-selected="false">KRI registry</button>
+          <button role="tab" class="op-tab" data-surface="calibration" aria-selected="false">Calibration ledger</button>
+          <button role="tab" class="op-tab" data-surface="peer_benchmark" aria-selected="false">Peer benchmark</button>
+          <button role="tab" class="op-tab" data-surface="reasoning_diff" aria-selected="false">Reasoning diff</button>
+          <button role="tab" class="op-tab" data-surface="facts_linter" aria-selected="false">Observable-facts linter</button>
+          <button role="tab" class="op-tab" data-surface="corroboration" aria-selected="false">Corroboration score</button>
+          <button role="tab" class="op-tab" data-surface="rubric_picker" aria-selected="false">Sector-rubric picker</button>
+          <button role="tab" class="op-tab" data-surface="playbook_viewer" aria-selected="false">Playbook viewer</button>
+        </nav>
+        <div id="op-surface-mount" class="op-surface-mount" role="tabpanel" aria-labelledby="op-surfaces-title"></div>
+      </section>
     </main>
 
     <footer class="site-footer" role="contentinfo">
@@ -571,6 +592,7 @@
     <script type="module" src="/app.js"></script>
     <script src="/mlro-picker.js" defer></script>
     <script src="/mlro-panels.js" defer></script>
+    <script src="/mlro-surfaces.js" defer></script>
     <script src="/deep-reasoning.js" defer></script>
   </body>
 </html>

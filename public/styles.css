@@ -1733,3 +1733,63 @@ main, header, section, footer { position: relative; z-index: 2; }
   .advisor-card.advisor-card-v2 .advisor-state::before,
   .advisor-card.advisor-card-v2 .advisor-open::before { animation: none; transition: none; }
 }
+
+/* ── operator surfaces ──────────────────────────────────────── */
+.op-surfaces {
+  margin: 20px 0 28px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.04) 0%, rgba(11, 13, 19, 0.95) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+}
+.op-surfaces-head h3 {
+  margin: 0; font-size: 16px; letter-spacing: 0.01em;
+  background: linear-gradient(90deg, #60A5FA 0%, #A855F7 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+}
+.op-surfaces-sub { margin: 4px 0 12px; color: rgba(209, 213, 219, 0.6); font-size: 12.5px; }
+.op-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 6px; margin-bottom: 12px;
+  border-radius: 10px;
+  background: rgba(6, 7, 10, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.op-tab {
+  background: transparent; border: 1px solid transparent;
+  color: rgba(209, 213, 219, 0.8);
+  font-size: 12px; padding: 6px 12px; border-radius: 8px;
+  cursor: pointer; transition: background 120ms, border-color 120ms, color 120ms;
+}
+.op-tab:hover { border-color: rgba(96, 165, 250, 0.35); color: #E5E7EB; }
+.op-tab.is-active {
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.18), rgba(168, 85, 247, 0.1));
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #F3F4F6;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25) inset, 0 0 16px -6px rgba(168, 85, 247, 0.6);
+}
+.op-tab:focus-visible { outline: 2px solid #60A5FA; outline-offset: 2px; }
+.op-surface-mount { min-height: 96px; }
+.op-placeholder {
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: rgba(6, 7, 10, 0.7);
+  border: 1px solid rgba(96, 165, 250, 0.22);
+}
+.op-ph-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.op-ph-head h4 { margin: 0; font-size: 14.5px; color: #F3F4F6; }
+.op-ph-backing {
+  font-size: 10.5px; letter-spacing: 0.06em;
+  color: rgba(168, 85, 247, 0.85);
+  padding: 2px 8px; border-radius: 6px;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.op-ph-note { margin: 8px 0 0; color: rgba(209, 213, 219, 0.75); font-size: 13px; line-height: 1.55; }
+.op-ph-tag {
+  display: inline-block; margin-top: 12px;
+  font-size: 10px; letter-spacing: 0.18em; color: rgba(96, 165, 250, 0.8);
+  padding: 3px 9px; border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.35); background: rgba(96, 165, 250, 0.06);
+}
+.op-empty { margin: 0; color: rgba(209, 213, 219, 0.45); font-size: 12.5px; font-style: italic; padding: 12px; }
