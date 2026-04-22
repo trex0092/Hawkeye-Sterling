@@ -1,0 +1,169 @@
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// Luisa's Asana project — "01 · Screening - Sanctions & Adverse Media".
+// Hard-coded because the user pinned that specific board as the reports
+// destination. If this needs to be configurable later, promote to env.
+const ASANA_PROJECT_GID = "1214148660020527";
+const ASANA_WORKSPACE_GID = "1213645083721316";
+
+interface ReportHit {
+  listId: string;
+  listRef: string;
+  candidateName: string;
+  matchedAlias?: string;
+  score: number;            // 0..1
+  method: string;
+  phoneticAgreement: boolean;
+  programs?: string[];
+  reason: string;
+}
+
+interface ReportBody {
+  subject: {
+    id: string;
+    name: string;
+    aliases?: string[];
+    entityType?: string;
+    jurisdiction?: string;
+    group?: string;
+    caseId?: string;
+    ongoingScreening?: boolean;
+  };
+  result: {
+    hits: ReportHit[];
+    topScore: number;
+    severity: string;
+    listsChecked: number;
+    candidatesChecked: number;
+    durationMs: number;
+    generatedAt: string;
+  };
+  trigger?: "screen" | "ongoing" | "save";
+}
+
+interface ApiResponse {
+  ok: boolean;
+  taskGid?: string;
+  taskUrl?: string;
+  error?: string;
+  detail?: string;
+}
+
+function respond(status: number, body: ApiResponse): NextResponse {
+  return NextResponse.json(body, { status });
+}
+
+function buildTaskName(b: ReportBody): string {
+  const trigger = b.trigger === "ongoing" ? "[ONGOING]" : "[SCREEN]";
+  const sev = b.result.severity.toUpperCase();
+  const hits = b.result.hits.length;
+  return `${trigger} ${sev} · ${b.subject.name} · ${hits} hit${hits === 1 ? "" : "s"} · top ${b.result.topScore}`;
+}
+
+function buildTaskNotes(b: ReportBody): string {
+  const lines: string[] = [];
+  lines.push(`Subject: ${b.subject.name}`);
+  if (b.subject.aliases?.length) lines.push(`Aliases: ${b.subject.aliases.join("; ")}`);
+  lines.push(`Subject ID: ${b.subject.id}`);
+  if (b.subject.caseId) lines.push(`Case ID: ${b.subject.caseId}`);
+  if (b.subject.group) lines.push(`Group: ${b.subject.group}`);
+  lines.push(`Type: ${b.subject.entityType ?? "—"}`);
+  lines.push(`Jurisdiction: ${b.subject.jurisdiction ?? "—"}`);
+  lines.push(`Ongoing screening: ${b.subject.ongoingScreening ? "ON" : "OFF"}`);
+  lines.push("");
+  lines.push("── Brain verdict ──");
+  lines.push(`Severity: ${b.result.severity.toUpperCase()}`);
+  lines.push(`Top score: ${b.result.topScore} / 100`);
+  lines.push(
+    `Lists checked: ${b.result.listsChecked} · Candidates: ${b.result.candidatesChecked} · ${b.result.durationMs}ms`,
+  );
+  lines.push(`Generated: ${b.result.generatedAt}`);
+  lines.push("");
+  if (b.result.hits.length === 0) {
+    lines.push("No matches above the 82% threshold.");
+  } else {
+    lines.push(`── Hits (${b.result.hits.length}) ──`);
+    for (const h of b.result.hits) {
+      const pct = Math.round(h.score * 100);
+      lines.push(
+        `• [${h.listId}] ${h.candidateName} — ${pct}% (${h.method})${h.phoneticAgreement ? " · phonetic" : ""}`,
+      );
+      lines.push(`    ref: ${h.listRef}`);
+      if (h.matchedAlias) lines.push(`    matched alias: ${h.matchedAlias}`);
+      if (h.programs?.length) lines.push(`    programs: ${h.programs.join(", ")}`);
+      lines.push(`    reason: ${h.reason}`);
+    }
+  }
+  lines.push("");
+  lines.push("Source: Hawkeye Sterling — https://hawkeye-sterling.netlify.app");
+  return lines.join("\n");
+}
+
+export async function POST(req: Request): Promise<NextResponse> {
+  const token = process.env["ASANA_TOKEN"];
+  if (!token) {
+    return respond(503, {
+      ok: false,
+      error: "asana not configured",
+      detail:
+        "Set ASANA_TOKEN (Personal Access Token) in Netlify env vars for the hawkeye-sterling site.",
+    });
+  }
+
+  let body: ReportBody;
+  try {
+    body = (await req.json()) as ReportBody;
+  } catch {
+    return respond(400, { ok: false, error: "invalid JSON body" });
+  }
+  if (!body?.subject?.name || !body?.result) {
+    return respond(400, { ok: false, error: "subject.name and result are required" });
+  }
+
+  const name = buildTaskName(body);
+  const notes = buildTaskNotes(body);
+
+  try {
+    const asanaRes = await fetch("https://app.asana.com/api/1.0/tasks", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        data: {
+          name,
+          notes,
+          projects: [ASANA_PROJECT_GID],
+          workspace: ASANA_WORKSPACE_GID,
+        },
+      }),
+    });
+    const payload = (await asanaRes.json().catch(() => null)) as
+      | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
+      | null;
+    if (!asanaRes.ok || !payload?.data?.gid) {
+      const msg = payload?.errors?.[0]?.message ?? `HTTP ${asanaRes.status}`;
+      return respond(502, {
+        ok: false,
+        error: "asana rejected the task",
+        detail: msg,
+      });
+    }
+    return respond(200, {
+      ok: true,
+      taskGid: payload.data.gid,
+      ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
+    });
+  } catch (err) {
+    return respond(500, {
+      ok: false,
+      error: "asana request failed",
+      detail: err instanceof Error ? err.message : String(err),
+    });
+  }
+}

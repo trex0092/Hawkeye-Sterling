@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
+import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { toQuickScreenSubject } from "@/lib/data/subjects";
 import type { AdverseMediaMatch, Subject } from "@/lib/types";
 import type {
@@ -47,6 +48,14 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
+
+  const asanaReport = useAutoReport({
+    subjectId: subject.id,
+    qsSubject: screening.status === "success" ? qsSubject : null,
+    result: screening.status === "success" ? screening.result : null,
+    trigger: "screen",
+    enabled: screening.status === "success",
+  });
 
   const brainScore =
     screening.status === "success" ? screening.result.topScore : null;
@@ -114,6 +123,7 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         <p className="text-12 text-ink-2 m-0">
           {subject.id} · {subject.type} · {subject.country} · opened {subject.openedAgo}
         </p>
+        <AsanaStatus state={asanaReport} />
         {flash && (
           <div className="mt-2 text-11 text-green font-medium" role="status">
             {flash}
@@ -487,3 +497,41 @@ function PanelBtn({
   );
 }
 
+
+function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").AutoReportState }) {
+  if (state.status === "idle") return null;
+  const base =
+    "inline-flex items-center gap-1.5 mt-2 text-10.5 font-medium rounded px-2 py-0.5";
+  if (state.status === "posting") {
+    return (
+      <span className={`${base} bg-bg-2 text-ink-2`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-ink-3 animate-pulse" />
+        Reporting to Asana…
+      </span>
+    );
+  }
+  if (state.status === "sent") {
+    return (
+      <span className={`${base} bg-green-dim text-green`}>
+        <span>✓</span>
+        Reported to Asana
+        {state.taskUrl && (
+          <a
+            href={state.taskUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-green/80 ml-1"
+          >
+            view task
+          </a>
+        )}
+      </span>
+    );
+  }
+  return (
+    <span className={`${base} bg-red-dim text-red`} title={state.error}>
+      <span>!</span>
+      Asana report failed
+    </span>
+  );
+}
