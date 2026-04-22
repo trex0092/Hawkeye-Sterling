@@ -1264,3 +1264,146 @@ main, header, section, footer { position: relative; z-index: 2; }
   line-height: 1.55;
   white-space: pre-wrap;
 }
+
+/* ── advisor card v2 — richer layout ─────────────────────── */
+.advisor-card-v2 { padding: 18px 22px; gap: 0; grid-template-columns: 1fr; }
+.advisor-card-v2 .advisor-card-grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 20px; align-items: center;
+}
+@media (max-width: 820px) { .advisor-card-v2 .advisor-card-grid { grid-template-columns: 1fr; } }
+
+/* neural trace SVG overlay */
+.advisor-trace { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.85; }
+.advisor-trace .trace-line { stroke-dasharray: 6 6; animation: trace-dash 8s linear infinite; }
+.advisor-trace .trace-line-2 { animation-duration: 12s; animation-direction: reverse; }
+@keyframes trace-dash { to { stroke-dashoffset: -240; } }
+
+/* regulator stamp row */
+.advisor-stamp-row { display: flex; align-items: center; margin-bottom: 6px; }
+.advisor-stamp {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 3px 10px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.18em;
+  color: rgba(244, 114, 182, 0.85);
+  background: linear-gradient(180deg, rgba(244, 114, 182, 0.08), rgba(168, 85, 247, 0.04));
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.stamp-glyph { font-size: 11px; color: #F0ABFC; }
+.stamp-sep { color: rgba(244, 114, 182, 0.45); }
+.stamp-sig { color: rgba(209, 213, 219, 0.7); letter-spacing: 0.06em; text-transform: none; }
+
+/* mode toggle chips */
+.advisor-modes {
+  display: flex; gap: 6px; margin: 10px 0 12px; flex-wrap: wrap;
+}
+.mode-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 10px 6px 12px;
+  background: rgba(11, 13, 19, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #E5E7EB;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.mode-chip:hover { border-color: rgba(244, 114, 182, 0.55); transform: translateY(-1px); }
+.mode-chip:focus-visible { outline: 2px solid #E879F9; outline-offset: 2px; }
+.mode-chip.is-active {
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.18), rgba(236, 72, 153, 0.1));
+  border-color: rgba(244, 114, 182, 0.7);
+  box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.3) inset, 0 0 16px -4px rgba(236, 72, 153, 0.45);
+}
+.chip-lead { font-weight: 600; letter-spacing: 0.01em; }
+.chip-budget {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(96, 165, 250, 0.15);
+  color: #93C5FD;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
+.mode-chip[data-mode="multi_perspective"] .chip-budget { background: rgba(236, 72, 153, 0.15); color: #F0ABFC; border-color: rgba(244, 114, 182, 0.4); }
+.mode-chip[data-mode="balanced"] .chip-budget { background: rgba(168, 85, 247, 0.15); color: #C4B5FD; border-color: rgba(168, 85, 247, 0.4); }
+.chip-note { font-size: 11px; color: rgba(209, 213, 219, 0.6); }
+
+/* budget + charter meter */
+.advisor-meter { display: grid; gap: 8px; margin-top: 4px; }
+.meter-row { display: flex; align-items: center; gap: 10px; }
+.meter-label { font-size: 10px; letter-spacing: 0.18em; color: rgba(209, 213, 219, 0.5); min-width: 64px; }
+.meter-track {
+  flex: 1; min-width: 120px; height: 6px; position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px; overflow: hidden;
+}
+.meter-fill {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, #60A5FA 0%, #A855F7 50%, #E879F9 100%);
+  box-shadow: 0 0 16px rgba(232, 121, 249, 0.5);
+  transition: width 180ms linear;
+}
+.meter-tick { position: absolute; top: -2px; bottom: -2px; width: 1px; background: rgba(255, 255, 255, 0.15); }
+.meter-value {
+  font-size: 10.5px; letter-spacing: 0.04em; color: rgba(209, 213, 219, 0.7);
+  min-width: 58px; text-align: right;
+}
+
+/* progress ring on actions side */
+.advisor-actions { display: flex; align-items: center; gap: 12px; position: relative; z-index: 2; }
+.advisor-ring { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+.advisor-ring svg { width: 44px; height: 44px; transform: rotate(-90deg); }
+.advisor-ring .ring-track { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 3; }
+.advisor-ring .ring-fill {
+  fill: none; stroke: url(#advisor-line); stroke-width: 3; stroke-linecap: round;
+  stroke-dasharray: 100; stroke-dashoffset: 100;
+  transition: stroke-dashoffset 200ms linear;
+}
+.ring-pct {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 10px; letter-spacing: 0.04em; color: rgba(209, 213, 219, 0.75);
+}
+
+/* keycap kbd */
+.advisor-hint { display: inline-flex; gap: 3px; padding: 0; border: 0; }
+.advisor-hint .kbd {
+  display: inline-grid; place-items: center;
+  min-width: 18px; height: 20px; padding: 0 4px;
+  font-size: 10px; letter-spacing: 0.02em; color: #D1D5DB;
+  background: rgba(11, 13, 19, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}
+
+/* last-run readout */
+.advisor-lastrun {
+  margin: 8px 0 0;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  font-size: 11px; color: rgba(209, 213, 219, 0.65); letter-spacing: 0.04em;
+}
+.advisor-lastrun .lr-label { color: rgba(209, 213, 219, 0.45); letter-spacing: 0.16em; }
+.advisor-lastrun .lr-sep { color: rgba(209, 213, 219, 0.25); }
+.advisor-lastrun .lr-verdict[data-verdict="approved"] { color: #34D399; }
+.advisor-lastrun .lr-verdict[data-verdict="returned_for_revision"] { color: #FCD34D; }
+.advisor-lastrun .lr-verdict[data-verdict="blocked"] { color: #F87171; }
+.advisor-lastrun .lr-verdict[data-verdict="incomplete"] { color: #FDBA74; }
+
+/* 3-D tilt hover — only when pointer supports hover */
+@media (hover: hover) {
+  .advisor-card-v2 {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    will-change: transform;
+  }
+  .advisor-card-v2 .advisor-card-grid,
+  .advisor-card-v2 .advisor-stamp-row,
+  .advisor-card-v2 .advisor-modes,
+  .advisor-card-v2 .advisor-meter {
+    transform: translateZ(12px);
+  }
+}
