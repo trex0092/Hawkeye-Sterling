@@ -10,6 +10,7 @@ export * from './doctrines.js';
 export * from './red-flags.js';
 export * from './typologies.js';
 export * from './matching.js';
+export * from './quick-screen.js';
 export * from './confidence.js';
 export * from './translit.js';
 export * from './aliases.js';
