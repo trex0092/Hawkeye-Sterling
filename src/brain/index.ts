@@ -88,6 +88,8 @@ export * from './mlro-context-builder.js';
 export * from './mlro-charter-diff.js';
 export * from './mlro-telemetry.js';
 export * from './mlro-peer-benchmark.js';
+export * from './mlro-capabilities.generated.js';
+export * from './mlro-red-flags-taxonomy.generated.js';
 export * from './redactor.js';
 export { auditBrain } from './audit.js';
 export {
