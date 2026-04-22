@@ -83,6 +83,160 @@
           <button type="button" data-mode="daily_monitoring" aria-pressed="false">Daily monitoring</button>
         </div>
 
+        <aside class="advisor-card advisor-card-v2" role="region" aria-labelledby="advisor-title" data-advisor-state="idle" data-advisor-mode="multi_perspective">
+          <div class="advisor-aurora" aria-hidden="true"></div>
+          <svg class="advisor-trace" aria-hidden="true" viewBox="0 0 600 120" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="advisor-line" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#60A5FA" stop-opacity="0"/>
+                <stop offset="40%" stop-color="#A855F7" stop-opacity="0.9"/>
+                <stop offset="60%" stop-color="#E879F9" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#F472B6" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,80 C150,10 250,110 360,40 C470,-30 540,95 600,30" fill="none" stroke="url(#advisor-line)" stroke-width="1.5" class="trace-line"/>
+            <path d="M0,30 C120,95 220,10 330,80 C450,130 520,20 600,90" fill="none" stroke="url(#advisor-line)" stroke-width="1" opacity="0.55" class="trace-line trace-line-2"/>
+          </svg>
+
+          <div class="advisor-card-grid">
+            <div class="advisor-card-body">
+              <div class="advisor-stamp-row">
+                <span class="advisor-stamp" aria-label="Regulator-grade, signed">
+                  <span class="stamp-glyph" aria-hidden="true">◎</span>
+                  <span class="stamp-label">REGULATOR-GRADE</span>
+                  <span class="stamp-sep">·</span>
+                  <span class="stamp-sig mono" id="advisor-charter-hash">charter#—</span>
+                </span>
+              </div>
+              <div class="advisor-title-row">
+                <span class="advisor-dot" aria-hidden="true"></span>
+                <p id="advisor-title" class="advisor-title">DEEP REASONING <span class="sep">·</span> MLRO ADVISOR</p>
+                <span class="advisor-state mono" id="advisor-state">READY</span>
+              </div>
+              <p class="advisor-sub">
+                <span class="pill pill-sonnet"><span class="pill-dot" aria-hidden="true"></span>Sonnet executor</span>
+                <span class="pill pill-opus"><span class="pill-dot" aria-hidden="true"></span>Opus advisor</span>
+                <span class="sep">·</span>
+                <span class="advisor-anchor mono">FDL 10/2025 Art.20-21 · reasoning trail persisted</span>
+              </p>
+
+              <div class="advisor-modes" role="radiogroup" aria-label="Reasoning mode">
+                <button type="button" class="mode-chip" role="radio" aria-checked="false" data-mode="speed">
+                  <span class="chip-lead">Speed</span>
+                  <span class="chip-budget mono">12s</span>
+                  <span class="chip-note">Sonnet only</span>
+                </button>
+                <button type="button" class="mode-chip" role="radio" aria-checked="false" data-mode="balanced">
+                  <span class="chip-lead">Balanced</span>
+                  <span class="chip-budget mono">20s</span>
+                  <span class="chip-note">Opus only</span>
+                </button>
+                <button type="button" class="mode-chip is-active" role="radio" aria-checked="true" data-mode="multi_perspective">
+                  <span class="chip-lead">Multi-perspective</span>
+                  <span class="chip-budget mono">25s</span>
+                  <span class="chip-note">Sonnet → Opus</span>
+                </button>
+              </div>
+
+              <div class="advisor-meter" aria-label="Budget and charter coverage">
+                <div class="meter-row">
+                  <span class="meter-label mono">BUDGET</span>
+                  <div class="meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="25000" aria-valuenow="0" id="advisor-budget-bar">
+                    <span class="meter-fill" id="advisor-budget-fill"></span>
+                    <span class="meter-tick" style="left:48%"></span>
+                    <span class="meter-tick" style="left:80%"></span>
+                  </div>
+                  <span class="meter-value mono" id="advisor-budget-value">0 / 25s</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label mono">CHARTER</span>
+                  <ol class="coverage-dots" id="advisor-coverage">
+                    <li data-p="P1" title="P1 — No unverified sanctions assertions"></li>
+                    <li data-p="P2" title="P2 — No fabricated adverse media"></li>
+                    <li data-p="P3" title="P3 — No legal conclusions"></li>
+                    <li data-p="P4" title="P4 — No tipping-off"></li>
+                    <li data-p="P5" title="P5 — No allegation upgrade"></li>
+                    <li data-p="P6" title="P6 — No entity merge on conflict"></li>
+                    <li data-p="P7" title="P7 — Scope declaration required"></li>
+                    <li data-p="P8" title="P8 — No training-data-as-source"></li>
+                    <li data-p="P9" title="P9 — No opaque scoring"></li>
+                    <li data-p="P10" title="P10 — No proceed on insufficient info"></li>
+                  </ol>
+                  <span class="meter-value mono" id="advisor-charter-value">0 / 10</span>
+                </div>
+              </div>
+
+              <p class="advisor-lastrun mono" id="advisor-lastrun" hidden>
+                <span class="lr-label">LAST RUN</span>
+                <span class="lr-when" id="lr-when">—</span>
+                <span class="lr-sep">·</span>
+                <span class="lr-verdict" id="lr-verdict">—</span>
+                <span class="lr-sep">·</span>
+                <span class="lr-elapsed" id="lr-elapsed">—</span>
+              </p>
+            </div>
+
+            <div class="advisor-actions">
+              <div class="advisor-ring" aria-hidden="true">
+                <svg viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.5" class="ring-track"/>
+                  <circle cx="18" cy="18" r="15.5" class="ring-fill" id="advisor-ring-fill" pathLength="100"/>
+                </svg>
+                <span class="ring-pct mono" id="advisor-ring-pct">0%</span>
+              </div>
+              <span class="advisor-hint mono" aria-hidden="true">
+                <span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">R</span>
+              </span>
+              <button type="button" id="advisor-open" class="advisor-open">
+                <span>Open</span>
+                <span class="arrow" aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <dialog id="advisor-modal" class="advisor-modal" aria-labelledby="advisor-modal-title">
+          <form method="dialog" class="advisor-modal-form">
+            <header class="advisor-modal-head">
+              <div class="advisor-modal-head-left">
+                <h3 id="advisor-modal-title">Deep Reasoning <span class="sep">·</span> MLRO Advisor</h3>
+                <p class="advisor-modal-sub">Two-model pipeline <span class="sep">·</span> charter-gated <span class="sep">·</span> trail persisted per FDL 10/2025 Art.20-21</p>
+              </div>
+              <button type="button" id="advisor-close" aria-label="Close" class="advisor-close">×</button>
+            </header>
+
+            <div class="advisor-pipeline" aria-label="Pipeline">
+              <div class="pipe-node" data-stage="executor">
+                <span class="pipe-badge pill-sonnet"><span class="pill-dot" aria-hidden="true"></span>Sonnet · executor</span>
+                <p class="pipe-caption">Draft reasoning chain across faculties, modes, doctrines, red-flags. Proposes next-steps only — no disposition.</p>
+                <span class="pipe-status mono" id="pipe-status-executor">idle</span>
+              </div>
+              <div class="pipe-arrow" aria-hidden="true"></div>
+              <div class="pipe-node" data-stage="advisor">
+                <span class="pipe-badge pill-opus"><span class="pill-dot" aria-hidden="true"></span>Opus · advisor</span>
+                <p class="pipe-caption">Charter review P1–P10. Strengthens rationale. Produces regulator-facing narrative. Returns approved / revise / blocked.</p>
+                <span class="pipe-status mono" id="pipe-status-advisor">idle</span>
+              </div>
+            </div>
+
+            <label for="advisor-question">Question for the advisor</label>
+            <textarea id="advisor-question" rows="4" placeholder="e.g. Does the subject's profile warrant heightened monitoring under FDL 10/2025 Art.20-21? Cite modes + doctrines."></textarea>
+
+            <div class="advisor-modal-actions">
+              <button type="button" class="btn btn-ghost" id="advisor-cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="advisor-run">Run advisor <span class="btn-kbd">⏎</span></button>
+            </div>
+
+            <section id="advisor-trail" class="advisor-trail" hidden aria-label="Reasoning trail">
+              <header class="trail-head">
+                <span class="mono">REASONING TRAIL</span>
+                <span class="trail-verdict mono" id="trail-verdict">—</span>
+              </header>
+              <ol class="trail-steps" id="trail-steps"></ol>
+            </section>
+          </form>
+        </dialog>
+
         <form id="form" novalidate>
           <!-- 01 Reporting entity -->
           <fieldset id="sec-entity" class="sec" data-sec-id="sec-entity">

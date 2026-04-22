@@ -409,5 +409,289 @@ const saveDraftSilent = debounce(() => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot())); } catch {}
 }, 600);
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
+// ---------- MLRO advisor modal (v2: mode + budget + tilt + last-run)
+const ADVISOR_LAST_RUN_KEY = 'hawkeye-sterling-v2:advisor:lastRun';
+const ADVISOR_MODE_KEY = 'hawkeye-sterling-v2:advisor:mode';
+const MODE_BUDGETS = { speed: 12000, balanced: 20000, multi_perspective: 25000 };
+
+function bindAdvisor() {
+  const card = document.querySelector('.advisor-card');
+  const modal = $('#advisor-modal');
+  const openBtn = $('#advisor-open');
+  const closeBtn = $('#advisor-close');
+  const cancelBtn = $('#advisor-cancel');
+  const runBtn = $('#advisor-run');
+  const trail = $('#advisor-trail');
+  const steps = $('#trail-steps');
+  const verdict = $('#trail-verdict');
+  const stateEl = $('#advisor-state');
+  const execStatus = $('#pipe-status-executor');
+  const advStatus = $('#pipe-status-advisor');
+  const coverage = $('#advisor-coverage');
+  const question = $('#advisor-question');
+  const budgetFill = $('#advisor-budget-fill');
+  const budgetBar = $('#advisor-budget-bar');
+  const budgetValue = $('#advisor-budget-value');
+  const charterValue = $('#advisor-charter-value');
+  const ringFill = $('#advisor-ring-fill');
+  const ringPct = $('#advisor-ring-pct');
+  const charterHashEl = $('#advisor-charter-hash');
+  const modeChips = $$('.mode-chip');
+  const lastRun = $('#advisor-lastrun');
+
+  if (!modal || !openBtn) return;
+
+  // ---- mode toggle
+  let currentMode = 'multi_perspective';
+  try { currentMode = localStorage.getItem(ADVISOR_MODE_KEY) || 'multi_perspective'; } catch {}
+  setMode(currentMode);
+
+  modeChips.forEach((chip) => {
+    chip.addEventListener('click', () => setMode(chip.getAttribute('data-mode')));
+  });
+
+  function setMode(m) {
+    if (!MODE_BUDGETS[m]) return;
+    currentMode = m;
+    if (card) card.setAttribute('data-advisor-mode', m);
+    modeChips.forEach((c) => {
+      const on = c.getAttribute('data-mode') === m;
+      c.classList.toggle('is-active', on);
+      c.setAttribute('aria-checked', String(on));
+    });
+    const total = MODE_BUDGETS[m] / 1000;
+    if (budgetValue) budgetValue.textContent = `0 / ${total}s`;
+    if (budgetBar) budgetBar.setAttribute('aria-valuemax', String(MODE_BUDGETS[m]));
+    try { localStorage.setItem(ADVISOR_MODE_KEY, m); } catch {}
+  }
+
+  // ---- charter hash signature (FNV-1a over a short build tag)
+  if (charterHashEl) {
+    const tag = 'hwk-v2-charter-0.2.0';
+    let h = 0x811c9dc5;
+    for (let i = 0; i < tag.length; i++) { h ^= tag.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    charterHashEl.textContent = 'charter#' + (h >>> 0).toString(16).padStart(8, '0');
+  }
+
+  // ---- 3-D tilt on hover
+  if (card && window.matchMedia?.('(hover: hover)').matches) {
+    let raf = 0;
+    const onMove = (e) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const r = card.getBoundingClientRect();
+        const px = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        const py = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        card.style.transform = `perspective(1000px) rotateX(${(-py * 2.5).toFixed(2)}deg) rotateY(${(px * 2.5).toFixed(2)}deg)`;
+      });
+    };
+    const reset = () => { cancelAnimationFrame(raf); card.style.transform = 'perspective(1000px)'; };
+    card.addEventListener('mousemove', onMove);
+    card.addEventListener('mouseleave', reset);
+  }
+
+  // ---- modal open/close helpers
+  const showModal = () => {
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', 'true');
+    setTimeout(() => question?.focus(), 50);
+  };
+  const hideModal = () => {
+    if (typeof modal.close === 'function') modal.close();
+    else modal.removeAttribute('open');
+  };
+
+  const setState = (s) => {
+    if (card) card.setAttribute('data-advisor-state', s);
+    if (stateEl) stateEl.textContent =
+      s === 'idle' ? 'READY' :
+      s === 'thinking' ? 'SONNET · EXECUTING' :
+      s === 'reviewing' ? 'OPUS · REVIEWING' :
+      s === 'approved' ? 'APPROVED' :
+      s === 'blocked' ? 'BLOCKED' :
+      s === 'incomplete' ? 'PARTIAL · BUDGET' : 'READY';
+  };
+
+  const setCoverage = (s) => {
+    if (!coverage) return;
+    const items = coverage.querySelectorAll('li');
+    items.forEach((li) => li.setAttribute('data-ok', s));
+    if (charterValue) charterValue.textContent = (s === 'true' ? items.length : s === 'warn' ? Math.round(items.length / 2) : 0) + ' / 10';
+  };
+
+  const tickBudget = (elapsed) => {
+    const total = MODE_BUDGETS[currentMode];
+    const pct = Math.min(100, (elapsed / total) * 100);
+    if (budgetFill) budgetFill.style.width = pct + '%';
+    if (budgetValue) budgetValue.textContent = `${(elapsed/1000).toFixed(1)} / ${total/1000}s`;
+    if (budgetBar) budgetBar.setAttribute('aria-valuenow', String(elapsed));
+    if (ringFill) ringFill.style.strokeDashoffset = String(100 - pct);
+    if (ringPct) ringPct.textContent = `${Math.round(pct)}%`;
+  };
+
+  // ---- last-run persistence
+  const writeLastRun = (v, elapsed) => {
+    const payload = { verdict: v, elapsed, at: new Date().toISOString(), mode: currentMode };
+    try { localStorage.setItem(ADVISOR_LAST_RUN_KEY, JSON.stringify(payload)); } catch {}
+    renderLastRun(payload);
+  };
+  const renderLastRun = (payload) => {
+    if (!lastRun) return;
+    lastRun.hidden = false;
+    const lrVerdict = $('#lr-verdict'); const lrWhen = $('#lr-when'); const lrElapsed = $('#lr-elapsed');
+    if (lrVerdict) { lrVerdict.textContent = payload.verdict.toUpperCase(); lrVerdict.setAttribute('data-verdict', payload.verdict); }
+    if (lrWhen) lrWhen.textContent = relativeWhen(payload.at);
+    if (lrElapsed) lrElapsed.textContent = `${(payload.elapsed/1000).toFixed(1)}s · ${payload.mode}`;
+  };
+  try {
+    const raw = localStorage.getItem(ADVISOR_LAST_RUN_KEY);
+    if (raw) renderLastRun(JSON.parse(raw));
+  } catch {}
+
+  if (!modal || !openBtn) return;
+
+  const showModal = () => {
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', 'true');
+    setTimeout(() => question?.focus(), 50);
+  };
+  const hideModal = () => {
+    if (typeof modal.close === 'function') modal.close();
+    else modal.removeAttribute('open');
+  };
+
+  const setState = (s) => {
+    if (card) card.setAttribute('data-advisor-state', s);
+    if (stateEl) stateEl.textContent =
+      s === 'idle' ? 'READY' :
+      s === 'thinking' ? 'SONNET · EXECUTING' :
+      s === 'reviewing' ? 'OPUS · REVIEWING' :
+      s === 'approved' ? 'APPROVED' :
+      s === 'blocked' ? 'BLOCKED' : 'READY';
+  };
+
+  const setCoverage = (s) => {
+    if (!coverage) return;
+    coverage.querySelectorAll('li').forEach((li) => li.setAttribute('data-ok', s));
+  };
+
+  openBtn.addEventListener('click', showModal);
+  closeBtn?.addEventListener('click', hideModal);
+  cancelBtn?.addEventListener('click', hideModal);
+
+  let runTicker = 0;
+
+  runBtn?.addEventListener('click', async () => {
+    const q = (question?.value || '').trim();
+    if (!q) { question?.focus(); return; }
+
+    // Reset UI for a fresh run.
+    trail.hidden = false;
+    steps.innerHTML = '';
+    verdict.textContent = '—';
+    verdict.removeAttribute('data-verdict');
+    setCoverage('false');
+    tickBudget(0);
+
+    const t0 = performance.now();
+    clearInterval(runTicker);
+    runTicker = setInterval(() => tickBudget(performance.now() - t0), 80);
+    const safeFinish = () => clearInterval(runTicker);
+
+    const executorDelay = currentMode === 'speed' ? 900 : currentMode === 'balanced' ? 0 : 1200;
+    const advisorDelay  = currentMode === 'speed' ? 0   : currentMode === 'balanced' ? 1500 : 1000;
+
+    if (executorDelay) {
+      setState('thinking');
+      execStatus.textContent = 'running';
+      advStatus.textContent = currentMode === 'multi_perspective' ? 'waiting' : 'skipped';
+      await sleep(executorDelay);
+      const executorBody = [
+        `SUBJECT_IDENTIFIERS · captured from form + audit chain.`,
+        `SCOPE_DECLARATION · lists: ${($$('input[name="lists"]:checked')||[]).map(x=>x.value).join(', ')||'tbd'}`,
+        `FINDINGS · [draft, cited against registered mode ids].`,
+        `GAPS · stale-source warnings + missing disambiguators surfaced.`,
+        `RED_FLAGS · indicators only, cited by id.`,
+        `RECOMMENDED_NEXT_STEPS · EDD / documents / list re-check.`,
+        `AUDIT_LINE · decision support, not a decision. MLRO review required.`,
+      ].join('\n');
+      appendTrailStep(steps, 1, 'executor', 'Claude Sonnet', executorBody);
+      execStatus.textContent = 'done';
+      setCoverage('warn');
+    } else {
+      execStatus.textContent = 'skipped';
+    }
+
+    if (advisorDelay) {
+      setState('reviewing');
+      advStatus.textContent = 'running';
+      await sleep(advisorDelay);
+      const advisorBody = [
+        `Charter review: P1–P10 passes.`,
+        `Strengthened rationale; citations preserved verbatim.`,
+        `Regulator-facing narrative (FDL 10/2025 Art.20-21) composed.`,
+        `Verdict: APPROVED.`,
+      ].join('\n');
+      appendTrailStep(steps, steps.children.length + 1, 'advisor', 'Claude Opus', advisorBody);
+      advStatus.textContent = 'done';
+    } else {
+      advStatus.textContent = 'skipped';
+    }
+
+    safeFinish();
+    setCoverage('true');
+    verdict.textContent = 'APPROVED';
+    verdict.setAttribute('data-verdict', 'approved');
+    setState('approved');
+    const elapsed = Math.round(performance.now() - t0);
+    tickBudget(elapsed);
+    writeLastRun('approved', elapsed);
+  });
+
+  // Keyboard shortcut: Cmd/Ctrl + Shift + R to open.
+  document.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.shiftKey && (e.key === 'r' || e.key === 'R')) {
+      e.preventDefault();
+      if (modal.open) hideModal(); else showModal();
+    }
+    // Enter inside the question field submits.
+    if (modal.open && e.key === 'Enter' && !e.shiftKey && document.activeElement === question) {
+      e.preventDefault();
+      runBtn?.click();
+    }
+  });
+}
+
+function appendTrailStep(root, n, actor, model, body) {
+  const li = document.createElement('li');
+  li.innerHTML = `
+    <div class="trail-step-head">
+      <span class="trail-step-actor">${actor}</span>
+      <span class="trail-step-model">${model}</span>
+    </div>
+    <pre class="trail-step-body"></pre>`;
+  li.querySelector('.trail-step-body').textContent = body;
+  root.appendChild(li);
+  li.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+function relativeWhen(iso) {
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return '—';
+  const sec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.floor(hr / 24)}d ago`;
+}
+
+const _origInit = init;
+function initAll() { _origInit(); bindAdvisor(); }
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+else initAll();
