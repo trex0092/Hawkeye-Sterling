@@ -71,6 +71,7 @@ export * from './control-test-registry.js';
 export * from './policy-library.js';
 export * from './cbddq-scorer.js';
 export * from './engine.js';
+export * from './mlro-reasoning-modes.js';
 export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
