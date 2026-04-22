@@ -101,16 +101,118 @@
     });
   }
 
+  // Browser-side mirror of src/brain/mlro-mode-synonyms.ts so the picker's
+  // live search is semantic without requiring a build step.
+  var SYNONYMS = {
+    gold: ['gold','bullion','lbma','dpms','refiner','dore','assay','cahra'],
+    bullion: ['bullion','dore','refiner','lbma'],
+    refinery: ['refiner','lbma','dore','cahra','assay'],
+    dpms: ['dpms','precious_metal','retail'],
+    cahra: ['cahra','drc','conflict'],
+    crypto: ['crypto','wallet','chain_analysis','bridge','mixer','mev','defi','nft','stablecoin','privacy_coin','taint'],
+    blockchain: ['chain_analysis','bridge','wallet'],
+    mixer: ['mixer','taint','privacy_coin'],
+    wallet: ['wallet','chain_analysis'],
+    vasp: ['vasp','wallet','mixer','travel_rule'],
+    nft: ['nft','wash','marketplace'],
+    ubo: ['ubo','bearer','nominee','ownership'],
+    beneficial: ['ubo','bearer'],
+    bearer: ['bearer'],
+    nominee: ['nominee','ubo'],
+    sanction: ['sanction','eocn','un_','ofac','ofsi','tfs','fatf'],
+    sanctions: ['sanction','eocn','un_','ofac','ofsi','tfs','fatf'],
+    ofac: ['ofac'],
+    eocn: ['eocn'],
+    proliferation: ['proliferation','pf_','dual_use','dprk','iran'],
+    weapons: ['weapons','arms','dual_use','proliferation'],
+    arms: ['arms','weapons'],
+    nuclear: ['nuclear','dprk','iran','proliferation'],
+    dprk: ['dprk'],
+    iran: ['iran'],
+    maritime: ['maritime','vessel','ship','ais','stss','flag','port_state','imo'],
+    vessel: ['vessel','imo','ais'],
+    ship: ['vessel','ship','ais'],
+    tbml: ['tbml','over_invoice','under_invoice','phantom'],
+    invoice: ['invoice','tbml'],
+    lc: ['lc_','ucp600'],
+    property: ['property','re_'],
+    pep: ['pep','rca'],
+    rca: ['rca'],
+    npo: ['npo','charity'],
+    charity: ['npo','charity'],
+    insurance: ['insurance','life_','premium','beneficiary'],
+    gambling: ['gambling','casino','junket'],
+    casino: ['casino','junket'],
+    fraud: ['fraud','advance_fee','bec','synthetic_id','ponzi','phoenix','invoice_fraud','ato_','sim_swap','app_scam'],
+    bec: ['bec','invoice_redirection','typosquat'],
+    scam: ['fraud','advance_fee','scam'],
+    phishing: ['bec','typosquat'],
+    insider: ['insider','insider_trading','insider_threat'],
+    layering: ['layering'],
+    spoofing: ['spoof'],
+    wash: ['wash_trade','wash_sale','nft_wash'],
+    bayes: ['bayes','bayesian','probabilistic'],
+    bayesian: ['bayes','bayesian'],
+    monte: ['monte_carlo'],
+    steelman: ['steelman'],
+    socratic: ['socratic'],
+    dialectic: ['dialectic'],
+    logic: ['modus','reductio','syllog','propositional','predicate','modal','deontic','temporal','epistemic'],
+    deduction: ['modus_ponens','deduct'],
+    structuring: ['structuring','smurfing','velocity','cash_courier'],
+    cash: ['cash','ctn','courier','structuring'],
+    smurfing: ['smurfing','structuring'],
+    correspondent: ['corresp','nested','u_turn'],
+    nested: ['nested','corresp'],
+    cdd: ['cdd','onboard'],
+    edd: ['edd','enhanced','sow','sof'],
+    onboarding: ['onboard','cdd','prospect'],
+    str: ['str','sar','narrative_str'],
+    ffr: ['ffr'],
+    pnmr: ['pnmr'],
+    ctr: ['ctr','cash_courier'],
+    goaml: ['goaml','filing'],
+    governance: ['governance','policy','mlro','board','escalation','four_eyes','sod','segregation','audit'],
+    audit: ['audit','control','independent','lookback'],
+    stride: ['stride'],
+    pasta: ['pasta'],
+    mitre: ['mitre_attack'],
+    timeline: ['timeline'],
+    provenance: ['provenance','lineage'],
+    tamper: ['tamper_detection'],
+  };
+
+  function expandQuery(raw) {
+    var q = (raw || '').trim().toLowerCase();
+    if (!q) return [];
+    var out = {}; out[q] = 1;
+    for (var key in SYNONYMS) {
+      if (q.indexOf(key) !== -1) SYNONYMS[key].forEach(function (a) { out[a] = 1; });
+    }
+    q.split(/\s+/).forEach(function (t) { if (t) out[t] = 1; });
+    return Object.keys(out);
+  }
+
   function renderList(cat, query) {
     var root = $('#dr-mode-list');
     var count = $('#dr-search-count');
     if (!root) return;
     var pool = cat ? CATEGORIES[cat] || [] : ALL_IDS;
     var q = (query || '').trim().toLowerCase();
-    var tokens = q ? q.split(/\s+/).filter(Boolean) : [];
-    var filtered = tokens.length === 0 ? pool : pool.filter(function (id) {
-      return tokens.every(function (t) { return id.toLowerCase().indexOf(t) !== -1; });
-    });
+    var terms = expandQuery(q);
+    var filtered;
+    if (terms.length === 0) {
+      filtered = pool;
+    } else {
+      // Semantic search: an id matches if ANY expanded term is a substring.
+      // This is a looser OR match than the previous tokenised AND, but
+      // combined with synonym expansion it surfaces many more relevant
+      // results — e.g. "gold" now returns bullion / lbma / dore modes.
+      filtered = pool.filter(function (id) {
+        var lc = id.toLowerCase();
+        return terms.some(function (t) { return lc.indexOf(t) !== -1; });
+      });
+    }
     if (count) count.textContent = String(filtered.length);
     var html = '';
     var cap = Math.min(filtered.length, 300);

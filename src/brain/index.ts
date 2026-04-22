@@ -72,6 +72,8 @@ export * from './policy-library.js';
 export * from './cbddq-scorer.js';
 export * from './engine.js';
 export * from './mlro-reasoning-modes.js';
+export * from './mlro-mode-synonyms.js';
+export * from './mlro-pipeline.js';
 export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
