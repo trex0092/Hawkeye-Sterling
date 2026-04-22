@@ -104,18 +104,26 @@ const DEFAULT_EXECUTOR = 'claude-sonnet-4-6';
 const DEFAULT_ADVISOR = 'claude-opus-4-7';
 
 const EXECUTOR_TASK =
-  'You are the Deep-Reasoning EXECUTOR. Using the cognitive catalogue, draft a step-by-step ' +
-  'reasoning chain that answers the MLRO question. For every finding cite the reasoning-mode ' +
-  'id(s), doctrine id(s), red-flag id(s), and evidence id(s) that produced it. Do not issue a ' +
-  'final disposition — propose next-steps only. Use the mandatory 7-section output structure.';
+  'You are the Deep-Reasoning EXECUTOR. Using the cognitive catalogue AND the ' +
+  'skills catalogue, draft a step-by-step reasoning chain that answers the MLRO ' +
+  'question. For every finding cite the reasoning-mode id(s), doctrine id(s), ' +
+  'red-flag id(s), evidence id(s), AND skill id(s) (e.g. `ubo-tracing`, ' +
+  '`transaction-pattern-reasoning`, `tbml-pattern-reasoning`). Any skill / mode / ' +
+  'id not present in the catalogue is a fabrication and invalidates the finding. ' +
+  'Do not issue a final disposition — propose next-steps only. Use the mandatory ' +
+  '7-section output structure. Echo the compositeHash in AUDIT_LINE.';
 
 const ADVISOR_TASK =
-  'You are the Deep-Reasoning ADVISOR. Review the EXECUTOR draft against the compliance ' +
-  'charter (P1–P10). Flag any violation, any unearned assertion, any tipping-off risk, any ' +
-  'merge of distinct subjects, any opaque scoring. Where sound, strengthen the rationale and ' +
-  'produce the regulator-facing narrative per FDL 10/2025 Art.20-21. Do NOT replace verbatim ' +
-  'quotations from evidence; never invent citations. Return the final narrative + an explicit ' +
-  'verdict: approved / returned_for_revision / blocked, with reason.';
+  'You are the Deep-Reasoning ADVISOR. Review the EXECUTOR draft against the ' +
+  'compliance charter (P1–P10), the cognitive catalogue, and the skills catalogue. ' +
+  'Flag any violation, any unearned assertion, any tipping-off risk, any merge of ' +
+  'distinct subjects, any opaque scoring, any cited skill / mode / doctrine / ' +
+  'regime / CAHRA / FATF / playbook / disposition id that is NOT in the catalogue. ' +
+  'Where sound, strengthen the rationale and produce the regulator-facing narrative ' +
+  'per FDL 10/2025 Art.20-21. Do NOT replace verbatim quotations from evidence; ' +
+  'never invent citations. Echo the charterHash, catalogueHash, and compositeHash ' +
+  'in the narrative AUDIT_LINE. Return the final narrative + an explicit verdict: ' +
+  'approved / returned_for_revision / blocked, with reason.';
 
 function applyMask(req: MlroAdvisorRequest): Partial<MlroAdvisorRequest['caseContext']> {
   const mask = req.contextMask;
@@ -156,7 +164,7 @@ export function buildAdvisorRequest(
     system: weaponizedSystemPrompt({
       taskRole: ADVISOR_TASK,
       audience: req.audience ?? 'regulator',
-      includeCatalogueSummary: false,
+      includeCatalogueSummary: true,
     }),
     user: [
       'CASE CONTEXT:',
