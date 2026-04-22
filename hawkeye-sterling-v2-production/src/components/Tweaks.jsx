@@ -1,5 +1,3 @@
-import React from 'react';
-
 function Tweaks({ visible, onClose, state, setState }) {
   if (!visible) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { SUBJECTS, APPROVALS, CONSOLE_LINES } from '@/data/constants';
 import TopBar from '@/components/TopBar';
 import RegulatoryRibbon from '@/components/RegulatoryRibbon';
@@ -79,7 +79,7 @@ function App() {
 
   return (
     <div className="app">
-      <TopBar workspace={workspace} setWorkspace={setWorkspace} onTweaksToggle={() => setTweaksOpen((v) => !v)} now={now} />
+      <TopBar workspace={workspace} setWorkspace={setWorkspace} now={now} />
       <RegulatoryRibbon />
       {workspace === 'bench' && (
         <>
