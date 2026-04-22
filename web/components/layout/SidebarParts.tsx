@@ -1,6 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+
+const OPERATOR_STORAGE_KEY = "hawkeye.operator";
 
 export function SidebarShell({ children }: { children: ReactNode }) {
   return (
@@ -74,25 +77,81 @@ export function SidebarFilterList<K extends string>({
 }
 
 export function SidebarMLROCard() {
+  const [name, setName] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(OPERATOR_STORAGE_KEY);
+      if (stored) setName(stored);
+    } catch {
+      /* localStorage disabled */
+    }
+  }, []);
+
+  const save = () => {
+    const trimmed = draft.trim();
+    setName(trimmed);
+    try {
+      if (trimmed) window.localStorage.setItem(OPERATOR_STORAGE_KEY, trimmed);
+      else window.localStorage.removeItem(OPERATOR_STORAGE_KEY);
+    } catch {
+      /* localStorage disabled */
+    }
+    setEditing(false);
+  };
+
+  const startEdit = () => {
+    setDraft(name);
+    setEditing(true);
+  };
+
   return (
     <div className="bg-brand text-white p-3 rounded-lg">
-      <div className="text-13 font-semibold mb-0.5">Noor Al-Mansouri</div>
-      <div className="text-11 opacity-85">MLRO, PRECISION SCREENING UAE</div>
-      <div className="grid gap-1.5 mt-3 pt-3 border-t border-white/20">
-        <MLRORow label="Caseload" value="42 open" />
-        <MLRORow label="Region" value="90 / AE" />
-        <MLRORow label="Retention" value="FDL Art.24" />
-        <MLRORow label="Policy" value="v4.1 · 134/25" />
-      </div>
-    </div>
-  );
-}
-
-function MLRORow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between text-10.5">
-      <span className="text-white/70 uppercase tracking-wide-3 font-medium">{label}</span>
-      <span className="font-mono font-medium">{value}</span>
+      {editing ? (
+        <div>
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            placeholder="Your name"
+            className="w-full bg-white/15 text-white placeholder-white/50 rounded px-2 py-1 text-13 font-semibold outline-none border border-white/30 focus:border-white"
+          />
+          <div className="mt-2 flex gap-1.5">
+            <button
+              type="button"
+              onClick={save}
+              className="text-11 font-semibold bg-white text-brand px-2 py-0.5 rounded hover:bg-white/90"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="text-11 font-medium text-white/80 px-2 py-0.5 rounded hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={startEdit}
+          className="w-full text-left"
+          title="Click to edit"
+        >
+          <div className="text-13 font-semibold mb-0.5">
+            {name || "Set your name"}
+          </div>
+          <div className="text-11 opacity-85">MLRO on duty</div>
+        </button>
+      )}
     </div>
   );
 }
