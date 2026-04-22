@@ -11,6 +11,9 @@
 import { FACULTIES } from './faculties.js';
 import { REASONING_MODES } from './reasoning-modes.js';
 import { ADVERSE_MEDIA_CATEGORIES, ADVERSE_MEDIA_QUERY } from './adverse-media.js';
+import { DOCTRINES, mandatoryDoctrines } from './doctrines.js';
+import { RED_FLAGS, RED_FLAGS_BY_TYPOLOGY } from './red-flags.js';
+import { TYPOLOGIES } from './typologies.js';
 import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
@@ -51,6 +54,20 @@ export interface WeaponizedBrainManifest {
       categories: Array<{ id: string; displayName: string; keywordCount: number }>;
       totalKeywords: number;
       queryLength: number;
+    };
+    doctrines: {
+      total: number;
+      mandatoryInUAE: number;
+      byAuthority: Record<string, number>;
+    };
+    redFlags: {
+      total: number;
+      bySeverity: { low: number; medium: number; high: number };
+      byTypology: Record<string, number>;
+    };
+    typologies: {
+      total: number;
+      ids: string[];
     };
   };
   integrity: {
@@ -95,10 +112,25 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     0,
   );
 
+  const doctrineByAuthority: Record<string, number> = {};
+  for (const d of DOCTRINES) {
+    doctrineByAuthority[d.authority] = (doctrineByAuthority[d.authority] ?? 0) + 1;
+  }
+
+  const rfBySeverity = { low: 0, medium: 0, high: 0 };
+  for (const rf of RED_FLAGS) rfBySeverity[rf.severity] += 1;
+  const rfByTypology: Record<string, number> = {};
+  for (const [typology, list] of Object.entries(RED_FLAGS_BY_TYPOLOGY)) {
+    rfByTypology[typology] = list.length;
+  }
+
   const catalogueSignature = JSON.stringify({
     faculties: faculties.map((f) => f.id).sort(),
     modes: REASONING_MODES.map((m) => m.id).sort(),
     adverse: adverseCategories.map((c) => c.id).sort(),
+    doctrines: DOCTRINES.map((d) => d.id).sort(),
+    redFlags: RED_FLAGS.map((rf) => rf.id).sort(),
+    typologies: TYPOLOGIES.map((t) => t.id).sort(),
   });
 
   return {
@@ -123,6 +155,20 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         categories: adverseCategories,
         totalKeywords,
         queryLength: ADVERSE_MEDIA_QUERY.length,
+      },
+      doctrines: {
+        total: DOCTRINES.length,
+        mandatoryInUAE: mandatoryDoctrines().length,
+        byAuthority: doctrineByAuthority,
+      },
+      redFlags: {
+        total: RED_FLAGS.length,
+        bySeverity: rfBySeverity,
+        byTypology: rfByTypology,
+      },
+      typologies: {
+        total: TYPOLOGIES.length,
+        ids: TYPOLOGIES.map((t) => t.id),
       },
     },
     integrity: {
@@ -155,7 +201,10 @@ export function weaponizedSystemPrompt(
         `Faculties: ${manifest.cognitiveCatalogue.faculties.length} (${manifest.cognitiveCatalogue.faculties.map((f) => f.id).join(', ')}).`,
         `Reasoning modes: ${manifest.cognitiveCatalogue.reasoningModes.total} registered (wave 1: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave1}, wave 2: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave2}).`,
         `Adverse-media categories: ${manifest.cognitiveCatalogue.adverseMedia.categories.length} (${manifest.cognitiveCatalogue.adverseMedia.totalKeywords} keywords).`,
-        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it.',
+        `Doctrines: ${manifest.cognitiveCatalogue.doctrines.total} (${manifest.cognitiveCatalogue.doctrines.mandatoryInUAE} mandatory in UAE).`,
+        `Red flags: ${manifest.cognitiveCatalogue.redFlags.total} (high=${manifest.cognitiveCatalogue.redFlags.bySeverity.high}, medium=${manifest.cognitiveCatalogue.redFlags.bySeverity.medium}, low=${manifest.cognitiveCatalogue.redFlags.bySeverity.low}).`,
+        `Typologies: ${manifest.cognitiveCatalogue.typologies.total}.`,
+        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, and typology id.',
       ].join('\n'),
     );
   }

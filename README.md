@@ -1,70 +1,3 @@
-# Hawkeye Sterling V2
-
-Regulator-grade sanctions, PEP and adverse-media screening command deck for UAE DPMS entities. Built to surpass Refinitiv World-Check.
-
-## Positioning
-
-- Primary-source list feeds (UN, EOCN, OFAC, EU, UK, UN DPRK/Iran PF) — no proprietary curation.
-- Every hit produces a transparent, signed reasoning chain (no black-box scoring).
-- Cognitive engine: 10 faculties, 190+ reasoning modes (Wave 1 + Wave 2), scorecard-graded.
-- Adverse media: 5-category taxonomy, ready-made boolean OR query, keyword coverage across ML/FC, TF, PF, Corruption/OC, Legal.
-- Four-eyes MLRO disposition enforced (separation of duties).
-- Reports delivered to Asana on first screening and on every daily monitoring run.
-
-## Current state · Module 01 · Subject Screening
-
-- `public/` — static command page (obsidian theme, no gold). Sticky section nav with live progress, four-eyes SoD guard, draft autosave, sticky submit HUD, audit-envelope preview. Mode switch: First screening / Daily monitoring.
-- `src/services/` — `gradeScore` (A+ → F) and `buildIntelligenceScorecard` / `buildMaxActiveInputs`.
-- `src/engine/` — 10 faculties + synonyms, Wave 1 + Wave 2 reasoning mode IDs, question-template IDs, scenario-preset IDs.
-- `src/adverseMedia/` — taxonomy (5 categories) + fixed boolean OR query + `buildAdverseMediaQuery(subjectName?)`.
-- `src/reports/caseReport.ts` — World-Check-style `CaseReport` types (positive / negative report envelope).
-- `src/integrations/asana.ts` — Asana delivery contract (`buildAsanaEnvelope`, `deliverToAsana`). Configure `ASANA_PAT`, project GID, section GIDs per mode.
-- `src/integrations/claudeAgent.ts` — Claude Managed Agents contract. Takes a `CaseReport` (+ optional CSV/JSON source data), returns a narrative HTML report with charts.
-
-## Regulatory basis
-
-- **FDL No.10/2025** — Art.17 (MLRO), Art.20-21 (screening), Art.24 (record-keeping), Art.26-27 (disposition), Art.29 (no tipping-off), Art.2(3) (factual & objective circumstances), Art.10 / Art.14 (retention, CDD).
-- **Cabinet Resolution 74/2020** — Art.4-7 (EOCN 24-hour freeze).
-- **Cabinet Resolution 134/2025** — Art.19 (four-eyes, separation of duties).
-- **MoE Circular 3/2025** — DPMS compliance guidance.
-- **FDL 46/2021** · **Cabinet Decision 28/2023** · **Evidence Law FL 35/2022** — electronic signatures.
-- **FDL 45/2021 (PDPL)** — lawful basis (legal obligation) for AML/CFT/CPF processing.
-
-## Run the page (no build)
-
-```bash
-npm run dev
-# opens http://localhost:8080/
-```
-
-The page is static HTML + CSS + vanilla ES module JS. Open `public/index.html` directly or serve `public/`.
-
-## Type-check the engine
-
-```bash
-npm run typecheck
-```
-
-## Roadmap
-
-- **P1** · Scaffold + design (done)
-- **P2** · Sanctions ingestion (direct-source feeds + cache + cron — pending, to be wired when user integrates backend)
-- **P3** · Fuzzy matching (Jaro-Winkler + Levenshtein + Double-Metaphone for AR/CJK)
-- **P4** · Screening UI + results + reasoning-chain panel
-- **P5** · PEP (OpenSanctions)
-- **P6** · Adverse media (news APIs + RSS, taxonomy + boolean query ready)
-- **P7** · Full cognitive engine (inference, deep re-scoring, argumentation, entity graphs) — faculty/mode scaffolding ready
-- **P8** · Hardening, testing, deploy
-
-## Non-goals
-
-- No proprietary list curation.
-- No black-box scoring.
-- No vendor lock-in.
-
-## Development note
-
-This build intentionally avoids Netlify-specific primitives until the page is considered correct. Deployment primitives (functions, Blobs, scheduled cron) will be added once the front-end is signed off.
 # Hawkeye Sterling
 
 > Regulator-grade AML / CFT / sanctions / PEP / adverse-media screening engine.
@@ -73,7 +6,9 @@ This build intentionally avoids Netlify-specific primitives until the page is co
 Hawkeye Sterling pairs direct-source sanctions ingestion with a first-class
 cognitive engine. Every verdict is produced by named reasoning modes, across
 ten declared faculties, and the **full reasoning chain is persisted** — no
-black-box scoring.
+black-box scoring. Every AI-generated output is governed by a content-frozen
+compliance charter that forbids fabrication, legal conclusions, tipping-off,
+and unsupported risk scoring.
 
 ---
 
@@ -89,7 +24,18 @@ black-box scoring.
 | Multilingual / transliteration | English-first | **Arabic & CJK** normalisation via Double-Metaphone + custom transliteration (Phase 3) |
 | False-positive handling | Manual queue | Introspection faculty — bias audit, confidence calibration, counterexample search |
 | Auditability | Vendor-controlled log | **Per-decision reasoning chain persisted** |
-| Cost model | Per-seat licence · opaque tiers | **Self-hostable** on Netlify · no per-seat gate |
+| Report delivery | Vendor portal | **Asana inbox** — on first screening and every daily monitoring run |
+| Assistant guardrails | Vendor terms | **Content-frozen compliance charter** — P1–P10 absolute prohibitions enforced |
+| Cost model | Per-seat licence · opaque tiers | **Self-hostable** · no per-seat gate |
+
+---
+
+## Current state · V2 command deck
+
+Module 01 · Subject Screening is the operator landing. Obsidian command-deck
+UI (no gold), sticky section nav with live progress, four-eyes separation-of-
+duties guard, Record-ID auto-issue, draft autosave, audit-envelope JSON
+preview, mode switch: *First screening* / *Daily monitoring*.
 
 ---
 
@@ -100,14 +46,14 @@ black-box scoring.
 Each faculty is a declared cognitive specialisation, carrying a synonym cluster
 that scopes it and a bound set of reasoning modes it draws on.
 
-| Faculty | Describes |
+| Faculty | Synonyms |
 |---|---|
-| Reasoning | Formal and informal logical inference over evidence and rules |
-| Data Analysis | Quantitative interrogation and modelling of structured/semi-structured data |
-| Deep Thinking | Slow, reflective examination — the System 2 core of the brain |
-| Intelligence | Breadth of pattern recognition across domains and jurisdictions |
-| Smartness | Fast, street-smart anomaly detection and heuristic triage |
-| Strong Brain | Integrated mental prowess — composition of all faculties under load |
+| Reasoning | logic, deduction, inference, rationalization, argumentation, analysis, cogitation, ratiocination, sense-making, thought process |
+| Data Analysis | data interpretation, data mining, data crunching, analytics, quantitative analysis, statistical analysis, data examination, data evaluation, data modeling, data processing |
+| Deep Thinking | contemplation, reflection, rumination, introspection, meditation, pondering, musing, deliberation, cerebration, profound thought |
+| Intelligence | intellect, acumen, cleverness, brilliance, brainpower, wit, sagacity, perspicacity, mental capacity, cognitive ability |
+| Smartness | sharpness, shrewdness, astuteness, quick-wittedness, savvy, canniness, ingenuity, resourcefulness, adroitness, keenness |
+| Strong Brain | sharp mind, keen intellect, powerful mind, quick mind, agile mind, brilliant mind, analytical mind, steel-trap mind, mental prowess, intellectual firepower |
 | Inference | Probabilistic / causal projection from partial evidence to likely truth |
 | Argumentation | Structured case-building, rebuttal, and adjudication of competing claims |
 | Introspection | The brain auditing itself — bias, calibration, confidence, drift |
@@ -118,8 +64,6 @@ that scopes it and a bound set of reasoning modes it draws on.
 Reasoning modes are registered with stable IDs, named categories, bound faculties,
 and a callable `apply(ctx)`. In Phase 1 every `apply` is a stub that returns an
 inconclusive `Finding`; real algorithms land mode-by-mode in Phase 7.
-
-Category breakdown:
 
 | Category | Count |
 |---|---|
@@ -144,7 +88,8 @@ Category breakdown:
 ### Adverse-media taxonomy
 
 Five risk categories, 100+ keywords, and the canonical pre-compiled boolean
-OR query for news / RSS / search-API ingestion:
+OR query for news / RSS / search-API ingestion, exposed as
+`ADVERSE_MEDIA_QUERY`:
 
 1. Money Laundering & Financial Crime
 2. Terrorist Financing
@@ -152,12 +97,38 @@ OR query for news / RSS / search-API ingestion:
 4. Corruption, Bribery & Organised Crime
 5. Legal, Criminal & Regulatory Proceedings
 
+### Weaponized-brain composer
+
+`src/brain/weaponized.ts` fuses the compliance charter + faculties +
+reasoning modes + adverse-media taxonomy into a single signed manifest with
+FNV-1a integrity hashes. `weaponizedSystemPrompt({ taskRole, audience })` is
+the one-line import every AI integration uses as its governing policy.
+
 ### Reasoning chain persistence
 
 Every `BrainVerdict` carries `findings[]`, a faculty-labelled `chain[]`,
 `recommendedActions[]`, and a `CognitiveDepth` sidecar (faculties touched,
 modes run, categories spanned, chain length). This is the audit artefact a
 regulator can request — and the evidence trail your MLRO uses years later.
+
+---
+
+## Compliance charter (non-negotiable)
+
+Every AI-generated output is governed by `src/policy/systemPrompt.ts`. It
+cannot be paraphrased, softened, or bypassed by downstream prompts.
+
+**P1** No unverified sanctions assertions · **P2** No fabricated adverse media
+/ citations · **P3** No legal conclusions · **P4** No tipping-off content ·
+**P5** No allegation-to-finding upgrade · **P6** No merging of distinct
+persons/entities · **P7** No "clean" result without scope declaration ·
+**P8** No training-data-as-current-source · **P9** No opaque risk scoring ·
+**P10** No proceeding on insufficient information.
+
+Match-confidence taxonomy is enforced: **EXACT · STRONG · POSSIBLE · WEAK ·
+NO MATCH**. Every response carries the mandatory 7-section structure
+(Subject Identifiers, Scope Declaration, Findings, Gaps, Red Flags,
+Recommended Next Steps, Audit Line).
 
 ---
 
@@ -177,22 +148,36 @@ regulator can request — and the evidence trail your MLRO uses years later.
 
 ---
 
+## Delivery
+
+- **Asana** — first-screening and every daily-monitoring report is posted to
+  a configured Asana project (inbox → MLRO triage). Contract in
+  `src/integrations/asana.ts`.
+- **Claude Managed Agents** — CSV/JSON source data → narrative HTML report
+  with embedded charts. Contract in `src/integrations/claudeAgent.ts`. Always
+  prepends `SYSTEM_PROMPT` before any task-specific role.
+
+---
+
 ## Phase roadmap
 
-1. ✅ **Scaffold + cognitive-brain registry** — TS + Netlify, 10 faculties,
-   200 reasoning modes, templates, scenarios, adverse-media taxonomy, HUD UI.
-2. **Sanctions ingestion** — UN · OFAC · EU · UK · UAE EOCN · UAE Local
-   Terrorist List · Netlify Blobs cache · daily scheduled refresh.
-3. **Fuzzy matching** — Levenshtein · Jaro-Winkler · Double-Metaphone ·
+1. ✅ **Scaffold + cognitive-brain registry** — 10 faculties, 200 reasoning
+   modes, templates, scenarios, adverse-media taxonomy.
+2. ✅ **V2 command deck** — Module 01 · Subject Screening (obsidian, four-eyes,
+   HUD, autosave, envelope preview, mode switch) + compliance charter +
+   weaponized-brain composer.
+3. **Sanctions ingestion** — UN · OFAC · EU · UK · UAE EOCN · UAE Local
+   Terrorist List · cache · daily scheduled refresh.
+4. **Fuzzy matching** — Levenshtein · Jaro-Winkler · Double-Metaphone ·
    Arabic / CJK transliteration · confidence-calibrated match scoring.
-4. **Screening UI + reasoning-chain panel** — live evidence graph, hit-level
+5. **Screening UI + reasoning-chain panel** — live evidence graph, hit-level
    disposition, reasoning-chain audit export.
-5. **PEP** — OpenSanctions ingestion · family & close-associates enrichment.
-6. **Adverse media** — NewsAPI · GDELT · Google CSE · direct RSS.
-7. **Cognitive engine v2** — real mode implementations · entity graphs ·
+6. **PEP** — OpenSanctions ingestion · family & close-associates enrichment.
+7. **Adverse media** — NewsAPI · GDELT · Google CSE · direct RSS.
+8. **Cognitive engine v2** — real mode implementations · entity graphs ·
    Bayesian re-scoring · argumentation adjudication · introspection audit.
-8. **Hardening & deploy** — integration tests · load · CSP validation ·
-   Netlify production deployment.
+9. **Hardening & deploy** — integration tests · load · CSP validation ·
+   production deployment.
 
 ---
 
@@ -200,25 +185,33 @@ regulator can request — and the evidence trail your MLRO uses years later.
 
 ```
 hawkeye-sterling/
-├── package.json, tsconfig.json, netlify.toml
-├── src/brain/
-│   ├── types.ts              domain model
-│   ├── faculties.ts          10 faculties × synonyms × bound modes
-│   ├── reasoning-modes.ts    200 reasoning-mode registry
-│   ├── question-templates.ts investigative questionnaires
-│   ├── scenarios.ts          named scenario presets
-│   ├── adverse-media.ts      5-category taxonomy + compiled query
-│   ├── engine.ts             orchestrator, cognitive-depth metrics
-│   ├── audit.ts              self-audit (npm run brain:audit)
-│   └── index.ts              barrel
-├── netlify/functions/
-│   ├── screen.ts             POST /api/screen
-│   ├── lists.ts              GET  /api/lists
-│   └── brain-meta.ts         GET  /api/brain
+├── package.json, tsconfig.json
+├── src/
+│   ├── brain/
+│   │   ├── types.ts              domain model
+│   │   ├── faculties.ts          10 faculties × synonyms × bound modes
+│   │   ├── reasoning-modes.ts    200 reasoning-mode registry
+│   │   ├── question-templates.ts investigative questionnaires
+│   │   ├── scenarios.ts          named scenario presets
+│   │   ├── adverse-media.ts      5-category taxonomy + compiled query
+│   │   ├── engine.ts             orchestrator, cognitive-depth metrics
+│   │   ├── audit.ts              self-audit (npm run brain:audit)
+│   │   ├── weaponized.ts         charter + catalogue composer
+│   │   └── index.ts              barrel
+│   ├── policy/
+│   │   └── systemPrompt.ts       content-frozen compliance charter
+│   ├── services/
+│   │   ├── grade.ts              A+ → F grading
+│   │   └── intelligenceScorecard.ts  intelligent / smart / autonomous / composite
+│   ├── reports/
+│   │   └── caseReport.ts         World-Check-style envelope (positive / negative)
+│   └── integrations/
+│       ├── asana.ts              first-screening + daily-monitoring delivery
+│       └── claudeAgent.ts        CSV/JSON → narrative HTML report
 └── public/
-    ├── index.html            dark-HUD landing, screening form, reasoning stream
-    ├── styles.css            obsidian + cyan/amber neon, glass, scanline
-    ├── app.js                HUD client (no external deps)
+    ├── index.html                Module 01 · Subject Screening (obsidian)
+    ├── styles.css                obsidian theme, hairline rules, cyan/amber/red
+    ├── app.js                    HUD controller, validation, four-eyes, autosave
     └── assets/favicon.svg
 ```
 
@@ -226,30 +219,34 @@ hawkeye-sterling/
 
 ## Getting started
 
-Prerequisites: **Node 20+**, **npm**, optionally `netlify-cli` for local dev.
+Prerequisites: **Node 20+**, **npm**.
 
 ```bash
 npm install
+npm run dev               # static serve on http://localhost:8080
 npm run typecheck         # strict TS, zero errors expected
 npm run brain:audit       # prints registry totals, flags any dupes / gaps
-npx netlify dev           # serves / and /api/* on localhost
 ```
 
-Try a screen:
+---
 
-```bash
-curl -sX POST http://localhost:8888/api/screen \
-  -H 'content-type: application/json' \
-  -d '{"subject":{"name":"Test Subject","type":"entity","jurisdiction":"AE"}}'
-```
+## Regulatory anchors
+
+- Federal Decree-Law No. 20 of 2018 (as amended, incl. FDL No. 10 of 2025).
+- Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025).
+- Cabinet Decision No. 74 of 2020 (Terrorism Lists / TFS).
+- Cabinet Resolution No. 16 of 2021 (administrative penalties).
+- MoE DNFBP circulars and guidance for the precious-metals sector.
+- FATF Recommendations and relevant Methodology paragraphs.
+- LBMA Responsible Gold Guidance (supply-chain context).
 
 ---
 
 ## Deployment
 
-Deployment to Netlify happens when the project owner verifies the product is
-**perfect**. Phase 1 runs entirely locally — nothing leaves the device until
-ingestion modules ship in Phase 2.
+Deployment happens when the project owner verifies the product is **perfect**.
+The build ships as a static page plus a typed TypeScript library; the hosting
+platform is chosen at integration time.
 
 ---
 
