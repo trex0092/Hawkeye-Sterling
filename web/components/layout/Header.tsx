@@ -1,16 +1,25 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 const NAV_TABS = [
-  { label: "Workbench", href: "/workbench", active: false },
-  { label: "Screening", href: "/screening", active: true },
-  { label: "Cases", href: "/cases", active: false },
-  { label: "Evidence trail", href: "/audit-trail", active: false },
-  { label: "Audit", href: "/audit-trail", active: false },
-];
+  { label: "Workbench", href: "/workbench" },
+  { label: "Screening", href: "/screening" },
+  { label: "Cases", href: "/cases" },
+  { label: "Evidence trail", href: "/audit-trail" },
+  { label: "Audit", href: "/audit-trail" },
+] as const;
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-4 h-[54px] px-6">
-        <a href="/" className="inline-flex items-center gap-2 text-ink-0 no-underline text-13 font-semibold">
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 text-ink-0 no-underline text-13 font-semibold"
+        >
           <span className="w-[18px] h-[18px] bg-ink-0 rounded-sm flex items-center justify-center text-white font-mono text-[10px] font-bold">
             H
           </span>
@@ -19,19 +28,22 @@ export function Header() {
         </a>
 
         <div className="flex gap-0.5 ml-8">
-          {NAV_TABS.map((tab) => (
-            <a
-              key={tab.label}
-              href={tab.href}
-              className={`px-3.5 py-1.5 text-12.5 rounded no-underline font-medium transition-colors ${
-                tab.active
-                  ? "bg-bg-2 text-ink-0"
-                  : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
-              }`}
-            >
-              {tab.label}
-            </a>
-          ))}
+          {NAV_TABS.map((tab) => {
+            const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+            return (
+              <a
+                key={tab.label}
+                href={tab.href}
+                className={`px-3.5 py-1.5 text-12.5 rounded no-underline font-medium transition-colors ${
+                  active
+                    ? "bg-bg-2 text-ink-0"
+                    : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
+                }`}
+              >
+                {tab.label}
+              </a>
+            );
+          })}
         </div>
 
         <div className="ml-auto flex items-center gap-5 font-mono text-10.5 text-ink-2">

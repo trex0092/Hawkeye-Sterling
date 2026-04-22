@@ -57,3 +57,59 @@ export interface QueueFilter {
   label: string;
   count: string;
 }
+
+export type CaseStatus = "active" | "review" | "reported" | "closed";
+
+export type CaseFilterKey =
+  | "all"
+  | "active"
+  | "awaiting"
+  | "escalated"
+  | "closed-cleared"
+  | "closed-reported";
+
+export interface CaseFilter {
+  key: CaseFilterKey;
+  label: string;
+  count: string;
+}
+
+export type EvidenceCategory =
+  | "screening-report"
+  | "cdd-package"
+  | "transaction-records"
+  | "reasoning-chain"
+  | "four-eyes-approval";
+
+export interface EvidenceEntry {
+  category: EvidenceCategory;
+  title: string;
+  meta: string;
+  detail: string;
+}
+
+export interface TimelineEvent {
+  timestamp: string;
+  event: string;
+}
+
+export type CaseBadgeTone = "violet" | "orange" | "green";
+
+export interface CaseRecord {
+  id: string;
+  badge: string;
+  badgeTone: CaseBadgeTone;
+  subject: string;
+  meta: string;
+  status: CaseStatus;
+  evidenceCount: string;
+  lastActivity: string;
+  opened: string;
+  reported?: string;
+  goAMLReference?: string;
+  mlroDisposition?: string;
+  statusLabel: string;
+  statusDetail: string;
+  evidence: EvidenceEntry[];
+  timeline: TimelineEvent[];
+}

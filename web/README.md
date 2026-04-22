@@ -25,7 +25,7 @@ Open http://localhost:3000 — root redirects to `/screening` (Module 01).
 | # | Module | Route | State |
 |---|--------|-------|-------|
 | 01 | Subject Screening | `/screening` | ✔ implemented |
-| 02 | Cases & Evidence Trail | `/cases` | pending |
+| 02 | Cases & Evidence Trail | `/cases` | ✔ implemented |
 | 03 | Deep Reasoning Workbench | `/workbench` | pending |
 | 04 | Sanction Delta Monitor | `/sanctions-delta` | pending |
 | 05 | Smurfing Detector | `/smurfing` | pending |
