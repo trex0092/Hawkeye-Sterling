@@ -110,6 +110,56 @@ export const APPROVALS = [
   { id: 'APR-0139', title: 'Onboarding approval · Istanbul Altin — EDD', meta: ['Maker: R.Menon', 'Type: High-risk onboarding', 'Opened 09:41'], sla: 'SLA 24h · 17h 35m left', warn: true },
 ];
 
+// Demo candidate list for /api/quick-screen. In a production deploy this is
+// replaced by authoritative watchlist ingest (see watchlist-adapters in the
+// brain). Kept small on purpose so the UI boots instantly.
+export const CANDIDATES = [
+  {
+    listId: 'ofac_sdn',
+    listRef: 'OFAC-SDN-28841',
+    name: 'Dmitri Sergeyevich Volkov',
+    aliases: ['D. Volkov', 'Dmitry Volkov'],
+    entityType: 'individual',
+    jurisdiction: 'RU',
+    programs: ['E.O. 14024'],
+  },
+  {
+    listId: 'eu_consolidated',
+    listRef: 'EU-CFSP-2014/145',
+    name: 'VOLKOV, D.',
+    aliases: [],
+    entityType: 'individual',
+    jurisdiction: 'RU',
+    programs: ['CFSP 2014/145'],
+  },
+  {
+    listId: 'un_1267',
+    listRef: 'UN-1267-AQ-1234',
+    name: 'Kwame Asante-Boateng',
+    aliases: ['K. Boateng'],
+    entityType: 'individual',
+    jurisdiction: 'GH',
+    programs: ['UNSCR 1267'],
+  },
+  {
+    listId: 'uk_ofsi',
+    listRef: 'UK-OFSI-18877',
+    name: 'Crescent Refineries Jordan',
+    aliases: ['Crescent Refineries', 'CRJ'],
+    entityType: 'organisation',
+    jurisdiction: 'JO',
+    programs: ['UK Russia Regulations'],
+  },
+  {
+    listId: 'ofac_cons',
+    listRef: 'OFAC-CONS-90221',
+    name: 'Istanbul Altin Rafinerisi A.S',
+    aliases: ['Istanbul Altin'],
+    entityType: 'organisation',
+    jurisdiction: 'TR',
+  },
+];
+
 export const CONSOLE_LINES = [
   { ts: '14:27:14', lvl: 'HIT', kind: 'hit', msg: 'OFAC SDN · VOLKOV DMITRI · 87% · HS-24891 — promoted to critical' },
   { ts: '14:27:11', lvl: 'EU', kind: 'hit', msg: 'EU CFSP 2014/145 · VOLKOV D. · 82% · HS-24891' },

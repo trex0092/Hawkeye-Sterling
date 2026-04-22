@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { SUBJECTS } from '@/data/constants';
+import { SUBJECTS, CANDIDATES } from '@/data/constants';
+import { screenSubject } from '@/lib/api';
 
 function Queue({ selectedId, setSelectedId }) {
   const [search, setSearch] = useState('');
+  const [screening, setScreening] = useState(false);
+  const [lastResult, setLastResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const filtered = SUBJECTS.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) || s.id.toLowerCase().includes(search.toLowerCase())
@@ -11,11 +15,35 @@ function Queue({ selectedId, setSelectedId }) {
   const getSeverityColor = (severity) => {
     switch (severity) {
       case 'crit':
+      case 'critical':
         return 'var(--accent)';
       case 'high':
         return 'var(--amber)';
       default:
         return 'var(--ink-3)';
+    }
+  };
+
+  const onScreen = async () => {
+    const subject = SUBJECTS.find((s) => s.id === selectedId);
+    if (!subject || screening) return;
+    setScreening(true);
+    setError(null);
+    try {
+      const result = await screenSubject(
+        {
+          name: subject.name,
+          entityType: subject.type?.toLowerCase().includes('corporate') ? 'organisation' : 'individual',
+          jurisdiction: subject.jur?.split(/[\s/]+/)[0],
+        },
+        CANDIDATES,
+      );
+      setLastResult(result);
+    } catch (err) {
+      setError(err?.message ?? 'screen failed');
+      setLastResult(null);
+    } finally {
+      setScreening(false);
     }
   };
 
@@ -47,8 +75,36 @@ function Queue({ selectedId, setSelectedId }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button className="btn primary">Screen</button>
+        <button className="btn primary" onClick={onScreen} disabled={screening || !selectedId}>
+          {screening ? 'Screening…' : 'Screen'}
+        </button>
       </div>
+
+      {(lastResult || error) && (
+        <div
+          style={{
+            padding: '8px var(--pad)',
+            borderBottom: '1px solid var(--rule)',
+            background: 'var(--paper-2)',
+            fontSize: '11px',
+            fontFamily: 'JetBrains Mono, monospace',
+            color: error
+              ? 'var(--crit)'
+              : lastResult?.severity === 'critical' || lastResult?.severity === 'high'
+                ? 'var(--accent)'
+                : 'var(--ink-2)',
+          }}
+        >
+          {error ? (
+            <>ERROR · {error}</>
+          ) : (
+            <>
+              {lastResult.subject.name} · <strong>{lastResult.severity.toUpperCase()}</strong> ·
+              score {lastResult.topScore} · {lastResult.hits.length} hit{lastResult.hits.length === 1 ? '' : 's'} across {lastResult.listsChecked} list{lastResult.listsChecked === 1 ? '' : 's'} · {lastResult.durationMs}ms
+            </>
+          )}
+        </div>
+      )}
 
       <div className="qlist">
         <div className="qrow head">
