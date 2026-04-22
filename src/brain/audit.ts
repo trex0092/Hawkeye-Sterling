@@ -8,6 +8,7 @@ import { REASONING_MODES, REASONING_MODE_BY_ID } from './reasoning-modes.js';
 import { QUESTION_TEMPLATES } from './question-templates.js';
 import { SCENARIOS, SCENARIO_BY_ID } from './scenarios.js';
 import { ADVERSE_MEDIA_CATEGORIES, ADVERSE_MEDIA_QUERY } from './adverse-media.js';
+import { implementationCoverage, listImplementedModeIds } from './modes/registry.js';
 
 export interface AuditReport {
   ok: boolean;
@@ -22,6 +23,12 @@ export interface AuditReport {
   };
   categoryCounts: Record<string, number>;
   facultyCoverage: Record<string, number>;
+  implementation: {
+    implementedCount: number;
+    totalCount: number;
+    percent: number;
+    implementedModes: string[];
+  };
   problems: string[];
 }
 
@@ -101,6 +108,8 @@ export function auditBrain(print = true): AuditReport {
   }
 
   const amkw = ADVERSE_MEDIA_CATEGORIES.reduce((n, c) => n + c.keywords.length, 0);
+  const coverage = implementationCoverage(REASONING_MODES.length);
+  const implementedModes = listImplementedModeIds();
 
   const report: AuditReport = {
     ok: problems.length === 0,
@@ -115,6 +124,12 @@ export function auditBrain(print = true): AuditReport {
     },
     categoryCounts,
     facultyCoverage,
+    implementation: {
+      implementedCount: coverage.implemented,
+      totalCount: coverage.total,
+      percent: coverage.percent,
+      implementedModes,
+    },
     problems,
   };
 
@@ -124,6 +139,9 @@ export function auditBrain(print = true): AuditReport {
     console.log('totals', report.totals);
     console.log('modes per category', report.categoryCounts);
     console.log('faculty coverage', report.facultyCoverage);
+    console.log(
+      `implementation coverage: ${report.implementation.implementedCount}/${report.implementation.totalCount} modes real (${report.implementation.percent}%)`,
+    );
     if (report.problems.length > 0) {
       console.log('problems:');
       for (const p of report.problems) console.log(' -', p);

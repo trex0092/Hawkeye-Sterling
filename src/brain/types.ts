@@ -3,6 +3,9 @@
 // and adverse-media taxonomy. Every screening run produces a Verdict whose full reasoning
 // chain is persisted — that is the core differentiator vs World-Check.
 
+export type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
+import type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
+
 export type FacultyId =
   | 'reasoning'
   | 'data_analysis'
@@ -71,16 +74,32 @@ export interface BrainContext {
   domains: string[]; // e.g. ['cdd','sanctions','ubo','dpms']
 }
 
+// Hypotheses the brain can update probabilistically. A finding states which hypothesis
+// its score/LR is evidence for or against. Fusion tracks posteriors per hypothesis.
+export type Hypothesis =
+  | 'illicit_risk'          // default: generic illicit/suspicious risk against subject
+  | 'sanctioned'            // subject is a sanctions match
+  | 'pep'                   // subject is a PEP or close associate
+  | 'material_concern'      // material compliance concern beyond specific typology
+  | 'adverse_media_linked'  // credibly linked to adverse media
+  | 'ubo_opaque';           // UBO chain is opaque or obstructive
+
 export interface Finding {
   modeId: string;
   category: ReasoningCategory;
   faculties: FacultyId[];
-  score: number;        // 0..1 severity contribution
+  score: number;        // 0..1 severity contribution against the hypothesis
   confidence: number;   // 0..1 model confidence in this finding
   verdict: Verdict;
   rationale: string;
-  evidence: string[];   // textual evidence pointers
+  evidence: string[];   // evidence IDs (resolvable against an EvidenceItem registry when present)
   producedAt: number;
+
+  // --- optional, additive — enables Bayesian fusion, weighted aggregation, introspection ---
+  likelihoodRatios?: LikelihoodRatio[]; // when present, fusion updates a posterior per hypothesis
+  hypothesis?: Hypothesis;              // the hypothesis the finding is evidence for/against
+  weight?: number;                      // override for aggregation weight (defaults to confidence)
+  tags?: string[];                      // free-form labels (e.g. 'meta', 'introspection', 'logic')
 }
 
 export interface ReasoningMode {
@@ -131,6 +150,69 @@ export interface AdverseMediaCategory {
   keywords: string[];
 }
 
+export type ConsensusLevel = 'strong' | 'weak' | 'conflicted' | 'sparse';
+
+// Per-faculty activation. The ten faculties declared in faculties.ts must become
+// first-class in every verdict — it is how the brain proves it deployed the full
+// cognitive catalogue (Reasoning, Data Analysis, Deep Thinking, Intelligence,
+// Smartness, Strong Brain, Inference, Argumentation, Introspection, Ratiocination).
+export interface FacultyActivation {
+  facultyId: FacultyId;
+  modesFired: number;           // number of modes that listed this faculty and produced a finding
+  weightedScore: number;        // 0..1 confidence-weighted mean severity contributed via this faculty
+  weightedConfidence: number;   // 0..1 mean confidence across modes that touched this faculty
+  posterior?: number;           // per-faculty posterior for the primary hypothesis (if LRs emitted)
+  status: 'silent' | 'weak' | 'engaged' | 'dominant';
+}
+
+export interface CognitiveFirepower {
+  activations: FacultyActivation[];      // one entry per known faculty (silent entries included)
+  modesFired: number;
+  facultiesEngaged: number;              // count with status != 'silent'
+  categoriesSpanned: number;
+  independentEvidenceCount: number;      // distinct evidence IDs cited across findings
+  firepowerScore: number;                // 0..1 composite: faculties × mode density × evidence independence
+}
+
+export interface FindingConflict {
+  a: string;             // modeId A
+  b: string;             // modeId B
+  aVerdict: Verdict;
+  bVerdict: Verdict;
+  aScore: number;
+  bScore: number;
+  delta: number;         // |aScore - bScore|
+  hypothesis?: Hypothesis;
+  note: string;
+}
+
+export interface FusionResult {
+  outcome: Verdict;
+  score: number;                       // final severity 0..1
+  confidence: number;                  // final confidence 0..1 (introspection-adjusted)
+  weightedScore: number;               // confidence×credibility-weighted mean of finding.score
+  prior: number;                       // prior P(H) used for the primary hypothesis
+  posterior: number;                   // posterior P(H|E) for the primary hypothesis
+  primaryHypothesis: Hypothesis;
+  bayesTrace?: BayesTrace;             // undefined if no LRs were emitted
+  posteriorsByHypothesis: Partial<Record<Hypothesis, number>>;
+  conflicts: FindingConflict[];
+  consensus: ConsensusLevel;
+  contributorCount: number;
+  methodology: string;                 // plain-text description per charter P9
+  firepower: CognitiveFirepower;       // per-faculty activation + composite firepower score
+}
+
+export interface IntrospectionReport {
+  chainQuality: number;                // 0..1 overall quality of the chain
+  biasesDetected: string[];            // bias IDs encountered
+  calibrationGap: number;              // 0..1; 0 = well calibrated
+  coverageGaps: string[];              // faculty/category blind spots
+  confidenceAdjustment: number;        // delta applied to aggregateConfidence in [-0.2, 0.2]
+  notes: string[];
+  producedAt: number;
+}
+
 export interface BrainVerdict {
   runId: string;
   subject: Subject;
@@ -141,6 +223,17 @@ export interface BrainVerdict {
   chain: ReasoningChainNode[];
   recommendedActions: string[];
   generatedAt: number;
+  // --- new, additive ---
+  prior?: number;
+  posterior?: number;                  // posterior for primary hypothesis
+  primaryHypothesis?: Hypothesis;
+  bayesTrace?: BayesTrace;
+  posteriorsByHypothesis?: Partial<Record<Hypothesis, number>>;
+  conflicts?: FindingConflict[];
+  consensus?: ConsensusLevel;
+  introspection?: IntrospectionReport;
+  methodology?: string;
+  firepower?: CognitiveFirepower;
 }
 
 export interface ReasoningChainNode {

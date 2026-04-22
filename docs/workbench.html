@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Deep Reasoning Workbench — Hawkeye Sterling</title>
+  <link rel="stylesheet" href="styles-v5.css" />
+  <style>
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .mode-card {
+      padding: 10px 12px;
+      background: white;
+      border: 1px solid var(--hair-2);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 100ms ease;
+    }
+    .mode-card:hover {
+      border-color: var(--brand);
+      background: var(--brand-dim);
+    }
+    .mode-card.selected {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+    .mode-card-id {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--brand);
+      margin-bottom: 4px;
+    }
+    .mode-card.selected .mode-card-id {
+      color: rgba(255,255,255,0.8);
+    }
+    .mode-card-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-0);
+    }
+    .mode-card.selected .mode-card-name {
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">H</span>
+        <span>Hawkeye Sterling</span>
+        <span style="font-size:11px; color: var(--ink-3); font-weight:400; margin-left:4px;">v5.2</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="index.html">Workbench</a>
+        <a href="screening.html">Screening</a>
+        <a href="cases.html">Cases</a>
+        <a href="workbench.html" class="active">Deep reasoning</a>
+        <a href="taxonomy.html">Library</a>
+        <a href="brain.html">Brain</a>
+      </div>
+      <div class="nav-hud">
+        <span class="hud-seg">
+          <span class="dot"></span>
+          <span style="font-weight:500;">live</span>
+        </span>
+      </div>
+    </nav>
+  </header>
+
+  <div class="app-layout">
+    
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-head">Pipeline</div>
+        <div style="font-size: 12px; color: var(--ink-1); padding: 0 8px;">
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 500; color: var(--ink-0); margin-bottom: 4px;">Multi-perspective</div>
+            <div style="font-size: 11px; color: var(--ink-2);">Sonnet executor → Opus advisor</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 500; color: var(--ink-0); margin-bottom: 4px;">Charter coverage</div>
+            <div style="font-size: 11px; color: var(--ink-2);">P1–P10 · Immutable</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-head">Faculties</div>
+        <ul class="sidebar-filters">
+          <li class="active">
+            <span>All modes</span>
+            <span class="count">690</span>
+          </li>
+          <li>
+            <span>Reasoning</span>
+            <span class="count">78</span>
+          </li>
+          <li>
+            <span>Data Analysis</span>
+            <span class="count">64</span>
+          </li>
+          <li>
+            <span>Deep Thinking</span>
+            <span class="count">52</span>
+          </li>
+          <li>
+            <span>Intelligence</span>
+            <span class="count">88</span>
+          </li>
+          <li>
+            <span>Smartness</span>
+            <span class="count">71</span>
+          </li>
+          <li>
+            <span>Inference</span>
+            <span class="count">94</span>
+          </li>
+          <li>
+            <span>Argumentation</span>
+            <span class="count">58</span>
+          </li>
+          <li>
+            <span>Introspection</span>
+            <span class="count">82</span>
+          </li>
+          <li>
+            <span>Ratiocination</span>
+            <span class="count">103</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      
+      <div class="hero">
+        <div class="hero-eyebrow">MODULE 03 · COGNITIVE ENGINE</div>
+        <h1 class="hero-title">Deep <em>reasoning.</em></h1>
+        <p class="hero-lede">
+          <strong>690 modes · 10 faculties · charter-gated.</strong> Multi-perspective pipeline (Sonnet executor → Opus advisor) with full reasoning chain persistence. Every verdict traced to the modes that produced it.
+        </p>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <span class="toolbar-search-icon">⌕</span>
+          <input type="search" placeholder="Search modes — e.g. 'bayesian', 'causal graph', 'ubo bearer'" />
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-small">
+            <span>Category:</span>
+            <span style="font-weight:600;">All</span>
+          </button>
+          <button class="btn btn-small">
+            <span>Selected:</span>
+            <span style="font-weight:600;">0</span>
+          </button>
+          <button class="btn-primary btn-small" style="background: var(--brand); border-color: var(--brand); color: white;">Run pipeline</button>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid var(--hair-2); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); margin-bottom: 12px;">Curated presets</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <button class="btn btn-small">CAHRA gold · onboard</button>
+          <button class="btn btn-small">VASP · mixer inbound</button>
+          <button class="btn btn-small">PEP · SoW mismatch</button>
+          <button class="btn btn-small">Structuring · near threshold</button>
+          <button class="btn btn-small">TBML · over-invoice</button>
+          <button class="btn btn-small">EOCN · partial (PNMR)</button>
+          <button class="btn btn-small">EOCN · confirmed (FFR)</button>
+          <button class="btn btn-small">UBO · opaque chain</button>
+          <button class="btn btn-small">Correspondent · nested</button>
+          <button class="btn btn-small">BEC · typosquat</button>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid var(--hair-2); border-radius: 8px; padding: 20px;">
+        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); margin-bottom: 4px;">Reasoning modes catalogue</div>
+        <div style="font-size: 12px; color: var(--ink-2); margin-bottom: 16px;">690 modes across 10 faculties · Click to select</div>
+
+        <div class="mode-grid">
+          <div class="mode-card selected">
+            <div class="mode-card-id">RM-001</div>
+            <div class="mode-card-name">Modus Ponens</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-002</div>
+            <div class="mode-card-name">Modus Tollens</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-003</div>
+            <div class="mode-card-name">Hypothetical Syllogism</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-004</div>
+            <div class="mode-card-name">Disjunctive Syllogism</div>
+          </div>
+          <div class="mode-card selected">
+            <div class="mode-card-id">RM-012</div>
+            <div class="mode-card-name">Bayesian Update</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-027</div>
+            <div class="mode-card-name">Causal Graph Analysis</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-034</div>
+            <div class="mode-card-name">Counterfactual Reasoning</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-045</div>
+            <div class="mode-card-name">Pattern Matching</div>
+          </div>
+          <div class="mode-card selected">
+            <div class="mode-card-id">RM-056</div>
+            <div class="mode-card-name">Anomaly Detection</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-078</div>
+            <div class="mode-card-name">Time-Series Analysis</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-089</div>
+            <div class="mode-card-name">Network Analysis</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-102</div>
+            <div class="mode-card-name">Entity Resolution</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-115</div>
+            <div class="mode-card-name">UBO Trace</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-128</div>
+            <div class="mode-card-name">Bearer Share Detection</div>
+          </div>
+          <div class="mode-card selected">
+            <div class="mode-card-id">RM-143</div>
+            <div class="mode-card-name">Layering Detection</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-156</div>
+            <div class="mode-card-name">Structuring Analysis</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-178</div>
+            <div class="mode-card-name">TBML Red-Flag</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-192</div>
+            <div class="mode-card-name">CAHRA Refiner</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-205</div>
+            <div class="mode-card-name">Mixer Heuristic</div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-card-id">RM-218</div>
+            <div class="mode-card-name">PEP Proximity</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--hair);">
+          <div style="font-size: 11px; color: var(--ink-2);">
+            Showing 20 of 690 modes · <a href="#" style="color: var(--brand); text-decoration: none; font-weight: 500;">Load more</a>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+</body>
+</html>

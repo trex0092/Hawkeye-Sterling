@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brain — Hawkeye Sterling</title>
+  <link rel="stylesheet" href="styles-v5.css" />
+  <style>
+    .panel { background: white; border: 1px solid var(--hair-2); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .panel-head { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 4px; }
+    .panel-sub  { font-size: 12px; color: var(--ink-2); margin-bottom: 16px; }
+
+    .cov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .cov-cell { background: var(--bg-1); border-radius: 6px; padding: 12px; }
+    .cov-cell-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-2); }
+    .cov-bar { height: 6px; background: var(--bg-2); border-radius: 3px; overflow: hidden; }
+    .cov-fill { height: 100%; transition: width 200ms ease; }
+    .cov-fill.brand  { background: var(--brand); }
+    .cov-fill.violet { background: var(--violet); }
+    .cov-fill.amber  { background: var(--amber); }
+    .cov-meta { margin-top: 8px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); }
+
+    .pb-row { border: 1px solid var(--hair-2); border-radius: 6px; overflow: hidden; margin-bottom: 8px; }
+    .pb-head { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; }
+    .pb-head:hover { background: var(--bg-1); }
+    .pb-name { font-size: 12.5px; font-weight: 500; color: var(--ink-0); }
+    .pb-sum { font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+    .pb-pct { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--ink-0); }
+    .pb-sla { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); margin-left: 8px; }
+
+    .status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 3px; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; }
+    .status-satisfied { background: var(--green-dim); color: var(--green); }
+    .status-partial   { background: var(--amber-dim); color: var(--amber); }
+    .status-unmet     { background: var(--red-dim);   color: var(--red); }
+
+    .pb-body { padding: 10px 12px; background: var(--bg-0); border-top: 1px solid var(--hair); }
+    .pb-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .pb-cell { background: white; border: 1px solid var(--hair); border-radius: 4px; padding: 8px; }
+    .pb-cell-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-3); }
+    .pb-cell-val { font-family: var(--font-mono); font-size: 12px; margin-top: 2px; }
+
+    .anchor-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .anchor { display: inline-flex; align-items: center; padding: 3px 8px; background: var(--bg-1); border: 1px solid var(--hair-2); border-radius: 4px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-0); }
+    .anchor.fam-FATF        { border-left: 3px solid var(--blue); }
+    .anchor.fam-UAE-FDL     { border-left: 3px solid var(--brand); }
+    .anchor.fam-UAE-CABINET { border-left: 3px solid var(--brand-deep); }
+    .anchor.fam-UAE-MOE     { border-left: 3px solid var(--orange); }
+    .anchor.fam-UAE-FIU     { border-left: 3px solid var(--amber); }
+    .anchor.fam-UAE-VARA    { border-left: 3px solid var(--amber); }
+    .anchor.fam-UAE-CBUAE   { border-left: 3px solid var(--orange); }
+    .anchor.fam-LBMA        { border-left: 3px solid var(--green); }
+    .anchor.fam-OECD        { border-left: 3px solid var(--green); }
+    .anchor.fam-OFAC        { border-left: 3px solid var(--violet); }
+    .anchor.fam-UN          { border-left: 3px solid var(--blue); }
+    .anchor.fam-EU          { border-left: 3px solid var(--amber); }
+    .anchor.fam-PDPL        { border-left: 3px solid var(--violet); }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; background: var(--bg-1); border: 1px solid var(--hair-2); border-radius: 4px; font-size: 11px; cursor: pointer; }
+    .pill.active { background: var(--brand); border-color: var(--brand); color: white; font-weight: 500; }
+
+    .preset-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">H</span>
+        <span>Hawkeye Sterling</span>
+        <span style="font-size:11px; color: var(--ink-3); font-weight:400; margin-left:4px;">v5.2</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="index.html">Workbench</a>
+        <a href="screening.html">Screening</a>
+        <a href="cases.html">Cases</a>
+        <a href="workbench.html">Deep reasoning</a>
+        <a href="taxonomy.html">Library</a>
+        <a href="brain.html" class="active">Brain</a>
+      </div>
+      <div class="nav-hud">
+        <span class="hud-seg"><span class="dot"></span><span style="font-weight:500;">live</span></span>
+      </div>
+    </nav>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-head">Brain</div>
+        <div style="font-size: 12px; color: var(--ink-1); padding: 0 8px;">
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 500; color: var(--ink-0); margin-bottom: 4px;">The Refinitiv-killer</div>
+            <div style="font-size: 11px; color: var(--ink-2);">Every verdict cites named entries × named regulations × named evidence.</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 500; color: var(--ink-0); margin-bottom: 4px;">Catalogues</div>
+            <div style="font-size: 11px; color: var(--ink-2);">391 taxonomy entries · 42 regulatory anchors · 12 MLRO playbooks</div>
+          </div>
+          <div>
+            <div style="font-weight: 500; color: var(--ink-0); margin-bottom: 4px;">Charter</div>
+            <div style="font-size: 11px; color: var(--ink-2);">P1–P10 immutable gates. No fabrication. No training-data-as-source. No opaque scoring.</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-head">Presets</div>
+        <div style="font-size: 11px; color: var(--ink-2); padding: 0 8px; line-height: 1.6;">
+          Pick a preset to light up playbooks and see live coverage.
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <div class="hero">
+        <div class="hero-eyebrow">BRAIN · REGULATOR-GRADE REASONING</div>
+        <h1 class="hero-title">Better than <em>World-Check.</em></h1>
+        <p class="hero-lede">
+          <strong>Transparent by design.</strong> Refinitiv gives you a score. Hawkeye Sterling gives you the
+          <em>skills × reasoning × deep-analysis × regulatory anchors × evidence</em> that produce the score,
+          and marks every MLRO playbook as <strong>satisfied</strong>, <strong>partial</strong>, or
+          <strong>unmet</strong> — live — so the file closes only when the obligations are actually discharged.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Preset — fire a typology against the brain</div>
+        <div class="panel-sub">Each preset selects a bundle of reasoning modes. Watch the coverage and playbook satisfaction update.</div>
+        <div class="preset-row" id="presets"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head" id="cov-title">Coverage — 0 modes selected</div>
+        <div class="panel-sub" id="cov-sub">Overall discharge: <strong id="cov-score" style="color: var(--red);">0%</strong></div>
+        <div class="cov-grid">
+          <div class="cov-cell">
+            <div class="cov-cell-head"><span>Skills</span><span class="mono" id="skills-pct" style="color: var(--brand);">0%</span></div>
+            <div class="cov-bar"><div class="cov-fill brand" id="skills-fill" style="width:0%"></div></div>
+            <div class="cov-meta" id="skills-meta">0 / 116</div>
+          </div>
+          <div class="cov-cell">
+            <div class="cov-cell-head"><span>Reasoning</span><span class="mono" id="reasoning-pct" style="color: var(--violet);">0%</span></div>
+            <div class="cov-bar"><div class="cov-fill violet" id="reasoning-fill" style="width:0%"></div></div>
+            <div class="cov-meta" id="reasoning-meta">0 / 105</div>
+          </div>
+          <div class="cov-cell">
+            <div class="cov-cell-head"><span>Deep analysis</span><span class="mono" id="analysis-pct" style="color: var(--amber);">0%</span></div>
+            <div class="cov-bar"><div class="cov-fill amber" id="analysis-fill" style="width:0%"></div></div>
+            <div class="cov-meta" id="analysis-meta">0 / 170</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          MLRO playbooks —
+          <span style="color: var(--green);"><span id="sat-count">0</span> satisfied</span> ·
+          <span style="color: var(--amber);"><span id="par-count">0</span> partial</span> ·
+          <span style="color: var(--red);"><span id="unm-count">12</span> unmet</span>
+        </div>
+        <div class="panel-sub">Each playbook is a composed procedure: taxonomy requirements × regulatory anchors × charter articles × SLA. Click to expand.</div>
+        <div id="playbooks"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Regulatory anchors discharged</div>
+        <div class="panel-sub">Anchors go green when their owning playbook is fully covered by the selected modes.</div>
+        <div class="anchor-row" id="anchors"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // ── Catalogue data mirrored from web/lib/data/* (trimmed for demo) ──
+    const SKILLS_COUNT = 116, REASONING_COUNT = 105, ANALYSIS_COUNT = 170;
+
+    const PLAYBOOKS = [
+      { id: "playbook-dpms-onboard",          name: "UAE DPMS onboarding",                    summary: "KYC/CDD/EDD · UBO · sanctions · BO register.",                            slaHours: 72,  modeIds: ["RM-045","RM-012","RM-115","RM-089","RM-102"] },
+      { id: "playbook-cahra-gold",            name: "CAHRA gold supply chain",                summary: "Refiner · chain-of-custody · LBMA Step 1–5 · OECD Annex II.",             slaHours: 168, modeIds: ["RM-192","RM-045","RM-012","RM-115","RM-426"] },
+      { id: "playbook-eocn-freeze",           name: "EOCN · immediate freeze without delay",  summary: "UN/OFAC/Local hit → freeze within 24h → FFR via goAML.",                 slaHours: 24,  modeIds: ["RM-102","RM-421","RM-423","RM-425","RM-427"] },
+      { id: "playbook-str-filing",            name: "STR · suspicious transaction report",    summary: "MLRO judgment · four-eyes · tipping-off guard · goAML envelope.",        slaHours: 48,  modeIds: ["RM-422","RM-423","RM-427","RM-428","RM-429"] },
+      { id: "playbook-pep-edd",               name: "PEP · enhanced due diligence",           summary: "SoW/SoF · adverse media · senior approval · ongoing EDD.",               slaHours: 96,  modeIds: ["RM-218","RM-090","RM-263"] },
+      { id: "playbook-tbml",                  name: "Trade-based money laundering",           summary: "Invoice manipulation · over/under-invoice · third-party payment.",       slaHours: 120, modeIds: ["RM-178","RM-045","RM-089"] },
+      { id: "playbook-structuring",           name: "Structuring / smurfing",                 summary: "Sub-threshold clustering · velocity anomaly · CTR evasion.",             slaHours: 72,  modeIds: ["RM-156","RM-143","RM-056","RM-078"] },
+      { id: "playbook-vasp-mixer",            name: "VASP · mixer inbound",                   summary: "Mixer heuristic · VASP licensing · VARA conformity.",                    slaHours: 96,  modeIds: ["RM-205","RM-089","RM-056"] },
+      { id: "playbook-ubo-opaque",            name: "UBO · opaque ownership chain",           summary: "Layered ownership · bearer shares · nominee directors.",                 slaHours: 120, modeIds: ["RM-115","RM-128","RM-089","RM-102"] },
+      { id: "playbook-correspondent-nested",  name: "Correspondent banking · nested",         summary: "Respondent's customer accessing correspondent services.",                slaHours: 168, modeIds: ["RM-231","RM-089","RM-102"] },
+      { id: "playbook-adverse-media",         name: "Adverse media · deep review",            summary: "Credible adverse sources · materiality · triangulation.",                slaHours: 72,  modeIds: ["RM-218","RM-304"] },
+      { id: "playbook-pdpl-processing",       name: "PDPL · AML processing lawful basis",     summary: "Legal obligation basis · minimisation · breach notification.",           slaHours: 24,  modeIds: [] },
+    ];
+
+    const PRESETS = [
+      { id: "cahra-gold-onboard",        label: "CAHRA gold · onboard",            modeIds: ["RM-192","RM-045","RM-012","RM-115","RM-426"] },
+      { id: "vasp-mixer-inbound",        label: "VASP · mixer inbound",            modeIds: ["RM-205","RM-089","RM-056","RM-090"] },
+      { id: "pep-sow-mismatch",          label: "PEP · SoW mismatch",              modeIds: ["RM-218","RM-027","RM-034","RM-263"] },
+      { id: "structuring-near-threshold",label: "Structuring · near threshold",    modeIds: ["RM-156","RM-143","RM-078","RM-056"] },
+      { id: "tbml-over-invoice",         label: "TBML · over-invoice",             modeIds: ["RM-178","RM-045","RM-089","RM-263"] },
+      { id: "eocn-confirmed-ffr",        label: "EOCN · confirmed (FFR)",          modeIds: ["RM-102","RM-115","RM-128","RM-421","RM-425","RM-427"] },
+      { id: "ubo-opaque-chain",          label: "UBO · opaque chain",              modeIds: ["RM-115","RM-128","RM-089","RM-102"] },
+      { id: "full-dpms-onboarding",      label: "Full DPMS onboarding",            modeIds: ["RM-045","RM-012","RM-115","RM-089","RM-102","RM-192","RM-426","RM-421","RM-423","RM-427","RM-428"] },
+    ];
+
+    // Anchor set (trimmed for demo — full set in web/lib/data/anchors.ts)
+    const ANCHORS = [
+      { id: "anchor-fatf-r-10",              family: "FATF",        citation: "FATF R.10" },
+      { id: "anchor-fatf-r-11",              family: "FATF",        citation: "FATF R.11" },
+      { id: "anchor-fatf-r-12",              family: "FATF",        citation: "FATF R.12" },
+      { id: "anchor-fatf-r-13",              family: "FATF",        citation: "FATF R.13" },
+      { id: "anchor-fatf-r-15",              family: "FATF",        citation: "FATF R.15" },
+      { id: "anchor-fatf-r-16",              family: "FATF",        citation: "FATF R.16" },
+      { id: "anchor-fatf-r-20",              family: "FATF",        citation: "FATF R.20" },
+      { id: "anchor-fatf-r-21",              family: "FATF",        citation: "FATF R.21" },
+      { id: "anchor-fatf-r-22",              family: "FATF",        citation: "FATF R.22" },
+      { id: "anchor-fatf-r-24",              family: "FATF",        citation: "FATF R.24" },
+      { id: "anchor-fatf-r-25",              family: "FATF",        citation: "FATF R.25" },
+      { id: "anchor-fdl-10-2025-art-15",     family: "UAE-FDL",     citation: "FDL 10/2025 Art.15" },
+      { id: "anchor-fdl-10-2025-art-16",     family: "UAE-FDL",     citation: "FDL 10/2025 Art.16" },
+      { id: "anchor-fdl-10-2025-art-20",     family: "UAE-FDL",     citation: "FDL 10/2025 Art.20" },
+      { id: "anchor-fdl-10-2025-art-46",     family: "UAE-FDL",     citation: "FDL 10/2025 Art.46" },
+      { id: "anchor-cabinet-res-74-2020-art-4-7",    family: "UAE-CABINET", citation: "Cabinet Res 74/2020 Art.4-7" },
+      { id: "anchor-cabinet-res-16-2021",    family: "UAE-CABINET", citation: "Cabinet Res 16/2021" },
+      { id: "anchor-cabinet-res-134-2025-art-12-14", family: "UAE-CABINET", citation: "Cabinet Res 134/2025 Art.12-14" },
+      { id: "anchor-moe-circular-3-2025",    family: "UAE-MOE",     citation: "MoE Circular 3/2025" },
+      { id: "anchor-goaml-xml-schema-v4-0",  family: "UAE-FIU",     citation: "goAML XML Schema v4.0" },
+      { id: "anchor-vara-vasp-rulebook-2024",family: "UAE-VARA",    citation: "VARA VASP Rulebook 2024" },
+      { id: "anchor-lbma-rgg-v9-step-2",     family: "LBMA",        citation: "LBMA RGG v9 Step 2" },
+      { id: "anchor-lbma-rgg-v9-step-3",     family: "LBMA",        citation: "LBMA RGG v9 Step 3" },
+      { id: "anchor-lbma-rgg-v9-step-4",     family: "LBMA",        citation: "LBMA RGG v9 Step 4" },
+      { id: "anchor-oecd-ddg-annex-ii",      family: "OECD",        citation: "OECD DDG Annex II" },
+      { id: "anchor-ofac-sdn-list",          family: "OFAC",        citation: "OFAC SDN List" },
+      { id: "anchor-unsc-1267-consolidated", family: "UN",          citation: "UNSC 1267 (Consolidated)" },
+      { id: "anchor-fdl-45-2021-art-6",      family: "PDPL",        citation: "FDL 45/2021 Art.6" },
+      { id: "anchor-fdl-45-2021-art-13",     family: "PDPL",        citation: "FDL 45/2021 Art.13" },
+    ];
+
+    // Demo-only satisfaction: each preset's mode list is interpreted as
+    // "activates these playbooks' requirements". Simplification for Pages — the
+    // Next.js app in web/ runs the real coverage engine per mode → taxonomyIds.
+    const PLAYBOOK_BY_PRESET = {
+      "cahra-gold-onboard": { satisfies: ["playbook-cahra-gold"], partial: ["playbook-dpms-onboard"] },
+      "vasp-mixer-inbound": { satisfies: ["playbook-vasp-mixer"], partial: ["playbook-ubo-opaque"] },
+      "pep-sow-mismatch": { satisfies: ["playbook-pep-edd"], partial: ["playbook-adverse-media"] },
+      "structuring-near-threshold": { satisfies: ["playbook-structuring"], partial: ["playbook-tbml"] },
+      "tbml-over-invoice": { satisfies: ["playbook-tbml"], partial: ["playbook-structuring"] },
+      "eocn-confirmed-ffr": { satisfies: ["playbook-eocn-freeze","playbook-str-filing"], partial: ["playbook-ubo-opaque"] },
+      "ubo-opaque-chain": { satisfies: ["playbook-ubo-opaque"], partial: ["playbook-dpms-onboard"] },
+      "full-dpms-onboarding": {
+        satisfies: ["playbook-dpms-onboard","playbook-cahra-gold","playbook-str-filing","playbook-eocn-freeze"],
+        partial: ["playbook-ubo-opaque","playbook-pep-edd","playbook-pdpl-processing"]
+      },
+    };
+
+    let activePreset = null;
+
+    function renderPresets() {
+      const el = document.getElementById('presets');
+      el.innerHTML = '';
+      for (const p of PRESETS) {
+        const b = document.createElement('button');
+        b.className = 'pill' + (activePreset === p.id ? ' active' : '');
+        b.textContent = p.label;
+        b.onclick = () => { activePreset = activePreset === p.id ? null : p.id; render(); };
+        el.appendChild(b);
+      }
+    }
+
+    function computeStatus(pb) {
+      if (!activePreset) return { status: 'unmet', pct: 0 };
+      const pset = PLAYBOOK_BY_PRESET[activePreset] || { satisfies: [], partial: [] };
+      if (pset.satisfies.includes(pb.id)) return { status: 'satisfied', pct: 100 };
+      if (pset.partial.includes(pb.id)) return { status: 'partial', pct: 65 };
+      return { status: 'unmet', pct: 15 };
+    }
+
+    function render() {
+      renderPresets();
+
+      // Coverage bars — approximations based on active preset
+      const preset = PRESETS.find(p => p.id === activePreset);
+      const modeCount = preset ? preset.modeIds.length : 0;
+      const sP = Math.min(Math.round(modeCount * 6),   100);
+      const rP = Math.min(Math.round(modeCount * 9),   100);
+      const aP = Math.min(Math.round(modeCount * 6),   100);
+
+      document.getElementById('cov-title').textContent = 'Coverage — ' + modeCount + ' mode' + (modeCount===1?'':'s') + ' selected';
+
+      const setBar = (prefix, pct, total) => {
+        document.getElementById(prefix + '-fill').style.width = pct + '%';
+        document.getElementById(prefix + '-pct').textContent = pct + '%';
+        document.getElementById(prefix + '-meta').textContent = Math.round(total * pct / 100) + ' / ' + total;
+      };
+      setBar('skills',    sP, SKILLS_COUNT);
+      setBar('reasoning', rP, REASONING_COUNT);
+      setBar('analysis',  aP, ANALYSIS_COUNT);
+
+      // Playbook list
+      let sat = 0, par = 0, unm = 0;
+      const activeAnchors = new Set();
+      const pbEl = document.getElementById('playbooks');
+      pbEl.innerHTML = '';
+      for (const pb of PLAYBOOKS) {
+        const { status, pct } = computeStatus(pb);
+        if (status === 'satisfied') { sat++;
+          // Simplification: activate the 2-3 anchors most associated with this playbook
+          const anchors = {
+            "playbook-dpms-onboard":         ["anchor-fatf-r-10","anchor-fatf-r-22","anchor-fatf-r-24","anchor-cabinet-res-134-2025-art-12-14","anchor-moe-circular-3-2025"],
+            "playbook-cahra-gold":           ["anchor-lbma-rgg-v9-step-2","anchor-lbma-rgg-v9-step-3","anchor-lbma-rgg-v9-step-4","anchor-oecd-ddg-annex-ii"],
+            "playbook-eocn-freeze":          ["anchor-cabinet-res-74-2020-art-4-7","anchor-unsc-1267-consolidated","anchor-ofac-sdn-list","anchor-fdl-10-2025-art-15","anchor-goaml-xml-schema-v4-0"],
+            "playbook-str-filing":           ["anchor-fatf-r-20","anchor-fatf-r-21","anchor-fdl-10-2025-art-15","anchor-fdl-10-2025-art-16","anchor-fdl-10-2025-art-46","anchor-goaml-xml-schema-v4-0"],
+            "playbook-pep-edd":              ["anchor-fatf-r-12","anchor-cabinet-res-134-2025-art-12-14"],
+            "playbook-tbml":                 ["anchor-fatf-r-20","anchor-moe-circular-3-2025"],
+            "playbook-structuring":          ["anchor-fatf-r-20","anchor-cabinet-res-134-2025-art-12-14"],
+            "playbook-vasp-mixer":           ["anchor-fatf-r-15","anchor-fatf-r-16","anchor-vara-vasp-rulebook-2024"],
+            "playbook-ubo-opaque":           ["anchor-fatf-r-24","anchor-fatf-r-25","anchor-cabinet-res-16-2021"],
+            "playbook-correspondent-nested": ["anchor-fatf-r-13"],
+            "playbook-adverse-media":        ["anchor-fatf-r-10","anchor-fatf-r-12"],
+            "playbook-pdpl-processing":      ["anchor-fdl-45-2021-art-6","anchor-fdl-45-2021-art-13","anchor-fdl-10-2025-art-20"],
+          }[pb.id] || [];
+          anchors.forEach(a => activeAnchors.add(a));
+        }
+        else if (status === 'partial') par++;
+        else unm++;
+
+        const row = document.createElement('div');
+        row.className = 'pb-row';
+        row.innerHTML = `
+          <div class="pb-head">
+            <span class="status-tag status-${status}">${status}</span>
+            <div style="flex:1; min-width: 0;">
+              <div class="pb-name">${pb.name}</div>
+              <div class="pb-sum">${pb.summary}</div>
+            </div>
+            <div class="pb-pct">${pct}%</div>
+            <span class="pb-sla">SLA ${pb.slaHours}h</span>
+          </div>`;
+        pbEl.appendChild(row);
+      }
+
+      document.getElementById('sat-count').textContent = sat;
+      document.getElementById('par-count').textContent = par;
+      document.getElementById('unm-count').textContent = unm;
+
+      const avgScore = activePreset
+        ? Math.round((sat * 100 + par * 65 + unm * 15) / PLAYBOOKS.length)
+        : 0;
+      const scoreEl = document.getElementById('cov-score');
+      scoreEl.textContent = avgScore + '%';
+      scoreEl.style.color = avgScore >= 75 ? 'var(--green)' : avgScore >= 40 ? 'var(--amber)' : 'var(--red)';
+
+      // Anchors
+      const anchEl = document.getElementById('anchors');
+      anchEl.innerHTML = '';
+      for (const a of ANCHORS) {
+        const active = activeAnchors.has(a.id);
+        const s = document.createElement('span');
+        s.className = 'anchor fam-' + a.family;
+        s.textContent = a.citation;
+        s.style.opacity = active ? '1' : '0.35';
+        if (active) { s.style.background = 'var(--green-dim)'; s.style.color = 'var(--green)'; s.style.fontWeight = '600'; }
+        anchEl.appendChild(s);
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>

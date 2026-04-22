@@ -1,0 +1,42 @@
+// Hawkeye Sterling — incident archetype library.
+// Structured incident classifications the MLRO / control function draws on
+// when an operational or compliance incident occurs. Each archetype carries
+// severity, required notifications, minimum remediation tasks, and
+// regulatory anchors.
+
+export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface Incident {
+  id: string;
+  title: string;
+  severity: IncidentSeverity;
+  description: string;
+  notify: Array<'mlro' | 'senior_management' | 'board' | 'regulator' | 'fiu' | 'data_protection_officer'>;
+  minimumRemediation: string[];
+  regulatoryAnchors: string[];
+}
+
+export const INCIDENTS: Incident[] = [
+  { id: 'inc_tipping_off_intercepted', title: 'Tipping-off egress intercepted', severity: 'high', description: 'Outbound communication with tipping-off indicators was blocked by the guard before transmission.', notify: ['mlro'], minimumRemediation: ['Preserve the blocked draft + audit-chain entry.', 'Substitute with neutral offboarding / status-only language.', 'Root-cause review: training gap vs process gap.'], regulatoryAnchors: ['FDL 20/2018 Art.25', 'Charter P4'] },
+  { id: 'inc_confirmed_sanctions_freeze', title: 'Confirmed sanctions freeze executed', severity: 'critical', description: 'Subject matched UN / OFAC / EU / UK / UAE EOCN list with two strong identifiers; assets frozen.', notify: ['mlro', 'senior_management', 'fiu', 'regulator'], minimumRemediation: ['Submit FFR via goAML within 5 business days.', 'Preserve reasoning chain + evidence in audit chain.', 'Confirm no tipping-off risk in subsequent customer comms.'], regulatoryAnchors: ['CR 74/2020 Art.4-7', 'UNSCR 1267/1373/1988'] },
+  { id: 'inc_partial_match_unresolved', title: 'Partial match unresolved (PNMR)', severity: 'high', description: 'Partial name match could not be ruled out; PNMR filed.', notify: ['mlro'], minimumRemediation: ['File PNMR via goAML within 5 business days.', 'Capture disambiguation attempts in audit chain.'], regulatoryAnchors: ['CR 74/2020'] },
+  { id: 'inc_str_filed', title: 'Suspicious transaction report filed', severity: 'high', description: 'STR filed against a customer or transaction.', notify: ['mlro'], minimumRemediation: ['Preserve supporting evidence.', 'No tipping-off in subsequent interactions.'], regulatoryAnchors: ['FATF R.20'] },
+  { id: 'inc_four_eyes_violation', title: 'Four-eyes / separation-of-duties violation', severity: 'high', description: 'Submitter and approver (or two approvers) were the same user.', notify: ['mlro', 'senior_management'], minimumRemediation: ['Roll back the impacted disposition; re-submit under valid SoD.', 'Control testing uplift for next review cycle.'], regulatoryAnchors: ['CR 134/2025 Art.19', 'Charter structural'] },
+  { id: 'inc_data_breach_subject_record', title: 'Data breach — subject record disclosed', severity: 'critical', description: 'Subject personal data disclosed to unauthorised party.', notify: ['mlro', 'data_protection_officer', 'senior_management'], minimumRemediation: ['Contain: access revocation, key rotation.', 'Notify UAE Data Office per PDPL timelines.', 'Evaluate notification to affected data subjects.', 'Incident report + lessons-learned.'], regulatoryAnchors: ['FDL 45/2021 (PDPL)'] },
+  { id: 'inc_stale_sanctions_feed', title: 'Sanctions feed stale > 24h', severity: 'high', description: 'Sanctions list freshness SLA breached for more than 24 hours.', notify: ['mlro'], minimumRemediation: ['Stand up fallback feed or manual import.', 'Re-screen all onboarded and monitored customers against the refreshed list.', 'Root-cause review.'], regulatoryAnchors: ['Charter P8'] },
+  { id: 'inc_screening_miss_root_cause', title: 'Screening miss identified in lookback', severity: 'high', description: 'Lookback review identified a subject who should have been flagged earlier.', notify: ['mlro', 'senior_management'], minimumRemediation: ['Remediate the specific case.', 'Update rule / model to catch the class.', 'Board-level reporting.'], regulatoryAnchors: ['FATF R.20'] },
+  { id: 'inc_regulator_enquiry', title: 'Regulator enquiry received', severity: 'medium', description: 'Enquiry received from MoE / FIU / foreign FIU.', notify: ['mlro', 'senior_management'], minimumRemediation: ['Acknowledge within stated SLA.', 'Preserve and produce responsive records.'], regulatoryAnchors: ['CR 134/2025'] },
+  { id: 'inc_insider_access_review_failed', title: 'Insider access review failed', severity: 'medium', description: 'Quarterly privileged-access review identifies entitlement creep or gap.', notify: ['mlro', 'senior_management'], minimumRemediation: ['Revoke stale entitlements.', 'Re-review with independent approver.'], regulatoryAnchors: ['Three Lines Model'] },
+  { id: 'inc_vendor_outage_screening', title: 'Screening-vendor outage', severity: 'high', description: 'Primary screening vendor unavailable for longer than SLA.', notify: ['mlro', 'senior_management'], minimumRemediation: ['Invoke contingency / fallback vendor.', 'Operational continuity review.'], regulatoryAnchors: [] },
+  { id: 'inc_false_positive_surge', title: 'False-positive surge', severity: 'medium', description: 'False-positive rate spikes material percentage above baseline.', notify: ['mlro'], minimumRemediation: ['Recalibrate matching thresholds.', 'Peer-group benchmark comparison.'], regulatoryAnchors: [] },
+  { id: 'inc_audit_finding_repeat', title: 'Repeat audit finding', severity: 'high', description: 'Internal / external audit finding repeats from a prior cycle.', notify: ['mlro', 'senior_management', 'board'], minimumRemediation: ['Root-cause analysis; escalate to board committee.', 'Revised remediation plan with owner + due dates.'], regulatoryAnchors: ['Three Lines Model'] },
+  { id: 'inc_sanction_regime_change', title: 'Sanction regime change', severity: 'medium', description: 'Material change (new EO, delisting, amendment) to a sanctions regime.', notify: ['mlro'], minimumRemediation: ['Refresh lists + re-screen affected portfolio.', 'Update policy references.'], regulatoryAnchors: [] },
+  { id: 'inc_regulatory_deadline_missed', title: 'Regulatory deadline missed', severity: 'critical', description: 'Mandatory filing deadline missed (e.g. 5-business-day PNMR/FFR).', notify: ['mlro', 'senior_management', 'board'], minimumRemediation: ['Self-disclose where required.', 'Root-cause analysis.', 'Process hardening + automation review.'], regulatoryAnchors: ['CR 74/2020', 'FDL 10/2025'] },
+  { id: 'inc_phishing_campaign_against_staff', title: 'Phishing campaign against staff', severity: 'medium', description: 'Credential-harvesting attempt targeting compliance / MLRO users.', notify: ['mlro', 'data_protection_officer'], minimumRemediation: ['Reset affected credentials; revoke active sessions.', 'Security awareness training refresh.'], regulatoryAnchors: [] },
+  { id: 'inc_ubo_material_change', title: 'Material UBO change not disclosed', severity: 'medium', description: 'Material change in UBO discovered by subsequent review.', notify: ['mlro'], minimumRemediation: ['Re-run UBO resolver; update record.', 'Assess EDD uplift.'], regulatoryAnchors: ['FATF R.24'] },
+  { id: 'inc_cahra_input_without_docs', title: 'CAHRA input accepted without OECD docs', severity: 'critical', description: 'Refinery accepted CAHRA-origin input without OECD Annex II evidence.', notify: ['mlro', 'senior_management', 'board'], minimumRemediation: ['Quarantine the input lot.', 'Remediate supply-chain diligence control.', 'Board-level reporting.'], regulatoryAnchors: ['OECD DDG Annex II', 'LBMA RGG'] },
+  { id: 'inc_consultant_report_adverse', title: 'Adverse consultant / audit report', severity: 'high', description: 'External consultant or audit report identifies material control deficiency.', notify: ['mlro', 'senior_management', 'board'], minimumRemediation: ['Remediation plan with owner + date.', 'Interim mitigation where possible.'], regulatoryAnchors: [] },
+  { id: 'inc_training_gap_exposed', title: 'Training gap exposed by incident', severity: 'low', description: 'Incident root-cause traces to staff lacking specific AML/CFT training.', notify: ['mlro'], minimumRemediation: ['Targeted refresher training.', 'Competency test before return to disposition duties.'], regulatoryAnchors: ['FATF R.18'] },
+];
+
+export const INCIDENT_BY_ID: Map<string, Incident> = new Map(INCIDENTS.map((i) => [i.id, i]));

@@ -1,13 +1,13 @@
 // Hawkeye Sterling — reasoning-mode registry.
 // 200 modes across 16 categories, wave 1 + wave 2.
-// Each entry is registered metadata + a stub apply() that returns an inconclusive
-// placeholder Finding. Real algorithms will be implemented mode-by-mode in Phase 7.
+// Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
+// supplies an override) or a stub apply() that returns an inconclusive placeholder Finding.
+// Real algorithms land mode-by-mode in Phase 7 — register them via MODE_OVERRIDES.
 
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
-import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
-import { WAVE4_OVERRIDES, WAVE4_NEW } from './reasoning-modes-wave4.js';
+import { MODE_OVERRIDES } from './modes/registry.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -34,7 +34,7 @@ const m = (
   apply: stubApply(id, category, faculties),
 });
 
-const WAVE_1_2_MODES: ReasoningMode[] = [
+export const REASONING_MODES: ReasoningMode[] = [
   // ── LOGIC ──────────────────────────────────────────────────────────────
   m('modus_ponens', 'Modus Ponens', 'logic', ['reasoning','inference'], 1, 'If P → Q and P, conclude Q.'),
   m('modus_tollens', 'Modus Tollens', 'logic', ['reasoning','inference'], 1, 'If P → Q and ¬Q, conclude ¬P.'),
@@ -268,29 +268,13 @@ const WAVE_1_2_MODES: ReasoningMode[] = [
   m('kyb_strict', 'Strict KYB', 'sectoral_typology', ['strong_brain'], 2, 'Enhanced entity onboarding — UBO, source-of-funds, licence validation.'),
 ];
 
-// Apply wave-3 real-implementation overrides onto the wave 1/2 stubs,
-// then append the 70+ wave-3 new modes, then apply wave-4 overrides, then
-// append wave-4 new modes.
-const WAVE3_OVERRIDE_BY_ID = new Map(WAVE3_OVERRIDES.map((m) => [m.id, m]));
-const WAVE_1_2_MODES_FINAL: ReasoningMode[] = WAVE_1_2_MODES.map(
-  (m) => WAVE3_OVERRIDE_BY_ID.get(m.id) ?? m,
-);
-
-const WAVE4_OVERRIDE_BY_ID = new Map(WAVE4_OVERRIDES.map((m) => [m.id, m]));
-
-// Apply wave-4 overrides across the whole post-wave-3 combined list.
-const WAVE_1_2_MODES_AFTER_W4: ReasoningMode[] = WAVE_1_2_MODES_FINAL.map(
-  (m) => WAVE4_OVERRIDE_BY_ID.get(m.id) ?? m,
-);
-const WAVE3_MODES_AFTER_W4: ReasoningMode[] = WAVE3_MODES.map(
-  (m) => WAVE4_OVERRIDE_BY_ID.get(m.id) ?? m,
-);
-
-export const REASONING_MODES: ReasoningMode[] = [
-  ...WAVE_1_2_MODES_AFTER_W4,
-  ...WAVE3_MODES_AFTER_W4,
-  ...WAVE4_NEW,
-];
+// Apply any real implementations registered in modes/registry.ts before the
+// registry is frozen into lookups. Stubs survive for IDs without overrides.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const override = MODE_OVERRIDES[r.id];
+  if (override) REASONING_MODES[i] = { ...r, apply: override };
+}
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
   REASONING_MODES.map((r) => [r.id, r]),
@@ -301,10 +285,3 @@ export const REASONING_MODES_BY_CATEGORY: Record<string, ReasoningMode[]> =
     (acc[r.category] ||= []).push(r);
     return acc;
   }, {} as Record<string, ReasoningMode[]>);
-
-export function countModesWithRealApply(): number {
-  // Count of modes whose apply() is a real implementation rather than the
-  // default stub. Wave 3: the 4 overrides + benford_law (registered directly
-  // in WAVE3_MODES). Wave 4: the full override list + every new wave-4 mode.
-  return WAVE3_OVERRIDES.length + 1 + WAVE4_OVERRIDES.length + WAVE4_NEW.length;
-}

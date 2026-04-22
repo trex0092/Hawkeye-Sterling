@@ -1,0 +1,40 @@
+// Hawkeye Sterling — policy library index.
+// Named policies the firm maintains. Each row gives an owner, review cadence,
+// approval body, and the charter / regulatory anchors it honours. Not the
+// policy text itself — the index.
+
+export type PolicyOwner = 'mlro' | 'compliance' | 'operations' | 'it_security' | 'data_protection_officer' | 'hr' | 'finance';
+
+export interface Policy {
+  id: string;
+  title: string;
+  owner: PolicyOwner;
+  reviewMonths: number;
+  approvedBy: 'board' | 'senior_management' | 'mlro' | 'committee';
+  anchors: string[];
+}
+
+export const POLICIES: Policy[] = [
+  { id: 'pol_aml_programme', title: 'AML / CFT / CPF Programme', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 20/2018', 'FDL 10/2025', 'CD 10/2019', 'CR 134/2025'] },
+  { id: 'pol_cdd_edd', title: 'CDD / EDD Standard', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.10/12/19', 'Wolfsberg FAQ'] },
+  { id: 'pol_sanctions', title: 'Sanctions Screening + TFS', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['CR 74/2020', 'UN 1267 et al.'] },
+  { id: 'pol_transaction_monitoring', title: 'Transaction-Monitoring Rules + Thresholds', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF RBA'] },
+  { id: 'pol_str_sar_reporting', title: 'STR / SAR / FFR / PNMR Reporting Procedure', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.20', 'CR 74/2020'] },
+  { id: 'pol_record_retention', title: 'Record Retention + Destruction', owner: 'compliance', reviewMonths: 24, approvedBy: 'senior_management', anchors: ['FDL 10/2025 Art.24', 'FDL 45/2021 (PDPL)'] },
+  { id: 'pol_ubo', title: 'Beneficial Ownership Standard', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.24/25'] },
+  { id: 'pol_pep', title: 'PEP / RCA Management', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.12', 'Wolfsberg'] },
+  { id: 'pol_training', title: 'AML/CFT Training Curriculum', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.18'] },
+  { id: 'pol_tipping_off', title: 'Tipping-off Prevention', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 20/2018 Art.25'] },
+  { id: 'pol_four_eyes', title: 'Four-eyes / Separation of Duties', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['CR 134/2025 Art.19'] },
+  { id: 'pol_pdpl_privacy', title: 'Data Protection (PDPL)', owner: 'data_protection_officer', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 45/2021 (PDPL)'] },
+  { id: 'pol_vendor_risk', title: 'Vendor / Third-Party Risk', owner: 'operations', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.17'] },
+  { id: 'pol_incident_mgmt', title: 'Incident Management', owner: 'it_security', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['Internal BCP'] },
+  { id: 'pol_bcp', title: 'Business Continuity Plan', owner: 'operations', reviewMonths: 12, approvedBy: 'board', anchors: ['Internal BCP'] },
+  { id: 'pol_whistleblowing', title: 'Whistleblowing + Non-Retaliation', owner: 'hr', reviewMonths: 24, approvedBy: 'board', anchors: ['Internal'] },
+  { id: 'pol_code_of_conduct', title: 'Code of Conduct', owner: 'hr', reviewMonths: 24, approvedBy: 'board', anchors: ['Internal'] },
+  { id: 'pol_gifts_entertainment', title: 'Gifts + Entertainment', owner: 'compliance', reviewMonths: 24, approvedBy: 'senior_management', anchors: ['Internal'] },
+  { id: 'pol_conflict_of_interest', title: 'Conflict of Interest', owner: 'compliance', reviewMonths: 12, approvedBy: 'board', anchors: ['Internal'] },
+  { id: 'pol_dpms_supply_chain', title: 'DPMS Supply-Chain Due Diligence (LBMA / OECD)', owner: 'operations', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['LBMA RGG', 'OECD DDG Annex II'] },
+];
+
+export const POLICY_BY_ID: Map<string, Policy> = new Map(POLICIES.map((p) => [p.id, p]));
