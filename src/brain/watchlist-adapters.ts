@@ -81,7 +81,7 @@ export const UAE_EOCN_ADAPTER: WatchlistAdapter = {
 export const UAE_LOCAL_TERRORIST_ADAPTER: WatchlistAdapter = {
   listId: 'uae_local_terrorist',
   format: 'pdf',
-  authoritativeUrlEnvKey: 'UAE_EOCN_URL',
+  authoritativeUrlEnvKey: 'UAE_LOCAL_TERRORIST_URL',
   parse: () => { throw new Error('Phase-2: UAE Local Terrorist List parser not yet implemented'); },
   validate: (e) => validateCommon(e),
 };
