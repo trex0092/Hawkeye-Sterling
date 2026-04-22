@@ -37,6 +37,28 @@ interface Manifest {
   integrity: Record<string, string>;
 }
 
+interface Enhanced {
+  extended: {
+    taxonomy: Record<string, number>;
+    regulatory: Record<string, number>;
+    expertise: Record<string, number>;
+  };
+  crossReferences: {
+    redFlagsByTypology: Array<{ typology: string; count: number }>;
+    jurisdictionsByRegion: Array<{ region: string; count: number }>;
+    typologyCount: number;
+    topTypologies: Array<{ id: string; title: string }>;
+  };
+  totals: {
+    catalogues: number;
+    enhancedCatalogues: number;
+    regulatoryRecords: number;
+    taxonomyRecords: number;
+    skillsRecords: number;
+    totalRecords: number;
+  };
+}
+
 interface Response {
   ok: boolean;
   manifest?: Manifest;
@@ -44,6 +66,7 @@ interface Response {
     charterDirectiveCount: number;
     catalogueStats: Record<string, number>;
   };
+  enhanced?: Enhanced;
   error?: string;
   detail?: string;
 }
@@ -51,7 +74,14 @@ interface Response {
 export default function WeaponizedBrainPage() {
   const [state, setState] = useState<
     | { status: "loading" }
-    | { status: "ready"; data: Required<Pick<Response, "manifest" | "integrity">> }
+    | {
+        status: "ready";
+        data: {
+          manifest: Manifest;
+          integrity: NonNullable<Response["integrity"]>;
+          enhanced: Enhanced | null;
+        };
+      }
     | { status: "error"; error: string }
   >({ status: "loading" });
 
@@ -60,7 +90,14 @@ export default function WeaponizedBrainPage() {
       .then((r) => r.json() as Promise<Response>)
       .then((r) => {
         if (r.ok && r.manifest && r.integrity) {
-          setState({ status: "ready", data: { manifest: r.manifest, integrity: r.integrity } });
+          setState({
+            status: "ready",
+            data: {
+              manifest: r.manifest,
+              integrity: r.integrity,
+              enhanced: r.enhanced ?? null,
+            },
+          });
         } else {
           setState({ status: "error", error: r.detail ?? r.error ?? "unknown" });
         }
@@ -108,9 +145,11 @@ export default function WeaponizedBrainPage() {
 function BrainDashboard({
   manifest,
   integrity,
+  enhanced,
 }: {
   manifest: Manifest;
   integrity: { charterDirectiveCount: number; catalogueStats: Record<string, number> };
+  enhanced: Enhanced | null;
 }) {
   const c = manifest.cognitiveCatalogue;
   return (
@@ -241,6 +280,93 @@ function BrainDashboard({
         </Grid>
       </Section>
 
+      {enhanced && (
+        <>
+          {/* Top-line enhanced totals */}
+          <Section title="Enhanced totals">
+            <div className="bg-ink-0 text-white rounded-xl p-5 flex flex-wrap gap-8 items-end">
+              <Stat label="Catalogues (core)" value={enhanced.totals.catalogues} />
+              <Stat label="Extended catalogues" value={enhanced.totals.enhancedCatalogues} />
+              <Stat label="Taxonomy records" value={enhanced.totals.taxonomyRecords} />
+              <Stat label="Regulatory records" value={enhanced.totals.regulatoryRecords} />
+              <Stat label="Skills records" value={enhanced.totals.skillsRecords} />
+              <Stat label="Total records" value={enhanced.totals.totalRecords} />
+            </div>
+          </Section>
+
+          {/* Extended catalogues — never surfaced before */}
+          <Section title="Extended · Taxonomy">
+            <Grid>
+              {Object.entries(enhanced.extended.taxonomy).map(([k, v]) => (
+                <Card key={k} title={humanize(k)} count={v} />
+              ))}
+            </Grid>
+          </Section>
+
+          <Section title="Extended · Regulatory">
+            <Grid>
+              {Object.entries(enhanced.extended.regulatory).map(([k, v]) => (
+                <Card key={k} title={humanize(k)} count={v} />
+              ))}
+            </Grid>
+          </Section>
+
+          <Section title="Extended · Expertise">
+            <Grid>
+              {Object.entries(enhanced.extended.expertise).map(([k, v]) => (
+                <Card key={k} title={humanize(k)} count={v} />
+              ))}
+            </Grid>
+          </Section>
+
+          {/* Cross-references */}
+          <Section title="Cross-references">
+            <Grid>
+              <Card
+                title="Typologies"
+                count={enhanced.crossReferences.typologyCount}
+              >
+                {enhanced.crossReferences.topTypologies.map((t) => (
+                  <LineItem key={t.id} primary={t.title} secondary={t.id} />
+                ))}
+              </Card>
+              <Card
+                title="Red flags by typology"
+                count={enhanced.crossReferences.redFlagsByTypology.reduce(
+                  (a, b) => a + b.count,
+                  0,
+                )}
+              >
+                {enhanced.crossReferences.redFlagsByTypology
+                  .slice(0, 12)
+                  .map((r) => (
+                    <LineItem
+                      key={r.typology}
+                      primary={r.typology}
+                      secondary={`${r.count}`}
+                    />
+                  ))}
+              </Card>
+              <Card
+                title="Jurisdictions by region"
+                count={enhanced.crossReferences.jurisdictionsByRegion.reduce(
+                  (a, b) => a + b.count,
+                  0,
+                )}
+              >
+                {enhanced.crossReferences.jurisdictionsByRegion.map((j) => (
+                  <LineItem
+                    key={j.region}
+                    primary={j.region}
+                    secondary={`${j.count}`}
+                  />
+                ))}
+              </Card>
+            </Grid>
+          </Section>
+        </>
+      )}
+
       {/* Integrity signature */}
       <Section title="Integrity signature">
         <div className="bg-white border border-hair-2 rounded-xl p-4">
@@ -260,6 +386,13 @@ function BrainDashboard({
       </Section>
     </>
   );
+}
+
+function humanize(key: string): string {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (m) => m.toUpperCase())
+    .trim();
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
