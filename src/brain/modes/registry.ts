@@ -13,14 +13,30 @@ import type { BrainContext, Finding } from '../types.js';
 import { META_MODE_APPLIES } from './meta.js';
 import { LOGIC_MODE_APPLIES } from './logic.js';
 import { FORENSIC_MODE_APPLIES } from './forensic.js';
+import { STATISTICAL_MODE_APPLIES } from './statistical.js';
+import { BEHAVIORAL_MODE_APPLIES } from './behavioral.js';
+import { GOVERNANCE_MODE_APPLIES } from './governance.js';
+import { DATA_QUALITY_MODE_APPLIES } from './data_quality.js';
+import { COGNITIVE_MODE_APPLIES } from './cognitive.js';
+import { TYPOLOGY_MODE_APPLIES } from './typology.js';
 import { COMPLIANCE_MODE_APPLIES } from './compliance.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
+// Spread order matters: later bundles override earlier for shared IDs.
+// COMPLIANCE_MODE_APPLIES is spread LAST so its Phase-7 domain-specific
+// implementations of ubo_tree_walk / velocity_analysis / four_eyes_stress
+// win over the generic versions in forensic / behavioral / governance.
 export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...META_MODE_APPLIES,
   ...LOGIC_MODE_APPLIES,
   ...FORENSIC_MODE_APPLIES,
+  ...STATISTICAL_MODE_APPLIES,
+  ...BEHAVIORAL_MODE_APPLIES,
+  ...GOVERNANCE_MODE_APPLIES,
+  ...DATA_QUALITY_MODE_APPLIES,
+  ...COGNITIVE_MODE_APPLIES,
+  ...TYPOLOGY_MODE_APPLIES,
   ...COMPLIANCE_MODE_APPLIES,
 };
 

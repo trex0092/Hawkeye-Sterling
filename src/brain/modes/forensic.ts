@@ -8,6 +8,81 @@
 import type {
   BrainContext, FacultyId, Finding, ReasoningCategory, Verdict,
 } from '../types.js';
+import { EntityGraph, type EdgeKind, type NodeKind } from '../entity-graph.js';
+
+// Edge kinds that count as "ownership / control" traversal for UBO walk.
+const UBO_EDGE_KINDS: readonly EdgeKind[] = ['owns', 'controls', 'shareholder_of', 'director_of'];
+
+interface UboWalkPath {
+  nodes: string[];
+  cumulativeShare: number;
+  terminated: 'natural_person' | 'cycle' | 'opaque' | 'max_depth';
+}
+
+function walkUbo(g: EntityGraph, rootId: string, maxDepth = 8): { paths: UboWalkPath[]; opaque: string[] } {
+  const paths: UboWalkPath[] = [];
+  const opaque: string[] = [];
+  const walk = (id: string, visited: Set<string>, trail: string[], share: number, depth: number): void => {
+    const node = g.node(id);
+    if (!node) {
+      paths.push({ nodes: [...trail, id], cumulativeShare: share, terminated: 'opaque' });
+      opaque.push(id);
+      return;
+    }
+    if (visited.has(id)) {
+      paths.push({ nodes: [...trail, id], cumulativeShare: share, terminated: 'cycle' });
+      return;
+    }
+    if (depth > maxDepth) {
+      paths.push({ nodes: [...trail, id], cumulativeShare: share, terminated: 'max_depth' });
+      return;
+    }
+    if (node.kind === 'person') {
+      paths.push({ nodes: [...trail, id], cumulativeShare: share, terminated: 'natural_person' });
+      return;
+    }
+    const owners = g.out(id, UBO_EDGE_KINDS);
+    if (owners.length === 0) {
+      paths.push({ nodes: [...trail, id], cumulativeShare: share, terminated: 'opaque' });
+      opaque.push(id);
+      return;
+    }
+    const next = new Set(visited).add(id);
+    for (const e of owners) {
+      const w = typeof e.weight === 'number' ? e.weight : 1;
+      walk(e.to, next, [...trail, id], share * w, depth + 1);
+    }
+  };
+  walk(rootId, new Set(), [], 1, 0);
+  return { paths, opaque: [...new Set(opaque)] };
+}
+
+function buildUboGraph(rootId: string, chain: unknown[]): EntityGraph {
+  const g = new EntityGraph();
+  g.addNode({ id: rootId, kind: 'entity', label: rootId });
+  for (const raw of chain) {
+    if (!raw || typeof raw !== 'object') continue;
+    const rec = raw as Record<string, unknown>;
+    const from = typeof rec.from === 'string' ? rec.from : rootId;
+    const to = typeof rec.to === 'string' ? rec.to
+      : typeof rec.id === 'string' ? rec.id : undefined;
+    if (!to) continue;
+    const label = typeof rec.label === 'string' ? rec.label
+      : typeof rec.name === 'string' ? rec.name : to;
+    const kind: NodeKind = rec.kind === 'person' || rec.type === 'natural_person' || rec.kind === 'individual'
+      ? 'person' : 'entity';
+    if (!g.node(from)) g.addNode({ id: from, kind: 'entity', label: from });
+    if (!g.node(to)) g.addNode({ id: to, kind, label });
+    const share = typeof rec.share === 'number' ? rec.share
+      : typeof rec.weight === 'number' ? rec.weight : undefined;
+    const edge: { from: string; to: string; kind: EdgeKind; weight?: number } = {
+      from, to, kind: 'owns',
+    };
+    if (share !== undefined) edge.weight = share;
+    g.addEdge(edge);
+  }
+  return g;
+}
 
 function findingOf(
   modeId: string,
@@ -193,8 +268,123 @@ export const linkAnalysisApply = async (ctx: BrainContext): Promise<Finding> => 
   );
 };
 
+// ── ubo_tree_walk ───────────────────────────────────────────────────────
+// Uses EntityGraph built from ctx.evidence.uboChain to walk ownership edges
+// from the subject to all natural persons. Opaque branches ⇒ ubo_opaque.
+export const uboTreeWalkApply = async (ctx: BrainContext): Promise<Finding> => {
+  const chain = ctx.evidence.uboChain;
+  if (!Array.isArray(chain) || chain.length === 0) {
+    return findingOf(
+      'ubo_tree_walk', 'compliance_framework', ['ratiocination'],
+      'inconclusive', 0, 0.4,
+      'UBO tree walk: evidence.uboChain not supplied.',
+    );
+  }
+  const rootId = ctx.subject.name || 'subject';
+  const g = buildUboGraph(rootId, chain);
+  const result = walkUbo(g, rootId);
+  const natural = result.paths.filter((p) => p.terminated === 'natural_person');
+  const opaque = result.paths.filter((p) => p.terminated === 'opaque');
+  const cycles = result.paths.filter((p) => p.terminated === 'cycle');
+  const maxDepth = result.paths.filter((p) => p.terminated === 'max_depth');
+
+  const explainedShare = natural.reduce((a, p) => a + p.cumulativeShare, 0);
+  const opaqueShare = opaque.reduce((a, p) => a + p.cumulativeShare, 0);
+
+  const verdict: Verdict = opaqueShare > 0.5 ? 'escalate'
+    : opaqueShare > 0.25 || cycles.length > 0 ? 'flag'
+    : 'clear';
+  const rationale =
+    `UBO walk from ${rootId}: ${natural.length} natural-person terminus(es) (cum. share ${(explainedShare * 100).toFixed(0)}%), ` +
+    `${opaque.length} opaque branch(es) (cum. share ${(opaqueShare * 100).toFixed(0)}%), ` +
+    `${cycles.length} cycle(s), ${maxDepth.length} max-depth truncation(s). ` +
+    `${opaqueShare > 0.25 ? 'UBO transparency is weak — charter P6 requires explicit disambiguation.' : 'UBO chain resolves to natural persons.'}`;
+  const f: Finding = {
+    modeId: 'ubo_tree_walk',
+    category: 'compliance_framework',
+    faculties: ['ratiocination'],
+    verdict,
+    score: Math.min(1, opaqueShare),
+    confidence: 0.85,
+    rationale,
+    evidence: [],
+    producedAt: Date.now(),
+  };
+  if (opaqueShare > 0.25) f.hypothesis = 'ubo_opaque';
+  return f;
+};
+
+// ── kill_chain ──────────────────────────────────────────────────────────
+// Walks a simplified ML kill chain — Placement → Layering → Integration —
+// over transaction evidence. Marks which stages have observable signals.
+export const killChainApply = async (ctx: BrainContext): Promise<Finding> => {
+  const txs = Array.isArray(ctx.evidence.transactions) ? ctx.evidence.transactions : [];
+  if (txs.length === 0) {
+    return findingOf('kill_chain', 'forensic', ['intelligence'],
+      'inconclusive', 0, 0.4, 'Kill chain: no transactions to stage.');
+  }
+  let placement = 0;  // cash-heavy, small-amount ingress
+  let layering = 0;   // transfers, swaps, cross-border
+  let integration = 0; // outflows to 'legitimate'-looking destinations
+  for (const x of txs) {
+    if (!x || typeof x !== 'object') continue;
+    const r = x as Record<string, unknown>;
+    const amt = typeof r.amount === 'number' ? r.amount : 0;
+    if (r.cash === true || r.mechanism === 'cash_deposit') placement++;
+    if (r.crossBorder === true || r.mechanism === 'wire_transfer' || r.swap === true) layering++;
+    if (amt < 0 && typeof r.destination === 'string' && (r.destination.includes('real_estate') || r.destination.includes('business') || r.legitimatePurpose === true)) integration++;
+  }
+  const stages = [placement > 0, layering > 0, integration > 0].filter(Boolean).length;
+  const verdict: Verdict = stages === 3 ? 'escalate' : stages === 2 ? 'flag' : 'clear';
+  return findingOf('kill_chain', 'forensic', ['intelligence'],
+    verdict, stages / 3, 0.85,
+    `ML kill chain: placement=${placement > 0 ? 'observed' : 'absent'} (${placement}), layering=${layering > 0 ? 'observed' : 'absent'} (${layering}), integration=${integration > 0 ? 'observed' : 'absent'} (${integration}). ${stages}/3 stages have observable signals.`);
+};
+
+// ── narrative_coherence ────────────────────────────────────────────────
+// Does the customer-stated narrative match the observed evidence?
+// evidence.statedBusiness / statedPurpose compared against transaction
+// counterparty distribution and documents.
+export const narrativeCoherenceApply = async (ctx: BrainContext): Promise<Finding> => {
+  const e = ctx.evidence as Record<string, unknown>;
+  const stated = typeof e.statedBusiness === 'string' ? e.statedBusiness.toLowerCase() : '';
+  const purpose = typeof e.statedPurpose === 'string' ? e.statedPurpose.toLowerCase() : '';
+  if (!stated && !purpose) {
+    return findingOf('narrative_coherence', 'forensic', ['deep_thinking', 'intelligence'],
+      'inconclusive', 0, 0.4,
+      'Narrative coherence: evidence.statedBusiness / statedPurpose not supplied.');
+  }
+  const txs = Array.isArray(ctx.evidence.transactions) ? ctx.evidence.transactions : [];
+  let matches = 0; let total = 0;
+  for (const x of txs) {
+    if (!x || typeof x !== 'object') continue;
+    const r = x as Record<string, unknown>;
+    const cp = typeof r.counterparty === 'string' ? r.counterparty.toLowerCase() : '';
+    const memo = typeof r.memo === 'string' ? r.memo.toLowerCase()
+      : typeof r.description === 'string' ? r.description.toLowerCase() : '';
+    total++;
+    const blob = cp + ' ' + memo;
+    if ((stated && blob.includes(stated.split(' ')[0] ?? '')) ||
+        (purpose && blob.includes(purpose.split(' ')[0] ?? ''))) {
+      matches++;
+    }
+  }
+  if (total === 0) {
+    return findingOf('narrative_coherence', 'forensic', ['deep_thinking', 'intelligence'],
+      'inconclusive', 0, 0.4, 'Narrative coherence: no transactions to cross-check.');
+  }
+  const rate = matches / total;
+  const verdict: Verdict = rate < 0.2 ? 'escalate' : rate < 0.5 ? 'flag' : 'clear';
+  return findingOf('narrative_coherence', 'forensic', ['deep_thinking', 'intelligence'],
+    verdict, 1 - rate, 0.8,
+    `Narrative coherence: ${matches}/${total} transactions reference the stated business / purpose ("${stated || purpose}"). ${rate < 0.5 ? 'Stated activity diverges from observed activity — escalate for explanation.' : 'Stated activity broadly matches observed activity.'}`);
+};
+
 export const FORENSIC_MODE_APPLIES = {
   timeline_reconstruction: timelineReconstructionApply,
   evidence_graph: evidenceGraphApply,
   link_analysis: linkAnalysisApply,
+  ubo_tree_walk: uboTreeWalkApply,
+  kill_chain: killChainApply,
+  narrative_coherence: narrativeCoherenceApply,
 } as const;
