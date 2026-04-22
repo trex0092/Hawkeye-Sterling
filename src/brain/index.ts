@@ -88,28 +88,7 @@ export * from './mlro-context-builder.js';
 export * from './mlro-charter-diff.js';
 export * from './mlro-telemetry.js';
 export * from './mlro-peer-benchmark.js';
-export * from './mlro-capabilities.generated.js';
-export * from './mlro-red-flags-taxonomy.generated.js';
-export * from './entity-graph.js';
-export * from './smurfing-detector.js';
-export * from './evidence-corroboration.js';
-export * from './investigation-timeline.js';
-export * from './sanction-delta.js';
-export * from './cross-regime-conflict.js';
-export * from './outcome-feedback.js';
 export * from './redactor.js';
-export * from './fusion.js';
-export * from './introspection.js';
-export {
-  MODE_OVERRIDES,
-  registerModeOverride,
-  listImplementedModeIds,
-  implementationCoverage,
-  type ModeApply,
-} from './modes/registry.js';
-export { META_MODE_APPLIES } from './modes/meta.js';
-export { LOGIC_MODE_APPLIES } from './modes/logic.js';
-export { FORENSIC_MODE_APPLIES } from './modes/forensic.js';
 export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
