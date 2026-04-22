@@ -141,7 +141,7 @@ function ScreeningTab({
   adverseMedia,
 }: {
   state: ReturnType<typeof useQuickScreen>;
-  adverseMedia?: AdverseMediaMatch;
+  adverseMedia?: AdverseMediaMatch | undefined;
 }) {
   const title = (
     <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">

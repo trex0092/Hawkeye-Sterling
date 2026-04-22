@@ -10,8 +10,7 @@ import type {
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
-// @ts-expect-error — JS import without bundled .d.ts; types pinned via runtime cast below.
-import { quickScreen as brainQuickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as brainQuickScreen } from "../../../../dist/src/brain/quick-screen.js";
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
