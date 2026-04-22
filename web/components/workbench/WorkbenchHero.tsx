@@ -8,7 +8,7 @@ export function WorkbenchHero() {
         Deep <em className="italic text-brand">reasoning.</em>
       </h1>
       <p className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
-        <strong>690 modes · 10 faculties · charter-gated.</strong> Multi-perspective pipeline
+        <strong>1080 modes · 15 faculties · charter-gated.</strong> Multi-perspective pipeline
         (Sonnet executor → Opus advisor) with full reasoning chain persistence. Every verdict
         traced to the modes that produced it.
       </p>

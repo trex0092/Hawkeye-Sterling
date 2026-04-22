@@ -84,7 +84,7 @@ export function NewScreeningForm({
   return (
     <div className="bg-white border border-hair-2 rounded-xl overflow-hidden grid" style={{ gridTemplateColumns: "260px 1fr" }}>
       {/* ── Left: Screening settings ────────────────────────────── */}
-      <aside className="bg-bg-1 border-r border-hair-2 p-4">
+      <aside className="bg-transparent border-r border-hair p-4">
         <SettingsHeading>Screening settings</SettingsHeading>
 
         <SettingsGroup label="Entity type">
@@ -411,7 +411,7 @@ export function NewScreeningForm({
 }
 
 const inputCls =
-  "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand focus:bg-white";
+  "w-full bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand focus:bg-white";
 
 function SettingsHeading({ children }: { children: React.ReactNode }) {
   return (
