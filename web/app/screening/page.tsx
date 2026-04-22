@@ -7,6 +7,10 @@ import { ScreeningHero } from "@/components/screening/ScreeningHero";
 import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
 import { SubjectDetailPanel } from "@/components/screening/SubjectDetailPanel";
+import {
+  NewScreeningForm,
+  type ScreeningFormData,
+} from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import type { FilterKey, Subject } from "@/lib/types";
 
@@ -58,19 +62,29 @@ function nextSubjectId(existing: Subject[]): string {
   return `HS-${n}`;
 }
 
-function buildSubject(name: string, existing: Subject[]): Subject {
+function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
   const id = nextSubjectId(existing);
   const badgeNum = id.replace(/^HS-/, "").slice(-5);
+  const country =
+    data.entityType === "individual"
+      ? (data.countryLocation ?? data.citizenship ?? "—")
+      : (data.registeredCountry ?? "—");
+  const metaBits: string[] = [];
+  if (data.group) metaBits.push(data.group);
+  if (data.alternateNames.length > 0)
+    metaBits.push(`aliases: ${data.alternateNames.join(", ")}`);
+  if (data.ongoingScreening) metaBits.push("ongoing screening ON");
   return {
     id,
     badge: badgeNum,
     badgeTone: "violet",
-    name,
-    meta: "New subject · awaiting enrichment",
-    country: "—",
-    jurisdiction: "—",
-    type: "Individual · UBO",
-    entityType: "individual",
+    name: data.name.trim(),
+    ...(data.alternateNames.length > 0 ? { aliases: data.alternateNames } : {}),
+    meta: metaBits.join(" · ") || "new subject",
+    country: country.toUpperCase().slice(0, 20),
+    jurisdiction: country.toUpperCase().slice(0, 6),
+    type: data.entityType === "individual" ? "Individual · UBO" : "Corporate · Supplier",
+    entityType: data.entityType,
     riskScore: 0,
     status: "active",
     cddPosture: "CDD",
@@ -78,8 +92,15 @@ function buildSubject(name: string, existing: Subject[]): Subject {
     exposureAED: "0",
     slaNotify: "+72h 00m",
     mostSerious: "—",
-    openedAgo: "just now",
+    openedAgo: formatDDMMYY(new Date()),
   };
+}
+
+function formatDDMMYY(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 export default function ScreeningPage() {
@@ -90,11 +111,6 @@ export default function ScreeningPage() {
     SUBJECTS[0]?.id ?? null,
   );
   const [formOpen, setFormOpen] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [formEntityType, setFormEntityType] = useState<
-    "individual" | "organisation"
-  >("individual");
-  const [formJurisdiction, setFormJurisdiction] = useState("");
 
   const deferredQuery = useDeferredValue(query);
 
@@ -116,31 +132,22 @@ export default function ScreeningPage() {
     [subjects, selectedId],
   );
 
-  const handleNewScreening = () => {
-    setFormOpen((open) => !open);
-  };
+  const suggestedCaseId = useMemo(
+    () => nextSubjectId(subjects).replace(/^HS-/, "CAS-"),
+    [subjects],
+  );
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = formName.trim();
-    if (!name) return;
+  const handleSubmit = (data: ScreeningFormData, screen: boolean) => {
     setSubjects((prev) => {
-      const subject = buildSubject(name, prev);
-      subject.entityType = formEntityType;
-      subject.type =
-        formEntityType === "individual" ? "Individual · UBO" : "Corporate · Supplier";
-      const j = formJurisdiction.trim().toUpperCase();
-      if (j) {
-        subject.jurisdiction = j;
-        subject.country = j;
-      }
+      const subject = buildSubject(data, prev);
       setSelectedId(subject.id);
       return [subject, ...prev];
     });
-    setFormName("");
-    setFormJurisdiction("");
-    setFormEntityType("individual");
     setFormOpen(false);
+    // `screen` vs save distinction: both add to the queue; screening auto-runs
+    // via useQuickScreen in the detail panel. A future enhancement could defer
+    // auto-screening when the user chose Save.
+    void screen;
   };
 
   const handleDelete = (id: string) => {
@@ -163,7 +170,7 @@ export default function ScreeningPage() {
       <Header />
       <div
         className="grid min-h-[calc(100vh-54px)]"
-        style={{ gridTemplateColumns: "220px 1fr 360px" }}
+        style={{ gridTemplateColumns: selected && !formOpen ? "220px 1fr 360px" : "220px 1fr" }}
       >
         <Sidebar
           filters={QUEUE_FILTERS}
@@ -180,67 +187,17 @@ export default function ScreeningPage() {
           <ScreeningToolbar
             query={query}
             onQueryChange={setQuery}
-            onNewScreening={handleNewScreening}
+            onNewScreening={() => setFormOpen((o) => !o)}
           />
           {formOpen && (
-            <form
-              onSubmit={handleFormSubmit}
-              className="mb-4 bg-white border border-hair-2 rounded-lg p-4 flex items-end gap-3 flex-wrap"
-            >
-              <div className="flex-1 min-w-[220px]">
-                <label className="block text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">
-                  Subject name
-                </label>
-                <input
-                  autoFocus
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Luisa Fernanda Gómez"
-                  className="w-full px-3 py-2 border border-hair-2 rounded text-13 bg-white focus:outline-none focus:border-brand"
-                />
-              </div>
-              <div>
-                <label className="block text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">
-                  Type
-                </label>
-                <select
-                  value={formEntityType}
-                  onChange={(e) =>
-                    setFormEntityType(e.target.value as "individual" | "organisation")
-                  }
-                  className="px-3 py-2 border border-hair-2 rounded text-13 bg-white focus:outline-none focus:border-brand"
-                >
-                  <option value="individual">Individual</option>
-                  <option value="organisation">Organisation</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">
-                  Jurisdiction
-                </label>
-                <input
-                  value={formJurisdiction}
-                  onChange={(e) => setFormJurisdiction(e.target.value)}
-                  placeholder="e.g. AE"
-                  maxLength={6}
-                  className="w-[100px] px-3 py-2 border border-hair-2 rounded text-13 bg-white focus:outline-none focus:border-brand font-mono uppercase"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!formName.trim()}
-                className="px-4 py-2 bg-ink-0 text-white font-semibold text-12.5 rounded hover:bg-ink-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Screen subject
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormOpen(false)}
-                className="px-3 py-2 text-12.5 text-ink-2 hover:text-ink-0"
-              >
-                Cancel
-              </button>
-            </form>
+            <div className="mb-6">
+              <NewScreeningForm
+                suggestedCaseId={suggestedCaseId}
+                onScreen={(data) => handleSubmit(data, true)}
+                onSave={(data) => handleSubmit(data, false)}
+                onCancel={() => setFormOpen(false)}
+              />
+            </div>
           )}
           <ScreeningTable
             subjects={filtered}
@@ -250,15 +207,7 @@ export default function ScreeningPage() {
           />
         </main>
 
-        {selected ? (
-          <SubjectDetailPanel subject={selected} />
-        ) : (
-          <aside className="bg-white border-l border-hair-2 p-6 flex items-center justify-center text-12 text-ink-2 text-center">
-            Select a subject, or click{" "}
-            <span className="mx-1 font-semibold text-ink-0">+ New screening</span>{" "}
-            to start.
-          </aside>
-        )}
+        {selected && !formOpen && <SubjectDetailPanel subject={selected} />}
       </div>
     </>
   );
