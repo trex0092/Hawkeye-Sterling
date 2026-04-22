@@ -3,7 +3,6 @@
   "version": "0.2.0",
   "private": true,
   "description": "Hawkeye Sterling — regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine. Built to surpass Refinitiv World-Check.",
-  "type": "module",
   "scripts": {
     "dev": "python3 -m http.server --directory public 8080",
     "build": "tsc",
