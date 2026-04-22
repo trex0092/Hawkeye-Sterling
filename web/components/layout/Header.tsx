@@ -4,11 +4,12 @@ import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_TABS = [
-  { label: "Workbench", href: "/" },
+  { label: "Workbench", href: "/workbench" },
   { label: "Screening", href: "/screening" },
   { label: "Batch", href: "/batch" },
   { label: "Cases", href: "/cases" },
-  { label: "Deep reasoning", href: "/workbench" },
+  { label: "Transaction monitor", href: "/transaction-monitor" },
+  { label: "STR / SAR", href: "/str-cases" },
   { label: "Weaponized", href: "/weaponized-brain" },
   { label: "Audit", href: "/audit-trail" },
 ] as const;
