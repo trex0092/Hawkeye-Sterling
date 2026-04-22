@@ -10,7 +10,10 @@
 // This is the Refinitiv-kill: the MLRO can see, live, whether the selected
 // cognitive pipeline is sufficient to discharge the obligations in play.
 
-import { PLAYBOOKS, type Playbook } from "./playbooks.js";
+import {
+  REGULATORY_PLAYBOOKS,
+  type RegulatoryPlaybook,
+} from "./regulatory-playbooks.js";
 import { ANCHORS } from "./anchors.js";
 
 export interface ModeLike {
@@ -95,7 +98,7 @@ function categoryCoverage(
 }
 
 function evaluatePlaybook(
-  doc: Playbook,
+  doc: RegulatoryPlaybook,
   activated: Set<string>,
   anchorsActivated: Set<string>,
 ): PlaybookSatisfaction {
@@ -152,12 +155,12 @@ export interface ComputeCoverageInput {
   totals: { skills: number; reasoning: number; analysis: number };
   // Optional: reasoning modes carry anchor references too (future extension).
   anchorIds?: string[];
-  playbooks?: readonly Playbook[];
+  playbooks?: readonly RegulatoryPlaybook[];
   now?: () => string;
 }
 
 export function computeCoverage(input: ComputeCoverageInput): CoverageReport {
-  const playbooks = input.playbooks ?? PLAYBOOKS;
+  const playbooks = input.playbooks ?? REGULATORY_PLAYBOOKS;
   const now = input.now ?? (() => new Date().toISOString());
 
   const activated = new Set<string>();

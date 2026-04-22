@@ -9,7 +9,7 @@ import {
   slugifyTaxonomyName,
 } from "../taxonomy.js";
 import { ANCHORS, anchorsByFamily } from "../anchors.js";
-import { PLAYBOOKS, taxId } from "../playbooks.js";
+import { REGULATORY_PLAYBOOKS as PLAYBOOKS, taxId } from "../regulatory-playbooks.js";
 import { computeCoverage } from "../coverage.js";
 
 describe("taxonomy", () => {
