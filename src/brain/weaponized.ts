@@ -14,6 +14,9 @@ import { ADVERSE_MEDIA_CATEGORIES, ADVERSE_MEDIA_QUERY } from './adverse-media.j
 import { DOCTRINES, mandatoryDoctrines } from './doctrines.js';
 import { RED_FLAGS, RED_FLAGS_BY_TYPOLOGY } from './red-flags.js';
 import { TYPOLOGIES } from './typologies.js';
+import { SANCTION_REGIMES, MANDATORY_UAE_REGIMES } from './sanction-regimes.js';
+import { JURISDICTION_RISK_SEED } from './jurisdictions.js';
+import { DPMS_KPIS, DPMS_KPIS_BY_CLUSTER } from './dpms-kpis.js';
 import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
@@ -68,6 +71,22 @@ export interface WeaponizedBrainManifest {
     typologies: {
       total: number;
       ids: string[];
+    };
+    matching: {
+      methods: string[];
+    };
+    sanctionRegimes: {
+      total: number;
+      mandatoryInUAE: number;
+      byAuthority: Record<string, number>;
+    };
+    jurisdictions: {
+      total: number;
+      byFatfStatus: Record<string, number>;
+    };
+    dpmsKpis: {
+      total: number;
+      byCluster: Record<string, number>;
     };
   };
   integrity: {
@@ -124,6 +143,21 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     rfByTypology[typology] = list.length;
   }
 
+  const regimeByAuthority: Record<string, number> = {};
+  for (const r of SANCTION_REGIMES) {
+    regimeByAuthority[r.authority] = (regimeByAuthority[r.authority] ?? 0) + 1;
+  }
+
+  const jurByFatf: Record<string, number> = {};
+  for (const j of JURISDICTION_RISK_SEED) {
+    jurByFatf[j.fatf] = (jurByFatf[j.fatf] ?? 0) + 1;
+  }
+
+  const kpiByCluster: Record<string, number> = {};
+  for (const [cluster, list] of Object.entries(DPMS_KPIS_BY_CLUSTER)) {
+    kpiByCluster[cluster] = list.length;
+  }
+
   const catalogueSignature = JSON.stringify({
     faculties: faculties.map((f) => f.id).sort(),
     modes: REASONING_MODES.map((m) => m.id).sort(),
@@ -131,6 +165,9 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     doctrines: DOCTRINES.map((d) => d.id).sort(),
     redFlags: RED_FLAGS.map((rf) => rf.id).sort(),
     typologies: TYPOLOGIES.map((t) => t.id).sort(),
+    regimes: SANCTION_REGIMES.map((r) => r.id).sort(),
+    jurisdictions: JURISDICTION_RISK_SEED.map((j) => j.iso2).sort(),
+    kpis: DPMS_KPIS.map((k) => k.id).sort(),
   });
 
   return {
@@ -170,6 +207,25 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         total: TYPOLOGIES.length,
         ids: TYPOLOGIES.map((t) => t.id),
       },
+      matching: {
+        methods: [
+          'exact', 'levenshtein', 'jaro', 'jaro_winkler',
+          'soundex', 'double_metaphone', 'token_set',
+        ],
+      },
+      sanctionRegimes: {
+        total: SANCTION_REGIMES.length,
+        mandatoryInUAE: MANDATORY_UAE_REGIMES.length,
+        byAuthority: regimeByAuthority,
+      },
+      jurisdictions: {
+        total: JURISDICTION_RISK_SEED.length,
+        byFatfStatus: jurByFatf,
+      },
+      dpmsKpis: {
+        total: DPMS_KPIS.length,
+        byCluster: kpiByCluster,
+      },
     },
     integrity: {
       charterHash: fnv1a(SYSTEM_PROMPT),
@@ -204,7 +260,11 @@ export function weaponizedSystemPrompt(
         `Doctrines: ${manifest.cognitiveCatalogue.doctrines.total} (${manifest.cognitiveCatalogue.doctrines.mandatoryInUAE} mandatory in UAE).`,
         `Red flags: ${manifest.cognitiveCatalogue.redFlags.total} (high=${manifest.cognitiveCatalogue.redFlags.bySeverity.high}, medium=${manifest.cognitiveCatalogue.redFlags.bySeverity.medium}, low=${manifest.cognitiveCatalogue.redFlags.bySeverity.low}).`,
         `Typologies: ${manifest.cognitiveCatalogue.typologies.total}.`,
-        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, and typology id.',
+        `Sanction regimes: ${manifest.cognitiveCatalogue.sanctionRegimes.total} (${manifest.cognitiveCatalogue.sanctionRegimes.mandatoryInUAE} mandatory in UAE).`,
+        `Jurisdictions indexed: ${manifest.cognitiveCatalogue.jurisdictions.total}.`,
+        `DPMS KPIs: ${manifest.cognitiveCatalogue.dpmsKpis.total}.`,
+        `Matching methods available: ${manifest.cognitiveCatalogue.matching.methods.join(', ')}.`,
+        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, typology id, sanction-regime id, jurisdiction iso2, DPMS KPI id, and matching method id.',
       ].join('\n'),
     );
   }
