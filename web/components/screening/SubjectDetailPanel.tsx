@@ -48,7 +48,23 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
 
-  const barWidth = `${Math.min(subject.riskScore, 100)}%`;
+  const brainScore =
+    screening.status === "success" ? screening.result.topScore : null;
+  const brainSeverity =
+    screening.status === "success" ? screening.result.severity : null;
+  const effectiveScore = brainScore ?? subject.riskScore;
+  const barWidth = `${Math.min(effectiveScore, 100)}%`;
+
+  const brainLists =
+    screening.status === "success"
+      ? Array.from(new Set(screening.result.hits.map((h) => h.listId)))
+      : [];
+  const effectiveLists =
+    brainLists.length > 0
+      ? brainLists
+      : subject.listCoverage.length > 0
+        ? subject.listCoverage
+        : [];
 
   const showFlash = (msg: string) => {
     setFlash(msg);
@@ -108,14 +124,29 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
       <Section title="Risk score">
         <div className="flex items-baseline gap-2 mb-2">
           <span className="font-display text-36 font-normal text-brand leading-none">
-            {subject.riskScore}
+            {effectiveScore}
           </span>
           <span className="text-16 text-ink-3">/100</span>
+          {brainSeverity && (
+            <span className={`ml-2 text-11 font-semibold ${SEVERITY_TONE[brainSeverity]}`}>
+              {SEVERITY_LABEL[brainSeverity]}
+            </span>
+          )}
         </div>
         <div className="h-1.5 bg-bg-2 rounded-sm overflow-hidden">
           <div className="h-full risk-bar-fill" style={{ width: barWidth }} />
         </div>
-        <div className="mt-2 text-11 text-ink-2">Most serious: {subject.mostSerious}</div>
+        <div className="mt-2 text-11 text-ink-2">
+          {brainScore !== null
+            ? `Brain · ${screening.status === "success" ? screening.result.hits.length : 0} hit${
+                screening.status === "success" && screening.result.hits.length === 1 ? "" : "s"
+              } across ${effectiveLists.length || 0} list${effectiveLists.length === 1 ? "" : "s"}`
+            : screening.status === "loading"
+              ? "Brain · screening…"
+              : screening.status === "error"
+                ? "Brain · unavailable"
+                : "Brain · idle"}
+        </div>
       </Section>
 
       <Section title="CDD posture">
@@ -124,18 +155,20 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         </Field>
       </Section>
 
-      <Section title="Exposure (immediate-consignment)">
-        <Field label="AED">
-          <span className="font-mono text-12 text-ink-0">{subject.exposureAED}</span>
-        </Field>
-        <Field label="Gms Khobar · Birkes · Degussa">
-          <span className="text-11 text-ink-2">Cabinet Res 134/2025 Art.12-14</span>
-        </Field>
-      </Section>
-
-      <Section title="SLA (immediate-notify)">
-        <span className="text-11 text-ink-2">{subject.slaNotify}</span>
-      </Section>
+      {effectiveLists.length > 0 && (
+        <Section title="List coverage">
+          <div className="flex flex-wrap gap-1">
+            {effectiveLists.map((l) => (
+              <span
+                key={l}
+                className="inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10.5 font-medium tracking-wide-2 bg-violet-dim text-violet"
+              >
+                {l}
+              </span>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <div className="mb-6">
         <div className="flex gap-1 mb-4 border-b border-hair">
@@ -168,18 +201,6 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         )}
       </div>
 
-      <Section title="Linked obligations" noMargin>
-        <div className="grid gap-2">
-          <ObligationRow
-            title="Four-eyes · AML-Desk"
-            meta="Consignment · CJU-88012"
-          />
-          <ObligationRow
-            title="Evidence vault · 94 files"
-            meta="Ledger LBMA RGG v9 Step 3 · Independent audit pending"
-          />
-        </div>
-      </Section>
     </aside>
   );
 }
@@ -386,13 +407,3 @@ function PanelBtn({
   );
 }
 
-function ObligationRow({ title, meta }: { title: string; meta: string }) {
-  return (
-    <div className="flex justify-between items-center px-2.5 py-2 bg-bg-1 rounded">
-      <div>
-        <div className="text-12 font-medium text-ink-0">{title}</div>
-        <div className="text-10.5 text-ink-2 mt-0.5">{meta}</div>
-      </div>
-    </div>
-  );
-}

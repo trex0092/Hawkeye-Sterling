@@ -89,6 +89,12 @@ export default function ScreeningPage() {
   const [selectedId, setSelectedId] = useState<string | null>(
     SUBJECTS[0]?.id ?? null,
   );
+  const [formOpen, setFormOpen] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formEntityType, setFormEntityType] = useState<
+    "individual" | "organisation"
+  >("individual");
+  const [formJurisdiction, setFormJurisdiction] = useState("");
 
   const deferredQuery = useDeferredValue(query);
 
@@ -111,13 +117,30 @@ export default function ScreeningPage() {
   );
 
   const handleNewScreening = () => {
-    const name = window.prompt("Subject name (person or entity):")?.trim();
+    setFormOpen((open) => !open);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = formName.trim();
     if (!name) return;
     setSubjects((prev) => {
       const subject = buildSubject(name, prev);
+      subject.entityType = formEntityType;
+      subject.type =
+        formEntityType === "individual" ? "Individual · UBO" : "Corporate · Supplier";
+      const j = formJurisdiction.trim().toUpperCase();
+      if (j) {
+        subject.jurisdiction = j;
+        subject.country = j;
+      }
       setSelectedId(subject.id);
       return [subject, ...prev];
     });
+    setFormName("");
+    setFormJurisdiction("");
+    setFormEntityType("individual");
+    setFormOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -159,6 +182,66 @@ export default function ScreeningPage() {
             onQueryChange={setQuery}
             onNewScreening={handleNewScreening}
           />
+          {formOpen && (
+            <form
+              onSubmit={handleFormSubmit}
+              className="mb-4 bg-white border border-hair-2 rounded-lg p-4 flex items-end gap-3 flex-wrap"
+            >
+              <div className="flex-1 min-w-[220px]">
+                <label className="block text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">
+                  Subject name
+                </label>
+                <input
+                  autoFocus
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="e.g. Luisa Fernanda Gómez"
+                  className="w-full px-3 py-2 border border-hair-2 rounded text-13 bg-white focus:outline-none focus:border-brand"
+                />
+              </div>
+              <div>
+                <label className="block text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">
+                  Type
+                </label>
+                <select
+                  value={formEntityType}
+                  onChange={(e) =>
+                    setFormEntityType(e.target.value as "individual" | "organisation")
+                  }
+                  className="px-3 py-2 border border-hair-2 rounded text-13 bg-white focus:outline-none focus:border-brand"
+                >
+                  <option value="individual">Individual</option>
+                  <option value="organisation">Organisation</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">
+                  Jurisdiction
+                </label>
+                <input
+                  value={formJurisdiction}
+                  onChange={(e) => setFormJurisdiction(e.target.value)}
+                  placeholder="e.g. AE"
+                  maxLength={6}
+                  className="w-[100px] px-3 py-2 border border-hair-2 rounded text-13 bg-white focus:outline-none focus:border-brand font-mono uppercase"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!formName.trim()}
+                className="px-4 py-2 bg-ink-0 text-white font-semibold text-12.5 rounded hover:bg-ink-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Screen subject
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormOpen(false)}
+                className="px-3 py-2 text-12.5 text-ink-2 hover:text-ink-0"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
           <ScreeningTable
             subjects={filtered}
             selectedId={selectedId}
