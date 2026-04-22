@@ -3,9 +3,10 @@
 interface ScreeningToolbarProps {
   query: string;
   onQueryChange: (value: string) => void;
+  onNewScreening: () => void;
 }
 
-export function ScreeningToolbar({ query, onQueryChange }: ScreeningToolbarProps) {
+export function ScreeningToolbar({ query, onQueryChange, onNewScreening }: ScreeningToolbarProps) {
   return (
     <div className="flex items-center gap-3 mb-5 px-4 py-3 bg-white border border-hair-2 rounded-lg">
       <div className="flex-1 relative">
@@ -31,7 +32,7 @@ export function ScreeningToolbar({ query, onQueryChange }: ScreeningToolbarProps
           <span>Group</span>
           <span className="text-ink-3">None</span>
         </ToolbarButton>
-        <ToolbarButton small primary>
+        <ToolbarButton small primary onClick={onNewScreening}>
           <span>+ New</span>
           <span className="font-semibold">screening</span>
         </ToolbarButton>
@@ -44,10 +45,12 @@ function ToolbarButton({
   children,
   small,
   primary,
+  onClick,
 }: {
   children: React.ReactNode;
   small?: boolean;
   primary?: boolean;
+  onClick?: () => void;
 }) {
   const base =
     "inline-flex items-center gap-1.5 rounded font-sans border transition-colors cursor-pointer";
@@ -55,5 +58,9 @@ function ToolbarButton({
   const variant = primary
     ? "bg-ink-0 text-white border-ink-0 font-semibold hover:bg-ink-1 hover:border-ink-1"
     : "bg-white text-ink-0 border-hair-2 hover:border-hair-3 hover:bg-bg-2";
-  return <button className={`${base} ${size} ${variant}`}>{children}</button>;
+  return (
+    <button type="button" onClick={onClick} className={`${base} ${size} ${variant}`}>
+      {children}
+    </button>
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { toQuickScreenSubject } from "@/lib/data/subjects";
 import type { AdverseMediaMatch, Subject } from "@/lib/types";
@@ -35,11 +35,50 @@ interface SubjectDetailPanelProps {
 
 export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
+  const [escalated, setEscalated] = useState(false);
+  const [strRaised, setStrRaised] = useState(false);
+  const [flash, setFlash] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEscalated(false);
+    setStrRaised(false);
+    setFlash(null);
+  }, [subject.id]);
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
 
   const barWidth = `${Math.min(subject.riskScore, 100)}%`;
+
+  const showFlash = (msg: string) => {
+    setFlash(msg);
+    window.setTimeout(() => setFlash(null), 2200);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(subject.id);
+      showFlash(`Copied ${subject.id}`);
+    } catch {
+      showFlash("Copy failed");
+    }
+  };
+
+  const handleEscalate = () => {
+    if (escalated) return;
+    if (window.confirm(`Escalate ${subject.name} to MLRO?`)) {
+      setEscalated(true);
+      showFlash("Escalated to MLRO");
+    }
+  };
+
+  const handleRaiseSTR = () => {
+    if (strRaised) return;
+    if (window.confirm(`Raise STR for ${subject.name}?`)) {
+      setStrRaised(true);
+      showFlash("STR raised — queued to goAML");
+    }
+  };
 
   return (
     <aside className="bg-white border-l border-hair-2 p-6 overflow-y-auto">
@@ -47,14 +86,23 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
           <div className="flex gap-1.5">
-            <PanelBtn>⎙</PanelBtn>
-            <PanelBtn>Escalate</PanelBtn>
-            <PanelBtn brand>Raise STR</PanelBtn>
+            <PanelBtn onClick={handleCopy} title="Copy subject ID">⎙</PanelBtn>
+            <PanelBtn onClick={handleEscalate} disabled={escalated}>
+              {escalated ? "Escalated" : "Escalate"}
+            </PanelBtn>
+            <PanelBtn brand onClick={handleRaiseSTR} disabled={strRaised}>
+              {strRaised ? "STR raised" : "Raise STR"}
+            </PanelBtn>
           </div>
         </div>
         <p className="text-12 text-ink-2 m-0">
           {subject.id} · {subject.type} · {subject.country} · opened {subject.openedAgo}
         </p>
+        {flash && (
+          <div className="mt-2 text-11 text-green font-medium" role="status">
+            {flash}
+          </div>
+        )}
       </div>
 
       <Section title="Risk score">
@@ -307,16 +355,35 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function PanelBtn({
   children,
   brand,
+  onClick,
+  disabled,
+  title,
 }: {
   children: React.ReactNode;
   brand?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  title?: string;
 }) {
   const base =
-    "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium cursor-pointer transition-colors";
+    "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium transition-colors";
   const variant = brand
     ? "bg-brand border-brand text-white font-semibold hover:bg-brand-hover"
     : "bg-white border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2";
-  return <button className={`${base} ${variant}`}>{children}</button>;
+  const interact = disabled
+    ? "opacity-60 cursor-not-allowed"
+    : "cursor-pointer";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`${base} ${variant} ${interact}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 function ObligationRow({ title, meta }: { title: string; meta: string }) {

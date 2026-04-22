@@ -29,7 +29,6 @@ export function Header() {
             H
           </span>
           <span>Hawkeye Sterling</span>
-          <span className="text-11 text-ink-3 font-normal ml-1">v5.2</span>
         </a>
 
         <div className="flex gap-0.5 ml-8">
@@ -55,10 +54,6 @@ export function Header() {
           <span className="flex items-center gap-1">
             <span className="font-semibold">14:27:23</span>
             <span className="text-ink-3">GST</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="text-ink-3">sess_</span>
-            <span className="font-mono font-semibold">a7f1b3c6</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-green" />
