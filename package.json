@@ -12,6 +12,7 @@
     "brain:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/index.js').then(m=>m.auditBrain())\"",
     "extract:prefixes": "node scripts/extract-prefixes.cjs > src/brain/mlro-prefixes.generated.ts",
     "export:taxonomies": "node scripts/export-taxonomies.cjs",
+    "gen:skills-doc": "tsc && node scripts/gen-skills-doc.mjs",
     "server:brain-reason": "tsc && node server/brain-reason.mjs"
   },
   "devDependencies": {

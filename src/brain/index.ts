@@ -102,3 +102,18 @@ export {
   type WeaponizedBrainManifest,
   type WeaponizedSystemPromptOptions,
 } from './weaponized.js';
+export {
+  SKILLS,
+  SKILLS_BY_ID,
+  SKILLS_BY_DOMAIN,
+  SKILLS_BY_LAYER,
+  SKILLS_DOMAIN_COUNTS,
+  SKILLS_LAYER_COUNTS,
+  inferDomain,
+  skillsCatalogueSummary,
+  skillsCatalogueSignature,
+  type Skill,
+  type SkillDomain,
+  type SkillLayer,
+  type SkillsSummaryOptions,
+} from './skills-catalogue.js';

@@ -24,6 +24,15 @@ import { REDLINES } from './redlines.js';
 import { FATF_RECOMMENDATIONS } from './fatf-index.js';
 import { DISPOSITIONS } from './dispositions.js';
 import {
+  SKILLS,
+  SKILLS_DOMAIN_COUNTS,
+  SKILLS_LAYER_COUNTS,
+  skillsCatalogueSignature,
+  skillsCatalogueSummary,
+  type SkillDomain,
+  type SkillLayer,
+} from './skills-catalogue.js';
+import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
   OUTPUT_SECTIONS,
@@ -118,6 +127,11 @@ export interface WeaponizedBrainManifest {
       total: number;
       ids: string[];
     };
+    skills: {
+      total: number;
+      byLayer: Record<SkillLayer, number>;
+      byDomain: Record<SkillDomain, number>;
+    };
   };
   integrity: {
     charterHash: string;
@@ -204,6 +218,7 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     redlines: REDLINES.map((r) => r.id).sort(),
     fatf: FATF_RECOMMENDATIONS.map((r) => r.id).sort(),
     dispositions: DISPOSITIONS.map((d) => d.code).sort(),
+    skills: JSON.parse(skillsCatalogueSignature()),
   });
 
   return {
@@ -286,6 +301,11 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         total: DISPOSITIONS.length,
         ids: DISPOSITIONS.map((d) => d.code),
       },
+      skills: {
+        total: SKILLS.length,
+        byLayer: SKILLS_LAYER_COUNTS as Record<SkillLayer, number>,
+        byDomain: SKILLS_DOMAIN_COUNTS as Record<SkillDomain, number>,
+      },
     },
     integrity: {
       charterHash: fnv1a(SYSTEM_PROMPT),
@@ -298,6 +318,14 @@ export interface WeaponizedSystemPromptOptions {
   taskRole?: string;
   audience?: string;
   includeCatalogueSummary?: boolean;
+  /**
+   * Inject the MLRO / compliance skills catalogue summary. Default true.
+   * When `includeSkillsFullList` is also true, every skill id + label + domain
+   * + layer is dumped into the prompt (adds ~400 lines; use only when the
+   * caller needs per-skill citation).
+   */
+  includeSkillsCatalogue?: boolean;
+  includeSkillsFullList?: boolean;
 }
 
 export function weaponizedSystemPrompt(
@@ -331,6 +359,21 @@ export function weaponizedSystemPrompt(
         `FATF recommendations indexed: ${manifest.cognitiveCatalogue.fatf.total}.`,
         `Disposition codes: ${manifest.cognitiveCatalogue.dispositions.total}.`,
         'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, typology id, sanction-regime id, jurisdiction iso2, CAHRA status, DPMS KPI id, threshold id, playbook id, redline id, FATF recommendation id, disposition code, matching method id, and evidence id. Training-data evidence must carry the stale-warning. Any risk score must state methodology + inputs + weights + gaps (P9). Any outbound customer-facing text must pass the tipping-off guard (P4). Final narratives must pass the observable-facts linter (P3, P5).',
+      ].join('\n'),
+    );
+  }
+
+  if (opts.includeSkillsCatalogue ?? true) {
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'SKILLS CATALOGUE — YOU EMBODY EVERY ONE OF THESE',
+        '================================================================================',
+        '',
+        skillsCatalogueSummary(
+          opts.includeSkillsFullList ? { includeFullList: true } : {},
+        ),
       ].join('\n'),
     );
   }
