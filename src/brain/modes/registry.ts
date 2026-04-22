@@ -13,6 +13,7 @@ import type { BrainContext, Finding } from '../types.js';
 import { META_MODE_APPLIES } from './meta.js';
 import { LOGIC_MODE_APPLIES } from './logic.js';
 import { FORENSIC_MODE_APPLIES } from './forensic.js';
+import { COMPLIANCE_MODE_APPLIES } from './compliance.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
@@ -20,6 +21,7 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...META_MODE_APPLIES,
   ...LOGIC_MODE_APPLIES,
   ...FORENSIC_MODE_APPLIES,
+  ...COMPLIANCE_MODE_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */

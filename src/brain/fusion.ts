@@ -28,15 +28,15 @@ const CONFLICTS_RETURNED_MAX = 12;
 
 export interface FuseOptions {
   /** Resolves finding.evidence[] IDs to EvidenceItem for credibility/freshness attenuation. */
-  evidenceIndex?: Map<string, EvidenceItem>;
+  evidenceIndex?: Map<string, EvidenceItem> | undefined;
   /** Prior P(primaryHypothesis) used as the starting probability for Bayesian update. */
-  prior?: number;
+  prior?: number | undefined;
   /** Primary hypothesis whose posterior drives the outcome. Defaults to 'illicit_risk'. */
-  primaryHypothesis?: Hypothesis;
+  primaryHypothesis?: Hypothesis | undefined;
   /** Evidence older than this is treated as stale and its contribution is halved. */
-  maxStalenessDays?: number;
+  maxStalenessDays?: number | undefined;
   /** |Δscore| threshold between contributing findings to register as a conflict. */
-  conflictScoreThreshold?: number;
+  conflictScoreThreshold?: number | undefined;
 }
 
 export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): FusionResult {

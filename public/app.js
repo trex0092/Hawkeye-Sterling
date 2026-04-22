@@ -581,6 +581,27 @@ function bindAdvisor() {
 
   let runTicker = 0;
 
+  // Real backend call to /api/brain-reason. Falls back to local simulation
+  // on error (offline, no server, HTTP 503, etc.). Configurable endpoint
+  // via localStorage key `hawkeye.api.brainReason` (default :8081/api/brain-reason).
+  async function callBrainReason(payload) {
+    const endpoint = (function () {
+      try { return localStorage.getItem('hawkeye.api.brainReason') || 'http://localhost:8081/api/brain-reason'; }
+      catch (_) { return 'http://localhost:8081/api/brain-reason'; }
+    })();
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) return { ok: false, error: 'HTTP ' + res.status };
+      return await res.json();
+    } catch (err) {
+      return { ok: false, error: (err && err.message) || String(err) };
+    }
+  }
+
   runBtn?.addEventListener('click', async () => {
     const q = (question?.value || '').trim();
     if (!q) { question?.focus(); return; }
@@ -598,55 +619,107 @@ function bindAdvisor() {
     runTicker = setInterval(() => tickBudget(performance.now() - t0), 80);
     const safeFinish = () => clearInterval(runTicker);
 
-    const executorDelay = currentMode === 'speed' ? 900 : currentMode === 'balanced' ? 0 : 1200;
-    const advisorDelay  = currentMode === 'speed' ? 0   : currentMode === 'balanced' ? 1500 : 1000;
+    setState('thinking');
+    execStatus.textContent = 'running';
+    advStatus.textContent = currentMode === 'multi_perspective' ? 'waiting' : (currentMode === 'speed' ? 'skipped' : 'running');
 
-    if (executorDelay) {
-      setState('thinking');
-      execStatus.textContent = 'running';
-      advStatus.textContent = currentMode === 'multi_perspective' ? 'waiting' : 'skipped';
-      await sleep(executorDelay);
-      const executorBody = [
-        `SUBJECT_IDENTIFIERS · captured from form + audit chain.`,
-        `SCOPE_DECLARATION · lists: ${($$('input[name="lists"]:checked')||[]).map(x=>x.value).join(', ')||'tbd'}`,
-        `FINDINGS · [draft, cited against registered mode ids].`,
-        `GAPS · stale-source warnings + missing disambiguators surfaced.`,
-        `RED_FLAGS · indicators only, cited by id.`,
-        `RECOMMENDED_NEXT_STEPS · EDD / documents / list re-check.`,
-        `AUDIT_LINE · decision support, not a decision. MLRO review required.`,
+    // Assemble the case context from the form.
+    const listsChecked = ($$('input[name="lists"]:checked') || []).map((x) => x.value);
+    const caseContext = {
+      caseId: ($('#re_record_id')?.value || 'HWK-dev-unassigned'),
+      subjectName: ($('#subject_name')?.value || $('#sb_name')?.value || 'unspecified'),
+      entityType: ($('#subject_type')?.value || 'individual'),
+      scope: { listsChecked, listVersionDates: {}, jurisdictions: [], matchingMethods: ['exact','levenshtein','jaro_winkler','double_metaphone','token_set'] },
+      evidenceIds: [],
+    };
+
+    const payload = { question: q, mode: currentMode, caseContext, audience: 'regulator' };
+    const apiResult = await callBrainReason(payload);
+
+    let execText = '';
+    let advText = '';
+    let verdictStr = 'approved';
+    let usedFallback = false;
+
+    if (apiResult && apiResult.ok && apiResult.reasoningTrail) {
+      for (const step of apiResult.reasoningTrail) {
+        if (step.actor === 'executor') {
+          appendTrailStep(steps, step.stepNo || steps.children.length + 1, 'executor', step.modelId || 'Claude Sonnet', step.body || '');
+          execText = step.body || '';
+          execStatus.textContent = 'done';
+          setCoverage('warn');
+        } else {
+          appendTrailStep(steps, step.stepNo || steps.children.length + 1, 'advisor', step.modelId || 'Claude Opus', step.body || '');
+          advText = step.body || '';
+          advStatus.textContent = 'done';
+        }
+      }
+      verdictStr = (apiResult.complianceReview && apiResult.complianceReview.advisorVerdict) || 'approved';
+      if (apiResult.partial) verdictStr = 'incomplete';
+    } else {
+      // Fall back to local simulation when the backend isn't reachable.
+      usedFallback = true;
+      await sleep(currentMode === 'speed' ? 700 : 1000);
+      execText = [
+        `SUBJECT_IDENTIFIERS · ${caseContext.subjectName} (${caseContext.entityType}) · ${caseContext.caseId}`,
+        `SCOPE_DECLARATION · lists: ${listsChecked.join(', ') || 'tbd'}`,
+        `FINDINGS · [local simulation — backend unreachable at /api/brain-reason]`,
+        `GAPS · no current source — real screening requires the server.`,
+        `RED_FLAGS · — no evidence available locally —`,
+        `RECOMMENDED_NEXT_STEPS · start server via 'npm run server:brain-reason' then re-run.`,
+        `AUDIT_LINE · decision support, not a decision. MLRO review required. (offline)`,
       ].join('\n');
-      appendTrailStep(steps, 1, 'executor', 'Claude Sonnet', executorBody);
+      appendTrailStep(steps, 1, 'executor', 'local sim', execText);
       execStatus.textContent = 'done';
       setCoverage('warn');
-    } else {
-      execStatus.textContent = 'skipped';
+      if (currentMode !== 'speed') {
+        await sleep(600);
+        advText = 'Charter P1–P10 locally probed. Verdict: APPROVED (offline, unauthoritative).';
+        appendTrailStep(steps, 2, 'advisor', 'local sim', advText);
+        advStatus.textContent = 'done';
+      }
     }
 
-    if (advisorDelay) {
-      setState('reviewing');
-      advStatus.textContent = 'running';
-      await sleep(advisorDelay);
-      const advisorBody = [
-        `Charter review: P1–P10 passes.`,
-        `Strengthened rationale; citations preserved verbatim.`,
-        `Regulator-facing narrative (FDL 10/2025 Art.20-21) composed.`,
-        `Verdict: APPROVED.`,
-      ].join('\n');
-      appendTrailStep(steps, steps.children.length + 1, 'advisor', 'Claude Opus', advisorBody);
-      advStatus.textContent = 'done';
+    // Update charter panel + coverage + auto-dispositioner chip.
+    const combinedText = execText + '\n\n' + advText;
+    if (window.hawkProbeCharter && window.hawkPaintCharter) {
+      const probed = window.hawkProbeCharter(combinedText);
+      window.hawkPaintCharter(probed);
+      setCoverage(probed.allowed ? 'true' : 'fail');
     } else {
-      advStatus.textContent = 'skipped';
+      setCoverage('true');
+    }
+
+    // Render the dispositioner chip if the panel is present.
+    const dispoChip = $('#advisor-dispo');
+    if (dispoChip) {
+      const disp = proposeLocalDisposition({ partial: verdictStr === 'incomplete', narrative: combinedText });
+      dispoChip.textContent = disp.code + ' · ' + (disp.rationale || '').slice(0, 90);
+      dispoChip.setAttribute('data-conf', disp.code === 'D05_frozen_ffr' ? 'high' : 'medium');
     }
 
     safeFinish();
-    setCoverage('true');
-    verdict.textContent = 'APPROVED';
-    verdict.setAttribute('data-verdict', 'approved');
-    setState('approved');
+    verdict.textContent = verdictStr.toUpperCase();
+    verdict.setAttribute('data-verdict', verdictStr);
+    setState(verdictStr === 'incomplete' ? 'blocked' : verdictStr === 'blocked' ? 'blocked' : 'approved');
     const elapsed = Math.round(performance.now() - t0);
     tickBudget(elapsed);
-    writeLastRun('approved', elapsed);
+    writeLastRun(verdictStr, elapsed);
+    if (usedFallback) appendTrailStep(steps, steps.children.length + 1, 'system', 'fallback', 'Backend unreachable — used local simulation. Set localStorage.hawkeye.api.brainReason to override endpoint.');
   });
+
+  // Mirror of src/brain/mlro-auto-dispositioner.ts priority logic (smaller surface).
+  function proposeLocalDisposition(input) {
+    const text = input.narrative || '';
+    if (/\btipping[- ]off\b/i.test(text) || /we (have|are) (filed|submitted)/i.test(text)) return { code: 'D08_exit_relationship', rationale: 'Tipping-off risk detected' };
+    if (/\b(confirmed|exact) (match|designation|sanctions)\b/i.test(text) || /\bfreeze\b.*\b24[- ]hour\b/i.test(text)) return { code: 'D05_frozen_ffr', rationale: 'Confirmed sanctions match' };
+    if (/\bpartial[_ ](name[_ ])?match\b/i.test(text) || /\bpnmr\b/i.test(text)) return { code: 'D06_partial_match_pnmr', rationale: 'Partial match not ruled out' };
+    if (input.partial) return { code: 'D03_edd_required', rationale: 'Partial output — collect more evidence' };
+    if (/\bstr[_ ]filed\b|\bsuspicious transaction report\b/i.test(text)) return { code: 'D07_str_filed', rationale: 'STR filing recommended' };
+    if (/\bedd\b|\benhanced due diligence\b/i.test(text)) return { code: 'D03_edd_required', rationale: 'EDD recommended' };
+    if (/\bno match\b|\bcleared\b|\bapproved\b/i.test(text)) return { code: 'D00_no_match', rationale: 'No match within declared scope' };
+    return { code: 'D03_edd_required', rationale: 'Insufficient signal — default to EDD' };
+  }
 
   // Keyboard shortcut: Cmd/Ctrl + Shift + R to open.
   document.addEventListener('keydown', (e) => {
