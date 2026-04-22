@@ -33,7 +33,10 @@ export interface ConflictReport {
   conflicts: Array<{ kind: 'verdict' | 'confidence' | 'citation'; detail: string }>;
 }
 
-const VERDICT_RX = /\b(APPROVED|BLOCKED|RETURNED[_ ]FOR[_ ]REVISION|FREEZE|ESCALATE|CLEARED|NO[ _]MATCH|MATCH|DO[ _]NOT[ _]ONBOARD|EXIT[ _]RELATIONSHIP|HEIGHTENED[ _]MONITORING|STR[ _]FILED|FFR[ _]FILED|PNMR[ _]FILED)\b/gi;
+// VERDICT_RX intentionally omits bare `MATCH` — "with EXACT match" is a
+// confidence-tier phrase, not a verdict, and including it caused every
+// confidence mention to masquerade as a verdict token.
+const VERDICT_RX = /\b(APPROVED|BLOCKED|RETURNED[_ ]FOR[_ ]REVISION|FREEZE|ESCALATE|CLEARED|NO[ _]MATCH|DO[ _]NOT[ _]ONBOARD|EXIT[ _]RELATIONSHIP|HEIGHTENED[ _]MONITORING|STR[ _]FILED|FFR[ _]FILED|PNMR[ _]FILED)\b/gi;
 const CONFIDENCE_RX = /\b(EXACT|STRONG|POSSIBLE|WEAK|NO[ _]MATCH|INCOMPLETE)\b/gi;
 const CITATION_RX = /\b(?:FDL\s+(?:No\.\s*)?\d+\/\d+(?:\s+Art\.\s*\d+(?:-\d+)?)?|Cabinet\s+(?:Decision|Resolution|Res\.?|Rel)\s+(?:No\.\s*)?\d+\/\d+(?:\s+Art\.\s*\d+(?:-\d+)?)?|CR\s+\d+\/\d+(?:\s+Art\.\s*\d+(?:-\d+)?)?|FATF\s+R\.\s*\d+|UN\s+\d{3,4}|UNSCR\s+\d+|OFAC|UK\s+OFSI|EOCN|LBMA\s+RGG|OECD\s+DDG)\b/gi;
 

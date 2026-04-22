@@ -51,12 +51,17 @@ export function isBusinessDay(d: Date, cfg: CalendarConfig = defaultUaeCalendar(
   return !isWeekend(d, cfg) && !isHoliday(d, cfg);
 }
 
+// "Within n business days" in UAE filing semantics = the first calendar day
+// ON WHICH n full business days have elapsed since `start`. So addBusinessDays
+// steps through n business days and then advances one more calendar day — the
+// returned date is the deadline boundary (start-of-that-day is the cutoff).
 export function addBusinessDays(
   start: Date,
   n: number,
   cfg: CalendarConfig = defaultUaeCalendar(),
 ): Date {
   const out = new Date(start.getTime());
+  if (n === 0) return out;
   let added = 0;
   const step = n >= 0 ? 1 : -1;
   const target = Math.abs(n);
@@ -64,6 +69,7 @@ export function addBusinessDays(
     out.setUTCDate(out.getUTCDate() + step);
     if (isBusinessDay(out, cfg)) added++;
   }
+  out.setUTCDate(out.getUTCDate() + step);
   return out;
 }
 
