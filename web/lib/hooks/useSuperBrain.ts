@@ -14,6 +14,16 @@ export interface SuperBrainResult {
     rationale?: string;
   } | null;
   adverseMedia: Array<{ categoryId: string; keyword: string; offset: number }>;
+  esg: Array<{
+    categoryId: string;
+    domain: string;
+    label: string;
+    keyword: string;
+    offset: number;
+    sasb?: string;
+    euTaxonomy?: string;
+    sdg?: string[];
+  }>;
   jurisdiction: {
     iso2: string;
     name: string;

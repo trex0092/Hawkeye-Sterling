@@ -640,6 +640,48 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
         </Field>
       )}
 
+      {r.esg.length > 0 && (
+        <Field label={`ESG signals (${r.esg.length})`}>
+          <div className="text-10.5 text-ink-3 mb-1.5">
+            Classified against SASB · EU Taxonomy · UN SDGs.
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {r.esg.map((e, i) => (
+              <div
+                key={`${e.categoryId}-${i}`}
+                className="bg-green-dim/40 border border-green/20 rounded px-2 py-1.5"
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-11 font-semibold text-green">
+                    {e.label}
+                  </span>
+                  <span className="font-mono text-10 text-ink-3" title={`keyword: ${e.keyword}`}>
+                    "{e.keyword}"
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {e.sasb && (
+                    <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-bg-2 text-ink-1">
+                      SASB · {e.sasb}
+                    </span>
+                  )}
+                  {e.euTaxonomy && (
+                    <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-blue-dim text-blue">
+                      EU Tax · {e.euTaxonomy}
+                    </span>
+                  )}
+                  {e.sdg && e.sdg.length > 0 && (
+                    <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber">
+                      SDG {e.sdg.join(", ")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Field>
+      )}
+
       {r.redlines.fired.length > 0 && (
         <Field label="Redlines fired">
           <div className="flex flex-wrap gap-1">

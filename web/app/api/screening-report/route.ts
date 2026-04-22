@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { classifyEsg } from "@/lib/data/esg";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +97,22 @@ function buildTaskNotes(b: ReportBody): string {
       lines.push(`    reason: ${h.reason}`);
     }
   }
+  // ── ESG signals (SASB · EU Taxonomy · UN SDGs) ─────────────
+  const esgText = [b.subject.name, ...(b.subject.aliases ?? [])].join(" ");
+  const esg = classifyEsg(esgText);
+  if (esg.length > 0) {
+    lines.push("");
+    lines.push(`── ESG signals (${esg.length}) ──`);
+    for (const e of esg) {
+      const frameworks: string[] = [];
+      if (e.sasb) frameworks.push(`SASB:${e.sasb}`);
+      if (e.euTaxonomy) frameworks.push(`EU-Tax:${e.euTaxonomy}`);
+      if (e.sdg?.length) frameworks.push(`SDG:${e.sdg.join(",")}`);
+      lines.push(`• [${e.domain}] ${e.label} — "${e.keyword}"`);
+      if (frameworks.length) lines.push(`    ${frameworks.join(" · ")}`);
+    }
+  }
+
   lines.push("");
   lines.push("Source: Hawkeye Sterling — https://hawkeye-sterling.netlify.app");
   return lines.join("\n");
