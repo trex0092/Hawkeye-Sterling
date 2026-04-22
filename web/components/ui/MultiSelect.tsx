@@ -1,0 +1,204 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+
+export interface MultiSelectGroup {
+  title: string;
+  options: Array<{ value: string; label: string }>;
+}
+
+interface Props {
+  groups: MultiSelectGroup[];
+  placeholder?: string;
+  value?: string[];
+  onChange?: (values: string[]) => void;
+}
+
+export function MultiSelect({
+  groups,
+  placeholder = "Select…",
+  value,
+  onChange,
+}: Props) {
+  const [internal, setInternal] = useState<Set<string>>(
+    () => new Set(value ?? []),
+  );
+  const selected = value ? new Set(value) : internal;
+  const setSelected = (next: Set<string>) => {
+    if (onChange) onChange(Array.from(next));
+    else setInternal(next);
+  };
+
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const allOptions = useMemo(
+    () => groups.flatMap((g) => g.options),
+    [groups],
+  );
+
+  const triggerLabel = useMemo(() => {
+    if (selected.size === 0) return placeholder;
+    if (selected.size === 1) {
+      const v = Array.from(selected)[0]!;
+      const o = allOptions.find((x) => x.value === v);
+      return o?.label ?? placeholder;
+    }
+    return `${selected.size} selected`;
+  }, [selected, allOptions, placeholder]);
+
+  const q = query.trim().toLowerCase();
+  const visibleGroups = useMemo(
+    () =>
+      groups
+        .map((g) => ({
+          ...g,
+          options: g.options.filter(
+            (o) => !q || o.label.toLowerCase().includes(q),
+          ),
+        }))
+        .filter((g) => g.options.length > 0),
+    [groups, q],
+  );
+
+  const toggle = (v: string) => {
+    const next = new Set(selected);
+    if (next.has(v)) next.delete(v);
+    else next.add(v);
+    setSelected(next);
+  };
+
+  return (
+    <div className="relative w-full" ref={rootRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`w-full text-left bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
+          selected.size === 0 ? "text-ink-3" : ""
+        }`}
+      >
+        <span className="flex-1 truncate">{triggerLabel}</span>
+        <span
+          className={`absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 text-10 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        >
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-hair-2 rounded-lg shadow-lg max-h-[400px] flex flex-col overflow-hidden">
+          <div className="p-2 border-b border-hair bg-bg-1">
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search…"
+              className="w-full px-2.5 py-1.5 text-12 bg-white border border-hair-2 rounded focus:outline-none focus:border-brand"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto p-1.5">
+            {visibleGroups.length === 0 ? (
+              <div className="text-11 text-ink-3 text-center py-6 uppercase tracking-wide-2 font-mono">
+                No options match
+              </div>
+            ) : (
+              visibleGroups.map((g) => (
+                <div key={g.title} className="mb-2 last:mb-0">
+                  <div className="px-2 pt-1.5 pb-1 text-10 font-mono font-semibold uppercase tracking-wide-3 text-ink-3 flex items-center gap-2">
+                    <span>{g.title}</span>
+                    <span className="flex-1 h-px bg-hair" />
+                  </div>
+                  {g.options.map((o) => {
+                    const on = selected.has(o.value);
+                    return (
+                      <button
+                        type="button"
+                        key={o.value}
+                        onClick={() => toggle(o.value)}
+                        className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-12 hover:bg-brand-dim ${
+                          on ? "text-brand-deep" : "text-ink-1"
+                        }`}
+                      >
+                        <span
+                          className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center ${
+                            on
+                              ? "bg-brand border-brand"
+                              : "border-hair-3 bg-white"
+                          }`}
+                        >
+                          {on && (
+                            <span className="text-white text-10 leading-none">
+                              ✓
+                            </span>
+                          )}
+                        </span>
+                        <span>{o.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 bg-bg-1 border-t border-hair text-10 font-mono uppercase tracking-wide-2">
+            <span className="text-ink-2">
+              <strong className="text-brand">{selected.size}</strong> selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="text-ink-3 hover:text-red"
+            >
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SingleSelectProps {
+  options: Array<{ value: string; label: string }>;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+export function SingleSelect({
+  options,
+  value,
+  onChange,
+  placeholder = "Select…",
+}: SingleSelectProps) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 focus:outline-none focus:border-brand min-h-[40px]"
+    >
+      {!options.some((o) => o.value === value) && (
+        <option value="">{placeholder}</option>
+      )}
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
