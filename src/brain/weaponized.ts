@@ -33,6 +33,18 @@ import {
   type SkillLayer,
 } from './skills-catalogue.js';
 import {
+  COGNITIVE_AMPLIFIER,
+  cognitiveAmplifierBlock,
+  type CognitiveAmplifier,
+} from './cognitive-amplifier.js';
+import {
+  META_COGNITION,
+  META_COGNITION_CATEGORY_COUNTS,
+  metaCognitionBlock,
+  metaCognitionSignature,
+  type MetaCognitionCategory,
+} from './meta-cognition.js';
+import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
   OUTPUT_SECTIONS,
@@ -132,6 +144,12 @@ export interface WeaponizedBrainManifest {
       byLayer: Record<SkillLayer, number>;
       byDomain: Record<SkillDomain, number>;
     };
+    amplifier: CognitiveAmplifier;
+    metaCognition: {
+      total: number;
+      byCategory: Record<MetaCognitionCategory, number>;
+      ids: string[];
+    };
   };
   integrity: {
     charterHash: string;
@@ -219,6 +237,12 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     fatf: FATF_RECOMMENDATIONS.map((r) => r.id).sort(),
     dispositions: DISPOSITIONS.map((d) => d.code).sort(),
     skills: JSON.parse(skillsCatalogueSignature()),
+    amplifier: {
+      version: COGNITIVE_AMPLIFIER.version,
+      percent: COGNITIVE_AMPLIFIER.percent,
+      factor: COGNITIVE_AMPLIFIER.factor,
+    },
+    metaCognition: JSON.parse(metaCognitionSignature()),
   });
 
   return {
@@ -306,6 +330,12 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         byLayer: SKILLS_LAYER_COUNTS as Record<SkillLayer, number>,
         byDomain: SKILLS_DOMAIN_COUNTS as Record<SkillDomain, number>,
       },
+      amplifier: COGNITIVE_AMPLIFIER,
+      metaCognition: {
+        total: META_COGNITION.length,
+        byCategory: META_COGNITION_CATEGORY_COUNTS as Record<MetaCognitionCategory, number>,
+        ids: META_COGNITION.map((m) => m.id),
+      },
     },
     integrity: {
       charterHash: fnv1a(SYSTEM_PROMPT),
@@ -326,6 +356,20 @@ export interface WeaponizedSystemPromptOptions {
    */
   includeSkillsCatalogue?: boolean;
   includeSkillsFullList?: boolean;
+  /**
+   * Inject the cognitive amplifier block (brain-gain directive). Default true.
+   * Disable only in low-stakes, read-only contexts where the amplified chain
+   * of reasoning would be overkill.
+   */
+  includeAmplifierBlock?: boolean;
+  /**
+   * Inject the meta-cognition primitives (counterfactual, Bayesian, steelman,
+   * red-team, pre-mortem, first-principles, analogical, self-consistency, …).
+   * Default true. These sit ABOVE the domain reasoning modes and the skills
+   * catalogue; disabling them only makes sense for unit tests of the lower
+   * layers.
+   */
+  includeMetaCognition?: boolean;
   /** Emit the charter/catalogue/composite hashes at the end of the prompt. Default true. */
   includeIntegrityBlock?: boolean;
 }
@@ -376,6 +420,32 @@ export function weaponizedSystemPrompt(
         skillsCatalogueSummary(
           opts.includeSkillsFullList ? { includeFullList: true } : {},
         ),
+      ].join('\n'),
+    );
+  }
+
+  if (opts.includeMetaCognition ?? true) {
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'META-COGNITION — REASONING ABOUT YOUR REASONING',
+        '================================================================================',
+        '',
+        metaCognitionBlock(),
+      ].join('\n'),
+    );
+  }
+
+  if (opts.includeAmplifierBlock ?? true) {
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'COGNITIVE AMPLIFICATION — BRAIN-GAIN DIRECTIVE',
+        '================================================================================',
+        '',
+        cognitiveAmplifierBlock(),
       ].join('\n'),
     );
   }
@@ -489,6 +559,10 @@ export function assertWeaponized(prompt: string): WeaponizationReport {
     { id: 'dispositions', label: 'Disposition codes line', match: /Disposition codes: \d+/ },
     { id: 'skills-catalogue', label: 'Skills catalogue header', match: 'SKILLS CATALOGUE' },
     { id: 'skills-total', label: 'Skills total line', match: /\d+ skills registered/ },
+    { id: 'meta-cognition-header', label: 'Meta-cognition header', match: 'META-COGNITION — REASONING ABOUT YOUR REASONING' },
+    { id: 'meta-cognition-total', label: 'Meta-cognition total line', match: /Meta-cognition primitives: \d+ registered/ },
+    { id: 'amplifier-header', label: 'Cognitive amplifier header', match: 'COGNITIVE AMPLIFICATION — BRAIN-GAIN DIRECTIVE' },
+    { id: 'amplifier-percent', label: 'Cognitive amplifier percent line', match: /Cognitive amplification: \+[\d,]+%/ },
     { id: 'integrity-block', label: 'Integrity block', match: 'INTEGRITY — DO NOT DRIFT' },
     { id: 'charter-hash', label: 'Charter hash emitted', match: `charterHash:   ${integrity.charterHash}` },
     { id: 'catalogue-hash', label: 'Catalogue hash emitted', match: `catalogueHash: ${integrity.catalogueHash}` },
