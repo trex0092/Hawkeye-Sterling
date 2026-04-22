@@ -19,6 +19,8 @@
   package = "@netlify/plugin-nextjs"
 
 [functions]
+  # Look for the scheduled Netlify Function(s) at the repo root.
+  directory = "netlify/functions"
   # Ensure the compiled brain is bundled with each Next.js-generated function.
   included_files = ["dist/src/brain/**/*.js", "dist/src/brain/**/*.js.map"]
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { classifyEsg } from "@/lib/data/esg";
+import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -170,6 +171,26 @@ export async function POST(req: Request): Promise<NextResponse> {
         detail: msg,
       });
     }
+    // Fire an outbound webhook in parallel. Delivery is fire-and-forget —
+    // the screening UI shouldn't block on external systems.
+    void postWebhook({
+      type:
+        body.trigger === "ongoing"
+          ? "screening.delta"
+          : "screening.completed",
+      subjectId: body.subject.id,
+      subjectName: body.subject.name,
+      severity: body.result.severity,
+      topScore: body.result.topScore,
+      newHits: body.result.hits.slice(0, 10).map((h) => ({
+        listId: h.listId,
+        listRef: h.listRef,
+        candidateName: h.candidateName,
+      })),
+      ...(payload.data.permalink_url ? { asanaTaskUrl: payload.data.permalink_url } : {}),
+      generatedAt: body.result.generatedAt,
+      source: "hawkeye-sterling",
+    });
     return respond(200, {
       ok: true,
       taskGid: payload.data.gid,
