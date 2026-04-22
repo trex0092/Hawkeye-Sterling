@@ -20,6 +20,14 @@ export * from './validator.js';
 export * from './sanction-regimes.js';
 export * from './jurisdictions.js';
 export * from './dpms-kpis.js';
+export * from './thresholds.js';
+export * from './playbooks.js';
+export * from './calendar.js';
+export * from './risk-score.js';
+export * from './case-narrative.js';
+export * from './audit-chain.js';
+export * from './ubo.js';
+export * from './entity-resolution.js';
 export * from './engine.js';
 export { auditBrain } from './audit.js';
 export {

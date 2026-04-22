@@ -18,6 +18,8 @@ import { SANCTION_REGIMES, MANDATORY_UAE_REGIMES } from './sanction-regimes.js';
 import { JURISDICTION_RISK_SEED } from './jurisdictions.js';
 import { DPMS_KPIS, DPMS_KPIS_BY_CLUSTER } from './dpms-kpis.js';
 import { CAHRA_SEED } from './cahra.js';
+import { THRESHOLDS } from './thresholds.js';
+import { PLAYBOOKS } from './playbooks.js';
 import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
@@ -92,6 +94,14 @@ export interface WeaponizedBrainManifest {
     cahra: {
       total: number;
       activeCount: number;
+    };
+    thresholds: {
+      total: number;
+      ids: string[];
+    };
+    playbooks: {
+      total: number;
+      ids: string[];
     };
   };
   integrity: {
@@ -174,6 +184,8 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     jurisdictions: JURISDICTION_RISK_SEED.map((j) => j.iso2).sort(),
     kpis: DPMS_KPIS.map((k) => k.id).sort(),
     cahra: CAHRA_SEED.map((c) => c.iso2).sort(),
+    thresholds: THRESHOLDS.map((t) => t.id).sort(),
+    playbooks: PLAYBOOKS.map((p) => p.id).sort(),
   });
 
   return {
@@ -236,6 +248,14 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         total: CAHRA_SEED.length,
         activeCount: CAHRA_SEED.filter((c) => c.status === 'active_cahra').length,
       },
+      thresholds: {
+        total: THRESHOLDS.length,
+        ids: THRESHOLDS.map((t) => t.id),
+      },
+      playbooks: {
+        total: PLAYBOOKS.length,
+        ids: PLAYBOOKS.map((p) => p.id),
+      },
     },
     integrity: {
       charterHash: fnv1a(SYSTEM_PROMPT),
@@ -275,7 +295,9 @@ export function weaponizedSystemPrompt(
         `DPMS KPIs: ${manifest.cognitiveCatalogue.dpmsKpis.total}.`,
         `Matching methods available: ${manifest.cognitiveCatalogue.matching.methods.join(', ')}.`,
         `CAHRA registry: ${manifest.cognitiveCatalogue.cahra.total} countries (${manifest.cognitiveCatalogue.cahra.activeCount} active CAHRA).`,
-        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, typology id, sanction-regime id, jurisdiction iso2, CAHRA status, DPMS KPI id, and matching method id. Evidence must be cited by evidence-id; training-data evidence must carry the stale-warning.',
+        `Thresholds: ${manifest.cognitiveCatalogue.thresholds.total} named thresholds available.`,
+        `Playbooks: ${manifest.cognitiveCatalogue.playbooks.total} MLRO procedures available.`,
+        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, typology id, sanction-regime id, jurisdiction iso2, CAHRA status, DPMS KPI id, threshold id, playbook id, and matching method id. Evidence must be cited by evidence-id; training-data evidence must carry the stale-warning. Any risk score must state methodology + inputs + weights + gaps (P9).',
       ].join('\n'),
     );
   }
