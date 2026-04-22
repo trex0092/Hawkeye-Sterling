@@ -334,9 +334,203 @@
     });
   }
 
+  // ── Presets (mirror of src/brain/mlro-pipeline-presets.ts) ──
+  var PRESETS = {
+    pp_cahra_gold_onboard: ['data','bullion_dore_drc_asm','oecd_ddg_annex','lbma_rgg_five_step','red_team','reflective'],
+    pp_vasp_mixer_inbound: ['chain_analysis','taint_propagation','vasp_travel_rule','bayesian','reflective'],
+    pp_pep_wealth_mismatch: ['data','source_triangulation','narrative_coherence','dialectic','bayesian','reflective'],
+    pp_structuring_near_threshold: ['data','velocity_analysis','spike_detection','pattern_of_life','socratic'],
+    pp_tbml_over_invoice: ['data','ucp600_discipline','vessel_ais_gap_analysis','red_team','reflective'],
+    pp_eocn_partial_match: ['source_triangulation','dialectic','counterfactual','reflective'],
+    pp_eocn_confirmed: ['data','list_walk','sanctions_regime_matrix','reflective'],
+    pp_ubo_opaque: ['data','ubo_tree_walk','ubo_nominee_directors','ubo_bearer_shares','jurisdiction_cascade','socratic'],
+    pp_corresp_nested: ['corresp_nested_bank_flow','kyb_strict','jurisdiction_cascade','red_team'],
+    pp_bec_typosquat: ['data','linguistic_forensics','pattern_of_life','reflective'],
+    pp_re_cash_shell: ['data','re_cash_purchase','ubo_tree_walk','jurisdiction_cascade','reflective'],
+    pp_tipping_off_intercept: ['red_team','reflective'],
+    pp_audit_lookback: ['audit_lookback_sample','control_effectiveness','four_eyes_compliance','statistical','reflective'],
+    pp_npo_conflict_zone: ['data','jurisdiction_cascade','source_triangulation','red_team'],
+    pp_baseline_triage: ['speed','data','reflective'],
+  };
+
+  function bindPresets() {
+    var root = $('#dr-preset-chips');
+    if (!root) return;
+    root.addEventListener('click', function (e) {
+      var btn = e.target.closest('.dr-preset');
+      if (!btn) return;
+      var id = btn.getAttribute('data-preset');
+      var chain = PRESETS[id] || [];
+      if (chain.length === 0) return;
+      root.querySelectorAll('.dr-preset').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+      selected = chain.filter(function (m) { return ALL_IDS.indexOf(m) !== -1 || ALL_IDS.length === 0; });
+      // Reflect in the list UI.
+      document.querySelectorAll('.dr-mode').forEach(function (b) {
+        b.classList.toggle('is-on', selected.indexOf(b.getAttribute('data-id')) !== -1);
+      });
+      renderSelected();
+      syncBackingSelect();
+    });
+  }
+
+  // ── Exports (JSON / Markdown / HTML) ──
+  function captureSnapshot() {
+    var mountText = '';
+    var mount = $('#deepReasoningMount');
+    if (mount) mountText = (mount.innerText || mount.textContent || '').trim();
+    return {
+      product: 'Hawkeye Sterling V2',
+      subject: (document.querySelector('#subject_name') || {}).value || '—',
+      caseId: (document.querySelector('#re_record_id') || {}).value || 'HWK-unassigned',
+      generatedAt: new Date().toISOString(),
+      selectedModes: selected.slice(),
+      mountText: mountText,
+    };
+  }
+
+  // Minimal PII redactor mirroring src/brain/redactor.ts patterns.
+  function maybeRedact(text) {
+    var on = ($('#dr-redact') || {}).checked;
+    if (!on || !text) return text;
+    return text
+      .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, function (s) { return s.replace(/(?<=.).(?=[^@]*@)/g, '*'); })
+      .replace(/\+?\d[\d\s\-()]{6,}\d/g, function (s) { return s.slice(0,3) + '*'.repeat(Math.max(3, s.length - 5)) + s.slice(-2); })
+      .replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g, function (s) { return s.slice(0,4) + '*'.repeat(Math.max(3, s.length - 8)) + s.slice(-4); })
+      .replace(/\b0x[a-fA-F0-9]{40}\b/g, function (s) { return s.slice(0,6) + '*'.repeat(Math.max(3, s.length - 10)) + s.slice(-4); })
+      .replace(/\b784[- ]?\d{4}[- ]?\d{7}[- ]?\d\b/g, '784-****-*******-*');
+  }
+
+  function downloadBlob(content, mime, filename) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 100);
+  }
+
+  function exportAs(format) {
+    var snap = captureSnapshot();
+    snap.mountText = maybeRedact(snap.mountText);
+    var stem = (snap.caseId + '_' + (snap.subject || 'subject')).replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 60);
+    if (format === 'json') {
+      downloadBlob(JSON.stringify(snap, null, 2), 'application/json', stem + '.json');
+    } else if (format === 'markdown') {
+      var md = '# Deep-Reasoning snapshot — ' + snap.caseId + '\n\n';
+      md += 'Subject: **' + snap.subject + '**  \n';
+      md += 'Generated: ' + snap.generatedAt + ' UTC  \n';
+      md += 'Modes selected: ' + (snap.selectedModes.join(', ') || '—') + '\n\n';
+      md += '## Deep-reasoning output\n\n```\n' + (snap.mountText || '(mount empty — backend not reachable)') + '\n```\n';
+      md += '\n> Decision support, not a decision. MLRO review required (FDL 10/2025 Art.20-21).\n';
+      downloadBlob(md, 'text/markdown', stem + '.md');
+    } else if (format === 'html') {
+      var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]); }); };
+      var html = '<!doctype html><html><head><meta charset="utf-8"><title>Deep reasoning — ' + esc(snap.caseId) +
+        '</title><style>body{background:#08090B;color:#E5E7EB;font:14px/1.55 system-ui;padding:24px}' +
+        'h1,h3{color:#F0ABFC}pre{background:#06070A;padding:12px;border-radius:8px;border:1px solid #1f2128;white-space:pre-wrap;font-family:"IBM Plex Mono",monospace;font-size:12.5px}' +
+        '.foot{color:#9CA3AF;margin-top:24px;border-top:1px solid #1f2128;padding-top:12px;font-size:12px}</style></head><body>' +
+        '<h1>Deep-Reasoning snapshot</h1>' +
+        '<p><strong>' + esc(snap.subject) + '</strong> · ' + esc(snap.caseId) + ' · ' + snap.generatedAt + ' UTC</p>' +
+        '<h3>Modes selected</h3><p><code>' + esc(snap.selectedModes.join(', ') || '—') + '</code></p>' +
+        '<h3>Deep-reasoning output</h3><pre>' + esc(snap.mountText || '(mount empty — backend not reachable)') + '</pre>' +
+        '<p class="foot">Decision support, not a decision. MLRO review required (FDL 10/2025 Art.20-21).</p></body></html>';
+      downloadBlob(html, 'text/html', stem + '.html');
+    }
+    appendHistory({
+      at: snap.generatedAt,
+      preset: (document.querySelector('.dr-preset.is-active') || {}).getAttribute ? document.querySelector('.dr-preset.is-active').getAttribute('data-preset') : null,
+      modes: snap.selectedModes.slice(),
+      elapsedMs: 0,
+      verdict: 'approved',
+      format: format,
+    });
+  }
+
+  function bindExports() {
+    var root = document.querySelector('.dr-exports');
+    if (!root) return;
+    root.addEventListener('click', function (e) {
+      var btn = e.target.closest('.dr-export-btn');
+      if (!btn) return;
+      exportAs(btn.getAttribute('data-export'));
+    });
+  }
+
+  // ── History (localStorage ring buffer) ──
+  var HISTORY_KEY = 'hawkeye.dr-workspace.history.v1';
+  var HISTORY_MAX = 20;
+
+  function readHistory() {
+    try { var raw = localStorage.getItem(HISTORY_KEY); var arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; }
+    catch (_) { return []; }
+  }
+  function writeHistory(xs) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(xs.slice(-HISTORY_MAX))); } catch (_) {} }
+  function appendHistory(entry) {
+    var h = readHistory();
+    h.push(entry);
+    writeHistory(h);
+    renderHistory();
+  }
+  function renderHistory() {
+    var list = $('#dr-history');
+    var count = $('#dr-history-count');
+    if (!list || !count) return;
+    var h = readHistory();
+    count.textContent = String(h.length);
+    if (h.length === 0) { list.innerHTML = '<li class="dr-history-empty">— no runs yet —</li>'; return; }
+    var html = '';
+    for (var i = h.length - 1; i >= 0; i--) {
+      var e = h[i];
+      var when = relativeWhen(e.at);
+      html += '<li>' +
+        '<span class="h-when mono">' + when + '</span>' +
+        '<span class="h-preset">' + (e.preset || '—') + '</span>' +
+        '<span class="h-modes">' + (e.modes ? e.modes.slice(0, 4).join(' · ') + (e.modes.length > 4 ? ' +' + (e.modes.length - 4) : '') : '') + '</span>' +
+        '<span class="h-verdict" data-v="' + (e.verdict || 'approved') + '">' + (e.verdict || 'approved') + '</span>' +
+        '<button type="button" class="h-replay" data-idx="' + i + '">Replay</button>' +
+        '</li>';
+    }
+    list.innerHTML = html;
+    list.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.h-replay');
+      if (!btn) return;
+      var idx = Number(btn.getAttribute('data-idx'));
+      var entry = h[idx];
+      if (!entry || !entry.modes) return;
+      selected = entry.modes.slice();
+      document.querySelectorAll('.dr-mode').forEach(function (b) {
+        b.classList.toggle('is-on', selected.indexOf(b.getAttribute('data-id')) !== -1);
+      });
+      renderSelected();
+      syncBackingSelect();
+    });
+  }
+  function relativeWhen(iso) {
+    var t = Date.parse(iso); if (isNaN(t)) return '—';
+    var s = Math.max(0, Math.floor((Date.now() - t) / 1000));
+    if (s < 60) return s + 's ago';
+    var m = Math.floor(s / 60); if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60); if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+  function bindHistoryToggle() {
+    var btn = $('#dr-history-toggle');
+    var list = $('#dr-history');
+    if (!btn || !list) return;
+    btn.addEventListener('click', function () {
+      var open = list.hidden;
+      list.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      if (open) renderHistory();
+    });
+  }
+
   function init() {
     bindSearch();
     bindClear();
+    bindPresets();
+    bindExports();
+    bindHistoryToggle();
     renderSelected();
     // Try immediately; retry a few times while deep-reasoning.js renders.
     if (!tryBootstrap()) {
@@ -350,6 +544,7 @@
       var raw = localStorage.getItem('hawkeye.dr-picker.selected');
       if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) selected = arr.slice(0, 12); }
     } catch (_) {}
+    renderHistory();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
