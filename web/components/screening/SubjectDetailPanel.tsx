@@ -111,13 +111,77 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
     }
   };
 
+  const handleDownloadReport = async () => {
+    if (screening.status !== "success") {
+      showFlash("Screening not complete yet");
+      return;
+    }
+    const payload = {
+      subject: {
+        id: subject.id,
+        name: subject.name,
+        entityType: subject.entityType,
+        jurisdiction: subject.jurisdiction,
+        ...(subject.aliases ? { aliases: subject.aliases } : {}),
+      },
+      result: {
+        topScore: screening.result.topScore,
+        severity: screening.result.severity,
+        hits: screening.result.hits.map((h) => ({
+          listId: h.listId,
+          listRef: h.listRef,
+          candidateName: h.candidateName,
+          score: h.score,
+          method: h.method,
+          ...(h.programs ? { programs: h.programs } : {}),
+        })),
+      },
+      superBrain:
+        superBrain.status === "success"
+          ? {
+              pep: superBrain.result.pep,
+              jurisdiction: superBrain.result.jurisdiction,
+              adverseMedia: superBrain.result.adverseMedia,
+              adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
+              esg: superBrain.result.esg,
+              redlines: superBrain.result.redlines,
+              composite: superBrain.result.composite,
+            }
+          : null,
+    };
+    try {
+      const res = await fetch("/api/compliance-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        showFlash("Report failed");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `hawkeye-report-${subject.id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showFlash("Report downloaded");
+    } catch {
+      showFlash("Report failed");
+    }
+  };
+
   return (
     <aside className="bg-white border-l border-hair-2 p-6 overflow-y-auto">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap">
             <PanelBtn onClick={handleCopy} title="Copy subject ID">⎙</PanelBtn>
+            <PanelBtn onClick={handleDownloadReport} title="Download MLRO report">
+              Report
+            </PanelBtn>
             <PanelBtn onClick={handleEscalate} disabled={escalated}>
               {escalated ? "Escalated" : "Escalate"}
             </PanelBtn>
