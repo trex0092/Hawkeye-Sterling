@@ -44,6 +44,14 @@ export * from './question-bank-extended.js';
 export * from './scenario-presets-extended.js';
 export * from './document-checklists.js';
 export * from './str-narratives.js';
+export * from './jurisdictions-full.js';
+export * from './watchlist-adapters.js';
+export * from './sector-rubrics.js';
+export * from './uae-free-zones.js';
+export * from './wolfsberg-cbddq.js';
+export * from './risk-appetite.js';
+export * from './hs-codes-high-risk.js';
+export * from './goaml-shapes.js';
 export * from './engine.js';
 export { auditBrain } from './audit.js';
 export {
