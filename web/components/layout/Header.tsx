@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 const NAV_TABS = [
   { label: "Workbench", href: "/" },
   { label: "Screening", href: "/screening" },
+  { label: "Batch", href: "/batch" },
   { label: "Cases", href: "/cases" },
   { label: "Deep reasoning", href: "/workbench" },
   { label: "Weaponized", href: "/weaponized-brain" },

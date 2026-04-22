@@ -11,6 +11,10 @@ export interface NewsArticle {
   keywordGroups: string[];
   esgCategories: string[];
   severity: "clear" | "low" | "medium" | "high" | "critical";
+  fuzzyScore: number;
+  fuzzyMethod: string;
+  matchedVariant?: string;
+  lang: string;
 }
 
 export interface NewsDossier {
@@ -21,6 +25,7 @@ export interface NewsDossier {
   esgDomains: string[];
   articles: NewsArticle[];
   source: "google-news-rss" | "newsapi";
+  languages: string[];
 }
 
 export type NewsSearchState =

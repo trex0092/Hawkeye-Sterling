@@ -1,0 +1,405 @@
+"use client";
+
+import { useMemo, useRef, useState } from "react";
+import { Header } from "@/components/layout/Header";
+
+interface RowResult {
+  name: string;
+  entityType?: string;
+  jurisdiction?: string;
+  topScore: number;
+  severity: string;
+  hitCount: number;
+  listCoverage: string[];
+  keywordGroups: string[];
+  esgCategories: string[];
+  durationMs: number;
+  error?: string;
+}
+
+interface BatchResponse {
+  ok: boolean;
+  summary?: {
+    total: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    clear: number;
+    errors: number;
+    totalDurationMs: number;
+  };
+  results?: RowResult[];
+  error?: string;
+}
+
+interface ParsedRow {
+  name: string;
+  aliases?: string[];
+  entityType?: "individual" | "organisation";
+  jurisdiction?: string;
+}
+
+function parseCsv(text: string): ParsedRow[] {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) return [];
+  const firstLine = lines[0] ?? "";
+  const looksHeader = /name/i.test(firstLine);
+  const rows = looksHeader ? lines.slice(1) : lines;
+  const header = looksHeader
+    ? firstLine.split(",").map((h) => h.trim().toLowerCase())
+    : null;
+  const idx = (h: string) => (header ? header.indexOf(h) : -1);
+  const iName = Math.max(idx("name"), 0);
+  const iType = idx("type");
+  const iJur = Math.max(idx("jurisdiction"), idx("country"));
+  const iAliases = idx("aliases");
+
+  return rows.map((line) => {
+    const cols = line.split(",").map((c) => c.trim());
+    const name = cols[iName] ?? "";
+    const out: ParsedRow = { name };
+    if (iType >= 0 && cols[iType]) {
+      const t = cols[iType].toLowerCase();
+      if (t === "individual" || t === "organisation" || t === "organization") {
+        out.entityType = t === "organization" ? "organisation" : (t as "individual" | "organisation");
+      }
+    }
+    if (iJur >= 0 && cols[iJur]) out.jurisdiction = cols[iJur];
+    if (iAliases >= 0 && cols[iAliases]) {
+      out.aliases = cols[iAliases].split(/;|\|/).map((a) => a.trim()).filter(Boolean);
+    }
+    return out;
+  }).filter((r) => r.name);
+}
+
+function toCsv(results: RowResult[]): string {
+  const header = [
+    "name",
+    "entityType",
+    "jurisdiction",
+    "severity",
+    "topScore",
+    "hitCount",
+    "listCoverage",
+    "keywordGroups",
+    "esgCategories",
+    "durationMs",
+    "error",
+  ].join(",");
+  const rows = results.map((r) =>
+    [
+      JSON.stringify(r.name),
+      r.entityType ?? "",
+      r.jurisdiction ?? "",
+      r.severity,
+      r.topScore,
+      r.hitCount,
+      JSON.stringify(r.listCoverage.join("|")),
+      JSON.stringify(r.keywordGroups.join("|")),
+      JSON.stringify(r.esgCategories.join("|")),
+      r.durationMs,
+      r.error ? JSON.stringify(r.error) : "",
+    ].join(","),
+  );
+  return [header, ...rows].join("\n");
+}
+
+const SEVERITY_CLS: Record<string, string> = {
+  critical: "bg-red-dim text-red",
+  high: "bg-orange-dim text-orange",
+  medium: "bg-amber-dim text-amber",
+  low: "bg-blue-dim text-blue",
+  clear: "bg-green-dim text-green",
+  error: "bg-red text-white",
+};
+
+export default function BatchPage() {
+  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [status, setStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "loading" }
+    | { kind: "done"; resp: BatchResponse }
+    | { kind: "error"; error: string }
+  >({ kind: "idle" });
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const summary = status.kind === "done" ? status.resp.summary : null;
+  const results = status.kind === "done" ? status.resp.results ?? [] : [];
+
+  const handleFile = async (file: File) => {
+    const text = await file.text();
+    setRows(parseCsv(text));
+  };
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files[0];
+    if (f) void handleFile(f);
+  };
+
+  const runBatch = async () => {
+    if (rows.length === 0) return;
+    setStatus({ kind: "loading" });
+    try {
+      const res = await fetch("/api/batch-screen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ rows }),
+      });
+      const data = (await res.json()) as BatchResponse;
+      if (!data.ok) {
+        setStatus({ kind: "error", error: data.error ?? "unknown" });
+      } else {
+        setStatus({ kind: "done", resp: data });
+      }
+    } catch (err) {
+      setStatus({
+        kind: "error",
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  const downloadCsv = () => {
+    if (results.length === 0) return;
+    const csv = toCsv(results);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hawkeye-batch-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const sampleCsv = useMemo(
+    () =>
+      [
+        "name,type,jurisdiction,aliases",
+        "Wagner Group,organisation,RU,PMC Wagner;ЧВК Вагнер",
+        "Dmitri Volkov,individual,RU,Volkov D.;Дмитрий Волков",
+        "Kim Jong Un,individual,KP,Kim Jung Un",
+        "Tornado Cash,organisation,,tornado.cash",
+      ].join("\n"),
+    [],
+  );
+
+  const downloadSample = () => {
+    const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "hawkeye-batch-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="bg-bg-0 min-h-[calc(100vh-54px)] px-10 py-8">
+        <div className="mb-8">
+          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+            MODULE 07 · BATCH SCREENING
+          </div>
+          <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
+            Batch <em className="italic text-brand">screening.</em>
+          </h1>
+          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
+            <strong>Drop a CSV · screen up to 500 subjects at once.</strong> Every row
+            is run through quickScreen (sanctions / fuzzy match), the 13-group
+            adverse-keyword classifier and the 25-category ESG classifier — same
+            brain as single screening. Export the result as CSV for audit.
+          </p>
+        </div>
+
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={onDrop}
+          className="border-2 border-dashed border-hair-3 rounded-xl p-8 bg-white text-center mb-6"
+        >
+          <div className="text-12 text-ink-2 mb-3">
+            Drop a CSV here, or choose a file. Header: <span className="font-mono">name,type,jurisdiction,aliases</span>
+          </div>
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFile(f);
+            }}
+          />
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => fileInput.current?.click()}
+              className="px-4 py-2 bg-ink-0 text-white rounded text-12.5 font-semibold hover:bg-ink-1"
+            >
+              Choose CSV
+            </button>
+            <button
+              onClick={downloadSample}
+              className="px-4 py-2 bg-bg-2 text-ink-0 rounded text-12.5 font-medium hover:bg-hair-2"
+            >
+              Download template
+            </button>
+          </div>
+        </div>
+
+        {rows.length > 0 && (
+          <div className="bg-white border border-hair-2 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-4 flex-wrap mb-3">
+              <div className="text-13 text-ink-0 font-semibold">
+                {rows.length} row{rows.length === 1 ? "" : "s"} ready
+              </div>
+              <button
+                onClick={runBatch}
+                disabled={status.kind === "loading"}
+                className="px-4 py-1.5 bg-brand text-white rounded font-semibold text-12.5 hover:bg-brand-hover disabled:opacity-50"
+              >
+                {status.kind === "loading" ? "Screening…" : "Run batch"}
+              </button>
+              <button
+                onClick={() => {
+                  setRows([]);
+                  setStatus({ kind: "idle" });
+                }}
+                className="px-3 py-1.5 text-ink-2 text-12 hover:text-ink-0"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="max-h-[180px] overflow-y-auto text-11 text-ink-2 font-mono">
+              {rows.slice(0, 25).map((r, i) => (
+                <div key={i}>
+                  {r.name}{r.jurisdiction ? ` · ${r.jurisdiction}` : ""}{r.entityType ? ` · ${r.entityType}` : ""}
+                </div>
+              ))}
+              {rows.length > 25 && <div>…and {rows.length - 25} more</div>}
+            </div>
+          </div>
+        )}
+
+        {status.kind === "error" && (
+          <div className="bg-red-dim text-red rounded px-3 py-2 text-12 mb-4">
+            Batch failed: {status.error}
+          </div>
+        )}
+
+        {summary && (
+          <div className="bg-ink-0 text-white rounded-xl p-4 mb-4 flex flex-wrap gap-6 items-end">
+            <SummaryStat label="Total" value={summary.total} />
+            <SummaryStat label="Critical" value={summary.critical} tone="text-red" />
+            <SummaryStat label="High" value={summary.high} tone="text-orange" />
+            <SummaryStat label="Medium" value={summary.medium} tone="text-amber" />
+            <SummaryStat label="Low" value={summary.low} tone="text-blue" />
+            <SummaryStat label="Clear" value={summary.clear} tone="text-green" />
+            {summary.errors > 0 && (
+              <SummaryStat label="Errors" value={summary.errors} tone="text-red" />
+            )}
+            <div className="ml-auto flex gap-2">
+              <button
+                onClick={downloadCsv}
+                className="px-3 py-1.5 bg-brand text-white rounded text-11 font-semibold hover:bg-brand-hover"
+              >
+                Download CSV
+              </button>
+            </div>
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="bg-white border border-hair-2 rounded-xl overflow-hidden">
+            <table className="w-full text-12">
+              <thead className="bg-bg-1 border-b border-hair-2">
+                <tr>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Name
+                  </th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Severity
+                  </th>
+                  <th className="text-right px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Score
+                  </th>
+                  <th className="text-right px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Hits
+                  </th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Lists
+                  </th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Keyword groups
+                  </th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    ESG
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((r, i) => (
+                  <tr key={`${r.name}-${i}`} className="border-b border-hair last:border-0 hover:bg-bg-1">
+                    <td className="px-3 py-2 text-ink-0 font-medium">{r.name}</td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 ${SEVERITY_CLS[r.severity] ?? "bg-bg-2 text-ink-1"}`}>
+                        {r.severity}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono">{r.topScore}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.hitCount}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-0.5">
+                        {r.listCoverage.map((l) => (
+                          <span key={l} className="px-1 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet">
+                            {l}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-0.5">
+                        {r.keywordGroups.map((k) => (
+                          <span key={k} className="px-1 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
+                            {k.replace(/-/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-0.5">
+                        {r.esgCategories.slice(0, 3).map((c) => (
+                          <span key={c} className="px-1 py-px rounded-sm font-mono text-10 bg-green-dim text-green">
+                            {c.replace(/-/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
+
+function SummaryStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: string;
+}) {
+  return (
+    <div>
+      <div className="text-10 uppercase tracking-wide-4 text-white/50">{label}</div>
+      <div className={`text-18 font-mono font-semibold ${tone ?? "text-white"}`}>{value}</div>
+    </div>
+  );
+}
