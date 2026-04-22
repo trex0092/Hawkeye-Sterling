@@ -103,11 +103,62 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
     }
   };
 
-  const handleRaiseSTR = () => {
+  const handleRaiseSTR = async () => {
     if (strRaised) return;
-    if (window.confirm(`Raise STR for ${subject.name}?`)) {
-      setStrRaised(true);
-      showFlash("STR raised — queued to goAML");
+    if (!window.confirm(`Raise STR for ${subject.name}? A draft will be filed to the STR/SAR board.`)) {
+      return;
+    }
+    setStrRaised(true);
+    showFlash("Filing STR to Asana…");
+    const payload: Record<string, unknown> = {
+      subject: {
+        id: subject.id,
+        name: subject.name,
+        entityType: subject.entityType,
+        jurisdiction: subject.jurisdiction,
+        ...(subject.aliases ? { aliases: subject.aliases } : {}),
+      },
+      filingType: "STR",
+    };
+    if (screening.status === "success") {
+      payload.result = {
+        topScore: screening.result.topScore,
+        severity: screening.result.severity,
+        listsChecked: screening.result.listsChecked,
+        candidatesChecked: screening.result.candidatesChecked,
+        durationMs: screening.result.durationMs,
+        generatedAt: screening.result.generatedAt,
+        hits: screening.result.hits.map((h) => ({
+          listId: h.listId,
+          listRef: h.listRef,
+          candidateName: h.candidateName,
+          score: h.score,
+          method: h.method,
+          ...(h.programs ? { programs: h.programs } : {}),
+        })),
+      };
+    }
+    if (superBrain.status === "success") {
+      payload.superBrain = {
+        pep: superBrain.result.pep,
+        jurisdiction: superBrain.result.jurisdiction,
+        adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
+      };
+    }
+    try {
+      const res = await fetch("/api/sar-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as { ok: boolean; taskUrl?: string };
+      if (data.ok) {
+        showFlash("STR filed — draft in STR/SAR board");
+      } else {
+        showFlash("STR filing failed");
+      }
+    } catch {
+      showFlash("STR filing failed");
     }
   };
 
