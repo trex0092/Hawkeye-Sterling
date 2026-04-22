@@ -6,6 +6,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions."refresh-lists"]
+  schedule = "0 3 * * *"
+
 [dev]
   functions = "netlify/functions"
   publish = "public"

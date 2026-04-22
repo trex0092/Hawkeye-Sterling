@@ -7,6 +7,7 @@ import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
 import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
+import { WAVE4_OVERRIDES, WAVE4_NEW } from './reasoning-modes-wave4.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -268,15 +269,27 @@ const WAVE_1_2_MODES: ReasoningMode[] = [
 ];
 
 // Apply wave-3 real-implementation overrides onto the wave 1/2 stubs,
-// then append the 70+ wave-3 new modes.
+// then append the 70+ wave-3 new modes, then apply wave-4 overrides, then
+// append wave-4 new modes.
 const WAVE3_OVERRIDE_BY_ID = new Map(WAVE3_OVERRIDES.map((m) => [m.id, m]));
 const WAVE_1_2_MODES_FINAL: ReasoningMode[] = WAVE_1_2_MODES.map(
   (m) => WAVE3_OVERRIDE_BY_ID.get(m.id) ?? m,
 );
 
+const WAVE4_OVERRIDE_BY_ID = new Map(WAVE4_OVERRIDES.map((m) => [m.id, m]));
+
+// Apply wave-4 overrides across the whole post-wave-3 combined list.
+const WAVE_1_2_MODES_AFTER_W4: ReasoningMode[] = WAVE_1_2_MODES_FINAL.map(
+  (m) => WAVE4_OVERRIDE_BY_ID.get(m.id) ?? m,
+);
+const WAVE3_MODES_AFTER_W4: ReasoningMode[] = WAVE3_MODES.map(
+  (m) => WAVE4_OVERRIDE_BY_ID.get(m.id) ?? m,
+);
+
 export const REASONING_MODES: ReasoningMode[] = [
-  ...WAVE_1_2_MODES_FINAL,
-  ...WAVE3_MODES,
+  ...WAVE_1_2_MODES_AFTER_W4,
+  ...WAVE3_MODES_AFTER_W4,
+  ...WAVE4_NEW,
 ];
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
@@ -290,8 +303,8 @@ export const REASONING_MODES_BY_CATEGORY: Record<string, ReasoningMode[]> =
   }, {} as Record<string, ReasoningMode[]>);
 
 export function countModesWithRealApply(): number {
-  // Count modes whose apply() is NOT the default stub.
-  // We detect by checking if apply rationale starts with "[stub]" on an empty ctx.
-  // Cheap heuristic — cached at module load for audit output.
-  return WAVE3_OVERRIDES.length + 1; // +1 for benford_law in WAVE3_MODES
+  // Count of modes whose apply() is a real implementation rather than the
+  // default stub. Wave 3: the 4 overrides + benford_law (registered directly
+  // in WAVE3_MODES). Wave 4: the full override list + every new wave-4 mode.
+  return WAVE3_OVERRIDES.length + 1 + WAVE4_OVERRIDES.length + WAVE4_NEW.length;
 }
