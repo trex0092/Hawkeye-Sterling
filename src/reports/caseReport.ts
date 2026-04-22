@@ -1,6 +1,12 @@
-import type { FacultyId } from '../engine/faculties.js';
-import type { ReasoningModeId } from '../engine/reasoningModes.js';
-import type { AdverseMediaCategoryId } from '../adverseMedia/taxonomy.js';
+import type { FacultyId } from '../brain/types.js';
+
+export type ReasoningModeId = string;
+export type AdverseMediaCategoryId =
+  | 'ml_financial_crime'
+  | 'terrorist_financing'
+  | 'proliferation_financing'
+  | 'corruption_organised_crime'
+  | 'legal_criminal_regulatory';
 
 export type CaseRating = 'Not Rated' | 'Low' | 'Medium' | 'High' | 'Critical';
 export type EntityType = 'Individual' | 'Organisation' | 'Vessel' | 'Aircraft' | 'Other';
@@ -165,17 +171,18 @@ export function emptyCaseReport(partial: Partial<CaseReport> & {
   printedBy: string;
   group: string;
 }): CaseReport {
+  const { identity, mode, printedBy, group, ...rest } = partial;
   return {
     header: {
       product: 'Hawkeye Sterling V2',
       reportKind: 'CASE REPORT',
       confidential: true,
       generatedAt: new Date().toISOString(),
-      printedBy: partial.printedBy,
-      group: partial.group,
-      mode: partial.mode,
+      printedBy,
+      group,
+      mode,
     },
-    identity: partial.identity,
+    identity,
     keyFindings: {
       totalMatches: 'NO MATCHES FOUND',
       resolvedMatches: 0,
@@ -190,6 +197,6 @@ export function emptyCaseReport(partial: Partial<CaseReport> & {
       legalNotice:
         'The contents of this record are private and confidential. Do not rely on this report without independent verification of the underlying sources.',
     },
-    ...partial,
+    ...rest,
   };
 }

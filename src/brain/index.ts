@@ -8,3 +8,9 @@ export * from './scenarios.js';
 export * from './adverse-media.js';
 export * from './engine.js';
 export { auditBrain } from './audit.js';
+export {
+  buildWeaponizedBrainManifest,
+  weaponizedSystemPrompt,
+  type WeaponizedBrainManifest,
+  type WeaponizedSystemPromptOptions,
+} from './weaponized.js';

@@ -25,9 +25,9 @@ export interface AsanaDeliveryEnvelope {
 
 export interface AsanaDeliveryResult {
   ok: boolean;
-  taskGid?: string;
-  url?: string;
-  error?: string;
+  taskGid?: string | undefined;
+  url?: string | undefined;
+  error?: string | undefined;
 }
 
 function summariseReport(report: CaseReport): string {
