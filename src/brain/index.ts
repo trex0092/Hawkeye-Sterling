@@ -28,6 +28,15 @@ export * from './case-narrative.js';
 export * from './audit-chain.js';
 export * from './ubo.js';
 export * from './entity-resolution.js';
+export * from './scope-hash.js';
+export * from './tipping-off-guard.js';
+export * from './pep-classifier.js';
+export * from './redlines.js';
+export * from './fatf-index.js';
+export * from './lifecycle.js';
+export * from './alerts.js';
+export * from './dispositions.js';
+export * from './observable-facts.js';
 export * from './engine.js';
 export { auditBrain } from './audit.js';
 export {

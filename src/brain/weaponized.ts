@@ -20,6 +20,9 @@ import { DPMS_KPIS, DPMS_KPIS_BY_CLUSTER } from './dpms-kpis.js';
 import { CAHRA_SEED } from './cahra.js';
 import { THRESHOLDS } from './thresholds.js';
 import { PLAYBOOKS } from './playbooks.js';
+import { REDLINES } from './redlines.js';
+import { FATF_RECOMMENDATIONS } from './fatf-index.js';
+import { DISPOSITIONS } from './dispositions.js';
 import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
@@ -100,6 +103,18 @@ export interface WeaponizedBrainManifest {
       ids: string[];
     };
     playbooks: {
+      total: number;
+      ids: string[];
+    };
+    redlines: {
+      total: number;
+      ids: string[];
+    };
+    fatf: {
+      total: number;
+      ids: string[];
+    };
+    dispositions: {
       total: number;
       ids: string[];
     };
@@ -186,6 +201,9 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     cahra: CAHRA_SEED.map((c) => c.iso2).sort(),
     thresholds: THRESHOLDS.map((t) => t.id).sort(),
     playbooks: PLAYBOOKS.map((p) => p.id).sort(),
+    redlines: REDLINES.map((r) => r.id).sort(),
+    fatf: FATF_RECOMMENDATIONS.map((r) => r.id).sort(),
+    dispositions: DISPOSITIONS.map((d) => d.code).sort(),
   });
 
   return {
@@ -256,6 +274,18 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         total: PLAYBOOKS.length,
         ids: PLAYBOOKS.map((p) => p.id),
       },
+      redlines: {
+        total: REDLINES.length,
+        ids: REDLINES.map((r) => r.id),
+      },
+      fatf: {
+        total: FATF_RECOMMENDATIONS.length,
+        ids: FATF_RECOMMENDATIONS.map((r) => r.id),
+      },
+      dispositions: {
+        total: DISPOSITIONS.length,
+        ids: DISPOSITIONS.map((d) => d.code),
+      },
     },
     integrity: {
       charterHash: fnv1a(SYSTEM_PROMPT),
@@ -297,7 +327,10 @@ export function weaponizedSystemPrompt(
         `CAHRA registry: ${manifest.cognitiveCatalogue.cahra.total} countries (${manifest.cognitiveCatalogue.cahra.activeCount} active CAHRA).`,
         `Thresholds: ${manifest.cognitiveCatalogue.thresholds.total} named thresholds available.`,
         `Playbooks: ${manifest.cognitiveCatalogue.playbooks.total} MLRO procedures available.`,
-        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, typology id, sanction-regime id, jurisdiction iso2, CAHRA status, DPMS KPI id, threshold id, playbook id, and matching method id. Evidence must be cited by evidence-id; training-data evidence must carry the stale-warning. Any risk score must state methodology + inputs + weights + gaps (P9).',
+        `Redlines: ${manifest.cognitiveCatalogue.redlines.total} hard-stop rules active.`,
+        `FATF recommendations indexed: ${manifest.cognitiveCatalogue.fatf.total}.`,
+        `Disposition codes: ${manifest.cognitiveCatalogue.dispositions.total}.`,
+        'Use named modes in your reasoning chain. Every finding must cite the mode id(s) that produced it, and — where applicable — the doctrine id, red-flag id, typology id, sanction-regime id, jurisdiction iso2, CAHRA status, DPMS KPI id, threshold id, playbook id, redline id, FATF recommendation id, disposition code, matching method id, and evidence id. Training-data evidence must carry the stale-warning. Any risk score must state methodology + inputs + weights + gaps (P9). Any outbound customer-facing text must pass the tipping-off guard (P4). Final narratives must pass the observable-facts linter (P3, P5).',
       ].join('\n'),
     );
   }
