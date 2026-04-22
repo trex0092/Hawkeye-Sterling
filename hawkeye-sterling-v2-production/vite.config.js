@@ -7,6 +7,12 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    proxy: {
+      '/api': {
+        target: process.env.BRAIN_API_URL ?? 'http://localhost:8081',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     target: 'es2020',

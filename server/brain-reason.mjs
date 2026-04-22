@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { invokeMlroAdvisor } from '../dist/src/integrations/mlroAdvisor.js';
 import { AuditChain } from '../dist/src/brain/audit-chain.js';
+import { quickScreen } from '../dist/src/brain/quick-screen.js';
 
 const PORT = Number(process.env.PORT ?? 8081);
 const API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -138,6 +139,49 @@ const OPENAPI = {
       },
     },
     '/api/audit': { get: { summary: 'Dump audit chain', responses: { 200: { description: 'entries + verify()' } } } },
+    '/api/quick-screen': {
+      post: {
+        summary: 'Low-latency name-screening over a caller-supplied candidate list',
+        description: 'Stateless; composes matchEnsemble across the subject and candidates. Returns hits sorted by score, a 0..100 top score, and a bucketed severity. No LLM call; no API key required.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['subject', 'candidates'],
+                properties: {
+                  subject: {
+                    type: 'object',
+                    required: ['name'],
+                    properties: {
+                      name: { type: 'string' },
+                      aliases: { type: 'array', items: { type: 'string' } },
+                      entityType: { type: 'string' },
+                      jurisdiction: { type: 'string' },
+                    },
+                  },
+                  candidates: { type: 'array', items: { type: 'object' } },
+                  options: {
+                    type: 'object',
+                    properties: {
+                      scoreThreshold: { type: 'number' },
+                      maxHits: { type: 'number' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'QuickScreenResult' },
+          400: { description: 'bad request' },
+          413: { description: 'payload too large' },
+          429: { description: 'rate limited' },
+        },
+      },
+    },
   },
 };
 
@@ -230,6 +274,48 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && req.url === '/api/audit') {
     return sendJson(res, 200, { entries: audit.list(), verify: audit.verify() });
+  }
+
+  if (req.method === 'POST' && req.url === '/api/quick-screen') {
+    let body;
+    try { body = await readJson(req); }
+    catch (err) {
+      const msg = err && err.message === 'payload too large' ? 'payload too large' : 'invalid JSON body';
+      const status = msg === 'payload too large' ? 413 : 400;
+      log('warn', 'quick_screen.bad_request', { ip, status, reason: msg });
+      return sendJson(res, status, { ok: false, error: msg });
+    }
+
+    const subject = body.subject;
+    const candidates = body.candidates;
+    if (!subject || typeof subject.name !== 'string' || !subject.name.trim()) {
+      log('warn', 'quick_screen.bad_request', { ip, reason: 'subject.name required' });
+      return sendJson(res, 400, { ok: false, error: 'subject.name required' });
+    }
+    if (!Array.isArray(candidates)) {
+      log('warn', 'quick_screen.bad_request', { ip, reason: 'candidates must be an array' });
+      return sendJson(res, 400, { ok: false, error: 'candidates must be an array' });
+    }
+
+    try {
+      const result = quickScreen(subject, candidates, body.options ?? {});
+      appendAudit('server', 'quick_screen.response', {
+        subject: subject.name,
+        topScore: result.topScore,
+        severity: result.severity,
+        hitCount: result.hits.length,
+        candidatesChecked: result.candidatesChecked,
+      });
+      log('info', 'quick_screen.response', {
+        ip, subject: subject.name, topScore: result.topScore,
+        severity: result.severity, hitCount: result.hits.length,
+        durationMs: result.durationMs, totalMs: Date.now() - started,
+      });
+      return sendJson(res, 200, { ok: true, ...result });
+    } catch (err) {
+      log('error', 'quick_screen.error', { ip, err: err?.message ?? String(err) });
+      return sendJson(res, 500, { ok: false, error: 'quick-screen failed', detail: err?.message ?? String(err) });
+    }
   }
 
   sendJson(res, 404, { ok: false, error: 'not found' });
