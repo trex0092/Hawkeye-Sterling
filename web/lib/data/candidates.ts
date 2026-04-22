@@ -172,4 +172,48 @@ export const CANDIDATES: QuickScreenCandidate[] = [
   { listId: "EU-CFSP", listRef: "EU-CFSP-MLI-0055", name: "Mali Gold Refinery",
     aliases: ["MGR"], entityType: "organisation",
     jurisdiction: "ML", programs: ["CAHRA", "MALI"] },
+
+  // ── US Consolidated Sanctions (non-SDN) ─────────────────────
+  { listId: "US-CONSOLIDATED", listRef: "SSI-BOND-2232", name: "Gazprom Neft",
+    aliases: ["Газпром нефть"], entityType: "organisation",
+    jurisdiction: "RU", programs: ["UKRAINE-EO13662", "SSI"] },
+  { listId: "US-CONSOLIDATED", listRef: "NS-PLC-00118", name: "Huawei Technologies Co. Ltd.",
+    aliases: ["Huawei", "华为"], entityType: "organisation",
+    jurisdiction: "CN", programs: ["EAR", "NS-PLC"] },
+  { listId: "US-CONSOLIDATED", listRef: "SDNT-CU-0044", name: "CubaNet S.A.",
+    entityType: "organisation", jurisdiction: "CU", programs: ["CUBA"] },
+
+  // ── OSFI Canada (DFAT / listed persons / entities) ──────────
+  { listId: "CA-OSFI", listRef: "CA-SEMA-RU-0123", name: "Vladimir Solovyov",
+    aliases: ["Владимир Соловьёв"], entityType: "individual",
+    jurisdiction: "RU", programs: ["SEMA-RU"] },
+  { listId: "CA-OSFI", listRef: "CA-UNA-001", name: "Hezbollah",
+    aliases: ["Hizballah", "Hizbullah"], entityType: "organisation",
+    jurisdiction: "LB", programs: ["UNA-SUPPRESSION"] },
+
+  // ── Australian Sanctions (DFAT) ─────────────────────────────
+  { listId: "AU-DFAT", listRef: "AU-AS-RU-2022-0033", name: "Igor Sechin",
+    aliases: ["Сечин Игорь"], entityType: "individual",
+    jurisdiction: "RU", programs: ["AU-AS-RUSSIA"] },
+  { listId: "AU-DFAT", listRef: "AU-AS-MM-0055", name: "Myanmar Economic Corporation",
+    aliases: ["MEC"], entityType: "organisation",
+    jurisdiction: "MM", programs: ["AU-AS-MYANMAR"] },
+
+  // ── HM Treasury (UK) — explicit alongside OFSI ──────────────
+  { listId: "UK-HMT", listRef: "UK-HMT-LBY-075", name: "Moutassim Gaddafi",
+    entityType: "individual", jurisdiction: "LY", programs: ["LIBYA"] },
+  { listId: "UK-HMT", listRef: "UK-HMT-CT-120", name: "Abu Hamza al-Masri",
+    aliases: ["Mustafa Kamel"], entityType: "individual",
+    jurisdiction: "GB", programs: ["COUNTER-TERRORISM"] },
+
+  // ── Additional multi-regime coverage ────────────────────────
+  { listId: "UN-1267", listRef: "UN-QDi.512", name: "Taliban Finance Commission",
+    aliases: ["Taliban Financial Committee"], entityType: "organisation",
+    jurisdiction: "AF", programs: ["ISIL-AQ", "TALIBAN"] },
+  { listId: "OFAC-SDN", listRef: "OFAC-SDN-CY-4492", name: "APT28",
+    aliases: ["Fancy Bear", "STRONTIUM"], entityType: "organisation",
+    jurisdiction: "RU", programs: ["CYBER2"] },
+  { listId: "EU-CFSP", listRef: "EU-CFSP-IR-2024-99", name: "Islamic Revolutionary Guard Corps",
+    aliases: ["IRGC", "سپاه پاسداران"], entityType: "organisation",
+    jurisdiction: "IR", programs: ["IRAN-HR"] },
 ];

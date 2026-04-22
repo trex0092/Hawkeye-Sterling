@@ -793,11 +793,22 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   }
   return (
     <Section title={`Adverse-media dossier (${r.articleCount})`}>
-      <div className="flex items-center gap-2 mb-2 text-10.5">
+      <div className="flex items-center gap-2 mb-2 text-10.5 flex-wrap">
         <span className="text-ink-2 uppercase tracking-wide-2">Top severity:</span>
         <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono font-semibold ${SEVERITY_BG[r.topSeverity] ?? "bg-bg-2 text-ink-1"}`}>
           {r.topSeverity}
         </span>
+        {r.languages && r.languages.length > 0 && (
+          <>
+            <span className="text-ink-3">·</span>
+            <span className="text-ink-2">Languages:</span>
+            {r.languages.map((l) => (
+              <span key={l} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet uppercase">
+                {l}
+              </span>
+            ))}
+          </>
+        )}
         <span className="ml-auto font-mono text-ink-3">source: {r.source}</span>
       </div>
 
@@ -831,8 +842,12 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
                 {a.severity}
               </span>
             </div>
-            <div className="text-10 text-ink-3 font-mono">
-              {a.source || "—"} · {a.pubDate ? new Date(a.pubDate).toLocaleDateString() : "—"}
+            <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2">
+              <span>{a.source || "—"}</span>
+              <span>· {a.pubDate ? new Date(a.pubDate).toLocaleDateString() : "—"}</span>
+              <span>· <span className="uppercase text-violet">{a.lang}</span></span>
+              <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
+              {a.matchedVariant && <span>· via "{a.matchedVariant}"</span>}
             </div>
             {(a.keywordGroups.length > 0 || a.esgCategories.length > 0) && (
               <div className="flex flex-wrap gap-1 mt-1">
