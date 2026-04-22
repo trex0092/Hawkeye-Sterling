@@ -62,6 +62,14 @@ export * from './retention-policy.js';
 export * from './report-templates.js';
 export * from './emirates-regulators.js';
 export * from './dq-rules.js';
+export * from './validators.js';
+export * from './signals.js';
+export * from './kri-registry.js';
+export * from './product-channel-catalogue.js';
+export * from './cluster-labels.js';
+export * from './control-test-registry.js';
+export * from './policy-library.js';
+export * from './cbddq-scorer.js';
 export * from './engine.js';
 export { auditBrain } from './audit.js';
 export {
