@@ -1,24 +1,55 @@
 // Hawkeye Sterling — cognitive engine orchestrator.
+//
 // run(subject, evidence, domains) → BrainVerdict with full reasoning chain.
-// Phase 1 stubs return inconclusive; the chain-of-reasoning shape is already real.
+//
+// Pipeline:
+//   1. Infer domains from subject + evidence (unless caller specifies).
+//   2. Select reasoning modes the declared domains demand.
+//   3. Force the six always-on meta-cognitive modes to run LAST, so they see
+//      the full set of prior findings before auditing the chain.
+//   4. Run each mode; collect findings + per-faculty chain nodes.
+//   5. Fuse findings: Bayesian posterior + confidence-weighted score + conflict
+//      detection + per-faculty activation / cognitive firepower.
+//   6. Run an introspection pass over the meta findings, fusion conflicts, and
+//      firepower to compute chain quality and an auditable confidence adjustment.
+//   7. Apply the adjustment, build the verdict, return it.
 
+import type { EvidenceItem } from './evidence.js';
 import { FACULTY_BY_ID } from './faculties.js';
+import { fuseFindings } from './fusion.js';
+import { introspect } from './introspection.js';
 import { REASONING_MODE_BY_ID, REASONING_MODES } from './reasoning-modes.js';
 import { QUESTION_TEMPLATES } from './question-templates.js';
 import type {
-  BrainContext, BrainVerdict, Evidence, FacultyId,
-  Finding, ReasoningChainNode, Subject, Verdict,
+  BrainContext, BrainVerdict, Evidence, FacultyId, Finding, Hypothesis,
+  ReasoningChainNode, Subject, Verdict,
 } from './types.js';
+
+const META_MODE_IDS: readonly string[] = [
+  'cognitive_bias_audit',
+  'confidence_calibration',
+  'popper_falsification',
+  'source_triangulation',
+  'triangulation',
+  'occam_vs_conspiracy',
+];
+const META_MODE_SET: ReadonlySet<string> = new Set(META_MODE_IDS);
 
 export interface RunOptions {
   subject: Subject;
   evidence?: Evidence;
   domains?: string[];
   maxModes?: number;
+  /** Optional index of EvidenceItems keyed by ID — used by fusion for credibility attenuation. */
+  evidenceIndex?: Map<string, EvidenceItem>;
+  /** Primary hypothesis for the Bayesian posterior. Defaults to 'illicit_risk'. */
+  primaryHypothesis?: Hypothesis;
+  /** Override the prior probability of the primary hypothesis. Defaults to 0.1. */
+  prior?: number;
 }
 
 export async function run(options: RunOptions): Promise<BrainVerdict> {
-  const { subject, evidence = {}, domains, maxModes } = options;
+  const { subject, evidence = {}, domains, maxModes, evidenceIndex, primaryHypothesis, prior } = options;
   const runId = cryptoRandomId();
   const startedAt = Date.now();
 
@@ -57,19 +88,35 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
     }
   }
 
-  const aggregate = aggregateFindings(findings);
+  const fusion = fuseFindings(findings, { evidenceIndex, primaryHypothesis, prior });
+  const introspection = introspect(findings, {
+    conflicts: fusion.conflicts,
+    firepower: fusion.firepower,
+  });
+  const adjustedConfidence = clamp01(fusion.confidence + introspection.confidenceAdjustment);
 
-  return {
+  const verdict: BrainVerdict = {
     runId,
     subject,
-    outcome: aggregate.outcome,
-    aggregateScore: aggregate.score,
-    aggregateConfidence: aggregate.confidence,
+    outcome: fusion.outcome,
+    aggregateScore: fusion.score,
+    aggregateConfidence: adjustedConfidence,
     findings,
     chain,
-    recommendedActions: recommend(aggregate.outcome),
+    recommendedActions: recommend(fusion.outcome, fusion.conflicts.length > 0, introspection.coverageGaps),
     generatedAt: Date.now(),
+    prior: fusion.prior,
+    posterior: fusion.posterior,
+    primaryHypothesis: fusion.primaryHypothesis,
+    posteriorsByHypothesis: fusion.posteriorsByHypothesis,
+    conflicts: fusion.conflicts,
+    consensus: fusion.consensus,
+    introspection,
+    methodology: fusion.methodology,
+    firepower: fusion.firepower,
   };
+  if (fusion.bayesTrace !== undefined) verdict.bayesTrace = fusion.bayesTrace;
+  return verdict;
 }
 
 function inferDomainsFromSubject(subject: Subject, evidence: Evidence): string[] {
@@ -78,12 +125,8 @@ function inferDomainsFromSubject(subject: Subject, evidence: Evidence): string[]
     d.add('ubo');
     d.add('edd');
   }
-  if (subject.type === 'wallet') {
-    d.add('vasp');
-  }
-  if (subject.type === 'vessel') {
-    d.add('tf');
-  }
+  if (subject.type === 'wallet') d.add('vasp');
+  if (subject.type === 'vessel') d.add('tf');
   if (evidence.transactions) d.add('tbml');
   if (evidence.uboChain) d.add('ubo');
   return [...d];
@@ -99,55 +142,50 @@ function selectReasoningModeIdsForDomains(
       for (const m of tpl.reasoningModes) set.add(m);
     }
   }
-  // Always include core introspection and source-triangulation modes.
-  for (const m of [
-    'cognitive_bias_audit', 'confidence_calibration', 'popper_falsification',
-    'source_triangulation', 'triangulation', 'occam_vs_conspiracy',
-  ]) set.add(m);
+  // Force the six always-on meta-cognitive modes to run LAST so they see the
+  // complete prior-finding set when auditing bias / calibration / falsification /
+  // triangulation / Occam.
+  for (const metaId of META_MODE_IDS) {
+    set.delete(metaId);
+    set.add(metaId);
+  }
 
   const ordered = [...set];
-  return maxModes ? ordered.slice(0, maxModes) : ordered;
+  if (!maxModes) return ordered;
+  if (ordered.length <= maxModes) return ordered;
+  const head = ordered.filter((id) => !META_MODE_SET.has(id));
+  const tail = ordered.filter((id) => META_MODE_SET.has(id));
+  if (maxModes < tail.length) return tail.slice(0, maxModes);
+  const headRoom = Math.max(0, maxModes - tail.length);
+  return [...head.slice(0, headRoom), ...tail];
 }
 
-function aggregateFindings(findings: Finding[]): {
-  outcome: Verdict; score: number; confidence: number;
-} {
-  if (findings.length === 0) {
-    return { outcome: 'inconclusive', score: 0, confidence: 0 };
-  }
-  const score = avg(findings.map((f) => f.score));
-  const confidence = avg(findings.map((f) => f.confidence));
-  const verdicts = findings.map((f) => f.verdict);
-  const outcome: Verdict = verdicts.includes('block')
-    ? 'block'
-    : verdicts.includes('escalate')
-    ? 'escalate'
-    : verdicts.includes('flag')
-    ? 'flag'
-    : verdicts.every((v) => v === 'inconclusive')
-    ? 'inconclusive'
-    : 'clear';
-  return { outcome, score, confidence };
-}
-
-function recommend(outcome: Verdict): string[] {
+function recommend(outcome: Verdict, hasConflicts: boolean, coverageGaps: string[]): string[] {
+  const actions: string[] = [];
   switch (outcome) {
     case 'block':
-      return ['Immediate account freeze', 'Notify MLRO', 'File STR', 'Preserve evidence'];
+      actions.push('Immediate account freeze', 'Notify MLRO', 'Prepare STR via goAML', 'Preserve evidence (chain-of-custody)');
+      break;
     case 'escalate':
-      return ['Escalate to senior compliance', 'Open EDD file', 'Extended review cadence'];
+      actions.push('Escalate to senior compliance', 'Open EDD file', 'Extended review cadence', 'Two-sign-off disposition');
+      break;
     case 'flag':
-      return ['Enhanced monitoring', 'Secondary analyst review', 'Document disposition'];
+      actions.push('Enhanced monitoring', 'Secondary analyst review', 'Document disposition with rationale');
+      break;
     case 'inconclusive':
-      return ['Request supplementary evidence', 'Defer decision pending data', 'Re-run after evidence'];
+      actions.push('Request supplementary evidence per P10', 'Defer disposition', 'Re-run after evidence');
+      break;
     case 'clear':
-      return ['Proceed per standard cadence', 'Periodic review per risk rating'];
+      actions.push('Proceed per standard cadence', 'Periodic review per risk rating');
+      break;
   }
+  if (hasConflicts) actions.push('Resolve mode-level conflicts before disposition (see verdict.conflicts[])');
+  if (coverageGaps.length > 0) actions.push(`Close coverage gaps: ${coverageGaps.slice(0, 3).join(', ')}`);
+  return actions;
 }
 
-function avg(xs: number[]): number {
-  if (xs.length === 0) return 0;
-  return xs.reduce((a, b) => a + b, 0) / xs.length;
+function clamp01(x: number): number {
+  return Math.min(1, Math.max(0, x));
 }
 
 function cryptoRandomId(): string {
@@ -156,8 +194,8 @@ function cryptoRandomId(): string {
   return [...a].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Depth metric — prove how thoroughly the brain reasoned.
-// Reports faculties touched, modes run, categories spanned, chain length.
+// ── cognitive depth metric (unchanged public API) ────────────────────────
+
 export interface CognitiveDepth {
   facultiesTouched: FacultyId[];
   facultyCount: number;

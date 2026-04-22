@@ -1,11 +1,13 @@
 // Hawkeye Sterling — reasoning-mode registry.
 // 200 modes across 16 categories, wave 1 + wave 2.
-// Each entry is registered metadata + a stub apply() that returns an inconclusive
-// placeholder Finding. Real algorithms will be implemented mode-by-mode in Phase 7.
+// Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
+// supplies an override) or a stub apply() that returns an inconclusive placeholder Finding.
+// Real algorithms land mode-by-mode in Phase 7 — register them via MODE_OVERRIDES.
 
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
+import { MODE_OVERRIDES } from './modes/registry.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -265,6 +267,14 @@ export const REASONING_MODES: ReasoningMode[] = [
   m('sanctions_maritime_stss', 'Maritime STS Sanctions Evasion', 'sectoral_typology', ['intelligence'], 2, 'Ship-to-ship transfers, AIS spoofing, flag/name changes.'),
   m('kyb_strict', 'Strict KYB', 'sectoral_typology', ['strong_brain'], 2, 'Enhanced entity onboarding — UBO, source-of-funds, licence validation.'),
 ];
+
+// Apply any real implementations registered in modes/registry.ts before the
+// registry is frozen into lookups. Stubs survive for IDs without overrides.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const override = MODE_OVERRIDES[r.id];
+  if (override) REASONING_MODES[i] = { ...r, apply: override };
+}
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
   REASONING_MODES.map((r) => [r.id, r]),

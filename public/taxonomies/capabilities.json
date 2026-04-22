@@ -1,0 +1,1987 @@
+[
+  {
+    "id": "amlcft_competencies",
+    "label": "AML/CFT Competencies",
+    "bucket": "competency"
+  },
+  {
+    "id": "technical_compliance_capabilities",
+    "label": "Technical Compliance Capabilities",
+    "bucket": "competency"
+  },
+  {
+    "id": "regulatory_intelligence",
+    "label": "Regulatory Intelligence",
+    "bucket": "competency"
+  },
+  {
+    "id": "risk_assessment_proficiency",
+    "label": "Risk Assessment Proficiency",
+    "bucket": "competency"
+  },
+  {
+    "id": "kyccddedd_expertise",
+    "label": "KYC/CDD/EDD Expertise",
+    "bucket": "competency"
+  },
+  {
+    "id": "sanctions_screening_capability",
+    "label": "Sanctions Screening Capability",
+    "bucket": "competency"
+  },
+  {
+    "id": "investigative_competence",
+    "label": "Investigative Competence",
+    "bucket": "competency"
+  },
+  {
+    "id": "mlro_decision_making",
+    "label": "MLRO Decision-Making",
+    "bucket": "competency"
+  },
+  {
+    "id": "supply_chain_due_diligence",
+    "label": "Supply Chain Due Diligence",
+    "bucket": "competency"
+  },
+  {
+    "id": "regulatory_writing",
+    "label": "Regulatory Writing",
+    "bucket": "competency"
+  },
+  {
+    "id": "policy_drafting",
+    "label": "Policy Drafting",
+    "bucket": "competency"
+  },
+  {
+    "id": "judgment_and_discretion",
+    "label": "Judgment and Discretion",
+    "bucket": "competency"
+  },
+  {
+    "id": "attention_to_detail",
+    "label": "Attention to Detail",
+    "bucket": "competency"
+  },
+  {
+    "id": "communication",
+    "label": "Communication",
+    "bucket": "competency"
+  },
+  {
+    "id": "escalation_management",
+    "label": "Escalation Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "stakeholder_management",
+    "label": "Stakeholder Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_competencies",
+    "label": "Compliance Competencies",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_capabilities",
+    "label": "Compliance Capabilities",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_proficiencies",
+    "label": "Compliance Proficiencies",
+    "bucket": "competency"
+  },
+  {
+    "id": "technical_requirements",
+    "label": "Technical Requirements",
+    "bucket": "competency"
+  },
+  {
+    "id": "core_competencies",
+    "label": "Core Competencies",
+    "bucket": "competency"
+  },
+  {
+    "id": "risk_management_capabilities",
+    "label": "Risk Management Capabilities",
+    "bucket": "competency"
+  },
+  {
+    "id": "transaction_monitoring_expertise",
+    "label": "Transaction Monitoring Expertise",
+    "bucket": "competency"
+  },
+  {
+    "id": "red_flag_recognition",
+    "label": "Red Flag Recognition",
+    "bucket": "competency"
+  },
+  {
+    "id": "adverse_media_screening",
+    "label": "Adverse Media Screening",
+    "bucket": "competency"
+  },
+  {
+    "id": "corporate_structure_analysis",
+    "label": "Corporate Structure Analysis",
+    "bucket": "competency"
+  },
+  {
+    "id": "pep_identification",
+    "label": "PEP Identification",
+    "bucket": "competency"
+  },
+  {
+    "id": "ubo_tracing",
+    "label": "UBO Tracing",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_documentation",
+    "label": "Compliance Documentation",
+    "bucket": "competency"
+  },
+  {
+    "id": "evidence_collection",
+    "label": "Evidence Collection",
+    "bucket": "competency"
+  },
+  {
+    "id": "record_keeping",
+    "label": "Record-Keeping",
+    "bucket": "competency"
+  },
+  {
+    "id": "control_design",
+    "label": "Control Design",
+    "bucket": "competency"
+  },
+  {
+    "id": "control_implementation",
+    "label": "Control Implementation",
+    "bucket": "competency"
+  },
+  {
+    "id": "testing_methodology",
+    "label": "Testing Methodology",
+    "bucket": "competency"
+  },
+  {
+    "id": "audit_competence",
+    "label": "Audit Competence",
+    "bucket": "competency"
+  },
+  {
+    "id": "examination_preparation",
+    "label": "Examination Preparation",
+    "bucket": "competency"
+  },
+  {
+    "id": "board_reporting",
+    "label": "Board Reporting",
+    "bucket": "competency"
+  },
+  {
+    "id": "senior_management_briefing",
+    "label": "Senior Management Briefing",
+    "bucket": "competency"
+  },
+  {
+    "id": "governance_architecture",
+    "label": "Governance Architecture",
+    "bucket": "competency"
+  },
+  {
+    "id": "committee_management",
+    "label": "Committee Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "reporting_protocol",
+    "label": "Reporting Protocol",
+    "bucket": "competency"
+  },
+  {
+    "id": "tipping_off_management",
+    "label": "Tipping-Off Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "consent_management",
+    "label": "Consent Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "goaml_reporting",
+    "label": "GOAML Reporting",
+    "bucket": "competency"
+  },
+  {
+    "id": "fiu_correspondence",
+    "label": "FIU Correspondence",
+    "bucket": "competency"
+  },
+  {
+    "id": "regulatory_liaison",
+    "label": "Regulatory Liaison",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_training_design",
+    "label": "Compliance Training Design",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_awareness",
+    "label": "Compliance Awareness",
+    "bucket": "competency"
+  },
+  {
+    "id": "staff_coaching",
+    "label": "Staff Coaching",
+    "bucket": "competency"
+  },
+  {
+    "id": "red_flag_awareness",
+    "label": "Red Flag Awareness",
+    "bucket": "competency"
+  },
+  {
+    "id": "scenario_based_learning",
+    "label": "Scenario-Based Learning",
+    "bucket": "competency"
+  },
+  {
+    "id": "policy_documentation",
+    "label": "Policy Documentation",
+    "bucket": "competency"
+  },
+  {
+    "id": "procedure_documentation",
+    "label": "Procedure Documentation",
+    "bucket": "competency"
+  },
+  {
+    "id": "control_documentation",
+    "label": "Control Documentation",
+    "bucket": "competency"
+  },
+  {
+    "id": "risk_register_maintenance",
+    "label": "Risk Register Maintenance",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_calendar_management",
+    "label": "Compliance Calendar Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_metrics",
+    "label": "Compliance Metrics",
+    "bucket": "competency"
+  },
+  {
+    "id": "performance_monitoring",
+    "label": "Performance Monitoring",
+    "bucket": "competency"
+  },
+  {
+    "id": "threshold_management",
+    "label": "Threshold Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "alert_management",
+    "label": "Alert Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "false_positive_management",
+    "label": "False Positive Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_system_administration",
+    "label": "Compliance System Administration",
+    "bucket": "competency"
+  },
+  {
+    "id": "database_management",
+    "label": "Database Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_tool_proficiency",
+    "label": "Compliance Tool Proficiency",
+    "bucket": "competency"
+  },
+  {
+    "id": "ewra_development",
+    "label": "EWRA Development",
+    "bucket": "competency"
+  },
+  {
+    "id": "bwra_development",
+    "label": "BWRA Development",
+    "bucket": "competency"
+  },
+  {
+    "id": "risk_matrix_design",
+    "label": "Risk Matrix Design",
+    "bucket": "competency"
+  },
+  {
+    "id": "risk_appetite_calibration",
+    "label": "Risk Appetite Calibration",
+    "bucket": "competency"
+  },
+  {
+    "id": "inherent_risk_assessment",
+    "label": "Inherent Risk Assessment",
+    "bucket": "competency"
+  },
+  {
+    "id": "residual_risk_assessment",
+    "label": "Residual Risk Assessment",
+    "bucket": "competency"
+  },
+  {
+    "id": "control_effectiveness_evaluation",
+    "label": "Control Effectiveness Evaluation",
+    "bucket": "competency"
+  },
+  {
+    "id": "remediation_roadmap",
+    "label": "Remediation Roadmap",
+    "bucket": "competency"
+  },
+  {
+    "id": "cahra_assessment",
+    "label": "CAHRA Assessment",
+    "bucket": "competency"
+  },
+  {
+    "id": "refinery_evaluation",
+    "label": "Refinery Evaluation",
+    "bucket": "competency"
+  },
+  {
+    "id": "lbma_rgg_steps_1_5",
+    "label": "LBMA RGG Steps 1-5",
+    "bucket": "competency"
+  },
+  {
+    "id": "chain_of_custody_verification",
+    "label": "Chain-of-Custody Verification",
+    "bucket": "competency"
+  },
+  {
+    "id": "conflict_minerals_assessment",
+    "label": "Conflict Minerals Assessment",
+    "bucket": "competency"
+  },
+  {
+    "id": "country_of_origin_verification",
+    "label": "Country-of-Origin Verification",
+    "bucket": "competency"
+  },
+  {
+    "id": "sourcing_documentation",
+    "label": "Sourcing Documentation",
+    "bucket": "competency"
+  },
+  {
+    "id": "invoice_analysis",
+    "label": "Invoice Analysis",
+    "bucket": "competency"
+  },
+  {
+    "id": "pricing_discrepancy_detection",
+    "label": "Pricing Discrepancy Detection",
+    "bucket": "competency"
+  },
+  {
+    "id": "third_party_payment_investigation",
+    "label": "Third-Party Payment Investigation",
+    "bucket": "competency"
+  },
+  {
+    "id": "structuring_detection",
+    "label": "Structuring Detection",
+    "bucket": "competency"
+  },
+  {
+    "id": "smurfing_detection",
+    "label": "Smurfing Detection",
+    "bucket": "competency"
+  },
+  {
+    "id": "velocity_anomaly_detection",
+    "label": "Velocity Anomaly Detection",
+    "bucket": "competency"
+  },
+  {
+    "id": "threshold_alert_review",
+    "label": "Threshold Alert Review",
+    "bucket": "competency"
+  },
+  {
+    "id": "tbml_review",
+    "label": "TBML Review",
+    "bucket": "competency"
+  },
+  {
+    "id": "placementlayeringintegration_analysis",
+    "label": "Placement/Layering/Integration Analysis",
+    "bucket": "competency"
+  },
+  {
+    "id": "digital_asset_compliance",
+    "label": "Digital Asset Compliance",
+    "bucket": "competency"
+  },
+  {
+    "id": "cryptocurrencies_monitoring",
+    "label": "Cryptocurrencies Monitoring",
+    "bucket": "competency"
+  },
+  {
+    "id": "virtual_assets_screening",
+    "label": "Virtual Assets Screening",
+    "bucket": "competency"
+  },
+  {
+    "id": "pdpl_data_privacy",
+    "label": "PDPL Data Privacy",
+    "bucket": "competency"
+  },
+  {
+    "id": "data_breach_response",
+    "label": "Data Breach Response",
+    "bucket": "competency"
+  },
+  {
+    "id": "consent_management_systems",
+    "label": "Consent Management Systems",
+    "bucket": "competency"
+  },
+  {
+    "id": "cabinet_resolution_interpretation",
+    "label": "Cabinet Resolution Interpretation",
+    "bucket": "competency"
+  },
+  {
+    "id": "fatf_compliance",
+    "label": "FATF Compliance",
+    "bucket": "competency"
+  },
+  {
+    "id": "mutual_evaluation_preparation",
+    "label": "Mutual Evaluation Preparation",
+    "bucket": "competency"
+  },
+  {
+    "id": "sanctions_program_design",
+    "label": "Sanctions Program Design",
+    "bucket": "competency"
+  },
+  {
+    "id": "tfs_compliance",
+    "label": "TFS Compliance",
+    "bucket": "competency"
+  },
+  {
+    "id": "proliferation_financing_prevention",
+    "label": "Proliferation Financing Prevention",
+    "bucket": "competency"
+  },
+  {
+    "id": "cpf_controls",
+    "label": "CPF Controls",
+    "bucket": "competency"
+  },
+  {
+    "id": "vendor_assessment",
+    "label": "Vendor Assessment",
+    "bucket": "competency"
+  },
+  {
+    "id": "third_party_management",
+    "label": "Third-Party Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "counterparty_due_diligence",
+    "label": "Counterparty Due Diligence",
+    "bucket": "competency"
+  },
+  {
+    "id": "beneficial_owner_identification",
+    "label": "Beneficial Owner Identification",
+    "bucket": "competency"
+  },
+  {
+    "id": "relationship_manager_coaching",
+    "label": "Relationship Manager Coaching",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_culture_building",
+    "label": "Compliance Culture Building",
+    "bucket": "competency"
+  },
+  {
+    "id": "compliance_incentivization",
+    "label": "Compliance Incentivization",
+    "bucket": "competency"
+  },
+  {
+    "id": "whistleblower_management",
+    "label": "Whistleblower Management",
+    "bucket": "competency"
+  },
+  {
+    "id": "internal_disclosure_decisions",
+    "label": "Internal Disclosure Decisions",
+    "bucket": "competency"
+  },
+  {
+    "id": "legal_professional_privilege_assessment",
+    "label": "Legal Professional Privilege Assessment",
+    "bucket": "competency"
+  },
+  {
+    "id": "regulatory_strategy",
+    "label": "Regulatory Strategy",
+    "bucket": "competency"
+  },
+  {
+    "id": "examination_strategy",
+    "label": "Examination Strategy",
+    "bucket": "competency"
+  },
+  {
+    "id": "negotiation_skills",
+    "label": "Negotiation Skills",
+    "bucket": "competency"
+  },
+  {
+    "id": "regulatory_relations",
+    "label": "Regulatory Relations",
+    "bucket": "competency"
+  },
+  {
+    "id": "regulatory_inference",
+    "label": "Regulatory Inference",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "risk_based_logic",
+    "label": "Risk-Based Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "suspicious_activity_assessment",
+    "label": "Suspicious Activity Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "control_effectiveness_reasoning",
+    "label": "Control Effectiveness Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "compliance_rationale",
+    "label": "Compliance Rationale",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "tipping_off_analysis",
+    "label": "Tipping-Off Analysis",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "precedent_based_reasoning",
+    "label": "Precedent-Based Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "proportionality_assessment",
+    "label": "Proportionality Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "regulatory_interpretation",
+    "label": "Regulatory Interpretation",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "mlro_judgment",
+    "label": "MLRO Judgment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "escalation_logic",
+    "label": "Escalation Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "consent_reasoning",
+    "label": "Consent Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "materiality_assessment",
+    "label": "Materiality Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "likelihood_and_impact_assessment",
+    "label": "Likelihood & Impact Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "transaction_pattern_reasoning",
+    "label": "Transaction Pattern Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "red_flag_correlation",
+    "label": "Red Flag Correlation",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "indicator_weighting",
+    "label": "Indicator Weighting",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "risk_scoring_logic",
+    "label": "Risk Scoring Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "customer_risk_assessment_reasoning",
+    "label": "Customer Risk Assessment Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "supplier_risk_assessment_reasoning",
+    "label": "Supplier Risk Assessment Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "geographic_risk_reasoning",
+    "label": "Geographic Risk Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "product_risk_reasoning",
+    "label": "Product Risk Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "channel_risk_reasoning",
+    "label": "Channel Risk Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "business_line_risk_reasoning",
+    "label": "Business Line Risk Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "inherent_risk_logic",
+    "label": "Inherent Risk Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "residual_risk_logic",
+    "label": "Residual Risk Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "control_effectiveness_judgment",
+    "label": "Control Effectiveness Judgment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "gap_assessment_reasoning",
+    "label": "Gap Assessment Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "compliance_maturity_reasoning",
+    "label": "Compliance Maturity Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "regulatory_examination_reasoning",
+    "label": "Regulatory Examination Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "fatf_reasoning",
+    "label": "FATF Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "cabinet_resolution_reasoning",
+    "label": "Cabinet Resolution Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "moe_circular_interpretation",
+    "label": "MoE Circular Interpretation",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "cbuae_directive_interpretation",
+    "label": "CBUAE Directive Interpretation",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "fiu_guidance_application",
+    "label": "FIU Guidance Application",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "sanctions_regime_logic",
+    "label": "Sanctions Regime Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "tfs_compliance_reasoning",
+    "label": "TFS Compliance Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "proliferation_financing_logic",
+    "label": "Proliferation Financing Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "cpf_analysis_logic",
+    "label": "CPF Analysis Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "pdpl_application_reasoning",
+    "label": "PDPL Application Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "digital_asset_reasoning",
+    "label": "Digital Asset Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "vara_reasoning",
+    "label": "VARA Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "lbma_rgg_logic",
+    "label": "LBMA RGG Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "cahra_determination",
+    "label": "CAHRA Determination",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "conflict_zone_identification",
+    "label": "Conflict Zone Identification",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "refinery_assessment_reasoning",
+    "label": "Refinery Assessment Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "supply_chain_risk_logic",
+    "label": "Supply Chain Risk Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "invoice_pricing_reasoning",
+    "label": "Invoice Pricing Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "tbml_pattern_reasoning",
+    "label": "TBML Pattern Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "structuring_pattern_reasoning",
+    "label": "Structuring Pattern Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "smurfing_pattern_reasoning",
+    "label": "Smurfing Pattern Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "velocity_anomaly_reasoning",
+    "label": "Velocity Anomaly Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "circular_transaction_reasoning",
+    "label": "Circular Transaction Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "beneficial_owner_tracing_logic",
+    "label": "Beneficial Owner Tracing Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "corporate_structure_unraveling",
+    "label": "Corporate Structure Unraveling",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "pep_connection_reasoning",
+    "label": "PEP Connection Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "adverse_media_assessment",
+    "label": "Adverse Media Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "source_of_funds_reasoning",
+    "label": "Source of Funds Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "source_of_wealth_reasoning",
+    "label": "Source of Wealth Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "third_party_payment_logic",
+    "label": "Third-Party Payment Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "false_positive_determination",
+    "label": "False Positive Determination",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "screening_match_assessment",
+    "label": "Screening Match Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "policy_application_reasoning",
+    "label": "Policy Application Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "procedure_compliance_reasoning",
+    "label": "Procedure Compliance Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "control_design_reasoning",
+    "label": "Control Design Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "testing_methodology_reasoning",
+    "label": "Testing Methodology Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "documentation_requirement_reasoning",
+    "label": "Documentation Requirement Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "record_keeping_standard_reasoning",
+    "label": "Record-Keeping Standard Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "board_reporting_thresholds",
+    "label": "Board Reporting Thresholds",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "senior_management_escalation_logic",
+    "label": "Senior Management Escalation Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "governance_structure_reasoning",
+    "label": "Governance Structure Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "reporting_line_assessment",
+    "label": "Reporting Line Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "authority_assessment",
+    "label": "Authority Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "whistleblower_assessment",
+    "label": "Whistleblower Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "internal_disclosure_timing_logic",
+    "label": "Internal Disclosure Timing Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "legal_privilege_assessment",
+    "label": "Legal Privilege Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "regulatory_strategy_reasoning",
+    "label": "Regulatory Strategy Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "examination_preparation_logic",
+    "label": "Examination Preparation Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "negotiation_logic",
+    "label": "Negotiation Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "precedent_application",
+    "label": "Precedent Application",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "regulatory_trend_analysis",
+    "label": "Regulatory Trend Analysis",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "industry_practice_reasoning",
+    "label": "Industry Practice Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "best_practice_application",
+    "label": "Best Practice Application",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "proportionate_response_determination",
+    "label": "Proportionate Response Determination",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "cost_benefit_analysis",
+    "label": "Cost-Benefit Analysis",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "resource_allocation_reasoning",
+    "label": "Resource Allocation Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "priority_setting_logic",
+    "label": "Priority Setting Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "timeline_assessment",
+    "label": "Timeline Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "remediation_feasibility_reasoning",
+    "label": "Remediation Feasibility Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "control_implementation_reasoning",
+    "label": "Control Implementation Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "training_effectiveness_reasoning",
+    "label": "Training Effectiveness Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "staff_capability_assessment",
+    "label": "Staff Capability Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "stakeholder_risk_assessment",
+    "label": "Stakeholder Risk Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "relationship_management_reasoning",
+    "label": "Relationship Management Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "regulatory_relations_logic",
+    "label": "Regulatory Relations Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "compliance_culture_development",
+    "label": "Compliance Culture Development",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "incentive_structure_reasoning",
+    "label": "Incentive Structure Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "penalty_assessment_reasoning",
+    "label": "Penalty Assessment Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "enforcement_risk_reasoning",
+    "label": "Enforcement Risk Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "consent_probability_assessment",
+    "label": "Consent Probability Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "production_order_likelihood",
+    "label": "Production Order Likelihood",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "internal_investigation_scope",
+    "label": "Internal Investigation Scope",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "evidence_preservation_logic",
+    "label": "Evidence Preservation Logic",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "chain_of_custody_reasoning",
+    "label": "Chain of Custody Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "documentation_standards_reasoning",
+    "label": "Documentation Standards Reasoning",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "audit_trail_integrity_assessment",
+    "label": "Audit Trail Integrity Assessment",
+    "bucket": "reasoning"
+  },
+  {
+    "id": "transaction_analysis",
+    "label": "Transaction Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "pattern_detection",
+    "label": "Pattern Detection",
+    "bucket": "analysis"
+  },
+  {
+    "id": "trade_based_money_laundering_analysis",
+    "label": "Trade-Based Money Laundering Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "velocity_analysis",
+    "label": "Velocity Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "structuring_investigation",
+    "label": "Structuring Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "smurfing_investigation",
+    "label": "Smurfing Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "placementlayeringintegration_staging",
+    "label": "Placement/Layering/Integration Staging",
+    "bucket": "analysis"
+  },
+  {
+    "id": "cash_intensive_business_assessment",
+    "label": "Cash-Intensive Business Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "circular_transaction_analysis",
+    "label": "Circular Transaction Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "round_dollar_analysis",
+    "label": "Round Dollar Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "multiple_transaction_analysis",
+    "label": "Multiple Transaction Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "third_party_payment_analysis",
+    "label": "Third-Party Payment Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "invoice_pricing_analysis",
+    "label": "Invoice Pricing Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "pricing_discrepancy_analysis",
+    "label": "Pricing Discrepancy Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "over_invoice_analysis",
+    "label": "Over-Invoice Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "under_invoice_analysis",
+    "label": "Under-Invoice Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "documentation_discrepancy_analysis",
+    "label": "Documentation Discrepancy Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "tbml_red_flag_analysis",
+    "label": "TBML Red Flag Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "enterprise_wide_risk_assessment",
+    "label": "Enterprise-Wide Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "business_wide_risk_assessment",
+    "label": "Business-Wide Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "gap_analysis",
+    "label": "Gap Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "control_effectiveness_testing",
+    "label": "Control Effectiveness Testing",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_maturity_assessment",
+    "label": "Compliance Maturity Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "regulatory_examination_analysis",
+    "label": "Regulatory Examination Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "audit_trail_forensics",
+    "label": "Audit Trail Forensics",
+    "bucket": "analysis"
+  },
+  {
+    "id": "customer_risk_scoring",
+    "label": "Customer Risk Scoring",
+    "bucket": "analysis"
+  },
+  {
+    "id": "source_of_funds_analysis",
+    "label": "Source of Funds Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "source_of_wealth_analysis",
+    "label": "Source of Wealth Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "ubo_beneficial_ownership_mapping",
+    "label": "UBO Beneficial Ownership Mapping",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_corporate_structure_analysis",
+    "label": "Corporate Structure Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "family_connection_tracing",
+    "label": "Family Connection Tracing",
+    "bucket": "analysis"
+  },
+  {
+    "id": "wealth_correlation_analysis",
+    "label": "Wealth Correlation Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "pep_and_corruption_investigation",
+    "label": "PEP & Corruption Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "adverse_media_deep_review",
+    "label": "Adverse Media Deep Review",
+    "bucket": "analysis"
+  },
+  {
+    "id": "sanctions_screening_analysis",
+    "label": "Sanctions Screening Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "screening_match_validation",
+    "label": "Screening Match Validation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "false_positive_resolution",
+    "label": "False Positive Resolution",
+    "bucket": "analysis"
+  },
+  {
+    "id": "know_your_supplier_due_diligence",
+    "label": "Know Your Supplier Due Diligence",
+    "bucket": "analysis"
+  },
+  {
+    "id": "kys_investigation",
+    "label": "KYS Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_cahra_assessment",
+    "label": "CAHRA Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "conflict_affected_area_analysis",
+    "label": "Conflict-Affected Area Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "high_risk_area_identification",
+    "label": "High-Risk Area Identification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "refinery_due_diligence",
+    "label": "Refinery Due Diligence",
+    "bucket": "analysis"
+  },
+  {
+    "id": "refinery_compliance_evaluation",
+    "label": "Refinery Compliance Evaluation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "lbma_certification_verification",
+    "label": "LBMA Certification Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "lbma_rgg_steps_1_5_assessment",
+    "label": "LBMA RGG Steps 1-5 Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_chain_of_custody_verification",
+    "label": "Chain-of-Custody Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "responsible_sourcing_assessment",
+    "label": "Responsible Sourcing Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "conflict_minerals_analysis",
+    "label": "Conflict Minerals Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_country_of_origin_verification",
+    "label": "Country-of-Origin Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "mine_location_assessment",
+    "label": "Mine Location Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "artisanal_mining_assessment",
+    "label": "Artisanal Mining Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "policy_gap_analysis",
+    "label": "Policy Gap Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "regulatory_compliance_mapping",
+    "label": "Regulatory Compliance Mapping",
+    "bucket": "analysis"
+  },
+  {
+    "id": "control_documentation_review",
+    "label": "Control Documentation Review",
+    "bucket": "analysis"
+  },
+  {
+    "id": "governance_structure_assessment",
+    "label": "Governance Structure Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "training_effectiveness_analysis",
+    "label": "Training Effectiveness Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "red_flag_recognition_testing",
+    "label": "Red Flag Recognition Testing",
+    "bucket": "analysis"
+  },
+  {
+    "id": "tipping_off_risk_assessment",
+    "label": "Tipping-Off Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "consent_feasibility_analysis",
+    "label": "Consent Feasibility Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_legal_professional_privilege_assessment",
+    "label": "Legal Professional Privilege Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_materiality_assessment",
+    "label": "Materiality Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "regulatory_intelligence_analysis",
+    "label": "Regulatory Intelligence Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "regulatory_examination_forensics",
+    "label": "Regulatory Examination Forensics",
+    "bucket": "analysis"
+  },
+  {
+    "id": "industry_precedent_analysis",
+    "label": "Industry Precedent Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "peer_enforcement_action_analysis",
+    "label": "Peer Enforcement Action Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "fiu_correspondence_analysis",
+    "label": "FIU Correspondence Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "fiu_filing_pattern_analysis",
+    "label": "FIU Filing Pattern Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "fatf_mutual_evaluation_analysis",
+    "label": "FATF Mutual Evaluation Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "fatf_deficiency_analysis",
+    "label": "FATF Deficiency Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "cabinet_resolution_interpretation_analysis",
+    "label": "Cabinet Resolution Interpretation Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "moe_circular_analysis",
+    "label": "MoE Circular Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "cbuae_directive_analysis",
+    "label": "CBUAE Directive Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "sanctions_regime_deep_analysis",
+    "label": "Sanctions Regime Deep Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "tfs_compliance_deep_analysis",
+    "label": "TFS Compliance Deep Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "proliferation_financing_analysis",
+    "label": "Proliferation Financing Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "cpf_control_analysis",
+    "label": "CPF Control Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "pdpl_data_privacy_analysis",
+    "label": "PDPL Data Privacy Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "digital_asset_deep_analysis",
+    "label": "Digital Asset Deep Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "cryptocurrency_analysis",
+    "label": "Cryptocurrency Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "virtual_asset_analysis",
+    "label": "Virtual Asset Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "vara_framework_analysis",
+    "label": "VARA Framework Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "supply_chain_risk_deep_analysis",
+    "label": "Supply Chain Risk Deep Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "vendor_risk_profiling",
+    "label": "Vendor Risk Profiling",
+    "bucket": "analysis"
+  },
+  {
+    "id": "third_party_risk_assessment",
+    "label": "Third-Party Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "counterparty_risk_analysis",
+    "label": "Counterparty Risk Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "beneficial_owner_verification",
+    "label": "Beneficial Owner Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "relationship_manager_assessment",
+    "label": "Relationship Manager Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_culture_maturity_analysis",
+    "label": "Compliance Culture Maturity Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "whistleblower_investigation",
+    "label": "Whistleblower Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "internal_disclosure_assessment",
+    "label": "Internal Disclosure Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "board_reporting_analysis",
+    "label": "Board Reporting Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "senior_management_briefing_analysis",
+    "label": "Senior Management Briefing Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "governance_structure_evaluation",
+    "label": "Governance Structure Evaluation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "reporting_line_analysis",
+    "label": "Reporting Line Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_authority_assessment",
+    "label": "Authority Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "committee_effectiveness_analysis",
+    "label": "Committee Effectiveness Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_calendar_review",
+    "label": "Compliance Calendar Review",
+    "bucket": "analysis"
+  },
+  {
+    "id": "threshold_management_analysis",
+    "label": "Threshold Management Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "alert_management_analysis",
+    "label": "Alert Management Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "false_positive_root_cause_analysis",
+    "label": "False Positive Root Cause Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_tool_effectiveness_analysis",
+    "label": "Compliance Tool Effectiveness Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "system_configuration_analysis",
+    "label": "System Configuration Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "database_integrity_analysis",
+    "label": "Database Integrity Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_metric_analysis",
+    "label": "Compliance Metric Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "performance_indicator_analysis",
+    "label": "Performance Indicator Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_kpi_assessment",
+    "label": "Compliance KPI Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "risk_register_review",
+    "label": "Risk Register Review",
+    "bucket": "analysis"
+  },
+  {
+    "id": "risk_heat_map_analysis",
+    "label": "Risk Heat Map Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "remediation_roadmap_analysis",
+    "label": "Remediation Roadmap Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "remediation_tracking_analysis",
+    "label": "Remediation Tracking Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "implementation_feasibility_analysis",
+    "label": "Implementation Feasibility Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "timeline_feasibility_analysis",
+    "label": "Timeline Feasibility Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "resource_requirement_analysis",
+    "label": "Resource Requirement Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_cost_analysis",
+    "label": "Compliance Cost Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "anal_cost_benefit_analysis",
+    "label": "Cost-Benefit Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "budget_allocation_analysis",
+    "label": "Budget Allocation Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "staff_capability_analysis",
+    "label": "Staff Capability Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "training_need_assessment",
+    "label": "Training Need Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_awareness_assessment",
+    "label": "Compliance Awareness Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "stakeholder_readiness_analysis",
+    "label": "Stakeholder Readiness Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "change_management_analysis",
+    "label": "Change Management Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "regulatory_relations_assessment",
+    "label": "Regulatory Relations Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "examination_preparation_analysis",
+    "label": "Examination Preparation Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "negotiation_strategy_analysis",
+    "label": "Negotiation Strategy Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "enforcement_risk_assessment",
+    "label": "Enforcement Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "penalty_risk_calculation",
+    "label": "Penalty Risk Calculation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "production_order_risk_assessment",
+    "label": "Production Order Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "internal_investigation_scope_assessment",
+    "label": "Internal Investigation Scope Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "evidence_preservation_analysis",
+    "label": "Evidence Preservation Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "audit_trail_analysis",
+    "label": "Audit Trail Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "documentation_standards_review",
+    "label": "Documentation Standards Review",
+    "bucket": "analysis"
+  },
+  {
+    "id": "record_keeping_assessment",
+    "label": "Record-Keeping Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "retention_schedule_verification",
+    "label": "Retention Schedule Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "destruction_protocol_verification",
+    "label": "Destruction Protocol Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_program_effectiveness_analysis",
+    "label": "Compliance Program Effectiveness Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "system_coverage_analysis",
+    "label": "System Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "control_coverage_analysis",
+    "label": "Control Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "procedure_coverage_analysis",
+    "label": "Procedure Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "documentation_coverage_analysis",
+    "label": "Documentation Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "testing_coverage_analysis",
+    "label": "Testing Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "monitoring_coverage_analysis",
+    "label": "Monitoring Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "reporting_coverage_analysis",
+    "label": "Reporting Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "governance_coverage_analysis",
+    "label": "Governance Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "training_coverage_analysis",
+    "label": "Training Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "awareness_coverage_analysis",
+    "label": "Awareness Coverage Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "vendor_management_analysis",
+    "label": "Vendor Management Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "third_party_oversight_analysis",
+    "label": "Third-Party Oversight Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "outsourcing_risk_analysis",
+    "label": "Outsourcing Risk Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "service_provider_risk_assessment",
+    "label": "Service Provider Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "subcontractor_risk_assessment",
+    "label": "Subcontractor Risk Assessment",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_due_diligence",
+    "label": "Compliance Due Diligence",
+    "bucket": "analysis"
+  },
+  {
+    "id": "background_investigation",
+    "label": "Background Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "screening_results_analysis",
+    "label": "Screening Results Analysis",
+    "bucket": "analysis"
+  },
+  {
+    "id": "match_validation",
+    "label": "Match Validation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "false_positive_investigation",
+    "label": "False Positive Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "alert_investigation",
+    "label": "Alert Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "transaction_investigation",
+    "label": "Transaction Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "customer_investigation",
+    "label": "Customer Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "supplier_investigation",
+    "label": "Supplier Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "geographic_risk_investigation",
+    "label": "Geographic Risk Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "product_risk_investigation",
+    "label": "Product Risk Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "channel_risk_investigation",
+    "label": "Channel Risk Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "business_line_risk_investigation",
+    "label": "Business Line Risk Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "customer_segment_investigation",
+    "label": "Customer Segment Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "transaction_volume_investigation",
+    "label": "Transaction Volume Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "customer_behavior_investigation",
+    "label": "Customer Behavior Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "unusual_activity_investigation",
+    "label": "Unusual Activity Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "suspicious_pattern_investigation",
+    "label": "Suspicious Pattern Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "red_flag_investigation",
+    "label": "Red Flag Investigation",
+    "bucket": "analysis"
+  },
+  {
+    "id": "indicator_verification",
+    "label": "Indicator Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "control_verification",
+    "label": "Control Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "procedure_verification",
+    "label": "Procedure Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "documentation_verification",
+    "label": "Documentation Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "evidence_verification",
+    "label": "Evidence Verification",
+    "bucket": "analysis"
+  },
+  {
+    "id": "compliance_assertion_verification",
+    "label": "Compliance Assertion Verification",
+    "bucket": "analysis"
+  }
+]

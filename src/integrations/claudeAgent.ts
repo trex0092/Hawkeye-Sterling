@@ -1,5 +1,6 @@
 import type { CaseReport } from '../reports/caseReport.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
+import { fetchJsonWithRetry } from './httpRetry.js';
 
 export interface ClaudeAgentConfig {
   apiKey: string;
@@ -82,11 +83,13 @@ export function buildNarrativeRequest(req: NarrativeReportRequest): {
 export async function generateNarrativeReport(
   req: NarrativeReportRequest,
   config: ClaudeAgentConfig,
-  fetchImpl: typeof fetch = fetch,
+  _fetchImpl: typeof fetch = fetch,
 ): Promise<NarrativeReportResult> {
+  void _fetchImpl; // retained for API back-compat; resilient helper uses global fetch
   const payload = buildNarrativeRequest(req);
-  try {
-    const res = await fetchImpl('https://api.anthropic.com/v1/messages', {
+  const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
+    'https://api.anthropic.com/v1/messages',
+    {
       method: 'POST',
       headers: {
         'x-api-key': config.apiKey,
@@ -104,12 +107,21 @@ export async function generateNarrativeReport(
           kind: 'narrative-report',
         },
       }),
-    });
-    if (!res.ok) return { ok: false, error: `Claude HTTP ${res.status}` };
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const html = json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
-    return { ok: true, html };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    },
+    {
+      perAttemptMs: config.timeoutMs ?? 60_000,
+      idleReadMs: 25_000,
+      maxAttempts: 3,
+    },
+  );
+
+  if (!result.ok || !result.json) {
+    const prefix = result.partial ? 'partial response (stream idle) ' : '';
+    return {
+      ok: false,
+      error: `${prefix}${result.error ?? `HTTP ${result.status ?? 'unknown'}`} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
+    };
   }
+  const html = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
+  return { ok: true, html };
 }
