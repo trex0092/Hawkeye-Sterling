@@ -1,0 +1,195 @@
+# Hawkeye Sterling — label manifest.
+# Compliance-domain taxonomy to replace / augment the nine GitHub defaults.
+# Synced to the repo by .github/workflows/labels.yml (EndBug/label-sync).
+# Colours: hex without the leading `#`.
+
+# ─── type ────────────────────────────────────────────────────────────────
+- name: 'type/bug'
+  color: 'b60205'
+  description: Something is broken
+- name: 'type/feature'
+  color: 'a2eeef'
+  description: New capability
+- name: 'type/enhancement'
+  color: '84b6eb'
+  description: Improvement to an existing capability
+- name: 'type/refactor'
+  color: 'c2e0c6'
+  description: Internal refactor with no behaviour change
+- name: 'type/docs'
+  color: '0075ca'
+  description: Documentation only
+- name: 'type/test'
+  color: 'bfd4f2'
+  description: Adds or changes tests
+- name: 'type/chore'
+  color: 'fef2c0'
+  description: Build, CI, tooling, lint
+- name: 'type/security'
+  color: 'd93f0b'
+  description: Security vulnerability or hardening
+- name: 'type/perf'
+  color: 'f9d0c4'
+  description: Performance work
+- name: 'type/a11y'
+  color: '5319e7'
+  description: Accessibility
+
+# ─── area ────────────────────────────────────────────────────────────────
+- name: 'area/brain'
+  color: '1d76db'
+  description: src/brain — cognitive engine, catalogues, reasoning modes
+- name: 'area/advisor'
+  color: '5319e7'
+  description: Deep Reasoning · MLRO Advisor (card, modal, pipeline)
+- name: 'area/ui'
+  color: 'bfd4f2'
+  description: public/ — HTML, CSS, browser JS
+- name: 'area/integrations'
+  color: '0e8a16'
+  description: Asana, Claude Agent, goAML, GitHub adapters
+- name: 'area/sanctions'
+  color: 'd93f0b'
+  description: Sanctions regimes, screening, watchlist adapters
+- name: 'area/dpms'
+  color: 'fbca04'
+  description: DPMS / gold / LBMA / OECD DDG
+- name: 'area/crypto'
+  color: 'c5def5'
+  description: VASP, on-chain, mixer, bridge, travel rule
+- name: 'area/trade-finance'
+  color: 'b60205'
+  description: TBML, LC, UCP 600, HS codes, vessel AIS
+- name: 'area/real-estate'
+  color: 'd4c5f9'
+  description: Real-estate risk, cash purchase, shell buyers
+- name: 'area/pep'
+  color: 'fef2c0'
+  description: PEP / RCA classification, EDD
+- name: 'area/ubo'
+  color: 'c2e0c6'
+  description: Ultimate Beneficial Ownership, nominee / bearer
+- name: 'area/filings'
+  color: '0366d6'
+  description: STR / SAR / FFR / PNMR / CTR, goAML
+- name: 'area/governance'
+  color: '5319e7'
+  description: Four-eyes, SoD, MLRO, board reporting
+- name: 'area/telemetry'
+  color: 'e99695'
+  description: Metrics, calibration, drift
+- name: 'area/charter'
+  color: 'd93f0b'
+  description: Compliance charter P1–P10 (governance of AI outputs)
+- name: 'area/tests'
+  color: 'bfd4f2'
+  description: Test harness or coverage
+
+# ─── priority ────────────────────────────────────────────────────────────
+- name: 'priority/critical'
+  color: 'b60205'
+  description: Block release; stop-the-line
+- name: 'priority/high'
+  color: 'd93f0b'
+  description: Ship this sprint
+- name: 'priority/medium'
+  color: 'fbca04'
+  description: Ship when bandwidth allows
+- name: 'priority/low'
+  color: 'c2e0c6'
+  description: Backlog
+
+# ─── status ──────────────────────────────────────────────────────────────
+- name: 'status/triage'
+  color: 'ededed'
+  description: Needs triage
+- name: 'status/blocked'
+  color: 'b60205'
+  description: Blocked — dependency unresolved
+- name: 'status/in-progress'
+  color: '1d76db'
+  description: Actively being worked on
+- name: 'status/ready-for-review'
+  color: '0e8a16'
+  description: PR open and ready for review
+- name: 'status/needs-info'
+  color: 'fbca04'
+  description: Waiting on information from reporter
+- name: 'status/wontfix'
+  color: 'ffffff'
+  description: Will not be worked on
+- name: 'status/duplicate'
+  color: 'cfd3d7'
+  description: Duplicate of another issue / PR
+- name: 'status/stale'
+  color: 'ededed'
+  description: No recent activity
+
+# ─── phase ───────────────────────────────────────────────────────────────
+- name: 'phase/1-scaffold'
+  color: 'bfdadc'
+  description: Phase 1 — scaffold + cognitive-brain registry
+- name: 'phase/2-command-deck'
+  color: 'c5def5'
+  description: Phase 2 — V2 Module 01 command deck + MLRO advisor
+- name: 'phase/3-deep-reasoning'
+  color: 'd4c5f9'
+  description: Phase 3 — 690-mode deep-reasoning port + picker
+- name: 'phase/4-weaponize'
+  color: 'f9d0c4'
+  description: Phase 4 — pipeline presets + exports + tests
+- name: 'phase/5-observability'
+  color: 'fad8c7'
+  description: Phase 5 — telemetry + calibration + conflict detection
+- name: 'phase/6-ingestion'
+  color: 'bfd4f2'
+  description: Phase 6 — real sanctions ingestion (UN / OFAC / EU / UK / EOCN)
+- name: 'phase/7-cognitive-v2'
+  color: 'd4c5f9'
+  description: Phase 7 — real reasoning-mode implementations + Bayesian re-score
+- name: 'phase/8-hardening'
+  color: 'c2e0c6'
+  description: Phase 8 — hardening, deployment, load testing
+
+# ─── regulatory anchor ───────────────────────────────────────────────────
+- name: 'reg/FDL-10-2025'
+  color: '5319e7'
+  description: FDL No. 10 of 2025 — Art.17/20-21/24/26-27/29/2(3)/10/14
+- name: 'reg/CR-74-2020'
+  color: 'd93f0b'
+  description: Cabinet Resolution 74/2020 — EOCN 24-hour freeze, FFR/PNMR
+- name: 'reg/CR-134-2025'
+  color: '5319e7'
+  description: Cabinet Resolution 134/2025 — four-eyes, SoD, senior management
+- name: 'reg/MoE-Circular'
+  color: 'fef2c0'
+  description: MoE DNFBP circulars and guidance
+- name: 'reg/PDPL'
+  color: 'c5def5'
+  description: FDL 45/2021 (PDPL) — data protection
+- name: 'reg/FATF'
+  color: 'bfd4f2'
+  description: FATF Recommendations + Methodology
+- name: 'reg/LBMA-RGG'
+  color: 'fbca04'
+  description: LBMA Responsible Gold Guidance
+- name: 'reg/OECD-DDG'
+  color: 'fbca04'
+  description: OECD Due Diligence Guidance Annex II
+
+# ─── meta ────────────────────────────────────────────────────────────────
+- name: 'good-first-issue'
+  color: '7057ff'
+  description: Good for newcomers
+- name: 'help-wanted'
+  color: '008672'
+  description: Extra attention is needed
+- name: 'question'
+  color: 'd876e3'
+  description: Further information is requested
+- name: 'dependencies'
+  color: '0366d6'
+  description: Pull requests that update a dependency file
+- name: 'breaking-change'
+  color: 'b60205'
+  description: Breaking API / contract change

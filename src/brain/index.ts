@@ -81,6 +81,13 @@ export * from './mlro-prefixes.generated.js';
 export * from './mlro-conflict-detector.js';
 export * from './mlro-calibration.js';
 export * from './mlro-explainer.js';
+export * from './mlro-reasoning-diff.js';
+export * from './mlro-auto-dispositioner.js';
+export * from './mlro-prefix-composer.js';
+export * from './mlro-context-builder.js';
+export * from './mlro-charter-diff.js';
+export * from './mlro-telemetry.js';
+export * from './mlro-peer-benchmark.js';
 export * from './redactor.js';
 export { auditBrain } from './audit.js';
 export {
