@@ -113,7 +113,13 @@ export type Faculty =
   | "inference"
   | "argumentation"
   | "introspection"
-  | "ratiocination";
+  | "ratiocination"
+  | "forensics"
+  | "linguistic"
+  | "psychological"
+  | "temporal"
+  | "geospatial"
+  | "cryptographic";
 
 export interface ReasoningMode {
   id: string;
