@@ -23,6 +23,14 @@ export type SubjectStatus = "active" | "frozen" | "cleared";
 
 export type BadgeTone = "violet" | "orange" | "dashed";
 
+export interface AdverseMediaMatch {
+  source: string;
+  score: number;
+  name: string;
+  reference: string;
+  date: string;
+}
+
 export interface Subject {
   id: string;
   badge: string;
@@ -30,12 +38,15 @@ export interface Subject {
   name: string;
   meta: string;
   country: string;
+  jurisdiction: string;
+  aliases?: string[];
   type: SubjectType;
+  entityType: "individual" | "organisation" | "other";
   riskScore: number;
   status: SubjectStatus;
   cddPosture: CDDPosture;
   listCoverage: SanctionSource[];
-  sanctions: SanctionMatch[];
+  adverseMedia?: AdverseMediaMatch;
   exposureAED: string;
   slaNotify: string;
   mostSerious: string;

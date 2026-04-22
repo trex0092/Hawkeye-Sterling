@@ -21,12 +21,16 @@ function parseSlaHours(sla: string): number {
   return hours + minutes / 60;
 }
 
+const SANCTIONS_KEYWORDS = /ofac|sdn|un\b|eu\b|ofsi|eocn|sanction|cahra/i;
+
 function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
   switch (filter) {
     case "critical":
       return subjects.filter((s) => s.riskScore >= CRITICAL_THRESHOLD);
     case "sanctions":
-      return subjects.filter((s) => s.sanctions.some((m) => m.score >= 60 && !m.flagged));
+      return subjects.filter(
+        (s) => SANCTIONS_KEYWORDS.test(s.meta) || s.listCoverage.length >= 4,
+      );
     case "edd":
       return subjects.filter((s) => s.cddPosture === "EDD");
     case "pep":

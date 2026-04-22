@@ -1,16 +1,25 @@
 # Hawkeye Sterling — Web (v5)
 
-Next.js 14 + TypeScript + Tailwind front-end for the Hawkeye Sterling AML/CFT platform.
+Next.js 14 + TypeScript + Tailwind front-end for the Hawkeye Sterling AML/CFT
+platform. Deployed to Netlify via [`@netlify/plugin-nextjs`](https://github.com/netlify/next-runtime); the
+root `netlify.toml` builds the backend engine first (`dist/`) then this app.
 
 ## Getting started
 
 ```bash
+# From the repo root — build the brain once so the API route can import it:
+npm ci
+npm run build
+
+# Then run the Next.js dev server:
 cd web
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000 — root redirects to `/screening` (Module 01).
+Open http://localhost:3000 — root redirects to `/screening` (Module 01). The
+Screening detail panel performs live `quickScreen` calls against the compiled
+brain via `POST /api/quick-screen`.
 
 ## Scripts
 
@@ -39,9 +48,19 @@ Open http://localhost:3000 — root redirects to `/screening` (Module 01).
 ## Architecture
 
 - **Design tokens** live in `app/globals.css` as CSS custom properties and are re-exported through Tailwind via `tailwind.config.ts` (`bg-brand`, `text-ink-0`, `font-display`, etc.).
-- **Layout components** (`components/layout/*`): `Header`, `Sidebar` — shared across modules.
-- **Module components** (`components/screening/*`): `ScreeningHero`, `ScreeningToolbar`, `ScreeningTable`, `SubjectDetailPanel`.
-- **Mock data** in `lib/data/` — swap for real API calls when the engine exposes HTTP endpoints.
+- **Layout components** (`components/layout/*`): `Header`, `Sidebar` primitives (`SidebarParts.tsx`).
+- **Module components** (`components/screening|cases|workbench/*`).
+- **API layer**:
+  - `app/api/quick-screen/route.ts` — Next.js route handler that imports the
+    compiled backend (`dist/src/brain/quick-screen.js`) and serves
+    `POST /api/quick-screen`.
+  - `lib/api/quickScreen.ts` — typed client with `QuickScreenError`.
+  - `lib/api/quickScreen.types.ts` — wire-format types mirroring the brain.
+  - `lib/hooks/useQuickScreen.ts` — subject-keyed screening hook with
+    abort-on-change semantics.
+- **Seed data** in `lib/data/` — subjects, cases, modes, and the candidate
+  corpus the live screening runs against. Swap `candidates.ts` for a real
+  watchlist feed when `src/brain/watchlist-adapters.ts` is wired.
 - **Types** in `lib/types.ts`.
 
 ## Notes

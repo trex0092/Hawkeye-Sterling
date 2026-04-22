@@ -1,10 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import type { SanctionMatch, Subject } from "@/lib/types";
+import { useMemo, useState } from "react";
+import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
+import { toQuickScreenSubject } from "@/lib/data/subjects";
+import type { AdverseMediaMatch, Subject } from "@/lib/types";
+import type {
+  QuickScreenHit,
+  QuickScreenResult,
+  QuickScreenSeverity,
+} from "@/lib/api/quickScreen.types";
 
 const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
+
+const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
+  clear: "Clear",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  critical: "Critical",
+};
+
+const SEVERITY_TONE: Record<QuickScreenSeverity, string> = {
+  clear: "text-green",
+  low: "text-blue",
+  medium: "text-amber",
+  high: "text-orange",
+  critical: "text-red",
+};
 
 interface SubjectDetailPanelProps {
   subject: Subject;
@@ -12,6 +35,9 @@ interface SubjectDetailPanelProps {
 
 export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
+
+  const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
+  const screening = useQuickScreen(qsSubject);
 
   const barWidth = `${Math.min(subject.riskScore, 100)}%`;
 
@@ -81,22 +107,10 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         </div>
 
         {activeTab === "Screening" && (
-          <>
-            <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
-              Sanctions & adverse-media matches
-            </div>
-            <div className="text-11 text-ink-2 mb-3">6 lists · policy v4.1</div>
-            <ul className="list-none p-0 m-0">
-              {subject.sanctions.length === 0 && (
-                <li className="text-11 text-ink-2 py-2.5">
-                  No recent sanctions matches for this subject.
-                </li>
-              )}
-              {subject.sanctions.map((item, idx) => (
-                <SanctionRow key={`${item.source}-${idx}`} match={item} />
-              ))}
-            </ul>
-          </>
+          <ScreeningTab
+            state={screening}
+            adverseMedia={subject.adverseMedia}
+          />
         )}
 
         {activeTab !== "Screening" && (
@@ -119,6 +133,144 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         </div>
       </Section>
     </aside>
+  );
+}
+
+function ScreeningTab({
+  state,
+  adverseMedia,
+}: {
+  state: ReturnType<typeof useQuickScreen>;
+  adverseMedia?: AdverseMediaMatch;
+}) {
+  const title = (
+    <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
+      Sanctions &amp; adverse-media matches
+    </div>
+  );
+
+  if (state.status === "idle" || state.status === "loading") {
+    return (
+      <>
+        {title}
+        <div className="text-11 text-ink-2 mb-3">Running live screening…</div>
+        <div className="space-y-2">
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
+        {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+      </>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <>
+        {title}
+        <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">
+          Screening failed: {state.error}
+        </div>
+        {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {title}
+      <ScreeningSummary result={state.result} />
+      <HitsList hits={state.result.hits} />
+      {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+    </>
+  );
+}
+
+function ScreeningSummary({ result }: { result: QuickScreenResult }) {
+  return (
+    <div className="text-11 text-ink-2 mb-3 flex items-center gap-3 flex-wrap">
+      <span>
+        {result.listsChecked} lists · {result.candidatesChecked} candidates
+      </span>
+      <span>·</span>
+      <span>
+        Top score:{" "}
+        <span className="font-mono font-semibold text-ink-0">{result.topScore}</span>
+      </span>
+      <span>·</span>
+      <span className={`font-medium ${SEVERITY_TONE[result.severity]}`}>
+        {SEVERITY_LABEL[result.severity]}
+      </span>
+      <span className="ml-auto font-mono text-10.5 text-ink-3">
+        {result.durationMs}ms
+      </span>
+    </div>
+  );
+}
+
+function HitsList({ hits }: { hits: QuickScreenHit[] }) {
+  if (hits.length === 0) {
+    return (
+      <div className="text-11 text-ink-2 py-2.5">
+        No sanctions matches above threshold.
+      </div>
+    );
+  }
+  return (
+    <ul className="list-none p-0 m-0">
+      {hits.map((hit, idx) => (
+        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} />
+      ))}
+    </ul>
+  );
+}
+
+function HitRow({ hit }: { hit: QuickScreenHit }) {
+  const pct = Math.round(hit.score * 100);
+  return (
+    <li className="py-2.5 border-b border-hair last:border-b-0">
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
+        <span className="font-mono text-11 text-ink-2">{pct}%</span>
+      </div>
+      <div className="text-12.5 text-ink-0 mb-1">
+        {hit.candidateName}
+        {hit.matchedAlias ? (
+          <span className="text-ink-2"> · alias "{hit.matchedAlias}"</span>
+        ) : null}
+      </div>
+      <div className="text-11 text-ink-2">
+        {hit.listRef} · {hit.reason}
+      </div>
+    </li>
+  );
+}
+
+function AdverseMediaRow({ item }: { item: AdverseMediaMatch }) {
+  return (
+    <div className="bg-red-dim px-3 py-2.5 rounded-lg mt-3">
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="font-mono text-11 font-semibold text-red">{item.source}</span>
+        <span className="font-mono text-11 text-red">{item.score}%</span>
+      </div>
+      <div className="text-12.5 text-ink-0 mb-1">{item.name}</div>
+      <div className="text-11 text-ink-2">
+        {item.reference} · {item.date}
+      </div>
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="py-2.5 border-b border-hair last:border-b-0">
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="inline-block h-3 w-16 bg-bg-2 rounded-sm animate-pulse" />
+        <span className="inline-block h-3 w-8 bg-bg-2 rounded-sm animate-pulse" />
+      </div>
+      <div className="h-3 w-48 bg-bg-2 rounded-sm animate-pulse mb-1" />
+      <div className="h-2.5 w-36 bg-bg-2 rounded-sm animate-pulse" />
+    </div>
   );
 }
 
@@ -152,44 +304,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function PanelBtn({ children, brand }: { children: React.ReactNode; brand?: boolean }) {
+function PanelBtn({
+  children,
+  brand,
+}: {
+  children: React.ReactNode;
+  brand?: boolean;
+}) {
   const base =
     "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium cursor-pointer transition-colors";
   const variant = brand
     ? "bg-brand border-brand text-white font-semibold hover:bg-brand-hover"
     : "bg-white border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2";
   return <button className={`${base} ${variant}`}>{children}</button>;
-}
-
-function SanctionRow({ match }: { match: SanctionMatch }) {
-  if (match.flagged) {
-    return (
-      <li className="bg-red-dim px-3 py-2.5 rounded-lg mt-3">
-        <div className="flex justify-between items-baseline mb-1">
-          <span className="font-mono text-11 font-semibold text-red">{match.source}</span>
-          <span className="font-mono text-11 text-red">{match.score}%</span>
-        </div>
-        <div className="text-12.5 text-ink-0 mb-1">{match.name}</div>
-        <div className="text-11 text-ink-2">
-          {match.reference}
-          {match.date ? ` · ${match.date}` : ""}
-        </div>
-      </li>
-    );
-  }
-  return (
-    <li className="py-2.5 border-b border-hair last:border-b-0">
-      <div className="flex justify-between items-baseline mb-1">
-        <span className="font-mono text-11 font-semibold text-ink-0">{match.source}</span>
-        <span className="font-mono text-11 text-ink-2">{match.score}%</span>
-      </div>
-      <div className="text-12.5 text-ink-0 mb-1">{match.name}</div>
-      <div className="text-11 text-ink-2">
-        {match.date ? `${match.date} · ` : ""}
-        {match.reference}
-      </div>
-    </li>
-  );
 }
 
 function ObligationRow({ title, meta }: { title: string; meta: string }) {
