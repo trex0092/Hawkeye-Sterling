@@ -53,12 +53,13 @@ export const fourEyesStressApply = async (ctx: BrainContext): Promise<Finding> =
   }
   const violations: string[] = [];
   for (const r of rows) {
+    const caseId = typeof r.caseId === 'string' ? r.caseId : '?';
     const s = typeof r.submitter === 'string' ? r.submitter : '';
     const a1 = typeof r.firstApprover === 'string' ? r.firstApprover : '';
     const a2 = typeof r.secondApprover === 'string' ? r.secondApprover : '';
-    if (s && a1 && s === a1) violations.push(`${r.caseId ?? '?'}: submitter=first approver (${s})`);
-    if (a1 && a2 && a1 === a2) violations.push(`${r.caseId ?? '?'}: 1st=2nd approver (${a1})`);
-    if (s && a2 && s === a2) violations.push(`${r.caseId ?? '?'}: submitter=2nd approver (${s})`);
+    if (s && a1 && s === a1) violations.push(`${caseId}: submitter=first approver (${s})`);
+    if (a1 && a2 && a1 === a2) violations.push(`${caseId}: 1st=2nd approver (${a1})`);
+    if (s && a2 && s === a2) violations.push(`${caseId}: submitter=2nd approver (${s})`);
   }
   if (violations.length === 0) {
     return mk('four_eyes_stress', 'governance', ['strong_brain'],
