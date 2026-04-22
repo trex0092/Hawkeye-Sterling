@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
+import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
 import { toQuickScreenSubject } from "@/lib/data/subjects";
 import type { AdverseMediaMatch, Subject } from "@/lib/types";
 import type {
@@ -48,6 +49,9 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
+  const superBrain = useSuperBrain(qsSubject, {
+    adverseMediaText: subject.adverseMedia?.name ?? subject.meta,
+  });
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,
@@ -210,6 +214,9 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
           </div>
         )}
       </div>
+
+      <SuperBrainPanel state={superBrain} />
+
 
     </aside>
   );
@@ -533,5 +540,153 @@ function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").Aut
       <span>!</span>
       Asana report failed
     </span>
+  );
+}
+
+function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain").SuperBrainState }) {
+  if (state.status === "idle") return null;
+  if (state.status === "loading") {
+    return (
+      <Section title="Super brain">
+        <div className="text-11 text-ink-2">Fusing brain modules…</div>
+      </Section>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <Section title="Super brain">
+        <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">
+          Unavailable: {state.error}
+        </div>
+      </Section>
+    );
+  }
+  const r: SuperBrainResult = state.result;
+  return (
+    <Section title="Super brain">
+      <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
+        <div className="flex justify-between items-baseline mb-1">
+          <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
+            Composite score
+          </span>
+          <span className="font-mono font-semibold text-18 text-brand">
+            {r.composite.score}
+            <span className="text-white/50 text-12"> /100</span>
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-10.5 font-mono text-white/60">
+          {Object.entries(r.composite.breakdown).map(([k, v]) => (
+            <span key={k}>
+              {k}: <span className="text-white">{v}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {r.jurisdiction && (
+        <Field label="Jurisdiction">
+          <div className="text-12 text-ink-0">
+            {r.jurisdiction.name}{" "}
+            <span className="font-mono text-ink-3">({r.jurisdiction.iso2})</span>
+            {r.jurisdiction.cahra && (
+              <span className="ml-2 inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
+                CAHRA
+              </span>
+            )}
+          </div>
+          {r.jurisdiction.regimes.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {r.jurisdiction.regimes.slice(0, 6).map((reg) => (
+                <span
+                  key={reg}
+                  className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
+                >
+                  {reg}
+                </span>
+              ))}
+            </div>
+          )}
+        </Field>
+      )}
+
+      {r.pep && r.pep.salience > 0 && (
+        <Field label="PEP classification">
+          <div className="text-12 text-ink-0">
+            <span className="font-semibold">{r.pep.type.replace(/_/g, " ")}</span>{" "}
+            <span className="text-ink-2">· tier {r.pep.tier}</span>{" "}
+            <span className="font-mono text-ink-3">
+              salience {Math.round(r.pep.salience * 100)}%
+            </span>
+          </div>
+          {r.pep.rationale && (
+            <div className="text-10.5 text-ink-2 mt-0.5">{r.pep.rationale}</div>
+          )}
+        </Field>
+      )}
+
+      {r.adverseMedia.length > 0 && (
+        <Field label="Adverse-media categories">
+          <div className="flex flex-wrap gap-1">
+            {r.adverseMedia.map((am, i) => (
+              <span
+                key={`${am.categoryId}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
+                title={`keyword: ${am.keyword}`}
+              >
+                {am.categoryId.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      {r.redlines.fired.length > 0 && (
+        <Field label="Redlines fired">
+          <div className="flex flex-wrap gap-1">
+            {r.redlines.fired.map((f, i) => (
+              <span
+                key={`${f.id ?? i}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red text-white tracking-wide-1"
+                title={f.why}
+              >
+                {f.label ?? f.id ?? "redline"}
+              </span>
+            ))}
+          </div>
+          {r.redlines.action && (
+            <div className="text-10.5 text-red mt-1">Action: {r.redlines.action}</div>
+          )}
+        </Field>
+      )}
+
+      <Field label="Phonetic fingerprints">
+        <div className="font-mono text-10.5 text-ink-2 flex flex-wrap gap-x-3">
+          <span>soundex: <span className="text-ink-0">{r.variants.soundex}</span></span>
+          <span>
+            dmetaphone:{" "}
+            <span className="text-ink-0">
+              {Array.isArray(r.variants.doubleMetaphone)
+                ? r.variants.doubleMetaphone.join(" / ")
+                : r.variants.doubleMetaphone}
+            </span>
+          </span>
+        </div>
+      </Field>
+
+      {r.variants.nameVariants.length > 0 && (
+        <Field label="Name variants">
+          <div className="flex flex-wrap gap-1">
+            {r.variants.nameVariants.slice(0, 10).map((v, i) => (
+              <span
+                key={`${v}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-bg-2 text-ink-1"
+              >
+                {v}
+              </span>
+            ))}
+          </div>
+        </Field>
+      )}
+    </Section>
   );
 }
