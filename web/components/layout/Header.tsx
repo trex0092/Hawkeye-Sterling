@@ -61,8 +61,6 @@ export function Header() {
             <span className="w-1.5 h-1.5 rounded-full bg-green" />
             <span className="font-medium">live</span>
           </span>
-          <span className="flex items-center gap-1 text-ink-3">◐ night</span>
-          <span className="flex items-center gap-1 text-ink-3">☾ tweaks</span>
         </div>
       </nav>
     </header>
