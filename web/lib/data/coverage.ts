@@ -48,6 +48,7 @@ export interface CoverageReport {
   playbooksPartial: number;
   playbooksUnmet: number;
   overallScore: number;
+  generatedAt: string;
 }
 
 const SATISFIED_THRESHOLD = 95;
@@ -180,5 +181,6 @@ export function computeCoverage(input: ComputeCoverageInput): CoverageReport {
     playbooksPartial: partial,
     playbooksUnmet: unmet,
     overallScore,
+    generatedAt: new Date().toISOString(),
   };
 }

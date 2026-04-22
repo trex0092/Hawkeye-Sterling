@@ -329,7 +329,7 @@ function Section({
 }: {
   title: string;
   children: React.ReactNode;
-  noMargin?: boolean;
+  noMargin?: boolean | undefined;
 }) {
   return (
     <div className={noMargin ? "mt-6" : "mb-6"}>

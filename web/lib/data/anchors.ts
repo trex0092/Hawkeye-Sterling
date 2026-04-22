@@ -90,3 +90,7 @@ export const ANCHORS: readonly RegulatoryAnchor[] = Object.freeze(
 export function anchorById(id: string): RegulatoryAnchor | undefined {
   return ANCHORS.find((a) => a.id === id);
 }
+
+export function anchorsByFamily(family: AnchorFamily): RegulatoryAnchor[] {
+  return ANCHORS.filter((a) => a.family === family);
+}
