@@ -8,11 +8,11 @@
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode, Verdict,
 } from './types.js';
-import { matchScore, normalizeLatin } from './lib/name-matching.js';
+import { matchScore } from './lib/name-matching.js';
 import { jurisdictionProfile, jurisdictionCascadeRisk, JURISDICTION_DATA_AS_OF } from './lib/jurisdictions.js';
 import {
   extractAmounts, extractTimestamps, structuringScan, smurfingScan,
-  roundAmountRate, roundTripScan, peelChainScore, timeClusteringScore,
+  roundTripScan, peelChainScore, timeClusteringScore,
   washTradeScore, journalAnomalyScore,
 } from './lib/tx-patterns.js';
 import { scoreAdverseMedia } from './lib/adverse-media-scorer.js';

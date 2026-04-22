@@ -32,15 +32,15 @@
     </div>
     <nav class="chips">
       <span class="chip chip-live"><span class="dot"></span> BRAIN ONLINE</span>
-      <span class="chip">v0.1.0</span>
-      <span class="chip chip-warn">PHASE 1 · STUB MODES</span>
+      <span class="chip">v0.2.0</span>
+      <span class="chip chip-win">WAVE 4 · 70 REAL MODES</span>
     </nav>
   </header>
 
   <section class="hero">
-    <h1>The strongest screening brain in the world.<br/><span class="accent">Built to surpass Refinitiv World-Check.</span></h1>
+    <h1>The strongest screening brain in the world.<br/><span class="accent">Built to surpass Refinitiv World-Check and Dow Jones R&amp;C.</span></h1>
     <p class="lede">
-      Sanctions · PEP · UBO · Adverse Media · TBML · VASP · DPMS · Proliferation — scanned, reasoned, and explained. Every decision traces back to the reasoning modes that produced it. No black box. No proprietary list lock-in. Full cognitive chain persisted.
+      Sanctions · PEP · UBO · Adverse Media · TBML · VASP · DPMS · Proliferation — scanned, reasoned, and explained. 279 reasoning modes, 70 running production algorithms, composite fuzzy matching across Latin · Arabic · Cyrillic · CJK, 23 direct-source list channels, FATF-calibrated jurisdiction risk, Bayesian + Dempster-Shafer aggregation. Every decision traces back to the reasoning modes that produced it. No black box. No proprietary list lock-in. Full cognitive chain persisted.
     </p>
     <div class="stat-strip" id="stat-strip">
       <div class="stat"><span class="stat-num" data-k="faculties">—</span><span class="stat-lbl">Faculties</span></div>
@@ -93,9 +93,9 @@
       <h2 id="chain-title" class="panel-title">▌ REASONING STREAM</h2>
       <div class="chain-header">
         <span class="pulse" id="pulse" hidden></span>
-        <span id="chain-status">Awaiting subject…</span>
+        <span id="chain-status" role="status" aria-live="polite">Awaiting subject…</span>
       </div>
-      <ol class="chain" id="chain"></ol>
+      <ol class="chain" id="chain" aria-live="polite" aria-relevant="additions"></ol>
     </section>
 
     <section class="panel panel-verdict" aria-labelledby="verdict-title">
@@ -115,6 +115,16 @@
       </div>
     </section>
   </main>
+
+  <section class="panel panel-hits" aria-labelledby="hits-title" id="hits-section" hidden>
+    <h2 id="hits-title" class="panel-title">▌ SANCTIONS MATCH CANDIDATES</h2>
+    <div class="hits-grid" id="hits-grid"></div>
+  </section>
+
+  <section class="panel panel-findings" aria-labelledby="findings-title" id="findings-section" hidden>
+    <h2 id="findings-title" class="panel-title">▌ FINDINGS BY CATEGORY</h2>
+    <div class="findings-grid" id="findings-grid"></div>
+  </section>
 
   <section class="panel panel-faculties" aria-labelledby="fac-title">
     <h2 id="fac-title" class="panel-title">▌ THE TEN FACULTIES</h2>
@@ -138,8 +148,10 @@
       <tbody>
         <tr><td>Data origin</td><td>Proprietary curation</td><td class="win">Direct-source ingestion (UN, OFAC, EU, UK, UAE EOCN, UAE Local Terrorist List, OpenSanctions)</td></tr>
         <tr><td>Reasoning transparency</td><td>Black-box scoring</td><td class="win">Full reasoning chain · every finding traced to reasoning modes</td></tr>
-        <tr><td>Cognitive engine</td><td>Rule-book heuristics</td><td class="win">10 faculties · 200 reasoning modes · introspection-audited</td></tr>
-        <tr><td>Adverse-media breadth</td><td>Curated dossiers</td><td class="win">5-category taxonomy · 100+ keywords · compiled boolean query</td></tr>
+        <tr><td>Cognitive engine</td><td>Rule-book heuristics</td><td class="win">10 faculties · 279 reasoning modes · 70 with production algorithms · introspection-audited</td></tr>
+        <tr><td>Adverse-media breadth</td><td>Curated dossiers</td><td class="win">5-category taxonomy · multi-language (ar/fa/fr/es/ru/zh/en) · compiled boolean query</td></tr>
+        <tr><td>Jurisdiction intelligence</td><td>Country tag</td><td class="win">FATF black / grey / secrecy-tier cascade · point-in-time stamp</td></tr>
+        <tr><td>Aggregation rigor</td><td>Weighted score</td><td class="win">Bayesian cascade + Dempster-Shafer + counter-evidence weighting</td></tr>
         <tr><td>UAE / emirate specificity</td><td>Generic jurisdiction tag</td><td class="win">EOCN + Local Terrorist List + emirate-level rules + DPMS 30 KPIs</td></tr>
         <tr><td>Multilingual / transliteration</td><td>English-first</td><td class="win">Arabic &amp; CJK normalisation via Double-Metaphone + custom transliteration</td></tr>
         <tr><td>False-positive handling</td><td>Manual disposition queue</td><td class="win">Introspection faculty: bias audit, confidence calibration, counterexample search</td></tr>
@@ -152,20 +164,20 @@
   <section class="panel panel-roadmap" aria-labelledby="rm-title">
     <h2 id="rm-title" class="panel-title">▌ PHASE ROADMAP</h2>
     <ol class="roadmap">
-      <li class="done"><strong>1 · Scaffold + cognitive-brain registry</strong><span>TS + Netlify, 10 faculties, 200 reasoning modes, templates, scenarios, adverse-media taxonomy.</span></li>
-      <li><strong>2 · Sanctions ingestion</strong><span>UN · OFAC · EU · UK · UAE EOCN · UAE Local Terrorist List · Netlify Blobs · daily cron.</span></li>
-      <li><strong>3 · Fuzzy matching</strong><span>Levenshtein · Jaro-Winkler · Double-Metaphone · Arabic / CJK transliteration.</span></li>
-      <li><strong>4 · Screening UI + results</strong><span>Reasoning-chain panel · evidence graph · hit-level disposition.</span></li>
-      <li><strong>5 · PEP</strong><span>OpenSanctions ingestion · family &amp; close-associates enrichment.</span></li>
-      <li><strong>6 · Adverse media</strong><span>NewsAPI · GDELT · Google CSE · direct RSS · categorisation via 5-taxonomy query.</span></li>
-      <li><strong>7 · Cognitive engine v2</strong><span>Real mode implementations · entity graphs · Bayesian re-scoring · introspection.</span></li>
-      <li><strong>8 · Hardening &amp; deploy</strong><span>Integration tests · load · CSP validation · Netlify production deploy.</span></li>
+      <li class="done"><strong>1 · Scaffold + cognitive-brain registry</strong><span>TS + Netlify, 10 faculties, 279 reasoning modes, templates, scenarios, adverse-media taxonomy.</span></li>
+      <li class="done"><strong>2 · Sanctions ingestion</strong><span>UN · OFAC SDN &amp; Cons · EU FSF · UK OFSI · UAE EOCN + LTL · Netlify Blobs · daily cron @ 03:00 UTC.</span></li>
+      <li class="done"><strong>3 · Fuzzy matching</strong><span>Composite Jaro-Winkler + token-set + 3-gram Jaccard + Levenshtein-ratio + Double-Metaphone. Latin / Arabic / Cyrillic / CJK.</span></li>
+      <li class="done"><strong>4 · Screening UI + results</strong><span>Reasoning chain streamed, findings by category, sanctions-hit candidate cards, Ctrl/⌘+Enter submit.</span></li>
+      <li><strong>5 · PEP</strong><span>OpenSanctions ingestion · family &amp; close-associates enrichment. <em>Role-heuristic already live via pep_screening.</em></span></li>
+      <li><strong>6 · Adverse media</strong><span>NewsAPI · GDELT · Google CSE · direct RSS · 5-taxonomy + multilingual classification (text scoring live via adverse_media_scoring).</span></li>
+      <li class="done"><strong>7 · Cognitive engine v2 (Wave 4)</strong><span>70 modes with production algorithms: tx-patterns, graph, jurisdiction, linguistic, crypto, Bayesian + Dempster-Shafer aggregation.</span></li>
+      <li><strong>8 · Hardening &amp; deploy</strong><span>vitest (60 tests) + eslint + GitHub Actions CI live. Netlify production deploy when MLRO signs off.</span></li>
     </ol>
   </section>
 
   <footer class="footer">
-    <span>Hawkeye Sterling · v0.1.0 · regulator-grade screening</span>
-    <span class="footer-right">no secrets leave this device in Phase 1</span>
+    <span>Hawkeye Sterling · v0.2.0 · regulator-grade screening</span>
+    <span class="footer-right">70 reasoning modes live · 23 direct-source list channels · MLRO review required</span>
   </footer>
 
   <script src="/app.js" defer></script>
