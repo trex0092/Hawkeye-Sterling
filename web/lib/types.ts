@@ -93,6 +93,37 @@ export interface TimelineEvent {
   event: string;
 }
 
+export type Faculty =
+  | "reasoning"
+  | "data-analysis"
+  | "deep-thinking"
+  | "intelligence"
+  | "smartness"
+  | "inference"
+  | "argumentation"
+  | "introspection"
+  | "ratiocination";
+
+export interface ReasoningMode {
+  id: string;
+  name: string;
+  faculty: Faculty;
+}
+
+export type FacultyFilterKey = "all" | Faculty;
+
+export interface FacultyFilter {
+  key: FacultyFilterKey;
+  label: string;
+  count: string;
+}
+
+export interface ReasoningPreset {
+  id: string;
+  label: string;
+  modeIds: string[];
+}
+
 export type CaseBadgeTone = "violet" | "orange" | "green";
 
 export interface CaseRecord {

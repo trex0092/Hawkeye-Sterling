@@ -3,12 +3,17 @@
 import { usePathname } from "next/navigation";
 
 const NAV_TABS = [
-  { label: "Workbench", href: "/workbench" },
+  { label: "Workbench", href: "/" },
   { label: "Screening", href: "/screening" },
   { label: "Cases", href: "/cases" },
-  { label: "Evidence trail", href: "/audit-trail" },
+  { label: "Deep reasoning", href: "/workbench" },
   { label: "Audit", href: "/audit-trail" },
 ] as const;
+
+function isActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -29,7 +34,7 @@ export function Header() {
 
         <div className="flex gap-0.5 ml-8">
           {NAV_TABS.map((tab) => {
-            const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+            const active = isActive(pathname, tab.href);
             return (
               <a
                 key={tab.label}
