@@ -1,4 +1,8 @@
+import React, { useState } from 'react';
+
 function BottomRail({ approvals, lines }) {
+  const [activeTab, setActiveTab] = useState('approvals');
+
   return (
     <div className="bottom-rail">
       <div style={{ borderRight: '1px solid var(--rule)', display: 'flex', flexDirection: 'column' }}>

@@ -1,6 +1,7 @@
+import React from 'react';
 import { WORKSPACES } from '@/data/constants';
 
-function TopBar({ workspace, setWorkspace, now }) {
+function TopBar({ workspace, setWorkspace, onTweaksToggle, now }) {
   return (
     <div className="top-bar">
       <div className="brand">

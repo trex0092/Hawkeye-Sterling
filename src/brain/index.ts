@@ -100,8 +100,12 @@ export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
   weaponizedSystemPrompt,
+  weaponizedIntegrity,
+  assertWeaponized,
   type WeaponizedBrainManifest,
   type WeaponizedSystemPromptOptions,
+  type WeaponizationAssertion,
+  type WeaponizationReport,
 } from './weaponized.js';
 export {
   SKILLS,
@@ -118,3 +122,21 @@ export {
   type SkillLayer,
   type SkillsSummaryOptions,
 } from './skills-catalogue.js';
+export {
+  BRAIN_AMPLIFICATION_PERCENT,
+  BRAIN_AMPLIFICATION_FACTOR,
+  COGNITIVE_AMPLIFIER_VERSION,
+  COGNITIVE_AMPLIFIER,
+  cognitiveAmplifierBlock,
+  type CognitiveAmplifier,
+} from './cognitive-amplifier.js';
+export {
+  META_COGNITION,
+  META_COGNITION_BY_ID,
+  META_COGNITION_BY_CATEGORY,
+  META_COGNITION_CATEGORY_COUNTS,
+  metaCognitionSignature,
+  metaCognitionBlock,
+  type MetaCognitionCategory,
+  type MetaCognitionPrimitive,
+} from './meta-cognition.js';

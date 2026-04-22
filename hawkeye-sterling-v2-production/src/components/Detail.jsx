@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { SUBJECTS } from '@/data/constants';
 
 function Detail({ subjectId, onApprove, onEscalate }) {

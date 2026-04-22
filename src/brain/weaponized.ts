@@ -33,6 +33,18 @@ import {
   type SkillLayer,
 } from './skills-catalogue.js';
 import {
+  COGNITIVE_AMPLIFIER,
+  cognitiveAmplifierBlock,
+  type CognitiveAmplifier,
+} from './cognitive-amplifier.js';
+import {
+  META_COGNITION,
+  META_COGNITION_CATEGORY_COUNTS,
+  metaCognitionBlock,
+  metaCognitionSignature,
+  type MetaCognitionCategory,
+} from './meta-cognition.js';
+import {
   SYSTEM_PROMPT,
   MATCH_CONFIDENCE_LEVELS,
   OUTPUT_SECTIONS,
@@ -132,6 +144,12 @@ export interface WeaponizedBrainManifest {
       byLayer: Record<SkillLayer, number>;
       byDomain: Record<SkillDomain, number>;
     };
+    amplifier: CognitiveAmplifier;
+    metaCognition: {
+      total: number;
+      byCategory: Record<MetaCognitionCategory, number>;
+      ids: string[];
+    };
   };
   integrity: {
     charterHash: string;
@@ -219,6 +237,12 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     fatf: FATF_RECOMMENDATIONS.map((r) => r.id).sort(),
     dispositions: DISPOSITIONS.map((d) => d.code).sort(),
     skills: JSON.parse(skillsCatalogueSignature()),
+    amplifier: {
+      version: COGNITIVE_AMPLIFIER.version,
+      percent: COGNITIVE_AMPLIFIER.percent,
+      factor: COGNITIVE_AMPLIFIER.factor,
+    },
+    metaCognition: JSON.parse(metaCognitionSignature()),
   });
 
   return {
@@ -306,6 +330,12 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         byLayer: SKILLS_LAYER_COUNTS as Record<SkillLayer, number>,
         byDomain: SKILLS_DOMAIN_COUNTS as Record<SkillDomain, number>,
       },
+      amplifier: COGNITIVE_AMPLIFIER,
+      metaCognition: {
+        total: META_COGNITION.length,
+        byCategory: META_COGNITION_CATEGORY_COUNTS as Record<MetaCognitionCategory, number>,
+        ids: META_COGNITION.map((m) => m.id),
+      },
     },
     integrity: {
       charterHash: fnv1a(SYSTEM_PROMPT),
@@ -326,6 +356,22 @@ export interface WeaponizedSystemPromptOptions {
    */
   includeSkillsCatalogue?: boolean;
   includeSkillsFullList?: boolean;
+  /**
+   * Inject the cognitive amplifier block (brain-gain directive). Default true.
+   * Disable only in low-stakes, read-only contexts where the amplified chain
+   * of reasoning would be overkill.
+   */
+  includeAmplifierBlock?: boolean;
+  /**
+   * Inject the meta-cognition primitives (counterfactual, Bayesian, steelman,
+   * red-team, pre-mortem, first-principles, analogical, self-consistency, …).
+   * Default true. These sit ABOVE the domain reasoning modes and the skills
+   * catalogue; disabling them only makes sense for unit tests of the lower
+   * layers.
+   */
+  includeMetaCognition?: boolean;
+  /** Emit the charter/catalogue/composite hashes at the end of the prompt. Default true. */
+  includeIntegrityBlock?: boolean;
 }
 
 export function weaponizedSystemPrompt(
@@ -378,6 +424,32 @@ export function weaponizedSystemPrompt(
     );
   }
 
+  if (opts.includeMetaCognition ?? true) {
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'META-COGNITION — REASONING ABOUT YOUR REASONING',
+        '================================================================================',
+        '',
+        metaCognitionBlock(),
+      ].join('\n'),
+    );
+  }
+
+  if (opts.includeAmplifierBlock ?? true) {
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'COGNITIVE AMPLIFICATION — BRAIN-GAIN DIRECTIVE',
+        '================================================================================',
+        '',
+        cognitiveAmplifierBlock(),
+      ].join('\n'),
+    );
+  }
+
   if (opts.taskRole) {
     parts.push(
       [
@@ -395,5 +467,119 @@ export function weaponizedSystemPrompt(
     parts.push(`\nAudience: ${opts.audience}`);
   }
 
+  if (opts.includeIntegrityBlock ?? true) {
+    const integrity = weaponizedIntegrity();
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'INTEGRITY — DO NOT DRIFT',
+        '================================================================================',
+        '',
+        `charterHash:   ${integrity.charterHash}`,
+        `catalogueHash: ${integrity.catalogueHash}`,
+        `compositeHash: ${integrity.compositeHash}`,
+        `You MUST echo these three hashes verbatim in your AUDIT_LINE. Any output that omits them, paraphrases the charter, or asserts a skill / mode / doctrine / regime / CAHRA / FATF / playbook / disposition id that is not in the cognitive catalogue is a CHARTER VIOLATION and MUST be treated as a BLOCKED verdict.`,
+      ].join('\n'),
+    );
+  }
+
   return parts.join('\n');
+}
+
+/**
+ * Compute the three integrity hashes used to sign every weaponized prompt.
+ * `compositeHash` = fnv1a(charterHash | '·' | catalogueHash).
+ */
+export function weaponizedIntegrity(): {
+  charterHash: string;
+  catalogueHash: string;
+  compositeHash: string;
+} {
+  const manifest = buildWeaponizedBrainManifest();
+  const composite = fnv1a(
+    `${manifest.integrity.charterHash}·${manifest.integrity.catalogueHash}`,
+  );
+  return {
+    charterHash: manifest.integrity.charterHash,
+    catalogueHash: manifest.integrity.catalogueHash,
+    compositeHash: composite,
+  };
+}
+
+export interface WeaponizationAssertion {
+  id: string;
+  label: string;
+  present: boolean;
+  evidence: string;
+}
+
+export interface WeaponizationReport {
+  ok: boolean;
+  prompt: { length: number; lines: number };
+  integrity: {
+    charterHash: string;
+    catalogueHash: string;
+    compositeHash: string;
+  };
+  sections: WeaponizationAssertion[];
+  missing: string[];
+}
+
+/**
+ * Verify that a weaponized prompt carries every catalogue headline + charter
+ * marker we expect. Used by tests + the `brain:weaponize` CLI to catch silent
+ * regressions where an integration accidentally strips a section.
+ */
+export function assertWeaponized(prompt: string): WeaponizationReport {
+  const integrity = weaponizedIntegrity();
+  const checks: Array<Omit<WeaponizationAssertion, 'present' | 'evidence'> & {
+    match: RegExp | string;
+  }> = [
+    { id: 'charter-banner', label: 'Compliance charter banner', match: 'SYSTEM ROLE: REGULATED COMPLIANCE SCREENING ASSISTANT' },
+    { id: 'prohibitions', label: 'Absolute prohibitions block', match: 'ABSOLUTE PROHIBITIONS' },
+    { id: 'output-structure', label: 'Mandatory 7-section output structure', match: 'MANDATORY OUTPUT STRUCTURE' },
+    { id: 'match-confidence', label: 'Match-confidence taxonomy', match: 'MATCH CONFIDENCE' },
+    { id: 'cognitive-catalogue', label: 'Cognitive catalogue header', match: 'COGNITIVE CATALOGUE' },
+    { id: 'faculties', label: 'Faculties line', match: /Faculties: \d+/ },
+    { id: 'reasoning-modes', label: 'Reasoning modes line', match: /Reasoning modes: \d+/ },
+    { id: 'adverse-media', label: 'Adverse-media categories line', match: /Adverse-media categories: \d+/ },
+    { id: 'doctrines', label: 'Doctrines line', match: /Doctrines: \d+/ },
+    { id: 'red-flags', label: 'Red flags line', match: /Red flags: \d+/ },
+    { id: 'typologies', label: 'Typologies line', match: /Typologies: \d+/ },
+    { id: 'sanction-regimes', label: 'Sanction regimes line', match: /Sanction regimes: \d+/ },
+    { id: 'jurisdictions', label: 'Jurisdictions line', match: /Jurisdictions indexed: \d+/ },
+    { id: 'dpms-kpis', label: 'DPMS KPIs line', match: /DPMS KPIs: \d+/ },
+    { id: 'matching', label: 'Matching methods line', match: /Matching methods available:/ },
+    { id: 'cahra', label: 'CAHRA registry line', match: /CAHRA registry: \d+/ },
+    { id: 'thresholds', label: 'Thresholds line', match: /Thresholds: \d+/ },
+    { id: 'playbooks', label: 'Playbooks line', match: /Playbooks: \d+/ },
+    { id: 'redlines', label: 'Redlines line', match: /Redlines: \d+ hard-stop/ },
+    { id: 'fatf', label: 'FATF recommendations line', match: /FATF recommendations indexed: \d+/ },
+    { id: 'dispositions', label: 'Disposition codes line', match: /Disposition codes: \d+/ },
+    { id: 'skills-catalogue', label: 'Skills catalogue header', match: 'SKILLS CATALOGUE' },
+    { id: 'skills-total', label: 'Skills total line', match: /\d+ skills registered/ },
+    { id: 'meta-cognition-header', label: 'Meta-cognition header', match: 'META-COGNITION — REASONING ABOUT YOUR REASONING' },
+    { id: 'meta-cognition-total', label: 'Meta-cognition total line', match: /Meta-cognition primitives: \d+ registered/ },
+    { id: 'amplifier-header', label: 'Cognitive amplifier header', match: 'COGNITIVE AMPLIFICATION — BRAIN-GAIN DIRECTIVE' },
+    { id: 'amplifier-percent', label: 'Cognitive amplifier percent line', match: /Cognitive amplification: \+[\d,]+%/ },
+    { id: 'integrity-block', label: 'Integrity block', match: 'INTEGRITY — DO NOT DRIFT' },
+    { id: 'charter-hash', label: 'Charter hash emitted', match: `charterHash:   ${integrity.charterHash}` },
+    { id: 'catalogue-hash', label: 'Catalogue hash emitted', match: `catalogueHash: ${integrity.catalogueHash}` },
+    { id: 'composite-hash', label: 'Composite hash emitted', match: `compositeHash: ${integrity.compositeHash}` },
+  ];
+
+  const sections: WeaponizationAssertion[] = checks.map(({ id, label, match }) => {
+    const present = typeof match === 'string' ? prompt.includes(match) : match.test(prompt);
+    const evidence = typeof match === 'string' ? match : match.source;
+    return { id, label, present, evidence };
+  });
+  const missing = sections.filter((s) => !s.present).map((s) => s.id);
+  return {
+    ok: missing.length === 0,
+    prompt: { length: prompt.length, lines: prompt.split('\n').length },
+    integrity,
+    sections,
+    missing,
+  };
 }

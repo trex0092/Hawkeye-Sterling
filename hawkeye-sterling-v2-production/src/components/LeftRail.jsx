@@ -1,3 +1,4 @@
+import React from 'react';
 import { FILTERS, SHIFT } from '@/data/constants';
 
 function LeftRail({ activeFilter, setFilter }) {
