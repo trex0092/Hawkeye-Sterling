@@ -31,6 +31,35 @@ export interface SuperBrainResult {
     offset: number;
   }>;
   adverseKeywordGroups: Array<{ group: string; label: string; count: number }>;
+  jurisdictionRich?: {
+    code: string;
+    name: string;
+    tiers: string[];
+    riskScore: number;
+    notes: string[];
+  } | null;
+  typologies?: {
+    hits: Array<{ id: string; name: string; family: string; weight: number }>;
+    compositeScore: number;
+  };
+  adverseMediaScored?: {
+    byCategory: Record<string, number>;
+    total: number;
+    distinctKeywords: number;
+    topKeywords: string[];
+    categoriesTripped: string[];
+    compositeScore: number;
+  } | null;
+  pepAssessment?: {
+    isLikelyPEP: boolean;
+    highestTier: string;
+    matchedRoles: string[];
+    riskScore: number;
+  } | null;
+  stylometry?: {
+    gaslightingScore?: number;
+    [k: string]: unknown;
+  } | null;
   jurisdiction: {
     iso2: string;
     name: string;

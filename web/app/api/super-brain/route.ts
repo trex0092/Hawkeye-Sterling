@@ -14,6 +14,15 @@ import {
 } from "../../../../dist/src/brain/index.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyEsg } from "@/lib/data/esg";
+// Wave 4 enhancements — richer brain modules landed via PR #49.
+import { jurisdictionProfile } from "../../../../dist/src/brain/lib/jurisdictions.js";
+import {
+  matchTypologies,
+  typologyCompositeScore,
+} from "../../../../dist/src/brain/lib/typologies.js";
+import { scoreAdverseMedia } from "../../../../dist/src/brain/lib/adverse-media-scorer.js";
+import { assessPEP } from "../../../../dist/src/brain/lib/pep.js";
+import { analyseText } from "../../../../dist/src/brain/lib/stylometry.js";
 import {
   classifyAdverseKeywords,
   adverseKeywordGroupCounts,
@@ -145,6 +154,77 @@ export async function POST(req: Request): Promise<NextResponse> {
       ),
     );
 
+    // ── Wave 4 additions ────────────────────────────────────────
+    // Richer jurisdiction profile (FATF tier + secrecy + sanctions
+    // exposure) from the new library module.
+    const jurisdictionIso = jurisdiction?.iso2 ?? body.subject.jurisdiction;
+    const jurisdictionRich = jurisdictionIso
+      ? (() => {
+          try {
+            return jurisdictionProfile(jurisdictionIso.toUpperCase());
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
+    // FATF / Egmont typology catalogue — regex-fingerprint matching on
+    // the joined narrative/aliases/role/media text.
+    const rawTypologyHits: ReturnType<typeof matchTypologies> = (() => {
+      try {
+        return matchTypologies(fullText);
+      } catch {
+        return [];
+      }
+    })();
+    const typologyHits = rawTypologyHits.map((h) => ({
+      id: h.typology.id,
+      name: h.typology.name,
+      family: h.typology.family,
+      weight: h.typology.weight,
+      snippet: h.snippet,
+    }));
+    const typologyScore = (() => {
+      try {
+        return typologyCompositeScore(rawTypologyHits);
+      } catch {
+        return 0;
+      }
+    })();
+
+    // Structured adverse-media scorer (5-category confidence + composite).
+    const adverseMediaScored = mediaText
+      ? (() => {
+          try {
+            return scoreAdverseMedia(mediaText, []);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
+    // Richer PEP assessment across role + title heuristics.
+    const pepAssessment = body.roleText
+      ? (() => {
+          try {
+            return assessPEP(body.roleText ?? "", body.subject.name);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
+    // Stylometry — detect gaslighting / evasive phrasing in the narrative.
+    const stylometry = mediaText
+      ? (() => {
+          try {
+            return analyseText(mediaText);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
     return NextResponse.json({
       ok: true,
       screen,
@@ -156,6 +236,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       jurisdiction,
       redlines,
       variants,
+      // Wave 4 additions
+      jurisdictionRich,
+      typologies: { hits: typologyHits, compositeScore: typologyScore },
+      adverseMediaScored,
+      pepAssessment,
+      stylometry,
       composite: {
         score: composite,
         breakdown: {
