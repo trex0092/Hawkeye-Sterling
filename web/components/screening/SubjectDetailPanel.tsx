@@ -818,6 +818,93 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
         </Field>
       )}
 
+      {r.typologies && r.typologies.hits.length > 0 && (
+        <Field
+          label={`Typologies fired (${r.typologies.hits.length}) · composite ${Math.round(r.typologies.compositeScore * 100)}%`}
+        >
+          <div className="flex flex-wrap gap-1">
+            {r.typologies.hits.map((t) => (
+              <span
+                key={t.id}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
+                title={`${t.family} · weight ${t.weight}`}
+              >
+                {t.name}
+              </span>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      {r.jurisdictionRich && r.jurisdictionRich.tiers.length > 0 && (
+        <Field
+          label={`Jurisdiction profile · risk ${Math.round(r.jurisdictionRich.riskScore * 100)}%`}
+        >
+          <div className="flex flex-wrap gap-1 mb-1">
+            {r.jurisdictionRich.tiers.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber"
+              >
+                {t.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+          {r.jurisdictionRich.notes.length > 0 && (
+            <div className="text-10.5 text-ink-2 font-mono">
+              {r.jurisdictionRich.notes[0]}
+            </div>
+          )}
+        </Field>
+      )}
+
+      {r.adverseMediaScored && r.adverseMediaScored.compositeScore > 0 && (
+        <Field
+          label={`Adverse-media (scored) · ${Math.round(r.adverseMediaScored.compositeScore * 100)}%`}
+        >
+          <div className="flex flex-wrap gap-1 mb-1">
+            {r.adverseMediaScored.categoriesTripped.map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red"
+              >
+                {c.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+          {r.adverseMediaScored.topKeywords.length > 0 && (
+            <div className="text-10.5 text-ink-2 font-mono">
+              keywords: {r.adverseMediaScored.topKeywords.slice(0, 6).join(" · ")}
+            </div>
+          )}
+        </Field>
+      )}
+
+      {r.pepAssessment && r.pepAssessment.isLikelyPEP && (
+        <Field
+          label={`PEP assessment · ${r.pepAssessment.highestTier} · ${Math.round(r.pepAssessment.riskScore * 100)}%`}
+        >
+          <div className="flex flex-wrap gap-1">
+            {r.pepAssessment.matchedRoles.map((m, i) => (
+              <span
+                key={`${m}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      {r.stylometry && typeof r.stylometry.gaslightingScore === "number" && r.stylometry.gaslightingScore > 0 && (
+        <Field label={`Stylometry · gaslighting ${Math.round((r.stylometry.gaslightingScore ?? 0) * 100)}%`}>
+          <div className="text-10.5 text-ink-2 font-mono">
+            Narrative analysed for evasive / gaslighting phrasing.
+          </div>
+        </Field>
+      )}
+
       {r.adverseKeywordGroups.length > 0 && (
         <Field label={`Adverse-keyword signals (${r.adverseKeywords.length})`}>
           <div className="flex flex-wrap gap-1 mb-2">

@@ -2,13 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Browser native-control surfaces (date dropdowns, calendars, context menus)
- * follow the active theme so they don't flash black on dark OS settings. */
-html {
+/* The tool ships as a light editorial theme only. Force color-scheme so the
+ * browser doesn't auto-darken native controls based on the OS preference. */
+html,
+html[data-theme] {
   color-scheme: light;
-}
-html[data-theme="dark"] {
-  color-scheme: dark;
 }
 
 @layer base {
@@ -59,45 +57,6 @@ html[data-theme="dark"] {
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.08);
   }
 
-  /* ── DARK / night mode ────────────────────────────────────────────────
-   * Triggered by an operator-controlled toggle that sets
-   * document.documentElement.dataset.theme = "dark". All surfaces are
-   * derived from CSS variables, so we only need to invert the palette. */
-  html[data-theme="dark"] {
-    --bg-0: #0d0c0b;
-    --bg-1: #161412;
-    --bg-2: #1f1c1a;
-    --bg-3: #2b2824;
-    --bg-panel: #161412;
-
-    --hair: rgba(255, 255, 255, 0.06);
-    --hair-2: rgba(255, 255, 255, 0.1);
-    --hair-3: rgba(255, 255, 255, 0.16);
-    --hair-pink: rgba(236, 72, 153, 0.25);
-
-    --ink-0: #f5f4f3;
-    --ink-1: #d6d3d1;
-    --ink-2: #a8a29e;
-    --ink-3: #78716c;
-    --ink-4: #44403c;
-
-    --brand: #f472b6;
-    --brand-ink: #f9a8d4;
-    --brand-hover: #ec4899;
-    --brand-dim: rgba(244, 114, 182, 0.14);
-    --brand-line: rgba(244, 114, 182, 0.35);
-    --brand-deep: #fbcfe8;
-
-    --violet-dim: rgba(139, 92, 246, 0.18);
-    --amber-dim: rgba(245, 158, 11, 0.18);
-    --orange-dim: rgba(249, 115, 22, 0.18);
-    --red-dim: rgba(239, 68, 68, 0.18);
-    --green-dim: rgba(16, 185, 129, 0.18);
-    --blue-dim: rgba(59, 130, 246, 0.18);
-
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.4), 0 10px 15px rgba(0, 0, 0, 0.6);
-  }
 
   html {
     scroll-behavior: smooth;

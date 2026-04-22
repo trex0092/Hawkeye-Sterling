@@ -1,0 +1,820 @@
+{
+  "ok": true,
+  "generatedAt": "2026-04-22T20:01:13.311Z",
+  "manifest": {
+    "product": "Hawkeye Sterling",
+    "version": "0.2.0",
+    "generatedAt": "2026-04-22T20:01:13.307Z",
+    "charter": {
+      "prohibitions": [
+        {
+          "id": "P1",
+          "label": "No unverified sanctions assertions"
+        },
+        {
+          "id": "P2",
+          "label": "No fabricated adverse media / citations"
+        },
+        {
+          "id": "P3",
+          "label": "No legal conclusions"
+        },
+        {
+          "id": "P4",
+          "label": "No tipping-off content"
+        },
+        {
+          "id": "P5",
+          "label": "No allegation-to-finding upgrade"
+        },
+        {
+          "id": "P6",
+          "label": "No merging of distinct persons/entities"
+        },
+        {
+          "id": "P7",
+          "label": "No \"clean\" result without scope declaration"
+        },
+        {
+          "id": "P8",
+          "label": "No training-data-as-current-source"
+        },
+        {
+          "id": "P9",
+          "label": "No opaque risk scoring"
+        },
+        {
+          "id": "P10",
+          "label": "No proceeding on insufficient information"
+        }
+      ],
+      "matchConfidence": [
+        "EXACT",
+        "STRONG",
+        "POSSIBLE",
+        "WEAK",
+        "NO_MATCH"
+      ],
+      "outputStructure": [
+        "SUBJECT_IDENTIFIERS",
+        "SCOPE_DECLARATION",
+        "FINDINGS",
+        "GAPS",
+        "RED_FLAGS",
+        "RECOMMENDED_NEXT_STEPS",
+        "AUDIT_LINE"
+      ],
+      "regulatoryAnchors": [
+        "Federal Decree-Law No. 20 of 2018 (as amended, incl. FDL No. 10 of 2025)",
+        "Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025)",
+        "Cabinet Decision No. 74 of 2020 (Terrorism Lists & TFS)",
+        "Cabinet Resolution No. 16 of 2021 (administrative penalties)",
+        "MoE DNFBP circulars and guidance (precious-metals sector)",
+        "FATF Recommendations and Methodology",
+        "LBMA Responsible Gold Guidance"
+      ],
+      "authoritativeLists": [
+        "UN Security Council Consolidated List",
+        "UAE Local Terrorist List",
+        "OFAC SDN",
+        "OFAC Consolidated Sanctions List",
+        "EU Consolidated Financial Sanctions List",
+        "UK OFSI Consolidated List"
+      ]
+    },
+    "cognitiveCatalogue": {
+      "faculties": [
+        {
+          "id": "reasoning",
+          "displayName": "Reasoning",
+          "describes": "Formal and informal logical inference over evidence and rules.",
+          "synonyms": [
+            "logic",
+            "deduction",
+            "inference",
+            "rationalization",
+            "argumentation",
+            "analysis",
+            "cogitation",
+            "ratiocination",
+            "sense-making",
+            "thought process"
+          ],
+          "modeCount": 23
+        },
+        {
+          "id": "data_analysis",
+          "displayName": "Data Analysis",
+          "describes": "Quantitative interrogation and modelling of structured and semi-structured data.",
+          "synonyms": [
+            "data interpretation",
+            "data mining",
+            "data crunching",
+            "analytics",
+            "quantitative analysis",
+            "statistical analysis",
+            "data examination",
+            "data evaluation",
+            "data modeling",
+            "data processing"
+          ],
+          "modeCount": 52
+        },
+        {
+          "id": "deep_thinking",
+          "displayName": "Deep Thinking",
+          "describes": "Slow, reflective examination — the System 2 core of the brain.",
+          "synonyms": [
+            "contemplation",
+            "reflection",
+            "rumination",
+            "introspection",
+            "meditation",
+            "pondering",
+            "musing",
+            "deliberation",
+            "cerebration",
+            "profound thought"
+          ],
+          "modeCount": 14
+        },
+        {
+          "id": "intelligence",
+          "displayName": "Intelligence",
+          "describes": "Breadth of pattern recognition across domains and jurisdictions.",
+          "synonyms": [
+            "intellect",
+            "acumen",
+            "cleverness",
+            "brilliance",
+            "brainpower",
+            "wit",
+            "sagacity",
+            "perspicacity",
+            "mental capacity",
+            "cognitive ability"
+          ],
+          "modeCount": 46
+        },
+        {
+          "id": "smartness",
+          "displayName": "Smartness",
+          "describes": "Fast, street-smart anomaly detection and heuristic triage.",
+          "synonyms": [
+            "sharpness",
+            "shrewdness",
+            "astuteness",
+            "quick-wittedness",
+            "savvy",
+            "canniness",
+            "ingenuity",
+            "resourcefulness",
+            "adroitness",
+            "keenness"
+          ],
+          "modeCount": 22
+        },
+        {
+          "id": "strong_brain",
+          "displayName": "Strong Brain",
+          "describes": "Integrated mental prowess — composition of all faculties under load.",
+          "synonyms": [
+            "sharp mind",
+            "keen intellect",
+            "powerful mind",
+            "quick mind",
+            "agile mind",
+            "brilliant mind",
+            "analytical mind",
+            "steel-trap mind",
+            "mental prowess",
+            "intellectual firepower"
+          ],
+          "modeCount": 15
+        },
+        {
+          "id": "inference",
+          "displayName": "Inference",
+          "describes": "Probabilistic and causal projection from partial evidence to likely truth.",
+          "synonyms": [
+            "abduction",
+            "induction",
+            "deduction",
+            "best explanation",
+            "projection",
+            "extrapolation",
+            "causal chain",
+            "probabilistic update"
+          ],
+          "modeCount": 17
+        },
+        {
+          "id": "argumentation",
+          "displayName": "Argumentation",
+          "describes": "Structured case-building, rebuttal, and adjudication of competing claims.",
+          "synonyms": [
+            "debate",
+            "disputation",
+            "advocacy",
+            "dialectic",
+            "rebuttal",
+            "rejoinder",
+            "proof",
+            "justification"
+          ],
+          "modeCount": 13
+        },
+        {
+          "id": "introspection",
+          "displayName": "Introspection",
+          "describes": "The brain auditing itself — bias, calibration, confidence, drift.",
+          "synonyms": [
+            "self-examination",
+            "meta-cognition",
+            "self-critique",
+            "reflection",
+            "calibration",
+            "bias audit",
+            "blind-spot review",
+            "epistemic hygiene"
+          ],
+          "modeCount": 22
+        },
+        {
+          "id": "ratiocination",
+          "displayName": "Ratiocination",
+          "describes": "Chained methodical reasoning — the explicit, stepwise derivation of conclusions.",
+          "synonyms": [
+            "methodical reasoning",
+            "stepwise deduction",
+            "chain of thought",
+            "systematic inference",
+            "rigorous derivation"
+          ],
+          "modeCount": 17
+        }
+      ],
+      "reasoningModes": {
+        "total": 200,
+        "byCategory": {
+          "logic": 21,
+          "cognitive_science": 15,
+          "decision_theory": 15,
+          "forensic": 23,
+          "compliance_framework": 20,
+          "legal_reasoning": 10,
+          "strategic": 10,
+          "causal": 5,
+          "statistical": 14,
+          "graph_analysis": 4,
+          "threat_modeling": 7,
+          "behavioral_signals": 5,
+          "data_quality": 10,
+          "governance": 16,
+          "crypto_defi": 8,
+          "sectoral_typology": 17
+        },
+        "byWave": {
+          "wave1": 100,
+          "wave2": 100
+        }
+      },
+      "adverseMedia": {
+        "categories": [
+          {
+            "id": "ml_financial_crime",
+            "displayName": "Money Laundering & Financial Crime",
+            "keywordCount": 121
+          },
+          {
+            "id": "terrorist_financing",
+            "displayName": "Terrorist Financing",
+            "keywordCount": 26
+          },
+          {
+            "id": "proliferation_financing",
+            "displayName": "Proliferation Financing",
+            "keywordCount": 28
+          },
+          {
+            "id": "corruption_organised_crime",
+            "displayName": "Corruption, Bribery & Organised Crime",
+            "keywordCount": 119
+          },
+          {
+            "id": "legal_criminal_regulatory",
+            "displayName": "Legal, Criminal & Regulatory Proceedings",
+            "keywordCount": 122
+          }
+        ],
+        "totalKeywords": 416,
+        "queryLength": 1353
+      },
+      "doctrines": {
+        "total": 19,
+        "mandatoryInUAE": 13,
+        "byAuthority": {
+          "Financial Action Task Force": 2,
+          "The Wolfsberg Group": 2,
+          "London Bullion Market Association": 1,
+          "Organisation for Economic Co-operation and Development": 1,
+          "Egmont Group of Financial Intelligence Units": 1,
+          "Basel Institute on Governance": 1,
+          "United Arab Emirates": 1,
+          "UAE Cabinet": 4,
+          "UAE": 2,
+          "UAE Ministry of Economy": 1,
+          "International Organization for Standardization": 1,
+          "Committee of Sponsoring Organizations of the Treadway Commission": 1,
+          "Institute of Internal Auditors": 1
+        }
+      },
+      "redFlags": {
+        "total": 21,
+        "bySeverity": {
+          "low": 0,
+          "medium": 5,
+          "high": 16
+        },
+        "byTypology": {
+          "structuring": 2,
+          "dpms_retail": 2,
+          "dpms_refinery": 1,
+          "tbml": 3,
+          "sanctions_evasion": 2,
+          "proliferation": 1,
+          "pep": 2,
+          "ubo": 2,
+          "vasp": 2,
+          "adverse_media": 1,
+          "governance": 3
+        }
+      },
+      "typologies": {
+        "total": 41,
+        "ids": [
+          "structuring",
+          "smurfing",
+          "tbml",
+          "dpms_retail",
+          "dpms_refinery",
+          "bullion_wholesale",
+          "pep",
+          "pep_rca",
+          "sanctions_evasion",
+          "proliferation",
+          "vasp",
+          "tbml_phantom_shipment",
+          "correspondent_banking",
+          "shell_company_chain",
+          "nominee_directors",
+          "cash_courier",
+          "real_estate_cash",
+          "art_dealer",
+          "yacht_jet",
+          "family_office",
+          "insurance_wrap",
+          "fund_capital_call",
+          "market_manipulation",
+          "insider_trading",
+          "advance_fee_fraud",
+          "bec_fraud",
+          "invoice_fraud",
+          "synthetic_identity",
+          "ponzi_pyramid",
+          "phoenix_company",
+          "npo_diversion",
+          "kleptocracy",
+          "human_trafficking",
+          "wildlife_trafficking",
+          "narcotics_trafficking",
+          "arms_trafficking",
+          "maritime_stss",
+          "privacy_coin_laundering",
+          "mixer_usage",
+          "nft_wash_trade",
+          "defi_exploit"
+        ]
+      },
+      "matching": {
+        "methods": [
+          "exact",
+          "levenshtein",
+          "jaro",
+          "jaro_winkler",
+          "soundex",
+          "double_metaphone",
+          "token_set"
+        ]
+      },
+      "sanctionRegimes": {
+        "total": 22,
+        "mandatoryInUAE": 6,
+        "byAuthority": {
+          "UN Security Council": 6,
+          "US Treasury — OFAC": 5,
+          "European Union": 4,
+          "HM Treasury — OFSI": 3,
+          "UAE Executive Office for Control & Non-Proliferation": 1,
+          "UAE Cabinet": 1,
+          "Switzerland — FDFA (SECO)": 1,
+          "Global Affairs Canada": 1
+        }
+      },
+      "jurisdictions": {
+        "total": 17,
+        "byFatfStatus": {
+          "not_listed": 9,
+          "increased_monitoring": 5,
+          "call_for_action": 3
+        }
+      },
+      "dpmsKpis": {
+        "total": 30,
+        "byCluster": {
+          "onboarding": 4,
+          "screening": 5,
+          "transaction": 4,
+          "supply_chain": 4,
+          "governance": 4,
+          "reporting": 4,
+          "training": 2,
+          "tech": 3
+        }
+      },
+      "cahra": {
+        "total": 12,
+        "activeCount": 10
+      },
+      "thresholds": {
+        "total": 9,
+        "ids": [
+          "dpms_cash_transaction",
+          "ctn_incoming_passenger",
+          "ubo_beneficial_ownership",
+          "str_reporting_obligation",
+          "ffr_freeze_window",
+          "edd_threshold_pep",
+          "high_risk_country_edd",
+          "retention_minimum",
+          "retention_internal"
+        ]
+      },
+      "playbooks": {
+        "total": 12,
+        "ids": [
+          "pb_confirmed_sanctions_match",
+          "pb_partial_sanctions_match",
+          "pb_pep_onboarding",
+          "pb_high_risk_country_onboarding",
+          "pb_cash_over_threshold",
+          "pb_structuring_suspected",
+          "pb_tbml_over_invoice",
+          "pb_vasp_mixer_inbound",
+          "pb_tipping_off_risk",
+          "pb_exit_relationship",
+          "pb_lbma_rgg_cahra",
+          "pb_ubo_opacity"
+        ]
+      },
+      "redlines": {
+        "total": 8,
+        "ids": [
+          "rl_eocn_confirmed",
+          "rl_un_consolidated_confirmed",
+          "rl_ofac_sdn_confirmed",
+          "rl_tipping_off_draft",
+          "rl_dpms_cahra_without_oecd",
+          "rl_four_eyes_violated",
+          "rl_training_data_as_sanctions_source",
+          "rl_missing_charter_hash"
+        ]
+      },
+      "fatf": {
+        "total": 40,
+        "ids": [
+          "R.1",
+          "R.2",
+          "R.3",
+          "R.4",
+          "R.5",
+          "R.6",
+          "R.7",
+          "R.8",
+          "R.9",
+          "R.10",
+          "R.11",
+          "R.12",
+          "R.13",
+          "R.14",
+          "R.15",
+          "R.16",
+          "R.17",
+          "R.18",
+          "R.19",
+          "R.20",
+          "R.21",
+          "R.22",
+          "R.23",
+          "R.24",
+          "R.25",
+          "R.26",
+          "R.27",
+          "R.28",
+          "R.29",
+          "R.30",
+          "R.31",
+          "R.32",
+          "R.33",
+          "R.34",
+          "R.35",
+          "R.36",
+          "R.37",
+          "R.38",
+          "R.39",
+          "R.40"
+        ]
+      },
+      "dispositions": {
+        "total": 11,
+        "ids": [
+          "D00_no_match",
+          "D01_false_positive",
+          "D02_cleared_proceed",
+          "D03_edd_required",
+          "D04_heightened_monitoring",
+          "D05_frozen_ffr",
+          "D06_partial_match_pnmr",
+          "D07_str_filed",
+          "D08_exit_relationship",
+          "D09_do_not_onboard",
+          "D10_refer_to_authority"
+        ]
+      },
+      "skills": {
+        "total": 397,
+        "byLayer": {
+          "competency": 115,
+          "reasoning": 106,
+          "analysis": 176
+        },
+        "byDomain": {
+          "AML_CORE": 70,
+          "REGULATORY": 35,
+          "RISK_ASSESSMENT": 33,
+          "KYC_CDD": 27,
+          "SANCTIONS_TFS": 14,
+          "INVESTIGATIONS": 40,
+          "GOVERNANCE": 28,
+          "SUPPLY_CHAIN": 49,
+          "SOFT_SKILLS": 17,
+          "DOCUMENTATION": 23,
+          "REPORTING": 11,
+          "TRAINING": 16,
+          "COMPLIANCE_SYS": 21,
+          "DIGITAL_ASSETS": 9,
+          "DATA_PRIVACY": 4
+        }
+      },
+      "amplifier": {
+        "version": "v1.0.0",
+        "percent": 1000000,
+        "factor": 10000,
+        "directives": [
+          "Traverse every registered faculty before emitting a verdict; do not sample.",
+          "Apply every named reasoning mode that plausibly fires against the evidence and cite each one by id.",
+          "Walk the full skills catalogue at every turn; embody every skill the domain routing assigns to the scope.",
+          "Run the meta-cognition layer on every turn: first-principles decomposition, explicit Bayesian update, steelman the opposite, red-team self-review, pre-mortem, self-consistency across ≥2 reasoning paths, and counterfactual fragility probe on any HIGH/CONFIRMED finding.",
+          "Cross-check against every red flag, typology, sanction regime, CAHRA entry, jurisdiction risk, and FATF recommendation that could apply — do not short-circuit on the first match.",
+          "Stack the match-confidence taxonomy, observable-facts linter (P3/P5), tipping-off guard (P4), risk-methodology disclosure (P9), and redline scanner on every output before release.",
+          "Cite the firing meta-cognition primitive id (mc.*) alongside the faculty/mode/skill ids whenever it shaped the conclusion.",
+          "When unsure, prefer expanding the reasoning chain over truncating it. Time pressure is not a lawful reason to skip a faculty or a meta-cognition primitive.",
+          "Every assertion must name the faculty id, mode id, skill id, doctrine id, redline id, or meta-cognition id that produced it.",
+          "Declare unknowns, gaps, and stale evidence explicitly — amplified reasoning does not manufacture certainty. Widen confidence bands before narrowing them."
+        ]
+      },
+      "metaCognition": {
+        "total": 25,
+        "byCategory": {
+          "truth-seeking": 3,
+          "belief-update": 3,
+          "adversarial": 4,
+          "decomposition": 4,
+          "calibration": 3,
+          "foresight": 3,
+          "hygiene": 5
+        },
+        "ids": [
+          "mc.first-principles",
+          "mc.analogical",
+          "mc.reference-class",
+          "mc.bayesian-update",
+          "mc.evidence-weighing",
+          "mc.confidence-calibration",
+          "mc.steelman",
+          "mc.red-team",
+          "mc.devils-advocate",
+          "mc.bias-audit",
+          "mc.goal-decomposition",
+          "mc.causal-chain",
+          "mc.counterfactual",
+          "mc.dimensionality-probe",
+          "mc.self-consistency",
+          "mc.uncertainty-declaration",
+          "mc.scope-boundary",
+          "mc.pre-mortem",
+          "mc.second-order",
+          "mc.scenario-tree",
+          "mc.assumption-surface",
+          "mc.definition-discipline",
+          "mc.numerical-discipline",
+          "mc.source-tagging",
+          "mc.charter-compliance"
+        ]
+      }
+    },
+    "integrity": {
+      "charterHash": "ed3b0986",
+      "catalogueHash": "0568967a"
+    }
+  },
+  "integrity": {
+    "charterHash": "ed3b0986",
+    "catalogueHash": "0568967a",
+    "compositeHash": "8ff3bff3"
+  },
+  "enhanced": {
+    "extended": {
+      "taxonomy": {
+        "questionTemplates": 50,
+        "sectorRubrics": 5,
+        "scenarios": 38,
+        "typologies": 41,
+        "redFlags": 21,
+        "redFlagsExtended": 45,
+        "adverseMediaCategories": 5,
+        "metaCognition": 25
+      },
+      "regulatory": {
+        "fatfRecommendations": 40,
+        "sanctionRegimes": 22,
+        "dispositions": 11,
+        "redlines": 8,
+        "riskAppetite": 13,
+        "cahraSeed": 12,
+        "uaeFreeZones": 31,
+        "jurisdictionsFull": 249,
+        "dpmsKpis": 30
+      },
+      "expertise": {
+        "skills": 397,
+        "cognitiveAmplifier": 4
+      }
+    },
+    "crossReferences": {
+      "redFlagsByTypology": [
+        {
+          "typology": "crypto",
+          "count": 8
+        },
+        {
+          "typology": "banking",
+          "count": 5
+        },
+        {
+          "typology": "real_estate",
+          "count": 5
+        },
+        {
+          "typology": "tbml",
+          "count": 5
+        },
+        {
+          "typology": "dpms_refinery",
+          "count": 4
+        },
+        {
+          "typology": "insurance",
+          "count": 3
+        },
+        {
+          "typology": "bec_fraud",
+          "count": 3
+        },
+        {
+          "typology": "npo_diversion",
+          "count": 2
+        },
+        {
+          "typology": "gambling",
+          "count": 2
+        },
+        {
+          "typology": "art_dealer",
+          "count": 2
+        },
+        {
+          "typology": "market_manipulation",
+          "count": 2
+        },
+        {
+          "typology": "governance",
+          "count": 2
+        },
+        {
+          "typology": "yacht_jet",
+          "count": 1
+        },
+        {
+          "typology": "insider_trading",
+          "count": 1
+        }
+      ],
+      "jurisdictionsByRegion": [
+        {
+          "region": "Africa",
+          "count": 58
+        },
+        {
+          "region": "Americas",
+          "count": 55
+        },
+        {
+          "region": "Europe",
+          "count": 52
+        },
+        {
+          "region": "Asia",
+          "count": 51
+        },
+        {
+          "region": "Oceania",
+          "count": 28
+        },
+        {
+          "region": "Antarctic",
+          "count": 5
+        }
+      ],
+      "typologyCount": 41,
+      "topTypologies": [
+        {
+          "id": "structuring",
+          "title": ""
+        },
+        {
+          "id": "smurfing",
+          "title": ""
+        },
+        {
+          "id": "tbml",
+          "title": ""
+        },
+        {
+          "id": "dpms_retail",
+          "title": ""
+        },
+        {
+          "id": "dpms_refinery",
+          "title": ""
+        },
+        {
+          "id": "bullion_wholesale",
+          "title": ""
+        },
+        {
+          "id": "pep",
+          "title": ""
+        },
+        {
+          "id": "pep_rca",
+          "title": ""
+        },
+        {
+          "id": "sanctions_evasion",
+          "title": ""
+        },
+        {
+          "id": "proliferation",
+          "title": ""
+        },
+        {
+          "id": "vasp",
+          "title": ""
+        },
+        {
+          "id": "tbml_phantom_shipment",
+          "title": ""
+        }
+      ]
+    },
+    "totals": {
+      "catalogues": 19,
+      "enhancedCatalogues": 19,
+      "regulatoryRecords": 416,
+      "taxonomyRecords": 230,
+      "skillsRecords": 397,
+      "totalRecords": 1043
+    }
+  }
+}

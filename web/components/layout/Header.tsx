@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_TABS = [
   { label: "Workbench", href: "/workbench" },
@@ -63,7 +62,6 @@ export function Header() {
             <span className="w-1.5 h-1.5 rounded-full bg-green" />
             <span className="font-medium">live</span>
           </span>
-          <ThemeToggle />
         </div>
       </nav>
     </header>
