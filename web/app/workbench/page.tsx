@@ -7,6 +7,7 @@ import { WorkbenchHero } from "@/components/workbench/WorkbenchHero";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
 import { PresetsCard } from "@/components/workbench/PresetsCard";
 import { ModeGrid } from "@/components/workbench/ModeGrid";
+import { TaxonomyLibrary } from "@/components/workbench/TaxonomyLibrary";
 import {
   DEFAULT_SELECTED_MODE_IDS,
   FACULTY_FILTERS,
@@ -108,6 +109,7 @@ export default function WorkbenchPage() {
             onToggle={handleToggle}
             totalInFaculty={totalInFaculty}
           />
+          <TaxonomyLibrary />
         </main>
       </div>
     </>
