@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#FAF9F7" />
+<meta name="description" content="Hawkeye Sterling v5 — regulator-grade AML/CFT screening engine for UAE DPMS compliance." />
+<title>Hawkeye Sterling · v5.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg-0: #FAF9F7;
+  --bg-1: #F5F3F0;
+  --bg-2: #EFEBE6;
+  --bg-3: #E8E4DF;
+  --bg-panel: #FFFFFF;
+
+  --hair: rgba(0, 0, 0, 0.06);
+  --hair-2: rgba(0, 0, 0, 0.10);
+  --hair-3: rgba(0, 0, 0, 0.15);
+  --hair-pink: rgba(236, 72, 153, 0.18);
+
+  --ink-0: #1A1614;
+  --ink-1: #44403C;
+  --ink-2: #78716C;
+  --ink-3: #A8A29E;
+  --ink-4: #D6D3D1;
+
+  --brand: #EC4899;
+  --brand-ink: #F472B6;
+  --brand-hover: #DB2777;
+  --brand-dim: rgba(236, 72, 153, 0.08);
+  --brand-line: rgba(236, 72, 153, 0.25);
+  --brand-deep: #BE185D;
+
+  --violet: #8B5CF6;
+  --violet-dim: rgba(139, 92, 246, 0.10);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.10);
+  --orange: #F97316;
+  --orange-dim: rgba(249, 115, 22, 0.10);
+
+  --red: #EF4444;
+  --red-dim: rgba(239, 68, 68, 0.10);
+  --green: #10B981;
+  --green-dim: rgba(16, 185, 129, 0.10);
+  --blue: #3B82F6;
+  --blue-dim: rgba(59, 130, 246, 0.10);
+
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 6px rgba(0,0,0,0.05), 0 10px 15px rgba(0,0,0,0.08);
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Cormorant Garamond", "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-0);
+  color: var(--ink-0);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+/* ============ Header ============ */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 60px;
+  background: #fff;
+  border-bottom: 1px solid var(--hair-2);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 28px;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-mark {
+  width: 18px;
+  height: 18px;
+  background: #000;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 2px;
+  letter-spacing: 0;
+}
+.brand-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-0);
+  letter-spacing: -0.005em;
+}
+.brand-version {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  margin-left: 4px;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.nav-tab:hover { background: var(--bg-2); color: var(--ink-1); }
+.nav-tab.active { background: var(--bg-2); color: var(--ink-0); }
+
+.hud {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+.hud-seg { display: inline-flex; align-items: center; gap: 6px; }
+.hud-seg strong { color: var(--ink-1); font-weight: 500; }
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+}
+
+/* ============ Shell ============ */
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 60px);
+}
+
+/* ============ Sidebar ============ */
+.sidebar {
+  background: #fff;
+  border-right: 1px solid var(--hair-2);
+  padding: 20px 16px;
+  position: sticky;
+  top: 60px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.mlro-card {
+  background: var(--brand);
+  color: #fff;
+  padding: 12px;
+  border-radius: 6px;
+}
+.mlro-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mlro-role {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  margin-top: 2px;
+}
+.mlro-meta {
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 12px;
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+.mlro-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mlro-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mlro-value {
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: #fff;
+}
+
+.side-group { margin-top: 22px; }
+.side-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 8px 8px;
+}
+.side-list { display: grid; gap: 2px; }
+.side-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.side-item:hover { background: var(--bg-2); }
+.side-item.active { background: var(--brand-dim); color: var(--brand-deep); font-weight: 500; }
+.side-item .num {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+  width: 22px;
+}
+.side-item.active .num { color: var(--brand); }
+.side-item .label { flex: 1; }
+.count-badge {
+  background: var(--bg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: var(--ink-2);
+}
+
+/* ============ Main ============ */
+.main {
+  padding: 40px;
+  max-width: 1400px;
+}
+
+/* Hero */
+.hero { margin-bottom: 32px; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin: 0 0 16px;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink-0);
+  margin: 0 0 24px;
+}
+.hero-title em {
+  color: var(--brand);
+  font-style: italic;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  max-width: 720px;
+  margin: 24px 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--ink-0);
+  line-height: 1.2;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.lede {
+  max-width: 68ch;
+  font-size: 13.5px;
+  color: var(--ink-1);
+  line-height: 1.6;
+  border-left: 2px solid var(--brand);
+  padding-left: 14px;
+  margin: 0;
+}
+
+/* Regulatory ribbon */
+.ribbon {
+  margin-top: 24px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--hair-2);
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.ribbon-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+.ribbon code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-1);
+  background: var(--bg-1);
+  border: 1px solid var(--hair);
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.01em;
+}
+
+/* Section heading */
+.section-head {
+  margin: 40px 0 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink-0);
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+.section-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+/* Module grid */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.module-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--hair-2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .14s ease, box-shadow .14s ease, transform .14s ease;
+}
+.module-card:hover {
+  border-color: var(--brand);
+  box-shadow: var(--shadow-lg);
+}
+.module-card:hover .card-arrow { color: var(--brand); transform: translateX(2px); }
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.card-arrow {
+  font-size: 14px;
+  color: var(--ink-3);
+  transition: color .14s ease, transform .14s ease;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-0);
+  letter-spacing: -0.005em;
+  margin: 0 0 6px;
+}
+.card-desc {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin: 0 0 16px;
+  flex: 1;
+}
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
+}
+.card-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+.tag-violet { background: var(--violet-dim); color: var(--violet); }
+.tag-amber  { background: var(--amber-dim);  color: var(--amber); }
+.tag-orange { background: var(--orange-dim); color: var(--orange); }
+.tag-blue   { background: var(--blue-dim);   color: var(--blue); }
+.tag-green  { background: var(--green-dim);  color: var(--green); }
+.tag-red    { background: var(--red-dim);    color: var(--red); }
+.tag-brand  { background: var(--brand-dim);  color: var(--brand-deep); }
+
+.card-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: 28px; }
+  .nav-tabs { display: none; }
+}
+@media (max-width: 720px) {
+  .hud { display: none; }
+  .main { padding: 18px; }
+  .module-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 36px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--ink-0);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  z-index: 100;
+}
+.skip-link:focus { left: 12px; top: 12px; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#modules">Skip to modules</a>
+
+<header class="app-header" role="banner">
+  <div class="brand-lockup">
+    <span class="brand-mark" aria-hidden="true">H</span>
+    <span class="brand-text">Hawkeye Sterling</span>
+    <span class="brand-version">v5.2</span>
+  </div>
+  <nav class="nav-tabs" aria-label="Primary">
+    <a class="nav-tab active" href="./index.html">Overview</a>
+    <a class="nav-tab" href="./screening.html">Screening</a>
+    <a class="nav-tab" href="./cases.html">Cases</a>
+    <a class="nav-tab" href="./workbench.html">Workbench</a>
+    <a class="nav-tab" href="./audit-trail.html">Audit</a>
+  </nav>
+  <div class="hud" aria-live="polite">
+    <span class="hud-seg"><span class="status-dot" aria-hidden="true"></span><strong>ENGINE</strong> NOMINAL</span>
+    <span class="hud-seg"><strong>FEED</strong> OFAC · UN · EU · UK · EOCN</span>
+    <span class="hud-seg"><strong>UTC</strong> <span id="utc-clock">—</span></span>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Module navigation">
+    <div class="mlro-card">
+      <div class="mlro-name">Ayesha Al Marri</div>
+      <div class="mlro-role">MLRO · Sterling DMCC</div>
+      <div class="mlro-meta">
+        <div class="mlro-row"><span class="mlro-label">Licence</span><span class="mlro-value">DMCC-14827</span></div>
+        <div class="mlro-row"><span class="mlro-label">FIU code</span><span class="mlro-value">AE-FIU-00421</span></div>
+        <div class="mlro-row"><span class="mlro-label">Shift</span><span class="mlro-value">04:00 UTC</span></div>
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-title">Modules</div>
+      <nav class="side-list" aria-label="Modules">
+        <a class="side-item active" href="./index.html"><span class="num">00</span><span class="label">Overview</span><span class="count-badge">11</span></a>
+        <a class="side-item" href="./screening.html"><span class="num">01</span><span class="label">Screening</span><span class="count-badge">248</span></a>
+        <a class="side-item" href="./cases.html"><span class="num">02</span><span class="label">Cases</span><span class="count-badge">36</span></a>
+        <a class="side-item" href="./workbench.html"><span class="num">03</span><span class="label">Workbench</span><span class="count-badge">690</span></a>
+        <a class="side-item" href="./sanctions-delta.html"><span class="num">04</span><span class="label">Sanctions Delta</span><span class="count-badge">12</span></a>
+        <a class="side-item" href="./smurfing.html"><span class="num">05</span><span class="label">Smurfing</span><span class="count-badge">4</span></a>
+        <a class="side-item" href="./kri-registry.html"><span class="num">06</span><span class="label">KRI Registry</span><span class="count-badge">30</span></a>
+        <a class="side-item" href="./calibration.html"><span class="num">07</span><span class="label">Calibration</span></a>
+        <a class="side-item" href="./peer-benchmark.html"><span class="num">08</span><span class="label">Peer Benchmark</span></a>
+        <a class="side-item" href="./rubric-picker.html"><span class="num">09</span><span class="label">Rubric Picker</span></a>
+        <a class="side-item" href="./playbook.html"><span class="num">10</span><span class="label">Playbook</span></a>
+        <a class="side-item" href="./audit-trail.html"><span class="num">11</span><span class="label">Audit Trail</span></a>
+      </nav>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <section class="hero">
+      <p class="eyebrow">Regulator-grade · UAE DPMS</p>
+      <h1 class="hero-title">Hawkeye <em>Sterling</em></h1>
+
+      <div class="stats">
+        <div>
+          <div class="stat-value">11</div>
+          <div class="stat-label">Modules</div>
+        </div>
+        <div>
+          <div class="stat-value">690</div>
+          <div class="stat-label">Reasoning modes</div>
+        </div>
+        <div>
+          <div class="stat-value">5 lists</div>
+          <div class="stat-label">Sanctions coverage</div>
+        </div>
+      </div>
+
+      <p class="lede">A precision AML/CFT screening engine built for UAE DPMS compliance. Multi-list fuzzy matching against UN, OFAC, EU, UK, and EOCN with four-eyes MLRO disposition and immediate goAML filing inside statutory deadlines.</p>
+
+      <div class="ribbon" aria-label="Regulatory basis">
+        <span class="ribbon-label">Regulatory basis</span>
+        <code>FDL 10/2025</code>
+        <code>Cabinet Res 74/2020</code>
+        <code>Cabinet Res 134/2025</code>
+        <code>LBMA RGG v9</code>
+        <code>FATF Recommendations</code>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <h2 class="section-title">Modules</h2>
+      <span class="section-meta">11 of 11 · operational</span>
+    </div>
+
+    <div class="module-grid" id="modules">
+      <a class="module-card" href="./screening.html">
+        <div class="card-top"><span class="card-id">Module 01</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Subject Screening</h3>
+        <p class="card-desc">Precision workbench for MLRO officers. Fuzzy matching against UN, OFAC, EU, UK, and UAE EOCN lists with live risk scoring.</p>
+        <div class="card-foot"><span class="card-tag tag-brand">Command</span><span class="card-count">248 subjects</span></div>
+      </a>
+
+      <a class="module-card" href="./cases.html">
+        <div class="card-top"><span class="card-id">Module 02</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Cases &amp; Evidence Trail</h3>
+        <p class="card-desc">Case management and evidence vault. Timeline, chain of custody, four-eyes approvals, and goAML filing status.</p>
+        <div class="card-foot"><span class="card-tag tag-amber">In review</span><span class="card-count">36 open</span></div>
+      </a>
+
+      <a class="module-card" href="./workbench.html">
+        <div class="card-top"><span class="card-id">Module 03</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Deep Reasoning Workbench</h3>
+        <p class="card-desc">690-mode cognitive pipeline. Sonnet executor, Opus advisor, charter-gated egress with curated typology presets.</p>
+        <div class="card-foot"><span class="card-tag tag-violet">Pipeline</span><span class="card-count">690 modes</span></div>
+      </a>
+
+      <a class="module-card" href="./sanctions-delta.html">
+        <div class="card-top"><span class="card-id">Module 04</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Sanction Delta Monitor</h3>
+        <p class="card-desc">Daily-refresh change detection. Alerts on new designations, delistings, or amendments that impact the portfolio.</p>
+        <div class="card-foot"><span class="card-tag tag-red">3 critical</span><span class="card-count">12 deltas</span></div>
+      </a>
+
+      <a class="module-card" href="./smurfing.html">
+        <div class="card-top"><span class="card-id">Module 05</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Smurfing Detector</h3>
+        <p class="card-desc">Structuring pattern detection. Clusters transactions below CTR threshold and flags proximity to reporting limits.</p>
+        <div class="card-foot"><span class="card-tag tag-orange">Patterns</span><span class="card-count">4 clusters</span></div>
+      </a>
+
+      <a class="module-card" href="./kri-registry.html">
+        <div class="card-top"><span class="card-id">Module 06</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">KRI Registry</h3>
+        <p class="card-desc">Thirty key risk indicators covering DPMS operations. Threshold monitoring with trend analysis and breach alerts.</p>
+        <div class="card-foot"><span class="card-tag tag-green">Nominal</span><span class="card-count">30 KPIs</span></div>
+      </a>
+
+      <a class="module-card" href="./calibration.html">
+        <div class="card-top"><span class="card-id">Module 07</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Calibration Ledger</h3>
+        <p class="card-desc">Model performance tracking. Precision, recall, F1, and false-positive rate across versioned ruleset releases.</p>
+        <div class="card-foot"><span class="card-tag tag-blue">F1 · 91.9</span><span class="card-count">94.2% prec</span></div>
+      </a>
+
+      <a class="module-card" href="./peer-benchmark.html">
+        <div class="card-top"><span class="card-id">Module 08</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Peer Benchmark</h3>
+        <p class="card-desc">Anonymised DPMS sector comparison. Your values against peer median and 75th percentile with positional tags.</p>
+        <div class="card-foot"><span class="card-tag tag-brand">Top quartile</span><span class="card-count">Sector q4</span></div>
+      </a>
+
+      <a class="module-card" href="./rubric-picker.html">
+        <div class="card-top"><span class="card-id">Module 09</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Sector Rubric Picker</h3>
+        <p class="card-desc">Pre-built reasoning pipelines for high-risk typologies. CAHRA gold, VASP mixer inbound, PEP source-of-wealth mismatch.</p>
+        <div class="card-foot"><span class="card-tag tag-violet">Rubrics</span><span class="card-count">24 sets</span></div>
+      </a>
+
+      <a class="module-card" href="./playbook.html">
+        <div class="card-top"><span class="card-id">Module 10</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Playbook Viewer</h3>
+        <p class="card-desc">Regulatory guidance library. FATF Recommendations, LBMA Responsible Gold Guidance, and UAE DPMS circulars.</p>
+        <div class="card-foot"><span class="card-tag tag-blue">Library</span><span class="card-count">FATF · LBMA · UAE</span></div>
+      </a>
+
+      <a class="module-card" href="./audit-trail.html">
+        <div class="card-top"><span class="card-id">Module 11</span><span class="card-arrow" aria-hidden="true">&rarr;</span></div>
+        <h3 class="card-title">Audit Trail &amp; Export</h3>
+        <p class="card-desc">Immutable ten-year log of every decision and disposition. One-click goAML XML export aligned to UAE FIU schema.</p>
+        <div class="card-foot"><span class="card-tag tag-green">Chain 100%</span><span class="card-count">2,847 docs</span></div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  var clockEl = document.getElementById('utc-clock');
+  function tick(){
+    var now = new Date();
+    var h = String(now.getUTCHours()).padStart(2,'0');
+    var m = String(now.getUTCMinutes()).padStart(2,'0');
+    var s = String(now.getUTCSeconds()).padStart(2,'0');
+    if (clockEl) clockEl.textContent = h + ':' + m + ':' + s;
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

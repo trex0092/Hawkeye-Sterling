@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Screening — Hawkeye Sterling</title>
+  <link rel="stylesheet" href="styles-v5.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <nav class="nav">
+      <a href="/" class="brand">
+        <span class="brand-mark">H</span>
+        <span>Hawkeye Sterling</span>
+        <span style="font-size:11px; color: var(--ink-3); font-weight:400; margin-left:4px;">v5.2</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="#" class="active">Workbench</a>
+        <a href="#">Screening</a>
+        <a href="#">Cases</a>
+        <a href="#">Evidence trail</a>
+        <a href="#">Audit</a>
+      </div>
+      <div class="nav-hud">
+        <span class="hud-seg">
+          <span style="font-weight:600;">14:27:23</span>
+          <span style="color: var(--ink-3);">GST</span>
+        </span>
+        <span class="hud-seg">
+          <span style="color: var(--ink-3);">sess_</span>
+          <span class="mono" style="font-weight:600;">a7f1b3c6</span>
+        </span>
+        <span class="hud-seg">
+          <span class="dot"></span>
+          <span style="font-weight:500;">live</span>
+        </span>
+        <span class="hud-seg" style="color: var(--ink-3);">◐ night</span>
+        <span class="hud-seg" style="color: var(--ink-3);">☾ tweaks</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Layout -->
+  <div class="app-layout with-panel">
+    
+    <!-- Left sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-head">Regulatory</div>
+        <div class="sidebar-card">
+          <div class="sidebar-card-name">Noor Al-Mansouri</div>
+          <div class="sidebar-card-role">MLRO, PRECISION SCREENING UAE</div>
+          <div class="sidebar-meta">
+            <div class="sidebar-meta-row">
+              <span class="sidebar-meta-label">Caseload</span>
+              <span class="sidebar-meta-value">42 open</span>
+            </div>
+            <div class="sidebar-meta-row">
+              <span class="sidebar-meta-label">Region</span>
+              <span class="sidebar-meta-value">90 / AE</span>
+            </div>
+            <div class="sidebar-meta-row">
+              <span class="sidebar-meta-label">Retention</span>
+              <span class="sidebar-meta-value">FDL Art.24</span>
+            </div>
+            <div class="sidebar-meta-row">
+              <span class="sidebar-meta-label">Policy</span>
+              <span class="sidebar-meta-value">v4.1 · 134/25</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-head">Shift</div>
+        <div style="font-size: 12px; color: var(--ink-1); padding: 0 8px;">
+          08:00–16:00
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-head">Queue filters</div>
+        <ul class="sidebar-filters">
+          <li class="active">
+            <span>All open</span>
+            <span class="count">42</span>
+          </li>
+          <li>
+            <span>Critical</span>
+            <span class="count">03</span>
+          </li>
+          <li>
+            <span>Sanctions hits</span>
+            <span class="count">07</span>
+          </li>
+          <li>
+            <span>EDD</span>
+            <span class="count">12</span>
+          </li>
+          <li>
+            <span>PEP exposure</span>
+            <span class="count">05</span>
+          </li>
+          <li>
+            <span>SLA breaching</span>
+            <span class="count">01</span>
+          </li>
+          <li>
+            <span>A-24h approver</span>
+            <span class="count">00</span>
+          </li>
+          <li>
+            <span>Closed today</span>
+            <span class="count">18</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-eyebrow">BUREAU II · PRECISION BENCH</div>
+        <h1 class="hero-title">Experience the <em>standard.</em></h1>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value">11</span>
+            <span class="hero-stat-label">in queue</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">3</span>
+            <span class="hero-stat-label">critical</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">8</span>
+            <span class="hero-stat-label">SLA risk</span>
+          </div>
+        </div>
+        <p class="hero-lede">
+          <strong>Six lists · ten-year audit · four eyes.</strong> One bench. One queue. Every subject cross-checked against six sanctions lists and bound to the ten-year audit trail.
+        </p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <span class="toolbar-search-icon">⌕</span>
+          <input type="search" placeholder="Search subjects — HS-24891" />
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-small">
+            <span>Sort:</span>
+            <span style="font-weight:600;">Severity</span>
+            <span style="color: var(--ink-3);">↓</span>
+          </button>
+          <button class="btn btn-small">
+            <span>Group</span>
+            <span style="color: var(--ink-3);">None</span>
+          </button>
+          <button class="btn-primary btn-small">
+            <span>+ New</span>
+            <span style="font-weight:600;">screening</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">ID</th>
+              <th>Subject</th>
+              <th>Type</th>
+              <th>List coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="table-badge violet">24891</div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Dmitri Volkov-Arenova</div>
+                    <div class="table-meta">RU / AE<br/>Name match on OFAC SDN (87% phonetic)</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Individual · UBO</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge violet">24897</div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Crescent Refineries Jordan</div>
+                    <div class="table-meta">JO / AE<br/>CAHRA jurisdiction · LBMA Step 3 trigger</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Corporate · Supplier</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                  <span class="tag un">UN</span>
+                  <span class="tag eu">EU</span>
+                  <span class="tag uk">UK</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge violet">24883</div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Istanbul Altin Rafinesi A.S</div>
+                    <div class="table-meta">TR<br/>LBMA RGG of Step 3 audit missing</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Corporate · Refiner</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                  <span class="tag un">UN</span>
+                  <span class="tag eu">EU</span>
+                  <span class="tag uk">UK</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge orange">24880</div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Kwame Asante-Boateng</div>
+                    <div class="table-meta">GH<br/>PEP · deputy minister (former)</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Individual · UBO</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                  <span class="tag un">UN</span>
+                  <span class="tag eu">EU</span>
+                  <span class="tag uk">UK</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge orange">24876</div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Gramaltin A.S — Restructure</div>
+                    <div class="table-meta">TR<br/>Ownership change >10% · CDD refresh</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Corporate · Customer</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                  <span class="tag un">UN</span>
+                  <span class="tag eu">EU</span>
+                  <span class="tag uk">UK</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge orange">24872</div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Fine Gold LLC — Structuring pattern</div>
+                    <div class="table-meta">AE<br/>6 txns AED 54,820 avg (below CTR)</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Transaction · Cluster</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                  <span class="tag un">UN</span>
+                  <span class="tag eu">EU</span>
+                  <span class="tag uk">UK</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div style="width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--ink-2); border: 1px dashed var(--hair-2);">
+                  •
+                </div>
+              </td>
+              <td>
+                <div class="table-id">
+                  <div>
+                    <div class="table-name">Fortescue LLP — UBO trace</div>
+                    <div class="table-meta">IM / AE<br/>Layer 3 UBO unresolved</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 11px; color: var(--ink-2);">Corporate · Intermediary</div>
+              </td>
+              <td>
+                <div class="table-tags">
+                  <span class="tag ofac">OFAC</span>
+                  <span class="tag un">UN</span>
+                  <span class="tag eu">EU</span>
+                  <span class="tag uk">UK</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+
+    <!-- Right panel -->
+    <aside class="right-panel">
+      <div class="panel-head">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <p class="panel-title">Dmitri Volkov-Arenova</p>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-small">⎙</button>
+            <button class="btn btn-small">Escalate</button>
+            <button class="btn-primary btn-small" style="background: var(--brand); border-color: var(--brand); color: white;">Raise STR</button>
+          </div>
+        </div>
+        <p class="panel-subtitle">HS-24891 · Individual · UBO / RU / AE · opened 00h 14m ago</p>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Risk score</div>
+        <div class="risk-score">
+          <span class="risk-score-value">94</span>
+          <span class="risk-score-max">/100</span>
+        </div>
+        <div class="risk-bar">
+          <div class="risk-bar-fill"></div>
+        </div>
+        <div style="margin-top: 8px; font-size: 11px; color: var(--ink-2);">Most serious: 2026-05-01</div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">CDD posture</div>
+        <div class="panel-field">
+          <div class="panel-field-label">Rating</div>
+          <div class="panel-field-value" style="font-weight: 600;">EDD</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Exposure (immediate-consignment)</div>
+        <div class="panel-field">
+          <div class="panel-field-label">AED</div>
+          <div class="panel-field-value mono">9,140</div>
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">Gms Khobar · Birkes · Degussa</div>
+          <div class="panel-field-value" style="font-size: 11px; color: var(--ink-2);">Cabinet Res 134/2025 Art.12-14</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">SLA (immediate-notify)</div>
+        <div class="panel-field">
+          <div class="panel-field-value" style="font-size: 11px; color: var(--ink-2);">+21h 46m</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-tabs">
+          <button class="panel-tab active">Screening</button>
+          <button class="panel-tab">CDD/EDD</button>
+          <button class="panel-tab">Ownership</button>
+          <button class="panel-tab">Timeline</button>
+          <button class="panel-tab">Evidence</button>
+        </div>
+
+        <div class="panel-section-title">Sanctions & adverse-media matches</div>
+        <div style="font-size: 11px; color: var(--ink-2); margin-bottom: 12px;">6 lists · policy v4.1</div>
+
+        <ul class="sanctions-list">
+          <li class="sanctions-item">
+            <div class="sanctions-item-head">
+              <span class="sanctions-item-source">OFAC SDN</span>
+              <span class="sanctions-item-score">87%</span>
+            </div>
+            <div class="sanctions-item-name">VOLKOV Dmitri Sergeyovich</div>
+            <div class="sanctions-item-meta">DoB 1973-08-14 · RU / AE · Designated 2022-04-06 · OFAC-SDN-28561</div>
+          </li>
+
+          <li class="sanctions-item">
+            <div class="sanctions-item-head">
+              <span class="sanctions-item-source">EU Consolidated</span>
+              <span class="sanctions-item-score">82%</span>
+            </div>
+            <div class="sanctions-item-name">VOLKOV, D.</div>
+            <div class="sanctions-item-meta">RU / CZFP 2043/150 · Restrictive measures · EU-CZFP-10456</div>
+          </li>
+
+          <li class="sanctions-item">
+            <div class="sanctions-item-head">
+              <span class="sanctions-item-source">UK OFSI</span>
+              <span class="sanctions-item-score">54%</span>
+            </div>
+            <div class="sanctions-item-name">NO exact match</div>
+            <div class="sanctions-item-meta">Fuzzy score below 60% threshold</div>
+          </li>
+
+          <li class="sanctions-item" style="background: var(--red-dim); padding: 10px 12px; border-radius: 6px; border: none; margin-top: 12px;">
+            <div class="sanctions-item-head">
+              <span class="sanctions-item-source" style="color: var(--red);">Adverse media</span>
+              <span class="sanctions-item-score" style="color: var(--red);">78%</span>
+            </div>
+            <div class="sanctions-item-name">Sanctions evasion, shell structuring (ruled 2024)</div>
+            <div class="sanctions-item-meta">4 articles · Consulting/fraud category · Reuters · 2024-11-03</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="panel-section" style="margin-top: 24px;">
+        <div class="panel-section-title">Linked obligations</div>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--bg-1); border-radius: 4px;">
+            <div>
+              <div style="font-size: 12px; font-weight: 500; color: var(--ink-0);">Four-eyes · AML-Desk</div>
+              <div style="font-size: 10.5px; color: var(--ink-2); margin-top: 2px;">Consignment · CJU-88012</div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--bg-1); border-radius: 4px;">
+            <div>
+              <div style="font-size: 12px; font-weight: 500; color: var(--ink-0);">Evidence vault · 94 files</div>
+              <div style="font-size: 10.5px; color: var(--ink-2); margin-top: 2px;">Ledger LBMA RGG v9 Step 3 · Independent audit pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+</body>
+</html>
