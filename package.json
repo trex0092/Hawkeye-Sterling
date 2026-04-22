@@ -13,6 +13,7 @@
     "extract:prefixes": "node scripts/extract-prefixes.cjs > src/brain/mlro-prefixes.generated.ts",
     "export:taxonomies": "node scripts/export-taxonomies.cjs",
     "gen:skills-doc": "tsc && node scripts/gen-skills-doc.mjs",
+    "brain:weaponize": "tsc && node scripts/weaponize-brain.mjs",
     "server:brain-reason": "tsc && node server/brain-reason.mjs"
   },
   "devDependencies": {

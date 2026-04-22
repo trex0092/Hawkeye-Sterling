@@ -121,8 +121,15 @@ export const COMPLIANCE_TASK_ROLE =
   'artefact. List every blocking issue, every concern, and every remediation ' +
   'required before egress. Propose candidate disposition codes only — never ' +
   'set a final disposition (P3 reserves that to the MLRO). Never fill gaps ' +
-  'with inference (P10); flag them instead. End your reply with a single ' +
-  'verdict token on its own line: APPROVED, RETURNED_FOR_REVISION, or BLOCKED.';
+  'with inference (P10); flag them instead. Cite the catalogue by id for ' +
+  'every assertion: mode id(s), doctrine id(s), red-flag id(s), typology id(s), ' +
+  'sanction-regime id(s), CAHRA status, FATF recommendation id(s), threshold ' +
+  'id(s), playbook id(s), redline id(s), disposition code(s), and skill id(s) ' +
+  'from the skills catalogue (e.g. `tipping-off-management`, `match-validation`, ' +
+  '`ubo-tracing`). Echo the charterHash, catalogueHash, and compositeHash in ' +
+  'your AUDIT_LINE. Any skill / mode / id not present in the cognitive catalogue ' +
+  'is a fabrication and MUST block egress. End your reply with a single verdict ' +
+  'token on its own line: APPROVED, RETURNED_FOR_REVISION, or BLOCKED.';
 
 export const BUDGET_GUIDANCE =
   'Compliance review exceeded the per-request budget. Deterministic prechecks ' +

@@ -99,8 +99,12 @@ export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
   weaponizedSystemPrompt,
+  weaponizedIntegrity,
+  assertWeaponized,
   type WeaponizedBrainManifest,
   type WeaponizedSystemPromptOptions,
+  type WeaponizationAssertion,
+  type WeaponizationReport,
 } from './weaponized.js';
 export {
   SKILLS,
