@@ -17,7 +17,7 @@ export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty }: ModeG
         Reasoning modes catalogue
       </div>
       <div className="text-12 text-ink-2 mb-4">
-        {TOTAL_MODES} modes across 10 faculties · Click to select
+        {TOTAL_MODES} modes across 15 faculties · Click to select
       </div>
 
       <div

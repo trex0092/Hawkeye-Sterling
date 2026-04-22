@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force browser native-control surfaces (date dropdowns, calendars, context
+ * menus) to render against a light backdrop so they match the editorial theme
+ * instead of the OS dark default. */
+html {
+  color-scheme: light;
+}
+select,
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: light;
+}
+
 @layer base {
   :root {
     --bg-0: #faf9f7;
