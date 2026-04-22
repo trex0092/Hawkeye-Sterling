@@ -1,13 +1,11 @@
-// Netlify Scheduled Function — twice-daily ongoing screening.
+// Netlify Scheduled Function — daily transaction monitoring.
 //
-// Schedule: 00:00 and 12:00 UTC every day (cron "0 0,12 * * *").
-// Action: POSTs to the deployed site's /api/ongoing/run route, which iterates
-//         all enrolled subjects, reruns the brain quickScreen, diffs new hits
-//         against the last-stored snapshot and posts Asana delta tasks +
-//         webhook events for anything new.
-//
-// The self-fetch pattern keeps all brain state and integrations in the main
-// Next.js function bundle; this scheduled function is just the heartbeat.
+// Schedule: every day at 09:00 Dubai time (UTC+4) → 05:00 UTC.
+// Action:   self-POSTs to /api/transaction-monitor/run which walks every
+//           enrolled subject, runs the brain's structuring / smurfing /
+//           anomaly detectors on any recorded transactions, and posts a
+//           single daily [TM-DAILY] summary task to Asana plus a webhook
+//           event with the alert roll-up.
 
 import type { Config } from "@netlify/functions";
 
@@ -23,7 +21,7 @@ export default async (_req: Request) => {
   if (token) headers.authorization = `Bearer ${token}`;
 
   try {
-    const res = await fetch(`${base}/api/ongoing/run`, {
+    const res = await fetch(`${base}/api/transaction-monitor/run`, {
       method: "POST",
       headers,
     });
@@ -55,8 +53,6 @@ export default async (_req: Request) => {
 };
 
 export const config: Config = {
-  // Twice daily at 09:00 and 15:00 Dubai time (UTC+4 all year).
-  //   09:00 GST → 05:00 UTC
-  //   15:00 GST → 11:00 UTC
-  schedule: "0 5,11 * * *",
+  // 09:00 Dubai (UTC+4) = 05:00 UTC, every day.
+  schedule: "0 5 * * *",
 };
