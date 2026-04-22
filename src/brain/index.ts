@@ -37,6 +37,13 @@ export * from './lifecycle.js';
 export * from './alerts.js';
 export * from './dispositions.js';
 export * from './observable-facts.js';
+export * from './reasoning-modes-wave-3.js';
+export * from './red-flags-extended.js';
+export * from './typologies-extended.js';
+export * from './question-bank-extended.js';
+export * from './scenario-presets-extended.js';
+export * from './document-checklists.js';
+export * from './str-narratives.js';
 export * from './engine.js';
 export { auditBrain } from './audit.js';
 export {
