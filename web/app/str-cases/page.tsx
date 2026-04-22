@@ -101,7 +101,14 @@ export default function StrCasesPage() {
           mlro,
         }),
       });
-      const data = (await res.json()) as { ok: boolean; taskUrl?: string };
+      if (!res.ok) {
+        flashFor(`Filing failed — server ${res.status}`);
+        return;
+      }
+      const data = (await res.json().catch(() => ({ ok: false }))) as {
+        ok: boolean;
+        taskUrl?: string;
+      };
       if (data.ok) {
         flashFor("Filed to STR/SAR Asana board");
         setCases((prev) => [

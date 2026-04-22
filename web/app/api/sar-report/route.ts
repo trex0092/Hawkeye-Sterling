@@ -17,7 +17,9 @@ type FilingType =
   | "FFR"
   | "PNMR"
   | "HRCR"
-  | "AIF";
+  | "AIF"
+  | "PEPR"
+  | "FTFR";
 
 interface Body {
   subject: {
