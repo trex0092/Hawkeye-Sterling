@@ -78,6 +78,10 @@ export * from './mlro-pipeline-presets.js';
 export * from './mlro-budget-planner.js';
 export * from './mlro-export.js';
 export * from './mlro-prefixes.generated.js';
+export * from './mlro-conflict-detector.js';
+export * from './mlro-calibration.js';
+export * from './mlro-explainer.js';
+export * from './redactor.js';
 export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
