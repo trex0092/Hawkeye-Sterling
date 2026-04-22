@@ -61,6 +61,8 @@ function deaccent(s: string): string {
 export function normaliseArabicRoman(input: string): string {
   if (!input) return '';
   let s = deaccent(input).toLowerCase();
+  // Strip multi-letter honorifics that survive the dot→space pass ("h.h.", "h.e.").
+  s = s.replace(/\bh\.h\.?\b/g, ' ').replace(/\bh\.e\.?\b/g, ' ');
   s = s.replace(/[’'`´]/g, '').replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ');
   s = s.replace(/\s+/g, ' ').trim();
   const tokens = s.split(' ').filter(Boolean);
@@ -97,8 +99,10 @@ export interface RomanisedName {
 export function romanise(input: string): RomanisedName {
   const raw = input;
   const particlesStripped: string[] = [];
-  const tokens = deaccent(input)
+  const cleaned = deaccent(input)
     .toLowerCase()
+    .replace(/\bh\.h\.?\b/g, ' ')
+    .replace(/\bh\.e\.?\b/g, ' ')
     .replace(/[’'`´]/g, '')
     .replace(/[^a-z\s-]/g, ' ')
     .replace(/-/g, ' ')
@@ -111,8 +115,7 @@ export function romanise(input: string): RomanisedName {
       }
       return true;
     });
-  const normalised = tokens
-    .map((t) => CANONICAL_BY_VARIANT.get(t) ?? t)
-    .join(' ');
+  const tokens = cleaned.map((t) => CANONICAL_BY_VARIANT.get(t) ?? t);
+  const normalised = tokens.join(' ');
   return { raw, normalised, tokens, particlesStripped };
 }

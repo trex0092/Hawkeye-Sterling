@@ -150,7 +150,13 @@ export const reductioApply = async (ctx: BrainContext): Promise<Finding> => {
   }
   const meanScore = p.reduce((a, f) => a + f.score, 0) / p.length;
   const spikes = p.filter((f) => f.score >= 0.7);
-  if (meanScore < 0.3 && spikes.length > 0) {
+  const nonSpikes = p.filter((f) => f.score < 0.7);
+  const nonSpikesMean = nonSpikes.length ? nonSpikes.reduce((a, f) => a + f.score, 0) / nonSpikes.length : 0;
+  // Classic reductio pattern: assume a 'clear' verdict, then point to any
+  // severity spike that refutes that assumption. If the remaining priors are
+  // collectively low-severity (the implicit "clear" population) but any one
+  // prior spikes, the assumption is refuted.
+  if (spikes.length > 0 && nonSpikesMean < 0.3) {
     return findingOf(
       'reductio', 'logic', ['reasoning', 'argumentation'],
       'flag', 0.6, 0.85,

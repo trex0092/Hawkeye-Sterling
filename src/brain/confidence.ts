@@ -142,5 +142,9 @@ export function calibrateConfidence(
 }
 
 function rank(level: MatchConfidenceLevel): number {
-  return MATCH_CONFIDENCE_LEVELS.indexOf(level);
+  // MATCH_CONFIDENCE_LEVELS is ordered strongest-first. Return an ascending
+  // rank so "higher rank" means "more confident", which makes the cap checks
+  // read as `level > cap → clamp down to cap`.
+  const idx = MATCH_CONFIDENCE_LEVELS.indexOf(level);
+  return MATCH_CONFIDENCE_LEVELS.length - 1 - idx;
 }

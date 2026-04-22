@@ -26,17 +26,25 @@ function keep(prefix: number, suffix: number, mask = '*'): (s: string) => string
   };
 }
 
+// Rule order matters: format-specific patterns run first so the generic
+// phone_e164 fallback can't cannibalise digit-string IDs (e.g. Emirates IDs).
 export const REDACTION_RULES: RedactionRule[] = [
-  { kind: 'email', pattern: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, mask: (s) => s.replace(/(?<=.).(?=[^@]*@)/g, '*') },
-  { kind: 'phone_e164', pattern: /\+?\d[\d\s\-()]{6,}\d/g, mask: keep(3, 2) },
-  { kind: 'iban', pattern: /\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g, mask: keep(4, 4) },
-  { kind: 'bic_swift', pattern: /\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b/g, mask: keep(4, 0) },
-  { kind: 'passport', pattern: /\b[A-Z]{1,2}\d{6,9}\b/g, mask: keep(2, 0) },
+  { kind: 'email', pattern: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, mask: (s) => {
+    const at = s.indexOf('@');
+    if (at <= 0) return '*'.repeat(s.length);
+    const local = s.slice(0, at);
+    const domain = s.slice(at);
+    return '*'.repeat(Math.max(3, local.length)) + domain;
+  } },
   { kind: 'emirates_id', pattern: /\b784[- ]?\d{4}[- ]?\d{7}[- ]?\d\b/g, mask: () => '784-****-*******-*' },
-  { kind: 'national_id', pattern: /\b\d{9,15}\b/g, mask: keep(2, 2) },
-  { kind: 'credit_card', pattern: /\b(?:\d[ -]?){12,18}\d\b/g, mask: keep(0, 4) },
+  { kind: 'iban', pattern: /\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g, mask: keep(4, 4) },
   { kind: 'wallet_address', pattern: /\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{25,39}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[A-Za-z1-9]{33})\b/g, mask: keep(6, 4) },
   { kind: 'imo_number', pattern: /\bIMO\s?\d{7}\b/gi, mask: keep(3, 0) },
+  { kind: 'credit_card', pattern: /\b(?:\d[ -]?){12,18}\d\b/g, mask: keep(0, 4) },
+  { kind: 'bic_swift', pattern: /\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b/g, mask: keep(4, 0) },
+  { kind: 'passport', pattern: /\b[A-Z]{1,2}\d{6,9}\b/g, mask: keep(2, 0) },
+  { kind: 'phone_e164', pattern: /\+?\d[\d\s\-()]{6,}\d/g, mask: keep(3, 2) },
+  { kind: 'national_id', pattern: /\b\d{9,15}\b/g, mask: keep(2, 2) },
   { kind: 'ipv4', pattern: /\b(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}\b/g, mask: keep(0, 0, '·') },
   { kind: 'date', pattern: /\b\d{4}-\d{2}-\d{2}\b|\b\d{2}[\/\-.]\d{2}[\/\-.]\d{2,4}\b/g, mask: () => 'YYYY-MM-DD' },
   { kind: 'amount', pattern: /\b(?:AED|USD|EUR|GBP|SAR|QAR)\s?\d{1,3}(?:[,]\d{3})*(?:\.\d{2})?\b/g, mask: (s) => s.replace(/\d/g, '#') },

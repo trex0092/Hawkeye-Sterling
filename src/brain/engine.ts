@@ -142,6 +142,10 @@ function selectReasoningModeIdsForDomains(
       for (const m of tpl.reasoningModes) set.add(m);
     }
   }
+  // Always-on inference: bayes_theorem emits explicit likelihood ratios for
+  // any evidence signals present, which lets fusion compute an auditable
+  // posterior even when the domain-matched templates don't name it.
+  set.add('bayes_theorem');
   // Force the six always-on meta-cognitive modes to run LAST so they see the
   // complete prior-finding set when auditing bias / calibration / falsification /
   // triangulation / Occam.

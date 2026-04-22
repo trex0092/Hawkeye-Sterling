@@ -143,10 +143,17 @@ export function soundex(input: string): string {
   let out = first;
   let prev = map[s[0]!] ?? '';
   for (let i = 1; i < s.length && out.length < 4; i++) {
-    const code = map[s[i]!] ?? '';
-    if (code && code !== prev) out += code;
-    if (code) prev = code;
-    else prev = '';
+    const ch = s[i]!;
+    const code = map[ch] ?? '';
+    if (code) {
+      if (code !== prev) out += code;
+      prev = code;
+    } else if (ch === 'h' || ch === 'w') {
+      // H and W neither reset nor emit — letters they separate keep merging.
+    } else {
+      // Vowel (or other): resets the merge so a later same-coded letter emits anew.
+      prev = '';
+    }
   }
   return (out + '000').slice(0, 4);
 }
