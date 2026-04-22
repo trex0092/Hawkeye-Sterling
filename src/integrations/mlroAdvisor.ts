@@ -9,6 +9,7 @@
 
 import { weaponizedSystemPrompt } from '../brain/weaponized.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
+import { fetchJsonWithRetry } from './httpRetry.js';
 
 export type ReasoningMode = 'speed' | 'balanced' | 'multi_perspective';
 
@@ -180,8 +181,9 @@ export type ChatCall = (input: {
 }) => Promise<{ ok: boolean; text?: string; error?: string }>;
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
+    'https://api.anthropic.com/v1/messages',
+    {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
@@ -198,16 +200,26 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
           pipeline: 'mlro-advisor',
         },
       }),
+    },
+    {
       ...(signal ? { signal } : {}),
-    });
-    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const text = json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
-    return { ok: true, text };
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') return { ok: false, error: 'aborted' };
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      // The outer withBudget() in this file already enforces the per-mode
+      // ceiling; keep per-attempt tight so we can retry inside that budget.
+      perAttemptMs: Math.min(15_000, maxTokens * 40 + 8_000),
+      idleReadMs: 12_000,
+      maxAttempts: 2,
+    },
+  );
+  if (signal?.aborted) return { ok: false, error: 'aborted' };
+  if (!result.ok || !result.json) {
+    const prefix = result.partial ? 'partial_response:' : '';
+    return {
+      ok: false,
+      error: `${prefix}${result.error ?? `HTTP ${result.status ?? 'unknown'}`} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
+    };
   }
+  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
+  return { ok: true, text };
 };
 
 function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<{ result?: T; timedOut: boolean }> {
