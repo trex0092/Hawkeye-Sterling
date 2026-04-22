@@ -89,6 +89,12 @@ export * from './mlro-charter-diff.js';
 export * from './mlro-telemetry.js';
 export * from './mlro-peer-benchmark.js';
 export * from './redactor.js';
+export { STATISTICAL_MODE_APPLIES } from './modes/statistical.js';
+export { BEHAVIORAL_MODE_APPLIES } from './modes/behavioral.js';
+export { GOVERNANCE_MODE_APPLIES } from './modes/governance.js';
+export { DATA_QUALITY_MODE_APPLIES } from './modes/data_quality.js';
+export { COGNITIVE_MODE_APPLIES } from './modes/cognitive.js';
+export { TYPOLOGY_MODE_APPLIES, structuringDetect, smurfingDetect } from './modes/typology.js';
 export { auditBrain } from './audit.js';
 export {
   buildWeaponizedBrainManifest,
