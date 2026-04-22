@@ -200,6 +200,28 @@
             <h3 id="dr-workspace-title">Deep-Reasoning workspace</h3>
             <p class="dr-workspace-sub">Full 690-mode catalogue · categorised · searchable · multi-select chaining · charter-gated egress</p>
           </header>
+
+          <div class="dr-presets" aria-label="Curated pipeline presets">
+            <span class="dr-presets-label mono">PRESETS</span>
+            <div class="dr-preset-chips" id="dr-preset-chips" role="toolbar" aria-label="Preset chains">
+              <button type="button" class="dr-preset" data-preset="pp_cahra_gold_onboard">CAHRA gold · onboard</button>
+              <button type="button" class="dr-preset" data-preset="pp_vasp_mixer_inbound">VASP · mixer inbound</button>
+              <button type="button" class="dr-preset" data-preset="pp_pep_wealth_mismatch">PEP · SoW mismatch</button>
+              <button type="button" class="dr-preset" data-preset="pp_structuring_near_threshold">Structuring · near threshold</button>
+              <button type="button" class="dr-preset" data-preset="pp_tbml_over_invoice">TBML · over-invoice</button>
+              <button type="button" class="dr-preset" data-preset="pp_eocn_partial_match">EOCN · partial (PNMR)</button>
+              <button type="button" class="dr-preset" data-preset="pp_eocn_confirmed">EOCN · confirmed (FFR)</button>
+              <button type="button" class="dr-preset" data-preset="pp_ubo_opaque">UBO · opaque chain</button>
+              <button type="button" class="dr-preset" data-preset="pp_corresp_nested">Correspondent · nested</button>
+              <button type="button" class="dr-preset" data-preset="pp_bec_typosquat">BEC · typosquat</button>
+              <button type="button" class="dr-preset" data-preset="pp_re_cash_shell">Real estate · cash + shell</button>
+              <button type="button" class="dr-preset" data-preset="pp_tipping_off_intercept">Tipping-off · intercept</button>
+              <button type="button" class="dr-preset" data-preset="pp_audit_lookback">Audit · lookback</button>
+              <button type="button" class="dr-preset" data-preset="pp_npo_conflict_zone">NPO · conflict zone</button>
+              <button type="button" class="dr-preset" data-preset="pp_baseline_triage">Baseline triage</button>
+            </div>
+          </div>
+
           <div class="dr-picker" role="region" aria-label="Mode picker">
             <div class="dr-picker-head">
               <label class="dr-search-wrap">
@@ -221,6 +243,24 @@
             </footer>
           </div>
           <div id="deepReasoningMount" class="dr-mount" aria-label="Deep-reasoning panel"></div>
+
+          <div class="dr-toolbar" aria-label="Export and history">
+            <div class="dr-exports">
+              <span class="dr-exports-label mono">EXPORT</span>
+              <button type="button" class="dr-export-btn" data-export="json">JSON</button>
+              <button type="button" class="dr-export-btn" data-export="markdown">Markdown</button>
+              <button type="button" class="dr-export-btn" data-export="html">HTML</button>
+              <label class="dr-redact-toggle">
+                <input type="checkbox" id="dr-redact" />
+                <span>Redact PII</span>
+              </label>
+            </div>
+            <div class="dr-history-wrap">
+              <span class="dr-history-label mono">HISTORY</span>
+              <button type="button" class="dr-history-btn" id="dr-history-toggle" aria-expanded="false" aria-controls="dr-history">Recent runs <span class="mono" id="dr-history-count">0</span></button>
+            </div>
+          </div>
+          <ol id="dr-history" class="dr-history" hidden aria-label="Recent runs"></ol>
         </section>
 
         <dialog id="advisor-modal" class="advisor-modal" aria-labelledby="advisor-modal-title">
