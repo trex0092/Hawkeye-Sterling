@@ -249,6 +249,7 @@ function ScreeningTab({
     <>
       {title}
       <ScreeningSummary result={state.result} />
+      <BrainDiagnostics result={state.result} />
       <HitsList hits={state.result.hits} />
       {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
     </>
@@ -274,6 +275,73 @@ function ScreeningSummary({ result }: { result: QuickScreenResult }) {
         {result.durationMs}ms
       </span>
     </div>
+  );
+}
+
+function BrainDiagnostics({ result }: { result: QuickScreenResult }) {
+  if (result.hits.length === 0) return null;
+  const methods = Array.from(new Set(result.hits.map((h) => h.method)));
+  const programs = Array.from(
+    new Set(result.hits.flatMap((h) => h.programs ?? [])),
+  ).slice(0, 8);
+  const phoneticHits = result.hits.filter((h) => h.phoneticAgreement).length;
+  return (
+    <div className="bg-bg-1 border border-hair-2 rounded-lg p-3 mb-3 text-11">
+      <div className="font-semibold tracking-wide-4 uppercase text-ink-2 text-10 mb-2">
+        Brain diagnostics
+      </div>
+      <DiagRow label="Match methods">
+        {methods.map((m) => (
+          <Tag key={m}>{m.replace(/_/g, " ")}</Tag>
+        ))}
+      </DiagRow>
+      <DiagRow label="Phonetic agreement">
+        <span className="font-mono text-ink-0">
+          {phoneticHits}/{result.hits.length}
+        </span>
+      </DiagRow>
+      {programs.length > 0 && (
+        <DiagRow label="Programs">
+          {programs.map((p) => (
+            <Tag key={p} tone="red">
+              {p}
+            </Tag>
+          ))}
+        </DiagRow>
+      )}
+      <DiagRow label="Subject fingerprint">
+        <span className="font-mono text-10.5 text-ink-2">
+          {result.subject.name.toLowerCase().replace(/\s+/g, "-")} ·{" "}
+          {result.subject.entityType ?? "—"} ·{" "}
+          {result.subject.jurisdiction ?? "—"}
+        </span>
+      </DiagRow>
+    </div>
+  );
+}
+
+function DiagRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2 py-1 items-center">
+      <span className="text-ink-3 w-32 shrink-0 uppercase tracking-wide-2 text-10">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1">{children}</div>
+    </div>
+  );
+}
+
+function Tag({ children, tone }: { children: React.ReactNode; tone?: "red" }) {
+  const cls =
+    tone === "red"
+      ? "bg-red-dim text-red"
+      : "bg-violet-dim text-violet";
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 tracking-wide-1 ${cls}`}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -311,6 +379,18 @@ function HitRow({ hit }: { hit: QuickScreenHit }) {
       <div className="text-11 text-ink-2">
         {hit.listRef} · {hit.reason}
       </div>
+      {hit.programs && hit.programs.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {hit.programs.map((p) => (
+            <span
+              key={p}
+              className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+      )}
     </li>
   );
 }
