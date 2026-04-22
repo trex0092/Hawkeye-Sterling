@@ -195,6 +195,34 @@
           </div>
         </aside>
 
+        <section class="dr-workspace" aria-labelledby="dr-workspace-title">
+          <header class="dr-workspace-head">
+            <h3 id="dr-workspace-title">Deep-Reasoning workspace</h3>
+            <p class="dr-workspace-sub">Full 690-mode catalogue · categorised · searchable · multi-select chaining · charter-gated egress</p>
+          </header>
+          <div class="dr-picker" role="region" aria-label="Mode picker">
+            <div class="dr-picker-head">
+              <label class="dr-search-wrap">
+                <span class="dr-search-icon" aria-hidden="true">⌕</span>
+                <input id="dr-search" type="search" placeholder="Search 690 reasoning modes — e.g. “ubo bearer”, “bayes”, “cahra refiner”" autocomplete="off" />
+                <span class="dr-search-count mono" id="dr-search-count">690</span>
+              </label>
+              <div class="dr-suggest" id="dr-suggest" aria-label="Suggested for this case">
+                <span class="dr-suggest-label mono">SUGGESTED</span>
+                <div class="dr-suggest-chips" id="dr-suggest-chips"></div>
+              </div>
+            </div>
+            <nav class="dr-cats" aria-label="Mode categories" id="dr-cats"></nav>
+            <ul class="dr-mode-list" id="dr-mode-list" aria-label="Modes in selected category"></ul>
+            <footer class="dr-picker-foot">
+              <span class="dr-selected-label mono">SELECTED</span>
+              <ul class="dr-selected" id="dr-selected" aria-label="Selected modes (chain order)"></ul>
+              <button type="button" class="btn btn-ghost dr-clear" id="dr-clear">Clear</button>
+            </footer>
+          </div>
+          <div id="deepReasoningMount" class="dr-mount" aria-label="Deep-reasoning panel"></div>
+        </section>
+
         <dialog id="advisor-modal" class="advisor-modal" aria-labelledby="advisor-modal-title">
           <form method="dialog" class="advisor-modal-form">
             <header class="advisor-modal-head">
@@ -500,5 +528,7 @@
     </footer>
 
     <script type="module" src="/app.js"></script>
+    <script src="/mlro-picker.js" defer></script>
+    <script src="/deep-reasoning.js" defer></script>
   </body>
 </html>
