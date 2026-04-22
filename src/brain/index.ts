@@ -90,6 +90,13 @@ export * from './mlro-telemetry.js';
 export * from './mlro-peer-benchmark.js';
 export * from './mlro-capabilities.generated.js';
 export * from './mlro-red-flags-taxonomy.generated.js';
+export * from './entity-graph.js';
+export * from './smurfing-detector.js';
+export * from './evidence-corroboration.js';
+export * from './investigation-timeline.js';
+export * from './sanction-delta.js';
+export * from './cross-regime-conflict.js';
+export * from './outcome-feedback.js';
 export * from './redactor.js';
 export { auditBrain } from './audit.js';
 export {
