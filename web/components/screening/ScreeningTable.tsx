@@ -6,9 +6,10 @@ interface ScreeningTableProps {
   subjects: Subject[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function ScreeningTable({ subjects, selectedId, onSelect }: ScreeningTableProps) {
+export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: ScreeningTableProps) {
   return (
     <div className="bg-white border border-hair-2 rounded-xl overflow-hidden">
       <table className="w-full border-collapse text-12.5">
@@ -26,6 +27,7 @@ export function ScreeningTable({ subjects, selectedId, onSelect }: ScreeningTabl
             <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
               List coverage
             </th>
+            <th className="w-[40px]" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
@@ -59,9 +61,31 @@ export function ScreeningTable({ subjects, selectedId, onSelect }: ScreeningTabl
                     ))}
                   </div>
                 </td>
+                <td className={`px-2 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${subject.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(subject.id);
+                    }}
+                    className="w-7 h-7 rounded flex items-center justify-center text-ink-3 hover:bg-red-dim hover:text-red transition-colors"
+                  >
+                    ×
+                  </button>
+                </td>
               </tr>
             );
           })}
+          {subjects.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-6 py-10 text-center text-12 text-ink-2">
+                No screenings yet — click{" "}
+                <span className="font-semibold text-ink-0">+ New screening</span> to add a
+                subject.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
