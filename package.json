@@ -2,30 +2,19 @@
   "name": "hawkeye-sterling",
   "version": "0.2.0",
   "private": true,
-  "description": "Regulator-grade sanctions & PEP screening platform. Built to surpass Refinitiv World-Check.",
+  "description": "Hawkeye Sterling — regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine. Built to surpass Refinitiv World-Check.",
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server --directory public 8080",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
-  },
-  "devDependencies": {
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
-  "version": "0.1.0",
-  "private": true,
-  "description": "Hawkeye Sterling — the strongest regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine in the world. Built to surpass Refinitiv World-Check.",
-  "type": "module",
-  "scripts": {
-    "dev": "netlify dev",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "brain:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/index.js').then(m=>m.auditBrain())\""
   },
   "devDependencies": {
-    "@netlify/functions": "^3.0.0",
     "@types/node": "^24.0.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.5"
   },
   "engines": {
     "node": ">=20"

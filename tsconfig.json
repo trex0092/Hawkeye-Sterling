@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022", "DOM"],
     "outDir": "dist",
     "rootDir": ".",
@@ -14,25 +14,10 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
     "skipLibCheck": true,
     "declaration": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "netlify/functions/**/*.ts"],
-  "exclude": ["node_modules", "dist", "public"]
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    "resolveJsonModule": true,
-    "declaration": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src/**/*", "netlify/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "public", "src/**/__tests__/**", "src/**/*.test.ts"]
 }

@@ -1,4 +1,5 @@
 import type { CaseReport } from '../reports/caseReport.js';
+import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
 
 export interface ClaudeAgentConfig {
   apiKey: string;
@@ -38,7 +39,7 @@ export interface NarrativeReportResult {
 const DEFAULT_MODEL = 'claude-opus-4-7';
 
 function systemPromptFor(style: NarrativeReportRequest['style'] = 'regulator'): string {
-  const base =
+  const role =
     'You are the Hawkeye Sterling V2 data analyst agent. You have access to a sandboxed Python environment with pandas, matplotlib/plotly and file mounting. ' +
     'You receive one CaseReport JSON and zero or more CSV/JSON data files. Produce a single self-contained HTML report with interactive charts embedded as SVG or inline Plotly. ' +
     'Cite every claim to a source in the CaseReport. Preserve the World-Check-style section ordering (Case/Comparison, Key Data, Keywords, SIC, PEP Sub-Category, Biography, PEP Roles, Connections, Sources, Audit, Notes).';
@@ -47,7 +48,8 @@ function systemPromptFor(style: NarrativeReportRequest['style'] = 'regulator'): 
     executive: 'Write for a board audience: top-line verdict, risk posture, three key findings, one-page TL;DR.',
     investigator: 'Write for an MLRO investigator: timeline, entity graph, reasoning chain, next-step recommendations.',
   };
-  return `${base}\n\nAudience: ${styles[style]}`;
+  // The canonical compliance charter ALWAYS leads. Role and audience follow.
+  return `${SYSTEM_PROMPT}\n\n================================================================================\nTASK ROLE\n================================================================================\n\n${role}\n\nAudience: ${styles[style]}`;
 }
 
 export function buildNarrativeRequest(req: NarrativeReportRequest): {
