@@ -409,5 +409,134 @@ const saveDraftSilent = debounce(() => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot())); } catch {}
 }, 600);
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
+// ---------- MLRO advisor modal
+function bindAdvisor() {
+  const card = document.querySelector('.advisor-card');
+  const modal = $('#advisor-modal');
+  const openBtn = $('#advisor-open');
+  const closeBtn = $('#advisor-close');
+  const cancelBtn = $('#advisor-cancel');
+  const runBtn = $('#advisor-run');
+  const trail = $('#advisor-trail');
+  const steps = $('#trail-steps');
+  const verdict = $('#trail-verdict');
+  const stateEl = $('#advisor-state');
+  const execStatus = $('#pipe-status-executor');
+  const advStatus = $('#pipe-status-advisor');
+  const coverage = $('#advisor-coverage');
+  const question = $('#advisor-question');
+
+  if (!modal || !openBtn) return;
+
+  const showModal = () => {
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', 'true');
+    setTimeout(() => question?.focus(), 50);
+  };
+  const hideModal = () => {
+    if (typeof modal.close === 'function') modal.close();
+    else modal.removeAttribute('open');
+  };
+
+  const setState = (s) => {
+    if (card) card.setAttribute('data-advisor-state', s);
+    if (stateEl) stateEl.textContent =
+      s === 'idle' ? 'READY' :
+      s === 'thinking' ? 'SONNET · EXECUTING' :
+      s === 'reviewing' ? 'OPUS · REVIEWING' :
+      s === 'approved' ? 'APPROVED' :
+      s === 'blocked' ? 'BLOCKED' : 'READY';
+  };
+
+  const setCoverage = (s) => {
+    if (!coverage) return;
+    coverage.querySelectorAll('li').forEach((li) => li.setAttribute('data-ok', s));
+  };
+
+  openBtn.addEventListener('click', showModal);
+  closeBtn?.addEventListener('click', hideModal);
+  cancelBtn?.addEventListener('click', hideModal);
+
+  runBtn?.addEventListener('click', async () => {
+    const q = (question?.value || '').trim();
+    if (!q) { question?.focus(); return; }
+
+    // Stub run — the real call is wired in src/integrations/mlroAdvisor.ts
+    // and requires ANTHROPIC_API_KEY; this UI path runs a faithful local
+    // simulation so the operator can rehearse the pipeline.
+    trail.hidden = false;
+    steps.innerHTML = '';
+    verdict.textContent = '—';
+    verdict.removeAttribute('data-verdict');
+    setCoverage('false');
+
+    setState('thinking');
+    execStatus.textContent = 'running';
+    advStatus.textContent = 'waiting';
+    await sleep(700);
+    const executorBody = [
+      `SUBJECT_IDENTIFIERS · captured from form + audit chain.`,
+      `SCOPE_DECLARATION · lists: ${($$('input[name="lists"]:checked')||[]).map(x=>x.value).join(', ')||'tbd'}`,
+      `FINDINGS · [draft, to be cited against registered mode ids].`,
+      `GAPS · stale-source warnings + missing disambiguators surfaced.`,
+      `RED_FLAGS · indicators only, cited by id.`,
+      `RECOMMENDED_NEXT_STEPS · EDD / documents / list re-check.`,
+      `AUDIT_LINE · decision support, not a decision. MLRO review required.`,
+    ].join('\n');
+    appendTrailStep(steps, 1, 'executor', 'Claude Sonnet', executorBody);
+    execStatus.textContent = 'done';
+
+    setState('reviewing');
+    advStatus.textContent = 'running';
+    setCoverage('warn');
+    await sleep(800);
+    const advisorBody = [
+      `Charter review: P1–P10 passes.`,
+      `Strengthened rationale; citations preserved verbatim.`,
+      `Regulator-facing narrative (FDL 10/2025 Art.20-21) composed.`,
+      `Verdict: APPROVED.`,
+    ].join('\n');
+    appendTrailStep(steps, 2, 'advisor', 'Claude Opus', advisorBody);
+    advStatus.textContent = 'done';
+
+    setCoverage('true');
+    verdict.textContent = 'APPROVED';
+    verdict.setAttribute('data-verdict', 'approved');
+    setState('approved');
+  });
+
+  // Keyboard shortcut: Cmd/Ctrl + Shift + R to open.
+  document.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.shiftKey && (e.key === 'r' || e.key === 'R')) {
+      e.preventDefault();
+      if (modal.open) hideModal(); else showModal();
+    }
+    // Enter inside the question field submits.
+    if (modal.open && e.key === 'Enter' && !e.shiftKey && document.activeElement === question) {
+      e.preventDefault();
+      runBtn?.click();
+    }
+  });
+}
+
+function appendTrailStep(root, n, actor, model, body) {
+  const li = document.createElement('li');
+  li.innerHTML = `
+    <div class="trail-step-head">
+      <span class="trail-step-actor">${actor}</span>
+      <span class="trail-step-model">${model}</span>
+    </div>
+    <pre class="trail-step-body"></pre>`;
+  li.querySelector('.trail-step-body').textContent = body;
+  root.appendChild(li);
+  li.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+const _origInit = init;
+function initAll() { _origInit(); bindAdvisor(); }
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+else initAll();

@@ -83,6 +83,84 @@
           <button type="button" data-mode="daily_monitoring" aria-pressed="false">Daily monitoring</button>
         </div>
 
+        <aside class="advisor-card" role="region" aria-labelledby="advisor-title" data-advisor-state="idle">
+          <div class="advisor-aurora" aria-hidden="true"></div>
+          <div class="advisor-card-body">
+            <div class="advisor-title-row">
+              <span class="advisor-dot" aria-hidden="true"></span>
+              <p id="advisor-title" class="advisor-title">DEEP REASONING <span class="sep">·</span> MLRO ADVISOR</p>
+              <span class="advisor-state mono" id="advisor-state">READY</span>
+            </div>
+            <p class="advisor-sub">
+              <span class="pill pill-sonnet"><span class="pill-dot" aria-hidden="true"></span>Sonnet executor</span>
+              <span class="pill pill-opus"><span class="pill-dot" aria-hidden="true"></span>Opus advisor</span>
+              <span class="sep">·</span>
+              <span class="advisor-anchor mono">FDL Art.20-21 reasoning trail</span>
+            </p>
+            <div class="advisor-coverage" aria-label="Charter coverage — P1 through P10">
+              <span class="coverage-label mono">CHARTER</span>
+              <ol class="coverage-dots" id="advisor-coverage">
+                <li data-p="P1" title="P1 — No unverified sanctions assertions"></li>
+                <li data-p="P2" title="P2 — No fabricated adverse media"></li>
+                <li data-p="P3" title="P3 — No legal conclusions"></li>
+                <li data-p="P4" title="P4 — No tipping-off"></li>
+                <li data-p="P5" title="P5 — No allegation upgrade"></li>
+                <li data-p="P6" title="P6 — No entity merge on conflict"></li>
+                <li data-p="P7" title="P7 — Scope declaration required"></li>
+                <li data-p="P8" title="P8 — No training-data-as-source"></li>
+                <li data-p="P9" title="P9 — No opaque scoring"></li>
+                <li data-p="P10" title="P10 — No proceed on insufficient info"></li>
+              </ol>
+            </div>
+          </div>
+          <div class="advisor-actions">
+            <span class="advisor-hint mono" aria-hidden="true">⌘⇧R</span>
+            <button type="button" id="advisor-open" class="advisor-open">Open <span class="arrow" aria-hidden="true">↗</span></button>
+          </div>
+        </aside>
+
+        <dialog id="advisor-modal" class="advisor-modal" aria-labelledby="advisor-modal-title">
+          <form method="dialog" class="advisor-modal-form">
+            <header class="advisor-modal-head">
+              <div class="advisor-modal-head-left">
+                <h3 id="advisor-modal-title">Deep Reasoning <span class="sep">·</span> MLRO Advisor</h3>
+                <p class="advisor-modal-sub">Two-model pipeline <span class="sep">·</span> charter-gated <span class="sep">·</span> trail persisted per FDL 10/2025 Art.20-21</p>
+              </div>
+              <button type="button" id="advisor-close" aria-label="Close" class="advisor-close">×</button>
+            </header>
+
+            <div class="advisor-pipeline" aria-label="Pipeline">
+              <div class="pipe-node" data-stage="executor">
+                <span class="pipe-badge pill-sonnet"><span class="pill-dot" aria-hidden="true"></span>Sonnet · executor</span>
+                <p class="pipe-caption">Draft reasoning chain across faculties, modes, doctrines, red-flags. Proposes next-steps only — no disposition.</p>
+                <span class="pipe-status mono" id="pipe-status-executor">idle</span>
+              </div>
+              <div class="pipe-arrow" aria-hidden="true"></div>
+              <div class="pipe-node" data-stage="advisor">
+                <span class="pipe-badge pill-opus"><span class="pill-dot" aria-hidden="true"></span>Opus · advisor</span>
+                <p class="pipe-caption">Charter review P1–P10. Strengthens rationale. Produces regulator-facing narrative. Returns approved / revise / blocked.</p>
+                <span class="pipe-status mono" id="pipe-status-advisor">idle</span>
+              </div>
+            </div>
+
+            <label for="advisor-question">Question for the advisor</label>
+            <textarea id="advisor-question" rows="4" placeholder="e.g. Does the subject's profile warrant heightened monitoring under FDL 10/2025 Art.20-21? Cite modes + doctrines."></textarea>
+
+            <div class="advisor-modal-actions">
+              <button type="button" class="btn btn-ghost" id="advisor-cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="advisor-run">Run advisor <span class="btn-kbd">⏎</span></button>
+            </div>
+
+            <section id="advisor-trail" class="advisor-trail" hidden aria-label="Reasoning trail">
+              <header class="trail-head">
+                <span class="mono">REASONING TRAIL</span>
+                <span class="trail-verdict mono" id="trail-verdict">—</span>
+              </header>
+              <ol class="trail-steps" id="trail-steps"></ol>
+            </section>
+          </form>
+        </dialog>
+
         <form id="form" novalidate>
           <!-- 01 Reporting entity -->
           <fieldset id="sec-entity" class="sec" data-sec-id="sec-entity">
