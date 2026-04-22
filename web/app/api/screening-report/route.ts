@@ -4,10 +4,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Luisa's Asana project — "01 · Screening - Sanctions & Adverse Media".
-// Hard-coded because the user pinned that specific board as the reports
-// destination. If this needs to be configurable later, promote to env.
-const ASANA_PROJECT_GID = "1214148660020527";
-const ASANA_WORKSPACE_GID = "1213645083721316";
+// Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID env vars.
+const DEFAULT_PROJECT_GID = "1214148660020527";
+const DEFAULT_WORKSPACE_GID = "1213645083721316";
 
 interface ReportHit {
   listId: string;
@@ -138,8 +137,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         data: {
           name,
           notes,
-          projects: [ASANA_PROJECT_GID],
-          workspace: ASANA_WORKSPACE_GID,
+          projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
+          workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
         },
       }),
     });
