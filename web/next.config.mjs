@@ -14,9 +14,16 @@ const nextConfig = {
   // and every route 502s at cold-start with a MODULE_NOT_FOUND error.
   // Lifting the tracing root one level up + explicitly including dist/
   // guarantees the compiled brain ships with every function.
-  outputFileTracingRoot: path.join(__dirname, ".."),
-  outputFileTracingIncludes: {
-    "/api/**/*": ["../dist/**/*.js"],
+  //
+  // Next.js 14 still keeps these knobs under `experimental`; at top-level
+  // they're silently ignored (the build emits "Unrecognized key(s) in
+  // object: 'outputFileTracingRoot', 'outputFileTracingIncludes'" and the
+  // tracing override never takes effect). Promoted to top-level in Next 15.
+  experimental: {
+    outputFileTracingRoot: path.join(__dirname, ".."),
+    outputFileTracingIncludes: {
+      "/api/**/*": ["../dist/**/*.js"],
+    },
   },
 };
 
