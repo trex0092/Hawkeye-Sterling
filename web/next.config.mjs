@@ -22,7 +22,12 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: path.join(__dirname, ".."),
     outputFileTracingIncludes: {
+      // Include compiled brain for all API routes.
       "/api/**/*": ["../dist/**/*.js"],
+      // styled-jsx is dynamically required by next/dist/server/require-hook.js
+      // via a string literal, so the static file tracer never detects it.
+      // Explicitly include it for every route so it lands in the Lambda bundle.
+      "/**": ["./node_modules/styled-jsx/**/*"],
     },
   },
 };

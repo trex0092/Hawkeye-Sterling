@@ -1,174 +1,101 @@
-// Hawkeye Sterling — tiered rate limiting.
+// Hawkeye Sterling — per-API-key rate limiter.
 //
-// Token bucket for per-minute burst protection + monthly counter for quota.
-// In-memory default; swap via setRateLimitStore for production backends
-// (Redis, Upstash). Emits the canonical X-RateLimit-* headers used by every
-// modern REST API so clients can self-throttle.
-//
-// Tiers (requests per minute / requests per month):
-//   free        60      1,000
-//   growth     600     50,000
-//   scale    6,000    500,000
-//   enterprise ∞          ∞   (or overridden by ApiKeyRecord.monthlyQuota)
+// Fixed-window counters in Netlify Blobs. Two windows per key:
+//   second-resolution cap (burst)
+//   minute-resolution cap (sustained)
+// Limits come from the tier definition so commercial tiers are published
+// in one place.
 
-import type { ApiKeyRecord, ApiTier } from "./api-keys.js";
+import { getJson, setJson } from "./store";
+import { tierFor, type TierDefinition } from "@/lib/data/tiers";
+
+interface Window {
+  startMs: number;
+  count: number;
+}
+
+interface LimitState {
+  second: Window;
+  minute: Window;
+}
+
+const PREFIX = "ratelimit/";
 
 export interface RateLimitResult {
   allowed: boolean;
-  limitPerMinute: number;
-  remainingPerMinute: number;
-  resetAtSec: number;            // unix seconds when the minute bucket refills
-  monthlyLimit: number;
-  monthlyRemaining: number;
-  monthlyResetAtSec: number;     // unix seconds at start of next month
-  retryAfterSec?: number;        // present when denied
+  retryAfterSec: number;
+  remainingSecond: number;
+  remainingMinute: number;
+  tier: TierDefinition;
 }
 
-const TIER_PER_MINUTE: Record<ApiTier, number> = {
-  free: 60,
-  growth: 600,
-  scale: 6_000,
-  enterprise: Number.POSITIVE_INFINITY,
-};
-
-interface Bucket {
-  tokens: number;
-  lastRefill: number;            // ms timestamp
-  monthly: { count: number; period: string };
+function bucketStart(now: number, widthMs: number): number {
+  return Math.floor(now / widthMs) * widthMs;
 }
 
-interface RateLimitStore {
-  get(tenantId: string): Bucket | undefined;
-  set(tenantId: string, bucket: Bucket): void;
-}
+export async function consumeRateLimit(
+  keyId: string,
+  tierId: string,
+): Promise<RateLimitResult> {
+  const tier = tierFor(tierId);
+  const now = Date.now();
+  const storageKey = `${PREFIX}${keyId}`;
+  const prior = (await getJson<LimitState>(storageKey)) ?? {
+    second: { startMs: bucketStart(now, 1_000), count: 0 },
+    minute: { startMs: bucketStart(now, 60_000), count: 0 },
+  };
 
-class InMemoryBucketStore implements RateLimitStore {
-  private readonly buckets = new Map<string, Bucket>();
-  get(tenantId: string): Bucket | undefined {
-    return this.buckets.get(tenantId);
+  const secondStart = bucketStart(now, 1_000);
+  const minuteStart = bucketStart(now, 60_000);
+  if (prior.second.startMs !== secondStart) {
+    prior.second = { startMs: secondStart, count: 0 };
   }
-  set(tenantId: string, bucket: Bucket): void {
-    this.buckets.set(tenantId, bucket);
-  }
-}
-
-let STORE: RateLimitStore = new InMemoryBucketStore();
-
-export function setRateLimitStore(store: RateLimitStore): void {
-  STORE = store;
-}
-
-/** Test-only — reset the in-memory store. */
-export function __resetRateLimitStore(): void {
-  STORE = new InMemoryBucketStore();
-}
-
-function periodKey(d: Date): string {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-function startOfNextMonthSec(now: Date): number {
-  const next = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0),
-  );
-  return Math.floor(next.getTime() / 1000);
-}
-
-export function checkRateLimit(
-  record: ApiKeyRecord,
-  now: Date = new Date(),
-): RateLimitResult {
-  const perMinute = TIER_PER_MINUTE[record.tier];
-  const monthlyLimit = record.monthlyQuota;
-  const nowMs = now.getTime();
-  const period = periodKey(now);
-
-  let bucket = STORE.get(record.tenantId);
-  if (!bucket) {
-    bucket = {
-      tokens: Number.isFinite(perMinute) ? perMinute : Number.POSITIVE_INFINITY,
-      lastRefill: nowMs,
-      monthly: { count: 0, period },
-    };
+  if (prior.minute.startMs !== minuteStart) {
+    prior.minute = { startMs: minuteStart, count: 0 };
   }
 
-  // Refill token bucket — full refill every 60s, linear interpolation between.
-  if (Number.isFinite(perMinute)) {
-    const elapsedMs = nowMs - bucket.lastRefill;
-    if (elapsedMs > 0) {
-      const refill = (elapsedMs / 60_000) * perMinute;
-      bucket.tokens = Math.min(perMinute, bucket.tokens + refill);
-      bucket.lastRefill = nowMs;
-    }
-  }
+  const nextSecond = prior.second.count + 1;
+  const nextMinute = prior.minute.count + 1;
 
-  // Reset monthly counter when the calendar month rolls over.
-  if (bucket.monthly.period !== period) {
-    bucket.monthly = { count: 0, period };
-  }
-
-  const resetAtSec = Math.floor(nowMs / 1000) + 60;
-  const monthlyResetAtSec = startOfNextMonthSec(now);
-
-  // Quota denial wins over burst denial, since quota is the enforcing constraint.
-  if (bucket.monthly.count >= monthlyLimit) {
-    STORE.set(record.tenantId, bucket);
+  if (nextSecond > tier.rateLimitPerSecond) {
     return {
       allowed: false,
-      limitPerMinute: Number.isFinite(perMinute) ? perMinute : 0,
-      remainingPerMinute: Math.floor(bucket.tokens),
-      resetAtSec,
-      monthlyLimit,
-      monthlyRemaining: 0,
-      monthlyResetAtSec,
-      retryAfterSec: monthlyResetAtSec - Math.floor(nowMs / 1000),
+      retryAfterSec: 1,
+      remainingSecond: 0,
+      remainingMinute: Math.max(0, tier.rateLimitPerMinute - prior.minute.count),
+      tier,
     };
   }
-
-  if (Number.isFinite(perMinute) && bucket.tokens < 1) {
-    const secondsToOneToken = Math.ceil((1 - bucket.tokens) * (60 / perMinute));
-    STORE.set(record.tenantId, bucket);
+  if (nextMinute > tier.rateLimitPerMinute) {
     return {
       allowed: false,
-      limitPerMinute: perMinute,
-      remainingPerMinute: 0,
-      resetAtSec,
-      monthlyLimit,
-      monthlyRemaining: monthlyLimit - bucket.monthly.count,
-      monthlyResetAtSec,
-      retryAfterSec: Math.max(1, secondsToOneToken),
+      retryAfterSec: Math.max(1, Math.ceil((minuteStart + 60_000 - now) / 1_000)),
+      remainingSecond: Math.max(0, tier.rateLimitPerSecond - prior.second.count),
+      remainingMinute: 0,
+      tier,
     };
   }
 
-  // Charge the request.
-  if (Number.isFinite(perMinute)) bucket.tokens -= 1;
-  bucket.monthly.count += 1;
-  STORE.set(record.tenantId, bucket);
+  prior.second.count = nextSecond;
+  prior.minute.count = nextMinute;
+  await setJson(storageKey, prior);
 
   return {
     allowed: true,
-    limitPerMinute: Number.isFinite(perMinute) ? perMinute : 0,
-    remainingPerMinute: Number.isFinite(perMinute) ? Math.floor(bucket.tokens) : 0,
-    resetAtSec,
-    monthlyLimit,
-    monthlyRemaining:
-      Number.isFinite(monthlyLimit) ? monthlyLimit - bucket.monthly.count : 0,
-    monthlyResetAtSec,
+    retryAfterSec: 0,
+    remainingSecond: Math.max(0, tier.rateLimitPerSecond - nextSecond),
+    remainingMinute: Math.max(0, tier.rateLimitPerMinute - nextMinute),
+    tier,
   };
 }
 
-/** Build the X-RateLimit-* headers for a response. */
 export function rateLimitHeaders(r: RateLimitResult): Record<string, string> {
-  const h: Record<string, string> = {
-    "X-RateLimit-Limit": String(r.limitPerMinute),
-    "X-RateLimit-Remaining": String(r.remainingPerMinute),
-    "X-RateLimit-Reset": String(r.resetAtSec),
-    "X-RateLimit-Monthly-Limit": String(r.monthlyLimit),
-    "X-RateLimit-Monthly-Remaining": String(r.monthlyRemaining),
-    "X-RateLimit-Monthly-Reset": String(r.monthlyResetAtSec),
+  return {
+    "x-ratelimit-tier": r.tier.id,
+    "x-ratelimit-limit-minute": String(r.tier.rateLimitPerMinute),
+    "x-ratelimit-remaining-minute": String(r.remainingMinute),
+    "x-ratelimit-limit-second": String(r.tier.rateLimitPerSecond),
+    "x-ratelimit-remaining-second": String(r.remainingSecond),
+    ...(r.allowed ? {} : { "retry-after": String(r.retryAfterSec) }),
   };
-  if (r.retryAfterSec !== undefined) {
-    h["Retry-After"] = String(r.retryAfterSec);
-  }
-  return h;
 }

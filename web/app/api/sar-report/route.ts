@@ -6,9 +6,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Luisa's SAR/STR board — "05 · STR/SAR/CTR/PMR GoAML Filings".
-// Overridable via ASANA_SAR_PROJECT_GID.
+// Overridable via ASANA_SAR_PROJECT_GID / ASANA_ASSIGNEE_GID env vars.
 const DEFAULT_SAR_PROJECT_GID = "1214148631336502";
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
+const DEFAULT_WORKSPACE_GID   = "1213645083721316";
+const DEFAULT_ASSIGNEE_GID    = "1213645083721304"; // Luisa Fernanda — primary MLRO
 
 type FilingType =
   | "STR"
@@ -187,25 +188,42 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
   );
   lines.push("Source: Hawkeye Sterling — https://hawkeye-sterling.netlify.app");
 
-  const taskRes = await fetch("https://app.asana.com/api/1.0/tasks", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      data: {
-        name,
-        notes: lines.join("\n"),
-        projects: [projectGid],
-        workspace: workspaceGid,
+  // Wrap the Asana call in try-catch so a network failure returns a clean
+  // JSON error instead of letting Next.js surface an unformatted 500.
+  let taskRes: Response;
+  let asanaPayload: {
+    data?: { gid?: string; permalink_url?: string };
+    errors?: { message?: string }[];
+  } | null;
+  try {
+    taskRes = await fetch("https://app.asana.com/api/1.0/tasks", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        accept: "application/json",
       },
-    }),
-  });
-  const asanaPayload = (await taskRes.json().catch(() => null)) as
-    | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
-    | null;
+      body: JSON.stringify({
+        data: {
+          name,
+          notes: lines.join("\n"),
+          projects: [projectGid],
+          workspace: workspaceGid,
+          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+        },
+      }),
+    });
+    asanaPayload = (await taskRes.json().catch(() => null)) as typeof asanaPayload;
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "asana request failed",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      { status: 502 },
+    );
+  }
   if (!taskRes.ok || !asanaPayload?.data?.gid) {
     return NextResponse.json(
       {
@@ -238,7 +256,7 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     ...(asanaPayload.data.permalink_url
       ? { taskUrl: asanaPayload.data.permalink_url }
       : {}),
-  });
+  }, { status: 201 });
 }
 
 export const POST = withGuard(handleSarReport);

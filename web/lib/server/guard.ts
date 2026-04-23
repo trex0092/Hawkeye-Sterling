@@ -8,9 +8,9 @@
 //
 // Error envelope on denial: { code, message, traceId }.
 
-import { resolveApiKey } from "./api-keys.js";
+import { extractKey, validateAndConsume } from "./api-keys.js";
 import type { ApiKeyRecord } from "./api-keys.js";
-import { checkRateLimit, rateLimitHeaders } from "./rate-limit.js";
+import { consumeRateLimit, rateLimitHeaders } from "./rate-limit.js";
 
 export interface RequestContext {
   readonly apiKey: ApiKeyRecord;
@@ -35,6 +35,20 @@ function newTraceId(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Sanitize a caller-supplied trace ID so it can be safely echoed in headers
+// and log lines: strip everything outside printable ASCII 0x20-0x7E and cap length.
+function sanitizeTraceId(raw: string): string {
+  return raw.replace(/[^\x20-\x7E]/g, "").slice(0, 64);
+}
+
+// Whether the API key registry is populated. Used to decide whether to enforce
+// auth on routes: if no keys are configured the app is running in demo/dev mode
+// and we pass requests through without a key requirement.
+function apiKeysConfigured(): boolean {
+  const raw = process.env["HAWKEYE_API_KEYS"];
+  return Boolean(raw && raw.trim() && raw.trim() !== "[]");
+}
+
 function jsonError(
   status: number,
   envelope: ErrorEnvelope,
@@ -50,83 +64,97 @@ function jsonError(
   });
 }
 
-// Whether the API key registry is populated. Used to decide whether to enforce
-// auth on UI-facing routes: if no keys are configured the app is running in
-// demo/dev mode and we pass requests through without a key requirement.
-function apiKeysConfigured(): boolean {
-  const raw = process.env["HAWKEYE_API_KEYS"];
-  return Boolean(raw && raw.trim() && raw.trim() !== "[]");
-}
-
-// Sanitize a caller-supplied trace ID so it can be safely echoed in headers
-// and log lines: strip everything outside printable ASCII 0x20-0x7E and cap length.
-function sanitizeTraceId(raw: string): string {
-  return raw.replace(/[^\x20-\x7E]/g, "").slice(0, 64);
-}
-
 export function withGuard(handler: Handler): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     const rawTrace = req.headers.get("x-trace-id");
     const traceId = rawTrace ? sanitizeTraceId(rawTrace) || newTraceId() : newTraceId();
     const receivedAt = new Date();
 
-    // Authn — skip when no API keys are configured (demo / local-dev mode).
-    // In production, HAWKEYE_API_KEYS must be set or every call is rejected.
-    if (apiKeysConfigured()) {
-      const apiKey = resolveApiKey(req);
-      if (!apiKey) {
-        return jsonError(401, {
-          code: "unauthorized",
-          message:
-            "Missing or unknown API key. Supply X-Api-Key header or Authorization: Bearer.",
-          traceId,
-        });
+    // Demo mode: if no API keys are configured, skip auth entirely so the app
+    // works in dev/demo without key setup. In production HAWKEYE_API_KEYS must
+    // be set or every call is rejected.
+    const plaintext = extractKey(req);
+    if (!plaintext && !apiKeysConfigured()) {
+      const demoKey: ApiKeyRecord = {
+        id: "demo",
+        hash: "",
+        name: "demo",
+        tier: "free",
+        email: "demo@localhost",
+        createdAt: receivedAt.toISOString(),
+        usageMonthly: 0,
+        usageResetAt: receivedAt.toISOString(),
+      };
+      const ctx: RequestContext = {
+        apiKey: demoKey,
+        tenantId: "demo",
+        traceId,
+        receivedAt,
+      };
+      auditAccess({
+        traceId,
+        tenantId: "demo",
+        apiKeyPrefix: "demo",
+        method: req.method,
+        path: new URL(req.url).pathname,
+        at: receivedAt.toISOString(),
+      });
+      try {
+        const res = await handler(req, ctx);
+        const merged = new Headers(res.headers);
+        merged.set("x-trace-id", traceId);
+        return new Response(res.body, { status: res.status, statusText: res.statusText, headers: merged });
+      } catch (err) {
+        return jsonError(500, { code: "internal_error", message: err instanceof Error ? err.message : "handler failed", traceId });
       }
     }
 
-    // Re-resolve for the context — null in demo mode (no keys configured).
-    const apiKey = resolveApiKey(req);
+    // Authn + monthly quota
+    const check = await validateAndConsume(plaintext);
+    if (!check.ok) {
+      return jsonError(
+        check.reason === "quota_exceeded" ? 429 : 401,
+        {
+          code: check.reason ?? "unauthorized",
+          message:
+            check.reason === "quota_exceeded"
+              ? "Monthly quota exceeded."
+              : check.reason === "revoked"
+                ? "API key revoked."
+                : "Missing or unknown API key. Supply X-Api-Key header or Authorization: Bearer.",
+          traceId,
+        },
+      );
+    }
 
-    // Rate-limit — skip when no key is present (demo mode).
-    const rl = apiKey ? checkRateLimit(apiKey) : null;
-    const rlHeaders = rl ? rateLimitHeaders(rl) : {};
-    if (rl && !rl.allowed) {
+    const apiKey = check.record!;
+
+    // Per-second / per-minute rate-limit
+    const rl = await consumeRateLimit(apiKey.id, apiKey.tier);
+    const rlHeaders = rateLimitHeaders(rl);
+    if (!rl.allowed) {
       return jsonError(
         429,
         {
-          code:
-            rl.monthlyRemaining === 0
-              ? "quota_exceeded"
-              : "rate_limited",
-          message:
-            rl.monthlyRemaining === 0
-              ? `Monthly quota (${rl.monthlyLimit}) exhausted. Resets at ${rl.monthlyResetAtSec}.`
-              : `Rate limit ${rl.limitPerMinute}/min hit. Retry in ${rl.retryAfterSec}s.`,
+          code: "rate_limited",
+          message: `Rate limit exceeded. Retry in ${rl.retryAfterSec}s.`,
           traceId,
         },
         rlHeaders,
       );
     }
 
-    const demoKey: ApiKeyRecord = {
-      key: "demo",
-      tenantId: "demo",
-      tier: "free",
-      monthlyQuota: Number.POSITIVE_INFINITY,
-      issuedAt: receivedAt.toISOString(),
-    };
     const ctx: RequestContext = {
-      apiKey: apiKey ?? demoKey,
-      tenantId: apiKey?.tenantId ?? "demo",
+      apiKey,
+      tenantId: apiKey.email,
       traceId,
       receivedAt,
     };
 
-    // Audit
     auditAccess({
       traceId,
       tenantId: ctx.tenantId,
-      apiKeyPrefix: ctx.apiKey.key.slice(0, 10),
+      apiKeyPrefix: apiKey.id.slice(0, 10),
       method: req.method,
       path: new URL(req.url).pathname,
       at: receivedAt.toISOString(),
