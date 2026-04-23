@@ -245,9 +245,227 @@ export const smurfingDetect = async (ctx: BrainContext): Promise<Finding> => {
     { hypothesis: 'illicit_risk' });
 };
 
+// ── tbml_overlay (trade-based money laundering) ────────────────────────
+// Markers: evidence.trade[{invoicedUnitPrice, marketUnitPrice, quantity,
+// shipments}] — flags over/under-invoicing deltas ≥25% vs market.
+export const tbmlOverlayApply = async (ctx: BrainContext): Promise<Finding> => {
+  const trade = (ctx.evidence as Record<string, unknown>).trade;
+  if (!Array.isArray(trade) || trade.length === 0) {
+    return mk('tbml_overlay', 'sectoral_typology', ['intelligence'],
+      'inconclusive', 0, 0.4,
+      'TBML: evidence.trade[] not supplied.');
+  }
+  let outliers = 0;
+  let overInvoiceShare = 0;
+  let underInvoiceShare = 0;
+  const reasons: string[] = [];
+  for (const t of trade) {
+    if (!t || typeof t !== 'object') continue;
+    const rec = t as Record<string, unknown>;
+    const invoiced = typeof rec.invoicedUnitPrice === 'number' ? rec.invoicedUnitPrice : null;
+    const market = typeof rec.marketUnitPrice === 'number' ? rec.marketUnitPrice : null;
+    if (invoiced === null || market === null || market === 0) continue;
+    const delta = (invoiced - market) / market;
+    if (Math.abs(delta) >= 0.25) {
+      outliers++;
+      if (delta > 0) overInvoiceShare++; else underInvoiceShare++;
+      if (reasons.length < 3) reasons.push(`item Δ${(delta * 100).toFixed(0)}% (inv ${invoiced} vs mkt ${market})`);
+    }
+  }
+  const rate = outliers / Math.max(1, trade.length);
+  const verdict: Verdict = rate > 0.3 ? 'escalate' : rate > 0.1 ? 'flag' : 'clear';
+  const lrs: LikelihoodRatio[] = rate > 0.1
+    ? [{ evidenceId: 'tbml:price_deviation', positiveGivenHypothesis: Math.min(0.9, 0.5 + rate), positiveGivenNot: 0.1 }]
+    : [];
+  return mk('tbml_overlay', 'sectoral_typology', ['intelligence'],
+    verdict, Math.min(1, rate * 2), 0.85,
+    `TBML overlay: ${outliers}/${trade.length} line items deviate ≥25% from market price (over-invoice ${overInvoiceShare}, under-invoice ${underInvoiceShare}). ${reasons.join('; ')}.`,
+    { hypothesis: 'illicit_risk', likelihoodRatios: lrs });
+};
+
+// ── real_estate_cash ───────────────────────────────────────────────────
+// Marker: evidence.realEstate[{purchasePrice, cashPortionPct, shellBuyer?,
+// jurisdictionTier?, heldYearsBeforeFlip?}] — flags cash-heavy, shell-buyer
+// or rapid-flip UAE real estate red flags (UAE MOJ / MOEC typology).
+export const realEstateCashApply = async (ctx: BrainContext): Promise<Finding> => {
+  const deals = (ctx.evidence as Record<string, unknown>).realEstate;
+  if (!Array.isArray(deals) || deals.length === 0) {
+    return mk('real_estate_cash', 'sectoral_typology', ['intelligence'],
+      'inconclusive', 0, 0.4,
+      'Real-estate cash: evidence.realEstate[] not supplied.');
+  }
+  let cashHeavy = 0;
+  let shellBuyers = 0;
+  let rapidFlips = 0;
+  for (const d of deals) {
+    if (!d || typeof d !== 'object') continue;
+    const r = d as Record<string, unknown>;
+    if (typeof r.cashPortionPct === 'number' && r.cashPortionPct >= 0.5) cashHeavy++;
+    if (r.shellBuyer === true) shellBuyers++;
+    if (typeof r.heldYearsBeforeFlip === 'number' && r.heldYearsBeforeFlip < 1) rapidFlips++;
+  }
+  const total = deals.length;
+  const severity = Math.min(1, (cashHeavy + shellBuyers + rapidFlips) / (total * 2));
+  const verdict: Verdict = severity > 0.5 ? 'escalate' : severity > 0.2 ? 'flag' : 'clear';
+  return mk('real_estate_cash', 'sectoral_typology', ['intelligence'],
+    verdict, severity, 0.8,
+    `Real-estate cash typology: ${total} deal(s); cash-heavy (≥50%) ${cashHeavy}, shell-buyer ${shellBuyers}, <1-year flips ${rapidFlips}. ${severity > 0.5 ? 'Multiple red flags concurrent.' : severity > 0 ? 'Some red flags present.' : 'No red flags observed.'}`,
+    { hypothesis: 'illicit_risk' });
+};
+
+// ── invoice_fraud ──────────────────────────────────────────────────────
+// Markers: duplicate invoice numbers across counterparties, invoiced amount
+// not matching goods-received amount, invoice issued from a shell/redirected
+// address. Consumes evidence.invoices[].
+export const invoiceFraudApply = async (ctx: BrainContext): Promise<Finding> => {
+  const invoices = (ctx.evidence as Record<string, unknown>).invoices;
+  if (!Array.isArray(invoices) || invoices.length < 3) {
+    return mk('invoice_fraud', 'sectoral_typology', ['smartness'],
+      'inconclusive', 0, 0.4,
+      `Invoice fraud: need ≥3 invoices; have ${Array.isArray(invoices) ? invoices.length : 0}.`);
+  }
+  const numbers = new Map<string, number>();
+  let amountMismatches = 0;
+  let shellOrigin = 0;
+  for (const inv of invoices) {
+    if (!inv || typeof inv !== 'object') continue;
+    const r = inv as Record<string, unknown>;
+    const n = typeof r.invoiceNumber === 'string' ? r.invoiceNumber : '';
+    if (n) numbers.set(n, (numbers.get(n) ?? 0) + 1);
+    const invoiced = typeof r.invoicedAmount === 'number' ? r.invoicedAmount : null;
+    const received = typeof r.receivedAmount === 'number' ? r.receivedAmount : null;
+    if (invoiced !== null && received !== null && received > 0) {
+      const diff = Math.abs(invoiced - received) / received;
+      if (diff > 0.1) amountMismatches++;
+    }
+    if (r.issuerShell === true) shellOrigin++;
+  }
+  const duplicates = [...numbers.values()].filter((c) => c > 1).length;
+  const total = invoices.length;
+  const severity = Math.min(1, (duplicates * 0.5 + amountMismatches + shellOrigin) / Math.max(1, total));
+  const verdict: Verdict = severity > 0.4 ? 'escalate' : severity > 0.15 ? 'flag' : 'clear';
+  return mk('invoice_fraud', 'sectoral_typology', ['smartness'],
+    verdict, severity, 0.85,
+    `Invoice fraud: ${total} invoices; ${duplicates} duplicate number(s), ${amountMismatches} amount mismatch(es), ${shellOrigin} issued by shell/redirected entities.`,
+    { hypothesis: 'illicit_risk' });
+};
+
+// ── phoenix_company (nominee-director / rapid reincorporation) ─────────
+// Markers: evidence.corporateHistory[{entityId, incorporatedAt,
+// dissolvedAt?, directors[]}] — flags entities that dissolve and re-emerge
+// under new names with the same directors inside <2 years.
+export const phoenixCompanyApply = async (ctx: BrainContext): Promise<Finding> => {
+  const hist = (ctx.evidence as Record<string, unknown>).corporateHistory;
+  if (!Array.isArray(hist) || hist.length < 2) {
+    return mk('phoenix_company', 'sectoral_typology', ['smartness'],
+      'inconclusive', 0, 0.4,
+      `Phoenix: need ≥2 corporate-history records; have ${Array.isArray(hist) ? hist.length : 0}.`);
+  }
+  interface Rec { incorporated: number; dissolved: number | null; directors: Set<string>; id: string; }
+  const parsed: Rec[] = [];
+  for (const e of hist) {
+    if (!e || typeof e !== 'object') continue;
+    const r = e as Record<string, unknown>;
+    const id = typeof r.entityId === 'string' ? r.entityId : '';
+    const inc = typeof r.incorporatedAt === 'string' ? Date.parse(r.incorporatedAt) : Number.NaN;
+    const dis = typeof r.dissolvedAt === 'string' ? Date.parse(r.dissolvedAt) : null;
+    const dirs = Array.isArray(r.directors) ? (r.directors as unknown[]).filter((x): x is string => typeof x === 'string') : [];
+    if (!id || !Number.isFinite(inc)) continue;
+    parsed.push({ id, incorporated: inc, dissolved: dis, directors: new Set(dirs) });
+  }
+  parsed.sort((a, b) => a.incorporated - b.incorporated);
+  let phoenixHits = 0;
+  const hitPairs: string[] = [];
+  for (let i = 0; i < parsed.length; i++) {
+    const a = parsed[i]!;
+    if (a.dissolved === null) continue;
+    for (let j = i + 1; j < parsed.length; j++) {
+      const b = parsed[j]!;
+      if (b.incorporated < a.dissolved) continue;
+      const gapYears = (b.incorporated - a.dissolved) / (365 * 86_400_000);
+      if (gapYears > 2) continue;
+      const overlap = [...a.directors].filter((d) => b.directors.has(d)).length;
+      if (overlap > 0 && a.directors.size > 0) {
+        phoenixHits++;
+        if (hitPairs.length < 3) hitPairs.push(`${a.id}→${b.id} (${overlap} shared directors, gap ${gapYears.toFixed(1)}y)`);
+      }
+    }
+  }
+  const verdict: Verdict = phoenixHits >= 2 ? 'escalate' : phoenixHits === 1 ? 'flag' : 'clear';
+  return mk('phoenix_company', 'sectoral_typology', ['smartness'],
+    verdict, Math.min(1, phoenixHits * 0.4), 0.85,
+    `Phoenix: ${phoenixHits} phoenix-pattern pair(s) detected. ${hitPairs.join('; ')}.`,
+    { hypothesis: 'illicit_risk' });
+};
+
+// ── advance_fee (419-style) ────────────────────────────────────────────
+// Markers: evidence.advanceFeeSignals = { upfrontPaymentPct?: number,
+// counterpartyCountryTier?: 'high'|'very_high', claimedPayout?: number,
+// unsolicited: boolean }.
+export const advanceFeeApply = async (ctx: BrainContext): Promise<Finding> => {
+  const s = (ctx.evidence as Record<string, unknown>).advanceFeeSignals;
+  if (!s || typeof s !== 'object') {
+    return mk('advance_fee', 'sectoral_typology', ['smartness'],
+      'inconclusive', 0, 0.4,
+      'Advance-fee: evidence.advanceFeeSignals not supplied.');
+  }
+  const r = s as Record<string, unknown>;
+  const upfront = typeof r.upfrontPaymentPct === 'number' ? r.upfrontPaymentPct : null;
+  const tier = typeof r.counterpartyCountryTier === 'string' ? r.counterpartyCountryTier : '';
+  const payout = typeof r.claimedPayout === 'number' ? r.claimedPayout : null;
+  const unsolicited = r.unsolicited === true;
+  let score = 0;
+  const hits: string[] = [];
+  if (upfront !== null && upfront > 0.1) { score += 0.3; hits.push(`${(upfront * 100).toFixed(0)}% upfront fee`); }
+  if (tier === 'high' || tier === 'very_high') { score += 0.25; hits.push(`counterparty in ${tier} country tier`); }
+  if (payout !== null && payout > 0 && upfront !== null && payout / Math.max(1, upfront) > 50) {
+    score += 0.3; hits.push(`implausible payout-to-fee ratio ×${Math.round(payout / Math.max(1, upfront))}`);
+  }
+  if (unsolicited) { score += 0.15; hits.push('unsolicited contact'); }
+  const verdict: Verdict = score >= 0.7 ? 'escalate' : score >= 0.3 ? 'flag' : 'clear';
+  return mk('advance_fee', 'sectoral_typology', ['smartness'],
+    verdict, Math.min(1, score), 0.8,
+    `Advance-fee: ${hits.length === 0 ? 'no classic signals present.' : `${hits.length} classic signal(s): ${hits.join('; ')}.`}`,
+    { hypothesis: 'illicit_risk' });
+};
+
+// ── sanctions_maritime_stss (ship-to-ship sanctions evasion) ───────────
+// Markers: evidence.maritime = { aisDarkHours?: number, flagChanges12m?: number,
+// nameChanges12m?: number, stsNearSanctionedPort?: boolean }.
+export const maritimeStssApply = async (ctx: BrainContext): Promise<Finding> => {
+  const m = (ctx.evidence as Record<string, unknown>).maritime;
+  if (!m || typeof m !== 'object') {
+    return mk('sanctions_maritime_stss', 'sectoral_typology', ['intelligence'],
+      'inconclusive', 0, 0.4,
+      'Maritime STS: evidence.maritime not supplied.');
+  }
+  const r = m as Record<string, unknown>;
+  const dark = typeof r.aisDarkHours === 'number' ? r.aisDarkHours : 0;
+  const flagChanges = typeof r.flagChanges12m === 'number' ? r.flagChanges12m : 0;
+  const nameChanges = typeof r.nameChanges12m === 'number' ? r.nameChanges12m : 0;
+  const stsNear = r.stsNearSanctionedPort === true;
+  let score = 0;
+  const hits: string[] = [];
+  if (dark > 24) { score += 0.25; hits.push(`${dark}h AIS dark`); }
+  if (flagChanges >= 2) { score += 0.25; hits.push(`${flagChanges} flag changes / 12m`); }
+  if (nameChanges >= 2) { score += 0.2; hits.push(`${nameChanges} name changes / 12m`); }
+  if (stsNear) { score += 0.35; hits.push('STS near sanctioned port'); }
+  const verdict: Verdict = score >= 0.6 ? 'escalate' : score >= 0.3 ? 'flag' : 'clear';
+  return mk('sanctions_maritime_stss', 'sectoral_typology', ['intelligence'],
+    verdict, Math.min(1, score), 0.85,
+    `Maritime STS evasion: ${hits.length === 0 ? 'no signals.' : hits.join('; ')}.`,
+    { hypothesis: 'sanctioned' });
+};
+
 export const TYPOLOGY_MODE_APPLIES = {
   insider_threat: insiderThreatApply,
   collusion_pattern: collusionPatternApply,
   ponzi_scheme: ponziSchemeApply,
   bec_fraud: becFraudApply,
+  tbml_overlay: tbmlOverlayApply,
+  real_estate_cash: realEstateCashApply,
+  invoice_fraud: invoiceFraudApply,
+  phoenix_company: phoenixCompanyApply,
+  advance_fee: advanceFeeApply,
+  sanctions_maritime_stss: maritimeStssApply,
 } as const;
