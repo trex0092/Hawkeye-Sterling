@@ -221,17 +221,9 @@ export function NewScreeningForm({
             <input
               value={form.group}
               onChange={(e) => patch({ group: e.target.value })}
-              placeholder="Choose or type a group"
-              list="hs-groups"
+              placeholder="Type a group"
               className={inputCls}
             />
-            <datalist id="hs-groups">
-              <option value="Correspondent banking" />
-              <option value="Trade finance" />
-              <option value="DPMS" />
-              <option value="Crypto" />
-              <option value="Retail" />
-            </datalist>
           </Field>
         </div>
 
