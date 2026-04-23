@@ -248,13 +248,13 @@ function BrainDashboard({
             ))}
           </Card>
           <Card title="Regulatory anchors" count={manifest.charter.regulatoryAnchors.length}>
-            {manifest.charter.regulatoryAnchors.slice(0, 6).map((a) => (
+            {manifest.charter.regulatoryAnchors.slice(0, 8).map((a) => (
               <Tag key={a} tone="violet">
                 {a}
               </Tag>
             ))}
           </Card>
-          <Card title="Authoritative lists" count={manifest.charter.authoritativeLists.length}>
+          <Card title="Main authoritative lists" count={manifest.charter.authoritativeLists.length}>
             {manifest.charter.authoritativeLists.slice(0, 8).map((a) => (
               <LineItem key={a} primary={a} />
             ))}
