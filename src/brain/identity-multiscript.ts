@@ -15,7 +15,7 @@
 // Goal: out-perform Refinitiv World-Check on Arabic-script false-negative rate
 // (where WC routinely misses Mohammed↔Muhammad↔محمد and Al-Hassan↔Hassan).
 
-import { matchEnsemble, type EnsembleMatch } from './matching.js';
+import { matchEnsemble, type MatchingMethod } from './matching.js';
 import { normaliseArabicRoman, variantsOf } from './translit.js';
 import { transliterateAny, cyrillicToLatin, chineseToPinyinSubset } from './translit-cyrillic-cjk.js';
 
@@ -336,7 +336,7 @@ export interface IdentityMatchResult {
   overallScore: number;       // 0..1
   bestName: string;           // the best-matching candidate form
   nameScore: number;          // 0..1 best ensemble score over all variants
-  nameMethod: EnsembleMatch['method'];
+  nameMethod: MatchingMethod;
   dobScore: number;           // 0..1 (0 if either DoB missing)
   nationalityMatch: boolean;
   strongIdHit: { kind: string; value: string } | null;
@@ -373,7 +373,7 @@ export function matchIdentities(a: IdentityMatchInput, b: IdentityMatchInput): I
   let bestScore = 0;
   let bestA = variantsA[0] ?? latinA;
   let bestB = variantsB[0] ?? latinB;
-  let bestMethod: EnsembleMatch['method'] = 'exact';
+  let bestMethod: MatchingMethod = 'exact';
   const cap = Math.min(variantsA.length, 40) * Math.min(variantsB.length, 40);
   let compared = 0;
   for (const va of variantsA.slice(0, 40)) {
@@ -381,7 +381,7 @@ export function matchIdentities(a: IdentityMatchInput, b: IdentityMatchInput): I
       compared++;
       if (compared > 1600) break;
       const r = matchEnsemble(va, vb);
-      if (r.score > bestScore) { bestScore = r.score; bestA = va; bestB = vb; bestMethod = r.method; }
+      if (r.best.score > bestScore) { bestScore = r.best.score; bestA = va; bestB = vb; bestMethod = r.best.method; }
       if (bestScore === 1) break;
     }
     if (bestScore === 1) break;
