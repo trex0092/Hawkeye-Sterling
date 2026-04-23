@@ -290,12 +290,12 @@ function BrainDashboard({
           {/* Top-line enhanced totals */}
           <Section title="Enhanced totals">
             <div className="bg-ink-0 text-white rounded-xl p-5 flex flex-wrap gap-8 items-end">
-              <Stat label="Catalogues (core)" value={enhanced.totals.catalogues} />
-              <Stat label="Extended catalogues" value={enhanced.totals.enhancedCatalogues} />
-              <Stat label="Taxonomy records" value={enhanced.totals.taxonomyRecords} />
-              <Stat label="Regulatory records" value={enhanced.totals.regulatoryRecords} />
-              <Stat label="Skills records" value={enhanced.totals.skillsRecords} />
-              <Stat label="Total records" value={enhanced.totals.totalRecords} />
+              <Stat label="Catalogues (core)" value={enhanced.totals?.catalogues} />
+              <Stat label="Extended catalogues" value={enhanced.totals?.enhancedCatalogues} />
+              <Stat label="Taxonomy records" value={enhanced.totals?.taxonomyRecords} />
+              <Stat label="Regulatory records" value={enhanced.totals?.regulatoryRecords} />
+              <Stat label="Skills records" value={enhanced.totals?.skillsRecords} />
+              <Stat label="Total records" value={enhanced.totals?.totalRecords} />
             </div>
           </Section>
 
@@ -304,45 +304,45 @@ function BrainDashboard({
             <div className="bg-white border border-hair-2 rounded-xl p-5">
               <BarChart
                 data={([
-                  { label: "Skills", value: enhanced.extended.expertise.skills ?? 0, tone: "brand" },
-                  { label: "Jurisdictions (full)", value: enhanced.extended.regulatory.jurisdictionsFull ?? 0, tone: "violet" },
-                  { label: "Reasoning modes", value: manifest.cognitiveCatalogue.reasoningModes.total ?? 0, tone: "brand" },
-                  { label: "Red flags (extended)", value: enhanced.extended.taxonomy.redFlagsExtended ?? 0, tone: "red" },
-                  { label: "Typologies", value: enhanced.extended.taxonomy.typologies ?? 0, tone: "red" },
-                  { label: "FATF recommendations", value: enhanced.extended.regulatory.fatfRecommendations ?? 0, tone: "violet" },
-                  { label: "Question templates", value: enhanced.extended.taxonomy.questionTemplates ?? 0, tone: "blue" },
-                  { label: "UAE free zones", value: enhanced.extended.regulatory.uaeFreeZones ?? 0, tone: "amber" },
-                  { label: "DPMS KPIs", value: enhanced.extended.regulatory.dpmsKpis ?? 0, tone: "amber" },
-                  { label: "Scenarios", value: enhanced.extended.taxonomy.scenarios ?? 0, tone: "blue" },
-                  { label: "Meta-cognition", value: enhanced.extended.taxonomy.metaCognition ?? 0, tone: "violet" },
-                  { label: "Sanction regimes", value: enhanced.extended.regulatory.sanctionRegimes ?? 0, tone: "red" },
-                  { label: "Risk appetite", value: enhanced.extended.regulatory.riskAppetite ?? 0, tone: "green" },
-                  { label: "CAHRA seed", value: enhanced.extended.regulatory.cahraSeed ?? 0, tone: "red" },
-                  { label: "Dispositions", value: enhanced.extended.regulatory.dispositions ?? 0, tone: "green" },
-                  { label: "Redlines", value: enhanced.extended.regulatory.redlines ?? 0, tone: "red" },
-                  { label: "Sector rubrics", value: enhanced.extended.taxonomy.sectorRubrics ?? 0, tone: "blue" },
-                  { label: "Cognitive amplifier", value: enhanced.extended.expertise.cognitiveAmplifier ?? 0, tone: "brand" },
-                  { label: "Adverse-media cats", value: enhanced.extended.taxonomy.adverseMediaCategories ?? 0, tone: "red" },
+                  { label: "Skills", value: enhanced.extended?.expertise?.skills ?? 0, tone: "brand" },
+                  { label: "Jurisdictions (full)", value: enhanced.extended?.regulatory?.jurisdictionsFull ?? 0, tone: "violet" },
+                  { label: "Reasoning modes", value: manifest.cognitiveCatalogue?.reasoningModes?.total ?? 0, tone: "brand" },
+                  { label: "Red flags (extended)", value: enhanced.extended?.taxonomy?.redFlagsExtended ?? 0, tone: "red" },
+                  { label: "Typologies", value: enhanced.extended?.taxonomy?.typologies ?? 0, tone: "red" },
+                  { label: "FATF recommendations", value: enhanced.extended?.regulatory?.fatfRecommendations ?? 0, tone: "violet" },
+                  { label: "Question templates", value: enhanced.extended?.taxonomy?.questionTemplates ?? 0, tone: "blue" },
+                  { label: "UAE free zones", value: enhanced.extended?.regulatory?.uaeFreeZones ?? 0, tone: "amber" },
+                  { label: "DPMS KPIs", value: enhanced.extended?.regulatory?.dpmsKpis ?? 0, tone: "amber" },
+                  { label: "Scenarios", value: enhanced.extended?.taxonomy?.scenarios ?? 0, tone: "blue" },
+                  { label: "Meta-cognition", value: enhanced.extended?.taxonomy?.metaCognition ?? 0, tone: "violet" },
+                  { label: "Sanction regimes", value: enhanced.extended?.regulatory?.sanctionRegimes ?? 0, tone: "red" },
+                  { label: "Risk appetite", value: enhanced.extended?.regulatory?.riskAppetite ?? 0, tone: "green" },
+                  { label: "CAHRA seed", value: enhanced.extended?.regulatory?.cahraSeed ?? 0, tone: "red" },
+                  { label: "Dispositions", value: enhanced.extended?.regulatory?.dispositions ?? 0, tone: "green" },
+                  { label: "Redlines", value: enhanced.extended?.regulatory?.redlines ?? 0, tone: "red" },
+                  { label: "Sector rubrics", value: enhanced.extended?.taxonomy?.sectorRubrics ?? 0, tone: "blue" },
+                  { label: "Cognitive amplifier", value: enhanced.extended?.expertise?.cognitiveAmplifier ?? 0, tone: "brand" },
+                  { label: "Adverse-media cats", value: enhanced.extended?.taxonomy?.adverseMediaCategories ?? 0, tone: "red" },
                 ] as const).filter((d) => d.value > 0).map((d) => ({...d}))}
               />
             </div>
           </Section>
 
           {/* Jurisdictions-by-region donut */}
-          {enhanced.crossReferences.jurisdictionsByRegion.length > 0 && (
+          {(enhanced.crossReferences?.jurisdictionsByRegion?.length ?? 0) > 0 && (
             <Section title="Jurisdictional coverage · by region">
               <div className="bg-white border border-hair-2 rounded-xl p-5 flex flex-wrap items-center justify-around gap-6">
                 <Donut
                   size={240}
                   stroke={30}
                   centerValue={String(
-                    enhanced.crossReferences.jurisdictionsByRegion.reduce(
+                    (enhanced.crossReferences?.jurisdictionsByRegion ?? []).reduce(
                       (a, b) => a + b.count,
                       0,
                     ),
                   )}
                   centerLabel="Jurisdictions"
-                  segments={enhanced.crossReferences.jurisdictionsByRegion.map((r, i) => ({
+                  segments={(enhanced.crossReferences?.jurisdictionsByRegion ?? []).map((r, i) => ({
                     label: r.region,
                     value: r.count,
                     tone: (
@@ -353,7 +353,7 @@ function BrainDashboard({
                 <div className="flex-1 min-w-[260px]">
                   <BarChart
                     compact
-                    data={enhanced.crossReferences.redFlagsByTypology.slice(0, 10).map((r) => ({
+                    data={(enhanced.crossReferences?.redFlagsByTypology ?? []).slice(0, 10).map((r) => ({
                       label: r.typology,
                       value: r.count,
                       tone: "red",
@@ -370,7 +370,7 @@ function BrainDashboard({
           {/* Extended catalogues — never surfaced before */}
           <Section title="Extended · Taxonomy">
             <Grid>
-              {Object.entries(enhanced.extended.taxonomy).map(([k, v]) => (
+              {Object.entries(enhanced.extended?.taxonomy ?? {}).map(([k, v]) => (
                 <Card key={k} title={humanize(k)} count={v} />
               ))}
             </Grid>
@@ -378,7 +378,7 @@ function BrainDashboard({
 
           <Section title="Extended · Regulatory">
             <Grid>
-              {Object.entries(enhanced.extended.regulatory).map(([k, v]) => (
+              {Object.entries(enhanced.extended?.regulatory ?? {}).map(([k, v]) => (
                 <Card key={k} title={humanize(k)} count={v} />
               ))}
             </Grid>
@@ -386,7 +386,7 @@ function BrainDashboard({
 
           <Section title="Extended · Expertise">
             <Grid>
-              {Object.entries(enhanced.extended.expertise).map(([k, v]) => (
+              {Object.entries(enhanced.extended?.expertise ?? {}).map(([k, v]) => (
                 <Card key={k} title={humanize(k)} count={v} />
               ))}
             </Grid>
@@ -397,20 +397,20 @@ function BrainDashboard({
             <Grid>
               <Card
                 title="Typologies"
-                count={enhanced.crossReferences.typologyCount}
+                count={(enhanced.crossReferences?.typologyCount ?? 0)}
               >
-                {enhanced.crossReferences.topTypologies.map((t) => (
+                {(enhanced.crossReferences?.topTypologies ?? []).map((t) => (
                   <LineItem key={t.id} primary={t.title} secondary={t.id} />
                 ))}
               </Card>
               <Card
                 title="Red flags by typology"
-                count={enhanced.crossReferences.redFlagsByTypology.reduce(
+                count={(enhanced.crossReferences?.redFlagsByTypology ?? []).reduce(
                   (a, b) => a + b.count,
                   0,
                 )}
               >
-                {enhanced.crossReferences.redFlagsByTypology
+                {(enhanced.crossReferences?.redFlagsByTypology ?? [])
                   .slice(0, 12)
                   .map((r) => (
                     <LineItem
@@ -422,12 +422,12 @@ function BrainDashboard({
               </Card>
               <Card
                 title="Jurisdictions by region"
-                count={enhanced.crossReferences.jurisdictionsByRegion.reduce(
+                count={(enhanced.crossReferences?.jurisdictionsByRegion ?? []).reduce(
                   (a, b) => a + b.count,
                   0,
                 )}
               >
-                {enhanced.crossReferences.jurisdictionsByRegion.map((j) => (
+                {(enhanced.crossReferences?.jurisdictionsByRegion ?? []).map((j) => (
                   <LineItem
                     key={j.region}
                     primary={j.region}
