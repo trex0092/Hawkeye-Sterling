@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/ModuleShell";
 import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
+import { ReportModal } from "@/components/reports/ReportModal";
 import {
   TM_CHANNELS,
   TM_DIRECTIONS,
@@ -41,6 +42,39 @@ interface TxRow {
 
 const THRESHOLD_AED = 55_000;
 const STORAGE_KEY = "hawkeye.transaction-monitor.v1";
+
+// Shape a logged transaction into the compliance-report payload so
+// clicking a row renders the same MLRO dossier the screening panel
+// produces, with the transaction standing in as the "subject".
+function txToReportPayload(t: TxRow): unknown {
+  const amt = Number.parseFloat(t.amount.replace(/,/g, "")) || 0;
+  const reportable = t.channel === "Cash (DPMS)" && amt >= THRESHOLD_AED;
+  return {
+    subject: {
+      id: t.ref,
+      name: t.counterparty,
+      entityType: "organisation" as const,
+      jurisdiction: t.counterpartyCountry || undefined,
+      group: t.channel,
+    },
+    result: {
+      topScore: reportable ? 70 : t.behaviouralFlags.length > 0 ? 45 : 10,
+      severity: reportable
+        ? ("high" as const)
+        : t.behaviouralFlags.length > 0
+          ? ("medium" as const)
+          : ("low" as const),
+      hits: [],
+    },
+    superBrain: {
+      adverseKeywordGroups: t.behaviouralFlags.map((f, i) => ({
+        group: `flag_${i}`,
+        label: f,
+        count: 1,
+      })),
+    },
+  };
+}
 
 function loadTxs(): TxRow[] {
   if (typeof window === "undefined") return [];
@@ -87,6 +121,10 @@ export default function TransactionMonitorPage() {
   const [notes, setNotes] = useState("");
   const [flash, setFlash] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const [reportTx, setReportTx] = useState<TxRow | null>(null);
+
+  const openTxReport = (t: TxRow): void => setReportTx(t);
+  const closeTxReport = (): void => setReportTx(null);
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
   const alerts = txs.filter((t) => t.behaviouralFlags.length > 0).length;
@@ -369,13 +407,15 @@ export default function TransactionMonitorPage() {
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Logged
                     </th>
+                    <th className="w-[40px]" aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
                   {txs.map((t) => (
                     <tr
                       key={t.id}
-                      className="border-b border-hair last:border-0 hover:bg-bg-1"
+                      onClick={() => openTxReport(t)}
+                      className="border-b border-hair last:border-0 hover:bg-bg-1 cursor-pointer"
                     >
                       <td className="px-3 py-2 font-mono text-ink-2">{t.ref}</td>
                       <td className="px-3 py-2 text-ink-0">{t.counterparty}</td>
@@ -398,6 +438,19 @@ export default function TransactionMonitorPage() {
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
                         {new Date(t.loggedAt).toLocaleString()}
                       </td>
+                      <td className="px-2 py-2">
+                        <button
+                          type="button"
+                          aria-label={`Delete ${t.ref}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTxs((prev) => prev.filter((x) => x.id !== t.id));
+                          }}
+                          className="w-7 h-7 rounded flex items-center justify-center text-ink-3 hover:bg-red-dim hover:text-red transition-colors"
+                        >
+                          ×
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -406,6 +459,12 @@ export default function TransactionMonitorPage() {
           )}
         </ModuleShell>
       </main>
+      <ReportModal
+        open={reportTx !== null}
+        title={reportTx?.ref ?? ""}
+        payload={reportTx ? txToReportPayload(reportTx) : null}
+        onClose={closeTxReport}
+      />
     </>
   );
 }

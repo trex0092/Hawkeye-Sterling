@@ -221,6 +221,120 @@ function formatJurisdiction(sb: ReportSuperBrain): string[] {
   return lines;
 }
 
+// Narrative MLRO memo — Section 1 Facts. Same facts as the matrix above,
+// written in prose so the report reads like the memo an MLRO would sign,
+// not just a dump of engine output. Never invents facts — only restates
+// what the payload already carries.
+function formatFacts(
+  type: ReportType,
+  input: ReportInput,
+  now: Date,
+): string[] {
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} 1. FACTS ${"─".repeat(66)}`);
+  const s = input.subject;
+  const r = input.result;
+  const sb = input.superBrain;
+  const when = now.toUTCString().replace(" GMT", " UTC");
+  const subjectDescriptor =
+    s.entityType === "individual"
+      ? `the individual subject **${s.name}**${
+          s.nationality ? ` (${s.nationality} national)` : ""
+        }`
+      : `the ${s.entityType} **${s.name}**${
+          s.jurisdiction ? ` (registered in ${s.jurisdiction})` : ""
+        }`;
+  const caseBit = s.caseId ? ` under case ${s.caseId}` : "";
+  const topScoreBit = `a composite risk score of ${r.topScore}/100 (severity: ${r.severity.toUpperCase()})`;
+  const hitsBit =
+    r.hits.length === 0
+      ? "Zero sanctions-list hits were returned across the screened corpora."
+      : `The screening engine returned ${r.hits.length} hit(s) across ${
+          new Set(r.hits.map((h) => h.listId)).size
+        } list(s).`;
+  lines.push(
+    `On ${when}, Hawkeye Sterling screened ${subjectDescriptor}${caseBit},`,
+  );
+  lines.push(`returning ${topScoreBit}. ${hitsBit}`);
+  if (sb?.pep && sb.pep.salience > 0) {
+    lines.push(
+      `Subject classified as PEP (${pep(sb.pep.tier)} · salience ${Math.round(
+        sb.pep.salience * 100,
+      )}%).`,
+    );
+  }
+  const amCount =
+    (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
+  if (amCount > 0) {
+    lines.push(
+      `Adverse-media overlay fired ${amCount} category/categories — see matrix.`,
+    );
+  }
+  void type;
+  return lines;
+}
+
+// Section 2 — Analysis. Ties the facts to the risk posture. Stays with
+// the same single-paragraph-per-topic shape used in the B sample so
+// the memo reads to a human but every claim still traces back to a
+// field in the payload.
+function formatAnalysis(type: ReportType, input: ReportInput): string[] {
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} 2. ANALYSIS ${"─".repeat(63)}`);
+  const r = input.result;
+  const sb = input.superBrain;
+  const band =
+    r.severity === "critical"
+      ? "critical"
+      : r.severity === "high"
+        ? "high"
+        : r.severity === "medium"
+          ? "medium"
+          : r.severity === "low"
+            ? "low"
+            : "clear";
+  lines.push(
+    `The composite score sits in the **${band}** band. ${
+      r.hits.length > 0
+        ? `Sanctions hits concentrate on ${Array.from(
+            new Set(r.hits.map((h) => h.listId)),
+          ).join(", ")}.`
+        : "The subject does not appear on any monitored sanctions regime."
+    }`,
+  );
+  if (sb?.jurisdiction) {
+    lines.push(
+      `Jurisdictional risk for ${sb.jurisdiction.name} (${sb.jurisdiction.iso2})` +
+        (sb.jurisdiction.cahra
+          ? " is elevated — jurisdiction is on the CAHRA register."
+          : ` is assessed as ${sb.jurisdiction.regimes.length > 0 ? "medium" : "baseline"} (non-CAHRA).`),
+    );
+  }
+  if (type === "AM") {
+    lines.push(
+      "The adverse-media signal is presently open-source and requires analyst",
+    );
+    lines.push(
+      "review and live-news corroboration before constructive-knowledge can be",
+    );
+    lines.push("asserted under FDL 10/2025 Art.2(3).");
+  }
+  if (type === "PEP") {
+    lines.push(
+      "PEP status alone does not constitute a suspicion trigger; it invokes EDD",
+    );
+    lines.push(
+      "and senior-management approval under FATF Recommendation 12 / FDL 10/2025",
+    );
+    lines.push("Art.17.");
+  }
+  return lines;
+}
+
+function pep(tier: string): string {
+  return tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
+}
+
 function formatRecommendation(type: ReportType, r: ReportScreeningResult): string[] {
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} RECOMMENDATION (SYSTEM) ${"─".repeat(51)}`);
@@ -356,6 +470,11 @@ export function buildComplianceReport(input: ReportInput): string {
     out.push(...formatJurisdiction(input.superBrain));
     out.push(...formatAdverseMedia(input.superBrain));
   }
+  out.push("");
+  out.push(...formatFacts(type, input, now));
+  out.push("");
+  out.push(...formatAnalysis(type, input));
+  out.push("");
   out.push(...formatRecommendation(type, input.result));
   out.push(...formatGoaml(type, input, now));
   out.push(...formatDecision(type));

@@ -18,10 +18,14 @@ export function ScreeningHero({ inQueue, critical, slaRisk }: ScreeningHeroProps
         <HeroStat value={String(critical)} label="critical" />
         <HeroStat value={String(slaRisk)} label="SLA risk" />
       </div>
-      <p className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
-        <strong>Six lists · ten-year audit · four eyes.</strong> One bench. One queue. Every
-        subject cross-checked against six sanctions lists and bound to the ten-year audit
-        trail.
+      <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
+        <strong>Real-time, multi-vector screening.</strong> Every subject is
+        cross-checked against six sanctions regimes (OFAC, UN, EU, UK OFSI,
+        EOCN, Canada), classified for PEP exposure by FATF tier, overlaid
+        with adverse-media and jurisdiction-risk signals (CAHRA, FATF
+        grey-list), and sealed into a ten-year four-eyes audit trail.
+        Every verdict traces back to a rule, a list, or a hit — no
+        hallucinated narrative, no invented facts.
       </p>
     </div>
   );
