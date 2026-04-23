@@ -711,9 +711,9 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
               </span>
             )}
           </div>
-          {r.jurisdiction.regimes.length > 0 && (
+          {(r.jurisdiction.regimes?.length ?? 0) > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {r.jurisdiction.regimes.slice(0, 6).map((reg) => (
+              {(r.jurisdiction.regimes ?? []).slice(0, 6).map((reg) => (
                 <span
                   key={reg}
                   className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
