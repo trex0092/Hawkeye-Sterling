@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { quickScreen } from "../../../../../dist/src/brain/index.js";
+// Import from the concrete module, not the index barrel — see super-brain
+// route for why pulling in the 80-module barrel at cold-start kills these
+// Netlify Functions with 502s.
+import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";

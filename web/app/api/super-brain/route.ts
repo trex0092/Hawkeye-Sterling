@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
-import {
-  quickScreen,
-  classifyPepRole,
-  classifyAdverseMedia,
-  jurisdictionByName,
-  isCahra,
-  regimesForJurisdiction,
-  evaluateRedlines,
-  variantsOf,
-  expandAliases,
-  doubleMetaphone,
-  soundex,
-} from "../../../../dist/src/brain/index.js";
+// Import each brain function from its concrete module rather than the
+// index.js barrel. The barrel re-exports 80+ modules (~20k lines of
+// catalogues); pulling it in at the top of a Netlify Function route was
+// blowing cold-start past the 10s cap and returning 502s on every
+// subject-detail open.
+import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { classifyPepRole } from "../../../../dist/src/brain/pep-classifier.js";
+import { classifyAdverseMedia } from "../../../../dist/src/brain/adverse-media.js";
+import { jurisdictionByName } from "../../../../dist/src/brain/jurisdictions-full.js";
+import { isCahra } from "../../../../dist/src/brain/cahra.js";
+import { regimesForJurisdiction } from "../../../../dist/src/brain/sanction-regimes.js";
+import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
+import { variantsOf } from "../../../../dist/src/brain/translit.js";
+import { expandAliases } from "../../../../dist/src/brain/aliases.js";
+import { doubleMetaphone, soundex } from "../../../../dist/src/brain/matching.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.

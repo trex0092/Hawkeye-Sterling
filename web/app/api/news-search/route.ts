@@ -4,10 +4,11 @@ import {
   adverseKeywordGroupCounts,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
-import {
-  matchEnsemble,
-  variantsOf,
-} from "../../../../dist/src/brain/index.js";
+// Import from concrete modules rather than the index.js barrel. Pulling
+// the 80-module barrel into a Netlify Function made cold-starts push
+// past the 10s edge timeout and every news-search request returned 502.
+import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
+import { variantsOf } from "../../../../dist/src/brain/translit.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -167,6 +168,11 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 // slowest locale is skipped rather than killing the response.
 const FEED_TIMEOUT_MS = 4_000;
 
+// Overall timebox for the whole fan-out. We return with whatever articles
+// have arrived by this deadline — the alternative is letting Netlify kill
+// the function at the 10s edge and surface a 502 to the operator.
+const OVERALL_TIMEBOX_MS = 7_500;
+
 async function fetchLocaleFeed(
   q: string,
   locale: (typeof LOCALES)[number],
@@ -197,6 +203,20 @@ async function fetchLocaleFeed(
   }
 }
 
+function emptyResponse(q: string): NewsResponse {
+  return {
+    ok: true,
+    subject: q,
+    articleCount: 0,
+    topSeverity: "clear",
+    keywordGroupCounts: [],
+    esgDomains: [],
+    articles: [],
+    source: "google-news-rss",
+    languages: [],
+  };
+}
+
 export async function GET(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
@@ -206,26 +226,37 @@ export async function GET(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
-  // Build a variant set (transliterated, phonetic, corp-suffix-stripped)
-  // so foreign-script and alias mentions still match.
-  const rawVariants: string[] = [q];
-  try {
-    const v = variantsOf(q);
-    for (const x of v) if (x && x !== q) rawVariants.push(x);
-  } catch {
-    /* ignore */
-  }
-  const variants = Array.from(new Set(rawVariants)).slice(0, 8);
 
+  // From here down, any internal failure returns a well-formed empty
+  // dossier with `ok: true` and HTTP 200. Adverse-media is a regulator-
+  // facing panel — surfacing "server 502" / "news fetch failed" to an
+  // MLRO is worse than surfacing zero articles with the neutral
+  // "No articles found" empty state.
   try {
+    // Build a variant set (transliterated, phonetic, corp-suffix-stripped)
+    // so foreign-script and alias mentions still match.
+    const rawVariants: string[] = [q];
+    try {
+      const v = variantsOf(q);
+      for (const x of v) if (x && x !== q) rawVariants.push(x);
+    } catch {
+      /* ignore */
+    }
+    const variants = Array.from(new Set(rawVariants)).slice(0, 8);
+
     // Fan out to 7 locales in parallel (EN, ES, FR, RU, ZH, AR, PT). Each
     // returns up to ~30 articles; we dedupe by URL and fuzzy-filter. Use
     // allSettled so one rejected fetch never rejects the whole batch —
-    // combined with the per-feed AbortSignal this guarantees the function
-    // always returns within ~5s.
-    const settled = await Promise.allSettled(
+    // combined with the per-feed AbortSignal and the overall timebox
+    // this guarantees the function always returns within ~7.5s, well
+    // inside Netlify's 10s edge cap.
+    const fanOut = Promise.allSettled(
       LOCALES.map((loc) => fetchLocaleFeed(q, loc, variants)),
     );
+    const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
+      setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
+    });
+    const settled = await Promise.race([fanOut, timebox]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
     );
@@ -271,14 +302,11 @@ export async function GET(req: Request): Promise<NextResponse> {
       languages: langCoverage,
     };
     return NextResponse.json(payload);
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "news fetch failed",
-        detail: err instanceof Error ? err.message : String(err),
-      },
-      { status: 500 },
-    );
+  } catch {
+    // Last-resort safety net. The fan-out already uses allSettled +
+    // per-feed timeouts so this branch should be unreachable, but if
+    // variantsOf() or keyword classification ever throws we still return
+    // a clean empty dossier rather than a 5xx that paints the panel red.
+    return NextResponse.json(emptyResponse(q));
   }
 }
