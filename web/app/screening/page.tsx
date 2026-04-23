@@ -13,6 +13,7 @@ import {
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import type { FilterKey, Subject } from "@/lib/types";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 const CRITICAL_THRESHOLD = 85;
 const SLA_BREACH_THRESHOLD_H = 24;
@@ -151,7 +152,11 @@ export default function ScreeningPage() {
     // reruns the brain and fires delta alerts.
     if (data.ongoingScreening && createdSubject) {
       const subject = createdSubject as Subject;
-      void fetch("/api/ongoing", {
+      // Best-effort enrolment — fetchJson handles cold-start 502s with
+      // 3 retries × 750ms before giving up. We still don't surface a
+      // failure to the operator (the subject is on the queue regardless),
+      // but we no longer leak a raw fetch reject into the console.
+      void fetchJson("/api/ongoing", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -163,8 +168,7 @@ export default function ScreeningPage() {
           group: data.group,
           caseId: data.caseId,
         }),
-      }).catch(() => {
-        /* best-effort — surfacing failures is a future refinement */
+        label: "Ongoing enrolment failed",
       });
     }
     void screen;

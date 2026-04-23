@@ -2,6 +2,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "./quickScreen.types";
+import { fetchJson } from "./fetchWithRetry";
 
 export interface ScreeningReportPayload {
   subject: QuickScreenSubject & {
@@ -26,18 +27,19 @@ export async function postScreeningReport(
   payload: ScreeningReportPayload,
   init: RequestInit = {},
 ): Promise<ScreeningReportResponse> {
-  const res = await fetch("/api/screening-report", {
+  const res = await fetchJson<ScreeningReportResponse>("/api/screening-report", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
-    ...init,
+    label: "Screening report failed",
+    ...(init.signal ? { signal: init.signal } : {}),
   });
-  try {
-    return (await res.json()) as ScreeningReportResponse;
-  } catch {
+  if (!res.ok) {
     return {
       ok: false,
-      error: `non-JSON response (${res.status})`,
+      error: res.error ?? `Screening report failed`,
+      ...(res.detail ? { detail: res.detail } : {}),
     };
   }
+  return res.data ?? { ok: false, error: "Screening report failed empty body" };
 }
