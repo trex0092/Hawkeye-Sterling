@@ -4,10 +4,11 @@ import {
   adverseKeywordGroupCounts,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
-import {
-  matchEnsemble,
-  variantsOf,
-} from "../../../../dist/src/brain/index.js";
+// Direct module imports — see super-brain route for rationale: the barrel
+// index.js pulls the entire 3-4MB brain into every function bundle, which
+// blows past Netlify's cold-start budget and 502s the news dossier panel.
+import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
+import { variantsOf } from "../../../../dist/src/brain/translit.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
