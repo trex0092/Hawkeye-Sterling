@@ -13,6 +13,7 @@ import type {
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
+import { appendCase, buildCaseRecord } from "@/lib/data/case-store";
 
 const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
@@ -100,6 +101,25 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
     if (escalated) return;
     if (window.confirm(`Escalate ${subject.name} to MLRO?`)) {
       setEscalated(true);
+      // Persist the escalation as a case record so it lands on /cases
+      // under the "Awaiting MLRO" filter. Previously the click only
+      // toggled a local flag — operators saw nothing on the Cases page.
+      const composite =
+        superBrain.status === "success"
+          ? superBrain.result.composite.score
+          : screening.status === "success"
+            ? screening.result.topScore
+            : subject.riskScore;
+      appendCase(
+        buildCaseRecord({
+          subject: subject.name,
+          subjectJurisdiction: subject.country || subject.jurisdiction,
+          reportKind: "Escalation",
+          status: "review",
+          statusLabel: "Awaiting MLRO",
+          statusDetail: `Escalated from screening (composite ${composite}/100)`,
+        }),
+      );
       showFlash("Escalated to MLRO");
     }
   };
@@ -156,6 +176,19 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
       },
     );
     if (res.ok && res.data?.ok) {
+      // Persist the filing as a case record so /cases shows it under
+      // "Escalated to FIU" — MLRO sees the audit trail without leaving
+      // the screening panel.
+      appendCase(
+        buildCaseRecord({
+          subject: subject.name,
+          subjectJurisdiction: subject.country || subject.jurisdiction,
+          reportKind: "STR",
+          status: "reported",
+          statusLabel: "Submitted",
+          statusDetail: `STR filed from screening panel`,
+        }),
+      );
       showFlash("STR filed — draft in STR/SAR board");
     } else {
       showFlash(res.error ?? "STR filing failed");

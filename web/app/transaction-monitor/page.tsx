@@ -17,6 +17,7 @@ import {
   textareaCls,
 } from "@/components/ui/ModuleShell";
 import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
 import {
   TM_CHANNELS,
   TM_DIRECTIONS,
@@ -150,22 +151,22 @@ export default function TransactionMonitorPage() {
   const runDailyScan = async () => {
     setRunning(true);
     try {
-      const res = await fetch("/api/transaction-monitor/run", { method: "POST" });
+      // Retry-aware POST. Surfaces colon-free messages (`Scan failed
+      // server 502`) and tolerates Netlify cold-start 502s up to
+      // 3 retries × 750ms before giving up.
+      const res = await fetchJson<{ ok: boolean; totalAlerts?: number }>(
+        "/api/transaction-monitor/run",
+        { method: "POST", label: "Scan failed" },
+      );
       if (!res.ok) {
-        flashFor(`Scan failed — server ${res.status}`);
+        flashFor(res.error ?? "Scan failed");
         return;
       }
-      const data = (await res.json().catch(() => ({ ok: false }))) as {
-        ok: boolean;
-        totalAlerts?: number;
-      };
       flashFor(
-        data.ok
-          ? `Scan complete — ${data.totalAlerts ?? 0} alerts`
+        res.data?.ok
+          ? `Scan complete ${res.data.totalAlerts ?? 0} alerts`
           : "Scan failed",
       );
-    } catch {
-      flashFor("Scan failed");
     } finally {
       setRunning(false);
     }
