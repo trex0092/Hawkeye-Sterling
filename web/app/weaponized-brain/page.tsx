@@ -293,11 +293,9 @@ function BrainDashboard({
             count={c.doctrines.total}
             badge={`${c.doctrines.mandatoryInUAE} mandatory in UAE`}
           >
-            {Object.entries(c.doctrines.byAuthority ?? {})
-              .slice(0, 6)
-              .map(([auth, n]) => (
-                <LineItem key={auth} primary={auth} secondary={`${n}`} />
-              ))}
+            {Object.entries(c.doctrines.byAuthority ?? {}).map(([auth, n]) => (
+              <LineItem key={auth} primary={auth} secondary={`${n}`} />
+            ))}
           </Card>
           <Card title="Adverse media" count={c.adverseMedia.categories.length}>
             {c.adverseMedia.categories.map((a) => (
@@ -309,16 +307,14 @@ function BrainDashboard({
             ))}
           </Card>
           <Card title="Typologies" count={c.typologies.total}>
-            {c.typologies.ids.slice(0, 8).map((id) => (
+            {c.typologies.ids.slice(0, 20).map((id) => (
               <Tag key={id}>{id}</Tag>
             ))}
           </Card>
           <Card title="Red flags" count={c.redFlags.total}>
-            {Object.entries(c.redFlags.byTypology ?? {})
-              .slice(0, 8)
-              .map(([k, n]) => (
-                <LineItem key={k} primary={k} secondary={`${n}`} />
-              ))}
+            {Object.entries(c.redFlags.byTypology ?? {}).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
           </Card>
           <Card
             title="Sanction regimes"
