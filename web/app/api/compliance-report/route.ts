@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import {
   buildComplianceReport,
   type ReportInput,
 } from "@/lib/reports/complianceReport";
-import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,10 +12,16 @@ export const dynamic = "force-dynamic";
 // Body: { subject, result, superBrain?, reportingEntity?, mlro? }
 // Returns text/plain — the Hawkeye Sterling MLRO report, generated
 // strictly from the payload (no invented facts, no narrative hallucinations).
-export async function POST(req: Request): Promise<Response> {
-  const gate = await enforce(req, { requireAuth: true });
-  if (!gate.ok) return gate.response;
 
+// Strip characters that would let a caller inject response headers or
+// break the filename quoting. Subject IDs are user-controlled; without
+// this, "HS-10\r\nX-Evil: 1" in the body would split the header.
+function safeFilenameSegment(s: string | undefined | null): string {
+  if (!s) return "unknown";
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64) || "unknown";
+}
+
+async function handleComplianceReport(req: Request): Promise<Response> {
   let body: ReportInput;
   try {
     body = (await req.json()) as ReportInput;
@@ -28,12 +34,24 @@ export async function POST(req: Request): Promise<Response> {
       { status: 400 },
     );
   }
-  const report = buildComplianceReport(body);
+  let report: string;
+  try {
+    report = buildComplianceReport(body);
+  } catch (err) {
+    console.error("compliance-report failed to build", err);
+    return NextResponse.json(
+      { ok: false, error: "report generation failed" },
+      { status: 500 },
+    );
+  }
+  const filename = `hawkeye-report-${safeFilenameSegment(body.subject.id)}.txt`;
   return new Response(report, {
     status: 200,
     headers: {
       "content-type": "text/plain; charset=utf-8",
-      "content-disposition": `attachment; filename="hawkeye-report-${body.subject.id ?? "unknown"}.txt"`,
+      "content-disposition": `attachment; filename="${filename}"`,
     },
   });
 }
+
+export const POST = withGuard(handleComplianceReport);

@@ -42,7 +42,7 @@ export const TYPOLOGIES: Typology[] = [
     weight: 0.95 },
   { id: 'tf_charity', name: 'Charity / NPO abuse for TF', family: 'tf',
     description: 'Non-profit front funnelling to designated groups.',
-    fingerprint: /\b(npo|non[- ]profit) (?:abuse|front|conduit)|charity (?:front|diversion)|cash couriers? charity\b/i,
+    fingerprint: /\b(?:(?:npo|non[- ]?profit)\s+(?:abuse|front|conduit)|charity\s+(?:front|diversion)|cash couriers?\s+charity)\b/i,
     weight: 0.9 },
   { id: 'wildlife_trafficking', name: 'Wildlife trafficking', family: 'corruption',
     description: 'Ivory, rhino horn, pangolin, big cat trade.',
@@ -98,16 +98,19 @@ export const TYPOLOGIES: Typology[] = [
     weight: 0.95 },
 ];
 
+const MAX_TYPOLOGY_CHARS = 50_000;
+
 export interface TypologyMatch { typology: Typology; snippet: string; }
 export function matchTypologies(text: string): TypologyMatch[] {
+  const haystack = (text ?? '').slice(0, MAX_TYPOLOGY_CHARS);
   const matches: TypologyMatch[] = [];
   for (const typ of TYPOLOGIES) {
-    const m = typ.fingerprint.exec(text);
+    const m = typ.fingerprint.exec(haystack);
     if (m) {
       const i = m.index ?? 0;
       const start = Math.max(0, i - 32);
-      const end = Math.min(text.length, i + m[0].length + 32);
-      matches.push({ typology: typ, snippet: text.slice(start, end).replace(/\s+/g, ' ').trim() });
+      const end = Math.min(haystack.length, i + m[0].length + 32);
+      matches.push({ typology: typ, snippet: haystack.slice(start, end).replace(/\s+/g, ' ').trim() });
     }
   }
   return matches;

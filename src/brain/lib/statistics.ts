@@ -39,8 +39,10 @@ export function chiSquareGoF(observed: ReadonlyArray<number>, expected: Readonly
 }
 
 // KL divergence D(P || Q) with Laplace smoothing.
+// Iterates to the length of the longer array so unmatched tail elements are
+// not silently dropped (smoothed with eps so log stays finite).
 export function klDivergence(p: ReadonlyArray<number>, q: ReadonlyArray<number>, eps = 1e-6): number {
-  const n = Math.min(p.length, q.length);
+  const n = Math.max(p.length, q.length);
   let kl = 0;
   for (let i = 0; i < n; i++) {
     const pi = (p[i] ?? 0) + eps;
@@ -81,19 +83,39 @@ export function spikeDetection(xs: ReadonlyArray<number>, zThreshold = 3): Spike
 }
 
 // Simple changepoint: split that minimises within-segment variance.
+// Pre-computes prefix sums so the inner segment stats run in O(1) rather
+// than the O(n) mean() call that made the naive version O(n³) overall.
 export function changePoint(xs: ReadonlyArray<number>): { index: number; ratio: number } | null {
-  if (xs.length < 10) return null;
-  const overall = xs.reduce((s, x) => s + (x - mean(xs)) ** 2, 0);
+  const n = xs.length;
+  if (n < 10) return null;
+
+  // Build prefix sums for O(1) segment mean and variance.
+  const sum = new Float64Array(n + 1);
+  const sum2 = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) {
+    sum[i + 1] = sum[i]! + (xs[i] ?? 0);
+    sum2[i + 1] = sum2[i]! + (xs[i] ?? 0) ** 2;
+  }
+
+  // Segment variance using the identity Var = E[X²] - E[X]² (no subtraction loop needed).
+  const segVar = (lo: number, hi: number): number => {
+    const len = hi - lo;
+    if (len <= 0) return 0;
+    const s = sum[hi]! - sum[lo]!;
+    const s2 = sum2[hi]! - sum2[lo]!;
+    return s2 - (s * s) / len;
+  };
+
+  const overall = segVar(0, n);
+  if (overall === 0) return null;
+
   let bestI = -1, bestReduction = 0;
-  for (let i = 3; i < xs.length - 3; i++) {
-    const a = xs.slice(0, i), b = xs.slice(i);
-    const va = a.reduce((s, x) => s + (x - mean(a)) ** 2, 0);
-    const vb = b.reduce((s, x) => s + (x - mean(b)) ** 2, 0);
-    const within = va + vb;
+  for (let i = 3; i < n - 3; i++) {
+    const within = segVar(0, i) + segVar(i, n);
     const reduction = overall - within;
     if (reduction > bestReduction) { bestReduction = reduction; bestI = i; }
   }
-  if (bestI < 0 || overall === 0) return null;
+  if (bestI < 0) return null;
   return { index: bestI, ratio: bestReduction / overall };
 }
 

@@ -48,32 +48,48 @@ interface UpsertBody {
   scoreThreshold?: number;
 }
 
+const VALID_CADENCES: readonly Cadence[] = ["hourly", "daily", "weekly", "monthly"];
+
+function isCadence(v: unknown): v is Cadence {
+  return typeof v === "string" && (VALID_CADENCES as readonly string[]).includes(v);
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  let body: UpsertBody;
+  let raw: unknown;
   try {
-    body = (await req.json()) as UpsertBody;
+    raw = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
-  const { subjectId, cadence, scoreThreshold } = body;
-  if (!subjectId || !cadence) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return NextResponse.json(
-      { ok: false, error: "subjectId and cadence required" },
+      { ok: false, error: "body must be a JSON object" },
       { status: 400 },
     );
   }
-  if (!(cadence in CADENCE_MS)) {
+  const body = raw as Record<string, unknown>;
+  const subjectId =
+    typeof body["subjectId"] === "string" && body["subjectId"].trim()
+      ? body["subjectId"].trim()
+      : undefined;
+  const cadenceRaw = body["cadence"];
+  const scoreThreshold =
+    typeof body["scoreThreshold"] === "number" ? body["scoreThreshold"] : undefined;
+
+  if (!subjectId || !isCadence(cadenceRaw)) {
     return NextResponse.json(
       {
         ok: false,
-        error: "cadence must be hourly | daily | weekly | monthly",
+        error:
+          "subjectId required; cadence must be hourly | daily | weekly | monthly",
       },
       { status: 400 },
     );
   }
+  const cadence: Cadence = cadenceRaw;
   if (
     scoreThreshold !== undefined &&
     (scoreThreshold < 0 || scoreThreshold > 1)

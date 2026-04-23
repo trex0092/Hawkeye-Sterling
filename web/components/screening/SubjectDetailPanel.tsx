@@ -711,7 +711,7 @@ function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").Aut
       <span className={`${base} bg-green-dim text-green`}>
         <span>✓</span>
         Reported to Asana
-        {state.taskUrl && (
+        {state.taskUrl && /^https?:\/\//i.test(state.taskUrl) && (
           <a
             href={state.taskUrl}
             target="_blank"
@@ -949,7 +949,9 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           </div>
           {(r.adverseMediaScored.topKeywords?.length ?? 0) > 0 && (
             <div className="text-10.5 text-ink-2 font-mono">
-              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).join(" · ")}
+              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).map(
+                (k) => (typeof k === "string" ? k : (k as { keyword: string }).keyword)
+              ).join(" · ")}
             </div>
           )}
         </Field>
@@ -960,14 +962,17 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           label={`PEP assessment · ${r.pepAssessment.highestTier ?? "—"} · ${Math.round((r.pepAssessment.riskScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1">
-            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => (
-              <span
-                key={`${m}-${i}`}
-                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
-              >
-                {m}
-              </span>
-            ))}
+            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => {
+              const label = typeof m === "string" ? m : (m as { label: string }).label;
+              return (
+                <span
+                  key={`${label}-${i}`}
+                  className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
+                >
+                  {label}
+                </span>
+              );
+            })}
           </div>
         </Field>
       )}
@@ -1117,7 +1122,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
               <a
-                href={a.link}
+                href={/^https?:\/\//i.test(a.link) ? a.link : "#"}
                 target="_blank"
                 rel="noreferrer"
                 className="text-11 font-semibold text-ink-0 hover:text-brand leading-snug"

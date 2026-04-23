@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 // subjectId / id / email field matches the supplied identifier. Does
 // NOT delete audit-chain anchors (Art. 17(3)(b) exemption — legal
 // obligation for AML record retention).
+//
+// Auth: ADMIN_TOKEN required (fail-closed). Mass-delete is too
+// dangerous to expose to anonymous or API-key callers.
 
 interface DeleteRequest {
   subjectId?: string;
@@ -24,7 +27,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as DeleteRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400 },
+    );
   }
   const subjectId = body.subjectId?.trim();
   const email = body.email?.trim().toLowerCase();

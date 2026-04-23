@@ -60,27 +60,31 @@ function fingerprints(hits: LastHit[]): Set<string> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  // Fail-closed bearer token check. ONGOING_RUN_TOKEN must be set in
-  // Netlify environment variables; if absent the endpoint returns 503
-  // rather than opening access to anonymous callers.
+  // Bearer token protection. If ONGOING_RUN_TOKEN is not configured the
+  // endpoint is locked down entirely — a missing env var must not silently
+  // make this a public endpoint (Netlify cron jobs always inject the token).
   const expected = process.env["ONGOING_RUN_TOKEN"];
   if (!expected) {
-    return NextResponse.json(
-      { ok: false, error: "ONGOING_RUN_TOKEN not configured." },
-      { status: 503 },
-    );
+    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
   }
-  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ?? "";
-  if (!got || got !== expected) {
+  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  // Timing-safe comparison — use TextEncoder for Uint8Array compatibility.
+  // Pad `got` to the expected length so timingSafeEqual always compares the
+  // same byte count; the length check ensures a shorter token still fails.
+  const { timingSafeEqual } = await import("crypto");
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(expected);
+  const gotRaw = enc.encode(got);
+  const gotBuf = new Uint8Array(expBuf.length); // zero-padded
+  gotBuf.set(gotRaw.slice(0, expBuf.length));
+  if (got.length !== expected.length || !timingSafeEqual(expBuf, gotBuf)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   const keys = await listKeys("ongoing/subject/");
-  const subjects: EnrolledSubject[] = [];
-  for (const key of keys) {
-    const s = await getJson<EnrolledSubject>(key);
-    if (s) subjects.push(s);
-  }
+  // Load subjects in parallel — sequential awaits would time out for large portfolios.
+  const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
+  const subjects: EnrolledSubject[] = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
 
   const runAt = new Date().toISOString();
   const results: Array<{
@@ -94,6 +98,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     webhook: Awaited<ReturnType<typeof postWebhook>>;
     asanaTaskUrl?: string;
     escalationTaskUrl?: string;
+    escalationSkipReason?: string;
   }> = [];
 
   const nowMs = Date.now();
@@ -149,11 +154,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       // flooding the board on every rerun.
       if (newHits.length > 0) {
         try {
+          // Use an explicit, env-configured base URL rather than req.url to
+          // prevent SSRF via attacker-controlled Host headers.
+          const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
           const asanaRes = await fetch(
-            new URL(
-              "/api/screening-report",
-              req.url,
-            ).toString(),
+            new URL("/api/screening-report", appBase).toString(),
             {
               method: "POST",
               headers: { "content-type": "application/json" },
@@ -186,44 +191,81 @@ export async function POST(req: Request): Promise<NextResponse> {
       // MLRO sees the jump immediately. Independent of the delta task —
       // an escalation can fire without new hits (e.g. reinforced score
       // on existing hits) and both boards need to carry the signal.
+      //
+      // If the escalations board isn't configured, we log loudly and
+      // continue; silently dropping the signal would mean the MLRO
+      // misses a score-jump event the compliance report claims was
+      // flagged. Operators scanning logs must be able to see "we
+      // detected an escalation but had nowhere to file it".
       let escalationTaskUrl: string | undefined;
+      let escalationSkipReason: string | undefined;
       const escalationsProject = process.env["ASANA_ESCALATIONS_PROJECT_GID"];
       const asanaToken = process.env["ASANA_TOKEN"];
-      if (escalated && escalationsProject && asanaToken) {
-        try {
-          const body = {
-            data: {
-              name: `🚨 Score jumped +${scoreDelta} — ${s.name} (${s.id})`,
-              notes: [
-                `Subject: ${s.name} (${s.id})`,
-                `Jurisdiction: ${s.jurisdiction ?? "—"}`,
-                `Previous top score: ${prev?.topScore ?? "n/a"}`,
-                `New top score: ${screen.topScore}`,
-                `Delta: +${scoreDelta} (threshold ≥ ${ESCALATION_DELTA})`,
-                `Severity: ${screen.severity}`,
-                `New hits: ${newHits.length}`,
-                `Triggered at: ${runAt}`,
-              ].join("\n"),
-              projects: [escalationsProject],
-              workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
-            },
-          };
-          const r = await fetch("https://app.asana.com/api/1.0/tasks", {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              authorization: `Bearer ${asanaToken}`,
-            },
-            body: JSON.stringify(body),
-          });
-          const data = (await r.json().catch(() => null)) as
-            | { data?: { gid?: string; permalink_url?: string } }
-            | null;
-          if (data?.data?.permalink_url) {
-            escalationTaskUrl = data.data.permalink_url;
+      // Keep our branch's detailed skip-reason logging (so ops sees WHY an
+      // escalation was dropped) AND pick up the assignee field that main
+      // added — every Asana task now lands on Luisa's queue by default
+      // via ASANA_ASSIGNEE_GID (overridable via env).
+      if (escalated) {
+        if (!asanaToken) {
+          escalationSkipReason = "ASANA_TOKEN not set";
+          console.warn(
+            `[ongoing/run] escalation detected for ${s.id} but ASANA_TOKEN is not set — no task filed`,
+          );
+        } else if (!escalationsProject) {
+          escalationSkipReason = "ASANA_ESCALATIONS_PROJECT_GID not set";
+          console.warn(
+            `[ongoing/run] escalation detected for ${s.id} but ASANA_ESCALATIONS_PROJECT_GID is not set — no task filed`,
+          );
+        } else {
+          try {
+            const body = {
+              data: {
+                name: `🚨 Score jumped +${scoreDelta} — ${s.name} (${s.id})`,
+                notes: [
+                  `Subject: ${s.name} (${s.id})`,
+                  `Jurisdiction: ${s.jurisdiction ?? "—"}`,
+                  `Previous top score: ${prev?.topScore ?? "n/a"}`,
+                  `New top score: ${screen.topScore}`,
+                  `Delta: +${scoreDelta} (threshold ≥ ${ESCALATION_DELTA})`,
+                  `Severity: ${screen.severity}`,
+                  `New hits: ${newHits.length}`,
+                  `Triggered at: ${runAt}`,
+                ].join("\n"),
+                projects: [escalationsProject],
+                workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
+                assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+              },
+            };
+            const r = await fetch("https://app.asana.com/api/1.0/tasks", {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                authorization: `Bearer ${asanaToken}`,
+              },
+              body: JSON.stringify(body),
+            });
+            const data = (await r.json().catch(() => null)) as
+              | {
+                  data?: { gid?: string; permalink_url?: string };
+                  errors?: Array<{ message?: string }>;
+                }
+              | null;
+            if (data?.data?.permalink_url) {
+              escalationTaskUrl = data.data.permalink_url;
+            } else {
+              const detail = data?.errors?.[0]?.message ?? `HTTP ${r.status}`;
+              escalationSkipReason = `asana rejected: ${detail}`;
+              console.error(
+                `[ongoing/run] asana rejected escalation task for ${s.id}: ${detail}`,
+              );
+            }
+          } catch (err) {
+            escalationSkipReason = err instanceof Error ? err.message : String(err);
+            console.error(
+              `[ongoing/run] escalation POST threw for ${s.id}:`,
+              err,
+            );
           }
-        } catch {
-          /* continue without escalation task */
         }
       }
 
@@ -278,6 +320,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         webhook,
         ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
         ...(escalationTaskUrl ? { escalationTaskUrl } : {}),
+        ...(escalationSkipReason ? { escalationSkipReason } : {}),
       });
     } catch (err) {
       results.push({

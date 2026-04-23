@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
-import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Luisa's Asana project — "01 · Screening - Sanctions & Adverse Media".
-// Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID env vars.
-const DEFAULT_PROJECT_GID = "1214148660020527";
+// MLRO triage inbox — "00 · Master Inbox". All form submissions land here
+// first; MLRO routes them to downstream Projects 01–19.
+// Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID / ASANA_ASSIGNEE_GID
+// env vars in Netlify → Site settings → Environment variables.
+const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
+const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda — primary MLRO
 
 interface ReportHit {
   listId: string;
@@ -120,10 +123,7 @@ function buildTaskNotes(b: ReportBody): string {
   return lines.join("\n");
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: true });
-  if (!gate.ok) return gate.response;
-
+async function handleScreeningReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return respond(503, {
@@ -161,6 +161,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           notes,
           projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
           workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
+          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
         },
       }),
     });
@@ -169,7 +170,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       | null;
     if (!asanaRes.ok || !payload?.data?.gid) {
       const msg = payload?.errors?.[0]?.message ?? `HTTP ${asanaRes.status}`;
-      return respond(502, {
+      // Map upstream status so monitoring alerts differentiate misconfig
+      // (401/403 → 503 Service Unavailable on our side) from a real
+      // Asana outage (5xx → 502 Bad Gateway) from a bad payload we
+      // sent (4xx → 422 Unprocessable Entity).
+      const mappedStatus =
+        asanaRes.status >= 500
+          ? 502
+          : asanaRes.status === 401 || asanaRes.status === 403
+            ? 503
+            : 422;
+      return respond(mappedStatus, {
         ok: false,
         error: "asana rejected the task",
         detail: msg,
@@ -195,7 +206,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       generatedAt: body.result.generatedAt,
       source: "hawkeye-sterling",
     });
-    return respond(200, {
+    return respond(201, {
       ok: true,
       taskGid: payload.data.gid,
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
@@ -208,3 +219,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
   }
 }
+
+export const POST = withGuard(handleScreeningReport);

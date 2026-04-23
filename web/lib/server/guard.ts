@@ -36,9 +36,16 @@ function newTraceId(): string {
   return randomBytes(8).toString("hex");
 }
 
+// Sanitize a caller-supplied trace ID so it can be safely echoed in headers
+// and log lines: strip everything outside printable ASCII 0x20-0x7E and cap length.
+function sanitizeTraceId(raw: string): string {
+  return raw.replace(/[^\x20-\x7E]/g, "").slice(0, 64);
+}
+
 export function withGuard(handler: Handler): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
-    const traceId = req.headers.get("x-trace-id") ?? newTraceId();
+    const rawTrace = req.headers.get("x-trace-id");
+    const traceId = rawTrace ? sanitizeTraceId(rawTrace) || newTraceId() : newTraceId();
     const receivedAt = new Date();
 
     const gate = await enforce(req, { requireAuth: true });
@@ -113,11 +120,15 @@ export interface AuditRecord {
 
 type AuditSink = (record: AuditRecord) => void;
 
+// Fixed-capacity ring buffer with O(1) insert via index wraparound.
 const RING_CAPACITY = 1_000;
-const RING: AuditRecord[] = [];
+const RING: AuditRecord[] = new Array<AuditRecord>(RING_CAPACITY);
+let RING_HEAD = 0;
+let RING_SIZE = 0;
 let SINK: AuditSink = (record) => {
-  RING.push(record);
-  if (RING.length > RING_CAPACITY) RING.shift();
+  RING[RING_HEAD % RING_CAPACITY] = record;
+  RING_HEAD++;
+  if (RING_SIZE < RING_CAPACITY) RING_SIZE++;
 };
 
 export function setAuditSink(fn: AuditSink): void {
@@ -125,7 +136,10 @@ export function setAuditSink(fn: AuditSink): void {
 }
 
 export function recentAudit(): ReadonlyArray<AuditRecord> {
-  return RING.slice();
+  if (RING_SIZE < RING_CAPACITY) return RING.slice(0, RING_SIZE);
+  // Return entries in chronological order, starting from the oldest slot.
+  const start = RING_HEAD % RING_CAPACITY;
+  return [...RING.slice(start, RING_CAPACITY), ...RING.slice(0, start)].filter(Boolean);
 }
 
 function auditAccess(record: AuditRecord): void {

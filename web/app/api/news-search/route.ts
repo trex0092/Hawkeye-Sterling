@@ -10,6 +10,7 @@ import { classifyEsg } from "@/lib/data/esg";
 // past the 10s edge timeout and every news-search request returned 502.
 import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -101,6 +102,14 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
 }
 
+// Sanitize RSS link fields: only allow https/http URLs — block javascript:,
+// data: and other dangerous schemes that could execute as href values.
+function sanitizeLink(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return "";
+}
+
 function parseRss(xml: string, subject: string, variants: string[], lang: string): Article[] {
   const items = xml.split(/<item>/i).slice(1);
   const out: Article[] = [];
@@ -114,7 +123,7 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       return stripHtml(v);
     };
     const title = pick("title");
-    const link = pick("link");
+    const link = sanitizeLink(pick("link"));
     const pubDate = pick("pubDate");
     const source = pick("source") || pick("dc:creator") || "";
     const description = pick("description");
@@ -271,7 +280,13 @@ function emptyResponse(q: string): NewsResponse {
   };
 }
 
+const MAX_Q_LENGTH = 500;
+
 export async function GET(req: Request): Promise<NextResponse> {
+  // Gate the 7-locale RSS fan-out behind the per-key rate limiter.
+  // Anonymous callers still get the free-tier burst window; without
+  // this, a single user could trivially pin a Netlify Function into a
+  // quota-exhaustion loop.
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -280,6 +295,12 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!q) {
     return NextResponse.json(
       { ok: false, error: "query `q` required" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  if (q.length > MAX_Q_LENGTH) {
+    return NextResponse.json(
+      { ok: false, error: "query `q` too long" },
       { status: 400 },
     );
   }
@@ -362,12 +383,13 @@ export async function GET(req: Request): Promise<NextResponse> {
       source: "google-news-rss",
       languages: langCoverage,
     };
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, { headers: gate.headers });
   } catch {
     // Last-resort safety net. The fan-out already uses allSettled +
     // per-feed timeouts so this branch should be unreachable, but if
     // variantsOf() or keyword classification ever throws we still return
     // a clean empty dossier rather than a 5xx that paints the panel red.
-    return NextResponse.json(emptyResponse(q));
+    return NextResponse.json(emptyResponse(q), { headers: gate.headers });
   }
 }
+

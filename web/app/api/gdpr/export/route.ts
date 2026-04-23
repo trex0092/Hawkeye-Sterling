@@ -10,6 +10,9 @@ export const dynamic = "force-dynamic";
 // screening snapshots (ongoing/last/*) and analyst feedback (feedback/*).
 // This endpoint returns all records whose subjectId / id / email matches
 // the supplied identifier.
+//
+// Auth: ADMIN_TOKEN required (fail-closed). Bulk data export should
+// only be performed by an authorised operator.
 
 interface ExportRequest {
   subjectId?: string;
@@ -24,7 +27,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ExportRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400 },
+    );
   }
   const subjectId = body.subjectId?.trim();
   const email = body.email?.trim().toLowerCase();

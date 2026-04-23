@@ -96,27 +96,29 @@ export async function quickScreen(
       const { payload, rawText } = await readBodySafely(res);
 
       if (res.status >= 500 && res.status <= 599) {
-        // Transient infra failure — retry.
-        const detail =
+        // Transient infra failure — retry. Upstream detail (stack
+        // traces, module-not-found errors, …) is logged for ops but
+        // never surfaced to the operator — the MLRO only sees a clean
+        // "Screening temporarily unavailable" when retries run out.
+        const opsDetail =
           envelopeDetail(payload) ??
           envelopeError(payload) ??
-          (rawText ? rawText.slice(0, 200) : undefined);
-        lastError = new QuickScreenError(
-          `Screening failed server ${res.status}`,
-          detail,
-        );
+          (rawText ? rawText.slice(0, 300) : undefined);
+        if (opsDetail) {
+          console.warn("quick-screen 5xx", res.status, opsDetail);
+        }
+        lastError = new QuickScreenError("Screening temporarily unavailable");
       } else if (res.status < 200 || res.status > 299) {
-        // Deterministic non-2xx — surface immediately with body context.
+        // 4xx — the caller sent something bad. The server's own
+        // error field is safe to show (we write it). Never include
+        // `detail` (which may be upstream chatter).
         throw new QuickScreenError(
-          envelopeError(payload) ?? `Screening failed server ${res.status}`,
-          envelopeDetail(payload) ??
-            (rawText ? rawText.slice(0, 200) : undefined),
+          envelopeError(payload) ?? "Screening request rejected",
         );
       } else if (!payload || !("ok" in payload) || !payload.ok) {
         // 2xx but envelope is missing or negative — not retry-able.
         throw new QuickScreenError(
-          envelopeError(payload) ?? "Screening failed malformed response",
-          envelopeDetail(payload),
+          envelopeError(payload) ?? "Screening returned no result",
         );
       } else {
         return payload;
@@ -126,11 +128,13 @@ export async function quickScreen(
       if (err instanceof QuickScreenError) {
         if (!lastError) throw err;
       } else if (err instanceof Error && err.name === "AbortError") {
-        lastError = new QuickScreenError("Screening failed request timed out");
+        lastError = new QuickScreenError("Screening request timed out");
       } else {
-        lastError = new QuickScreenError(
-          err instanceof Error ? err.message : "Screening failed",
-        );
+        // Network-level failure. Log the raw error for ops; show the
+        // operator a neutral message so an MLRO case file never
+        // carries a transport-layer stack trace.
+        console.warn("quick-screen fetch failed", err);
+        lastError = new QuickScreenError("Screening temporarily unavailable");
       }
     } finally {
       clearTimeout(timer);

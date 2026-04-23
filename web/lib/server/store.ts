@@ -32,6 +32,7 @@ function buildMemoryStore(): MinimalStore {
 }
 
 let cached: MinimalStore | null = null;
+let usingInMemoryFallback = false;
 
 export function getStore(): MinimalStore {
   if (cached) return cached;
@@ -55,18 +56,34 @@ export function getStore(): MinimalStore {
     };
     return cached;
   } catch (err) {
-    // Netlify Blobs is unavailable (local dev or misconfigured deployment).
-    // Data written to the in-memory fallback is NOT shared across Lambda
-    // instances and is lost on cold start. If you see this in production,
-    // check that the site is linked to a Netlify project with Blobs enabled.
-    console.error(
-      "[hawkeye] Netlify Blobs unavailable — falling back to in-memory storage.",
-      "Issued keys, rate-limit counters and enrolled subjects will not persist.",
-      err,
-    );
+    // Silent fallback would hide a Netlify Blobs outage from ops — the
+    // in-memory store happily accepts writes that vanish on the next
+    // cold-start. Log loudly so monitoring catches it; local dev still
+    // gets a usable store because the catch branch is only reached
+    // outside a Netlify context (where getNetlifyStore throws).
     cached = buildMemoryStore();
+    usingInMemoryFallback = true;
+    const detail = err instanceof Error ? err.message : String(err);
+    const isNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
+    if (isNetlify) {
+      console.error(
+        `[store] Netlify Blobs unavailable — falling back to in-memory store. ` +
+          `Writes will be lost on cold-start. Reason: ${detail}`,
+      );
+    } else {
+      console.warn(
+        `[store] Netlify Blobs not configured (dev mode) — using in-memory store.`,
+      );
+    }
     return cached;
   }
+}
+
+/** True when the current process is operating without persistent storage.
+ *  Used by /api/status to downgrade to "degraded" when running a Netlify
+ *  deploy without a Blobs binding. */
+export function isInMemoryFallback(): boolean {
+  return usingInMemoryFallback;
 }
 
 export async function getJson<T>(key: string): Promise<T | null> {

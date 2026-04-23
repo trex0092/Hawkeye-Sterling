@@ -44,6 +44,8 @@ interface RowResult {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  // Batch is the single highest-cost endpoint (500 rows × brain
+  // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -51,24 +53,27 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
   }
   if (!Array.isArray(body?.rows)) {
     return NextResponse.json(
       { ok: false, error: "rows must be an array" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (body.rows.length === 0) {
     return NextResponse.json(
       { ok: false, error: "rows is empty" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (body.rows.length > 500) {
     return NextResponse.json(
       { ok: false, error: "batch size exceeds 500-row limit" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -91,9 +96,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         continue;
       }
       const t0 = Date.now();
+      // Validate alias elements — drop non-string entries to prevent type confusion.
+      const cleanAliases = Array.isArray(row.aliases)
+        ? (row.aliases as unknown[]).filter((a): a is string => typeof a === "string")
+        : [];
       const subject = {
         name: row.name.trim(),
-        ...(row.aliases && row.aliases.length ? { aliases: row.aliases } : {}),
+        ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
         ...(row.entityType ? { entityType: row.entityType } : {}),
         ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
       };
@@ -147,5 +156,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     totalDurationMs: Date.now() - started,
   };
 
-  return NextResponse.json({ ok: true, summary, results });
+  return NextResponse.json(
+    { ok: true, summary, results },
+    { headers: gate.headers },
+  );
 }
