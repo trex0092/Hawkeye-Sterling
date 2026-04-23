@@ -306,9 +306,24 @@
             "id": "legal_criminal_regulatory",
             "displayName": "Legal, Criminal & Regulatory Proceedings",
             "keywordCount": 122
+          },
+          {
+            "id": "esg",
+            "displayName": "ESG & Responsible-Sourcing Controversies",
+            "keywordCount": 37
+          },
+          {
+            "id": "cybercrime",
+            "displayName": "Cybercrime & Digital-Asset Abuse",
+            "keywordCount": 47
+          },
+          {
+            "id": "ai",
+            "displayName": "AI-Enabled Risk & Synthetic-Media Abuse",
+            "keywordCount": 31
           }
         ],
-        "totalKeywords": 416,
+        "totalKeywords": 531,
         "queryLength": 1353
       },
       "doctrines": {
@@ -653,7 +668,7 @@
         "typologies": 41,
         "redFlags": 21,
         "redFlagsExtended": 45,
-        "adverseMediaCategories": 5,
+        "adverseMediaCategories": 8,
         "metaCognition": 25
       },
       "regulatory": {
