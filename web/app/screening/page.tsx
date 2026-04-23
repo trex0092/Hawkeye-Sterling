@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ScreeningHero } from "@/components/screening/ScreeningHero";
@@ -12,7 +12,7 @@ import {
   type ScreeningFormData,
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
-import type { FilterKey, Subject } from "@/lib/types";
+import type { CDDPosture, FilterKey, QueueFilter, SortKey, Subject } from "@/lib/types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 const CRITICAL_THRESHOLD = 85;
@@ -26,9 +26,22 @@ function parseSlaHours(sla: string): number {
   return hours + minutes / 60;
 }
 
+// Parse DD/MM/YYYY → Date
+function parseOpenedDate(s: string): Date {
+  const parts = s.split("/");
+  if (parts.length !== 3) return new Date(0);
+  const [dd, mm, yyyy] = parts;
+  return new Date(
+    Number(yyyy),
+    Number(mm) - 1,
+    Number(dd),
+  );
+}
+
 const SANCTIONS_KEYWORDS = /ofac|sdn|un\b|eu\b|ofsi|eocn|sanction|cahra/i;
 
 function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
+  const now = Date.now();
   switch (filter) {
     case "critical":
       return subjects.filter((s) => s.riskScore >= CRITICAL_THRESHOLD);
@@ -43,13 +56,40 @@ function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
     case "sla":
       return subjects.filter((s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H);
     case "a24":
-      return [];
+      // Subjects opened within the last 24 hours
+      return subjects.filter((s) => {
+        const opened = parseOpenedDate(s.openedAgo);
+        return now - opened.getTime() <= 24 * 60 * 60 * 1000;
+      });
     case "closed":
       return subjects.filter((s) => s.status === "cleared");
     case "all":
     default:
-      return subjects;
+      return subjects.filter((s) => s.status !== "cleared");
   }
+}
+
+function sortSubjects(
+  subjects: Subject[],
+  key: SortKey,
+  dir: "asc" | "desc",
+): Subject[] {
+  const sign = dir === "asc" ? 1 : -1;
+  return [...subjects].sort((a, b) => {
+    switch (key) {
+      case "riskScore":
+        return sign * (a.riskScore - b.riskScore);
+      case "slaNotify":
+        return sign * (parseSlaHours(a.slaNotify) - parseSlaHours(b.slaNotify));
+      case "status":
+        return sign * a.status.localeCompare(b.status);
+      case "cddPosture":
+        return sign * a.cddPosture.localeCompare(b.cddPosture);
+      case "name":
+      default:
+        return sign * a.name.localeCompare(b.name);
+    }
+  });
 }
 
 function nextSubjectId(existing: Subject[]): string {
@@ -72,9 +112,14 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
       : (data.registeredCountry ?? "—");
   const metaBits: string[] = [];
   if (data.group) metaBits.push(data.group);
+  if (data.riskCategory) metaBits.push(data.riskCategory);
   if (data.alternateNames.length > 0)
     metaBits.push(`aliases: ${data.alternateNames.join(", ")}`);
   if (data.ongoingScreening) metaBits.push("ongoing screening ON");
+
+  const entityLabel = data.entityType === "individual" ? "Individual" : "Corporate";
+  const relationLabel = data.relationshipType || (data.entityType === "individual" ? "UBO" : "Supplier");
+
   return {
     id,
     badge: badgeNum,
@@ -84,16 +129,18 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     meta: metaBits.join(" · ") || "new subject",
     country: country.toUpperCase().slice(0, 20),
     jurisdiction: country.toUpperCase().slice(0, 6),
-    type: data.entityType === "individual" ? "Individual · UBO" : "Corporate · Supplier",
+    type: `${entityLabel} · ${relationLabel}` as Subject["type"],
     entityType: data.entityType,
     riskScore: 0,
     status: "active",
-    cddPosture: "CDD",
+    cddPosture: (data.cddPosture ?? "CDD") as CDDPosture,
     listCoverage: [],
     exposureAED: "0",
     slaNotify: "+72h 00m",
     mostSerious: "—",
     openedAgo: formatDDMMYY(new Date()),
+    ...(data.notes ? { notes: data.notes } : {}),
+    ...(data.riskCategory ? { riskCategory: data.riskCategory } : {}),
   };
 }
 
@@ -136,6 +183,49 @@ function formatDDMMYY(d: Date): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+function computeDynamicFilters(subjects: Subject[]): QueueFilter[] {
+  const now = Date.now();
+  return QUEUE_FILTERS.map((f) => {
+    let count: number;
+    switch (f.key) {
+      case "all":
+        count = subjects.filter((s) => s.status !== "cleared").length;
+        break;
+      case "critical":
+        count = subjects.filter((s) => s.riskScore >= CRITICAL_THRESHOLD).length;
+        break;
+      case "sanctions":
+        count = subjects.filter(
+          (s) => SANCTIONS_KEYWORDS.test(s.meta) || s.listCoverage.length >= 4,
+        ).length;
+        break;
+      case "edd":
+        count = subjects.filter((s) => s.cddPosture === "EDD").length;
+        break;
+      case "pep":
+        count = subjects.filter((s) => /PEP/i.test(s.meta)).length;
+        break;
+      case "sla":
+        count = subjects.filter(
+          (s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H,
+        ).length;
+        break;
+      case "a24":
+        count = subjects.filter((s) => {
+          const opened = parseOpenedDate(s.openedAgo);
+          return now - opened.getTime() <= 24 * 60 * 60 * 1000;
+        }).length;
+        break;
+      case "closed":
+        count = subjects.filter((s) => s.status === "cleared").length;
+        break;
+      default:
+        count = 0;
+    }
+    return { ...f, count: String(count).padStart(2, "0") };
+  });
+}
+
 export default function ScreeningPage() {
   const [subjects, setSubjects] = useState<Subject[]>(SUBJECTS);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
@@ -144,19 +234,29 @@ export default function ScreeningPage() {
     SUBJECTS[0]?.id ?? null,
   );
   const [formOpen, setFormOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("riskScore");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [statusFilter, setStatusFilter] = useState<Subject["status"] | "all">("all");
 
   const deferredQuery = useDeferredValue(query);
 
+  const dynamicFilters = useMemo(() => computeDynamicFilters(subjects), [subjects]);
+
   const filtered = useMemo(() => {
-    const filteredByKey = applyFilter(subjects, activeFilter);
+    let list = applyFilter(subjects, activeFilter);
+    if (statusFilter !== "all") {
+      list = list.filter((s) => s.status === statusFilter);
+    }
     const q = deferredQuery.trim().toLowerCase();
-    if (!q) return filteredByKey;
-    return filteredByKey
-      .map((s) => ({ s, score: searchScore(s, q) }))
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(({ s }) => s);
-  }, [subjects, activeFilter, deferredQuery]);
+    if (q) {
+      return list
+        .map((s) => ({ s, score: searchScore(s, q) }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ s }) => s);
+    }
+    return sortSubjects(list, sortKey, sortDir);
+  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -168,24 +268,32 @@ export default function ScreeningPage() {
     [subjects],
   );
 
+  const handleSortChange = useCallback((key: SortKey) => {
+    setSortKey((prev) => {
+      if (prev === key) {
+        setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return prev;
+      }
+      setSortDir("desc");
+      return key;
+    });
+  }, []);
+
+  const handleUpdateSubject = useCallback((id: string, update: Partial<Subject>) => {
+    setSubjects((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...update } : s)),
+    );
+  }, []);
+
   const handleSubmit = (data: ScreeningFormData, screen: boolean) => {
-    // Build the subject from the current render-phase snapshot. Safe for a
-    // user-triggered action: `subjects` is fresh. Moving construction outside
-    // the state-updater makes the updater pure and prevents double-invocation
-    // side-effects in React 18 Strict Mode (calling setState inside a setState
-    // updater is an impurity that React may invoke twice in development).
     const subject = buildSubject(data, subjects);
     setSubjects((prev) => [subject, ...prev]);
-    setSelectedId(subject.id);
+    if (screen) {
+      // Screen: auto-select to immediately trigger brain panels
+      setSelectedId(subject.id);
+    }
     setFormOpen(false);
-    // If the operator left "Ongoing screening" ON (default), persist the
-    // subject server-side so the twice-daily Netlify Scheduled Function
-    // reruns the brain and fires delta alerts.
     if (data.ongoingScreening) {
-      // Best-effort enrolment — fetchJson handles cold-start 502s with
-      // 3 retries × 750ms before giving up. We still don't surface a
-      // failure to the operator (the subject is on the queue regardless),
-      // but we no longer leak a raw fetch reject into the console.
       void fetchJson("/api/ongoing", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -201,7 +309,6 @@ export default function ScreeningPage() {
         label: "Ongoing enrolment failed",
       });
     }
-    void screen;
   };
 
   const handleDelete = (id: string) => {
@@ -218,30 +325,43 @@ export default function ScreeningPage() {
   const slaCount = subjects.filter(
     (s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H,
   ).length;
+  const avgRisk =
+    subjects.length > 0
+      ? Math.round(subjects.reduce((sum, s) => sum + s.riskScore, 0) / subjects.length)
+      : 0;
 
   return (
     <>
       <Header />
       <div
         className="grid min-h-[calc(100vh-54px)]"
-        style={{ gridTemplateColumns: selected && !formOpen ? "220px 1fr 360px" : "220px 1fr" }}
+        style={{
+          gridTemplateColumns:
+            selected && !formOpen ? "220px 1fr 380px" : "220px 1fr",
+        }}
       >
         <Sidebar
-          filters={QUEUE_FILTERS}
+          filters={dynamicFilters}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />
 
         <main className="bg-bg-0 px-10 py-8 overflow-y-auto">
           <ScreeningHero
-            inQueue={subjects.length}
+            inQueue={subjects.filter((s) => s.status !== "cleared").length}
             critical={criticalCount}
             slaRisk={slaCount}
+            avgRisk={avgRisk}
           />
           <ScreeningToolbar
             query={query}
             onQueryChange={setQuery}
             onNewScreening={() => setFormOpen((o) => !o)}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSortChange={handleSortChange}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
           />
           {formOpen && (
             <div className="mb-6">
@@ -258,10 +378,18 @@ export default function ScreeningPage() {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onDelete={handleDelete}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSortChange={handleSortChange}
           />
         </main>
 
-        {selected && !formOpen && <SubjectDetailPanel subject={selected} />}
+        {selected && !formOpen && (
+          <SubjectDetailPanel
+            subject={selected}
+            onUpdate={handleUpdateSubject}
+          />
+        )}
       </div>
     </>
   );

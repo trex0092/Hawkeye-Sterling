@@ -1,15 +1,32 @@
 "use client";
 
-import type { SanctionSource, Subject } from "@/lib/types";
+import type { CDDPosture, SanctionSource, SortKey, Subject, SubjectStatus } from "@/lib/types";
 
 interface ScreeningTableProps {
   subjects: Subject[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onSortChange: (key: SortKey) => void;
 }
 
-export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: ScreeningTableProps) {
+function parseSlaHours(sla: string): number {
+  const match = sla.match(/\+?(\d+)h\s*(\d+)?m?/);
+  if (!match || match[1] === undefined) return 999;
+  return Number.parseInt(match[1], 10) + (match[2] ? Number.parseInt(match[2], 10) / 60 : 0);
+}
+
+export function ScreeningTable({
+  subjects,
+  selectedId,
+  onSelect,
+  onDelete,
+  sortKey,
+  sortDir,
+  onSortChange,
+}: ScreeningTableProps) {
   return (
     <div className="bg-white border border-hair-2 rounded-xl overflow-hidden">
       <table className="w-full border-collapse text-12.5">
@@ -18,14 +35,47 @@ export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: Scr
             <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-[50px]">
               ID
             </th>
+            <SortableTh
+              label="Subject"
+              colKey="name"
+              activeKey={sortKey}
+              dir={sortDir}
+              onSort={onSortChange}
+            />
+            <SortableTh
+              label="Risk"
+              colKey="riskScore"
+              activeKey={sortKey}
+              dir={sortDir}
+              onSort={onSortChange}
+              className="w-[90px]"
+            />
+            <SortableTh
+              label="Status"
+              colKey="status"
+              activeKey={sortKey}
+              dir={sortDir}
+              onSort={onSortChange}
+              className="w-[80px]"
+            />
+            <SortableTh
+              label="CDD"
+              colKey="cddPosture"
+              activeKey={sortKey}
+              dir={sortDir}
+              onSort={onSortChange}
+              className="w-[60px]"
+            />
+            <SortableTh
+              label="SLA"
+              colKey="slaNotify"
+              activeKey={sortKey}
+              dir={sortDir}
+              onSort={onSortChange}
+              className="w-[70px]"
+            />
             <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
-              Subject
-            </th>
-            <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
-              Type
-            </th>
-            <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
-              List coverage
+              Lists
             </th>
             <th className="w-[40px]" aria-label="Actions" />
           </tr>
@@ -34,6 +84,7 @@ export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: Scr
           {subjects.map((subject, idx) => {
             const isLast = idx === subjects.length - 1;
             const isSelected = subject.id === selectedId;
+            const slh = parseSlaHours(subject.slaNotify);
             return (
               <tr
                 key={subject.id}
@@ -47,12 +98,22 @@ export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: Scr
                   <div className="font-medium text-ink-0 text-12.5">{subject.name}</div>
                   <div className="text-11 text-ink-2 mt-0.5 leading-snug">
                     {subject.country}
-                    <br />
-                    {subject.meta}
+                    {subject.meta && subject.meta !== "new subject" && (
+                      <> · {subject.meta.slice(0, 40)}{subject.meta.length > 40 ? "…" : ""}</>
+                    )}
                   </div>
                 </td>
                 <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <div className="text-11 text-ink-2">{subject.type}</div>
+                  <RiskCell score={subject.riskScore} />
+                </td>
+                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                  <StatusBadge status={subject.status} />
+                </td>
+                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                  <CddBadge posture={subject.cddPosture} />
+                </td>
+                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                  <SlaBadge hours={slh} raw={subject.slaNotify} />
                 </td>
                 <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
                   <div className="flex flex-wrap gap-1">
@@ -79,7 +140,7 @@ export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: Scr
           })}
           {subjects.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-6 py-10 text-center text-12 text-ink-2">
+              <td colSpan={8} className="px-6 py-10 text-center text-12 text-ink-2">
                 No screenings yet — click{" "}
                 <span className="font-semibold text-ink-0">+ New screening</span> to add a
                 subject.
@@ -90,6 +151,106 @@ export function ScreeningTable({ subjects, selectedId, onSelect, onDelete }: Scr
       </table>
     </div>
   );
+}
+
+function SortableTh({
+  label,
+  colKey,
+  activeKey,
+  dir,
+  onSort,
+  className = "",
+}: {
+  label: string;
+  colKey: SortKey;
+  activeKey: SortKey;
+  dir: "asc" | "desc";
+  onSort: (k: SortKey) => void;
+  className?: string;
+}) {
+  const active = colKey === activeKey;
+  return (
+    <th
+      className={`text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 cursor-pointer select-none hover:text-ink-0 ${className}`}
+      onClick={() => onSort(colKey)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        <span className={`text-10 ${active ? "text-brand" : "text-ink-3"}`}>
+          {active ? (dir === "asc" ? "↑" : "↓") : "↕"}
+        </span>
+      </span>
+    </th>
+  );
+}
+
+function RiskCell({ score }: { score: number }) {
+  const color =
+    score >= 85
+      ? "bg-red"
+      : score >= 60
+        ? "bg-orange"
+        : score >= 35
+          ? "bg-amber"
+          : "bg-green";
+  return (
+    <div>
+      <div className="flex items-baseline gap-1 mb-0.5">
+        <span className="font-mono text-12 font-semibold text-ink-0">{score}</span>
+        <span className="text-10 text-ink-3">/100</span>
+      </div>
+      <div className="h-1 w-14 bg-bg-2 rounded-sm overflow-hidden">
+        <div
+          className={`h-full ${color} rounded-sm`}
+          style={{ width: `${Math.min(score, 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: SubjectStatus }) {
+  const styles: Record<SubjectStatus, string> = {
+    active: "bg-green-dim text-green",
+    frozen: "bg-amber-dim text-amber",
+    cleared: "bg-blue-dim text-blue",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-10 font-medium tracking-wide-1 ${styles[status]}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function CddBadge({ posture }: { posture: CDDPosture }) {
+  const styles: Record<CDDPosture, string> = {
+    CDD: "bg-bg-2 text-ink-2",
+    EDD: "bg-orange-dim text-orange",
+    SDD: "bg-violet-dim text-violet",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-10 font-semibold ${styles[posture]}`}
+    >
+      {posture}
+    </span>
+  );
+}
+
+function SlaBadge({ hours, raw }: { hours: number; raw: string }) {
+  if (hours <= 0) {
+    return (
+      <span className="font-mono text-10 font-semibold text-red">BREACH</span>
+    );
+  }
+  if (hours <= 24) {
+    return (
+      <span className="font-mono text-10 font-semibold text-orange">{raw}</span>
+    );
+  }
+  return <span className="font-mono text-10 text-ink-2">{raw}</span>;
 }
 
 function Badge({ tone, label }: { tone: "violet" | "orange" | "dashed"; label: string }) {
