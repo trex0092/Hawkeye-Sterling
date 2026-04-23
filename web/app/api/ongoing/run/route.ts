@@ -103,8 +103,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         let asanaTaskUrl: string | undefined;
         if (newHits.length > 0) {
           try {
+            // Use an explicit, env-configured base URL rather than req.url to
+            // prevent SSRF via attacker-controlled Host headers.
+            const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
             const asanaRes = await fetch(
-              new URL("/api/screening-report", req.url).toString(),
+              new URL("/api/screening-report", appBase).toString(),
               {
                 method: "POST",
                 headers: { "content-type": "application/json" },

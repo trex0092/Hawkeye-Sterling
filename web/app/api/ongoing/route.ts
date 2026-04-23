@@ -18,6 +18,10 @@ interface EnrolledSubject {
 
 const MAX_NAME_LENGTH = 500;
 const MAX_ID_LENGTH = 128;
+// Allowlist for subject IDs used as blob store keys — prevent key-namespace
+// injection via path separators or special characters.
+const SAFE_ID_RE = /^[a-zA-Z0-9_\-.:]+$/;
+const ENTITY_TYPES = new Set(["individual", "organisation", "vessel", "aircraft", "other"]);
 
 async function handleGet(): Promise<NextResponse> {
   const keys = await listKeys("ongoing/subject/");
@@ -33,8 +37,8 @@ async function handlePost(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
-  if (!body?.id || typeof body.id !== "string" || body.id.length > MAX_ID_LENGTH) {
-    return NextResponse.json({ ok: false, error: "id required (string, max 128 chars)" }, { status: 400 });
+  if (!body?.id || typeof body.id !== "string" || body.id.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(body.id)) {
+    return NextResponse.json({ ok: false, error: "id required (alphanumeric/._-:, max 128 chars)" }, { status: 400 });
   }
   if (!body?.name || typeof body.name !== "string" || !body.name.trim() || body.name.length > MAX_NAME_LENGTH) {
     return NextResponse.json({ ok: false, error: "name required (string, max 500 chars)" }, { status: 400 });
@@ -43,6 +47,9 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const aliases = Array.isArray(body.aliases)
     ? (body.aliases as unknown[]).filter((a): a is string => typeof a === "string")
     : undefined;
+  if (body.entityType !== undefined && !ENTITY_TYPES.has(body.entityType)) {
+    return NextResponse.json({ ok: false, error: "entityType must be one of: individual, organisation, vessel, aircraft, other" }, { status: 400 });
+  }
   const record: EnrolledSubject = {
     id: body.id,
     name: body.name.trim(),
@@ -60,8 +67,8 @@ async function handlePost(req: Request): Promise<NextResponse> {
 async function handleDelete(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
-  if (!id || id.length > MAX_ID_LENGTH) {
-    return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  if (!id || id.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(id)) {
+    return NextResponse.json({ ok: false, error: "id required (alphanumeric/._-:, max 128 chars)" }, { status: 400 });
   }
   await del(`ongoing/subject/${id}`);
   await del(`ongoing/last/${id}`);

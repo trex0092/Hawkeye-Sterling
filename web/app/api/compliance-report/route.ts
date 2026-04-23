@@ -30,7 +30,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     status: 200,
     headers: {
       "content-type": "text/plain; charset=utf-8",
-      "content-disposition": `attachment; filename="hawkeye-report-${body.subject.id ?? "unknown"}.txt"`,
+      "content-disposition": `attachment; filename="hawkeye-report-${(body.subject.id ?? "unknown").replace(/[^a-zA-Z0-9_\-.:]/g, "_")}.txt"`,
     },
   });
 }

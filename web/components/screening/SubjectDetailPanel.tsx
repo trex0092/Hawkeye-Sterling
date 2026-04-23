@@ -711,7 +711,7 @@ function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").Aut
       <span className={`${base} bg-green-dim text-green`}>
         <span>✓</span>
         Reported to Asana
-        {state.taskUrl && (
+        {state.taskUrl && /^https?:\/\//i.test(state.taskUrl) && (
           <a
             href={state.taskUrl}
             target="_blank"
@@ -1122,7 +1122,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
               <a
-                href={a.link}
+                href={/^https?:\/\//i.test(a.link) ? a.link : "#"}
                 target="_blank"
                 rel="noreferrer"
                 className="text-11 font-semibold text-ink-0 hover:text-brand leading-snug"
