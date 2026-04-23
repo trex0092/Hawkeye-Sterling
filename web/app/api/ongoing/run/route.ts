@@ -200,6 +200,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               ].join("\n"),
               projects: [escalationsProject],
               workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
+              assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
             },
           };
           const r = await fetch("https://app.asana.com/api/1.0/tasks", {
