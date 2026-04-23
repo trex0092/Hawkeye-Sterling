@@ -14,6 +14,8 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
+import { BrainRadar } from "@/components/screening/BrainRadar";
+import { BrainConfidence } from "@/components/screening/BrainConfidence";
 import {
   canPerform,
   loadOperatorRole,
@@ -1138,6 +1140,8 @@ function SuperBrainPanel({
   return (
     <Section title="Super brain">
       <BrainNarrative result={r} subjectName={subjectName} subjectId={subjectId} />
+      <BrainRadar result={r} />
+      <BrainConfidence result={r} />
       <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
           <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
