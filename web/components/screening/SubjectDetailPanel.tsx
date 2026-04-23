@@ -13,7 +13,11 @@ import type {
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
-import { appendCase, buildCaseRecord } from "@/lib/data/case-store";
+import {
+  appendCase,
+  attachEvidenceToSubject,
+  buildCaseRecord,
+} from "@/lib/data/case-store";
 
 const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
@@ -212,6 +216,19 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           statusDetail: `STR filed from screening panel`,
         }),
       );
+      // Snapshot the Asana task URL into the case's evidence vault
+      // the moment the case is created — the append above is sync so
+      // the attach runs against the freshly-written record.
+      const taskUrl = res.data.taskUrl;
+      attachEvidenceToSubject(subject.name, {
+        category: "four-eyes-approval",
+        title: "STR filed to STR/SAR board",
+        meta: new Date().toISOString(),
+        detail: taskUrl
+          ? `Asana task: ${taskUrl}`
+          : "Asana task created (URL not returned)",
+        timelineEvent: "STR filed to Asana STR/SAR board",
+      });
       showFlash("STR filed — draft in STR/SAR board");
     } else {
       showFlash(res.error ?? "STR filing failed");
@@ -250,6 +267,15 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       if (!opened) {
         showFlash("Pop-up blocked — allow pop-ups to download PDF");
       }
+      // Snapshot into the case's evidence vault so the regulator can
+      // replay exactly what the MLRO saw on disposition day.
+      attachEvidenceToSubject(subject.name, {
+        category: "screening-report",
+        title: "Compliance report (PDF)",
+        meta: new Date().toISOString(),
+        detail: `Generated for ${subject.name} (${subject.id}) via /api/compliance-report?format=html`,
+        timelineEvent: "Compliance report (PDF) generated",
+      });
     } catch (err) {
       showFlash(
         err instanceof Error && err.name === "AbortError"
@@ -315,6 +341,13 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       a.click();
       URL.revokeObjectURL(url);
       showFlash("goAML STR downloaded");
+      attachEvidenceToSubject(subject.name, {
+        category: "screening-report",
+        title: "goAML STR envelope (XML)",
+        meta: new Date().toISOString(),
+        detail: `goAML v4 STR XML generated for ${subject.name} (${subject.id})`,
+        timelineEvent: "goAML STR XML generated",
+      });
     } catch {
       showFlash("goAML request failed");
     }
@@ -433,6 +466,13 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         a.click();
         URL.revokeObjectURL(url);
         showFlash("Report downloaded");
+        attachEvidenceToSubject(subject.name, {
+          category: "screening-report",
+          title: "Compliance report (.txt)",
+          meta: new Date().toISOString(),
+          detail: `Plain-text MLRO dossier for ${subject.name} (${subject.id})`,
+          timelineEvent: "Compliance report (.txt) downloaded",
+        });
         return;
       } catch (err) {
         if (attempt < retries) {

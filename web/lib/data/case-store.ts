@@ -53,6 +53,74 @@ export function deleteCase(id: string): void {
   saveCases(existing.filter((c) => c.id !== id));
 }
 
+import type { EvidenceCategory } from "@/lib/types";
+
+// Evidence-vault helper: attach a new evidence entry + audit-trail
+// event to an existing case, or to the most-recent case that matches
+// a subject name when the caller doesn't know the case ID yet.
+// Silently no-ops when the subject has no case yet — we don't want
+// to create cases from screening-side downloads.
+export interface EvidenceAttachInput {
+  category: EvidenceCategory;
+  title: string;
+  meta: string;
+  detail: string;
+  timelineEvent?: string;
+}
+
+function findCaseFor(subject: string): CaseRecord | null {
+  const all = loadCases();
+  const norm = subject.trim().toLowerCase();
+  return (
+    all.find((c) => c.subject.toLowerCase() === norm) ??
+    all.find((c) => c.subject.toLowerCase().includes(norm)) ??
+    null
+  );
+}
+
+export function attachEvidenceToSubject(
+  subject: string,
+  entry: EvidenceAttachInput,
+): void {
+  const target = findCaseFor(subject);
+  if (!target) return;
+  attachEvidenceToCase(target.id, entry);
+}
+
+export function attachEvidenceToCase(
+  caseId: string,
+  entry: EvidenceAttachInput,
+): void {
+  const all = loadCases();
+  const idx = all.findIndex((c) => c.id === caseId);
+  if (idx < 0) return;
+  const existing = all[idx]!;
+  const now = new Date();
+  const next: CaseRecord = {
+    ...existing,
+    evidenceCount: String(existing.evidence.length + 1).padStart(2, "0"),
+    lastActivity: "just now",
+    evidence: [
+      ...existing.evidence,
+      {
+        category: entry.category,
+        title: entry.title,
+        meta: entry.meta,
+        detail: entry.detail,
+      },
+    ],
+    timeline: [
+      ...existing.timeline,
+      {
+        timestamp: now.toISOString(),
+        event: entry.timelineEvent ?? `Evidence attached — ${entry.title}`,
+      },
+    ],
+  };
+  const updated = [...all.slice(0, idx), next, ...all.slice(idx + 1)];
+  saveCases(updated);
+}
+
 export interface NewCaseInput {
   subject: string;
   subjectJurisdiction?: string;
