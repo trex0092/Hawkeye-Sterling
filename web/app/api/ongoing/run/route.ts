@@ -60,34 +60,31 @@ function fingerprints(hits: LastHit[]): Set<string> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  // Bearer-token protection for manual invocations. In Netlify /
-  // production we scream if the token is missing so ops gets paged
-  // to fix the misconfig; in local dev we soft-allow.
+  // Bearer token protection. If ONGOING_RUN_TOKEN is not configured the
+  // endpoint is locked down entirely — a missing env var must not silently
+  // make this a public endpoint (Netlify cron jobs always inject the token).
   const expected = process.env["ONGOING_RUN_TOKEN"];
   if (!expected) {
-    if (process.env["NETLIFY"] || process.env["NODE_ENV"] === "production") {
-      console.error(
-        "[ongoing/run] ONGOING_RUN_TOKEN is not set — endpoint is PUBLIC. " +
-          "Set ONGOING_RUN_TOKEN in Netlify env vars to gate cron invocations.",
-      );
-    } else {
-      console.warn(
-        "[ongoing/run] ONGOING_RUN_TOKEN unset — accepting unauthenticated calls (dev mode).",
-      );
-    }
-  } else {
-    const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-    if (got !== expected) {
-      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-    }
+    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
+  }
+  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  // Timing-safe comparison — use TextEncoder for Uint8Array compatibility.
+  // Pad `got` to the expected length so timingSafeEqual always compares the
+  // same byte count; the length check ensures a shorter token still fails.
+  const { timingSafeEqual } = await import("crypto");
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(expected);
+  const gotRaw = enc.encode(got);
+  const gotBuf = new Uint8Array(expBuf.length); // zero-padded
+  gotBuf.set(gotRaw.slice(0, expBuf.length));
+  if (got.length !== expected.length || !timingSafeEqual(expBuf, gotBuf)) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   const keys = await listKeys("ongoing/subject/");
-  const subjects: EnrolledSubject[] = [];
-  for (const key of keys) {
-    const s = await getJson<EnrolledSubject>(key);
-    if (s) subjects.push(s);
-  }
+  // Load subjects in parallel — sequential awaits would time out for large portfolios.
+  const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
+  const subjects: EnrolledSubject[] = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
 
   const runAt = new Date().toISOString();
   const results: Array<{
@@ -157,11 +154,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       // flooding the board on every rerun.
       if (newHits.length > 0) {
         try {
+          // Use an explicit, env-configured base URL rather than req.url to
+          // prevent SSRF via attacker-controlled Host headers.
+          const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
           const asanaRes = await fetch(
-            new URL(
-              "/api/screening-report",
-              req.url,
-            ).toString(),
+            new URL("/api/screening-report", appBase).toString(),
             {
               method: "POST",
               headers: { "content-type": "application/json" },

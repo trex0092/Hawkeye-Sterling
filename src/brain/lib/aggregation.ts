@@ -74,13 +74,16 @@ export function dsCombineAll(masses: ReadonlyArray<DSMass>): { fused: DSMass; co
 export function multiSourceConsistency(verdicts: ReadonlyArray<'yes' | 'no' | 'unknown'>): {
   agreement: number; dominant: 'yes' | 'no' | 'unknown' | 'split'; yes: number; no: number; unknown: number;
 } {
+  if (verdicts.length === 0) {
+    return { agreement: 0, dominant: 'unknown', yes: 0, no: 0, unknown: 0 };
+  }
   let yes = 0, no = 0, unk = 0;
   for (const v of verdicts) {
     if (v === 'yes') yes++;
     else if (v === 'no') no++;
     else unk++;
   }
-  const total = verdicts.length || 1;
+  const total = verdicts.length;
   const py = yes / total, pn = no / total, pu = unk / total;
   const H = -(safeXlogx(py) + safeXlogx(pn) + safeXlogx(pu));
   const maxH = Math.log2(3);

@@ -30,6 +30,8 @@ interface QuickScreenRequestBody {
   options?: QuickScreenOptions;
 }
 
+const MAX_CANDIDATES = 5_000;
+
 function respond(
   status: number,
   body: QuickScreenResponse,
@@ -59,6 +61,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return respond(
       400,
       { ok: false, error: "candidates must be an array" },
+      gate.headers,
+    );
+  }
+  if (candidates.length > MAX_CANDIDATES) {
+    return respond(
+      400,
+      { ok: false, error: `candidates exceeds ${MAX_CANDIDATES}-entry limit` },
       gate.headers,
     );
   }

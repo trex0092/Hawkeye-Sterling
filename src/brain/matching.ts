@@ -102,7 +102,8 @@ export function jaro(a: string, b: string): number {
   let k = 0;
   for (let i = 0; i < m; i++) {
     if (!sFlags[i]) continue;
-    while (!tFlags[k]) k++;
+    while (k < n && !tFlags[k]) k++;
+    if (k >= n) break;
     if (s.charCodeAt(i) !== t.charCodeAt(k)) transpositions++;
     k++;
   }
@@ -176,7 +177,7 @@ export function doubleMetaphone(input: string): { primary: string; alternate: st
   const len = s.length;
 
   const at = (n: number) => s.charAt(n);
-  const slice = (from: number, length: number) => s.substr(from, length);
+  const slice = (from: number, length: number) => s.slice(from, from + length);
   const isVowel = (c: string) => 'AEIOUY'.includes(c);
 
   while (i < len && (primary.length < 4 || alternate.length < 4)) {

@@ -96,9 +96,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         continue;
       }
       const t0 = Date.now();
+      // Validate alias elements — drop non-string entries to prevent type confusion.
+      const cleanAliases = Array.isArray(row.aliases)
+        ? (row.aliases as unknown[]).filter((a): a is string => typeof a === "string")
+        : [];
       const subject = {
         name: row.name.trim(),
-        ...(row.aliases && row.aliases.length ? { aliases: row.aliases } : {}),
+        ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
         ...(row.entityType ? { entityType: row.entityType } : {}),
         ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
       };

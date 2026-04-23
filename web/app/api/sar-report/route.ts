@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
@@ -64,7 +65,7 @@ interface Body {
   mlro?: string;
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+async function handleSarReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json(
@@ -266,6 +267,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       : {}),
   }, { status: 201 });
 }
+
+export const POST = withGuard(handleSarReport);
 
 function autoNarrative(body: Body): string {
   const bits: string[] = [];

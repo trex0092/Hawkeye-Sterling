@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import {
   buildWeaponizedBrainManifest,
   weaponizedIntegrity,
@@ -104,20 +105,19 @@ function enhance() {
   };
 }
 
-export async function GET(): Promise<NextResponse> {
+async function handleWeaponizedBrain(): Promise<NextResponse> {
   try {
     const manifest = buildWeaponizedBrainManifest();
     const integrity = weaponizedIntegrity();
     const enhanced = enhance();
     return NextResponse.json({ ok: true, manifest, integrity, enhanced });
   } catch (err) {
+    console.error("[weaponized-brain]", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      {
-        ok: false,
-        error: "failed to load weaponized brain",
-        detail: err instanceof Error ? err.message : String(err),
-      },
+      { ok: false, error: "failed to load weaponized brain" },
       { status: 500 },
     );
   }
 }
+
+export const GET = withGuard(handleWeaponizedBrain);

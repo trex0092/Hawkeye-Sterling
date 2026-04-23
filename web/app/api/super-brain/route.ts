@@ -86,9 +86,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
-  if (!body?.subject?.name) {
+  if (!body?.subject?.name || body.subject.name.length > 500) {
     return NextResponse.json(
-      { ok: false, error: "subject.name required" },
+      { ok: false, error: "subject.name required (max 500 chars)" },
       { status: 400, headers: gate.headers },
     );
   }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import {
   buildComplianceReport,
   type ReportInput,
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 // Body: { subject, result, superBrain?, reportingEntity?, mlro? }
 // Returns text/plain — the Hawkeye Sterling MLRO report, generated
 // strictly from the payload (no invented facts, no narrative hallucinations).
+
 // Strip characters that would let a caller inject response headers or
 // break the filename quoting. Subject IDs are user-controlled; without
 // this, "HS-10\r\nX-Evil: 1" in the body would split the header.
@@ -19,7 +21,7 @@ function safeFilenameSegment(s: string | undefined | null): string {
   return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64) || "unknown";
 }
 
-export async function POST(req: Request): Promise<Response> {
+async function handleComplianceReport(req: Request): Promise<Response> {
   let body: ReportInput;
   try {
     body = (await req.json()) as ReportInput;
@@ -51,3 +53,5 @@ export async function POST(req: Request): Promise<Response> {
     },
   });
 }
+
+export const POST = withGuard(handleComplianceReport);
