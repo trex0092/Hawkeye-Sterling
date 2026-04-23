@@ -35,6 +35,26 @@ export async function enforce(
   const plaintext = extractKey(req);
   const anonymous = plaintext === null;
 
+  // Portal bypass: if the caller presents ADMIN_TOKEN (set as
+  // NEXT_PUBLIC_ADMIN_TOKEN in the browser bundle) skip API-key lookup
+  // and grant enterprise-tier rate limits without consuming monthly quota.
+  // This lets the portal UI call every gated route without per-page token
+  // management, while ADMIN_TOKEN itself never leaves the server env var.
+  const adminToken = process.env["ADMIN_TOKEN"];
+  if (adminToken && plaintext === adminToken) {
+    const rl = await consumeRateLimit("portal_admin", "enterprise");
+    if (!rl.allowed) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "rate limit exceeded", retryAfterSec: rl.retryAfterSec },
+          { status: 429, headers: rateLimitHeaders(rl) },
+        ),
+      };
+    }
+    return { ok: true, tier: rl.tier, keyId: "portal_admin", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+  }
+
   if (anonymous && opts.requireAuth) {
     return {
       ok: false,
