@@ -53,8 +53,10 @@ export interface PEPAssessment {
   riskScore: number;  // 0..1
 }
 
+const MAX_PEP_CHARS = 50_000;
+
 export function assessPEP(freeText: string, subjectName = ''): PEPAssessment {
-  const haystack = `${subjectName}\n${freeText}`;
+  const haystack = `${subjectName}\n${freeText}`.slice(0, MAX_PEP_CHARS);
   const matched: PEPAssessment['matchedRoles'] = [];
   for (const rm of ROLE_MATCHERS) {
     const m = rm.pattern.exec(haystack);
