@@ -190,7 +190,7 @@ export default function WorkbenchPage() {
           onFilterChange={setActiveFilter}
         />
 
-        <main className="bg-bg-0 px-10 py-8 overflow-y-auto">
+        <main className="px-10 py-8 overflow-y-auto">
           <WorkbenchHero />
 
           {/* Subject name input */}

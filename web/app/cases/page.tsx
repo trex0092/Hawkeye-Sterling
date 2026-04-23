@@ -126,7 +126,7 @@ export default function CasesPage() {
           onFilterChange={setActiveFilter}
         />
 
-        <main className="bg-bg-0 px-10 py-8 overflow-y-auto">
+        <main className="px-10 py-8 overflow-y-auto">
           <CasesHero />
           <CasesToolbar query={query} onQueryChange={setQuery} />
           <CasesTable

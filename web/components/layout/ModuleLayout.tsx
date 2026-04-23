@@ -72,8 +72,8 @@ export function ModuleLayout<K extends string = string>({
         <main
           className={
             narrow
-              ? "bg-bg-0 overflow-y-auto"
-              : "bg-bg-0 px-10 py-8 overflow-y-auto"
+              ? "overflow-y-auto"
+              : "px-10 py-8 overflow-y-auto"
           }
         >
           {children}

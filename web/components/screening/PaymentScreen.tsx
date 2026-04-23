@@ -86,9 +86,13 @@ export function PaymentScreen() {
   const screen = async () => {
     setLoading(true);
     try {
+      const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
       const res = await fetch("/api/payment-screen", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+        },
         body: JSON.stringify({ message }),
       });
       const payload = (await res.json()) as PaymentVerdict;
