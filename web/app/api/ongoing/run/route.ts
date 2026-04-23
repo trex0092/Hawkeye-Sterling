@@ -204,6 +204,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       let escalationSkipReason: string | undefined;
       const escalationsProject = process.env["ASANA_ESCALATIONS_PROJECT_GID"];
       const asanaToken = process.env["ASANA_TOKEN"];
+      // Keep our branch's detailed skip-reason logging (so ops sees WHY an
+      // escalation was dropped) AND pick up the assignee field that main
+      // added — every Asana task now lands on Luisa's queue by default
+      // via ASANA_ASSIGNEE_GID (overridable via env).
       if (escalated) {
         if (!asanaToken) {
           escalationSkipReason = "ASANA_TOKEN not set";
@@ -232,6 +236,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                 ].join("\n"),
                 projects: [escalationsProject],
                 workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
+                assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
               },
             };
             const r = await fetch("https://app.asana.com/api/1.0/tasks", {
@@ -243,7 +248,10 @@ export async function POST(req: Request): Promise<NextResponse> {
               body: JSON.stringify(body),
             });
             const data = (await r.json().catch(() => null)) as
-              | { data?: { gid?: string; permalink_url?: string }; errors?: Array<{ message?: string }> }
+              | {
+                  data?: { gid?: string; permalink_url?: string };
+                  errors?: Array<{ message?: string }>;
+                }
               | null;
             if (data?.data?.permalink_url) {
               escalationTaskUrl = data.data.permalink_url;

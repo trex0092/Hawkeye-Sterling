@@ -139,19 +139,19 @@ export default function ScreeningPage() {
   );
 
   const handleSubmit = (data: ScreeningFormData, screen: boolean) => {
-    let createdSubject: Subject | null = null;
-    setSubjects((prev) => {
-      const subject = buildSubject(data, prev);
-      createdSubject = subject;
-      setSelectedId(subject.id);
-      return [subject, ...prev];
-    });
+    // Build the subject from the current render-phase snapshot. Safe for a
+    // user-triggered action: `subjects` is fresh. Moving construction outside
+    // the state-updater makes the updater pure and prevents double-invocation
+    // side-effects in React 18 Strict Mode (calling setState inside a setState
+    // updater is an impurity that React may invoke twice in development).
+    const subject = buildSubject(data, subjects);
+    setSubjects((prev) => [subject, ...prev]);
+    setSelectedId(subject.id);
     setFormOpen(false);
     // If the operator left "Ongoing screening" ON (default), persist the
     // subject server-side so the twice-daily Netlify Scheduled Function
     // reruns the brain and fires delta alerts.
-    if (data.ongoingScreening && createdSubject) {
-      const subject = createdSubject as Subject;
+    if (data.ongoingScreening) {
       // Best-effort enrolment — fetchJson handles cold-start 502s with
       // 3 retries × 750ms before giving up. We still don't surface a
       // failure to the operator (the subject is on the queue regardless),

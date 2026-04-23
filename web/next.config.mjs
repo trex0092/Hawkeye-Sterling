@@ -34,19 +34,26 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: path.join(__dirname, ".."),
     outputFileTracingIncludes: {
-      "/**/*": [
+      // Compiled brain is only needed by API routes that import from dist/.
+      "/api/**/*": [
         "../dist/**/*.js",
+        // web/lib/server/store.ts dynamically requires @netlify/blobs at
+        // first call. Without an explicit trace include the serverless
+        // function silently falls back to in-memory storage — subjects
+        // enrolled via /api/ongoing would vanish on the next cold-start.
+        "./node_modules/@netlify/blobs/**/*",
+      ],
+      // styled-jsx + the React / Next server runtime are dynamically
+      // required by next/dist/server/require-hook.js via string literals
+      // on EVERY server-rendered route, so the static file tracer never
+      // picks them up. Explicitly include them for every route (both
+      // pages and API) so the Lambda bundle is self-contained.
+      "/**": [
         "./node_modules/styled-jsx/**/*",
         "./node_modules/next/dist/compiled/**/*",
         "./node_modules/next/dist/server/**/*",
         "./node_modules/react/**/*",
         "./node_modules/react-dom/**/*",
-        // Every API route goes through web/lib/server/store.ts which
-        // dynamically requires @netlify/blobs at first call. Without
-        // an explicit trace include, the serverless function silently
-        // falls back to in-memory storage — subjects enrolled via
-        // /api/ongoing would vanish on the next cold-start.
-        "./node_modules/@netlify/blobs/**/*",
       ],
     },
   },

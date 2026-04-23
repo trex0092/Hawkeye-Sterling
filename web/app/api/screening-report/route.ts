@@ -5,10 +5,13 @@ import { postWebhook } from "@/lib/server/webhook";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Luisa's Asana project — "01 · Screening - Sanctions & Adverse Media".
-// Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID env vars.
-const DEFAULT_PROJECT_GID = "1214148660020527";
+// MLRO triage inbox — "00 · Master Inbox". All form submissions land here
+// first; MLRO routes them to downstream Projects 01–19.
+// Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID / ASANA_ASSIGNEE_GID
+// env vars in Netlify → Site settings → Environment variables.
+const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
+const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda — primary MLRO
 
 interface ReportHit {
   listId: string;
@@ -157,6 +160,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           notes,
           projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
           workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
+          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
         },
       }),
     });
@@ -201,7 +205,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       generatedAt: body.result.generatedAt,
       source: "hawkeye-sterling",
     });
-    return respond(200, {
+    return respond(201, {
       ok: true,
       taskGid: payload.data.gid,
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
