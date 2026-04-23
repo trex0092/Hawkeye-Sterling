@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 interface RowResult {
   name: string;
@@ -220,24 +221,29 @@ export default function BatchPage() {
   const runBatch = async () => {
     if (rows.length === 0) return;
     setStatus({ kind: "loading" });
-    try {
-      const res = await fetch("/api/batch-screen", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ rows }),
-      });
-      const data = (await res.json()) as BatchResponse;
-      if (!data.ok) {
-        setStatus({ kind: "error", error: data.error ?? "unknown" });
-      } else {
-        setStatus({ kind: "done", resp: data });
-      }
-    } catch (err) {
+    // Retry-aware POST with the standard 3 × 750ms / 15s contract. A
+    // batch run is the most expensive endpoint we have so we rely on
+    // fetchJson's per-attempt timeout to bound a hung Netlify cold-start
+    // rather than freezing the operator on "loading…" forever.
+    const res = await fetchJson<BatchResponse>("/api/batch-screen", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rows }),
+      label: "Batch failed",
+      timeoutMs: 60_000, // batch runs can legitimately take longer
+    });
+    if (!res.ok) {
+      setStatus({ kind: "error", error: res.error ?? "Batch failed" });
+      return;
+    }
+    if (!res.data?.ok) {
       setStatus({
         kind: "error",
-        error: err instanceof Error ? err.message : String(err),
+        error: res.data?.error ?? "Batch failed malformed response",
       });
+      return;
     }
+    setStatus({ kind: "done", resp: res.data });
   };
 
   const downloadCsv = () => {

@@ -12,6 +12,8 @@ import type {
   QuickScreenResult,
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
+import { appendCase, buildCaseRecord } from "@/lib/data/case-store";
 
 const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
@@ -99,6 +101,25 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
     if (escalated) return;
     if (window.confirm(`Escalate ${subject.name} to MLRO?`)) {
       setEscalated(true);
+      // Persist the escalation as a case record so it lands on /cases
+      // under the "Awaiting MLRO" filter. Previously the click only
+      // toggled a local flag — operators saw nothing on the Cases page.
+      const composite =
+        superBrain.status === "success"
+          ? superBrain.result.composite.score
+          : screening.status === "success"
+            ? screening.result.topScore
+            : subject.riskScore;
+      appendCase(
+        buildCaseRecord({
+          subject: subject.name,
+          subjectJurisdiction: subject.country || subject.jurisdiction,
+          reportKind: "Escalation",
+          status: "review",
+          statusLabel: "Awaiting MLRO",
+          statusDetail: `Escalated from screening (composite ${composite}/100)`,
+        }),
+      );
       showFlash("Escalated to MLRO");
     }
   };
@@ -145,20 +166,32 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
       };
     }
-    try {
-      const res = await fetch("/api/sar-report", {
+    const res = await fetchJson<{ ok: boolean; taskUrl?: string }>(
+      "/api/sar-report",
+      {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
-      });
-      const data = (await res.json()) as { ok: boolean; taskUrl?: string };
-      if (data.ok) {
-        showFlash("STR filed — draft in STR/SAR board");
-      } else {
-        showFlash("STR filing failed");
-      }
-    } catch {
-      showFlash("STR filing failed");
+        label: "STR filing failed",
+      },
+    );
+    if (res.ok && res.data?.ok) {
+      // Persist the filing as a case record so /cases shows it under
+      // "Escalated to FIU" — MLRO sees the audit trail without leaving
+      // the screening panel.
+      appendCase(
+        buildCaseRecord({
+          subject: subject.name,
+          subjectJurisdiction: subject.country || subject.jurisdiction,
+          reportKind: "STR",
+          status: "reported",
+          statusLabel: "Submitted",
+          statusDetail: `STR filed from screening panel`,
+        }),
+      );
+      showFlash("STR filed — draft in STR/SAR board");
+    } else {
+      showFlash(res.error ?? "STR filing failed");
     }
   };
 
@@ -200,26 +233,59 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
             }
           : null,
     };
-    try {
-      const res = await fetch("/api/compliance-report", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        showFlash("Report failed");
+    // Compliance report returns a file blob, so we call fetch directly
+    // with a short retry loop rather than going through fetchJson (which
+    // is JSON-only). Mirrors the same 5xx / 750ms / 15s contract.
+    const retries = 3;
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 15_000);
+      try {
+        const res = await fetch("/api/compliance-report", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json, text/plain, */*",
+            "user-agent": "hawkeye-screening-client/1.0",
+          },
+          body: JSON.stringify(payload),
+          signal: ctl.signal,
+        });
+        if (res.status >= 500 && res.status <= 599) {
+          if (attempt < retries) {
+            await new Promise((r) => setTimeout(r, 750));
+            continue;
+          }
+          showFlash(`Report failed server ${res.status}`);
+          return;
+        }
+        if (!res.ok) {
+          showFlash(`Report failed server ${res.status}`);
+          return;
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `hawkeye-report-${subject.id}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showFlash("Report downloaded");
         return;
+      } catch (err) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 750));
+          continue;
+        }
+        showFlash(
+          err instanceof Error && err.name === "AbortError"
+            ? "Report failed request timed out"
+            : "Report failed",
+        );
+        return;
+      } finally {
+        clearTimeout(timer);
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `hawkeye-report-${subject.id}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showFlash("Report downloaded");
-    } catch {
-      showFlash("Report failed");
     }
   };
 
@@ -368,11 +434,17 @@ function ScreeningTab({
   }
 
   if (state.status === "error") {
+    // The hook already shapes a full human-readable message ("Screening
+    // failed — server 502", "Screening failed — request timed out", etc.),
+    // so we render it verbatim. Prefixing with "Screening failed:" here
+    // used to produce "Screening failed: server 502" in the case file — a
+    // colon-separated stack-trace-style blurb we don't want regulators to
+    // see in an MLRO-facing artefact.
     return (
       <>
         {title}
         <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">
-          Screening failed: {state.error}
+          {state.error}
         </div>
         {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
       </>
@@ -670,10 +742,13 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
     );
   }
   if (state.status === "error") {
+    // Hook emits a complete sentence ("Super brain unavailable — server
+    // 502"), so we render it as-is. Dropping the "Unavailable:" prefix
+    // removes the colon-separated copy that was leaking into case files.
     return (
       <Section title="Super brain">
         <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">
-          Unavailable: {state.error}
+          {state.error}
         </div>
       </Section>
     );
