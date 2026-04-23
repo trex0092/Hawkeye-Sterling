@@ -96,7 +96,7 @@ function checkStorage(): Check {
       name: "storage",
       status: "degraded",
       latencyMs: Date.now() - started,
-      note: "in-memory fallback — Netlify Blobs not bound",
+      note: "in-memory fallback - Netlify Blobs not bound",
     };
   }
   return { name: "storage", status: "operational", latencyMs: Date.now() - started };
