@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listApiKeys } from "@/lib/server/api-keys";
+import { enforce } from "@/lib/server/enforce";
 import { stats as feedbackStats, listFeedback } from "@/lib/server/feedback";
 import { getJson, listKeys } from "@/lib/server/store";
 import { DPMS_KPIS } from "../../../../dist/src/brain/dpms-kpis.js";
@@ -13,7 +14,10 @@ interface SchedulePreview {
   nextRunAt: string;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const [keys, feedback, scheduleKeys, ongoingKeys] = await Promise.all([
     listApiKeys(),
     feedbackStats(),

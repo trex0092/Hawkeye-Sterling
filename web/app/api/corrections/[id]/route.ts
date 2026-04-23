@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getJson, setJson } from "@/lib/server/store";
 import type { CorrectionRequest, CorrectionStatus } from "../route";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,9 +9,12 @@ export const dynamic = "force-dynamic";
 const PREFIX = "corrections/";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const record = await getJson<CorrectionRequest>(`${PREFIX}${params.id}`);
   if (!record) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
@@ -40,6 +44,9 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   let raw: unknown;
   try {
     raw = await req.json();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getJson, listKeys } from "@/lib/server/store";
-import { enforce } from "@/lib/server/enforce";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,9 +11,8 @@ export const dynamic = "force-dynamic";
 // This endpoint returns all records whose subjectId / id / email matches
 // the supplied identifier.
 //
-// Auth model: must present a valid API key (enforced via the standard
-// rate-limit gate). Anonymous callers hit the free-tier burst limit,
-// which for a bulk dump is effectively deny-by-default.
+// Auth: ADMIN_TOKEN required (fail-closed). Bulk data export should
+// only be performed by an authorised operator.
 
 interface ExportRequest {
   subjectId?: string;
@@ -21,8 +20,8 @@ interface ExportRequest {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  const deny = adminAuth(req);
+  if (deny) return deny;
 
   let body: ExportRequest;
   try {
@@ -30,7 +29,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400 },
     );
   }
   const subjectId = body.subjectId?.trim();
@@ -38,7 +37,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!subjectId && !email) {
     return NextResponse.json(
       { ok: false, error: "subjectId or email required" },
-      { status: 400, headers: gate.headers },
+      { status: 400 },
     );
   }
   const prefixes = [
@@ -67,14 +66,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     output[p] = bucket;
   }
-  return NextResponse.json(
-    {
-      ok: true,
-      generatedAt: new Date().toISOString(),
-      identifier: subjectId ? { subjectId } : { email },
-      regulation: "GDPR Art. 15",
-      data: output,
-    },
-    { headers: gate.headers },
-  );
+  return NextResponse.json({
+    ok: true,
+    generatedAt: new Date().toISOString(),
+    identifier: subjectId ? { subjectId } : { email },
+    regulation: "GDPR Art. 15",
+    data: output,
+  });
 }

@@ -26,7 +26,10 @@ const VALID_VERDICTS = new Set<Verdict>([
   "needs_review",
 ]);
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const [records, s] = await Promise.all([listFeedback(), stats()]);
   return NextResponse.json({
     ok: true,

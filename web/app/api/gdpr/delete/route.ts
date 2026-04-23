@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { del, getJson, listKeys } from "@/lib/server/store";
-import { enforce } from "@/lib/server/enforce";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,11 +10,8 @@ export const dynamic = "force-dynamic";
 // NOT delete audit-chain anchors (Art. 17(3)(b) exemption — legal
 // obligation for AML record retention).
 //
-// Auth: must present an API key. The rate limiter is the first line
-// of defence against mass-delete abuse; for hard compliance-grade
-// authorisation, MLRO-signed deletion requests should be routed via
-// the /api/corrections portal (30-day SLA, appeal path) and only
-// executed here by a human operator with enterprise credentials.
+// Auth: ADMIN_TOKEN required (fail-closed). Mass-delete is too
+// dangerous to expose to anonymous or API-key callers.
 
 interface DeleteRequest {
   subjectId?: string;
@@ -23,8 +20,8 @@ interface DeleteRequest {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  const deny = adminAuth(req);
+  if (deny) return deny;
 
   let body: DeleteRequest;
   try {
@@ -32,7 +29,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400 },
     );
   }
   const subjectId = body.subjectId?.trim();
@@ -40,7 +37,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!subjectId && !email) {
     return NextResponse.json(
       { ok: false, error: "subjectId or email required" },
-      { status: 400, headers: gate.headers },
+      { status: 400 },
     );
   }
   const prefixes = [
@@ -70,18 +67,15 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
   }
-  return NextResponse.json(
-    {
-      ok: true,
-      regulation: "GDPR Art. 17",
-      dryRun: Boolean(body.dryRun),
-      deletedCount: deleted.length,
-      deletedKeys: deleted,
-      retained: {
-        reason:
-          "Audit-chain anchors retained under GDPR Art. 17(3)(b) — legal obligation (AML record retention).",
-      },
+  return NextResponse.json({
+    ok: true,
+    regulation: "GDPR Art. 17",
+    dryRun: Boolean(body.dryRun),
+    deletedCount: deleted.length,
+    deletedKeys: deleted,
+    retained: {
+      reason:
+        "Audit-chain anchors retained under GDPR Art. 17(3)(b) — legal obligation (AML record retention).",
     },
-    { headers: gate.headers },
-  );
+  });
 }

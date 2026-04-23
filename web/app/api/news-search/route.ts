@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import {
   classifyAdverseKeywords,
   adverseKeywordGroupCounts,

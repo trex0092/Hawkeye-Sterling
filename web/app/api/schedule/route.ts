@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getJson, listKeys, setJson, del } from "@/lib/server/store";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,10 @@ interface Schedule {
 
 const PREFIX = "schedule/";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const keys = await listKeys(PREFIX);
   const out: Schedule[] = [];
   for (const k of keys) {
@@ -51,6 +55,9 @@ function isCadence(v: unknown): v is Cadence {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   let raw: unknown;
   try {
     raw = await req.json();
@@ -105,6 +112,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 }
 
 export async function DELETE(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const url = new URL(req.url);
   const id = url.searchParams.get("subjectId");
   if (!id) {
