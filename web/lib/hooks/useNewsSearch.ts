@@ -47,21 +47,18 @@ export function useNewsSearch(subjectName: string | null): NewsSearchState {
     setState({ status: "loading" });
     fetch(`/api/news-search?q=${encodeURIComponent(key)}`, { signal: ac.signal })
       .then(async (r) => {
-        if (!r.ok) {
-          setState({ status: "error", error: `server ${r.status}` });
-          return;
-        }
         const payload = (await r.json().catch(() => null)) as
           | ({ ok: true } & NewsDossier)
-          | { ok: false; error: string; detail?: string }
+          | { ok: false; error?: string; detail?: string }
           | null;
-        if (!payload || !payload.ok) {
+        if (!r.ok || !payload || !payload.ok) {
+          const fallback = r.ok ? "empty response" : `server ${r.status}`;
           setState({
             status: "error",
             error:
               (payload && "detail" in payload && payload.detail) ||
               (payload && "error" in payload && payload.error) ||
-              "unknown",
+              fallback,
           });
           return;
         }

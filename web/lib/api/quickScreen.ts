@@ -30,15 +30,16 @@ export async function quickScreen(
     ...init,
   });
 
-  let payload: QuickScreenResponse;
+  let payload: QuickScreenResponse | null = null;
   try {
     payload = (await res.json()) as QuickScreenResponse;
   } catch {
-    throw new QuickScreenError(`quick-screen returned non-JSON (${res.status})`);
+    throw new QuickScreenError(`server ${res.status} (non-JSON response)`);
   }
 
-  if (!payload.ok) {
-    throw new QuickScreenError(payload.error, payload.detail);
+  if (!payload || !payload.ok) {
+    const msg = payload?.error || `server ${res.status}`;
+    throw new QuickScreenError(msg, payload?.detail);
   }
   return payload;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import {
   ModuleShell,
@@ -39,9 +39,39 @@ interface TxRow {
 }
 
 const THRESHOLD_AED = 55_000;
+const STORAGE_KEY = "hawkeye.transaction-monitor.v1";
+
+function loadTxs(): TxRow[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as TxRow[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function TransactionMonitorPage() {
   const [txs, setTxs] = useState<TxRow[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const counterpartyRef = useRef<HTMLInputElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    setTxs(loadTxs());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(txs));
+    } catch {
+      /* quota / disabled storage — just skip */
+    }
+  }, [txs, hydrated]);
   const [ref, setRef] = useState(`TXN-2026-${String(Date.now()).slice(-4)}`);
   const [counterparty, setCounterparty] = useState("");
   const [amount, setAmount] = useState("");
@@ -69,6 +99,11 @@ export default function TransactionMonitorPage() {
   const flashFor = (msg: string) => {
     setFlash(msg);
     window.setTimeout(() => setFlash(null), 2500);
+  };
+
+  const focusForm = () => {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => counterpartyRef.current?.focus(), 250);
   };
 
   const clear = () => {
@@ -150,7 +185,9 @@ export default function TransactionMonitorPage() {
                 <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
                   {running ? "Running scan…" : "Run daily scan"}
                 </Btn>
-                <Btn variant="primary">+ Add transaction</Btn>
+                <Btn variant="primary" onClick={focusForm}>
+                  + Add transaction
+                </Btn>
               </>
             }
           />
@@ -162,7 +199,7 @@ export default function TransactionMonitorPage() {
           </KpiGrid>
 
           <Card>
-            <form onSubmit={log}>
+            <form ref={formRef} onSubmit={log}>
               <CardSection title="Transaction identity">
                 <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
                   <Field label="Transaction reference">
@@ -174,6 +211,7 @@ export default function TransactionMonitorPage() {
                   </Field>
                   <Field label="Counterparty">
                     <input
+                      ref={counterpartyRef}
                       value={counterparty}
                       onChange={(e) => setCounterparty(e.target.value)}
                       placeholder="Customer / entity name"

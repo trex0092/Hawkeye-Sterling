@@ -16,26 +16,75 @@ interface Manifest {
     authoritativeLists: string[];
   };
   cognitiveCatalogue: {
-    faculties: Array<{ id: string; displayName: string; modeCount: number; describes: string }>;
-    reasoningModes: { total: number; byCategory: Record<string, number> };
-    adverseMedia: { categoryCount: number; categories: Array<{ key: string; label: string }> };
-    doctrines: { total: number; mandatory: number; list: Array<{ id: string; authority: string; title: string }> };
-    redFlags: { total: number; byTypology: Record<string, number> };
-    typologies: { total: number; list: Array<{ id: string; title: string }> };
-    sanctionRegimes: { total: number; mandatoryUAE: number; list: string[] };
-    jurisdictions: { total: number };
-    dpmsKpis: { total: number };
-    cahra: { total: number };
-    thresholds: { total: number };
-    playbooks: { total: number; list: Array<{ id: string; title: string }> };
-    redlines: { total: number };
-    fatf: { total: number };
-    dispositions: { total: number };
-    skills: { total: number; domainCounts: Record<string, number> };
-    amplifier: { total: number };
-    metaCognition: { total: number };
+    faculties: Array<{
+      id: string;
+      displayName: string;
+      describes: string;
+      synonyms?: string[];
+      modeCount: number;
+    }>;
+    reasoningModes: {
+      total: number;
+      byCategory: Record<string, number>;
+      byWave?: { wave1: number; wave2: number };
+    };
+    adverseMedia: {
+      categories: Array<{ id: string; displayName: string; keywordCount: number }>;
+      totalKeywords: number;
+      queryLength?: number;
+    };
+    doctrines: {
+      total: number;
+      mandatoryInUAE: number;
+      byAuthority: Record<string, number>;
+    };
+    redFlags: {
+      total: number;
+      bySeverity?: { low: number; medium: number; high: number };
+      byTypology: Record<string, number>;
+    };
+    typologies: { total: number; ids: string[] };
+    matching?: { methods: string[] };
+    sanctionRegimes: {
+      total: number;
+      mandatoryInUAE: number;
+      byAuthority: Record<string, number>;
+    };
+    jurisdictions: { total: number; byFatfStatus?: Record<string, number> };
+    dpmsKpis: { total: number; byCluster?: Record<string, number> };
+    cahra: { total: number; activeCount?: number };
+    thresholds: { total: number; ids: string[] };
+    playbooks: { total: number; ids: string[] };
+    redlines: { total: number; ids: string[] };
+    fatf: { total: number; ids: string[] };
+    dispositions: { total: number; ids: string[] };
+    skills: {
+      total: number;
+      byLayer?: Record<string, number>;
+      byDomain?: Record<string, number>;
+    };
+    amplifier: {
+      version: string;
+      percent: number;
+      factor: number;
+      directives: string[];
+    };
+    metaCognition: {
+      total: number;
+      byCategory?: Record<string, number>;
+      ids?: string[];
+    };
   };
-  integrity: Record<string, string>;
+  integrity: {
+    charterHash: string;
+    catalogueHash: string;
+  };
+}
+
+interface Integrity {
+  charterHash: string;
+  catalogueHash: string;
+  compositeHash?: string;
 }
 
 interface Enhanced {
@@ -63,10 +112,7 @@ interface Enhanced {
 interface Response {
   ok: boolean;
   manifest?: Manifest;
-  integrity?: {
-    charterDirectiveCount: number;
-    catalogueStats: Record<string, number>;
-  };
+  integrity?: Integrity;
   enhanced?: Enhanced;
   error?: string;
   detail?: string;
@@ -79,7 +125,7 @@ export default function WeaponizedBrainPage() {
         status: "ready";
         data: {
           manifest: Manifest;
-          integrity: NonNullable<Response["integrity"]>;
+          integrity: Integrity;
           enhanced: Enhanced | null;
         };
       }
@@ -153,10 +199,11 @@ function BrainDashboard({
   enhanced,
 }: {
   manifest: Manifest;
-  integrity: { charterDirectiveCount: number; catalogueStats: Record<string, number> };
+  integrity: Integrity;
   enhanced: Enhanced | null;
 }) {
   const c = manifest.cognitiveCatalogue;
+  const cataloguesFused = Object.keys(c).length;
   return (
     <>
       {/* Top signature strip */}
@@ -174,11 +221,8 @@ function BrainDashboard({
           <div className="text-14 font-mono">{new Date(manifest.generatedAt).toLocaleString()}</div>
         </div>
         <div className="ml-auto flex gap-6">
-          <Stat label="Charter directives" value={integrity.charterDirectiveCount} />
-          <Stat
-            label="Catalogues fused"
-            value={Object.keys(integrity.catalogueStats).length}
-          />
+          <Stat label="Charter directives" value={manifest.charter.prohibitions.length} />
+          <Stat label="Catalogues fused" value={cataloguesFused} />
         </div>
       </div>
 
@@ -210,6 +254,11 @@ function BrainDashboard({
               </Tag>
             ))}
           </Card>
+          <Card title="Authoritative lists" count={manifest.charter.authoritativeLists.length}>
+            {manifest.charter.authoritativeLists.slice(0, 8).map((a) => (
+              <LineItem key={a} primary={a} />
+            ))}
+          </Card>
         </Grid>
       </Section>
 
@@ -226,62 +275,120 @@ function BrainDashboard({
             ))}
           </Card>
           <Card title="Reasoning modes" count={c.reasoningModes.total}>
-            {Object.entries(c.reasoningModes.byCategory).slice(0, 8).map(([k, n]) => (
-              <LineItem key={k} primary={k} secondary={`${n}`} />
-            ))}
+            {Object.entries(c.reasoningModes.byCategory ?? {})
+              .slice(0, 8)
+              .map(([k, n]) => (
+                <LineItem key={k} primary={k} secondary={`${n}`} />
+              ))}
           </Card>
           <Card title="Skills" count={c.skills.total}>
-            {Object.entries(c.skills.domainCounts).map(([k, n]) => (
-              <LineItem key={k} primary={k} secondary={`${n}`} />
-            ))}
+            {Object.entries(c.skills.byDomain ?? {})
+              .slice(0, 10)
+              .map(([k, n]) => (
+                <LineItem key={k} primary={k} secondary={`${n}`} />
+              ))}
           </Card>
           <Card
             title="Doctrines"
             count={c.doctrines.total}
-            badge={`${c.doctrines.mandatory} mandatory`}
+            badge={`${c.doctrines.mandatoryInUAE} mandatory in UAE`}
           >
-            {c.doctrines.list.slice(0, 6).map((d) => (
-              <LineItem key={d.id} primary={d.title} secondary={d.authority} />
-            ))}
+            {Object.entries(c.doctrines.byAuthority ?? {})
+              .slice(0, 6)
+              .map(([auth, n]) => (
+                <LineItem key={auth} primary={auth} secondary={`${n}`} />
+              ))}
           </Card>
-          <Card title="Adverse media" count={c.adverseMedia.categoryCount}>
+          <Card title="Adverse media" count={c.adverseMedia.categories.length}>
             {c.adverseMedia.categories.map((a) => (
-              <LineItem key={a.key} primary={a.label} secondary={a.key} />
+              <LineItem
+                key={a.id}
+                primary={a.displayName}
+                secondary={`${a.keywordCount} kw`}
+              />
             ))}
           </Card>
           <Card title="Typologies" count={c.typologies.total}>
-            {c.typologies.list.slice(0, 6).map((t) => (
-              <LineItem key={t.id} primary={t.title} secondary={t.id} />
+            {c.typologies.ids.slice(0, 8).map((id) => (
+              <Tag key={id}>{id}</Tag>
             ))}
           </Card>
           <Card title="Red flags" count={c.redFlags.total}>
-            {Object.entries(c.redFlags.byTypology).slice(0, 8).map(([k, n]) => (
-              <LineItem key={k} primary={k} secondary={`${n}`} />
-            ))}
+            {Object.entries(c.redFlags.byTypology ?? {})
+              .slice(0, 8)
+              .map(([k, n]) => (
+                <LineItem key={k} primary={k} secondary={`${n}`} />
+              ))}
           </Card>
           <Card
             title="Sanction regimes"
             count={c.sanctionRegimes.total}
-            badge={`${c.sanctionRegimes.mandatoryUAE} UAE-mandatory`}
+            badge={`${c.sanctionRegimes.mandatoryInUAE} UAE-mandatory`}
           >
-            {c.sanctionRegimes.list.slice(0, 8).map((s) => (
-              <Tag key={s}>{s}</Tag>
-            ))}
+            {Object.entries(c.sanctionRegimes.byAuthority ?? {})
+              .slice(0, 8)
+              .map(([auth, n]) => (
+                <LineItem key={auth} primary={auth} secondary={`${n}`} />
+              ))}
           </Card>
           <Card title="Playbooks" count={c.playbooks.total}>
-            {c.playbooks.list.slice(0, 6).map((p) => (
-              <LineItem key={p.id} primary={p.title} secondary={p.id} />
+            {c.playbooks.ids.slice(0, 8).map((id) => (
+              <Tag key={id}>{id}</Tag>
             ))}
           </Card>
-          <Card title="FATF" count={c.fatf.total} />
-          <Card title="Dispositions" count={c.dispositions.total} />
-          <Card title="Thresholds" count={c.thresholds.total} />
-          <Card title="Jurisdictions" count={c.jurisdictions.total} />
-          <Card title="CAHRA" count={c.cahra.total} />
-          <Card title="DPMS KPIs" count={c.dpmsKpis.total} />
-          <Card title="Redlines" count={c.redlines.total} />
-          <Card title="Cognitive amplifier" count={c.amplifier.total} />
-          <Card title="Meta-cognition" count={c.metaCognition.total} />
+          <Card title="FATF" count={c.fatf.total}>
+            {c.fatf.ids.slice(0, 8).map((id) => (
+              <Tag key={id} tone="violet">
+                {id}
+              </Tag>
+            ))}
+          </Card>
+          <Card title="Dispositions" count={c.dispositions.total}>
+            {c.dispositions.ids.slice(0, 8).map((id) => (
+              <Tag key={id}>{id}</Tag>
+            ))}
+          </Card>
+          <Card title="Thresholds" count={c.thresholds.total}>
+            {c.thresholds.ids.slice(0, 8).map((id) => (
+              <Tag key={id}>{id}</Tag>
+            ))}
+          </Card>
+          <Card title="Jurisdictions" count={c.jurisdictions.total}>
+            {Object.entries(c.jurisdictions.byFatfStatus ?? {}).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
+          </Card>
+          <Card
+            title="CAHRA"
+            count={c.cahra.total}
+            badge={
+              c.cahra.activeCount !== undefined
+                ? `${c.cahra.activeCount} active`
+                : undefined
+            }
+          />
+          <Card title="DPMS KPIs" count={c.dpmsKpis.total}>
+            {Object.entries(c.dpmsKpis.byCluster ?? {}).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
+          </Card>
+          <Card title="Redlines" count={c.redlines.total}>
+            {c.redlines.ids.slice(0, 8).map((id) => (
+              <Tag key={id} tone="violet">
+                {id}
+              </Tag>
+            ))}
+          </Card>
+          <Card
+            title="Cognitive amplifier"
+            count={c.amplifier.directives.length}
+            badge={`${c.amplifier.version} · ×${c.amplifier.factor.toLocaleString()}`}
+          />
+          <Card title="Meta-cognition" count={c.metaCognition.total}>
+            {Object.entries(c.metaCognition.byCategory ?? {}).map(([k, n]) => (
+              <LineItem key={k} primary={k} secondary={`${n}`} />
+            ))}
+          </Card>
         </Grid>
       </Section>
 
@@ -400,7 +507,7 @@ function BrainDashboard({
                 count={(enhanced.crossReferences?.typologyCount ?? 0)}
               >
                 {(enhanced.crossReferences?.topTypologies ?? []).map((t) => (
-                  <LineItem key={t.id} primary={t.title} secondary={t.id} />
+                  <LineItem key={t.id} primary={t.title || t.id} secondary={t.id} />
                 ))}
               </Card>
               <Card
@@ -445,19 +552,27 @@ function BrainDashboard({
         <div className="bg-white border border-hair-2 rounded-xl p-4">
           <table className="w-full text-12">
             <tbody>
-              {Object.entries(integrity.catalogueStats).map(([k, v]) => (
-                <tr key={k} className="border-b border-hair last:border-0">
-                  <td className="py-1.5 pr-4 text-ink-2 font-medium uppercase tracking-wide-2 text-10.5">
-                    {k}
-                  </td>
-                  <td className="py-1.5 font-mono text-ink-0">{v}</td>
-                </tr>
-              ))}
+              <IntegrityRow label="Charter hash" value={integrity.charterHash} />
+              <IntegrityRow label="Catalogue hash" value={integrity.catalogueHash} />
+              {integrity.compositeHash && (
+                <IntegrityRow label="Composite hash" value={integrity.compositeHash} />
+              )}
             </tbody>
           </table>
         </div>
       </Section>
     </>
+  );
+}
+
+function IntegrityRow({ label, value }: { label: string; value: string }) {
+  return (
+    <tr className="border-b border-hair last:border-0">
+      <td className="py-1.5 pr-4 text-ink-2 font-medium uppercase tracking-wide-2 text-10.5">
+        {label}
+      </td>
+      <td className="py-1.5 font-mono text-ink-0">{value}</td>
+    </tr>
   );
 }
 
@@ -495,7 +610,7 @@ function Card({
 }: {
   title: string;
   count: number;
-  badge?: string;
+  badge?: string | undefined;
   children?: React.ReactNode;
 }) {
   return (
@@ -534,11 +649,11 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "violet" })
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value }: { label: string; value: number | undefined }) {
   return (
     <div>
       <div className="text-10 uppercase tracking-wide-4 text-white/50">{label}</div>
-      <div className="text-18 font-mono font-semibold text-brand">{value}</div>
+      <div className="text-18 font-mono font-semibold text-brand">{value ?? "—"}</div>
     </div>
   );
 }
