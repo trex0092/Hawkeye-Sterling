@@ -90,8 +90,10 @@ export interface StylometryReport {
   flags: string[];
 }
 
+const MAX_STYLOMETRY_CHARS = 50_000;
+
 export function analyseText(raw: string): StylometryReport {
-  const text = raw ?? '';
+  const text = (raw ?? '').slice(0, MAX_STYLOMETRY_CHARS);
   const words = Math.max(1, wordCount(text));
   const hedges = countOccurrences(text, HEDGES);
   const mins = countOccurrences(text, MINIMISERS);
@@ -153,7 +155,7 @@ const GASLIGHTING_PHRASES = [
   'i never said that', 'you\'re twisting my words',
 ];
 export function gaslightingScore(raw: string): { score: number; hits: string[] } {
-  const { total, hit } = countOccurrences(raw ?? '', GASLIGHTING_PHRASES);
+  const { total, hit } = countOccurrences((raw ?? '').slice(0, MAX_STYLOMETRY_CHARS), GASLIGHTING_PHRASES);
   return { score: Math.min(1, total / 3), hits: hit };
 }
 

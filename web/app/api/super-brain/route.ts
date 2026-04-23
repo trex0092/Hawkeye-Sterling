@@ -82,6 +82,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Sanitise and cap inputs — prevents slow regex processing on huge payloads.
+  const MAX_TEXT = 50_000;
+  const aliases = Array.isArray(body.subject.aliases)
+    ? (body.subject.aliases as unknown[]).filter((a): a is string => typeof a === "string")
+    : [];
+  const mediaText = typeof body.adverseMediaText === "string"
+    ? body.adverseMediaText.slice(0, MAX_TEXT) : "";
+  const roleTextRaw = typeof body.roleText === "string"
+    ? body.roleText.slice(0, MAX_TEXT) : undefined;
+
   try {
     // 0 · Known-entity fixtures — household-name PEPs and documented
     //     adverse-media subjects auto-flag even without roleText or live
@@ -90,18 +100,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     const knownAdverse = lookupKnownAdverse(body.subject.name);
 
     // 1 · Quick screen (sanctions/fuzzy match against the seed corpus).
-    const screen = quickScreen(body.subject, CANDIDATES as Parameters<typeof quickScreen>[1]);
+    const screen = quickScreen(
+      { ...body.subject, aliases },
+      CANDIDATES as Parameters<typeof quickScreen>[1],
+    );
 
     // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
     //     to the known-PEP fixture's synthetic role, which lets recognised
     //     names (e.g. serving heads of state) classify without analyst input.
-    const pepRoleText = body.roleText ?? knownPep?.role ?? null;
+    const pepRoleText = roleTextRaw ?? knownPep?.role ?? null;
     const pep = pepRoleText ? classifyPepRole(pepRoleText) : null;
 
     // 3 · Adverse-media category detection. Merge live text classification
     //     with the known-adverse fixture so documented subjects still show a
     //     signal when no mediaText is provided.
-    const mediaText = body.adverseMediaText ?? "";
     const adverseMediaLive = mediaText ? classifyAdverseMedia(mediaText) : [];
     const adverseMedia = knownAdverse
       ? [
@@ -119,7 +131,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const fullText = [
       mediaText,
       body.subject.name,
-      (body.subject.aliases ?? []).join(" "),
+      aliases.join(" "),
       pepRoleText ?? "",
       knownAdverse?.keywords.join(" ") ?? "",
     ].join(" ");
@@ -130,9 +142,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     //      to the composite score per KEYWORD_GROUP_WEIGHT.
     const adverseKeywords = classifyAdverseKeywords(fullText);
     const adverseKeywordGroups = adverseKeywordGroupCounts(adverseKeywords);
-    const adverseKeywordPenalty = adverseKeywordGroups.reduce(
-      (acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0),
-      0,
+    const adverseKeywordPenalty = Math.min(
+      40,
+      adverseKeywordGroups.reduce((acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0), 0),
     );
 
     // 4 · Jurisdiction profile.
@@ -141,9 +153,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     // 5 · Redlines (charter prohibitions triggered by name/alias keywords).
     const redlineKeywords = [
       body.subject.name,
-      ...(body.subject.aliases ?? []),
-      body.roleText ?? "",
-      body.adverseMediaText ?? "",
+      ...aliases,
+      roleTextRaw ?? "",
+      mediaText,
     ]
       .join(" ")
       .toLowerCase()
