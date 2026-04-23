@@ -6,6 +6,8 @@ import {
   matchSoundex,
   matchDoubleMetaphone,
   matchTokenSet,
+  matchTrigram,
+  matchPartialTokenSet,
   matchEnsemble,
   levenshteinDistance,
   jaro,
@@ -74,6 +76,41 @@ describe('matching — token-set', () => {
   });
   it('low overlap fails the threshold', () => {
     expect(matchTokenSet('Ali Khan', 'Omar Farouk').pass).toBe(false);
+  });
+});
+
+describe('matching — trigram', () => {
+  it('scores identical strings at 1', () => {
+    expect(matchTrigram('Al Rajhi Bank', 'Al Rajhi Bank').score).toBe(1);
+  });
+  it('catches company name with spacing difference', () => {
+    expect(matchTrigram('AlRajhi Bank', 'Al Rajhi Bank').pass).toBe(true);
+  });
+  it('passes close transliteration variants', () => {
+    expect(matchTrigram('Dmitri Volkov', 'Dmitry Volkov').pass).toBe(true);
+  });
+  it('rejects clearly different names', () => {
+    expect(matchTrigram('Ali Khan', 'Omar Farouk').pass).toBe(false);
+  });
+});
+
+describe('matching — partial token-set', () => {
+  it('scores 1 when shorter name tokens are a subset', () => {
+    const m = matchPartialTokenSet('Mohammed Khan', 'Mohammed Abdul Khan');
+    expect(m.score).toBe(1);
+    expect(m.pass).toBe(true);
+  });
+  it('catches reversed order when tokens match', () => {
+    expect(matchPartialTokenSet('Volkov Dmitri', 'Dmitri Volkov').pass).toBe(true);
+  });
+  it('returns 0 when no tokens overlap', () => {
+    expect(matchPartialTokenSet('Ali Khan', 'Omar Farouk').score).toBe(0);
+    expect(matchPartialTokenSet('Ali Khan', 'Omar Farouk').pass).toBe(false);
+  });
+  it('handles single-token subject matching multi-token candidate', () => {
+    const m = matchPartialTokenSet('Volkov', 'Dmitri Sergeyevich Volkov');
+    expect(m.score).toBe(1);
+    expect(m.pass).toBe(true);
   });
 });
 

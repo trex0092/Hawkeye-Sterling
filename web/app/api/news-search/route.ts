@@ -134,11 +134,12 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 
     // Fuzzy-match the article title against the subject + all name variants
     // using the brain's matchEnsemble (exact / levenshtein / jaro-winkler /
-    // soundex / double-metaphone / token-set). Keep the best score so we
-    // can filter out false-positive "John Smith" hits that aren't about us.
+    // soundex / double-metaphone / token-set / trigram / partial-token-set).
+    // Keep the best score so we can filter out false-positive hits.
     let fuzzyScore = 0;
     let fuzzyMethod = "—";
     let matchedVariant: string | undefined;
+    const fullTextLower = fullText.toLowerCase();
     for (const v of variants) {
       try {
         const m = matchEnsemble(v, title);
@@ -149,6 +150,22 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
         }
       } catch {
         /* ignore per-variant errors */
+      }
+    }
+    // Supplement: token presence in full text (title + snippet) catches
+    // articles where the person's name appears in the body but not the
+    // headline. Cap at 0.72 so a genuine title match always outranks it.
+    if (fuzzyScore < 0.72) {
+      for (const v of variants) {
+        const vTokens = v.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
+        if (vTokens.length === 0) continue;
+        const hits = vTokens.filter((t) => fullTextLower.includes(t)).length;
+        const tokenScore = (hits / vTokens.length) * 0.72;
+        if (tokenScore > fuzzyScore) {
+          fuzzyScore = tokenScore;
+          fuzzyMethod = "token_presence";
+          matchedVariant = v === subject ? undefined : v;
+        }
       }
     }
 

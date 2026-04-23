@@ -97,6 +97,38 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
   };
 }
 
+// Scored search: returns a relevance score [0..100] for a subject against query q.
+// Higher score = better match. Returns 0 when the subject should not appear.
+function searchScore(s: Subject, q: string): number {
+  const name = s.name.toLowerCase();
+  const id = s.id.toLowerCase();
+  const country = s.country.toLowerCase();
+  const meta = s.meta.toLowerCase();
+  const aliasText = (s.aliases ?? []).join(" ").toLowerCase();
+
+  if (name === q) return 100;
+  if (id === q) return 98;
+  if (name.startsWith(q)) return 92;
+  if (name.includes(q)) return 82;
+  if (aliasText.includes(q)) return 80;
+  if (id.includes(q)) return 78;
+  if (country.includes(q)) return 68;
+
+  // Token-level partial match on name + aliases: score by fraction of query
+  // tokens that prefix-match a name token (catches "moh" → "Mohammed").
+  const qTokens = q.split(/\s+/).filter(Boolean);
+  const nameTokens = `${name} ${aliasText}`.split(/\s+/).filter(Boolean);
+  if (qTokens.length > 0 && nameTokens.length > 0) {
+    const matched = qTokens.filter((qt) =>
+      nameTokens.some((nt) => nt.startsWith(qt) || qt.startsWith(nt)),
+    ).length;
+    if (matched > 0) return 40 + Math.round((matched / qTokens.length) * 40);
+  }
+
+  if (meta.includes(q)) return 35;
+  return 0;
+}
+
 function formatDDMMYY(d: Date): string {
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -119,13 +151,11 @@ export default function ScreeningPage() {
     const filteredByKey = applyFilter(subjects, activeFilter);
     const q = deferredQuery.trim().toLowerCase();
     if (!q) return filteredByKey;
-    return filteredByKey.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.id.toLowerCase().includes(q) ||
-        s.country.toLowerCase().includes(q) ||
-        s.meta.toLowerCase().includes(q),
-    );
+    return filteredByKey
+      .map((s) => ({ s, score: searchScore(s, q) }))
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(({ s }) => s);
   }, [subjects, activeFilter, deferredQuery]);
 
   const selected = useMemo(
