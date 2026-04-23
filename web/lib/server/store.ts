@@ -31,13 +31,22 @@ function buildMemoryStore(): MinimalStore {
   };
 }
 
-let cached: MinimalStore | null = null;
+let blobsStore: MinimalStore | null = null;
+let blobsAvailable: boolean | null = null; // null = untested
 
 export function getStore(): MinimalStore {
-  if (cached) return cached;
+  // If we already confirmed Netlify Blobs is available, reuse the store.
+  if (blobsAvailable === true && blobsStore) return blobsStore;
+  // If we already confirmed it is unavailable, fall back to memory without
+  // retrying getNetlifyStore() (which would throw on every call).
+  if (blobsAvailable === false) return buildMemoryStore();
+
+  // First call: probe Netlify Blobs. Only cache on success — a transient
+  // failure (e.g. missing NETLIFY_BLOBS_CONTEXT at import time) must not
+  // permanently redirect all storage to the in-memory fallback.
   try {
     const ns = getNetlifyStore("hawkeye-sterling");
-    cached = {
+    blobsStore = {
       get: async (key) => {
         const v = await ns.get(key);
         return typeof v === "string" ? v : v == null ? null : String(v);
@@ -53,10 +62,14 @@ export function getStore(): MinimalStore {
         return { blobs: r.blobs.map((b) => ({ key: b.key })) };
       },
     };
-    return cached;
+    blobsAvailable = true;
+    return blobsStore;
   } catch {
-    cached = buildMemoryStore();
-    return cached;
+    // Mark as unavailable so subsequent calls skip the probe, but return a
+    // fresh memory store each call (not a singleton) so that a later
+    // re-import in a new Lambda invocation can re-probe successfully.
+    blobsAvailable = false;
+    return buildMemoryStore();
   }
 }
 

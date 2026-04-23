@@ -46,14 +46,16 @@ export interface SuperBrainResult {
     byCategory: Record<string, number>;
     total: number;
     distinctKeywords: number;
-    topKeywords: string[];
+    // Server returns enriched objects; string[] was the wrong type.
+    topKeywords: Array<{ keyword: string; categoryId: string; count: number }> | string[];
     categoriesTripped: string[];
     compositeScore: number;
   } | null;
   pepAssessment?: {
     isLikelyPEP: boolean;
     highestTier: string;
-    matchedRoles: string[];
+    // Server returns enriched role objects; string[] was the wrong type.
+    matchedRoles: Array<{ tier: string; label: string; snippet?: string }> | string[];
     riskScore: number;
   } | null;
   stylometry?: {

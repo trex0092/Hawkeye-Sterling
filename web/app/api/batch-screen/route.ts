@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
@@ -42,7 +43,7 @@ interface RowResult {
   error?: string;
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+async function handleBatchScreen(req: Request): Promise<NextResponse> {
   let body: Body;
   try {
     body = (await req.json()) as Body;
@@ -87,9 +88,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         continue;
       }
       const t0 = Date.now();
+      // Validate and sanitize alias elements — reject non-string entries.
+      const cleanAliases = Array.isArray(row.aliases)
+        ? (row.aliases as unknown[]).filter((a): a is string => typeof a === "string")
+        : [];
       const subject = {
         name: row.name.trim(),
-        ...(row.aliases && row.aliases.length ? { aliases: row.aliases } : {}),
+        ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
         ...(row.entityType ? { entityType: row.entityType } : {}),
         ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
       };
@@ -145,3 +150,5 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   return NextResponse.json({ ok: true, summary, results });
 }
+
+export const POST = withGuard(handleBatchScreen);

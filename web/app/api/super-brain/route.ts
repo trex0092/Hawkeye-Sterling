@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -68,16 +69,24 @@ interface Body {
   adverseMediaText?: string;
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+const MAX_NAME_LENGTH = 500;
+
+async function handleSuperBrain(req: Request): Promise<NextResponse> {
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
-  if (!body?.subject?.name) {
+  if (!body?.subject?.name || typeof body.subject.name !== "string") {
     return NextResponse.json(
       { ok: false, error: "subject.name required" },
+      { status: 400 },
+    );
+  }
+  if (body.subject.name.length > MAX_NAME_LENGTH) {
+    return NextResponse.json(
+      { ok: false, error: "subject.name too long" },
       { status: 400 },
     );
   }
@@ -296,16 +305,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
     });
   } catch (err) {
+    // Suppress internal error detail from the response — log it server-side only.
+    console.error("[super-brain]", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      {
-        ok: false,
-        error: "super-brain failed",
-        detail: err instanceof Error ? err.message : String(err),
-      },
+      { ok: false, error: "super-brain failed" },
       { status: 500 },
     );
   }
 }
+
+export const POST = withGuard(handleSuperBrain);
 
 function resolveJurisdiction(
   input?: string,

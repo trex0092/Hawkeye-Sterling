@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -29,11 +30,13 @@ interface QuickScreenRequestBody {
   options?: QuickScreenOptions;
 }
 
+const MAX_CANDIDATES = 5_000;
+
 function respond(status: number, body: QuickScreenResponse): NextResponse {
   return NextResponse.json(body, { status });
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+async function handleQuickScreen(req: Request): Promise<NextResponse> {
   let body: QuickScreenRequestBody;
   try {
     body = (await req.json()) as QuickScreenRequestBody;
@@ -50,15 +53,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!Array.isArray(candidates)) {
     return respond(400, { ok: false, error: "candidates must be an array" });
   }
+  if (candidates.length > MAX_CANDIDATES) {
+    return respond(400, { ok: false, error: `candidates exceeds ${MAX_CANDIDATES}-entry limit` });
+  }
 
   try {
     const result = quickScreen(subject, candidates, body.options ?? {});
     return respond(200, { ok: true, ...result });
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    return respond(500, { ok: false, error: "quick-screen failed", detail });
+    console.error("[quick-screen]", err instanceof Error ? err.message : err);
+    return respond(500, { ok: false, error: "quick-screen failed" });
   }
 }
+
+export const POST = withGuard(handleQuickScreen);
 
 export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, {

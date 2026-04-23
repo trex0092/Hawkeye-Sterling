@@ -50,26 +50,47 @@ function jsonError(
   });
 }
 
+// Whether the API key registry is populated. Used to decide whether to enforce
+// auth on UI-facing routes: if no keys are configured the app is running in
+// demo/dev mode and we pass requests through without a key requirement.
+function apiKeysConfigured(): boolean {
+  const raw = process.env["HAWKEYE_API_KEYS"];
+  return Boolean(raw && raw.trim() && raw.trim() !== "[]");
+}
+
+// Sanitize a caller-supplied trace ID so it can be safely echoed in headers
+// and log lines: strip everything outside printable ASCII 0x20-0x7E and cap length.
+function sanitizeTraceId(raw: string): string {
+  return raw.replace(/[^\x20-\x7E]/g, "").slice(0, 64);
+}
+
 export function withGuard(handler: Handler): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
-    const traceId = req.headers.get("x-trace-id") ?? newTraceId();
+    const rawTrace = req.headers.get("x-trace-id");
+    const traceId = rawTrace ? sanitizeTraceId(rawTrace) || newTraceId() : newTraceId();
     const receivedAt = new Date();
 
-    // Authn
-    const apiKey = resolveApiKey(req);
-    if (!apiKey) {
-      return jsonError(401, {
-        code: "unauthorized",
-        message:
-          "Missing or unknown API key. Supply X-Api-Key header or Authorization: Bearer.",
-        traceId,
-      });
+    // Authn — skip when no API keys are configured (demo / local-dev mode).
+    // In production, HAWKEYE_API_KEYS must be set or every call is rejected.
+    if (apiKeysConfigured()) {
+      const apiKey = resolveApiKey(req);
+      if (!apiKey) {
+        return jsonError(401, {
+          code: "unauthorized",
+          message:
+            "Missing or unknown API key. Supply X-Api-Key header or Authorization: Bearer.",
+          traceId,
+        });
+      }
     }
 
-    // Rate-limit
-    const rl = checkRateLimit(apiKey);
-    const rlHeaders = rateLimitHeaders(rl);
-    if (!rl.allowed) {
+    // Re-resolve for the context — null in demo mode (no keys configured).
+    const apiKey = resolveApiKey(req);
+
+    // Rate-limit — skip when no key is present (demo mode).
+    const rl = apiKey ? checkRateLimit(apiKey) : null;
+    const rlHeaders = rl ? rateLimitHeaders(rl) : {};
+    if (rl && !rl.allowed) {
       return jsonError(
         429,
         {
@@ -87,9 +108,16 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
       );
     }
 
+    const demoKey: ApiKeyRecord = {
+      key: "demo",
+      tenantId: "demo",
+      tier: "free",
+      monthlyQuota: Number.POSITIVE_INFINITY,
+      issuedAt: receivedAt.toISOString(),
+    };
     const ctx: RequestContext = {
-      apiKey,
-      tenantId: apiKey.tenantId,
+      apiKey: apiKey ?? demoKey,
+      tenantId: apiKey?.tenantId ?? "demo",
       traceId,
       receivedAt,
     };
@@ -98,7 +126,7 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
     auditAccess({
       traceId,
       tenantId: ctx.tenantId,
-      apiKeyPrefix: apiKey.key.slice(0, 10),
+      apiKeyPrefix: ctx.apiKey.key.slice(0, 10),
       method: req.method,
       path: new URL(req.url).pathname,
       at: receivedAt.toISOString(),
@@ -143,11 +171,15 @@ export interface AuditRecord {
 
 type AuditSink = (record: AuditRecord) => void;
 
+// Fixed-capacity ring buffer with O(1) insert via index wraparound.
 const RING_CAPACITY = 1_000;
-const RING: AuditRecord[] = [];
+const RING: AuditRecord[] = new Array<AuditRecord>(RING_CAPACITY);
+let RING_HEAD = 0;
+let RING_SIZE = 0;
 let SINK: AuditSink = (record) => {
-  RING.push(record);
-  if (RING.length > RING_CAPACITY) RING.shift();
+  RING[RING_HEAD % RING_CAPACITY] = record;
+  RING_HEAD++;
+  if (RING_SIZE < RING_CAPACITY) RING_SIZE++;
 };
 
 export function setAuditSink(fn: AuditSink): void {
@@ -155,7 +187,10 @@ export function setAuditSink(fn: AuditSink): void {
 }
 
 export function recentAudit(): ReadonlyArray<AuditRecord> {
-  return RING.slice();
+  if (RING_SIZE < RING_CAPACITY) return RING.slice(0, RING_SIZE);
+  // Return entries in chronological order, starting from the oldest slot.
+  const start = RING_HEAD % RING_CAPACITY;
+  return [...RING.slice(start, RING_CAPACITY), ...RING.slice(0, start)].filter(Boolean);
 }
 
 function auditAccess(record: AuditRecord): void {
