@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { postWebhook } from "@/lib/server/webhook";
+import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
+import { validateGoamlEnvelope } from "../../../../dist/src/brain/goaml-shapes.js";
+import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -164,22 +167,82 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
   lines.push("── Narrative (MLRO draft — review before submission) ──");
   lines.push(body.narrative ?? autoNarrative(body));
 
-  lines.push("");
-  lines.push("── goAML envelope (stub) ──");
-  lines.push(`report_code           : ${body.filingType}`);
-  lines.push(`entity_reference      : HWK-${body.filingType}-${body.subject.id}`);
-  lines.push(
-    `reason                : ${body.narrative ?? "[auto-drafted — MLRO to review]"}`,
-  );
-  if (body.subject.entityType === "individual") {
-    lines.push(`t_person.name         : ${body.subject.name}`);
-    if (body.subject.dob) lines.push(`t_person.dob          : ${body.subject.dob}`);
-    if (body.subject.jurisdiction)
-      lines.push(`t_person.nationality  : ${body.subject.jurisdiction}`);
+  // ── Build real goAML XML envelope ────────────────────────────────────────
+  const narrative = body.narrative ?? autoNarrative(body);
+  const internalRef = `HWK-${body.filingType}-${body.subject.id}`;
+  const reportCode = body.filingType as GoAmlReportCode;
+
+  let involvedPersons: GoAmlPerson[] | undefined;
+  let involvedEntities: GoAmlEntity[] | undefined;
+
+  if (body.subject.entityType === "individual" || !body.subject.entityType) {
+    const nameParts = body.subject.name.trim().split(/\s+/);
+    const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0] || body.subject.name;
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1]! : "";
+    const person: GoAmlPerson = {
+      firstName,
+      ...(lastName ? { lastName } : { lastName: "" }),
+      ...(body.subject.dob ? { dateOfBirth: body.subject.dob } : {}),
+      ...(body.subject.jurisdiction ? { nationality1: body.subject.jurisdiction } : {}),
+    };
+    involvedPersons = [person];
   } else {
-    lines.push(`t_entity.name         : ${body.subject.name}`);
-    if (body.subject.jurisdiction)
-      lines.push(`t_entity.incorp_ctry  : ${body.subject.jurisdiction}`);
+    const entity: GoAmlEntity = {
+      legalName: body.subject.name,
+      incorporationCountryIso2: body.subject.jurisdiction ?? "AE",
+      addresses: [],
+    };
+    involvedEntities = [entity];
+  }
+
+  const rentityId = process.env["GOAML_RENTITY_ID"] ?? "HWK-REPORTING-ENTITY";
+  const mlroEmail = process.env["MLRO_EMAIL"] ?? "mlro@hawkeye-sterling.com";
+  const mlroPhone = process.env["MLRO_PHONE"] ?? "+971-4-000-0000";
+
+  const envelope: GoAmlEnvelope = {
+    reportCode,
+    rentityId,
+    reportingPerson: {
+      fullName: mlro,
+      occupation: "MLRO",
+      email: mlroEmail,
+      phoneNumber: mlroPhone,
+    },
+    submissionCode: "E",
+    currencyCodeLocal: "AED",
+    reason: narrative,
+    ...(involvedPersons !== undefined ? { involvedPersons } : {}),
+    ...(involvedEntities !== undefined ? { involvedEntities } : {}),
+    internalReference: internalRef,
+    generatedAt: now,
+    charterIntegrityHash: process.env["CHARTER_HASH"] ?? "hawkeye-sterling-v1",
+  };
+
+  // Validate the envelope before serialising.
+  const validationErrors = validateGoamlEnvelope(envelope);
+  let goamlXml = "";
+  let goamlValidationWarnings: string[] = [];
+  try {
+    goamlXml = serialiseGoamlXml(envelope);
+    goamlValidationWarnings = validationErrors;
+  } catch (xmlErr) {
+    goamlValidationWarnings = [
+      `XML serialisation failed: ${xmlErr instanceof Error ? xmlErr.message : String(xmlErr)}`,
+      ...validationErrors,
+    ];
+  }
+
+  lines.push("");
+  lines.push("── goAML XML (serialised — MLRO to review before FIU submission) ──");
+  if (goamlValidationWarnings.length > 0) {
+    lines.push(`VALIDATION WARNINGS (${goamlValidationWarnings.length}):`);
+    for (const w of goamlValidationWarnings) lines.push(`  ⚠ ${w}`);
+    lines.push("");
+  }
+  if (goamlXml) {
+    lines.push(goamlXml);
+  } else {
+    lines.push("[XML generation failed — see validation warnings above]");
   }
 
   lines.push("");
@@ -265,6 +328,13 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     ...(asanaPayload.data.permalink_url
       ? { taskUrl: asanaPayload.data.permalink_url }
       : {}),
+    goaml: {
+      internalReference: internalRef,
+      validated: goamlValidationWarnings.length === 0,
+      validationWarnings: goamlValidationWarnings,
+      // Base64-encode XML so JSON serialisation is safe regardless of content.
+      xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
+    },
   }, { status: 201 });
 }
 

@@ -15,7 +15,7 @@ import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
 import { expandAliases } from "../../../../dist/src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../dist/src/brain/matching.js";
-import { CANDIDATES } from "@/lib/data/candidates";
+import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.
 import { jurisdictionProfile } from "../../../../dist/src/brain/lib/jurisdictions.js";
@@ -100,8 +100,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const knownPep = lookupKnownPEP(body.subject.name);
     const knownAdverse = lookupKnownAdverse(body.subject.name);
 
-    // 1 · Quick screen (sanctions/fuzzy match against the seed corpus).
-    const screen = quickScreen(body.subject, CANDIDATES as Parameters<typeof quickScreen>[1]);
+    // 1 · Quick screen — against the live ingested watchlists (OFAC, UN, EU,
+    //     UK, UAE-EOCN/LTL) merged with the static seed corpus as fallback.
+    const liveCandidates = await loadCandidates();
+    const screen = quickScreen(body.subject, liveCandidates as Parameters<typeof quickScreen>[1]);
 
     // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
     //     to the known-PEP fixture's synthetic role, which lets recognised

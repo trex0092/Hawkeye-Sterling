@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
 import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
-import { CANDIDATES } from "@/lib/data/candidates";
+import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
@@ -48,6 +48,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  // Load live watchlist corpus once per batch request (cached in-process).
+  const CANDIDATES = await loadCandidates();
 
   let body: Body;
   try {

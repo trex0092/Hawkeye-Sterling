@@ -6,6 +6,8 @@ interface WorkbenchToolbarProps {
   selectedCount: number;
   categoryLabel: string;
   onRun: () => void;
+  running?: boolean;
+  subjectRequired?: boolean;
 }
 
 export function WorkbenchToolbar({
@@ -14,7 +16,11 @@ export function WorkbenchToolbar({
   selectedCount,
   categoryLabel,
   onRun,
+  running = false,
+  subjectRequired = false,
 }: WorkbenchToolbarProps) {
+  const disabled = selectedCount === 0 || running || subjectRequired;
+
   return (
     <div className="flex items-center gap-3 mb-5 px-4 py-3 bg-white border border-hair-2 rounded-lg">
       <div className="flex-1 relative">
@@ -41,10 +47,18 @@ export function WorkbenchToolbar({
         </button>
         <button
           onClick={onRun}
-          disabled={selectedCount === 0}
-          className="inline-flex items-center gap-1.5 rounded bg-brand border border-brand text-white px-2.5 py-[5px] text-11.5 font-semibold hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={disabled}
+          title={subjectRequired ? "Enter a subject name above" : running ? "Running…" : "Run pipeline"}
+          className="inline-flex items-center gap-1.5 rounded bg-brand border border-brand text-white px-2.5 py-[5px] text-11.5 font-semibold hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] justify-center"
         >
-          Run pipeline
+          {running ? (
+            <>
+              <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Running…
+            </>
+          ) : (
+            "Run pipeline"
+          )}
         </button>
       </div>
     </div>
