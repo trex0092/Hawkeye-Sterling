@@ -8,7 +8,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { CANDIDATES } from "@/lib/data/candidates";
+import { loadCandidates } from "@/lib/server/candidates-loader";
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -119,6 +119,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Load subjects in parallel — sequential awaits would time out for large portfolios.
   const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
   const subjects: EnrolledSubject[] = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
+
+  // Live sanctions corpus (OFAC / UN / EU / UK / EOCN / UAE LTL) from the
+  // Netlify Blobs store populated by netlify/functions/refresh-lists cron.
+  // Falls back to the static seed fixture when blobs aren't populated
+  // (first-run / dev). Loaded once per invocation, not per-subject.
+  const CANDIDATES = await loadCandidates();
 
   const runAt = new Date().toISOString();
   const results: Array<{
