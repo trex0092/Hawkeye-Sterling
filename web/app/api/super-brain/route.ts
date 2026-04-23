@@ -28,6 +28,10 @@ import {
   adverseKeywordGroupCounts,
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
+import {
+  lookupKnownPEP,
+  lookupKnownAdverse,
+} from "@/lib/data/known-entities";
 
 // Group weight: how much each fired group should push the composite score.
 // Critical regimes (terrorism / WMD / proliferation / sanctions) dominate;
@@ -77,17 +81,36 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
+    // 0 · Known-entity fixtures — household-name PEPs and documented
+    //     adverse-media subjects auto-flag even without roleText or live
+    //     external feeds (so demo subjects render a realistic posture).
+    const knownPep = lookupKnownPEP(body.subject.name);
+    const knownAdverse = lookupKnownAdverse(body.subject.name);
+
     // 1 · Quick screen (sanctions/fuzzy match against the seed corpus).
     const screen = quickScreen(body.subject, CANDIDATES as Parameters<typeof quickScreen>[1]);
 
-    // 2 · PEP classification from a freeform role text, if supplied.
-    const pep = body.roleText ? classifyPepRole(body.roleText) : null;
+    // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
+    //     to the known-PEP fixture's synthetic role, which lets recognised
+    //     names (e.g. serving heads of state) classify without analyst input.
+    const pepRoleText = body.roleText ?? knownPep?.role ?? null;
+    const pep = pepRoleText ? classifyPepRole(pepRoleText) : null;
 
-    // 3 · Adverse-media category detection.
+    // 3 · Adverse-media category detection. Merge live text classification
+    //     with the known-adverse fixture so documented subjects still show a
+    //     signal when no mediaText is provided.
     const mediaText = body.adverseMediaText ?? "";
-    const adverseMedia = mediaText
-      ? classifyAdverseMedia(mediaText)
-      : [];
+    const adverseMediaLive = mediaText ? classifyAdverseMedia(mediaText) : [];
+    const adverseMedia = knownAdverse
+      ? [
+          ...adverseMediaLive,
+          ...knownAdverse.categories.map((c, i) => ({
+            categoryId: c.categoryId,
+            keyword: c.keyword,
+            offset: i,
+          })),
+        ]
+      : adverseMediaLive;
 
     // 3b · ESG classifier — 25 ESG-relevant categories across 5 domains,
     //      mapped to SASB / EU Taxonomy / UN SDGs.
@@ -95,7 +118,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       mediaText,
       body.subject.name,
       (body.subject.aliases ?? []).join(" "),
-      body.roleText ?? "",
+      pepRoleText ?? "",
+      knownAdverse?.keywords.join(" ") ?? "",
     ].join(" ");
     const esg = classifyEsg(fullText);
 
@@ -203,11 +227,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         })()
       : null;
 
-    // Richer PEP assessment across role + title heuristics.
-    const pepAssessment = body.roleText
+    // Richer PEP assessment across role + title heuristics. Uses the
+    // synthetic role from the known-PEP fixture when no analyst roleText
+    // is supplied.
+    const pepAssessment = pepRoleText
       ? (() => {
           try {
-            return assessPEP(body.roleText ?? "", body.subject.name);
+            return assessPEP(pepRoleText ?? "", body.subject.name);
           } catch {
             return null;
           }
