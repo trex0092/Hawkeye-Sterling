@@ -16,6 +16,7 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainRadar } from "@/components/screening/BrainRadar";
 import { BrainConfidence } from "@/components/screening/BrainConfidence";
+import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import {
   canPerform,
   loadOperatorRole,
@@ -680,7 +681,9 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           />
         )}
 
-        {activeTab !== "Screening" && (
+        {activeTab === "Ownership" && <OwnershipTab subject={subject} />}
+
+        {activeTab !== "Screening" && activeTab !== "Ownership" && (
           <div className="text-11 text-ink-2 py-6">
             {activeTab} data will populate here once the module is wired to the engine.
           </div>
