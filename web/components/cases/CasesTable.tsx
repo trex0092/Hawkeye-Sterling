@@ -6,9 +6,17 @@ interface CasesTableProps {
   cases: CaseRecord[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+  onOpenReport: (record: CaseRecord) => void;
 }
 
-export function CasesTable({ cases, selectedId, onSelect }: CasesTableProps) {
+export function CasesTable({
+  cases,
+  selectedId,
+  onSelect,
+  onDelete,
+  onOpenReport,
+}: CasesTableProps) {
   return (
     <div className="bg-white border border-hair-2 rounded-xl overflow-hidden">
       <table className="w-full border-collapse text-12.5">
@@ -19,6 +27,7 @@ export function CasesTable({ cases, selectedId, onSelect }: CasesTableProps) {
             <Th>Status</Th>
             <Th>Evidence</Th>
             <Th>Last activity</Th>
+            <th className="w-[40px]" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
@@ -28,7 +37,10 @@ export function CasesTable({ cases, selectedId, onSelect }: CasesTableProps) {
             return (
               <tr
                 key={record.id}
-                onClick={() => onSelect(record.id)}
+                onClick={() => {
+                  onSelect(record.id);
+                  onOpenReport(record);
+                }}
                 className={`cursor-pointer ${isSelected ? "bg-bg-1" : "hover:bg-bg-1"}`}
               >
                 <Td isLast={isLast}>
@@ -49,9 +61,39 @@ export function CasesTable({ cases, selectedId, onSelect }: CasesTableProps) {
                 <Td isLast={isLast}>
                   <span className="text-11.5 text-ink-2">{record.lastActivity}</span>
                 </Td>
+                <td className={`px-2 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                  <button
+                    type="button"
+                    aria-label={`Delete case ${record.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (
+                        window.confirm(
+                          `Delete case ${record.id} (${record.subject})? The audit-trail entries will remain but the case row will be removed from the register.`,
+                        )
+                      ) {
+                        onDelete(record.id);
+                      }
+                    }}
+                    className="w-7 h-7 rounded flex items-center justify-center text-ink-3 hover:bg-red-dim hover:text-red transition-colors"
+                  >
+                    ×
+                  </button>
+                </td>
               </tr>
             );
           })}
+          {cases.length === 0 && (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-6 py-10 text-center text-12 text-ink-2"
+              >
+                No cases yet — cases appear here when you escalate a subject
+                or file an STR from the screening panel.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

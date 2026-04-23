@@ -11,9 +11,15 @@ const STATUS_COLORS: Record<CaseStatus, string> = {
 
 interface CaseDetailPanelProps {
   record: CaseRecord;
+  onExport?: () => void;
+  onViewTimeline?: () => void;
 }
 
-export function CaseDetailPanel({ record }: CaseDetailPanelProps) {
+export function CaseDetailPanel({
+  record,
+  onExport,
+  onViewTimeline,
+}: CaseDetailPanelProps) {
   const subtitleBits = [
     record.subject,
     `Opened ${record.opened}`,
@@ -26,8 +32,16 @@ export function CaseDetailPanel({ record }: CaseDetailPanelProps) {
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">Case {record.id}</p>
           <div className="flex gap-1.5">
-            <PanelBtn>Export</PanelBtn>
-            <PanelBtn brand>View timeline</PanelBtn>
+            <PanelBtn onClick={onExport} title="View or download compliance report">
+              Export
+            </PanelBtn>
+            <PanelBtn
+              brand
+              onClick={onViewTimeline}
+              title="Open audit-trail timeline"
+            >
+              View timeline
+            </PanelBtn>
           </div>
         </div>
         <p className="text-12 text-ink-2 m-0">{subtitleBits.join(" · ")}</p>
@@ -99,16 +113,29 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function PanelBtn({
   children,
   brand,
+  onClick,
+  title,
 }: {
   children: React.ReactNode;
   brand?: boolean;
+  onClick?: () => void;
+  title?: string;
 }) {
   const base =
     "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium cursor-pointer transition-colors";
   const variant = brand
     ? "bg-brand border-brand text-white font-semibold hover:bg-brand-hover"
     : "bg-white border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2";
-  return <button className={`${base} ${variant}`}>{children}</button>;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`${base} ${variant}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 function EvidenceRow({ entry }: { entry: EvidenceEntry }) {

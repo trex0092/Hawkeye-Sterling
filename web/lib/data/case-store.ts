@@ -48,6 +48,11 @@ export function appendCase(record: CaseRecord): void {
   saveCases([record, ...filtered]);
 }
 
+export function deleteCase(id: string): void {
+  const existing = loadCases();
+  saveCases(existing.filter((c) => c.id !== id));
+}
+
 export interface NewCaseInput {
   subject: string;
   subjectJurisdiction?: string;
