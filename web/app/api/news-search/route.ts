@@ -161,6 +161,12 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   return out;
 }
 
+// Per-locale RSS timeout. Netlify Functions cap at 10s total wall-clock; with
+// 7 locales fanning out in parallel, any single stalled feed used to sink the
+// whole function into a 502. A 4-second AbortSignal bounds each feed so the
+// slowest locale is skipped rather than killing the response.
+const FEED_TIMEOUT_MS = 4_000;
+
 async function fetchLocaleFeed(
   q: string,
   locale: (typeof LOCALES)[number],
@@ -169,6 +175,8 @@ async function fetchLocaleFeed(
   const modifiers = LOCALE_MODIFIERS[locale.code] ?? LOCALE_MODIFIERS["en"] ?? "";
   const enriched = `"${q}" (${modifiers})`;
   const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(enriched)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
   try {
     const res = await fetch(feed, {
       headers: {
@@ -176,6 +184,7 @@ async function fetchLocaleFeed(
           "Mozilla/5.0 (compatible; HawkeyeSterling/0.2; +https://hawkeye-sterling.netlify.app)",
         accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
       },
+      signal: controller.signal,
       next: { revalidate: 300 },
     });
     if (!res.ok) return [];
@@ -183,6 +192,8 @@ async function fetchLocaleFeed(
     return parseRss(xml, q, variants, locale.code);
   } catch {
     return [];
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -208,9 +219,15 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   try {
     // Fan out to 7 locales in parallel (EN, ES, FR, RU, ZH, AR, PT). Each
-    // returns up to ~30 articles; we dedupe by URL and fuzzy-filter.
-    const perLocale = await Promise.all(
+    // returns up to ~30 articles; we dedupe by URL and fuzzy-filter. Use
+    // allSettled so one rejected fetch never rejects the whole batch —
+    // combined with the per-feed AbortSignal this guarantees the function
+    // always returns within ~5s.
+    const settled = await Promise.allSettled(
       LOCALES.map((loc) => fetchLocaleFeed(q, loc, variants)),
+    );
+    const perLocale: Article[][] = settled.map((r) =>
+      r.status === "fulfilled" ? r.value : [],
     );
     const merged = new Map<string, Article>();
     for (const bucket of perLocale) {
