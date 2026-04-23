@@ -189,7 +189,13 @@ function PartyCard({
   screen,
 }: {
   label: string;
-  party?: { account?: string; name?: string; address?: string };
+  party?:
+    | {
+        account?: string | undefined;
+        name?: string | undefined;
+        address?: string | undefined;
+      }
+    | undefined;
   screen: {
     severity: string;
     topScore: number;
