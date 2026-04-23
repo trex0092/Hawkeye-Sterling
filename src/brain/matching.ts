@@ -6,6 +6,55 @@
 // Every matcher returns a normalised score in [0,1] and declares its method
 // so the reasoning chain can cite which algorithm produced a hit.
 
+import { cyrillicToLatin, chineseToPinyinSubset } from './translit-cyrillic-cjk.js';
+
+// Minimal Arabic/Persian Unicode block → Latin transliteration.
+// Used only to feed Double Metaphone with ASCII when the input is Arabic-script.
+const ARABIC_TO_LATIN: Record<number, string> = {
+  0x0627: 'A', 0x0628: 'B', 0x062A: 'T', 0x062B: 'TH', 0x062C: 'J', 0x062D: 'H',
+  0x062E: 'KH', 0x062F: 'D', 0x0630: 'TH', 0x0631: 'R', 0x0632: 'Z', 0x0633: 'S',
+  0x0634: 'SH', 0x0635: 'S', 0x0636: 'D', 0x0637: 'T', 0x0638: 'TH', 0x0639: 'A',
+  0x063A: 'GH', 0x0641: 'F', 0x0642: 'Q', 0x0643: 'K', 0x0644: 'L', 0x0645: 'M',
+  0x0646: 'N', 0x0647: 'H', 0x0648: 'W', 0x0649: 'Y', 0x064A: 'Y',
+  // Persian-specific
+  0x067E: 'P', 0x0686: 'CH', 0x0698: 'ZH', 0x06AF: 'G', 0x06A9: 'K', 0x06CC: 'Y',
+};
+
+function arabicToLatin(input: string): string {
+  let out = '';
+  for (const ch of input) {
+    const cp = ch.codePointAt(0) ?? 0;
+    // Arabic/Persian Unicode block 0x0600–0x06FF
+    if (cp >= 0x0600 && cp <= 0x06FF) {
+      out += ARABIC_TO_LATIN[cp] ?? '';
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+function hasNonLatin(s: string): boolean {
+  for (const ch of s) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (c > 0x007F) return true;
+  }
+  return false;
+}
+
+/** Pre-romanise non-Latin scripts (Arabic, Cyrillic, CJK) into ASCII before
+ *  phonetic encoding. Passes pure ASCII strings through unchanged. */
+function toLatinScript(input: string): string {
+  if (!hasNonLatin(input)) return input;
+  // Arabic/Persian block
+  let s = arabicToLatin(input);
+  // Cyrillic
+  s = cyrillicToLatin(s);
+  // CJK subset
+  s = chineseToPinyinSubset(s);
+  return s;
+}
+
 export type MatchingMethod =
   | 'exact'
   | 'levenshtein'
@@ -133,7 +182,7 @@ export function matchJaroWinkler(a: string, b: string, threshold = 0.9): MatchSc
 
 // ---------- Soundex (classic)
 export function soundex(input: string): string {
-  const s = normalise(input).replace(/\s+/g, '');
+  const s = normalise(toLatinScript(input)).replace(/\s+/g, '');
   if (!s) return '';
   const first = s[0]!.toUpperCase();
   const map: Record<string, string> = {
@@ -168,11 +217,12 @@ export function matchSoundex(a: string, b: string): MatchScore {
 }
 
 // ---------- Double Metaphone (ASCII-subset pragmatic port)
-// A compact implementation that captures the common cases used for UAE-
-// context Latin-alphabet names. Full Unicode and non-Latin scripts will be
-// handled in Phase 3 alongside Arabic-root normalisation.
+// Non-Latin scripts (Arabic, Cyrillic, CJK) are pre-romanised via
+// toLatinScript() before the ASCII phonetic algorithm runs, so names like
+// "محمد" (Muhammad) and "Мухаммад" (Mukhammad) produce the same code as
+// their Latin equivalents.
 export function doubleMetaphone(input: string): { primary: string; alternate: string } {
-  const s = normalise(input).replace(/\s+/g, '').toUpperCase();
+  const s = normalise(toLatinScript(input)).replace(/\s+/g, '').toUpperCase();
   if (!s) return { primary: '', alternate: '' };
   let primary = '';
   let alternate = '';

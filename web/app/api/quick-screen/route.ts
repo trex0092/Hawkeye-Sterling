@@ -7,6 +7,7 @@ import type {
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
+import { loadCandidates } from "@/lib/server/candidates-loader";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -52,24 +53,27 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const subject = body.subject;
-  const candidates = body.candidates;
+  // If the caller supplies candidates use them; otherwise screen against the
+  // live ingested watchlists (OFAC, UN, EU, UK, UAE-EOCN/LTL + seed corpus).
+  const callerCandidates = body.candidates;
 
   if (!subject || typeof subject.name !== "string" || !subject.name.trim()) {
     return respond(400, { ok: false, error: "subject.name required" }, gate.headers);
   }
-  if (!Array.isArray(candidates)) {
-    return respond(
-      400,
-      { ok: false, error: "candidates must be an array" },
-      gate.headers,
-    );
-  }
-  if (candidates.length > MAX_CANDIDATES) {
-    return respond(
-      400,
-      { ok: false, error: `candidates exceeds ${MAX_CANDIDATES}-entry limit` },
-      gate.headers,
-    );
+
+  let candidates: QuickScreenCandidate[];
+  if (Array.isArray(callerCandidates)) {
+    if (callerCandidates.length > MAX_CANDIDATES) {
+      return respond(
+        400,
+        { ok: false, error: `candidates exceeds ${MAX_CANDIDATES}-entry limit` },
+        gate.headers,
+      );
+    }
+    candidates = callerCandidates;
+  } else {
+    // No candidates provided → use the live watchlist corpus.
+    candidates = await loadCandidates() as QuickScreenCandidate[];
   }
 
   try {

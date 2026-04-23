@@ -8,7 +8,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { CANDIDATES } from "@/lib/data/candidates";
+import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
@@ -59,6 +59,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  // Load live watchlist corpus once per batch request (cached in-process).
+  const CANDIDATES = await loadCandidates();
 
   let body: Body;
   try {
@@ -117,10 +120,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(row.entityType ? { entityType: row.entityType } : {}),
         ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
       };
-      const screen = quickScreen(
-        subject,
-        CANDIDATES as Parameters<typeof quickScreen>[1],
-      );
+      const screen = quickScreen(subject, CANDIDATES);
       const haystack = `${row.name} ${(row.aliases ?? []).join(" ")}`;
       const kw = classifyAdverseKeywords(haystack);
       const esg = classifyEsg(haystack);
