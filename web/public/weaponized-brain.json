@@ -310,7 +310,7 @@
           {
             "id": "esg",
             "displayName": "ESG & Responsible-Sourcing Controversies",
-            "keywordCount": 37
+            "keywordCount": 104
           },
           {
             "id": "cybercrime",
@@ -320,10 +320,10 @@
           {
             "id": "ai",
             "displayName": "AI-Enabled Risk & Synthetic-Media Abuse",
-            "keywordCount": 31
+            "keywordCount": 101
           }
         ],
-        "totalKeywords": 531,
+        "totalKeywords": 668,
         "queryLength": 1353
       },
       "doctrines": {
