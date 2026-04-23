@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 interface Analytics {
   ok: true;
@@ -33,13 +34,20 @@ export default function AnalyticsPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      try {
-        const r = await fetch("/api/analytics", { cache: "no-store" });
-        const payload = (await r.json()) as Analytics;
-        if (active) setData(payload);
-      } catch (e) {
-        if (active) setErr(e instanceof Error ? e.message : String(e));
+      const result = await fetchJson<Analytics>("/api/analytics", {
+        cache: "no-store",
+        label: "Analytics load failed",
+      });
+      if (!active) return;
+      if (!result.ok || !result.data) {
+        setErr(result.error ?? `status ${result.status}`);
+        return;
       }
+      if (!result.data.commercial || !result.data.monitoring || !result.data.quality || !result.data.kpis) {
+        setErr("analytics payload missing required sections");
+        return;
+      }
+      setData(result.data);
     })();
     return () => {
       active = false;
