@@ -89,16 +89,66 @@ html[data-theme="dark"] {
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 72px;
+    /* accent-color softens native form-control hover/selection
+       (checkboxes, radios, native select options, range thumbs)
+       to the brand pink instead of OS-default dark grey. */
+    accent-color: var(--brand);
   }
 
   body {
-    background: var(--bg-0);
+    background-color: var(--bg-0);
+    /* Soft pink watermark — a radial-gradient pair applied once at
+       the viewport level. Stays under all content; non-interactive.
+       Tuned to ~6% opacity so it reads as a brand wash, not a
+       distracting image. */
+    background-image:
+      radial-gradient(
+        ellipse at top right,
+        rgba(236, 72, 153, 0.08),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse at bottom left,
+        rgba(244, 114, 182, 0.06),
+        transparent 60%
+      );
+    background-attachment: fixed;
     color: var(--ink-0);
     font-family: var(--font-sans);
     font-size: 13.5px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Native <select> option hover — Chromium honours option styling on
+     most platforms. The default is a solid dark-grey bar; override to a
+     semi-transparent brand pink so dropdown panels feel continuous with
+     the rest of the UI. Hover + checked states both land on the same
+     tint. Firefox and Safari will fall back to OS defaults on some
+     platforms (browser-controlled). */
+  select option {
+    background-color: var(--bg-0);
+    color: var(--ink-0);
+  }
+  select option:hover,
+  select option:focus,
+  select option:checked {
+    background: linear-gradient(
+      0deg,
+      rgba(236, 72, 153, 0.18),
+      rgba(236, 72, 153, 0.18)
+    );
+    color: var(--ink-0);
+  }
+
+  /* Select control itself — subtle pink-tinted focus ring so keyboard
+     users see where they are without the OS-default blue halo. */
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid rgba(236, 72, 153, 0.35);
+    outline-offset: 1px;
   }
 
   ::selection {
