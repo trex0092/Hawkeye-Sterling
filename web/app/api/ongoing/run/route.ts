@@ -60,13 +60,19 @@ function fingerprints(hits: LastHit[]): Set<string> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  // Optional bearer token protection for manual invocations.
+  // Fail-closed bearer token check. ONGOING_RUN_TOKEN must be set in
+  // Netlify environment variables; if absent the endpoint returns 503
+  // rather than opening access to anonymous callers.
   const expected = process.env["ONGOING_RUN_TOKEN"];
-  if (expected) {
-    const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-    if (got !== expected) {
-      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-    }
+  if (!expected) {
+    return NextResponse.json(
+      { ok: false, error: "ONGOING_RUN_TOKEN not configured." },
+      { status: 503 },
+    );
+  }
+  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  if (!got || got !== expected) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   const keys = await listKeys("ongoing/subject/");

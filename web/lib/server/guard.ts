@@ -7,10 +7,15 @@
 //   export const POST = withGuard(async (req, ctx) => { ... });
 //
 // Error envelope on denial: { code, message, traceId }.
+//
+// NOTE: New routes should prefer calling `enforce(req)` directly (enforce.ts),
+// which returns a structured result and handles anonymous callers with free-tier
+// rate-limiting. `withGuard` is kept for existing routes that need the
+// RequestContext; it calls enforce internally with requireAuth: true.
 
-import { extractKey, validateAndConsume } from "./api-keys.js";
+import { randomBytes } from "node:crypto";
+import { enforce } from "./enforce";
 import type { ApiKeyRecord } from "./api-keys.js";
-import { consumeRateLimit, rateLimitHeaders } from "./rate-limit.js";
 
 export interface RequestContext {
   readonly apiKey: ApiKeyRecord;
@@ -28,26 +33,7 @@ export interface ErrorEnvelope {
 type Handler = (req: Request, ctx: RequestContext) => Promise<Response> | Response;
 
 function newTraceId(): string {
-  // 16 hex chars — compact + grep-friendly in audit logs. Not cryptographically
-  // strong; use a dedicated trace header in production.
-  const bytes = new Uint8Array(8);
-  for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function jsonError(
-  status: number,
-  envelope: ErrorEnvelope,
-  headers: Record<string, string> = {},
-): Response {
-  return new Response(JSON.stringify(envelope), {
-    status,
-    headers: {
-      "content-type": "application/json",
-      "x-trace-id": envelope.traceId,
-      ...headers,
-    },
-  });
+  return randomBytes(8).toString("hex");
 }
 
 export function withGuard(handler: Handler): (req: Request) => Promise<Response> {
@@ -55,41 +41,16 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
     const traceId = req.headers.get("x-trace-id") ?? newTraceId();
     const receivedAt = new Date();
 
-    // Authn + monthly quota
-    const plaintext = extractKey(req);
-    const check = await validateAndConsume(plaintext);
-    if (!check.ok) {
-      return jsonError(
-        check.reason === "quota_exceeded" ? 429 : 401,
-        {
-          code: check.reason ?? "unauthorized",
-          message:
-            check.reason === "quota_exceeded"
-              ? "Monthly quota exceeded."
-              : check.reason === "revoked"
-                ? "API key revoked."
-                : "Missing or unknown API key. Supply X-Api-Key header or Authorization: Bearer.",
-          traceId,
-        },
-      );
+    const gate = await enforce(req, { requireAuth: true });
+    if (!gate.ok) {
+      const nr = gate.response;
+      const merged = new Headers(nr.headers);
+      merged.set("x-trace-id", traceId);
+      return new Response(nr.body, { status: nr.status, headers: merged });
     }
 
-    const apiKey = check.record!;
-
-    // Per-second / per-minute rate-limit
-    const rl = await consumeRateLimit(apiKey.id, apiKey.tier);
-    const rlHeaders = rateLimitHeaders(rl);
-    if (!rl.allowed) {
-      return jsonError(
-        429,
-        {
-          code: "rate_limited",
-          message: `Rate limit exceeded. Retry in ${rl.retryAfterSec}s.`,
-          traceId,
-        },
-        rlHeaders,
-      );
-    }
+    // enforce with requireAuth: true guarantees record is non-null.
+    const apiKey = gate.record!;
 
     const ctx: RequestContext = {
       apiKey,
@@ -98,7 +59,6 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
       receivedAt,
     };
 
-    // Audit
     auditAccess({
       traceId,
       tenantId: ctx.tenantId,
@@ -110,9 +70,8 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
 
     try {
       const res = await handler(req, ctx);
-      // Stamp rate-limit + trace headers on the outgoing response.
       const merged = new Headers(res.headers);
-      for (const [k, v] of Object.entries(rlHeaders)) merged.set(k, v);
+      for (const [k, v] of Object.entries(gate.headers)) merged.set(k, v);
       merged.set("x-trace-id", traceId);
       return new Response(res.body, {
         status: res.status,
@@ -120,22 +79,29 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
         headers: merged,
       });
     } catch (err) {
-      return jsonError(
-        500,
-        {
+      return new Response(
+        JSON.stringify({
           code: "internal_error",
           message: err instanceof Error ? err.message : "handler failed",
           traceId,
+        } satisfies ErrorEnvelope),
+        {
+          status: 500,
+          headers: {
+            "content-type": "application/json",
+            "x-trace-id": traceId,
+            ...gate.headers,
+          },
         },
-        rlHeaders,
       );
     }
   };
 }
 
-/** Minimal audit hook. Default appends to an in-process ring buffer so it's
- *  accessible from /api/v1/audit/... routes during a single deploy. Production
- *  wires this to the existing audit-chain via setAuditSink. */
+/** Minimal audit hook. The default sink writes to an in-process ring buffer.
+ *  In a serverless environment each Lambda instance has its own ring, so the
+ *  buffer only covers requests routed to the current warm instance. Wire a
+ *  persistent sink via setAuditSink for cross-instance audit coverage. */
 export interface AuditRecord {
   traceId: string;
   tenantId: string;

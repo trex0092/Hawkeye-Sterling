@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { deleteKey, revokeKey } from "@/lib/server/api-keys";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
+
   const ok = await revokeKey(params.id);
   if (!ok) {
     return NextResponse.json({ ok: false, error: "unknown key" }, { status: 404 });
@@ -16,9 +20,12 @@ export async function POST(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
+
   await deleteKey(params.id);
   return NextResponse.json({ ok: true, id: params.id, deleted: true });
 }

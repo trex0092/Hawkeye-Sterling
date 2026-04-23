@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getJson, listKeys } from "@/lib/server/store";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,9 @@ interface ExportRequest {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
+
   let body: ExportRequest;
   try {
     body = (await req.json()) as ExportRequest;

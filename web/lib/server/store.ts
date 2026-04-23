@@ -54,7 +54,16 @@ export function getStore(): MinimalStore {
       },
     };
     return cached;
-  } catch {
+  } catch (err) {
+    // Netlify Blobs is unavailable (local dev or misconfigured deployment).
+    // Data written to the in-memory fallback is NOT shared across Lambda
+    // instances and is lost on cold start. If you see this in production,
+    // check that the site is linked to a Netlify project with Blobs enabled.
+    console.error(
+      "[hawkeye] Netlify Blobs unavailable — falling back to in-memory storage.",
+      "Issued keys, rate-limit counters and enrolled subjects will not persist.",
+      err,
+    );
     cached = buildMemoryStore();
     return cached;
   }

@@ -5,6 +5,13 @@
 //   minute-resolution cap (sustained)
 // Limits come from the tier definition so commercial tiers are published
 // in one place.
+//
+// Soft-limit caveat: Netlify Blobs has no atomic compare-and-swap. Two
+// concurrent requests arriving within the same blob round-trip (~50 ms)
+// can both read count=N, both pass the check, and both write count=N+1,
+// effectively allowing count=N+2. This is acceptable for short-window
+// burst limits. Strict enforcement requires a database with atomic
+// increment (e.g. Redis INCR).
 
 import { getJson, setJson } from "./store";
 import { tierFor, type TierDefinition } from "@/lib/data/tiers";
