@@ -567,7 +567,31 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
       <Section title="CDD posture">
         <Field label="Rating">
-          <span className="text-13 font-semibold text-ink-0">{subject.cddPosture}</span>
+          <CddPostureBadge
+            stored={subject.cddPosture}
+            brainSeverity={brainSeverity}
+            brainScore={brainScore}
+            hasSanctionsHit={
+              screening.status === "success" && screening.result.hits.length > 0
+            }
+            hasRedline={
+              superBrain.status === "success" &&
+              superBrain.result.redlines.fired.length > 0
+            }
+            isPep={
+              (superBrain.status === "success" &&
+                ((superBrain.result.pep?.salience ?? 0) > 0 ||
+                  Boolean(superBrain.result.pepAssessment?.isLikelyPEP))) ||
+              Boolean(subject.pep)
+            }
+            pepTier={
+              (superBrain.status === "success" &&
+                (superBrain.result.pep?.tier ??
+                  superBrain.result.pepAssessment?.highestTier)) ||
+              subject.pep?.tier ||
+              null
+            }
+          />
         </Field>
       </Section>
 
@@ -703,6 +727,80 @@ function ScreeningSummary({ result }: { result: QuickScreenResult }) {
       <span className="ml-auto font-mono text-10.5 text-ink-3">
         {result.durationMs}ms
       </span>
+    </div>
+  );
+}
+
+// CDD posture auto-upgrades from the stored value based on runtime
+// brain output. Business rule per MLRO policy:
+//   - CRITICAL severity OR composite ≥ 85 OR any confirmed sanctions
+//     hit OR redline fired OR tier-1 PEP → force EDD ("Zero tolerance —
+//     Enhanced Due Diligence required")
+//   - otherwise display whatever the onboarding analyst chose on the form
+//
+// The badge surfaces the upgrade reason so the operator sees WHY the
+// brain escalated, instead of silently overriding their selection.
+function CddPostureBadge({
+  stored,
+  brainSeverity,
+  brainScore,
+  hasSanctionsHit,
+  hasRedline,
+  isPep,
+  pepTier,
+}: {
+  stored: "CDD" | "EDD" | "SDD";
+  brainSeverity: import("@/lib/api/quickScreen.types").QuickScreenSeverity | null;
+  brainScore: number | null;
+  hasSanctionsHit: boolean;
+  hasRedline: boolean;
+  isPep: boolean;
+  pepTier: string | null;
+}) {
+  const reasons: string[] = [];
+  if (brainSeverity === "critical") reasons.push("critical severity");
+  if (brainScore != null && brainScore >= 85) reasons.push(`composite ${brainScore}/100`);
+  if (hasSanctionsHit) reasons.push("confirmed sanctions hit");
+  if (hasRedline) reasons.push("redline fired");
+  if (isPep && pepTier && /tier_1|tier 1|head_of_state/i.test(pepTier)) {
+    reasons.push("tier-1 PEP");
+  }
+
+  const upgraded = reasons.length > 0 && stored !== "EDD";
+  const display = upgraded ? "EDD" : stored;
+  const zeroTolerance =
+    hasSanctionsHit ||
+    brainSeverity === "critical" ||
+    (hasRedline && brainScore != null && brainScore >= 85);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="text-13 font-semibold text-ink-0">{display}</span>
+        {upgraded && (
+          <span
+            className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-amber-dim text-amber uppercase"
+            title={`Upgraded from ${stored} based on runtime screening result`}
+          >
+            upgraded
+          </span>
+        )}
+        {zeroTolerance && (
+          <span
+            className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-red text-white uppercase"
+            title="Zero tolerance — decline / freeze relationship per policy"
+          >
+            zero tolerance
+          </span>
+        )}
+      </div>
+      {upgraded && (
+        <div className="text-10.5 text-ink-2 mt-1 leading-snug">
+          Auto-escalated to Enhanced Due Diligence — {reasons.join(", ")}.
+          {zeroTolerance &&
+            " Zero-tolerance thresholds crossed; refer MLRO to consider freeze / decline under FDL 10/2025 Art.26-27."}
+        </div>
+      )}
     </div>
   );
 }
