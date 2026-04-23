@@ -8,7 +8,7 @@
 // This replaces the hardcoded-empty `CASES = []` array so the Cases page
 // actually reflects filings the operator has made.
 
-import type { CaseRecord, CaseStatus } from "@/lib/types";
+import type { CaseRecord, CaseStatus, EvidenceCategory } from "@/lib/types";
 
 const STORAGE_KEY = "hawkeye.cases.v1";
 
@@ -52,8 +52,6 @@ export function deleteCase(id: string): void {
   const existing = loadCases();
   saveCases(existing.filter((c) => c.id !== id));
 }
-
-import type { EvidenceCategory } from "@/lib/types";
 
 // Evidence-vault helper: attach a new evidence entry + audit-trail
 // event to an existing case, or to the most-recent case that matches
