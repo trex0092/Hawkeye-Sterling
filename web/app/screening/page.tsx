@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ScreeningHero } from "@/components/screening/ScreeningHero";
@@ -103,14 +103,45 @@ function formatDDMMYY(d: Date): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+const STORAGE_KEY = "hawkeye.screening-subjects.v1";
+
+function loadSubjects(): Subject[] {
+  if (typeof window === "undefined") return SUBJECTS;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return SUBJECTS;
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as Subject[]) : SUBJECTS;
+  } catch {
+    return SUBJECTS;
+  }
+}
+
 export default function ScreeningPage() {
   const [subjects, setSubjects] = useState<Subject[]>(SUBJECTS);
+  const [hydrated, setHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(
     SUBJECTS[0]?.id ?? null,
   );
   const [formOpen, setFormOpen] = useState(false);
+
+  useEffect(() => {
+    const loaded = loadSubjects();
+    setSubjects(loaded);
+    setSelectedId((prev) => prev ?? loaded[0]?.id ?? null);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+    } catch {
+      /* quota / disabled storage — just skip */
+    }
+  }, [subjects, hydrated]);
 
   const deferredQuery = useDeferredValue(query);
 
