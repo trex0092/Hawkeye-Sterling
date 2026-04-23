@@ -1,20 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-function formatDoubleMetaphone(
-  dm: string | [string, string] | { primary?: string; alternate?: string } | null | undefined,
-): string {
-  if (!dm) return "";
-  if (typeof dm === "string") return dm;
-  if (Array.isArray(dm)) return dm.filter(Boolean).join(" / ");
-  if (typeof dm === "object") {
-    const p = typeof dm.primary === "string" ? dm.primary : "";
-    const a = typeof dm.alternate === "string" ? dm.alternate : "";
-    return [p, a].filter(Boolean).join(" / ");
-  }
-  return "";
-}
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -746,6 +732,14 @@ function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").Aut
   );
 }
 
+function formatDoubleMetaphone(
+  dm: string | [string, string] | { primary: string; alternate?: string },
+): string {
+  if (typeof dm === "string") return dm;
+  if (Array.isArray(dm)) return dm.join(" / ");
+  return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
+}
+
 function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain").SuperBrainState }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
@@ -963,9 +957,7 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           </div>
           {(r.adverseMediaScored.topKeywords?.length ?? 0) > 0 && (
             <div className="text-10.5 text-ink-2 font-mono">
-              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).map(
-                (k) => (typeof k === "string" ? k : (k as { keyword: string }).keyword)
-              ).join(" · ")}
+              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).map((k) => k.keyword).join(" · ")}
             </div>
           )}
         </Field>
@@ -976,17 +968,14 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           label={`PEP assessment · ${r.pepAssessment.highestTier ?? "—"} · ${Math.round((r.pepAssessment.riskScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1">
-            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => {
-              const label = typeof m === "string" ? m : (m as { label: string }).label;
-              return (
-                <span
-                  key={`${label}-${i}`}
-                  className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
-                >
-                  {label}
-                </span>
-              );
-            })}
+            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => (
+              <span
+                key={`${m.label}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
+              >
+                {m.label}
+              </span>
+            ))}
           </div>
         </Field>
       )}
@@ -1028,7 +1017,9 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           <span>soundex: <span className="text-ink-0">{r.variants.soundex}</span></span>
           <span>
             dmetaphone:{" "}
-            <span className="text-ink-0">{formatDoubleMetaphone(r.variants.doubleMetaphone)}</span>
+            <span className="text-ink-0">
+              {formatDoubleMetaphone(r.variants.doubleMetaphone)}
+            </span>
           </span>
         </div>
       </Field>

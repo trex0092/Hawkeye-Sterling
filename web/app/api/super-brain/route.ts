@@ -5,7 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 // catalogues); pulling it in at the top of a Netlify Function route was
 // blowing cold-start past the 10s cap and returning 502s on every
 // subject-detail open.
-import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import { classifyPepRole } from "../../../../dist/src/brain/pep-classifier.js";
 import { classifyAdverseMedia } from "../../../../dist/src/brain/adverse-media.js";
 import { jurisdictionByName } from "../../../../dist/src/brain/jurisdictions-full.js";
@@ -35,6 +35,17 @@ import {
   lookupKnownPEP,
   lookupKnownAdverse,
 } from "@/lib/data/known-entities";
+import type {
+  QuickScreenCandidate,
+  QuickScreenResult,
+  QuickScreenSubject,
+} from "@/lib/api/quickScreen.types";
+
+type QuickScreenFn = (
+  subject: QuickScreenSubject,
+  candidates: QuickScreenCandidate[],
+) => QuickScreenResult;
+const quickScreen = _quickScreen as QuickScreenFn;
 
 // Group weight: how much each fired group should push the composite score.
 // Critical regimes (terrorism / WMD / proliferation / sanctions) dominate;

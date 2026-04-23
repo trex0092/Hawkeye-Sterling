@@ -39,23 +39,21 @@ export interface SuperBrainResult {
     notes: string[];
   } | null;
   typologies?: {
-    hits: Array<{ id: string; name: string; family: string; weight: number }>;
+    hits: Array<{ id: string; name: string; family: string; weight: number; snippet?: string }>;
     compositeScore: number;
   };
   adverseMediaScored?: {
     byCategory: Record<string, number>;
     total: number;
     distinctKeywords: number;
-    // Server returns enriched objects; string[] was the wrong type.
-    topKeywords: Array<{ keyword: string; categoryId: string; count: number }> | string[];
+    topKeywords: Array<{ keyword: string; categoryId: string; count: number }>;
     categoriesTripped: string[];
     compositeScore: number;
   } | null;
   pepAssessment?: {
     isLikelyPEP: boolean;
     highestTier: string;
-    // Server returns enriched role objects; string[] was the wrong type.
-    matchedRoles: Array<{ tier: string; label: string; snippet?: string }> | string[];
+    matchedRoles: Array<{ tier: string; label: string; snippet?: string }>;
     riskScore: number;
   } | null;
   stylometry?: {
@@ -77,10 +75,7 @@ export interface SuperBrainResult {
   variants: {
     aliasExpansion: string[];
     nameVariants: string[];
-    doubleMetaphone:
-      | string
-      | [string, string]
-      | { primary: string; alternate: string };
+    doubleMetaphone: string | [string, string] | { primary: string; alternate?: string };
     soundex: string;
   };
   composite: {
