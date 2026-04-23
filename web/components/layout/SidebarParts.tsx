@@ -2,6 +2,12 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import {
+  loadOperatorRole,
+  saveOperatorRole,
+  ROLE_LABEL,
+  type OperatorRole,
+} from "@/lib/data/operator-role";
 
 const OPERATOR_STORAGE_KEY = "hawkeye.operator";
 
@@ -80,6 +86,7 @@ export function SidebarMLROCard() {
   const [name, setName] = useState("");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const [role, setRole] = useState<OperatorRole>("analyst");
 
   useEffect(() => {
     try {
@@ -88,7 +95,18 @@ export function SidebarMLROCard() {
     } catch {
       /* localStorage disabled */
     }
+    setRole(loadOperatorRole());
+    const onRoleChange = () => setRole(loadOperatorRole());
+    window.addEventListener("hawkeye:operator-role-updated", onRoleChange);
+    return () =>
+      window.removeEventListener("hawkeye:operator-role-updated", onRoleChange);
   }, []);
+
+  const toggleRole = () => {
+    const next: OperatorRole = role === "mlro" ? "analyst" : "mlro";
+    saveOperatorRole(next);
+    setRole(next);
+  };
 
   const save = () => {
     const trimmed = draft.trim();
@@ -144,13 +162,31 @@ export function SidebarMLROCard() {
           type="button"
           onClick={startEdit}
           className="w-full text-left"
-          title="Click to edit"
+          title="Click to edit name"
         >
-          <div className="text-13 font-semibold mb-0.5">
-            {name || "Set your name"}
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-13 font-semibold truncate">
+              {name || "Set your name"}
+            </span>
           </div>
-          <div className="text-11 opacity-85">MLRO on duty</div>
+          <div className="text-11 opacity-85">On duty</div>
         </button>
+      )}
+      {!editing && (
+        <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+          <span className="text-10 uppercase tracking-wide-3 text-white/70">
+            Role
+          </span>
+          <button
+            type="button"
+            onClick={toggleRole}
+            className="inline-flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white border border-white/20"
+            title={`Click to switch to ${role === "mlro" ? "Analyst" : "MLRO"}`}
+          >
+            {ROLE_LABEL[role]}
+            <span className="text-10 opacity-75">⇄</span>
+          </button>
+        </div>
       )}
     </div>
   );

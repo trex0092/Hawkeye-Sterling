@@ -15,6 +15,11 @@ import type {
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import {
+  canPerform,
+  loadOperatorRole,
+  type OperatorRole,
+} from "@/lib/data/operator-role";
+import {
   appendCase,
   attachEvidenceToSubject,
   buildCaseRecord,
@@ -48,6 +53,17 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
+  const [role, setRole] = useState<OperatorRole>("analyst");
+
+  useEffect(() => {
+    setRole(loadOperatorRole());
+    const onRoleChange = () => setRole(loadOperatorRole());
+    window.addEventListener("hawkeye:operator-role-updated", onRoleChange);
+    return () =>
+      window.removeEventListener("hawkeye:operator-role-updated", onRoleChange);
+  }, []);
+
+  const canRaiseSTR = canPerform(role, "str");
   const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
@@ -204,6 +220,25 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       },
     );
     if (res.ok && res.data?.ok) {
+      // Seal the STR decision into the HMAC-signed audit chain so the
+      // regulator can prove the filing was authorised by an MLRO (not
+      // a replay / modified client). Best-effort: if AUDIT_CHAIN_SECRET
+      // isn't set server-side the call 503s and we continue — the
+      // case-record path still provides the local audit-trail timeline.
+      void fetchJson("/api/audit/sign", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "str",
+          target: subject.id,
+          actor: { role, name: subject.id },
+          body: {
+            subjectName: subject.name,
+            asanaTaskUrl: res.data.taskUrl ?? null,
+          },
+        }),
+        label: "Audit sign failed",
+      });
       // Persist the filing as a case record so /cases shows it under
       // "Escalated to FIU" — MLRO sees the audit trail without leaving
       // the screening panel.
@@ -511,7 +546,16 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             <PanelBtn onClick={handleEscalate} disabled={escalated}>
               {escalated ? "Escalated" : "Escalate"}
             </PanelBtn>
-            <PanelBtn brand onClick={handleRaiseSTR} disabled={strRaised}>
+            <PanelBtn
+              brand
+              onClick={handleRaiseSTR}
+              disabled={strRaised || !canRaiseSTR}
+              title={
+                !canRaiseSTR
+                  ? "MLRO role required to raise STR (toggle role in the sidebar)"
+                  : undefined
+              }
+            >
               {strRaised ? "STR raised" : "Raise STR"}
             </PanelBtn>
           </div>
@@ -988,10 +1032,10 @@ function PanelBtn({
   title,
 }: {
   children: React.ReactNode;
-  brand?: boolean;
-  onClick?: () => void;
-  disabled?: boolean;
-  title?: string;
+  brand?: boolean | undefined;
+  onClick?: (() => void) | undefined;
+  disabled?: boolean | undefined;
+  title?: string | undefined;
 }) {
   const base =
     "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium transition-colors";
