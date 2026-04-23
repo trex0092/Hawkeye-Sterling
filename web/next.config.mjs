@@ -6,20 +6,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // web/ is a workspace inside the monorepo; the API routes import the
-  // compiled brain from ../dist/src/brain/**. Tell Next's file-trace that
-  // the workspace root is one level up so Netlify's Next plugin bundles
-  // those files into the serverless function. Without this, cold-starts
-  // on Netlify 502 because the traced function can't resolve the import.
+  // The API routes (quick-screen, super-brain, news-search, ongoing/run,
+  // compliance-report, sar-report, screening-report, etc.) import the
+  // compiled brain from ../dist/src/brain/**. Next.js's default tracing
+  // roots at the `web/` project directory, so dist/ — which lives at the
+  // repo root — is silently dropped from the serverless function bundle
+  // and every route 502s at cold-start with a MODULE_NOT_FOUND error.
+  // Lifting the tracing root one level up + explicitly including dist/
+  // guarantees the compiled brain ships with every function.
+  //
+  // Next.js 14 still keeps these knobs under `experimental`; at top-level
+  // they're silently ignored (the build emits "Unrecognized key(s) in
+  // object: 'outputFileTracingRoot', 'outputFileTracingIncludes'" and the
+  // tracing override never takes effect). Promoted to top-level in Next 15.
   experimental: {
-    // Next.js 14 still exposes tracing knobs under `experimental`; they
-    // were promoted to top-level in Next.js 15.
     outputFileTracingRoot: path.join(__dirname, ".."),
     outputFileTracingIncludes: {
-      "/api/quick-screen": ["../dist/src/brain/**/*.js"],
-      "/api/super-brain": ["../dist/src/brain/**/*.js"],
-      "/api/news-search": ["../dist/src/brain/**/*.js"],
-      "/api/batch-screen": ["../dist/src/brain/**/*.js"],
+      "/api/**/*": ["../dist/**/*.js"],
     },
   },
 };

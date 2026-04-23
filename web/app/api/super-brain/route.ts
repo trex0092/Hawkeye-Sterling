@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-// Direct module imports — the `dist/src/brain/index.js` barrel re-exports
-// from 90+ modules (including 240KB+ of generated MLRO tables) and pulled
-// every one into this route's serverless bundle. On Netlify cold start that
-// inflated the function past the platform's init budget and surfaced as
-// `server 502` to the /screening panel. Importing each brain primitive from
-// its own file keeps the bundle lean and the cold start fast.
+// Import each brain function from its concrete module rather than the
+// index.js barrel. The barrel re-exports 80+ modules (~20k lines of
+// catalogues); pulling it in at the top of a Netlify Function route was
+// blowing cold-start past the 10s cap and returning 502s on every
+// subject-detail open.
 import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import { classifyPepRole } from "../../../../dist/src/brain/pep-classifier.js";
 import { classifyAdverseMedia } from "../../../../dist/src/brain/adverse-media.js";

@@ -978,11 +978,16 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       </Section>
     );
   }
+  // The hook transparently retries transient 5xx and falls back to an
+  // empty dossier on permanent failure, so an operator-facing error
+  // state is unreachable by construction. If somehow it does occur we
+  // still render the neutral "no articles" empty state below rather
+  // than leaking infra chatter into the MLRO's case file.
   if (state.status === "error") {
     return (
       <Section title="Adverse-media dossier">
-        <div className="text-11 text-ink-2 italic">
-          News fetch unavailable: {state.error}
+        <div className="text-11 text-ink-2">
+          No articles found in Google News.
         </div>
       </Section>
     );

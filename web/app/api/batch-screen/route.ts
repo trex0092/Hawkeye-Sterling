@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-// Direct import, not the barrel — same rationale as super-brain/news-search:
-// pulling the full brain barrel (~3-4MB compiled) bloats the serverless
-// bundle past Netlify's cold-start budget.
+// Import from the concrete module, not the index barrel — see super-brain
+// route for why pulling in the 80-module barrel at cold-start kills these
+// Netlify Functions with 502s.
 import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
