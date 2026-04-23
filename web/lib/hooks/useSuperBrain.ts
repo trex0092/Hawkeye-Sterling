@@ -113,13 +113,18 @@ export function useSuperBrain(
       signal: ac.signal,
     })
       .then(async (r) => {
-        const payload = (await r.json()) as
+        const payload = (await r.json().catch(() => null)) as
           | { ok: true; [k: string]: unknown }
-          | { ok: false; error: string; detail?: string };
-        if (!payload.ok) {
+          | { ok: false; error?: string; detail?: string }
+          | null;
+        if (!payload || !payload.ok) {
+          const fallback = r.ok ? "empty response" : `server ${r.status}`;
           setState({
             status: "error",
-            error: payload.detail ?? payload.error ?? "unknown",
+            error:
+              (payload && "detail" in payload && payload.detail) ||
+              (payload && "error" in payload && payload.error) ||
+              fallback,
           });
           return;
         }
