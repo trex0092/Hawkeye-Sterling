@@ -4,10 +4,11 @@ import {
   adverseKeywordGroupCounts,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
-import {
-  matchEnsemble,
-  variantsOf,
-} from "../../../../dist/src/brain/index.js";
+// Import from concrete modules rather than the index.js barrel. Pulling
+// the 80-module barrel into a Netlify Function made cold-starts push
+// past the 10s edge timeout and every news-search request returned 502.
+import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
+import { variantsOf } from "../../../../dist/src/brain/translit.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
