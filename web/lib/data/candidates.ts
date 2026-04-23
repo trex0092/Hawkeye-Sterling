@@ -68,7 +68,7 @@ export const CANDIDATES: QuickScreenCandidate[] = [
   {
     listId: "UN-1267",
     listRef: "UN-QDe.145",
-    name: "Fine Gold LLC",
+    name: "Demo Bullion FZE",
     entityType: "organisation",
     jurisdiction: "AE",
     programs: ["GOLD-TRADE"],

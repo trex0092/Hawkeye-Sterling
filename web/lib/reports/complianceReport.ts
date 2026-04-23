@@ -108,7 +108,9 @@ function formatHeader(
   const lines: string[] = [];
   lines.push("HAWKEYE STERLING");
   lines.push(`Report ID           : ${buildId(type, now)}`);
-  lines.push(`Reporting entity    : ${input.reportingEntity ?? "Fine Gold LLC"}`);
+  lines.push(
+    `Reporting entity    : ${input.reportingEntity ?? process.env["TENANT_NAME"] ?? "—"}`,
+  );
   lines.push(
     `Date and Time       : ${now.toUTCString().replace(" GMT", " UTC")}`,
   );

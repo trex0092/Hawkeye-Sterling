@@ -199,7 +199,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
   const lines: string[] = [];
   lines.push(`HAWKEYE STERLING · INITIAL SCREENING DOSSIER`);
   lines.push(`Report ID           : ${reportId}`);
-  lines.push(`Reporting entity    : Fine Gold LLC`);
+  lines.push(`Reporting entity    : ${process.env["TENANT_NAME"] ?? "—"}`);
   lines.push(`Generated           : ${gen.toUTCString().replace(" GMT", " UTC")}`);
   lines.push(`MLRO assigned       : Luisa Fernanda`);
   if (b.subject.caseId) lines.push(`Case                : ${b.subject.caseId}`);
@@ -287,7 +287,7 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
   if (b.subject.group) lines.push(`Group             : ${b.subject.group}`);
   lines.push(`Cadence           : thrice-daily · 08:30 / 15:00 / 17:30 Dubai`);
   lines.push(`MLRO assigned     : Luisa Fernanda`);
-  lines.push(`Reporting entity  : Fine Gold LLC`);
+  lines.push(`Reporting entity  : ${process.env["TENANT_NAME"] ?? "—"}`);
   lines.push("");
   lines.push(
     `Tick              : ${fmt(gen)} ${slot.label} (${slot.utc})`,

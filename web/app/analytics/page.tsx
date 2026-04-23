@@ -43,7 +43,6 @@ interface TxRow {
 }
 
 const TX_STORAGE_KEY = "hawkeye.transaction-monitor.v1";
-const REPORTING_ENTITY = "Fine Gold LLC";
 
 const FILING_TYPES = ["STR", "SAR", "CTR", "DPMSR", "FFR", "PEPR"] as const;
 
@@ -80,6 +79,7 @@ function weeklySeries(total: number, weeks: number): number[] {
 export default function AnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [tenantName, setTenantName] = useState<string>("—");
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [txs, setTxs] = useState<TxRow[]>([]);
   const now = useMemo(() => new Date(), []);
@@ -99,6 +99,15 @@ export default function AnalyticsPage() {
         return;
       }
       setData(result.data);
+    })();
+    // Fetch tenant identity for the report header. Independent of
+    // analytics so a tenant misconfig doesn't blank the whole page.
+    (async () => {
+      const r = await fetchJson<{ ok: true; name: string }>("/api/tenant", {
+        cache: "no-store",
+        label: "Tenant lookup failed",
+      });
+      if (active && r.ok && r.data?.name) setTenantName(r.data.name);
     })();
     return () => {
       active = false;
@@ -196,7 +205,7 @@ export default function AnalyticsPage() {
                 Analytics · MLRO Performance Digest
               </div>
               <h1 className="font-display text-36 text-ink-0 m-0 leading-tight">
-                {REPORTING_ENTITY}
+                {tenantName}
               </h1>
               <div className="text-12 text-ink-2 mt-1">
                 Period: {formatPeriod(now)}
