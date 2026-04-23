@@ -1,7 +1,8 @@
 // Hawkeye Sterling — name-matching algorithms.
 // Real implementations of: exact, Levenshtein (distance + ratio),
 // Jaro, Jaro-Winkler, Soundex, Double Metaphone (ASCII subset),
-// token-set (order-insensitive token similarity).
+// token-set (order-insensitive token similarity),
+// trigram (character n-gram Jaccard), partial-token-set (subset ratio).
 // Every matcher returns a normalised score in [0,1] and declares its method
 // so the reasoning chain can cite which algorithm produced a hit.
 
@@ -12,7 +13,9 @@ export type MatchingMethod =
   | 'jaro_winkler'
   | 'soundex'
   | 'double_metaphone'
-  | 'token_set';
+  | 'token_set'
+  | 'trigram'
+  | 'partial_token_set';
 
 export interface MatchScore {
   method: MatchingMethod;
@@ -296,6 +299,47 @@ export function matchDoubleMetaphone(a: string, b: string): MatchScore {
   return { method: 'double_metaphone', score: pass ? 1 : 0, threshold: 1, pass };
 }
 
+// ---------- trigram (character n-gram Jaccard)
+// Catches company-name abbreviations, spacing differences, and character
+// transpositions that cross token boundaries ("Al Rajhi" / "AlRajhi").
+function ngramSet(s: string, n: number): Set<string> {
+  const out = new Set<string>();
+  for (let i = 0; i <= s.length - n; i++) out.add(s.slice(i, i + n));
+  return out;
+}
+
+export function matchTrigram(a: string, b: string, threshold = 0.5): MatchScore {
+  const sa = normalise(a);
+  const sb = normalise(b);
+  const ta = ngramSet(sa, 3);
+  const tb = ngramSet(sb, 3);
+  if (ta.size === 0 || tb.size === 0) {
+    return { method: 'trigram', score: 0, threshold, pass: false };
+  }
+  let inter = 0;
+  for (const t of ta) if (tb.has(t)) inter++;
+  const union = ta.size + tb.size - inter;
+  const score = union === 0 ? 0 : inter / union;
+  return { method: 'trigram', score, threshold, pass: score >= threshold };
+}
+
+// ---------- partial token-set (subset ratio)
+// Measures intersection / min(|A|, |B|) so a name that is a strict subset
+// of another (e.g. "Mohammed Khan" ⊂ "Mohammed Abdul Khan") still scores 1.
+export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): MatchScore {
+  const ta = normalise(a).split(' ').filter(Boolean);
+  const tb = normalise(b).split(' ').filter(Boolean);
+  if (ta.length === 0 || tb.length === 0) {
+    return { method: 'partial_token_set', score: 0, threshold, pass: false };
+  }
+  const [shorter, longer] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  const longerSet = new Set(longer);
+  let inter = 0;
+  for (const t of shorter) if (longerSet.has(t)) inter++;
+  const score = inter / shorter.length;
+  return { method: 'partial_token_set', score, threshold, pass: score >= threshold };
+}
+
 // ---------- token-set (order-insensitive)
 export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore {
   const tokensA = new Set(normalise(a).split(' ').filter(Boolean));
@@ -327,6 +371,8 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     matchTokenSet(subject, candidate),
     matchSoundex(subject, candidate),
     matchDoubleMetaphone(subject, candidate),
+    matchTrigram(subject, candidate),
+    matchPartialTokenSet(subject, candidate),
   ];
   const best = scores.reduce((a, b) => (b.score > a.score ? b : a));
   const phoneticAgreement =
