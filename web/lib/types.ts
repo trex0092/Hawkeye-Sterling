@@ -1,3 +1,5 @@
+export type SortKey = "name" | "riskScore" | "slaNotify" | "status" | "cddPosture";
+
 export type SanctionSource = "OFAC" | "UN" | "EU" | "UK" | "EOCN";
 
 export interface SanctionMatch {
@@ -11,10 +13,15 @@ export interface SanctionMatch {
 
 export type SubjectType =
   | "Individual · UBO"
+  | "Individual · Customer"
+  | "Individual · Correspondent"
+  | "Individual · Counterparty"
   | "Corporate · Supplier"
   | "Corporate · Refiner"
   | "Corporate · Customer"
+  | "Corporate · Correspondent"
   | "Corporate · Intermediary"
+  | "Corporate · Counterparty"
   | "Transaction · Cluster";
 
 export type CDDPosture = "CDD" | "EDD" | "SDD";
@@ -51,6 +58,44 @@ export interface Subject {
   slaNotify: string;
   mostSerious: string;
   openedAgo: string;
+  notes?: string;
+  riskCategory?: string;
+}
+
+export interface UboEntry {
+  id: string;
+  name: string;
+  ownershipPct: number;
+  role: string;
+  jurisdiction: string;
+  verified: boolean;
+}
+
+export interface EddChecklistItem {
+  id: string;
+  label: string;
+  completed: boolean;
+  completedAt?: string;
+}
+
+export const EDD_CHECKLIST_DEFAULTS: { id: string; label: string }[] = [
+  { id: "sow", label: "Source of wealth documented" },
+  { id: "sof", label: "Source of funds verified" },
+  { id: "ubo-struct", label: "Beneficial ownership structure confirmed" },
+  { id: "edd-review", label: "Enhanced due diligence review completed" },
+  { id: "mlro", label: "MLRO sign-off obtained" },
+  { id: "pep-cert", label: "PEP screening certified" },
+  { id: "cbq", label: "Correspondent bank questionnaire received" },
+  { id: "four-eyes", label: "Four-eyes approval recorded" },
+];
+
+export interface SubjectDetail {
+  subjectId: string;
+  cddReviewDate?: string;
+  eddChecklist: EddChecklistItem[];
+  uboEntries: UboEntry[];
+  evidenceItems: EvidenceEntry[];
+  timelineEvents: TimelineEvent[];
 }
 
 export type FilterKey =

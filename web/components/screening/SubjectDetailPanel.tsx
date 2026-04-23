@@ -36,9 +36,10 @@ const SEVERITY_TONE: Record<QuickScreenSeverity, string> = {
 
 interface SubjectDetailPanelProps {
   subject: Subject;
+  onUpdate?: (id: string, update: Partial<Subject>) => void;
 }
 
-export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
+export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
