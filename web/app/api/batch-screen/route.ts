@@ -2,11 +2,22 @@ import { NextResponse } from "next/server";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
-import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import type {
+  QuickScreenCandidate,
+  QuickScreenResult,
+  QuickScreenSubject,
+} from "@/lib/api/quickScreen.types";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
+
+type QuickScreenFn = (
+  subject: QuickScreenSubject,
+  candidates: QuickScreenCandidate[],
+) => QuickScreenResult;
+const quickScreen = _quickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,10 +120,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(row.entityType ? { entityType: row.entityType } : {}),
         ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
       };
-      const screen = quickScreen(
-        subject,
-        CANDIDATES as Parameters<typeof quickScreen>[1],
-      );
+      const screen = quickScreen(subject, CANDIDATES);
       const haystack = `${row.name} ${(row.aliases ?? []).join(" ")}`;
       const kw = classifyAdverseKeywords(haystack);
       const esg = classifyEsg(haystack);
