@@ -68,13 +68,14 @@ export function DateParts({
   const inputCls = className || "border border-hair-2 rounded px-2 py-1.5 text-12 bg-white text-ink-0";
 
   return (
-    <div className="grid grid-cols-3 gap-2" aria-label={ariaLabel}>
-      <select
-        value={day}
-        onChange={(e) => emit(e.target.value, month, year)}
-        className={selectCls}
-        aria-label="Day"
-      >
+    <div aria-label={ariaLabel}>
+      <div className="grid grid-cols-3 gap-2">
+        <select
+          value={day}
+          onChange={(e) => emit(e.target.value, month, year)}
+          className={selectCls}
+          aria-label="Day"
+        >
         <option value="">Day</option>
         {DAYS.map((d) => (
           <option key={d} value={d}>
@@ -104,8 +105,17 @@ export function DateParts({
         maxLength={4}
         inputMode="numeric"
         className={inputCls}
-        aria-label="Year"
-      />
+          aria-label="Year"
+        />
+      </div>
+      {parse(value).day && parse(value).month && parse(value).year && (
+        <div className="mt-1 font-mono text-10 text-ink-3">
+          → {value}
+        </div>
+      )}
+      <div className="mt-1 font-mono text-10 text-ink-3">
+        Format: dd/mm/yyyy
+      </div>
     </div>
   );
 }
