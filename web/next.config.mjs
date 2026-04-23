@@ -19,10 +19,29 @@ const nextConfig = {
   // they're silently ignored (the build emits "Unrecognized key(s) in
   // object: 'outputFileTracingRoot', 'outputFileTracingIncludes'" and the
   // tracing override never takes effect). Promoted to top-level in Next 15.
+  //
+  // Why the extra node_modules entries below:
+  //   Lifting outputFileTracingRoot out of the web/ directory is what
+  //   lets ../dist ride along, but it also suppresses Next's default
+  //   transitive node_modules tracing — which used to pick up
+  //   styled-jsx and the rest of the Next server runtime automatically.
+  //   With the override, the serverless function was crashing on every
+  //   request with `Cannot find module 'styled-jsx/style'` out of
+  //   next/dist/server/require-hook.js. Explicitly including
+  //   styled-jsx + next's server + react/react-dom restores a
+  //   self-contained function bundle. Paths are relative to the app
+  //   directory (web/), not the tracing root.
   experimental: {
     outputFileTracingRoot: path.join(__dirname, ".."),
     outputFileTracingIncludes: {
-      "/api/**/*": ["../dist/**/*.js"],
+      "/**/*": [
+        "../dist/**/*.js",
+        "./node_modules/styled-jsx/**/*",
+        "./node_modules/next/dist/compiled/**/*",
+        "./node_modules/next/dist/server/**/*",
+        "./node_modules/react/**/*",
+        "./node_modules/react-dom/**/*",
+      ],
     },
   },
 };
