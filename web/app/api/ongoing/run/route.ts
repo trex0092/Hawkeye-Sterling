@@ -34,6 +34,27 @@ interface LastSnapshot {
   hits: LastHit[];
 }
 
+interface Schedule {
+  subjectId: string;
+  cadence: "hourly" | "daily" | "weekly" | "monthly";
+  scoreThreshold?: number;
+  nextRunAt: string;
+  lastRunAt?: string;
+}
+
+const CADENCE_MS = {
+  hourly: 60 * 60 * 1_000,
+  daily: 24 * 60 * 60 * 1_000,
+  weekly: 7 * 24 * 60 * 60 * 1_000,
+  monthly: 30 * 24 * 60 * 60 * 1_000,
+};
+
+// Threshold at which a score increase between runs is considered an
+// automatic escalation. 15 / 100 points (= 0.15 in normalised terms)
+// is large enough to clear noise from feedback-loop rescoring but
+// small enough to catch a subject moving from "possible" to "strong".
+const ESCALATION_DELTA = 15;
+
 function fingerprints(hits: LastHit[]): Set<string> {
   return new Set(hits.map((h) => `${h.listRef}|${h.candidateName}`));
 }
@@ -61,13 +82,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectName: string;
     topScore: number;
     severity: string;
+    scoreDelta: number;
+    escalated: boolean;
     newHits: Array<{ listId: string; listRef: string; candidateName: string }>;
     webhook: Awaited<ReturnType<typeof postWebhook>>;
     asanaTaskUrl?: string;
   }> = [];
 
+  const nowMs = Date.now();
+
   for (const s of subjects) {
     try {
+      // Respect per-subject schedule. If a schedule exists and the next
+      // run isn't due yet, skip this subject. Subjects without a
+      // schedule run on every tick (legacy behaviour).
+      const schedule = await getJson<Schedule>(`schedule/${s.id}`);
+      if (schedule && Date.parse(schedule.nextRunAt) > nowMs) {
+        continue;
+      }
+
       const subject = {
         name: s.name,
         ...(s.aliases && s.aliases.length ? { aliases: s.aliases } : {}),
@@ -83,6 +116,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       const newHits = screen.hits.filter(
         (h) => !prevFps.has(`${h.listRef}|${h.candidateName}`),
       );
+
+      // Auto-escalation: if the subject's top score jumped by more than
+      // ESCALATION_DELTA between runs, emit a dedicated escalation
+      // webhook so the MLRO is paged rather than waiting on the next
+      // four-eyes review.
+      const scoreDelta = prev ? screen.topScore - prev.topScore : 0;
+      const escalated = scoreDelta >= ESCALATION_DELTA;
 
       // Persist the fresh snapshot.
       const snapshot: LastSnapshot = {
@@ -135,12 +175,21 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
       }
 
+      const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =
+        escalated
+          ? "screening.escalated"
+          : newHits.length > 0
+            ? "screening.delta"
+            : "ongoing.rerun";
+
       const webhook = await postWebhook({
-        type: newHits.length > 0 ? "screening.delta" : "ongoing.rerun",
+        type: webhookType,
         subjectId: s.id,
         subjectName: s.name,
         severity: screen.severity,
         topScore: screen.topScore,
+        scoreDelta,
+        escalated,
         newHits: newHits.map((h) => ({
           listId: h.listId,
           listRef: h.listRef,
@@ -151,11 +200,24 @@ export async function POST(req: Request): Promise<NextResponse> {
         source: "hawkeye-sterling",
       });
 
+      // Advance the schedule clock.
+      if (schedule) {
+        const advance = CADENCE_MS[schedule.cadence];
+        const next: Schedule = {
+          ...schedule,
+          lastRunAt: runAt,
+          nextRunAt: new Date(nowMs + advance).toISOString(),
+        };
+        await setJson(`schedule/${s.id}`, next);
+      }
+
       results.push({
         subjectId: s.id,
         subjectName: s.name,
         topScore: screen.topScore,
         severity: screen.severity,
+        scoreDelta,
+        escalated,
         newHits: newHits.map((h) => ({
           listId: h.listId,
           listRef: h.listRef,
@@ -170,6 +232,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         subjectName: s.name,
         topScore: 0,
         severity: "error",
+        scoreDelta: 0,
+        escalated: false,
         newHits: [],
         webhook: {
           delivered: false,
@@ -183,7 +247,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     ok: true,
     runAt,
     total: subjects.length,
+    rescreened: results.length,
     withNewHits: results.filter((r) => r.newHits.length > 0).length,
+    escalations: results.filter((r) => r.escalated).length,
     results,
   });
 }

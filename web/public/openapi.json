@@ -1,0 +1,228 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Hawkeye Sterling API",
+    "version": "0.2.0",
+    "description": "Regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine. Stateless, explainable, audit-chained.",
+    "contact": {
+      "name": "Hawkeye Sterling support",
+      "url": "https://hawkeye-sterling.netlify.app/status"
+    },
+    "license": { "name": "Proprietary" }
+  },
+  "servers": [
+    { "url": "https://hawkeye-sterling.netlify.app", "description": "Production" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/quick-screen": {
+      "post": {
+        "summary": "Run a quick-screen against the sanctions corpus",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/QuickScreenRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Match ensemble result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QuickScreenResult" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/super-brain": {
+      "post": {
+        "summary": "Full cognitive fusion: PEP + jurisdiction + ESG + typologies + redlines",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subject"],
+                "properties": {
+                  "subject": { "$ref": "#/components/schemas/Subject" },
+                  "roleText": { "type": "string" },
+                  "adverseMediaText": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Fused brain output" } }
+      }
+    },
+    "/api/news-search": {
+      "get": {
+        "summary": "Multi-lingual adverse-media dossier (7 locales)",
+        "tags": ["Adverse Media"],
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Clustered article dossier" } }
+      }
+    },
+    "/api/batch-screen": {
+      "post": {
+        "summary": "Bulk screening (up to 500 rows / call)",
+        "tags": ["Screening"],
+        "responses": { "200": { "description": "Per-row screening result" } }
+      }
+    },
+    "/api/ongoing": {
+      "get": { "summary": "List enrolled subjects for ongoing monitoring", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } },
+      "post": { "summary": "Enrol a subject for ongoing monitoring", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } },
+      "delete": { "summary": "Remove a subject from ongoing monitoring", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/schedule": {
+      "get": { "summary": "List per-subject rescreening schedules", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } },
+      "post": {
+        "summary": "Create or update a per-subject schedule",
+        "tags": ["Monitoring"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subjectId", "cadence"],
+                "properties": {
+                  "subjectId": { "type": "string" },
+                  "cadence": { "type": "string", "enum": ["hourly", "daily", "weekly", "monthly"] },
+                  "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Schedule persisted" } }
+      }
+    },
+    "/api/feedback": {
+      "get": { "summary": "Aggregated FP / TM verdict statistics", "tags": ["Learning"], "responses": { "200": { "description": "OK" } } },
+      "post": {
+        "summary": "Submit analyst verdict (feedback loop)",
+        "tags": ["Learning"],
+        "responses": { "200": { "description": "Verdict recorded" } }
+      }
+    },
+    "/api/corrections": {
+      "get": { "summary": "List correction requests", "tags": ["Records"], "responses": { "200": { "description": "OK" } } },
+      "post": {
+        "summary": "File a record correction request (public)",
+        "tags": ["Records"],
+        "security": [],
+        "responses": { "200": { "description": "Receipt with 30-day SLA" } }
+      }
+    },
+    "/api/corrections/{id}": {
+      "get": { "summary": "Fetch a correction request", "tags": ["Records"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] },
+      "patch": { "summary": "Update status / appeal", "tags": ["Records"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] }
+    },
+    "/api/gdpr/export": {
+      "post": { "summary": "GDPR Art. 15 — right-of-access export", "tags": ["Compliance"], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/gdpr/delete": {
+      "post": { "summary": "GDPR Art. 17 — right-to-erasure", "tags": ["Compliance"], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/keys": {
+      "get": { "summary": "List API keys", "tags": ["Auth"], "responses": { "200": { "description": "OK" } } },
+      "post": {
+        "summary": "Issue a new API key (instant signup)",
+        "tags": ["Auth"],
+        "security": [],
+        "responses": { "200": { "description": "Plaintext returned once" } }
+      }
+    },
+    "/api/keys/{id}": {
+      "post": { "summary": "Revoke a key", "tags": ["Auth"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] },
+      "delete": { "summary": "Delete a key permanently", "tags": ["Auth"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] }
+    },
+    "/api/tiers": {
+      "get": { "summary": "List commercial tiers + limits", "tags": ["Auth"], "security": [], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/analytics": {
+      "get": { "summary": "Operational analytics + 30 DPMS KPIs", "tags": ["Analytics"], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/status": {
+      "get": { "summary": "Live health status of all services", "tags": ["System"], "security": [], "responses": { "200": { "description": "OK" } } }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key (hks_live_…)"
+      }
+    },
+    "schemas": {
+      "Subject": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "aliases": { "type": "array", "items": { "type": "string" } },
+          "entityType": { "type": "string", "enum": ["individual", "organisation", "vessel", "aircraft", "other"] },
+          "jurisdiction": { "type": "string" }
+        }
+      },
+      "QuickScreenRequest": {
+        "type": "object",
+        "required": ["subject", "candidates"],
+        "properties": {
+          "subject": { "$ref": "#/components/schemas/Subject" },
+          "candidates": { "type": "array", "items": { "type": "object" } },
+          "options": { "type": "object" }
+        }
+      },
+      "QuickScreenResult": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "topScore": { "type": "number" },
+          "severity": { "type": "string", "enum": ["clear", "low", "medium", "high", "critical"] },
+          "listsChecked": { "type": "integer" },
+          "candidatesChecked": { "type": "integer" },
+          "durationMs": { "type": "integer" },
+          "hits": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ok": { "type": "boolean" },
+                "error": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "Retry-After": { "schema": { "type": "integer" } },
+          "X-RateLimit-Remaining-Minute": { "schema": { "type": "integer" } }
+        }
+      }
+    }
+  }
+}

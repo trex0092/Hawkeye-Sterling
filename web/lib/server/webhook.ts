@@ -4,6 +4,7 @@ export interface WebhookEvent {
   type:
     | "screening.completed"
     | "screening.delta"
+    | "screening.escalated"
     | "ongoing.rerun"
     | "str.raised"
     | "escalation";
@@ -11,6 +12,8 @@ export interface WebhookEvent {
   subjectName: string;
   severity?: string;
   topScore?: number;
+  scoreDelta?: number;
+  escalated?: boolean;
   newHits?: Array<{ listId: string; listRef: string; candidateName: string }>;
   asanaTaskUrl?: string;
   generatedAt: string;

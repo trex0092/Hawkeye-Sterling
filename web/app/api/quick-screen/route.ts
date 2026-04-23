@@ -6,6 +6,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
+import { enforce } from "@/lib/server/enforce";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -29,34 +30,49 @@ interface QuickScreenRequestBody {
   options?: QuickScreenOptions;
 }
 
-function respond(status: number, body: QuickScreenResponse): NextResponse {
-  return NextResponse.json(body, { status });
+function respond(
+  status: number,
+  body: QuickScreenResponse,
+  headers: Record<string, string> = {},
+): NextResponse {
+  return NextResponse.json(body, { status, headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: QuickScreenRequestBody;
   try {
     body = (await req.json()) as QuickScreenRequestBody;
   } catch {
-    return respond(400, { ok: false, error: "invalid JSON body" });
+    return respond(400, { ok: false, error: "invalid JSON body" }, gate.headers);
   }
 
   const subject = body.subject;
   const candidates = body.candidates;
 
   if (!subject || typeof subject.name !== "string" || !subject.name.trim()) {
-    return respond(400, { ok: false, error: "subject.name required" });
+    return respond(400, { ok: false, error: "subject.name required" }, gate.headers);
   }
   if (!Array.isArray(candidates)) {
-    return respond(400, { ok: false, error: "candidates must be an array" });
+    return respond(
+      400,
+      { ok: false, error: "candidates must be an array" },
+      gate.headers,
+    );
   }
 
   try {
     const result = quickScreen(subject, candidates, body.options ?? {});
-    return respond(200, { ok: true, ...result });
+    return respond(200, { ok: true, ...result }, gate.headers);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    return respond(500, { ok: false, error: "quick-screen failed", detail });
+    return respond(
+      500,
+      { ok: false, error: "quick-screen failed", detail },
+      gate.headers,
+    );
   }
 }
 
