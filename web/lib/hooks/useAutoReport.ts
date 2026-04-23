@@ -32,10 +32,21 @@ interface Args {
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [1_000, 2_000, 4_000];
 const RETRYABLE_ERROR_MARKERS = ["server 5", "timed out", "network", "fetch failed"];
-// ASANA_TOKEN being unset is a predictable deploy-time misconfig, not a
-// transient failure — short-circuit so the operator doesn't see a red
-// "Asana report failed" banner on every subject open.
-const DISABLED_MARKERS = ["asana_not_configured", "asana not configured", "asana_token"];
+// ASANA_TOKEN being unset OR invalid/expired is a deploy-time misconfig,
+// not a transient failure an operator can fix from the UI — short-circuit
+// so the red "Asana report failed" banner only appears on real outages.
+// Auth-class upstream failures (401/403 + "unauthorized"/"forbidden") are
+// treated the same way as a missing token: integration offline.
+const DISABLED_MARKERS = [
+  "asana_not_configured",
+  "asana not configured",
+  "asana_token",
+  "server 401",
+  "server 403",
+  "unauthorized",
+  "forbidden",
+  "asana rejected",
+];
 
 function shouldRetry(error: string): boolean {
   const lower = error.toLowerCase();

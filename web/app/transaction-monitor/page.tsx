@@ -183,6 +183,16 @@ export default function TransactionMonitorPage() {
         ? "Transaction logged — behavioural flags fired"
         : "Transaction logged",
     );
+    // Best-effort Asana filing to the Transaction-Monitor board. We don't
+    // surface failure (screening-panel pattern): the tx is on the register
+    // regardless; Asana misconfig surfaces via the backend logs.
+    void fetch("/api/tm-report", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ transaction: row }),
+    }).catch(() => {
+      /* tx is logged locally; Asana is best-effort */
+    });
     clear();
   };
 
