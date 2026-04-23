@@ -84,16 +84,25 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         : [];
 
   const pepBadge = (() => {
-    if (superBrain.status !== "success") return null;
-    const { pep, pepAssessment } = superBrain.result;
-    const tier =
-      (pep && pep.salience > 0 ? pep.tier : null) ??
-      (pepAssessment?.isLikelyPEP ? pepAssessment.highestTier : null);
-    if (!tier) return null;
-    const tierLabel = tier
-      .replace(/^tier_/, "tier ")
-      .replace(/_/g, " ");
-    return { tierLabel, rationale: pep?.rationale ?? null };
+    if (superBrain.status === "success") {
+      const { pep, pepAssessment } = superBrain.result;
+      const tier =
+        (pep && pep.salience > 0 ? pep.tier : null) ??
+        (pepAssessment?.isLikelyPEP ? pepAssessment.highestTier : null);
+      if (tier) {
+        return {
+          tierLabel: tier.replace(/^tier_/, "tier ").replace(/_/g, " "),
+          rationale: pep?.rationale ?? subject.pep?.rationale ?? null,
+        };
+      }
+    }
+    if (subject.pep) {
+      return {
+        tierLabel: subject.pep.tier.replace(/^tier_/, "tier ").replace(/_/g, " "),
+        rationale: subject.pep.rationale ?? null,
+      };
+    }
+    return null;
   })();
 
   const showFlash = (msg: string) => {
@@ -718,7 +727,7 @@ function PanelBtn({
 
 
 function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").AutoReportState }) {
-  if (state.status === "idle") return null;
+  if (state.status === "idle" || state.status === "disabled") return null;
   const base =
     "inline-flex items-center gap-1.5 mt-2 text-10.5 font-medium rounded px-2 py-0.5";
   if (state.status === "posting") {

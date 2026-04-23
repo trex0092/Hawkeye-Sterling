@@ -12,7 +12,8 @@ import {
   type ScreeningFormData,
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
-import type { FilterKey, Subject } from "@/lib/types";
+import { lookupKnownPEP } from "@/lib/data/known-entities";
+import type { FilterKey, QueueFilter, Subject } from "@/lib/types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 const CRITICAL_THRESHOLD = 85;
@@ -39,7 +40,7 @@ function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
     case "edd":
       return subjects.filter((s) => s.cddPosture === "EDD");
     case "pep":
-      return subjects.filter((s) => /PEP/i.test(s.meta));
+      return subjects.filter((s) => s.pep != null || /PEP/i.test(s.meta));
     case "sla":
       return subjects.filter((s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H);
     case "a24":
@@ -66,14 +67,17 @@ function nextSubjectId(existing: Subject[]): string {
 function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
   const id = nextSubjectId(existing);
   const badgeNum = id.replace(/^HS-/, "").slice(-5);
-  const country =
+  const knownPep = data.entityType === "individual" ? lookupKnownPEP(data.name) : null;
+  const rawCountry =
     data.entityType === "individual"
-      ? (data.countryLocation ?? data.citizenship ?? "—")
-      : (data.registeredCountry ?? "—");
+      ? (data.countryLocation ?? data.citizenship ?? "")
+      : (data.registeredCountry ?? "");
+  const country = rawCountry || knownPep?.jurisdiction || "—";
   const metaBits: string[] = [];
   if (data.group) metaBits.push(data.group);
   if (data.alternateNames.length > 0)
     metaBits.push(`aliases: ${data.alternateNames.join(", ")}`);
+  if (knownPep) metaBits.push(`PEP · ${prettyPepTier(knownPep.tier)}`);
   if (data.ongoingScreening) metaBits.push("ongoing screening ON");
   return {
     id,
@@ -88,13 +92,20 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     entityType: data.entityType,
     riskScore: 0,
     status: "active",
-    cddPosture: "CDD",
+    cddPosture: knownPep ? "EDD" : "CDD",
     listCoverage: [],
+    ...(knownPep
+      ? { pep: { tier: knownPep.tier, rationale: knownPep.rationale } }
+      : {}),
     exposureAED: "0",
     slaNotify: "+72h 00m",
     mostSerious: "—",
     openedAgo: formatDDMMYY(new Date()),
   };
+}
+
+function prettyPepTier(tier: string): string {
+  return tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
 }
 
 // Scored search: returns a relevance score [0..100] for a subject against query q.
@@ -219,6 +230,15 @@ export default function ScreeningPage() {
     (s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H,
   ).length;
 
+  const filtersWithCounts = useMemo<QueueFilter[]>(
+    () =>
+      QUEUE_FILTERS.map((f) => {
+        const count = applyFilter(subjects, f.key).length;
+        return { ...f, count: String(count).padStart(2, "0") };
+      }),
+    [subjects],
+  );
+
   return (
     <>
       <Header />
@@ -227,7 +247,7 @@ export default function ScreeningPage() {
         style={{ gridTemplateColumns: selected && !formOpen ? "220px 1fr 360px" : "220px 1fr" }}
       >
         <Sidebar
-          filters={QUEUE_FILTERS}
+          filters={filtersWithCounts}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />

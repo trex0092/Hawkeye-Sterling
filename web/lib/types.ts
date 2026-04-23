@@ -47,6 +47,7 @@ export interface Subject {
   cddPosture: CDDPosture;
   listCoverage: SanctionSource[];
   adverseMedia?: AdverseMediaMatch;
+  pep?: { tier: string; rationale?: string };
   exposureAED: string;
   slaNotify: string;
   mostSerious: string;
