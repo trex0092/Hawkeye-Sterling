@@ -87,6 +87,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     newHits: Array<{ listId: string; listRef: string; candidateName: string }>;
     webhook: Awaited<ReturnType<typeof postWebhook>>;
     asanaTaskUrl?: string;
+    escalationTaskUrl?: string;
   }> = [];
 
   const nowMs = Date.now();
@@ -175,6 +176,51 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
       }
 
+      // Auto-escalation: also drop a task on the escalations board so the
+      // MLRO sees the jump immediately. Independent of the delta task —
+      // an escalation can fire without new hits (e.g. reinforced score
+      // on existing hits) and both boards need to carry the signal.
+      let escalationTaskUrl: string | undefined;
+      const escalationsProject = process.env["ASANA_ESCALATIONS_PROJECT_GID"];
+      const asanaToken = process.env["ASANA_TOKEN"];
+      if (escalated && escalationsProject && asanaToken) {
+        try {
+          const body = {
+            data: {
+              name: `🚨 Score jumped +${scoreDelta} — ${s.name} (${s.id})`,
+              notes: [
+                `Subject: ${s.name} (${s.id})`,
+                `Jurisdiction: ${s.jurisdiction ?? "—"}`,
+                `Previous top score: ${prev?.topScore ?? "n/a"}`,
+                `New top score: ${screen.topScore}`,
+                `Delta: +${scoreDelta} (threshold ≥ ${ESCALATION_DELTA})`,
+                `Severity: ${screen.severity}`,
+                `New hits: ${newHits.length}`,
+                `Triggered at: ${runAt}`,
+              ].join("\n"),
+              projects: [escalationsProject],
+              workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
+            },
+          };
+          const r = await fetch("https://app.asana.com/api/1.0/tasks", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${asanaToken}`,
+            },
+            body: JSON.stringify(body),
+          });
+          const data = (await r.json().catch(() => null)) as
+            | { data?: { gid?: string; permalink_url?: string } }
+            | null;
+          if (data?.data?.permalink_url) {
+            escalationTaskUrl = data.data.permalink_url;
+          }
+        } catch {
+          /* continue without escalation task */
+        }
+      }
+
       const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =
         escalated
           ? "screening.escalated"
@@ -225,6 +271,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         })),
         webhook,
         ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
+        ...(escalationTaskUrl ? { escalationTaskUrl } : {}),
       });
     } catch (err) {
       results.push({
