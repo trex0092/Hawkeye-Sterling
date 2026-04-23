@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface Check {
   name: string;
@@ -100,14 +100,19 @@ export default function StatusPage() {
   }, []);
 
   return (
-    <>
-      <Header />
-      <main className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="font-display text-36 text-ink-0 mb-1">System status</h1>
-        <p className="text-12 text-ink-2 mb-8">
-          Live endpoint health, refreshed every 15 seconds. SLA target:{" "}
-          {data?.sla.uptimeTargetPct ?? 99.99}% annual uptime.
-        </p>
+    <ModuleLayout>
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <ModuleHero
+          eyebrow="MODULE 07 · LIVE ENDPOINT HEALTH"
+          title="System"
+          titleEm="status."
+          intro={
+            <>
+              <strong>Live endpoint health</strong>, refreshed every 15 seconds. SLA
+              target {data?.sla.uptimeTargetPct ?? 99.99}% annual uptime.
+            </>
+          }
+        />
 
         {err && (
           <div className="bg-red-dim text-red rounded px-3 py-2 text-12 mb-4">
@@ -299,8 +304,8 @@ export default function StatusPage() {
         {!data && !err && (
           <div className="text-12 text-ink-2">Loading status…</div>
         )}
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }
 
