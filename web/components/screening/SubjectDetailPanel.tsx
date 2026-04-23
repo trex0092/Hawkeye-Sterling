@@ -818,9 +818,9 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
         </Field>
       )}
 
-      {r.typologies && r.typologies.hits.length > 0 && (
+      {(r.typologies?.hits?.length ?? 0) > 0 && r.typologies && (
         <Field
-          label={`Typologies fired (${r.typologies.hits.length}) · composite ${Math.round(r.typologies.compositeScore * 100)}%`}
+          label={`Typologies fired (${r.typologies.hits.length}) · composite ${Math.round((r.typologies.compositeScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1">
             {r.typologies.hits.map((t) => (
@@ -836,12 +836,12 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
         </Field>
       )}
 
-      {r.jurisdictionRich && r.jurisdictionRich.tiers.length > 0 && (
+      {r.jurisdictionRich && (r.jurisdictionRich.tiers?.length ?? 0) > 0 && (
         <Field
-          label={`Jurisdiction profile · risk ${Math.round(r.jurisdictionRich.riskScore * 100)}%`}
+          label={`Jurisdiction profile · risk ${Math.round((r.jurisdictionRich.riskScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1 mb-1">
-            {r.jurisdictionRich.tiers.map((t) => (
+            {(r.jurisdictionRich.tiers ?? []).map((t) => (
               <span
                 key={t}
                 className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber"
@@ -850,20 +850,20 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
               </span>
             ))}
           </div>
-          {r.jurisdictionRich.notes.length > 0 && (
+          {(r.jurisdictionRich.notes?.length ?? 0) > 0 && (
             <div className="text-10.5 text-ink-2 font-mono">
-              {r.jurisdictionRich.notes[0]}
+              {r.jurisdictionRich.notes?.[0]}
             </div>
           )}
         </Field>
       )}
 
-      {r.adverseMediaScored && r.adverseMediaScored.compositeScore > 0 && (
+      {r.adverseMediaScored && (r.adverseMediaScored.compositeScore ?? 0) > 0 && (
         <Field
-          label={`Adverse-media (scored) · ${Math.round(r.adverseMediaScored.compositeScore * 100)}%`}
+          label={`Adverse-media (scored) · ${Math.round((r.adverseMediaScored.compositeScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1 mb-1">
-            {r.adverseMediaScored.categoriesTripped.map((c) => (
+            {(r.adverseMediaScored.categoriesTripped ?? []).map((c) => (
               <span
                 key={c}
                 className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red"
@@ -872,9 +872,9 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
               </span>
             ))}
           </div>
-          {r.adverseMediaScored.topKeywords.length > 0 && (
+          {(r.adverseMediaScored.topKeywords?.length ?? 0) > 0 && (
             <div className="text-10.5 text-ink-2 font-mono">
-              keywords: {r.adverseMediaScored.topKeywords.slice(0, 6).join(" · ")}
+              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).join(" · ")}
             </div>
           )}
         </Field>
@@ -882,10 +882,10 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
 
       {r.pepAssessment && r.pepAssessment.isLikelyPEP && (
         <Field
-          label={`PEP assessment · ${r.pepAssessment.highestTier} · ${Math.round(r.pepAssessment.riskScore * 100)}%`}
+          label={`PEP assessment · ${r.pepAssessment.highestTier ?? "—"} · ${Math.round((r.pepAssessment.riskScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1">
-            {r.pepAssessment.matchedRoles.map((m, i) => (
+            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => (
               <span
                 key={`${m}-${i}`}
                 className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
@@ -897,13 +897,17 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
         </Field>
       )}
 
-      {r.stylometry && typeof r.stylometry.gaslightingScore === "number" && r.stylometry.gaslightingScore > 0 && (
-        <Field label={`Stylometry · gaslighting ${Math.round((r.stylometry.gaslightingScore ?? 0) * 100)}%`}>
-          <div className="text-10.5 text-ink-2 font-mono">
-            Narrative analysed for evasive / gaslighting phrasing.
-          </div>
-        </Field>
-      )}
+      {r.stylometry &&
+        typeof r.stylometry.gaslightingScore === "number" &&
+        r.stylometry.gaslightingScore > 0 && (
+          <Field
+            label={`Stylometry · gaslighting ${Math.round((r.stylometry.gaslightingScore ?? 0) * 100)}%`}
+          >
+            <div className="text-10.5 text-ink-2 font-mono">
+              Narrative analysed for evasive / gaslighting phrasing.
+            </div>
+          </Field>
+        )}
 
       {r.adverseKeywordGroups.length > 0 && (
         <Field label={`Adverse-keyword signals (${r.adverseKeywords.length})`}>
