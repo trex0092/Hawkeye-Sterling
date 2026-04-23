@@ -310,7 +310,7 @@
           {
             "id": "esg",
             "displayName": "ESG & Responsible-Sourcing Controversies",
-            "keywordCount": 104
+            "keywordCount": 173
           },
           {
             "id": "cybercrime",
@@ -323,7 +323,7 @@
             "keywordCount": 101
           }
         ],
-        "totalKeywords": 668,
+        "totalKeywords": 737,
         "queryLength": 1353
       },
       "doctrines": {
