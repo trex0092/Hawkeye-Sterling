@@ -136,7 +136,20 @@ function countThresholdBreaches(txs: Transaction[]): number {
 
 export async function POST(req: Request): Promise<NextResponse> {
   const expected = process.env["ONGOING_RUN_TOKEN"];
-  if (expected) {
+  if (!expected) {
+    // Local dev: soft-allow but scream in logs so nobody ships this
+    // route to production without the bearer-token check in place.
+    if (process.env["NETLIFY"] || process.env["NODE_ENV"] === "production") {
+      console.error(
+        "[transaction-monitor/run] ONGOING_RUN_TOKEN is not set — endpoint is PUBLIC. " +
+          "Set ONGOING_RUN_TOKEN in Netlify env vars to gate cron invocations.",
+      );
+    } else {
+      console.warn(
+        "[transaction-monitor/run] ONGOING_RUN_TOKEN unset — accepting unauthenticated calls (dev mode).",
+      );
+    }
+  } else {
     const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
     if (got !== expected) {
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });

@@ -224,13 +224,22 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
   if (!taskRes.ok || !asanaPayload?.data?.gid) {
+    // Asana returns 4xx on validation failures (bad GID, bad token,
+    // missing scope) and 5xx on their-side incidents. Mirror that in
+    // our status code so monitoring/alerting gets the right signal:
+    // 502 Bad Gateway for an upstream outage, 503 for a misconfig on
+    // our side. 4xx responses from Asana surface as 422 (we passed a
+    // bad payload) so clients know not to retry.
+    const upstreamStatus = taskRes.status;
+    const mappedStatus =
+      upstreamStatus >= 500 ? 502 : upstreamStatus === 401 || upstreamStatus === 403 ? 503 : 422;
     return NextResponse.json(
       {
         ok: false,
         error: "asana rejected the filing",
-        detail: asanaPayload?.errors?.[0]?.message ?? `HTTP ${taskRes.status}`,
+        detail: asanaPayload?.errors?.[0]?.message ?? `HTTP ${upstreamStatus}`,
       },
-      { status: 502 },
+      { status: mappedStatus },
     );
   }
 

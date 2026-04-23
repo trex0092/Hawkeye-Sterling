@@ -5,6 +5,7 @@ import {
   submitFeedback,
   type Verdict,
 } from "@/lib/server/feedback";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,11 +37,20 @@ export async function GET(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  // Gate verdicts behind the standard rate-limiter so anonymous
+  // actors can't flood the feedback table and skew the FP signal
+  // we feed back into the match-score calibrator.
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: FeedbackBody;
   try {
     body = (await req.json()) as FeedbackBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
   }
   const {
     subjectId,
@@ -65,13 +75,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         error:
           "subjectId, listId, listRef, candidateName, verdict and analyst required",
       },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (!VALID_VERDICTS.has(verdict)) {
     return NextResponse.json(
       { ok: false, error: "invalid verdict" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   const record = await submitFeedback({
@@ -83,5 +93,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(reason ? { reason } : {}),
     analyst,
   });
-  return NextResponse.json({ ok: true, record });
+  return NextResponse.json({ ok: true, record }, { headers: gate.headers });
 }
