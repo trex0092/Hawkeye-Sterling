@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
+import { TenantPicker } from "@/components/layout/TenantPicker";
 
 const NAV_TABS = [
   { key: "nav.workbench", href: "/workbench" },
@@ -103,6 +104,7 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
+          <TenantPicker />
           <select
             value={locale}
             onChange={(e) => pickLocale(e.target.value as Locale)}
