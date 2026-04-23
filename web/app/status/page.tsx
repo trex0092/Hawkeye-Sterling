@@ -8,6 +8,9 @@ interface Check {
   status: "operational" | "degraded" | "down";
   latencyMs: number;
   note?: string;
+  p50?: number;
+  p95?: number;
+  p99?: number;
 }
 
 interface SanctionsList {
@@ -33,6 +36,38 @@ interface Incident {
   affected: string[];
 }
 
+interface MaintenanceWindow {
+  id: string;
+  startAt: string;
+  endAt: string;
+  title: string;
+  affected: string[];
+}
+
+interface FeedVersions {
+  brain: string;
+  commitSha: string;
+  adverseMediaCategories: number;
+  adverseMediaKeywords: number;
+  knownPepEntries: number;
+  reviewedAt: string;
+}
+
+interface DeployEntry {
+  id: string;
+  committedAt: string;
+  deployedAt: string;
+  sha: string;
+  author?: string;
+  title: string;
+  state: "success" | "error" | "building";
+}
+
+interface DependencyGraph {
+  nodes: Array<{ id: string; label: string }>;
+  edges: Array<{ from: string; to: string }>;
+}
+
 interface StatusPayload {
   ok: true;
   status: "operational" | "degraded" | "down";
@@ -43,6 +78,10 @@ interface StatusPayload {
   externalChecks: Check[];
   sanctions: SanctionsCheck;
   incidents: Incident[];
+  maintenance: MaintenanceWindow[];
+  feedVersions: FeedVersions;
+  deploys: DeployEntry[];
+  dependencyGraph: DependencyGraph;
   sla: {
     uptimeTargetPct: number;
     rolling: { window30d: number; window90d: number; windowYtd: number };
@@ -122,6 +161,56 @@ export default function StatusPage() {
 
         {data && (
           <>
+            {/* Current-incident banner — only renders when anything is
+                not green. Prominent red/amber bar across the whole page. */}
+            {data.status !== "operational" && (
+              <div
+                className={`rounded-lg p-4 mb-4 flex items-start gap-3 ${
+                  data.status === "down"
+                    ? "bg-red text-white"
+                    : "bg-amber-dim text-amber"
+                }`}
+                role="alert"
+              >
+                <span className="text-20 leading-none">
+                  {data.status === "down" ? "🚨" : "⚠"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-13 font-semibold">
+                    {data.status === "down"
+                      ? "One or more services are DOWN — MLRO attention required"
+                      : "One or more services are DEGRADED — investigating"}
+                  </div>
+                  <div className="text-11 mt-0.5 opacity-90">
+                    {[...data.checks, ...data.externalChecks]
+                      .filter((c) => c.status !== "operational")
+                      .map((c) => `${c.name} (${c.status})`)
+                      .join(" · ")}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Scheduled maintenance — upcoming windows shown ahead of time. */}
+            {data.maintenance && data.maintenance.length > 0 && (
+              <div className="rounded-lg p-4 mb-4 bg-blue-dim text-blue flex items-start gap-3">
+                <span className="text-20 leading-none">🔧</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-13 font-semibold mb-1">
+                    Scheduled maintenance
+                  </div>
+                  {data.maintenance.map((m) => (
+                    <div key={m.id} className="text-11 mb-1">
+                      <span className="font-semibold">{m.title}</span> ·{" "}
+                      {new Date(m.startAt).toLocaleString()} →{" "}
+                      {new Date(m.endAt).toLocaleString()} · affects{" "}
+                      {m.affected.join(", ")}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="bg-white border border-hair-2 rounded-lg p-6 mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <span
@@ -286,17 +375,99 @@ export default function StatusPage() {
               )}
             </Section>
 
-            <div className="mt-8 text-11 text-ink-3">
-              Status publishes to{" "}
-              <a
-                href="/api/status"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-ink-1"
-              >
-                /api/status
-              </a>{" "}
-              as JSON for third-party monitors.
+            <Section title="Data-feed versions">
+              <div className="bg-white border border-hair-2 rounded px-4 py-3 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1 text-11 font-mono">
+                <div className="flex justify-between">
+                  <span className="text-ink-2">brain</span>
+                  <span className="text-ink-0">{data.feedVersions.brain}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-2">commit</span>
+                  <span className="text-ink-0">{data.feedVersions.commitSha}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-2">reviewed at</span>
+                  <span className="text-ink-0">{data.feedVersions.reviewedAt}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-2">AM categories</span>
+                  <span className="text-ink-0">{data.feedVersions.adverseMediaCategories}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-2">AM keywords</span>
+                  <span className="text-ink-0">{data.feedVersions.adverseMediaKeywords}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-2">known PEPs</span>
+                  <span className="text-ink-0">{data.feedVersions.knownPepEntries}</span>
+                </div>
+              </div>
+            </Section>
+
+            <Section title="Recent deploys">
+              <div className="bg-white border border-hair-2 rounded divide-y divide-hair">
+                {data.deploys.map((d) => (
+                  <div
+                    key={d.id}
+                    className="px-4 py-2.5 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${
+                          d.state === "success"
+                            ? "bg-green-dim text-green"
+                            : d.state === "error"
+                              ? "bg-red-dim text-red"
+                              : "bg-amber-dim text-amber"
+                        }`}
+                      >
+                        {d.state}
+                      </span>
+                      <span className="font-mono text-11 text-ink-0">{d.sha}</span>
+                      <span className="text-12 text-ink-1 truncate">{d.title}</span>
+                    </div>
+                    <span className="font-mono text-10 text-ink-3">
+                      {new Date(d.deployedAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Dependency graph">
+              <div className="bg-white border border-hair-2 rounded p-4">
+                <DependencyGraphSvg graph={data.dependencyGraph} />
+                <p className="text-10.5 text-ink-3 mt-2">
+                  Service dependency chain. An outage upstream propagates to
+                  everything linked from it; any red / amber node in the graph
+                  surfaces the blast radius of the failure.
+                </p>
+              </div>
+            </Section>
+
+            <div className="mt-8 text-11 text-ink-3 flex flex-wrap gap-4">
+              <span>
+                JSON:{" "}
+                <a
+                  href="/api/status"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-ink-1"
+                >
+                  /api/status
+                </a>
+              </span>
+              <span>
+                RSS feed:{" "}
+                <a
+                  href="/api/status/feed"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-ink-1"
+                >
+                  /api/status/feed
+                </a>
+              </span>
             </div>
           </>
         )}
@@ -327,6 +498,10 @@ function Section({
 }
 
 function ServiceRow({ check }: { check: Check }) {
+  const hasPercentiles =
+    check.p50 !== undefined ||
+    check.p95 !== undefined ||
+    check.p99 !== undefined;
   return (
     <div className="flex items-center justify-between bg-white border border-hair-2 rounded px-4 py-3">
       <div className="flex items-center gap-3">
@@ -340,8 +515,117 @@ function ServiceRow({ check }: { check: Check }) {
           <span className="text-11 text-ink-3 font-mono">· {check.note}</span>
         )}
       </div>
-      <span className="text-11 text-ink-2 font-mono">{check.latencyMs} ms</span>
+      <div className="flex items-center gap-3 font-mono text-10 text-ink-3">
+        {hasPercentiles && (
+          <>
+            <span title="50th percentile latency">p50 {check.p50}ms</span>
+            <span title="95th percentile latency">p95 {check.p95}ms</span>
+            <span title="99th percentile latency">p99 {check.p99}ms</span>
+          </>
+        )}
+        <span className="text-ink-2 text-11">now {check.latencyMs}ms</span>
+      </div>
     </div>
+  );
+}
+
+// Minimal SVG dependency-graph renderer. Node positions are computed
+// from the nodes array length — not perfect force-directed but fine
+// for the small set we currently track (8 nodes). Edges are rendered
+// as lines with arrowheads between node centres.
+function DependencyGraphSvg({
+  graph,
+}: {
+  graph: {
+    nodes: Array<{ id: string; label: string }>;
+    edges: Array<{ from: string; to: string }>;
+  };
+}) {
+  const width = 640;
+  const height = 220;
+  const nodeWidth = 108;
+  const nodeHeight = 32;
+
+  // Two-row layout: put screening + super-brain in the centre; other
+  // services fan out around them in a predictable order.
+  const LAYOUT: Record<string, { x: number; y: number }> = {
+    screening: { x: 100, y: 100 },
+    "super-brain": { x: 260, y: 100 },
+    "adverse-media": { x: 430, y: 40 },
+    "weaponized-brain": { x: 430, y: 100 },
+    storage: { x: 430, y: 160 },
+    asana: { x: 560, y: 40 },
+    "news-feed": { x: 560, y: 100 },
+    "sanctions-freshness": { x: 260, y: 180 },
+  };
+
+  const nodesById: Record<string, { x: number; y: number; label: string }> = {};
+  for (const n of graph.nodes) {
+    const pos = LAYOUT[n.id] ?? { x: 100, y: 100 };
+    nodesById[n.id] = { ...pos, label: n.label };
+  }
+
+  return (
+    <svg
+      width="100%"
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ maxHeight: 260 }}
+    >
+      <defs>
+        <marker
+          id="arrow"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af" />
+        </marker>
+      </defs>
+      {graph.edges.map((e, i) => {
+        const from = nodesById[e.from];
+        const to = nodesById[e.to];
+        if (!from || !to) return null;
+        return (
+          <line
+            key={i}
+            x1={from.x + nodeWidth / 2}
+            y1={from.y + nodeHeight / 2}
+            x2={to.x}
+            y2={to.y + nodeHeight / 2}
+            stroke="#9ca3af"
+            strokeWidth={1}
+            markerEnd="url(#arrow)"
+          />
+        );
+      })}
+      {Object.entries(nodesById).map(([id, n]) => (
+        <g key={id}>
+          <rect
+            x={n.x}
+            y={n.y}
+            width={nodeWidth}
+            height={nodeHeight}
+            rx={4}
+            fill="#fff"
+            stroke="#e5e7eb"
+            strokeWidth={1}
+          />
+          <text
+            x={n.x + nodeWidth / 2}
+            y={n.y + nodeHeight / 2}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{ fontSize: 11, fill: "#111" }}
+          >
+            {n.label}
+          </text>
+        </g>
+      ))}
+    </svg>
   );
 }
 

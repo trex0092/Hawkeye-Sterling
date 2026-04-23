@@ -20,6 +20,7 @@ import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
 import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
+import { PaymentScreen } from "@/components/screening/PaymentScreen";
 import {
   TM_CHANNELS,
   TM_DIRECTIONS,
@@ -466,6 +467,7 @@ export default function TransactionMonitorPage() {
               </table>
             </div>
           )}
+          <PaymentScreen />
         </ModuleShell>
       </div>
       <ReportModal
