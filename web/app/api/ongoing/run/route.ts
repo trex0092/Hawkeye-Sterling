@@ -47,12 +47,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
   }
   const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  // Use timing-safe comparison to prevent secret leakage via timing side-channel.
+  // Timing-safe comparison — use TextEncoder for Uint8Array compatibility.
+  // Pad `got` to the expected length so timingSafeEqual always compares the
+  // same byte count; the length check ensures a shorter token still fails.
   const { timingSafeEqual } = await import("crypto");
-  const expBuf = Buffer.from(expected, "utf8");
-  const gotBuf = Buffer.alloc(expBuf.length);
-  Buffer.from(got, "utf8").copy(gotBuf);
-  if (!timingSafeEqual(expBuf, gotBuf)) {
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(expected);
+  const gotRaw = enc.encode(got);
+  const gotBuf = new Uint8Array(expBuf.length); // zero-padded
+  gotBuf.set(gotRaw.slice(0, expBuf.length));
+  if (got.length !== expected.length || !timingSafeEqual(expBuf, gotBuf)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
