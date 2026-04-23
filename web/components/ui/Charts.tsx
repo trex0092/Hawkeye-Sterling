@@ -32,8 +32,9 @@ const TONE_HEX: Record<NonNullable<BarDatum["tone"]>, string> = {
   red: "var(--red)",
 };
 
-// Minimal, dependency-free horizontal bar chart rendered as inline SVG.
-// Uses CSS variables so it matches the editorial light theme.
+// Minimal, dependency-free horizontal bar chart.
+// Rendered as HTML/flex so text sizes are independent of container width
+// and stay consistent with the rest of the editorial light theme.
 export function BarChart({ data, height, compact }: Props) {
   const sorted = useMemo(
     () => [...data].sort((a, b) => b.value - a.value),
@@ -42,69 +43,46 @@ export function BarChart({ data, height, compact }: Props) {
 
   const max = sorted.reduce((m, d) => Math.max(m, d.value), 0) || 1;
   const rowHeight = compact ? 22 : 28;
-  const labelWidth = 180;
-  const valueWidth = 56;
-  const barGutter = 12;
-  const innerWidth = 640;
-  const barAreaWidth =
-    innerWidth - labelWidth - valueWidth - barGutter * 2;
-  const totalHeight = height ?? sorted.length * rowHeight + 12;
+  const barHeight = rowHeight - 10;
 
   return (
-    <svg
-      viewBox={`0 0 ${innerWidth} ${totalHeight}`}
-      className="w-full h-auto"
+    <div
+      className="w-full"
       role="img"
       aria-label="Catalogue size chart"
+      style={height ? { minHeight: height } : undefined}
     >
-      {sorted.map((d, i) => {
-        const y = i * rowHeight + 6;
-        const barLen = (d.value / max) * barAreaWidth;
+      {sorted.map((d) => {
+        const pct = (d.value / max) * 100;
         const tone = d.tone ?? "brand";
         return (
-          <g key={d.label}>
-            <text
-              x={labelWidth - 8}
-              y={y + rowHeight / 2 + 4}
-              textAnchor="end"
-              fontFamily="var(--font-mono)"
-              fontSize={11}
-              fill="var(--ink-1)"
-            >
+          <div
+            key={d.label}
+            className="flex items-center gap-3"
+            style={{ height: rowHeight }}
+          >
+            <div className="w-[160px] shrink-0 text-right font-mono text-11 text-ink-1 truncate">
               {d.label}
-            </text>
-            <rect
-              x={labelWidth + barGutter}
-              y={y + 4}
-              width={barAreaWidth}
-              height={rowHeight - 10}
-              rx={3}
-              fill="var(--bg-2)"
-            />
-            <rect
-              x={labelWidth + barGutter}
-              y={y + 4}
-              width={Math.max(2, barLen)}
-              height={rowHeight - 10}
-              rx={3}
-              fill={TONE_HEX[tone]}
-              className={TONE_CLASS[tone]}
-            />
-            <text
-              x={innerWidth - 4}
-              y={y + rowHeight / 2 + 4}
-              textAnchor="end"
-              fontFamily="var(--font-mono)"
-              fontSize={11}
-              fontWeight={600}
-              fill="var(--ink-0)"
+            </div>
+            <div
+              className="flex-1 rounded-sm bg-bg-2 relative"
+              style={{ height: barHeight }}
             >
+              <div
+                className={`absolute inset-y-0 left-0 rounded-sm ${TONE_CLASS[tone]}`}
+                style={{
+                  width: `${Math.max(0.5, pct)}%`,
+                  background: TONE_HEX[tone],
+                }}
+              />
+            </div>
+            <div className="w-[56px] shrink-0 text-right font-mono text-11 font-semibold text-ink-0">
               {d.value.toLocaleString()}
-            </text>
-          </g>
+            </div>
+          </div>
         );
       })}
-    </svg>
+    </div>
   );
 }
 
