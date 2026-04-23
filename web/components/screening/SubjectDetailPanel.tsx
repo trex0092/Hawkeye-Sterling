@@ -12,6 +12,7 @@ import type {
   QuickScreenResult,
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
@@ -145,20 +146,19 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
         adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
       };
     }
-    try {
-      const res = await fetch("/api/sar-report", {
+    const res = await fetchJson<{ ok: boolean; taskUrl?: string }>(
+      "/api/sar-report",
+      {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
-      });
-      const data = (await res.json()) as { ok: boolean; taskUrl?: string };
-      if (data.ok) {
-        showFlash("STR filed — draft in STR/SAR board");
-      } else {
-        showFlash("STR filing failed");
-      }
-    } catch {
-      showFlash("STR filing failed");
+        label: "STR filing failed",
+      },
+    );
+    if (res.ok && res.data?.ok) {
+      showFlash("STR filed — draft in STR/SAR board");
+    } else {
+      showFlash(res.error ?? "STR filing failed");
     }
   };
 
@@ -200,26 +200,59 @@ export function SubjectDetailPanel({ subject }: SubjectDetailPanelProps) {
             }
           : null,
     };
-    try {
-      const res = await fetch("/api/compliance-report", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        showFlash("Report failed");
+    // Compliance report returns a file blob, so we call fetch directly
+    // with a short retry loop rather than going through fetchJson (which
+    // is JSON-only). Mirrors the same 5xx / 750ms / 15s contract.
+    const retries = 3;
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 15_000);
+      try {
+        const res = await fetch("/api/compliance-report", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json, text/plain, */*",
+            "user-agent": "hawkeye-screening-client/1.0",
+          },
+          body: JSON.stringify(payload),
+          signal: ctl.signal,
+        });
+        if (res.status >= 500 && res.status <= 599) {
+          if (attempt < retries) {
+            await new Promise((r) => setTimeout(r, 750));
+            continue;
+          }
+          showFlash(`Report failed server ${res.status}`);
+          return;
+        }
+        if (!res.ok) {
+          showFlash(`Report failed server ${res.status}`);
+          return;
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `hawkeye-report-${subject.id}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showFlash("Report downloaded");
         return;
+      } catch (err) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 750));
+          continue;
+        }
+        showFlash(
+          err instanceof Error && err.name === "AbortError"
+            ? "Report failed request timed out"
+            : "Report failed",
+        );
+        return;
+      } finally {
+        clearTimeout(timer);
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `hawkeye-report-${subject.id}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showFlash("Report downloaded");
-    } catch {
-      showFlash("Report failed");
     }
   };
 

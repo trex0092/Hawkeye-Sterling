@@ -1,14 +1,15 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { CasesSidebar } from "@/components/cases/CasesSidebar";
 import { CasesHero } from "@/components/cases/CasesHero";
 import { CasesToolbar } from "@/components/cases/CasesToolbar";
 import { CasesTable } from "@/components/cases/CasesTable";
 import { CaseDetailPanel } from "@/components/cases/CaseDetailPanel";
-import { CASES, CASE_FILTERS } from "@/lib/data/cases";
-import type { CaseFilterKey, CaseRecord } from "@/lib/types";
+import { CASE_FILTERS } from "@/lib/data/cases";
+import { loadCases } from "@/lib/data/case-store";
+import type { CaseFilter, CaseFilterKey, CaseRecord } from "@/lib/types";
 
 function applyCaseFilter(cases: CaseRecord[], filter: CaseFilterKey): CaseRecord[] {
   switch (filter) {
@@ -28,15 +29,39 @@ function applyCaseFilter(cases: CaseRecord[], filter: CaseFilterKey): CaseRecord
   }
 }
 
+function count(cases: CaseRecord[], filter: CaseFilterKey): string {
+  return applyCaseFilter(cases, filter).length.toString().padStart(2, "0");
+}
+
 export default function CasesPage() {
   const [activeFilter, setActiveFilter] = useState<CaseFilterKey>("all");
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>(CASES[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [cases, setCases] = useState<CaseRecord[]>([]);
+
+  // Hydrate from localStorage on mount + react to writes from other
+  // modules (STR filing form, screening-panel escalations, etc.).
+  useEffect(() => {
+    const refresh = (): void => setCases(loadCases());
+    refresh();
+    const onUpdate = (): void => refresh();
+    window.addEventListener("hawkeye:cases-updated", onUpdate);
+    // Cross-tab sync via the native storage event.
+    window.addEventListener("storage", onUpdate);
+    return () => {
+      window.removeEventListener("hawkeye:cases-updated", onUpdate);
+      window.removeEventListener("storage", onUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId && cases[0]) setSelectedId(cases[0].id);
+  }, [cases, selectedId]);
 
   const deferredQuery = useDeferredValue(query);
 
   const filtered = useMemo(() => {
-    const byKey = applyCaseFilter(CASES, activeFilter);
+    const byKey = applyCaseFilter(cases, activeFilter);
     const q = deferredQuery.trim().toLowerCase();
     if (!q) return byKey;
     return byKey.filter(
@@ -46,11 +71,20 @@ export default function CasesPage() {
         c.meta.toLowerCase().includes(q) ||
         (c.goAMLReference?.toLowerCase().includes(q) ?? false),
     );
-  }, [activeFilter, deferredQuery]);
+  }, [activeFilter, deferredQuery, cases]);
 
   const selected = useMemo(
-    () => CASES.find((c) => c.id === selectedId) ?? CASES[0],
-    [selectedId],
+    () => cases.find((c) => c.id === selectedId) ?? cases[0],
+    [selectedId, cases],
+  );
+
+  const filtersWithCounts: CaseFilter[] = useMemo(
+    () =>
+      CASE_FILTERS.map((f) => ({
+        ...f,
+        count: count(cases, f.key),
+      })),
+    [cases],
   );
 
   return (
@@ -61,7 +95,7 @@ export default function CasesPage() {
         style={{ gridTemplateColumns: "220px 1fr 360px" }}
       >
         <CasesSidebar
-          filters={CASE_FILTERS}
+          filters={filtersWithCounts}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />

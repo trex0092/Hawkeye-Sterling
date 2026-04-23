@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import {
   ModuleShell,
@@ -23,6 +23,18 @@ import {
   STR_STATUSES,
   STR_RED_FLAGS,
 } from "@/lib/data/str-taxonomy";
+import { fetchJson } from "@/lib/api/fetchWithRetry";
+import {
+  appendCase,
+  buildCaseRecord,
+  loadCases,
+} from "@/lib/data/case-store";
+
+type FlashTone = "success" | "error";
+interface Flash {
+  tone: FlashTone;
+  msg: string;
+}
 
 interface CaseRow {
   id: string;
@@ -35,7 +47,27 @@ interface CaseRow {
 }
 
 export default function StrCasesPage() {
+  // Hydrate the in-page register from the shared case store so refreshing
+  // this page, opening it in a new tab, or filing from elsewhere all
+  // stay in sync. Previously this list was session-only state — a page
+  // reload erased every filing, and the /cases module never saw them.
   const [cases, setCases] = useState<CaseRow[]>([]);
+  useEffect(() => {
+    setCases(
+      loadCases()
+        .filter((c) => c.meta.startsWith("STR") || c.meta.startsWith("SAR"))
+        .map((c) => ({
+          id: c.id,
+          title: c.subject,
+          reportKind: c.meta.split(" · ")[0] ?? "STR",
+          subject: c.subject,
+          amountAed: "",
+          status: c.statusLabel,
+          openedAt: c.opened,
+        })),
+    );
+  }, []);
+
   const [status, setStatus] = useState("Draft");
   const [reportKind, setReportKind] = useState("STR");
   const [title, setTitle] = useState("");
@@ -50,7 +82,7 @@ export default function StrCasesPage() {
   const [mlro, setMlro] = useState("Luisa Fernanda");
   const [approver, setApprover] = useState("");
   const [noTippingOff, setNoTippingOff] = useState(true);
-  const [flash, setFlash] = useState<string | null>(null);
+  const [flash, setFlash] = useState<Flash | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const open = cases.filter(
@@ -77,9 +109,9 @@ export default function StrCasesPage() {
     setNoTippingOff(true);
   };
 
-  const flashFor = (msg: string) => {
-    setFlash(msg);
-    window.setTimeout(() => setFlash(null), 2500);
+  const flashFor = (tone: FlashTone, msg: string) => {
+    setFlash({ tone, msg });
+    window.setTimeout(() => setFlash(null), 3500);
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -87,48 +119,75 @@ export default function StrCasesPage() {
     if (!valid) return;
     setSubmitting(true);
     try {
-      const res = await fetch("/api/sar-report", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          subject: {
-            id: `STR-${Date.now()}`,
-            name: subject.trim(),
-            jurisdiction: subjectCountry.trim() || undefined,
-          },
-          filingType: reportKind,
-          narrative: narrative.trim() || undefined,
-          mlro,
-        }),
-      });
+      // fetchJson handles 5xx retries (3 attempts × 750ms), 15s timeout,
+      // safe JSON parsing and colon-free error copy. Previously the form
+      // surfaced raw "Filing failed — server 502" on any Netlify cold
+      // start — regulators saw infra chatter in the case file.
+      const res = await fetchJson<{ ok: boolean; taskUrl?: string }>(
+        "/api/sar-report",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            subject: {
+              id: `STR-${Date.now()}`,
+              name: subject.trim(),
+              jurisdiction: subjectCountry.trim() || undefined,
+            },
+            filingType: reportKind,
+            narrative: narrative.trim() || undefined,
+            mlro,
+          }),
+          label: "Filing failed",
+        },
+      );
       if (!res.ok) {
-        flashFor(`Filing failed — server ${res.status}`);
+        flashFor("error", res.error ?? "Filing failed");
         return;
       }
-      const data = (await res.json().catch(() => ({ ok: false }))) as {
-        ok: boolean;
-        taskUrl?: string;
-      };
-      if (data.ok) {
-        flashFor("Filed to STR/SAR Asana board");
+      if (res.data?.ok) {
+        // Persist to the shared case store so /cases shows the filing.
+        // Same record powers this page's in-module register (on next
+        // hydration) via the loadCases() effect above.
+        const caseStatus =
+          status === "Submitted"
+            ? "reported"
+            : status === "Closed"
+              ? "closed"
+              : status === "Under review"
+                ? "review"
+                : "active";
+        const record = buildCaseRecord({
+          subject: subject.trim(),
+          ...(subjectCountry.trim()
+            ? { subjectJurisdiction: subjectCountry.trim() }
+            : {}),
+          reportKind,
+          ...(amount ? { amountAed: amount } : {}),
+          status: caseStatus,
+          statusLabel: status,
+          statusDetail: `${reportKind} filed by ${mlro || "MLRO"}`,
+          ...(goamlRef.trim() ? { goAMLReference: goamlRef.trim() } : {}),
+        });
+        appendCase(record);
+
+        flashFor("success", "Filed to STR/SAR Asana board");
         setCases((prev) => [
           {
-            id: `STR-${Date.now()}`,
-            title: title.trim(),
+            id: record.id,
+            title: title.trim() || subject.trim(),
             reportKind,
             subject: subject.trim(),
             amountAed: amount,
             status,
-            openedAt: new Date().toISOString(),
+            openedAt: record.opened,
           },
           ...prev,
         ]);
         clear();
       } else {
-        flashFor("Filing failed — check Asana token");
+        flashFor("error", "Filing failed check Asana token");
       }
-    } catch {
-      flashFor("Filing failed");
     } finally {
       setSubmitting(false);
     }
@@ -280,8 +339,14 @@ export default function StrCasesPage() {
               </CardSection>
 
               {flash && (
-                <div className="text-11 text-green font-medium mb-3" role="status">
-                  {flash}
+                <div
+                  className={`text-11 font-medium mb-3 ${
+                    flash.tone === "success" ? "text-green" : "text-red"
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {flash.msg}
                 </div>
               )}
 
