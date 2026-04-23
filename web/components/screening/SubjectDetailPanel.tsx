@@ -957,9 +957,7 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           </div>
           {(r.adverseMediaScored.topKeywords?.length ?? 0) > 0 && (
             <div className="text-10.5 text-ink-2 font-mono">
-              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).map(
-                (k) => (typeof k === "string" ? k : (k as { keyword: string }).keyword)
-              ).join(" · ")}
+              keywords: {(r.adverseMediaScored.topKeywords ?? []).slice(0, 6).map((k) => k.keyword).join(" · ")}
             </div>
           )}
         </Field>
@@ -970,17 +968,14 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           label={`PEP assessment · ${r.pepAssessment.highestTier ?? "—"} · ${Math.round((r.pepAssessment.riskScore ?? 0) * 100)}%`}
         >
           <div className="flex flex-wrap gap-1">
-            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => {
-              const label = typeof m === "string" ? m : (m as { label: string }).label;
-              return (
-                <span
-                  key={`${label}-${i}`}
-                  className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
-                >
-                  {label}
-                </span>
-              );
-            })}
+            {(r.pepAssessment.matchedRoles ?? []).map((m, i) => (
+              <span
+                key={`${m.label}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
+              >
+                {m.label}
+              </span>
+            ))}
           </div>
         </Field>
       )}
