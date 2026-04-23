@@ -13,6 +13,7 @@ import type {
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
+import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import {
   appendCase,
   attachEvidenceToSubject,
@@ -616,7 +617,11 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         )}
       </div>
 
-      <SuperBrainPanel state={superBrain} />
+      <SuperBrainPanel
+        state={superBrain}
+        subjectName={subject.name}
+        subjectId={subject.id}
+      />
       <NewsDossierPanel state={news} />
 
     </aside>
@@ -958,7 +963,15 @@ function formatDoubleMetaphone(
   return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
 }
 
-function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain").SuperBrainState }) {
+function SuperBrainPanel({
+  state,
+  subjectName,
+  subjectId,
+}: {
+  state: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subjectName: string;
+  subjectId: string;
+}) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
     return (
@@ -982,6 +995,7 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
   const r: SuperBrainResult = state.result;
   return (
     <Section title="Super brain">
+      <BrainNarrative result={r} subjectName={subjectName} subjectId={subjectId} />
       <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
           <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
