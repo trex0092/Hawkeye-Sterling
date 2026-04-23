@@ -53,17 +53,35 @@ interface Schedule {
   lastRunAt?: string;
 }
 
-// thrice_daily = every 8 hours. Used by default for new ongoing-
-// screening enrolments so each subject generates three Asana tasks
-// per 24h window (08:00 / 16:00 / 00:00 UTC after a midnight start,
-// offset naturally by the subject's enrolment time).
-const CADENCE_MS = {
+// Fixed-interval cadences (hourly / daily / weekly / monthly) use a
+// simple "now + N ms" advance. The thrice_daily cadence is special:
+// it fires at three fixed Dubai clock times per MLRO policy, not every
+// 8h from enrolment. nextRunAt for thrice_daily is computed by
+// nextThriceDailyRun() below — NOT from CADENCE_MS.
+const CADENCE_MS: Record<Exclude<Schedule["cadence"], "thrice_daily">, number> = {
   hourly: 60 * 60 * 1_000,
-  thrice_daily: 8 * 60 * 60 * 1_000,
   daily: 24 * 60 * 60 * 1_000,
   weekly: 7 * 24 * 60 * 60 * 1_000,
   monthly: 30 * 24 * 60 * 60 * 1_000,
 };
+
+// 08:30 / 15:00 / 17:30 Dubai (UTC+4, no DST) → 04:30 / 11:00 / 13:30 UTC.
+const THRICE_DAILY_SLOTS_UTC: Array<[number, number]> = [
+  [4, 30],
+  [11, 0],
+  [13, 30],
+];
+
+function nextThriceDailyRun(from: Date): Date {
+  const candidates = THRICE_DAILY_SLOTS_UTC.map(([h, m]) => {
+    const d = new Date(from);
+    d.setUTCHours(h, m, 0, 0);
+    if (d.getTime() <= from.getTime()) d.setUTCDate(d.getUTCDate() + 1);
+    return d;
+  });
+  candidates.sort((a, b) => a.getTime() - b.getTime());
+  return candidates[0]!;
+}
 
 // Threshold at which a score increase between runs is considered an
 // automatic escalation. 15 / 100 points (= 0.15 in normalised terms)
@@ -312,13 +330,18 @@ export async function POST(req: Request): Promise<NextResponse> {
         source: "hawkeye-sterling",
       });
 
-      // Advance the schedule clock.
+      // Advance the schedule clock. thrice_daily pins to the next fixed
+      // Dubai slot (08:30 / 15:00 / 17:30); everything else uses a simple
+      // now + interval advance.
       if (schedule) {
-        const advance = CADENCE_MS[schedule.cadence];
+        const nextRunAt =
+          schedule.cadence === "thrice_daily"
+            ? nextThriceDailyRun(new Date(nowMs)).toISOString()
+            : new Date(nowMs + CADENCE_MS[schedule.cadence]).toISOString();
         const next: Schedule = {
           ...schedule,
           lastRunAt: runAt,
-          nextRunAt: new Date(nowMs + advance).toISOString(),
+          nextRunAt,
         };
         await setJson(`schedule/${s.id}`, next);
       }
