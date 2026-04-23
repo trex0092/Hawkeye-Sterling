@@ -34,10 +34,27 @@ function buildMemoryStore(): MinimalStore {
 let cached: MinimalStore | null = null;
 let usingInMemoryFallback = false;
 
+function buildStoreOptions(): Parameters<typeof getNetlifyStore>[0] {
+  // Prefer Netlify's auto-injected Blobs context (present when the Lambda is
+  // invoked by the @netlify/plugin-nextjs runtime with auto-binding on).
+  // Fall back to explicit siteID + token so deployments where the plugin
+  // does not inject context (monorepos, custom builds, background functions)
+  // still land on the real store instead of the in-memory fallback.
+  const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+  const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
+    process.env["NETLIFY_API_TOKEN"] ??
+    process.env["NETLIFY_AUTH_TOKEN"];
+  if (siteID && token) {
+    return { name: "hawkeye-sterling", siteID, token, consistency: "strong" };
+  }
+  return "hawkeye-sterling";
+}
+
 export function getStore(): MinimalStore {
   if (cached) return cached;
   try {
-    const ns = getNetlifyStore("hawkeye-sterling");
+    const ns = getNetlifyStore(buildStoreOptions());
     cached = {
       get: async (key) => {
         const v = await ns.get(key);
