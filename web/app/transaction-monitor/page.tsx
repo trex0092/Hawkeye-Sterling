@@ -474,6 +474,14 @@ export default function TransactionMonitorPage() {
         title={reportTx?.ref ?? ""}
         payload={reportTx ? txToReportPayload(reportTx) : null}
         onClose={closeTxReport}
+        asanaFile={
+          reportTx
+            ? {
+                endpoint: "/api/tm-report",
+                body: { transaction: reportTx },
+              }
+            : null
+        }
       />
     </>
   );
