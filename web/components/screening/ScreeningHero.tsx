@@ -21,7 +21,7 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
         <HeroStat
           value={inQueue > 0 ? String(avgRisk) : "—"}
           label="avg risk"
-          tone={avgRisk >= 85 ? "red" : avgRisk >= 60 ? "orange" : undefined}
+          {...(avgRisk >= 85 ? { tone: "red" as const } : avgRisk >= 60 ? { tone: "orange" as const } : {})}
         />
       </div>
       <p className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">

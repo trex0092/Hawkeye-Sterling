@@ -141,13 +141,13 @@ export function NewScreeningForm({
         <SettingsGroup label="Entity type">
           <EntityTypeRow
             active={form.entityType === "individual"}
-            onClick={() => patch({ entityType: "individual", relationshipType: undefined })}
+            onClick={() => patch({ entityType: "individual" })}
             icon="👤"
             label="Individual"
           />
           <EntityTypeRow
             active={form.entityType === "organisation"}
-            onClick={() => patch({ entityType: "organisation", relationshipType: undefined })}
+            onClick={() => patch({ entityType: "organisation" })}
             icon="🏛"
             label="Organisation"
           />
@@ -228,7 +228,7 @@ export function NewScreeningForm({
           <Field label="Relationship type">
             <select
               value={form.relationshipType ?? ""}
-              onChange={(e) => patch({ relationshipType: e.target.value || undefined })}
+              onChange={(e) => { if (e.target.value) patch({ relationshipType: e.target.value }); else patch({}); }}
               className={inputCls}
             >
               <option value="">Select…</option>
@@ -316,7 +316,7 @@ export function NewScreeningForm({
           <Field label="Risk category">
             <select
               value={form.riskCategory ?? ""}
-              onChange={(e) => patch({ riskCategory: e.target.value || undefined })}
+              onChange={(e) => { if (e.target.value) patch({ riskCategory: e.target.value }); else patch({}); }}
               className={inputCls}
             >
               <option value="">None</option>
