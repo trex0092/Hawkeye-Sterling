@@ -48,7 +48,7 @@ function buildStoreOptions(): Parameters<typeof getNetlifyStore>[0] {
   if (siteID && token) {
     return { name: "hawkeye-sterling", siteID, token, consistency: "strong" };
   }
-  return "hawkeye-sterling";
+  return { name: "hawkeye-sterling" };
 }
 
 export function getStore(): MinimalStore {
