@@ -165,7 +165,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       | null;
     if (!asanaRes.ok || !payload?.data?.gid) {
       const msg = payload?.errors?.[0]?.message ?? `HTTP ${asanaRes.status}`;
-      return respond(502, {
+      // Map upstream status so monitoring alerts differentiate misconfig
+      // (401/403 → 503 Service Unavailable on our side) from a real
+      // Asana outage (5xx → 502 Bad Gateway) from a bad payload we
+      // sent (4xx → 422 Unprocessable Entity).
+      const mappedStatus =
+        asanaRes.status >= 500
+          ? 502
+          : asanaRes.status === 401 || asanaRes.status === 403
+            ? 503
+            : 422;
+      return respond(mappedStatus, {
         ok: false,
         error: "asana rejected the task",
         detail: msg,

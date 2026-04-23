@@ -26,38 +26,72 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json({ ok: true, count: subjects.length, subjects });
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function stringField(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() ? v.trim() : undefined;
+}
+
+function stringArray(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const cleaned = v.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
 // POST /api/ongoing — enroll a subject for ongoing screening
 export async function POST(req: Request): Promise<NextResponse> {
-  let body: Partial<EnrolledSubject>;
+  let raw: unknown;
   try {
-    body = (await req.json()) as Partial<EnrolledSubject>;
+    raw = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
-  if (!body?.id || !body?.name) {
+  if (!isRecord(raw)) {
+    return NextResponse.json(
+      { ok: false, error: "body must be a JSON object" },
+      { status: 400 },
+    );
+  }
+  const id = stringField(raw["id"]);
+  const name = stringField(raw["name"]);
+  if (!id || !name) {
     return NextResponse.json(
       { ok: false, error: "id and name required" },
       { status: 400 },
     );
   }
+  const entityTypeRaw = stringField(raw["entityType"]);
+  const allowedEntityTypes = new Set([
+    "individual",
+    "organisation",
+    "vessel",
+    "aircraft",
+    "other",
+  ]);
+  const entityType =
+    entityTypeRaw && allowedEntityTypes.has(entityTypeRaw)
+      ? (entityTypeRaw as EnrolledSubject["entityType"])
+      : undefined;
   const record: EnrolledSubject = {
-    id: body.id,
-    name: body.name,
-    ...(body.aliases ? { aliases: body.aliases } : {}),
-    ...(body.entityType ? { entityType: body.entityType } : {}),
-    ...(body.jurisdiction ? { jurisdiction: body.jurisdiction } : {}),
-    ...(body.group ? { group: body.group } : {}),
-    ...(body.caseId ? { caseId: body.caseId } : {}),
+    id,
+    name,
+    ...(stringArray(raw["aliases"]) ? { aliases: stringArray(raw["aliases"])! } : {}),
+    ...(entityType ? { entityType } : {}),
+    ...(stringField(raw["jurisdiction"]) ? { jurisdiction: stringField(raw["jurisdiction"])! } : {}),
+    ...(stringField(raw["group"]) ? { group: stringField(raw["group"])! } : {}),
+    ...(stringField(raw["caseId"]) ? { caseId: stringField(raw["caseId"])! } : {}),
     enrolledAt: new Date().toISOString(),
   };
-  await setJson(`ongoing/subject/${body.id}`, record);
+  await setJson(`ongoing/subject/${id}`, record);
   return NextResponse.json({ ok: true, subject: record });
 }
 
 // DELETE /api/ongoing?id=HS-10001
 export async function DELETE(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
-  const id = url.searchParams.get("id");
+  const id = url.searchParams.get("id")?.trim();
   if (!id) {
     return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
   }

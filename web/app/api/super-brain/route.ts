@@ -30,6 +30,7 @@ import {
   adverseKeywordGroupCounts,
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
+import { enforce } from "@/lib/server/enforce";
 import {
   lookupKnownPEP,
   lookupKnownAdverse,
@@ -69,16 +70,26 @@ interface Body {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  // Gate + rate-limit BEFORE parsing the JSON body so an attacker can't
+  // blast megabytes of junk into a free-tier endpoint. gate.headers is
+  // threaded through every exit path so clients always see their
+  // remaining quota and rate-limit window.
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
   }
   if (!body?.subject?.name) {
     return NextResponse.json(
       { ok: false, error: "subject.name required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -282,15 +293,18 @@ export async function POST(req: Request): Promise<NextResponse> {
           pepPenalty,
         },
       },
-    });
+    }, { headers: gate.headers });
   } catch (err) {
+    // Log the detail server-side where auditors can see it; return a
+    // generic message to the client so brain-internal stack frames
+    // don't leak into an MLRO's screen as "Cannot find module …".
+    console.error("super-brain failed", err);
     return NextResponse.json(
       {
         ok: false,
-        error: "super-brain failed",
-        detail: err instanceof Error ? err.message : String(err),
+        error: "super-brain unavailable",
       },
-      { status: 500 },
+      { status: 503, headers: gate.headers },
     );
   }
 }
