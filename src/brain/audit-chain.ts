@@ -1,7 +1,10 @@
 // Hawkeye Sterling — append-only, tamper-evident audit chain.
 // Each entry includes the hash of the previous entry, so any retroactive edit
-// breaks the chain at the mutated row onwards. Uses FNV-1a (no WebCrypto
-// dependency); downstream can swap in SHA-256 via a pluggable hasher.
+// breaks the chain at the mutated row onwards.
+//
+// Default hasher: SHA-256 via Node.js crypto (synchronous, collision-resistant).
+// FNV-1a is retained as a lightweight option for non-security contexts (tests,
+// development) but MUST NOT be used in production audit chains.
 
 export interface AuditEntry {
   seq: number;
@@ -15,6 +18,39 @@ export interface AuditEntry {
 
 export type Hasher = (input: string) => string;
 
+// ── SHA-256 (default, production-grade) ─────────────────────────────────────
+// Uses Node.js crypto — synchronous, no WebCrypto async ceremony required.
+// Produces a 64-char hex digest; collision resistance is 2^128 (birthday bound).
+let _cryptoCreateHash: ((alg: string) => { update(d: string, enc: string): { digest(enc: string): string } }) | null = null;
+
+function getCreateHash() {
+  if (_cryptoCreateHash) return _cryptoCreateHash;
+  // Dynamic require keeps this module importable in non-Node environments
+  // (browser bundles) where it would be unused.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _cryptoCreateHash = (require('node:crypto') as { createHash: typeof _cryptoCreateHash }).createHash;
+  } catch {
+    _cryptoCreateHash = null;
+  }
+  return _cryptoCreateHash;
+}
+
+export function sha256hex(input: string): string {
+  const createHash = getCreateHash();
+  if (!createHash) {
+    // Fallback: FNV-1a if crypto is unavailable (edge runtime / browser).
+    // This should never happen in production — emit a console warning.
+    console.warn('[audit-chain] SHA-256 unavailable; falling back to FNV-1a. Do not use in production.');
+    return fnv1a(input);
+  }
+  return createHash('sha256').update(input, 'utf8').digest('hex');
+}
+
+// ── FNV-1a (non-cryptographic — retained for tests and local dev only) ───────
+// WARNING: FNV-1a is a 32-bit non-cryptographic hash. Collisions can be
+// engineered trivially. Never use this as the default hasher in a production
+// audit chain — it does NOT provide tamper-evidence against a determined adversary.
 export function fnv1a(input: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -32,7 +68,7 @@ export class AuditChain {
   private entries: AuditEntry[] = [];
   private hasher: Hasher;
 
-  constructor(hasher: Hasher = fnv1a) {
+  constructor(hasher: Hasher = sha256hex) {
     this.hasher = hasher;
   }
 
@@ -71,7 +107,7 @@ export class AuditChain {
     return this.entries.map((e) => ({ ...e }));
   }
 
-  static fromEntries(entries: AuditEntry[], hasher: Hasher = fnv1a): AuditChain {
+  static fromEntries(entries: AuditEntry[], hasher: Hasher = sha256hex): AuditChain {
     const chain = new AuditChain(hasher);
     (chain as unknown as { entries: AuditEntry[] }).entries = entries.map((e) => ({ ...e }));
     return chain;
