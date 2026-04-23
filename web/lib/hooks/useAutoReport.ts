@@ -11,6 +11,7 @@ export type AutoReportState =
   | { status: "idle" }
   | { status: "posting" }
   | { status: "sent"; taskUrl?: string }
+  | { status: "disabled" }
   | { status: "error"; error: string };
 
 interface Args {
@@ -31,10 +32,30 @@ interface Args {
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [1_000, 2_000, 4_000];
 const RETRYABLE_ERROR_MARKERS = ["server 5", "timed out", "network", "fetch failed"];
+// ASANA_TOKEN being unset OR invalid/expired is a deploy-time misconfig,
+// not a transient failure an operator can fix from the UI — short-circuit
+// so the red "Asana report failed" banner only appears on real outages.
+// Auth-class upstream failures (401/403 + "unauthorized"/"forbidden") are
+// treated the same way as a missing token: integration offline.
+const DISABLED_MARKERS = [
+  "asana_not_configured",
+  "asana not configured",
+  "asana_token",
+  "server 401",
+  "server 403",
+  "unauthorized",
+  "forbidden",
+  "asana rejected",
+];
 
 function shouldRetry(error: string): boolean {
   const lower = error.toLowerCase();
   return RETRYABLE_ERROR_MARKERS.some((m) => lower.includes(m));
+}
+
+function isDisabled(error: string): boolean {
+  const lower = error.toLowerCase();
+  return DISABLED_MARKERS.some((m) => lower.includes(m));
 }
 
 export function useAutoReport({
@@ -74,6 +95,10 @@ export function useAutoReport({
             return;
           }
           lastError = r.detail ?? r.error ?? "unknown";
+          if (isDisabled(lastError) || isDisabled(r.error ?? "")) {
+            setState({ status: "disabled" });
+            return;
+          }
           if (!shouldRetry(lastError)) break;
         } catch (err) {
           if (cancelled) return;

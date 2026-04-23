@@ -6,7 +6,10 @@ export type AdverseMediaCategoryId =
   | 'terrorist_financing'
   | 'proliferation_financing'
   | 'corruption_organised_crime'
-  | 'legal_criminal_regulatory';
+  | 'legal_criminal_regulatory'
+  | 'esg'
+  | 'cybercrime'
+  | 'ai';
 
 export type CaseRating = 'Not Rated' | 'Low' | 'Medium' | 'High' | 'Critical';
 export type EntityType = 'Individual' | 'Organisation' | 'Vessel' | 'Aircraft' | 'Other';

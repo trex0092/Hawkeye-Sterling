@@ -12,6 +12,7 @@ import {
   type ScreeningFormData,
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
+import { lookupKnownPEP } from "@/lib/data/known-entities";
 import type { CDDPosture, FilterKey, QueueFilter, SortKey, Subject } from "@/lib/types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
@@ -52,7 +53,7 @@ function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
     case "edd":
       return subjects.filter((s) => s.cddPosture === "EDD");
     case "pep":
-      return subjects.filter((s) => /PEP/i.test(s.meta));
+      return subjects.filter((s) => s.pep != null || /PEP/i.test(s.meta));
     case "sla":
       return subjects.filter((s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H);
     case "a24":
@@ -106,15 +107,18 @@ function nextSubjectId(existing: Subject[]): string {
 function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
   const id = nextSubjectId(existing);
   const badgeNum = id.replace(/^HS-/, "").slice(-5);
-  const country =
+  const knownPep = data.entityType === "individual" ? lookupKnownPEP(data.name) : null;
+  const rawCountry =
     data.entityType === "individual"
-      ? (data.countryLocation ?? data.citizenship ?? "—")
-      : (data.registeredCountry ?? "—");
+      ? (data.countryLocation ?? data.citizenship ?? "")
+      : (data.registeredCountry ?? "");
+  const country = rawCountry || knownPep?.jurisdiction || "—";
   const metaBits: string[] = [];
   if (data.group) metaBits.push(data.group);
   if (data.riskCategory) metaBits.push(data.riskCategory);
   if (data.alternateNames.length > 0)
     metaBits.push(`aliases: ${data.alternateNames.join(", ")}`);
+  if (knownPep) metaBits.push(`PEP · ${prettyPepTier(knownPep.tier)}`);
   if (data.ongoingScreening) metaBits.push("ongoing screening ON");
 
   const entityLabel = data.entityType === "individual" ? "Individual" : "Corporate";
@@ -133,8 +137,16 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     entityType: data.entityType,
     riskScore: 0,
     status: "active",
-    cddPosture: (data.cddPosture ?? "CDD") as CDDPosture,
+    // Known PEPs auto-bump to EDD unless the analyst explicitly picks
+    // a weaker posture on the form. Anything else honours the form
+    // selection (defaulting to standard CDD).
+    cddPosture: (knownPep
+      ? (data.cddPosture ?? "EDD")
+      : (data.cddPosture ?? "CDD")) as CDDPosture,
     listCoverage: [],
+    ...(knownPep
+      ? { pep: { tier: knownPep.tier, rationale: knownPep.rationale } }
+      : {}),
     exposureAED: "0",
     slaNotify: "+72h 00m",
     mostSerious: "—",
@@ -142,6 +154,10 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     ...(data.notes ? { notes: data.notes } : {}),
     ...(data.riskCategory ? { riskCategory: data.riskCategory } : {}),
   };
+}
+
+function prettyPepTier(tier: string): string {
+  return tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
 }
 
 // Scored search: returns a relevance score [0..100] for a subject against query q.
@@ -203,7 +219,12 @@ function computeDynamicFilters(subjects: Subject[]): QueueFilter[] {
         count = subjects.filter((s) => s.cddPosture === "EDD").length;
         break;
       case "pep":
-        count = subjects.filter((s) => /PEP/i.test(s.meta)).length;
+        // Match both the structured pep flag (set on enrolment via
+        // lookupKnownPEP) and the legacy meta-regex so subjects added
+        // before the pep field existed still count.
+        count = subjects.filter(
+          (s) => s.pep != null || /PEP/i.test(s.meta),
+        ).length;
         break;
       case "sla":
         count = subjects.filter(

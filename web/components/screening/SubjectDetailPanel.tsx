@@ -85,16 +85,25 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         : [];
 
   const pepBadge = (() => {
-    if (superBrain.status !== "success") return null;
-    const { pep, pepAssessment } = superBrain.result;
-    const tier =
-      (pep && pep.salience > 0 ? pep.tier : null) ??
-      (pepAssessment?.isLikelyPEP ? pepAssessment.highestTier : null);
-    if (!tier) return null;
-    const tierLabel = tier
-      .replace(/^tier_/, "tier ")
-      .replace(/_/g, " ");
-    return { tierLabel, rationale: pep?.rationale ?? null };
+    if (superBrain.status === "success") {
+      const { pep, pepAssessment } = superBrain.result;
+      const tier =
+        (pep && pep.salience > 0 ? pep.tier : null) ??
+        (pepAssessment?.isLikelyPEP ? pepAssessment.highestTier : null);
+      if (tier) {
+        return {
+          tierLabel: tier.replace(/^tier_/, "tier ").replace(/_/g, " "),
+          rationale: pep?.rationale ?? subject.pep?.rationale ?? null,
+        };
+      }
+    }
+    if (subject.pep) {
+      return {
+        tierLabel: subject.pep.tier.replace(/^tier_/, "tier ").replace(/_/g, " "),
+        rationale: subject.pep.rationale ?? null,
+      };
+    }
+    return null;
   })();
 
   const showFlash = (msg: string) => {
@@ -209,6 +218,84 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     }
   };
 
+  // Open the print-optimised HTML report in a new tab; the browser
+  // triggers its own print dialog on load, which lets the operator
+  // "Save as PDF" without the app needing a server-side PDF engine.
+  const handleDownloadPdf = async () => {
+    if (screening.status !== "success") {
+      showFlash("Screening not complete yet");
+      return;
+    }
+    const payload = buildReportPayload();
+    try {
+      const res = await fetch("/api/compliance-report?format=html", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "text/html, application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        showFlash(`Report failed server ${res.status}`);
+        return;
+      }
+      const html = await res.text();
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      // Revoke the blob URL once the new tab has had time to load; too
+      // early and the new tab gets nothing, too late and we leak memory.
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      if (!opened) {
+        showFlash("Pop-up blocked — allow pop-ups to download PDF");
+      }
+    } catch (err) {
+      showFlash(
+        err instanceof Error && err.name === "AbortError"
+          ? "Report failed request timed out"
+          : "Report failed",
+      );
+    }
+  };
+
+  const buildReportPayload = () => ({
+    subject: {
+      id: subject.id,
+      name: subject.name,
+      entityType: subject.entityType,
+      jurisdiction: subject.jurisdiction,
+      ...(subject.aliases ? { aliases: subject.aliases } : {}),
+    },
+    result:
+      screening.status === "success"
+        ? {
+            topScore: screening.result.topScore,
+            severity: screening.result.severity,
+            hits: screening.result.hits.map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              score: h.score,
+              method: h.method,
+              ...(h.programs ? { programs: h.programs } : {}),
+            })),
+          }
+        : { topScore: 0, severity: "clear", hits: [] },
+    superBrain:
+      superBrain.status === "success"
+        ? {
+            pep: superBrain.result.pep,
+            jurisdiction: superBrain.result.jurisdiction,
+            adverseMedia: superBrain.result.adverseMedia,
+            adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
+            esg: superBrain.result.esg,
+            redlines: superBrain.result.redlines,
+            composite: superBrain.result.composite,
+          }
+        : null,
+  });
+
   const handleDownloadReport = async () => {
     if (screening.status !== "success") {
       showFlash("Screening not complete yet");
@@ -310,8 +397,11 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
           <div className="flex gap-1.5 flex-wrap">
             <PanelBtn onClick={handleCopy} title="Copy subject ID">⎙</PanelBtn>
-            <PanelBtn onClick={handleDownloadReport} title="Download MLRO report">
-              Report
+            <PanelBtn onClick={handleDownloadPdf} title="Download PDF report">
+              💾
+            </PanelBtn>
+            <PanelBtn onClick={handleDownloadReport} title="Download .txt report">
+              .txt
             </PanelBtn>
             <PanelBtn onClick={handleEscalate} disabled={escalated}>
               {escalated ? "Escalated" : "Escalate"}
@@ -719,7 +809,7 @@ function PanelBtn({
 
 
 function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").AutoReportState }) {
-  if (state.status === "idle") return null;
+  if (state.status === "idle" || state.status === "disabled") return null;
   const base =
     "inline-flex items-center gap-1.5 mt-2 text-10.5 font-medium rounded px-2 py-0.5";
   if (state.status === "posting") {

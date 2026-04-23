@@ -142,7 +142,10 @@ export type AdverseMediaCategoryId =
   | 'terrorist_financing'
   | 'proliferation_financing'
   | 'corruption_organised_crime'
-  | 'legal_criminal_regulatory';
+  | 'legal_criminal_regulatory'
+  | 'esg'
+  | 'cybercrime'
+  | 'ai';
 
 export interface AdverseMediaCategory {
   id: AdverseMediaCategoryId;

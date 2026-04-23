@@ -69,6 +69,7 @@
         "Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025)",
         "Cabinet Decision No. 74 of 2020 (Terrorism Lists & TFS)",
         "Cabinet Resolution No. 16 of 2021 (administrative penalties)",
+        "Cabinet Resolution No. 156 of 2025 (Schedule of Goods Subject to Due-Diligence · Precious Metals & Gemstones)",
         "MoE DNFBP circulars and guidance (precious-metals sector)",
         "FATF Recommendations and Methodology",
         "LBMA Responsible Gold Guidance"
@@ -305,9 +306,24 @@
             "id": "legal_criminal_regulatory",
             "displayName": "Legal, Criminal & Regulatory Proceedings",
             "keywordCount": 122
+          },
+          {
+            "id": "esg",
+            "displayName": "ESG & Responsible-Sourcing Controversies",
+            "keywordCount": 173
+          },
+          {
+            "id": "cybercrime",
+            "displayName": "Cybercrime & Digital-Asset Abuse",
+            "keywordCount": 47
+          },
+          {
+            "id": "ai",
+            "displayName": "AI-Enabled Risk & Synthetic-Media Abuse",
+            "keywordCount": 101
           }
         ],
-        "totalKeywords": 416,
+        "totalKeywords": 737,
         "queryLength": 1353
       },
       "doctrines": {
@@ -652,7 +668,7 @@
         "typologies": 41,
         "redFlags": 21,
         "redFlagsExtended": 45,
-        "adverseMediaCategories": 5,
+        "adverseMediaCategories": 8,
         "metaCognition": 25
       },
       "regulatory": {

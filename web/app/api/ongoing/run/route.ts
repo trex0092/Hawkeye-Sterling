@@ -47,18 +47,41 @@ interface LastSnapshot {
 
 interface Schedule {
   subjectId: string;
-  cadence: "hourly" | "daily" | "weekly" | "monthly";
+  cadence: "hourly" | "thrice_daily" | "daily" | "weekly" | "monthly";
   scoreThreshold?: number;
   nextRunAt: string;
   lastRunAt?: string;
 }
 
-const CADENCE_MS = {
+// Fixed-interval cadences (hourly / daily / weekly / monthly) use a
+// simple "now + N ms" advance. The thrice_daily cadence is special:
+// it fires at three fixed Dubai clock times per MLRO policy, not every
+// 8h from enrolment. nextRunAt for thrice_daily is computed by
+// nextThriceDailyRun() below — NOT from CADENCE_MS.
+const CADENCE_MS: Record<Exclude<Schedule["cadence"], "thrice_daily">, number> = {
   hourly: 60 * 60 * 1_000,
   daily: 24 * 60 * 60 * 1_000,
   weekly: 7 * 24 * 60 * 60 * 1_000,
   monthly: 30 * 24 * 60 * 60 * 1_000,
 };
+
+// 08:30 / 15:00 / 17:30 Dubai (UTC+4, no DST) → 04:30 / 11:00 / 13:30 UTC.
+const THRICE_DAILY_SLOTS_UTC: Array<[number, number]> = [
+  [4, 30],
+  [11, 0],
+  [13, 30],
+];
+
+function nextThriceDailyRun(from: Date): Date {
+  const candidates = THRICE_DAILY_SLOTS_UTC.map(([h, m]) => {
+    const d = new Date(from);
+    d.setUTCHours(h, m, 0, 0);
+    if (d.getTime() <= from.getTime()) d.setUTCDate(d.getUTCDate() + 1);
+    return d;
+  });
+  candidates.sort((a, b) => a.getTime() - b.getTime());
+  return candidates[0]!;
+}
 
 // Threshold at which a score increase between runs is considered an
 // automatic escalation. 15 / 100 points (= 0.15 in normalised terms)
@@ -161,41 +184,43 @@ export async function POST(req: Request): Promise<NextResponse> {
       await setJson(`ongoing/last/${s.id}`, snapshot);
 
       let asanaTaskUrl: string | undefined;
-      // Post a delta task to Asana ONLY when something new appears — avoids
-      // flooding the board on every rerun.
-      if (newHits.length > 0) {
-        try {
-          // Use an explicit, env-configured base URL rather than req.url to
-          // prevent SSRF via attacker-controlled Host headers.
-          const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
-          const asanaRes = await fetch(
-            new URL("/api/screening-report", appBase).toString(),
-            {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                subject: {
-                  id: s.id,
-                  name: s.name,
-                  aliases: s.aliases,
-                  entityType: s.entityType,
-                  jurisdiction: s.jurisdiction,
-                  group: s.group,
-                  caseId: s.caseId,
-                  ongoingScreening: true,
-                },
-                result: { ...screen, hits: newHits },
-                trigger: "ongoing",
-              }),
-            },
-          );
-          const payload = (await asanaRes.json().catch(() => null)) as
-            | { taskUrl?: string }
-            | null;
-          if (payload?.taskUrl) asanaTaskUrl = payload.taskUrl;
-        } catch {
-          /* continue without Asana */
-        }
+      // File an Asana task on EVERY tick — ongoing-monitoring subjects must
+      // produce one report per run (three per day at thrice_daily cadence)
+      // per MLRO requirement. When there are new hits we ship just those;
+      // otherwise we ship the full current-state snapshot so the board
+      // shows a continuous heartbeat the regulator can audit.
+      try {
+        const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+        const asanaRes = await fetch(
+          new URL("/api/screening-report", appBase).toString(),
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              subject: {
+                id: s.id,
+                name: s.name,
+                aliases: s.aliases,
+                entityType: s.entityType,
+                jurisdiction: s.jurisdiction,
+                group: s.group,
+                caseId: s.caseId,
+                ongoingScreening: true,
+              },
+              result: {
+                ...screen,
+                hits: newHits.length > 0 ? newHits : screen.hits,
+              },
+              trigger: "ongoing",
+            }),
+          },
+        );
+        const payload = (await asanaRes.json().catch(() => null)) as
+          | { taskUrl?: string }
+          | null;
+        if (payload?.taskUrl) asanaTaskUrl = payload.taskUrl;
+      } catch {
+        /* continue without Asana — non-fatal */
       }
 
       // Auto-escalation: also drop a task on the escalations board so the
@@ -305,13 +330,18 @@ export async function POST(req: Request): Promise<NextResponse> {
         source: "hawkeye-sterling",
       });
 
-      // Advance the schedule clock.
+      // Advance the schedule clock. thrice_daily pins to the next fixed
+      // Dubai slot (08:30 / 15:00 / 17:30); everything else uses a simple
+      // now + interval advance.
       if (schedule) {
-        const advance = CADENCE_MS[schedule.cadence];
+        const nextRunAt =
+          schedule.cadence === "thrice_daily"
+            ? nextThriceDailyRun(new Date(nowMs)).toISOString()
+            : new Date(nowMs + CADENCE_MS[schedule.cadence]).toISOString();
         const next: Schedule = {
           ...schedule,
           lastRunAt: runAt,
-          nextRunAt: new Date(nowMs + advance).toISOString(),
+          nextRunAt,
         };
         await setJson(`schedule/${s.id}`, next);
       }

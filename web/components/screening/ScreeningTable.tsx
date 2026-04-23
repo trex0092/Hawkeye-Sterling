@@ -95,7 +95,17 @@ export function ScreeningTable({
                   <Badge tone={subject.badgeTone} label={subject.badge} />
                 </td>
                 <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <div className="font-medium text-ink-0 text-12.5">{subject.name}</div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-medium text-ink-0 text-12.5">{subject.name}</span>
+                    {subject.pep && (
+                      <span
+                        className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-brand text-white uppercase"
+                        title={subject.pep.rationale ?? undefined}
+                      >
+                        PEP
+                      </span>
+                    )}
+                  </div>
                   <div className="text-11 text-ink-2 mt-0.5 leading-snug">
                     {subject.country}
                     {subject.meta && subject.meta !== "new subject" && (

@@ -92,7 +92,30 @@ async function handlePost(req: Request): Promise<NextResponse> {
     enrolledAt: new Date().toISOString(),
   };
   await setJson(`ongoing/subject/${id}`, record);
-  return NextResponse.json({ ok: true, subject: record });
+
+  // Seed a thrice_daily schedule so the /api/ongoing/run cron produces
+  // three Asana tasks per 24h for every newly enrolled subject, per
+  // MLRO policy. Honour a caller-supplied cadence override when valid.
+  const allowedCadences = new Set([
+    "hourly",
+    "thrice_daily",
+    "daily",
+    "weekly",
+    "monthly",
+  ]);
+  const requestedCadence = stringField(raw["cadence"]);
+  const cadence =
+    requestedCadence && allowedCadences.has(requestedCadence)
+      ? requestedCadence
+      : "thrice_daily";
+  const nextRunAt = new Date().toISOString();
+  await setJson(`schedule/${id}`, {
+    subjectId: id,
+    cadence,
+    nextRunAt,
+  });
+
+  return NextResponse.json({ ok: true, subject: record, cadence });
 }
 
 async function handleDelete(req: Request): Promise<NextResponse> {

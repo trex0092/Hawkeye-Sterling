@@ -119,6 +119,163 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'whistleblower', 'qui tam',
     ],
   },
+  {
+    id: 'esg',
+    displayName: 'ESG & Responsible-Sourcing Controversies',
+    keywords: [
+      // Environment — pollution, waste, chemicals
+      'environmental violation', 'pollution', 'toxic waste', 'hazardous waste',
+      'illegal waste export', 'Basel Convention breach', 'oil spill',
+      'illegal dumping', 'marine pollution', 'chemical spill',
+      'groundwater contamination', 'air quality violation', 'ozone depletion',
+      'CFC smuggling', 'HFC smuggling', 'Montreal Protocol breach',
+      'asbestos exposure', 'e-waste dumping',
+      // Environment — nature and biodiversity
+      'deforestation', 'illegal logging', 'illegal mining', 'artisanal mining abuse',
+      'blood diamond', 'conflict mineral', 'cobalt mining abuse',
+      'ivory trade', 'wildlife trafficking', 'poaching', 'biodiversity loss',
+      'coral reef damage', 'protected area encroachment',
+      // Environment — climate
+      'greenwashing', 'carbon fraud', 'carbon credit fraud', 'carbon offset fraud',
+      'emissions fraud', 'emissions reporting fraud', 'Scope 3 misreporting',
+      'Paris Agreement breach', 'NDC non-compliance', 'methane leak',
+      'shale-gas flaring', 'fracking violation', 'Arctic drilling controversy',
+      'oil-sands pollution',
+      // Social — labour and human rights
+      'modern slavery', 'child labour', 'forced labour', 'bonded labour',
+      'sweatshop', 'wage theft', 'unpaid overtime', 'union busting',
+      'strike breaking', 'workplace discrimination', 'gender discrimination',
+      'racial discrimination', 'sexual harassment', 'indigenous rights violation',
+      'land grab', 'community displacement', 'supply chain abuse',
+      'human rights abuse', 'Uyghur forced labour',
+      // Social — workplace safety
+      'unsafe working conditions', 'fatal workplace accident', 'mine collapse',
+      'factory fire', 'Rana Plaza', 'shipbreaking abuse', 'beaching abuse',
+      'tailings dam collapse', 'industrial accident',
+      // Governance — corporate
+      'board governance failure', 'audit failure', 'executive misconduct',
+      'whistleblower retaliation', 'related-party transaction', 'self-dealing',
+      'materiality misstatement', 'accounting restatement',
+      // ESG disclosure / finance
+      'ESG misrepresentation', 'sustainability fraud', 'sustainability report fraud',
+      'ESG rating manipulation', 'green-bond fraud', 'green-loan fraud',
+      'sustainability-linked loan fraud', 'SFDR breach', 'EU Taxonomy misrepresentation',
+      'CSRD breach', 'CSDDD breach', 'TCFD non-compliance', 'ISSB non-compliance',
+      'SEC climate disclosure breach',
+      // Sector-specific (DPMS / FMCG / apparel / palm oil)
+      'palm-oil controversy', 'cocoa child labour', 'coffee forced labour',
+      'garment factory abuse', 'LBMA non-conformance',
+      'responsible-sourcing breach', 'OECD due-diligence breach',
+      'RJC non-conformance', 'Kimberley Process breach',
+      // Precious metals & mining — frameworks & standards
+      'LBMA Responsible Gold Guidance breach', 'LBMA Good Delivery delisting',
+      'LBMA RGG non-conformance', 'LBMA Responsible Silver Guidance breach',
+      'LBMA Responsible Platinum and Palladium Guidance breach',
+      'OECD Annex II risk', 'OECD Due Diligence Guidance breach',
+      'RJC Code of Practices breach', 'RJC Chain of Custody breach',
+      'Fairmined non-conformance', 'Fairtrade Gold non-conformance',
+      'Dodd-Frank Section 1502 breach', 'EU Conflict Minerals Regulation breach',
+      '3TG sourcing violation', 'conflict-affected high-risk area sourcing',
+      'CAHRA sourcing',
+      // Precious metals & mining — regional / sanctions hotspots
+      'Russian gold ban', 'OFAC gold sector sanctions', 'Myanmar jade',
+      'Myanmar ruby', 'Venezuelan gold', 'Orinoco mining arc',
+      'garimpeiros', 'Brazilian illegal gold', 'Amazon illegal mining',
+      'DRC gold smuggling', 'Sahel gold smuggling', 'Marange diamonds',
+      'Sudanese gold', 'West Africa artisanal gold',
+      'Zimbabwe gold smuggling', 'Colombian illegal gold',
+      'dore bar diversion', 'free-zone gold diversion',
+      'Dubai gold souk diversion', 'trade mis-invoicing of gold',
+      // Precious metals & mining — environmental impacts
+      'artisanal and small-scale mining abuse', 'ASGM mercury use',
+      'Minamata Convention breach', 'mercury poisoning',
+      'cyanide heap leaching abuse', 'acid mine drainage',
+      'heavy metal contamination', 'arsenic contamination',
+      'SO2 refinery emissions', 'dust explosion', 'refinery contamination',
+      'riverbed mining', 'illegal dredging',
+      'mining-driven deforestation',
+      // Precious metals & mining — social / community
+      'FPIC violation', 'ILO 169 breach',
+      'UN Guiding Principles breach', 'UNGP non-compliance',
+      'Voluntary Principles on Security and Human Rights breach',
+      'VPSHR non-compliance', 'mine-site security abuse',
+      'paramilitary protection at mine', 'community relocation dispute',
+      'indigenous community displacement', 'child miner',
+      'underage miner', 'mine-site sexual violence',
+      'informal gold payment',
+      // Precious metals & mining — notable tailings & disasters
+      'Brumadinho dam', 'Mariana dam', 'Mount Polley', 'Samarco',
+      'Baia Mare cyanide spill',
+    ],
+  },
+  {
+    id: 'cybercrime',
+    displayName: 'Cybercrime & Digital-Asset Abuse',
+    keywords: [
+      'ransomware', 'malware', 'trojan', 'phishing', 'spear phishing',
+      'smishing', 'vishing', 'data breach', 'data exfiltration',
+      'credential stuffing', 'SIM swap', 'SIM-swap', 'account takeover',
+      'zero-day', 'exploit kit', 'APT', 'advanced persistent threat',
+      'supply chain attack', 'SolarWinds', 'Log4j', 'botnet', 'DDoS',
+      'cryptojacking', 'crypto theft', 'exchange hack', 'wallet drainer',
+      'privacy coin', 'tornado cash', 'coin mixer', 'dusting attack',
+      'rug pull', 'NFT wash trade', 'DeFi exploit', 'flash-loan attack',
+      'smart contract exploit', 'oracle manipulation', 'dark web marketplace',
+      'initial access broker', 'BEC', 'business email compromise',
+      'deepfake fraud', 'voice cloning scam', 'romance scam', 'pig butchering',
+      'insider threat', 'CSAM', 'child sexual abuse material',
+      'darknet marketplace',
+    ],
+  },
+  {
+    id: 'ai',
+    displayName: 'AI-Enabled Risk & Synthetic-Media Abuse',
+    keywords: [
+      // Synthetic media
+      'deepfake', 'synthetic media', 'voice cloning', 'AI voice clone',
+      'face-swap', 'face-swap scam', 'lip-sync deepfake', 'AI-generated content',
+      'AI-generated video', 'AI-generated audio', 'AI-generated image',
+      'AI-generated document', 'AI-forged ID', 'deepfake passport',
+      'deepfake driver\'s licence', 'synthetic video identity',
+      // Identity & impersonation
+      'AI impersonation', 'CEO deepfake', 'deepfake CEO fraud',
+      'AI Zoom impersonation', 'AI video call scam', 'AI-generated KYC fraud',
+      'AI biometric spoof', 'liveness spoof', 'anti-spoofing bypass',
+      // Fraud / scams
+      'AI fraud', 'AI scam', 'AI investment scam', 'AI trading bot scam',
+      'AI pump-and-dump', 'AI-powered romance scam', 'AI pig butchering',
+      'AI-enabled phishing', 'AI smishing', 'AI vishing',
+      // Generative model misuse
+      'generative AI abuse', 'GenAI abuse', 'LLM jailbreak', 'prompt injection',
+      'indirect prompt injection', 'system-prompt leak', 'chatbot impersonation',
+      'unauthorized AI tool', 'shadow AI', 'fine-tuning abuse', 'LoRA abuse',
+      // Model security
+      'model poisoning', 'training-data poisoning', 'data-poisoning campaign',
+      'backdoor attack', 'neural backdoor', 'trojaned model', 'adversarial attack',
+      'adversarial example', 'model theft', 'model extraction', 'model exfiltration',
+      'model inversion', 'membership inference', 'gradient leak', 'embedding leak',
+      'RAG poisoning', 'vector-store poisoning',
+      // Misinformation / influence operations
+      'AI misinformation', 'AI disinformation', 'election deepfake',
+      'AI propaganda', 'AI influence operation', 'automated disinformation campaign',
+      'synthetic news', 'fake news generator', 'AI astroturfing',
+      // Abuse / safety
+      'AI-generated CSAM', 'AI child sexual abuse material',
+      'AI non-consensual intimate imagery', 'AI revenge porn',
+      'AI deepfake harassment', 'AI doxxing', 'AI hate speech generation',
+      // Fin-crime & laundering
+      'synthetic identity', 'AI-assisted laundering', 'AI mule recruitment',
+      'autonomous fraud', 'agentic AI misuse', 'LLM agent abuse',
+      'bot farm', 'AI-driven account creation', 'AI credential stuffing',
+      'AI password cracking',
+      // Governance / bias / regulation
+      'algorithmic bias', 'AI discrimination', 'algorithmic discrimination lawsuit',
+      'hallucination misuse', 'AI safety violation', 'AI audit failure',
+      'AI governance breach', 'EU AI Act breach', 'NIST AI RMF non-compliance',
+      'biometric-data abuse', 'AI copyright infringement',
+      'AI-enabled social engineering',
+    ],
+  },
 ];
 
 // Inject multilingual keywords into every category. We route most multilingual
