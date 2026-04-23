@@ -84,6 +84,19 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         ? subject.listCoverage
         : [];
 
+  const pepBadge = (() => {
+    if (superBrain.status !== "success") return null;
+    const { pep, pepAssessment } = superBrain.result;
+    const tier =
+      (pep && pep.salience > 0 ? pep.tier : null) ??
+      (pepAssessment?.isLikelyPEP ? pepAssessment.highestTier : null);
+    if (!tier) return null;
+    const tierLabel = tier
+      .replace(/^tier_/, "tier ")
+      .replace(/_/g, " ");
+    return { tierLabel, rationale: pep?.rationale ?? null };
+  })();
+
   const showFlash = (msg: string) => {
     setFlash(msg);
     window.setTimeout(() => setFlash(null), 2200);
@@ -311,6 +324,16 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         <p className="text-12 text-ink-2 m-0">
           {subject.id} · {subject.type} · {subject.country} · opened {subject.openedAgo}
         </p>
+        {pepBadge && (
+          <div className="mt-2 flex items-center gap-1.5" role="status">
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10.5 font-semibold tracking-wide-2 bg-brand text-white uppercase"
+              title={pepBadge.rationale ?? undefined}
+            >
+              PEP · {pepBadge.tierLabel}
+            </span>
+          </div>
+        )}
         <AsanaStatus state={asanaReport} />
         {flash && (
           <div className="mt-2 text-11 text-green font-medium" role="status">
