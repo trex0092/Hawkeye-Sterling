@@ -47,14 +47,19 @@ interface LastSnapshot {
 
 interface Schedule {
   subjectId: string;
-  cadence: "hourly" | "daily" | "weekly" | "monthly";
+  cadence: "hourly" | "thrice_daily" | "daily" | "weekly" | "monthly";
   scoreThreshold?: number;
   nextRunAt: string;
   lastRunAt?: string;
 }
 
+// thrice_daily = every 8 hours. Used by default for new ongoing-
+// screening enrolments so each subject generates three Asana tasks
+// per 24h window (08:00 / 16:00 / 00:00 UTC after a midnight start,
+// offset naturally by the subject's enrolment time).
 const CADENCE_MS = {
   hourly: 60 * 60 * 1_000,
+  thrice_daily: 8 * 60 * 60 * 1_000,
   daily: 24 * 60 * 60 * 1_000,
   weekly: 7 * 24 * 60 * 60 * 1_000,
   monthly: 30 * 24 * 60 * 60 * 1_000,
@@ -161,41 +166,43 @@ export async function POST(req: Request): Promise<NextResponse> {
       await setJson(`ongoing/last/${s.id}`, snapshot);
 
       let asanaTaskUrl: string | undefined;
-      // Post a delta task to Asana ONLY when something new appears — avoids
-      // flooding the board on every rerun.
-      if (newHits.length > 0) {
-        try {
-          // Use an explicit, env-configured base URL rather than req.url to
-          // prevent SSRF via attacker-controlled Host headers.
-          const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
-          const asanaRes = await fetch(
-            new URL("/api/screening-report", appBase).toString(),
-            {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                subject: {
-                  id: s.id,
-                  name: s.name,
-                  aliases: s.aliases,
-                  entityType: s.entityType,
-                  jurisdiction: s.jurisdiction,
-                  group: s.group,
-                  caseId: s.caseId,
-                  ongoingScreening: true,
-                },
-                result: { ...screen, hits: newHits },
-                trigger: "ongoing",
-              }),
-            },
-          );
-          const payload = (await asanaRes.json().catch(() => null)) as
-            | { taskUrl?: string }
-            | null;
-          if (payload?.taskUrl) asanaTaskUrl = payload.taskUrl;
-        } catch {
-          /* continue without Asana */
-        }
+      // File an Asana task on EVERY tick — ongoing-monitoring subjects must
+      // produce one report per run (three per day at thrice_daily cadence)
+      // per MLRO requirement. When there are new hits we ship just those;
+      // otherwise we ship the full current-state snapshot so the board
+      // shows a continuous heartbeat the regulator can audit.
+      try {
+        const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+        const asanaRes = await fetch(
+          new URL("/api/screening-report", appBase).toString(),
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              subject: {
+                id: s.id,
+                name: s.name,
+                aliases: s.aliases,
+                entityType: s.entityType,
+                jurisdiction: s.jurisdiction,
+                group: s.group,
+                caseId: s.caseId,
+                ongoingScreening: true,
+              },
+              result: {
+                ...screen,
+                hits: newHits.length > 0 ? newHits : screen.hits,
+              },
+              trigger: "ongoing",
+            }),
+          },
+        );
+        const payload = (await asanaRes.json().catch(() => null)) as
+          | { taskUrl?: string }
+          | null;
+        if (payload?.taskUrl) asanaTaskUrl = payload.taskUrl;
+      } catch {
+        /* continue without Asana — non-fatal */
       }
 
       // Auto-escalation: also drop a task on the escalations board so the
