@@ -12,30 +12,52 @@ import { useState } from "react";
 
 interface PaymentVerdict {
   ok: boolean;
-  parsed?: {
-    reference?: string;
-    valueDate?: string;
-    currency?: string;
-    amount?: string;
-    ordering?: { account?: string; name?: string; address?: string };
-    beneficiary?: { account?: string; name?: string; address?: string };
-    remittance?: string;
-  };
-  orderingScreen?: {
-    severity: string;
-    topScore: number;
-    hits: Array<{ listId: string; candidateName: string; score: number }>;
-  } | null;
-  beneficiaryScreen?: {
-    severity: string;
-    topScore: number;
-    hits: Array<{ listId: string; candidateName: string; score: number }>;
-  } | null;
-  verdict?: {
-    worseSeverity: string;
-    shouldBlock: boolean;
-  };
-  error?: string;
+  parsed?:
+    | {
+        reference?: string | undefined;
+        valueDate?: string | undefined;
+        currency?: string | undefined;
+        amount?: string | undefined;
+        ordering?:
+          | {
+              account?: string | undefined;
+              name?: string | undefined;
+              address?: string | undefined;
+            }
+          | undefined;
+        beneficiary?:
+          | {
+              account?: string | undefined;
+              name?: string | undefined;
+              address?: string | undefined;
+            }
+          | undefined;
+        remittance?: string | undefined;
+      }
+    | undefined;
+  orderingScreen?:
+    | {
+        severity: string;
+        topScore: number;
+        hits: Array<{ listId: string; candidateName: string; score: number }>;
+      }
+    | null
+    | undefined;
+  beneficiaryScreen?:
+    | {
+        severity: string;
+        topScore: number;
+        hits: Array<{ listId: string; candidateName: string; score: number }>;
+      }
+    | null
+    | undefined;
+  verdict?:
+    | {
+        worseSeverity: string;
+        shouldBlock: boolean;
+      }
+    | undefined;
+  error?: string | undefined;
 }
 
 const SEVERITY_TONE: Record<string, string> = {

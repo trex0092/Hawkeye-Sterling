@@ -11,7 +11,7 @@ import type { SuperBrainResult } from "@/lib/hooks/useSuperBrain";
 
 interface BrainRadarProps {
   result: SuperBrainResult;
-  size?: number;
+  size?: number | undefined;
 }
 
 interface AxisValue {

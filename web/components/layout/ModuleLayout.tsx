@@ -16,16 +16,16 @@ import {
 
 interface ModuleLayoutProps<K extends string = string> {
   children: ReactNode;
-  filters?: SidebarFilterItem<K>[];
-  activeFilter?: K;
-  onFilterChange?: (key: K) => void;
-  filtersTitle?: string;
-  sidebarExtra?: ReactNode;
-  detailPanel?: ReactNode;
-  shift?: string;
+  filters?: SidebarFilterItem<K>[] | undefined;
+  activeFilter?: K | undefined;
+  onFilterChange?: ((key: K) => void) | undefined;
+  filtersTitle?: string | undefined;
+  sidebarExtra?: ReactNode | undefined;
+  detailPanel?: ReactNode | undefined;
+  shift?: string | undefined;
   // When true the grid uses max-w constrained main content (for centred
   // report-style pages like Analytics, Status). Defaults to full-width.
-  narrow?: boolean;
+  narrow?: boolean | undefined;
 }
 
 export function ModuleLayout<K extends string = string>({
@@ -91,13 +91,15 @@ export function ModuleLayout<K extends string = string>({
 interface ModuleHeroProps {
   eyebrow: string;
   title: string;
-  titleEm?: string; // italic trailing word (e.g. "trail.", "standard.")
-  kpis?: Array<{
-    value: string;
-    label: string;
-    tone?: "red" | "orange" | "amber";
-  }>;
-  intro?: ReactNode;
+  titleEm?: string | undefined; // italic trailing word (e.g. "trail.", "standard.")
+  kpis?:
+    | Array<{
+        value: string;
+        label: string;
+        tone?: "red" | "orange" | "amber" | undefined;
+      }>
+    | undefined;
+  intro?: ReactNode | undefined;
 }
 
 export function ModuleHero({

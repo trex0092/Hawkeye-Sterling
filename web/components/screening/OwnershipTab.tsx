@@ -14,12 +14,12 @@ interface OwnershipNode {
   id: string;
   name: string;
   kind: "ubo" | "director" | "entity" | "nominee" | "trust";
-  jurisdiction?: string;
-  ownershipPct?: number;
-  verified?: boolean;
-  role?: string;
-  children?: OwnershipNode[];
-  flags?: Array<"pep" | "sanctions" | "adverse-media" | "cahra">;
+  jurisdiction?: string | undefined;
+  ownershipPct?: number | undefined;
+  verified?: boolean | undefined;
+  role?: string | undefined;
+  children?: OwnershipNode[] | undefined;
+  flags?: Array<"pep" | "sanctions" | "adverse-media" | "cahra"> | undefined;
 }
 
 function synthesiseChain(subject: Subject): OwnershipNode {

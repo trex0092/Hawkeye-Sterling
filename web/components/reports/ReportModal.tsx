@@ -15,7 +15,7 @@ interface ReportModalProps {
   // Optional — when provided, the modal POSTs the body to the endpoint
   // in parallel with fetching the report text and renders a
   // "Filed to Asana" status badge in the toolbar.
-  asanaFile?: AsanaFile | null;
+  asanaFile?: AsanaFile | null | undefined;
 }
 
 type ReportState =
