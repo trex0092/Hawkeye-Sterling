@@ -18,7 +18,6 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

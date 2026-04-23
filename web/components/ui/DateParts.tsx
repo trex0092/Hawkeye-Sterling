@@ -41,8 +41,8 @@ function format(day: string, month: string, year: string): string {
 interface DatePartsProps {
   value: string;
   onChange: (next: string) => void;
-  className?: string;
-  ariaLabel?: string;
+  className?: string | undefined;
+  ariaLabel?: string | undefined;
 }
 
 export function DateParts({
