@@ -10,7 +10,6 @@ import { classifyEsg } from "@/lib/data/esg";
 // past the 10s edge timeout and every news-search request returned 502.
 import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
-import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
