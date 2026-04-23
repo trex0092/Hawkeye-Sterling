@@ -8,9 +8,9 @@
 //
 // Error envelope on denial: { code, message, traceId }.
 
-import { extractKey, validateAndConsume } from "./api-keys.js";
-import type { ApiKeyRecord } from "./api-keys.js";
-import { consumeRateLimit, rateLimitHeaders } from "./rate-limit.js";
+import { extractKey, validateAndConsume } from "./api-keys";
+import type { ApiKeyRecord } from "./api-keys";
+import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 
 export interface RequestContext {
   readonly apiKey: ApiKeyRecord;
