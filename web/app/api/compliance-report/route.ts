@@ -3,6 +3,7 @@ import {
   buildComplianceReport,
   type ReportInput,
 } from "@/lib/reports/complianceReport";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,9 @@ export const dynamic = "force-dynamic";
 // Returns text/plain — the Hawkeye Sterling MLRO report, generated
 // strictly from the payload (no invented facts, no narrative hallucinations).
 export async function POST(req: Request): Promise<Response> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   let body: ReportInput;
   try {
     body = (await req.json()) as ReportInput;

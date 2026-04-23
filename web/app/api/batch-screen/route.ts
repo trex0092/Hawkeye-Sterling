@@ -6,6 +6,7 @@ import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,9 @@ interface RowResult {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Body;
   try {
     body = (await req.json()) as Body;

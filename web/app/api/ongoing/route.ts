@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,10 @@ interface EnrolledSubject {
 }
 
 // GET /api/ongoing — list all enrolled subjects
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const keys = await listKeys("ongoing/subject/");
   const subjects: EnrolledSubject[] = [];
   for (const key of keys) {
@@ -28,6 +32,9 @@ export async function GET(): Promise<NextResponse> {
 
 // POST /api/ongoing — enroll a subject for ongoing screening
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   let body: Partial<EnrolledSubject>;
   try {
     body = (await req.json()) as Partial<EnrolledSubject>;
@@ -56,6 +63,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
 // DELETE /api/ongoing?id=HS-10001
 export async function DELETE(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
   if (!id) {

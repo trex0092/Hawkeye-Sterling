@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { postWebhook } from "@/lib/server/webhook";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +65,9 @@ interface Body {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json(

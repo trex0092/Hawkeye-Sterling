@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -69,6 +70,9 @@ interface Body {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Body;
   try {
     body = (await req.json()) as Body;

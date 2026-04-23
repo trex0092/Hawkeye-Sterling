@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,9 @@ function newId(): string {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
   const keys = await listKeys(PREFIX);
@@ -62,6 +66,9 @@ export async function GET(req: Request): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
   let body: Partial<CorrectionRequest>;
   try {
     body = (await req.json()) as Partial<CorrectionRequest>;
