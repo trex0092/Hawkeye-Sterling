@@ -13,7 +13,12 @@ import type {
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
-import { appendCase, buildCaseRecord } from "@/lib/data/case-store";
+import { BrainNarrative } from "@/components/screening/BrainNarrative";
+import {
+  appendCase,
+  attachEvidenceToSubject,
+  buildCaseRecord,
+} from "@/lib/data/case-store";
 
 const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
@@ -212,6 +217,19 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           statusDetail: `STR filed from screening panel`,
         }),
       );
+      // Snapshot the Asana task URL into the case's evidence vault
+      // the moment the case is created — the append above is sync so
+      // the attach runs against the freshly-written record.
+      const taskUrl = res.data.taskUrl;
+      attachEvidenceToSubject(subject.name, {
+        category: "four-eyes-approval",
+        title: "STR filed to STR/SAR board",
+        meta: new Date().toISOString(),
+        detail: taskUrl
+          ? `Asana task: ${taskUrl}`
+          : "Asana task created (URL not returned)",
+        timelineEvent: "STR filed to Asana STR/SAR board",
+      });
       showFlash("STR filed — draft in STR/SAR board");
     } else {
       showFlash(res.error ?? "STR filing failed");
@@ -250,6 +268,15 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       if (!opened) {
         showFlash("Pop-up blocked — allow pop-ups to download PDF");
       }
+      // Snapshot into the case's evidence vault so the regulator can
+      // replay exactly what the MLRO saw on disposition day.
+      attachEvidenceToSubject(subject.name, {
+        category: "screening-report",
+        title: "Compliance report (PDF)",
+        meta: new Date().toISOString(),
+        detail: `Generated for ${subject.name} (${subject.id}) via /api/compliance-report?format=html`,
+        timelineEvent: "Compliance report (PDF) generated",
+      });
     } catch (err) {
       showFlash(
         err instanceof Error && err.name === "AbortError"
@@ -315,6 +342,13 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       a.click();
       URL.revokeObjectURL(url);
       showFlash("goAML STR downloaded");
+      attachEvidenceToSubject(subject.name, {
+        category: "screening-report",
+        title: "goAML STR envelope (XML)",
+        meta: new Date().toISOString(),
+        detail: `goAML v4 STR XML generated for ${subject.name} (${subject.id})`,
+        timelineEvent: "goAML STR XML generated",
+      });
     } catch {
       showFlash("goAML request failed");
     }
@@ -433,6 +467,13 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         a.click();
         URL.revokeObjectURL(url);
         showFlash("Report downloaded");
+        attachEvidenceToSubject(subject.name, {
+          category: "screening-report",
+          title: "Compliance report (.txt)",
+          meta: new Date().toISOString(),
+          detail: `Plain-text MLRO dossier for ${subject.name} (${subject.id})`,
+          timelineEvent: "Compliance report (.txt) downloaded",
+        });
         return;
       } catch (err) {
         if (attempt < retries) {
@@ -526,7 +567,31 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
       <Section title="CDD posture">
         <Field label="Rating">
-          <span className="text-13 font-semibold text-ink-0">{subject.cddPosture}</span>
+          <CddPostureBadge
+            stored={subject.cddPosture}
+            brainSeverity={brainSeverity}
+            brainScore={brainScore}
+            hasSanctionsHit={
+              screening.status === "success" && screening.result.hits.length > 0
+            }
+            hasRedline={
+              superBrain.status === "success" &&
+              superBrain.result.redlines.fired.length > 0
+            }
+            isPep={
+              (superBrain.status === "success" &&
+                ((superBrain.result.pep?.salience ?? 0) > 0 ||
+                  Boolean(superBrain.result.pepAssessment?.isLikelyPEP))) ||
+              Boolean(subject.pep)
+            }
+            pepTier={
+              (superBrain.status === "success" &&
+                (superBrain.result.pep?.tier ??
+                  superBrain.result.pepAssessment?.highestTier)) ||
+              subject.pep?.tier ||
+              null
+            }
+          />
         </Field>
       </Section>
 
@@ -576,7 +641,11 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         )}
       </div>
 
-      <SuperBrainPanel state={superBrain} />
+      <SuperBrainPanel
+        state={superBrain}
+        subjectName={subject.name}
+        subjectId={subject.id}
+      />
       <NewsDossierPanel state={news} />
 
     </aside>
@@ -658,6 +727,80 @@ function ScreeningSummary({ result }: { result: QuickScreenResult }) {
       <span className="ml-auto font-mono text-10.5 text-ink-3">
         {result.durationMs}ms
       </span>
+    </div>
+  );
+}
+
+// CDD posture auto-upgrades from the stored value based on runtime
+// brain output. Business rule per MLRO policy:
+//   - CRITICAL severity OR composite ≥ 85 OR any confirmed sanctions
+//     hit OR redline fired OR tier-1 PEP → force EDD ("Zero tolerance —
+//     Enhanced Due Diligence required")
+//   - otherwise display whatever the onboarding analyst chose on the form
+//
+// The badge surfaces the upgrade reason so the operator sees WHY the
+// brain escalated, instead of silently overriding their selection.
+function CddPostureBadge({
+  stored,
+  brainSeverity,
+  brainScore,
+  hasSanctionsHit,
+  hasRedline,
+  isPep,
+  pepTier,
+}: {
+  stored: "CDD" | "EDD" | "SDD";
+  brainSeverity: import("@/lib/api/quickScreen.types").QuickScreenSeverity | null;
+  brainScore: number | null;
+  hasSanctionsHit: boolean;
+  hasRedline: boolean;
+  isPep: boolean;
+  pepTier: string | null;
+}) {
+  const reasons: string[] = [];
+  if (brainSeverity === "critical") reasons.push("critical severity");
+  if (brainScore != null && brainScore >= 85) reasons.push(`composite ${brainScore}/100`);
+  if (hasSanctionsHit) reasons.push("confirmed sanctions hit");
+  if (hasRedline) reasons.push("redline fired");
+  if (isPep && pepTier && /tier_1|tier 1|head_of_state/i.test(pepTier)) {
+    reasons.push("tier-1 PEP");
+  }
+
+  const upgraded = reasons.length > 0 && stored !== "EDD";
+  const display = upgraded ? "EDD" : stored;
+  const zeroTolerance =
+    hasSanctionsHit ||
+    brainSeverity === "critical" ||
+    (hasRedline && brainScore != null && brainScore >= 85);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="text-13 font-semibold text-ink-0">{display}</span>
+        {upgraded && (
+          <span
+            className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-amber-dim text-amber uppercase"
+            title={`Upgraded from ${stored} based on runtime screening result`}
+          >
+            upgraded
+          </span>
+        )}
+        {zeroTolerance && (
+          <span
+            className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-red text-white uppercase"
+            title="Zero tolerance — decline / freeze relationship per policy"
+          >
+            zero tolerance
+          </span>
+        )}
+      </div>
+      {upgraded && (
+        <div className="text-10.5 text-ink-2 mt-1 leading-snug">
+          Auto-escalated to Enhanced Due Diligence — {reasons.join(", ")}.
+          {zeroTolerance &&
+            " Zero-tolerance thresholds crossed; refer MLRO to consider freeze / decline under FDL 10/2025 Art.26-27."}
+        </div>
+      )}
     </div>
   );
 }
@@ -918,7 +1061,15 @@ function formatDoubleMetaphone(
   return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
 }
 
-function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain").SuperBrainState }) {
+function SuperBrainPanel({
+  state,
+  subjectName,
+  subjectId,
+}: {
+  state: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subjectName: string;
+  subjectId: string;
+}) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
     return (
@@ -942,6 +1093,7 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
   const r: SuperBrainResult = state.result;
   return (
     <Section title="Super brain">
+      <BrainNarrative result={r} subjectName={subjectName} subjectId={subjectId} />
       <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
           <span className="text-10.5 uppercase tracking-wide-4 text-white/50">

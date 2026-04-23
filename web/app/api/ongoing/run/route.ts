@@ -189,6 +189,68 @@ export async function POST(req: Request): Promise<NextResponse> {
       };
       await setJson(`ongoing/last/${s.id}`, snapshot);
 
+      // Structured subject profile — append the current-state snapshot
+      // into the per-subject dossier so the Cases page / regulator
+      // replay has the full rolling history. Best-effort; a profile
+      // write failure must not break the ongoing screening loop.
+      try {
+        const profileKey = `profile/${s.id}`;
+        interface ExistingProfile {
+          id: string;
+          name: string;
+          createdAt: string;
+          updatedAt: string;
+          snapshots: Array<Record<string, unknown>>;
+          dispositions: Array<Record<string, unknown>>;
+          hitsEverSeen: string[];
+          adverseMediaEverSeen: string[];
+          aliases?: string[];
+          entityType?: string;
+          jurisdiction?: string;
+        }
+        const existing = await getJson<ExistingProfile>(profileKey);
+        const nowIso = runAt;
+        const snap = {
+          at: nowIso,
+          topScore: screen.topScore,
+          severity: screen.severity,
+          hits: screen.hits.map((h) => ({
+            listId: h.listId,
+            listRef: h.listRef,
+            candidateName: h.candidateName,
+            score: h.score,
+            method: h.method,
+          })),
+          source: "ongoing" as const,
+        };
+        const base: ExistingProfile = existing ?? {
+          id: s.id,
+          name: s.name,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          snapshots: [],
+          dispositions: [],
+          hitsEverSeen: [],
+          adverseMediaEverSeen: [],
+          ...(s.aliases && s.aliases.length ? { aliases: s.aliases } : {}),
+          ...(s.entityType ? { entityType: s.entityType } : {}),
+          ...(s.jurisdiction ? { jurisdiction: s.jurisdiction } : {}),
+        };
+        const fingerprints = new Set(base.hitsEverSeen);
+        for (const h of screen.hits) {
+          fingerprints.add(`${h.listRef}|${h.candidateName}`);
+        }
+        const updated: ExistingProfile = {
+          ...base,
+          updatedAt: nowIso,
+          snapshots: [...base.snapshots.slice(-199), snap],
+          hitsEverSeen: Array.from(fingerprints).slice(-500),
+        };
+        await setJson(profileKey, updated);
+      } catch {
+        /* non-fatal — the ongoing heartbeat is the priority */
+      }
+
       // Adverse-media sweep — hit Google News RSS for the subject's name.
       // The /api/news-search route classifies each article (737-keyword
       // taxonomy across 8 categories), scores for severity, and returns

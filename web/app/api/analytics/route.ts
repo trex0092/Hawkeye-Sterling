@@ -14,16 +14,34 @@ interface SchedulePreview {
   nextRunAt: string;
 }
 
+// Each sub-query is wrapped so a single Netlify Blobs hiccup, a feedback
+// store outage, or a bad api-keys serialisation doesn't take down the
+// whole analytics payload. The page renders partial data gracefully.
+async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.warn(`[analytics] ${label} failed`, err);
+    return fallback;
+  }
+}
+
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  const [keys, feedback, scheduleKeys, ongoingKeys] = await Promise.all([
-    listApiKeys(),
-    feedbackStats(),
-    listKeys("schedule/"),
-    listKeys("ongoing/subject/"),
-  ]);
+  const [keys, feedback, scheduleKeys, ongoingKeys, feedbackRecords] =
+    await Promise.all([
+      safe("listApiKeys", listApiKeys, [] as Awaited<ReturnType<typeof listApiKeys>>),
+      safe("feedbackStats", feedbackStats, {
+        totalVerdicts: 0,
+        falsePositiveByPair: {} as Record<string, number>,
+        trueMatchByPair: {} as Record<string, number>,
+      } as Awaited<ReturnType<typeof feedbackStats>>),
+      safe("listKeys schedule/", () => listKeys("schedule/"), [] as string[]),
+      safe("listKeys ongoing/subject/", () => listKeys("ongoing/subject/"), [] as string[]),
+      safe("listFeedback", listFeedback, [] as Awaited<ReturnType<typeof listFeedback>>),
+    ]);
 
   const tierCounts: Record<string, number> = {};
   let totalScreeningsThisMonth = 0;
@@ -34,7 +52,11 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const schedules: SchedulePreview[] = [];
   for (const k of scheduleKeys) {
-    const s = await getJson<SchedulePreview>(k);
+    const s = await safe(
+      `getJson ${k}`,
+      () => getJson<SchedulePreview>(k),
+      null,
+    );
     if (s) schedules.push(s);
   }
 
@@ -45,11 +67,23 @@ export async function GET(req: Request): Promise<NextResponse> {
   const tm = Object.values(feedback.trueMatchByPair).reduce((a, b) => a + b, 0);
   const total = fp + tm;
 
-  const records = await listFeedback();
-  const last24h = records.filter(
-    (r) =>
-      Date.now() - Date.parse(r.submittedAt) < 24 * 60 * 60 * 1_000,
+  const last24h = feedbackRecords.filter(
+    (r) => Date.now() - Date.parse(r.submittedAt) < 24 * 60 * 60 * 1_000,
   ).length;
+
+  // Kpis load from dist — wrap the length/slice calls so an unexpected
+  // shape (undefined at build boundary) doesn't 500 the whole endpoint.
+  const kpisDefined = safe(
+    "dpmsKpisDefined",
+    () => Promise.resolve(Array.isArray(DPMS_KPIS) ? DPMS_KPIS.length : 0),
+    0,
+  );
+  const kpisSample = safe(
+    "dpmsKpisSample",
+    () => Promise.resolve(Array.isArray(DPMS_KPIS) ? DPMS_KPIS.slice(0, 8) : []),
+    [] as unknown[],
+  );
+  const [defined, sample] = await Promise.all([kpisDefined, kpisSample]);
 
   return NextResponse.json({
     ok: true,
@@ -75,8 +109,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       totalVerdicts: feedback.totalVerdicts,
     },
     kpis: {
-      defined: Array.isArray(DPMS_KPIS) ? DPMS_KPIS.length : 0,
-      sample: Array.isArray(DPMS_KPIS) ? DPMS_KPIS.slice(0, 8) : [],
+      defined,
+      sample,
     },
   });
 }

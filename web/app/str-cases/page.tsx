@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleShell,
   ModuleHeader,
@@ -18,6 +18,7 @@ import {
   textareaCls,
 } from "@/components/ui/ModuleShell";
 import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
+import { DateParts } from "@/components/ui/DateParts";
 import {
   STR_REPORT_KINDS,
   STR_STATUSES,
@@ -194,9 +195,8 @@ export default function StrCasesPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="min-h-[calc(100vh-54px)] bg-bg-0">
+    <ModuleLayout narrow>
+      <div className="min-h-[calc(100vh-54px)]">
         <ModuleShell>
           <ModuleHeader
             title="STR Case Management"
@@ -270,19 +270,17 @@ export default function StrCasesPage() {
                       className={textInputCls}
                     />
                   </Field>
-                  <Field label="Detected on" hint="(dd/mm/yyyy)">
-                    <input
+                  <Field label="Detected on">
+                    <DateParts
                       value={detectedOn}
-                      onChange={(e) => setDetectedOn(e.target.value)}
-                      placeholder="dd/mm/yyyy"
+                      onChange={setDetectedOn}
                       className={textInputCls}
                     />
                   </Field>
-                  <Field label="Filing deadline" hint="(dd/mm/yyyy)">
-                    <input
+                  <Field label="Filing deadline" hint="without delay — FDL Art. 26–27">
+                    <DateParts
                       value={deadline}
-                      onChange={(e) => setDeadline(e.target.value)}
-                      placeholder="without delay — FDL Art. 26–27"
+                      onChange={setDeadline}
                       className={textInputCls}
                     />
                   </Field>
@@ -446,7 +444,7 @@ export default function StrCasesPage() {
             </div>
           )}
         </ModuleShell>
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }

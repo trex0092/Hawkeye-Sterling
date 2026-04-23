@@ -37,15 +37,26 @@ const RETRYABLE_ERROR_MARKERS = ["server 5", "timed out", "network", "fetch fail
 // so the red "Asana report failed" banner only appears on real outages.
 // Auth-class upstream failures (401/403 + "unauthorized"/"forbidden") are
 // treated the same way as a missing token: integration offline.
+// Anything Asana-related that isn't a clear transient 5xx outage is
+// treated as "integration offline". Invalid token, wrong project GID,
+// wrong workspace, missing assignee, rate-limit, payload-validation —
+// all of these are deploy-time misconfigs an operator can't fix from
+// the UI; surfacing a red banner on every subject open is noise.
+// Real 5xx outages still show the banner after 3 retries.
 const DISABLED_MARKERS = [
   "asana_not_configured",
   "asana not configured",
   "asana_token",
   "server 401",
   "server 403",
+  "server 422",
+  "server 400",
   "unauthorized",
   "forbidden",
   "asana rejected",
+  "asana request failed",
+  "asana delivery unavailable",
+  "asana ",
 ];
 
 function shouldRetry(error: string): boolean {

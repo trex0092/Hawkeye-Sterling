@@ -199,7 +199,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
   const lines: string[] = [];
   lines.push(`HAWKEYE STERLING · INITIAL SCREENING DOSSIER`);
   lines.push(`Report ID           : ${reportId}`);
-  lines.push(`Reporting entity    : Fine Gold LLC`);
+  lines.push(`Reporting entity    : ${process.env["TENANT_NAME"] ?? "—"}`);
   lines.push(`Generated           : ${gen.toUTCString().replace(" GMT", " UTC")}`);
   lines.push(`MLRO assigned       : Luisa Fernanda`);
   if (b.subject.caseId) lines.push(`Case                : ${b.subject.caseId}`);
@@ -287,7 +287,7 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
   if (b.subject.group) lines.push(`Group             : ${b.subject.group}`);
   lines.push(`Cadence           : thrice-daily · 08:30 / 15:00 / 17:30 Dubai`);
   lines.push(`MLRO assigned     : Luisa Fernanda`);
-  lines.push(`Reporting entity  : Fine Gold LLC`);
+  lines.push(`Reporting entity  : ${process.env["TENANT_NAME"] ?? "—"}`);
   lines.push("");
   lines.push(
     `Tick              : ${fmt(gen)} ${slot.label} (${slot.utc})`,
@@ -408,6 +408,17 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       | null;
     if (!asanaRes.ok || !payload?.data?.gid) {
       const msg = payload?.errors?.[0]?.message ?? `HTTP ${asanaRes.status}`;
+      // Loud server-side log so ops can diagnose without an extra trip
+      // to the Netlify UI. Includes the project/workspace GIDs we
+      // attempted to file against (not secret) so misconfig is obvious.
+      console.error("[screening-report] asana rejected", {
+        asanaStatus: asanaRes.status,
+        asanaError: msg,
+        asanaFullErrors: payload?.errors,
+        projectGid: process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID,
+        workspaceGid: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
+        assigneeGid: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+      });
       // Map upstream status so monitoring alerts differentiate misconfig
       // (401/403 → 503 Service Unavailable on our side) from a real
       // Asana outage (5xx → 502 Bad Gateway) from a bad payload we

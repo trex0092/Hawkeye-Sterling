@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleShell,
   ModuleHeader,
@@ -17,6 +17,7 @@ import {
   textareaCls,
 } from "@/components/ui/ModuleShell";
 import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
+import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
 import {
@@ -221,9 +222,8 @@ export default function TransactionMonitorPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="min-h-[calc(100vh-54px)] bg-bg-0">
+    <ModuleLayout narrow>
+      <div className="min-h-[calc(100vh-54px)]">
         <ModuleShell>
           <ModuleHeader
             title="Transaction Monitor"
@@ -287,11 +287,10 @@ export default function TransactionMonitorPage() {
                       className={textInputCls}
                     />
                   </Field>
-                  <Field label="Occurred on" hint="(dd/mm/yyyy)">
-                    <input
+                  <Field label="Occurred on">
+                    <DateParts
                       value={occurredOn}
-                      onChange={(e) => setOccurredOn(e.target.value)}
-                      placeholder="dd/mm/yyyy"
+                      onChange={setOccurredOn}
                       className={textInputCls}
                     />
                   </Field>
@@ -468,13 +467,21 @@ export default function TransactionMonitorPage() {
             </div>
           )}
         </ModuleShell>
-      </main>
+      </div>
       <ReportModal
         open={reportTx !== null}
         title={reportTx?.ref ?? ""}
         payload={reportTx ? txToReportPayload(reportTx) : null}
         onClose={closeTxReport}
+        asanaFile={
+          reportTx
+            ? {
+                endpoint: "/api/tm-report",
+                body: { transaction: reportTx },
+              }
+            : null
+        }
       />
-    </>
+    </ModuleLayout>
   );
 }

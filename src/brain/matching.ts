@@ -413,8 +413,68 @@ export interface EnsembleMatch {
   phoneticAgreement: boolean;
 }
 
+// Inline transliteration maps — keep the matcher module self-contained so
+// callers don't need to import from translit.ts to get native-script
+// coverage. Covers Arabic abjad (28 letters + hamza/taa-marbutah/alef
+// variants) and Cyrillic (Russian alphabet).
+const ARABIC_LETTER_MAP: Record<string, string> = {
+  'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th',
+  'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z',
+  'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a',
+  'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+  'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ة': 'h', 'ء': '', 'ؤ': 'w', 'ئ': 'y',
+};
+const CYRILLIC_LETTER_MAP: Record<string, string> = {
+  'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+  'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'j', 'к': 'k', 'л': 'l', 'м': 'm',
+  'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+  'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+  'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+};
+const ROMAN_FAMILIES: Record<string, string> = {
+  mohamed: 'muhammad', mohammed: 'muhammad', mohammad: 'muhammad',
+  mohamad: 'muhammad', mohd: 'muhammad',
+  ahmed: 'ahmad', ahmet: 'ahmad',
+  husain: 'hussein', husayn: 'hussein', hussain: 'hussein',
+  yousef: 'yusuf', youssef: 'yusuf', yousuf: 'yusuf',
+  abdulla: 'abdullah', abdallah: 'abdullah',
+  abdulaziz: 'abdul aziz', abdelaziz: 'abdul aziz',
+  abdulrahman: 'abdul rahman', abdurrahman: 'abdul rahman',
+  khaled: 'khalid', khaleed: 'khalid',
+  fatimah: 'fatima', fatma: 'fatima',
+  ayesha: 'aisha', aicha: 'aisha',
+  omar: 'umar', omer: 'umar',
+  said: 'saeed', sayed: 'saeed',
+};
+const MATCHER_PARTICLES: Set<string> = new Set([
+  'al', 'el', 'bin', 'ben', 'bint', 'abu', 'ibn',
+]);
+
+// Normalise a name for comparison: lowercase, strip diacritics,
+// transliterate Arabic/Cyrillic to Latin, collapse Arabic-name family
+// spellings, drop particles. Returns an empty string when the input
+// contains no matchable characters.
+export function normaliseForMatch(input: string): string {
+  if (!input) return '';
+  let s = input.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  s = s.replace(/./gu, (ch) => ARABIC_LETTER_MAP[ch] ?? ch);
+  s = s.replace(/./gu, (ch) => CYRILLIC_LETTER_MAP[ch] ?? ch);
+  s = s.replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = s.split(' ').filter(Boolean);
+  const out: string[] = [];
+  for (const t of tokens) {
+    if (MATCHER_PARTICLES.has(t)) continue;
+    out.push(ROMAN_FAMILIES[t] ?? t);
+  }
+  return out.join(' ').trim();
+}
+
 export function matchEnsemble(subject: string, candidate: string): EnsembleMatch {
-  const scores: MatchScore[] = [
+  // Run the ensemble twice — once on the raw inputs (so exact matches on
+  // already-Latin names aren't diluted) and once on the transliterated /
+  // normalised forms (so "محمد" finds "Mohamed Hassan" and "Дмитрий Волков"
+  // finds "VOLKOV Dmitri"). The best score across both passes wins.
+  const rawScores: MatchScore[] = [
     matchExact(subject, candidate),
     matchLevenshtein(subject, candidate),
     matchJaroWinkler(subject, candidate),
@@ -424,9 +484,36 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     matchTrigram(subject, candidate),
     matchPartialTokenSet(subject, candidate),
   ];
+
+  const subjectNorm = normaliseForMatch(subject);
+  const candidateNorm = normaliseForMatch(candidate);
+  // Only run the normalised pass when normalisation actually changed
+  // something — otherwise it's duplicated work for a pure-Latin pair.
+  const normApplies =
+    subjectNorm !== '' &&
+    candidateNorm !== '' &&
+    (subjectNorm !== subject.toLowerCase().trim() ||
+      candidateNorm !== candidate.toLowerCase().trim());
+
+  const normScores: MatchScore[] = normApplies
+    ? [
+        matchExact(subjectNorm, candidateNorm),
+        matchLevenshtein(subjectNorm, candidateNorm),
+        matchJaroWinkler(subjectNorm, candidateNorm),
+        matchTokenSet(subjectNorm, candidateNorm),
+        matchSoundex(subjectNorm, candidateNorm),
+        matchDoubleMetaphone(subjectNorm, candidateNorm),
+        matchTrigram(subjectNorm, candidateNorm),
+        matchPartialTokenSet(subjectNorm, candidateNorm),
+      ]
+    : [];
+
+  const scores = [...rawScores, ...normScores];
   const best = scores.reduce((a, b) => (b.score > a.score ? b : a));
   const phoneticAgreement =
-    scores.find((s) => s.method === 'soundex')!.pass ||
-    scores.find((s) => s.method === 'double_metaphone')!.pass;
+    rawScores.find((s) => s.method === 'soundex')!.pass ||
+    rawScores.find((s) => s.method === 'double_metaphone')!.pass ||
+    (normScores.find((s) => s.method === 'soundex')?.pass ?? false) ||
+    (normScores.find((s) => s.method === 'double_metaphone')?.pass ?? false);
   return { subject, candidate, scores, best, phoneticAgreement };
 }
