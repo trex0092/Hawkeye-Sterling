@@ -106,8 +106,9 @@ function composeLines(v: BrainVerdict, opts: EvidencePackOptions): string[] {
   return out;
 }
 
-/** Normalise unicode glyphs to ASCII, strip remaining non-printable,
- *  then apply PDF string escapes (backslash first). */
+/** Normalise unicode glyphs to ASCII and strip remaining non-printable
+ *  characters. Does NOT apply PDF string escaping — that's pdfEscape()'s job
+ *  and must run exactly once, at write time. */
 function sanitise(s: string): string {
   const normalised = s
     .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, "-")
@@ -116,8 +117,12 @@ function sanitise(s: string): string {
     .replace(/\u2026/g, "...")
     .replace(/[\u2500\u2501\u2502\u2503\u2550\u2551]/g, "-")
     .replace(/\u00A0/g, " ");
-  const ascii = normalised.replace(/[^\x20-\x7E]/g, "?");
-  return ascii
+  return normalised.replace(/[^\x20-\x7E]/g, "?");
+}
+
+/** Escape a string for inclusion inside a PDF literal-string `(...)`. */
+function pdfEscape(s: string): string {
+  return s
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
     .replace(/\)/g, "\\)");
@@ -165,7 +170,7 @@ function buildPdf(lines: string[], title: string, anchor: string | undefined): U
     let content = 'BT /F1 9 Tf\n';
     content += `1 0 0 1 ${LEFT_MARGIN} ${PAGE_HEIGHT - TOP_MARGIN} Tm\n`;
     for (let i = 0; i < lines.length; i++) {
-      const safe = sanitise(lines[i] ?? "");
+      const safe = pdfEscape(sanitise(lines[i] ?? ""));
       if (i === 0) content += `(${safe}) Tj\n`;
       else content += `0 -${LINE_HEIGHT} Td (${safe}) Tj\n`;
     }
@@ -183,7 +188,7 @@ function buildPdf(lines: string[], title: string, anchor: string | undefined): U
     objects[pid - 1] = objects[pid - 1]!.replace('/Parent 0 0 R', `/Parent ${pagesId} 0 R`);
   }
   const info: string[] = [
-    `/Title (${title.replace(/\(/g, '\\(').replace(/\)/g, '\\)')})`,
+    `/Title (${pdfEscape(sanitise(title))})`,
     '/Producer (Hawkeye-Sterling)',
     '/Creator (Hawkeye-Sterling Evidence Pack)',
     `/CreationDate (D:${pdfDate(new Date())})`,

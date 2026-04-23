@@ -16,7 +16,7 @@
 // (where WC routinely misses Mohammed↔Muhammad↔محمد and Al-Hassan↔Hassan).
 
 import { matchEnsemble, type MatchingMethod } from './matching.js';
-import { normaliseArabicRoman, variantsOf } from './translit.js';
+import { variantsOf } from './translit.js';
 import { transliterateAny, cyrillicToLatin, chineseToPinyinSubset } from './translit-cyrillic-cjk.js';
 
 export type ScriptRun = 'latin' | 'arabic' | 'persian' | 'cyrillic' | 'cjk' | 'other';
@@ -36,13 +36,17 @@ export function scriptOf(s: string): ScriptRun {
     else if ((c >= 0x3040 && c <= 0x30FF) || (c >= 0x4E00 && c <= 0x9FFF)
       || (c >= 0xAC00 && c <= 0xD7AF)) cjk++;
   }
-  const top = Math.max(latin, arabic, persian, cyrillic, cjk);
+  // Persian uses the Arabic block for most letters; the persian-specific
+  // letters (پ چ ژ گ ک ی) are the only distinguishing signal. Bucket the
+  // Arabic block together, then disambiguate on any persian-specific
+  // letter presence.
+  const arabicBlock = arabic + persian;
+  const top = Math.max(latin, arabicBlock, cyrillic, cjk);
   if (top === 0) return 'other';
   if (top === latin) return 'latin';
-  if (top === arabic) return 'arabic';
-  if (top === persian) return 'persian';
   if (top === cyrillic) return 'cyrillic';
-  return 'cjk';
+  if (top === cjk) return 'cjk';
+  return persian > 0 ? 'persian' : 'arabic';
 }
 
 /** Aggressive Arabic+Persian letter-level normalisation.
@@ -221,9 +225,14 @@ const HONORIFICS = new Set([
   'sir', 'madam', 'eng', 'capt', 'gen', 'maj',
 ]);
 
-/** Lowercase, strip diacritics, strip particles and honorifics, return clean tokens. */
+/** Lowercase, strip diacritics, strip particles and honorifics, return clean tokens.
+ *  Preserves original spelling (e.g. "Mohammed" stays "mohammed") — canonical-
+ *  family expansion is the job of expandToken(), not tokeniseLatin(). */
 export function tokeniseLatin(input: string): string[] {
-  const s = normaliseArabicRoman(input).toLowerCase();
+  let s = input.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  // Strip dotted honorific abbreviations before splitting so "H.E." / "H.H."
+  // don't leave behind stray 'h' / 'e' tokens.
+  s = s.replace(/\bh\.\s*h\.?\b/g, ' ').replace(/\bh\.\s*e\.?\b/g, ' ');
   const raw = s.split(/[^a-z0-9']+/).filter(Boolean);
   return raw.filter((t) => !PARTICLES.has(t) && !HONORIFICS.has(t.replace(/\./g, '')));
 }
@@ -310,7 +319,9 @@ export function dobOverlap(
   const yearTol = opts.yearToleranceYears ?? 1;
   const yearDelta = Math.abs(pa.year - pb.year);
   if (yearDelta > yearTol) return 0;
-  let score = 1 - yearDelta / Math.max(1, yearTol);  // 1.0 for exact year.
+  // Being within tolerance always yields a positive score: exact year → 1.0,
+  // edge of tolerance → 1/(tol+1) (e.g. delta=1, tol=1 → 0.5).
+  let score = 1 - yearDelta / (yearTol + 1);
   // Month contribution.
   if (pa.month !== undefined && pb.month !== undefined) {
     if (pa.month === pb.month) score = Math.min(1, score + 0.15);
@@ -456,19 +467,32 @@ function uniqueVariants(list: string[]): string[] {
 
 function toLatinish(input: string, script: ScriptRun): string {
   if (script === 'arabic' || script === 'persian') {
-    const normalised = normaliseArabicName(input);
-    // Look up the normalised Arabic form against every family's arabic[] list.
-    for (const fam of Object.values(ARABIC_NAME_FAMILIES)) {
-      for (const ar of fam.arabic) {
-        if (normaliseArabicName(ar) === normalised) return fam.latin[0]!;
-      }
-      if (fam.persian) {
-        for (const fa of fam.persian) {
-          if (normaliseArabicName(fa) === normalised) return fam.latin[0]!;
+    // Split on whitespace and the common "al-" / "el-" prefix so multi-token
+    // names like "محمد الحسن" map each token through the family table.
+    const tokens = normaliseArabicName(input)
+      .split(/[\s\-–—]+/)
+      .map((t) => t.replace(/^(ال|ٱل)/, '')) // drop leading definite article
+      .filter(Boolean);
+    const latinTokens: string[] = [];
+    for (const tok of tokens) {
+      let mapped: string | undefined;
+      for (const fam of Object.values(ARABIC_NAME_FAMILIES)) {
+        for (const ar of fam.arabic) {
+          if (normaliseArabicName(ar) === tok) { mapped = fam.latin[0]!; break; }
+        }
+        if (mapped) break;
+        if (fam.persian) {
+          for (const fa of fam.persian) {
+            if (normaliseArabicName(fa) === tok) { mapped = fam.latin[0]!; break; }
+          }
+          if (mapped) break;
         }
       }
+      latinTokens.push(mapped ?? tok);
     }
-    // Fallback: character-level best-effort. transliterateAny handles cyrillic/cjk.
+    const joined = latinTokens.join(' ').trim();
+    // If no token was mappable, fall back to the char-level transliterator.
+    if (joined && /[a-z]/i.test(joined)) return joined;
     const fallback = transliterateAny(input);
     return fallback || input;
   }
