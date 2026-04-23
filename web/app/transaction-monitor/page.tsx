@@ -17,6 +17,7 @@ import {
   textareaCls,
 } from "@/components/ui/ModuleShell";
 import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
+import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
 import {
@@ -287,11 +288,10 @@ export default function TransactionMonitorPage() {
                       className={textInputCls}
                     />
                   </Field>
-                  <Field label="Occurred on" hint="(dd/mm/yyyy)">
-                    <input
+                  <Field label="Occurred on">
+                    <DateParts
                       value={occurredOn}
-                      onChange={(e) => setOccurredOn(e.target.value)}
-                      placeholder="dd/mm/yyyy"
+                      onChange={setOccurredOn}
                       className={textInputCls}
                     />
                   </Field>

@@ -18,6 +18,7 @@ import {
   textareaCls,
 } from "@/components/ui/ModuleShell";
 import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
+import { DateParts } from "@/components/ui/DateParts";
 import {
   STR_REPORT_KINDS,
   STR_STATUSES,
@@ -270,19 +271,17 @@ export default function StrCasesPage() {
                       className={textInputCls}
                     />
                   </Field>
-                  <Field label="Detected on" hint="(dd/mm/yyyy)">
-                    <input
+                  <Field label="Detected on">
+                    <DateParts
                       value={detectedOn}
-                      onChange={(e) => setDetectedOn(e.target.value)}
-                      placeholder="dd/mm/yyyy"
+                      onChange={setDetectedOn}
                       className={textInputCls}
                     />
                   </Field>
-                  <Field label="Filing deadline" hint="(dd/mm/yyyy)">
-                    <input
+                  <Field label="Filing deadline" hint="without delay — FDL Art. 26–27">
+                    <DateParts
                       value={deadline}
-                      onChange={(e) => setDeadline(e.target.value)}
-                      placeholder="without delay — FDL Art. 26–27"
+                      onChange={setDeadline}
                       className={textInputCls}
                     />
                   </Field>
