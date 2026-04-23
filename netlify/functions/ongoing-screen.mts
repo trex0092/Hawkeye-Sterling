@@ -55,8 +55,9 @@ export default async (_req: Request) => {
 };
 
 export const config: Config = {
-  // Twice daily at 09:00 and 15:00 Dubai time (UTC+4 all year).
-  //   09:00 GST → 05:00 UTC
-  //   15:00 GST → 11:00 UTC
-  schedule: "0 5,11 * * *",
+  // Hourly heartbeat. The /api/ongoing/run route reads each subject's
+  // `nextRunAt` from the schedule store and only rescreens subjects
+  // whose cadence is due — so an hourly tick naturally handles hourly,
+  // daily, weekly and monthly cadences without separate cron entries.
+  schedule: "0 * * * *",
 };

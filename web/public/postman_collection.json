@@ -1,0 +1,130 @@
+{
+  "info": {
+    "_postman_id": "hawkeye-sterling-v0.2.0",
+    "name": "Hawkeye Sterling API",
+    "description": "Regulator-grade AML / CFT screening. Import, set `baseUrl` and `apiKey`, start screening.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://hawkeye-sterling.netlify.app" },
+    { "key": "apiKey", "value": "hks_live_replace_me" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{apiKey}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Quick screen",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subject\": {\n    \"name\": \"Ivan Petrov\",\n    \"entityType\": \"individual\",\n    \"jurisdiction\": \"RU\"\n  },\n  \"candidates\": []\n}"
+        },
+        "url": "{{baseUrl}}/api/quick-screen"
+      }
+    },
+    {
+      "name": "Super brain",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subject\": {\n    \"name\": \"Example Corp\",\n    \"entityType\": \"organisation\",\n    \"jurisdiction\": \"AE\"\n  },\n  \"adverseMediaText\": \"Investigated for bribery and sanctions evasion.\"\n}"
+        },
+        "url": "{{baseUrl}}/api/super-brain"
+      }
+    },
+    {
+      "name": "Adverse media dossier",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/news-search?q=Example%20Corp"
+      }
+    },
+    {
+      "name": "Batch screen",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rows\": [\n    { \"id\": \"BATCH-1\", \"name\": \"Ivan Petrov\", \"jurisdiction\": \"RU\" },\n    { \"id\": \"BATCH-2\", \"name\": \"Maria Lopez\", \"jurisdiction\": \"MX\" }\n  ]\n}"
+        },
+        "url": "{{baseUrl}}/api/batch-screen"
+      }
+    },
+    {
+      "name": "Enrol subject for monitoring",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"HS-10001\",\n  \"name\": \"Ivan Petrov\",\n  \"jurisdiction\": \"RU\"\n}"
+        },
+        "url": "{{baseUrl}}/api/ongoing"
+      }
+    },
+    {
+      "name": "Schedule rescreening",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subjectId\": \"HS-10001\",\n  \"cadence\": \"daily\",\n  \"scoreThreshold\": 0.85\n}"
+        },
+        "url": "{{baseUrl}}/api/schedule"
+      }
+    },
+    {
+      "name": "Submit analyst feedback",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subjectId\": \"HS-10001\",\n  \"listId\": \"OFAC-SDN\",\n  \"listRef\": \"OFAC-12345\",\n  \"candidateName\": \"Ivan Petrov\",\n  \"verdict\": \"false_positive\",\n  \"analyst\": \"analyst-01\"\n}"
+        },
+        "url": "{{baseUrl}}/api/feedback"
+      }
+    },
+    {
+      "name": "Correction request (public)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subjectName\": \"Ivan Petrov\",\n  \"requesterName\": \"Ivan Petrov\",\n  \"requesterEmail\": \"ivan@example.com\",\n  \"requesterCapacity\": \"subject\",\n  \"claim\": \"This record conflates me with a different individual of the same name.\"\n}"
+        },
+        "url": "{{baseUrl}}/api/corrections"
+      }
+    },
+    {
+      "name": "GDPR export",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subjectId\": \"HS-10001\"\n}"
+        },
+        "url": "{{baseUrl}}/api/gdpr/export"
+      }
+    },
+    {
+      "name": "Status",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/status"
+      }
+    }
+  ]
+}

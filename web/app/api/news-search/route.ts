@@ -203,6 +203,59 @@ async function fetchLocaleFeed(
   }
 }
 
+function tokens(title: string): Set<string> {
+  return new Set(
+    title
+      .toLowerCase()
+      .replace(/[^\p{Letter}\p{Number}\s]/gu, " ")
+      .split(/\s+/)
+      .filter((t) => t.length >= 3),
+  );
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 && b.size === 0) return 0;
+  let inter = 0;
+  for (const t of a) if (b.has(t)) inter += 1;
+  return inter / (a.size + b.size - inter || 1);
+}
+
+function clusterArticles(articles: Article[]): Article[] {
+  const clusters: Array<{ rep: Article; tokens: Set<string>; sources: Set<string> }> = [];
+  for (const a of articles) {
+    const toks = tokens(a.title);
+    let absorbed = false;
+    for (const c of clusters) {
+      if (jaccard(toks, c.tokens) >= 0.7) {
+        // Same event — keep the rep but record the source + escalate
+        // severity if the absorbed article is higher-severity than the
+        // representative. This avoids losing a "critical"-severity
+        // Reuters wire under a "medium" Le Figaro restatement of the
+        // same facts.
+        if (severityOrder(a.severity) > severityOrder(c.rep.severity)) {
+          c.rep.severity = a.severity;
+        }
+        if (a.source) c.sources.add(a.source);
+        absorbed = true;
+        break;
+      }
+    }
+    if (!absorbed) {
+      clusters.push({ rep: a, tokens: toks, sources: new Set(a.source ? [a.source] : []) });
+    }
+  }
+  return clusters.map((c) => {
+    const extras = Array.from(c.sources).filter((s) => s && s !== c.rep.source);
+    if (extras.length === 0) return c.rep;
+    return {
+      ...c.rep,
+      source: c.rep.source
+        ? `${c.rep.source} + ${extras.length} more`
+        : extras.join(", "),
+    };
+  });
+}
+
 function emptyResponse(q: string): NewsResponse {
   return {
     ok: true,
@@ -267,11 +320,15 @@ export async function GET(req: Request): Promise<NextResponse> {
         if (!merged.has(key)) merged.set(key, a);
       }
     }
-    const parsed = Array.from(merged.values())
+    const filtered = Array.from(merged.values())
       // Fuzzy gate: drop articles whose title doesn't resemble the subject.
       .filter((a) => a.fuzzyScore >= 55 || a.keywordGroups.length > 0)
-      .sort((a, b) => b.fuzzyScore - a.fuzzyScore)
-      .slice(0, 20);
+      .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
+    // Cluster near-duplicate articles into events. Two articles belong
+    // to the same event when their normalised titles share ≥ 70% of
+    // their token set — this collapses the same Reuters story syndicated
+    // across Le Monde, RT and Reuters Arabic into a single dossier row.
+    const parsed = clusterArticles(filtered).slice(0, 20);
     const topSeverity: Article["severity"] =
       parsed.reduce(
         (acc, a) => (severityOrder(a.severity) > severityOrder(acc) ? a.severity : acc),

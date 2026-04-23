@@ -2,11 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* The tool ships as a light editorial theme only. Force color-scheme so the
- * browser doesn't auto-darken native controls based on the OS preference. */
-html,
-html[data-theme] {
+/* Ship a light editorial theme by default, with an optional dark palette
+ * selected by data-theme="dark" on <html>. The color tokens are the same
+ * in both palettes — only the values change — so every component reads
+ * from CSS variables and recolors automatically. */
+html {
   color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @layer base {
@@ -57,6 +61,30 @@ html[data-theme] {
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.08);
   }
 
+  html[data-theme="dark"] {
+    --bg-0: #0e0d0c;
+    --bg-1: #161413;
+    --bg-2: #1d1b19;
+    --bg-3: #24211f;
+    --bg-panel: #1a1816;
+
+    --hair: rgba(255, 255, 255, 0.06);
+    --hair-2: rgba(255, 255, 255, 0.1);
+    --hair-3: rgba(255, 255, 255, 0.18);
+
+    --ink-0: #f5f3f0;
+    --ink-1: #d6d3d1;
+    --ink-2: #a8a29e;
+    --ink-3: #78716c;
+    --ink-4: #44403c;
+
+    --brand: #f472b6;
+    --brand-hover: #ec4899;
+    --brand-dim: rgba(244, 114, 182, 0.18);
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.5), 0 10px 15px rgba(0, 0, 0, 0.5);
+  }
 
   html {
     scroll-behavior: smooth;
@@ -91,6 +119,11 @@ html[data-theme] {
   }
   ::-webkit-scrollbar-thumb:hover {
     background: var(--ink-3);
+  }
+
+  /* RTL support: Arabic UI flips the sidebar/column order. */
+  html[dir="rtl"] main {
+    text-align: right;
   }
 }
 
