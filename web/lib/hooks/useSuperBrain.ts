@@ -90,6 +90,110 @@ export type SuperBrainState =
   | { status: "success"; result: SuperBrainResult }
   | { status: "error"; error: string };
 
+// Client contract (matches quickScreen + the reference CLI spec):
+//   - retry 5xx up to 3 times on a 750ms flat delay
+//   - 15s per-request timeout
+//   - Accept + User-Agent headers for parity with the server-side client
+//   - non-JSON response bodies are caught and surfaced
+//   - error copy is colon-free so it reads cleanly in the MLRO case file
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 750;
+const REQUEST_TIMEOUT_MS = 15_000;
+
+interface SuperBrainFetchOutcome {
+  ok: boolean;
+  result?: SuperBrainResult;
+  error?: string;
+  retryable?: boolean;
+}
+
+async function attemptSuperBrain(
+  subject: QuickScreenSubject,
+  opts: { roleText?: string; adverseMediaText?: string },
+  externalSignal: AbortSignal,
+): Promise<SuperBrainFetchOutcome> {
+  const timeoutCtl = new AbortController();
+  const timer = setTimeout(() => timeoutCtl.abort(), REQUEST_TIMEOUT_MS);
+  const onAbort = (): void => timeoutCtl.abort();
+  if (externalSignal.aborted) {
+    clearTimeout(timer);
+    return { ok: false, error: "aborted" };
+  }
+  externalSignal.addEventListener("abort", onAbort, { once: true });
+
+  try {
+    const r = await fetch("/api/super-brain", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        "user-agent": "hawkeye-screening-client/1.0",
+      },
+      body: JSON.stringify({ subject, ...opts }),
+      signal: timeoutCtl.signal,
+    });
+    const raw = await r.text().catch(() => "");
+    type ErrorBody = { ok: false; error?: string; detail?: string };
+    type SuccessBody = { ok: true; [k: string]: unknown };
+    let payload: SuccessBody | ErrorBody | null = null;
+    if (raw) {
+      try {
+        payload = JSON.parse(raw) as SuccessBody | ErrorBody;
+      } catch {
+        /* non-JSON body — handled below */
+      }
+    }
+
+    const errBody: ErrorBody | null =
+      payload && payload.ok === false ? payload : null;
+
+    if (r.status >= 500 && r.status <= 599) {
+      const detail =
+        errBody?.detail ||
+        errBody?.error ||
+        (raw ? raw.slice(0, 200) : undefined);
+      return {
+        ok: false,
+        retryable: true,
+        error: detail
+          ? `Super brain unavailable server ${r.status} ${detail}`
+          : `Super brain unavailable server ${r.status}`,
+      };
+    }
+
+    if (r.status < 200 || r.status > 299) {
+      const msg = errBody?.error ?? `Super brain unavailable server ${r.status}`;
+      return { ok: false, error: msg };
+    }
+
+    if (!payload || payload.ok !== true) {
+      const msg = errBody?.error ?? "Super brain unavailable malformed response";
+      return { ok: false, error: msg };
+    }
+
+    const { ok: _ok, ...rest } = payload;
+    void _ok;
+    return { ok: true, result: rest as unknown as SuperBrainResult };
+  } catch (err) {
+    if (externalSignal.aborted) return { ok: false, error: "aborted" };
+    if (err instanceof Error && err.name === "AbortError") {
+      return {
+        ok: false,
+        retryable: true,
+        error: "Super brain unavailable request timed out",
+      };
+    }
+    return {
+      ok: false,
+      retryable: true,
+      error: err instanceof Error ? err.message : "Super brain unavailable",
+    };
+  } finally {
+    clearTimeout(timer);
+    externalSignal.removeEventListener("abort", onAbort);
+  }
+}
+
 export function useSuperBrain(
   subject: QuickScreenSubject | null,
   opts: { roleText?: string; adverseMediaText?: string } = {},
@@ -106,39 +210,28 @@ export function useSuperBrain(
     }
     const ac = new AbortController();
     setState({ status: "loading" });
-    fetch("/api/super-brain", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ subject, ...opts }),
-      signal: ac.signal,
-    })
-      .then(async (r) => {
-        const payload = (await r.json().catch(() => null)) as
-          | { ok: true; [k: string]: unknown }
-          | { ok: false; error?: string; detail?: string }
-          | null;
-        if (!payload || !payload.ok) {
-          const fallback = r.ok ? "empty response" : `server ${r.status}`;
-          setState({
-            status: "error",
-            error:
-              (payload && "detail" in payload && payload.detail) ||
-              (payload && "error" in payload && payload.error) ||
-              fallback,
-          });
+
+    (async (): Promise<void> => {
+      let last: SuperBrainFetchOutcome | null = null;
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+        last = await attemptSuperBrain(subject, opts, ac.signal);
+        if (ac.signal.aborted) return;
+        if (last.ok && last.result) {
+          setState({ status: "success", result: last.result });
           return;
         }
-        const { ok: _ok, ...result } = payload;
-        void _ok;
-        setState({ status: "success", result: result as unknown as SuperBrainResult });
-      })
-      .catch((err: unknown) => {
+        if (!last.retryable) break;
+        if (attempt >= MAX_RETRIES) break;
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
         if (ac.signal.aborted) return;
-        setState({
-          status: "error",
-          error: err instanceof Error ? err.message : String(err),
-        });
+      }
+      if (ac.signal.aborted) return;
+      setState({
+        status: "error",
+        error: last?.error ?? "Super brain unavailable",
       });
+    })();
+
     return () => ac.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);

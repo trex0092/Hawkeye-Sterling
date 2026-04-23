@@ -368,11 +368,17 @@ function ScreeningTab({
   }
 
   if (state.status === "error") {
+    // The hook already shapes a full human-readable message ("Screening
+    // failed — server 502", "Screening failed — request timed out", etc.),
+    // so we render it verbatim. Prefixing with "Screening failed:" here
+    // used to produce "Screening failed: server 502" in the case file — a
+    // colon-separated stack-trace-style blurb we don't want regulators to
+    // see in an MLRO-facing artefact.
     return (
       <>
         {title}
         <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">
-          Screening failed: {state.error}
+          {state.error}
         </div>
         {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
       </>
@@ -670,10 +676,13 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
     );
   }
   if (state.status === "error") {
+    // Hook emits a complete sentence ("Super brain unavailable — server
+    // 502"), so we render it as-is. Dropping the "Unavailable:" prefix
+    // removes the colon-separated copy that was leaking into case files.
     return (
       <Section title="Super brain">
         <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">
-          Unavailable: {state.error}
+          {state.error}
         </div>
       </Section>
     );
