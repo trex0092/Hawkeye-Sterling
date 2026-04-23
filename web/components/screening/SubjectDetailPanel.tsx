@@ -1,20 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-function formatDoubleMetaphone(
-  dm: string | [string, string] | { primary?: string; alternate?: string } | null | undefined,
-): string {
-  if (!dm) return "";
-  if (typeof dm === "string") return dm;
-  if (Array.isArray(dm)) return dm.filter(Boolean).join(" / ");
-  if (typeof dm === "object") {
-    const p = typeof dm.primary === "string" ? dm.primary : "";
-    const a = typeof dm.alternate === "string" ? dm.alternate : "";
-    return [p, a].filter(Boolean).join(" / ");
-  }
-  return "";
-}
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -746,6 +732,14 @@ function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").Aut
   );
 }
 
+function formatDoubleMetaphone(
+  dm: string | [string, string] | { primary: string; alternate?: string },
+): string {
+  if (typeof dm === "string") return dm;
+  if (Array.isArray(dm)) return dm.join(" / ");
+  return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
+}
+
 function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain").SuperBrainState }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
@@ -1028,7 +1022,9 @@ function SuperBrainPanel({ state }: { state: import("@/lib/hooks/useSuperBrain")
           <span>soundex: <span className="text-ink-0">{r.variants.soundex}</span></span>
           <span>
             dmetaphone:{" "}
-            <span className="text-ink-0">{formatDoubleMetaphone(r.variants.doubleMetaphone)}</span>
+            <span className="text-ink-0">
+              {formatDoubleMetaphone(r.variants.doubleMetaphone)}
+            </span>
           </span>
         </div>
       </Field>

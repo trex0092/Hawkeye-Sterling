@@ -2,11 +2,22 @@ import { NextResponse } from "next/server";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
-import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import type {
+  QuickScreenCandidate,
+  QuickScreenResult,
+  QuickScreenSubject,
+} from "@/lib/api/quickScreen.types";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
+
+type QuickScreenFn = (
+  subject: QuickScreenSubject,
+  candidates: QuickScreenCandidate[],
+) => QuickScreenResult;
+const quickScreen = _quickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

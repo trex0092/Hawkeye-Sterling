@@ -77,10 +77,7 @@ export interface SuperBrainResult {
   variants: {
     aliasExpansion: string[];
     nameVariants: string[];
-    doubleMetaphone:
-      | string
-      | [string, string]
-      | { primary: string; alternate: string };
+    doubleMetaphone: string | [string, string] | { primary: string; alternate?: string };
     soundex: string;
   };
   composite: {
