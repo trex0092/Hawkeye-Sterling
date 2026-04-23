@@ -11,8 +11,8 @@ const STATUS_COLORS: Record<CaseStatus, string> = {
 
 interface CaseDetailPanelProps {
   record: CaseRecord;
-  onExport?: () => void;
-  onViewTimeline?: () => void;
+  onExport?: (() => void) | undefined;
+  onViewTimeline?: (() => void) | undefined;
 }
 
 export function CaseDetailPanel({
@@ -117,9 +117,9 @@ function PanelBtn({
   title,
 }: {
   children: React.ReactNode;
-  brand?: boolean;
-  onClick?: () => void;
-  title?: string;
+  brand?: boolean | undefined;
+  onClick?: (() => void) | undefined;
+  title?: string | undefined;
 }) {
   const base =
     "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium cursor-pointer transition-colors";
