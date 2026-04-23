@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getJson, listKeys } from "@/lib/server/store";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,10 @@ export const dynamic = "force-dynamic";
 // screening snapshots (ongoing/last/*) and analyst feedback (feedback/*).
 // This endpoint returns all records whose subjectId / id / email matches
 // the supplied identifier.
+//
+// Auth model: must present a valid API key (enforced via the standard
+// rate-limit gate). Anonymous callers hit the free-tier burst limit,
+// which for a bulk dump is effectively deny-by-default.
 
 interface ExportRequest {
   subjectId?: string;
@@ -16,18 +21,24 @@ interface ExportRequest {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: ExportRequest;
   try {
     body = (await req.json()) as ExportRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
   }
   const subjectId = body.subjectId?.trim();
   const email = body.email?.trim().toLowerCase();
   if (!subjectId && !email) {
     return NextResponse.json(
       { ok: false, error: "subjectId or email required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   const prefixes = [
@@ -56,11 +67,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     output[p] = bucket;
   }
-  return NextResponse.json({
-    ok: true,
-    generatedAt: new Date().toISOString(),
-    identifier: subjectId ? { subjectId } : { email },
-    regulation: "GDPR Art. 15",
-    data: output,
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      generatedAt: new Date().toISOString(),
+      identifier: subjectId ? { subjectId } : { email },
+      regulation: "GDPR Art. 15",
+      data: output,
+    },
+    { headers: gate.headers },
+  );
 }

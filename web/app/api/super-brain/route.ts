@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -31,6 +30,7 @@ import {
   adverseKeywordGroupCounts,
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
+import { enforce } from "@/lib/server/enforce";
 import {
   lookupKnownPEP,
   lookupKnownAdverse,
@@ -69,37 +69,29 @@ interface Body {
   adverseMediaText?: string;
 }
 
-const MAX_NAME_LENGTH = 500;
+export async function POST(req: Request): Promise<NextResponse> {
+  // Gate + rate-limit BEFORE parsing the JSON body so an attacker can't
+  // blast megabytes of junk into a free-tier endpoint. gate.headers is
+  // threaded through every exit path so clients always see their
+  // remaining quota and rate-limit window.
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
 
-async function handleSuperBrain(req: Request): Promise<NextResponse> {
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
-  }
-  if (!body?.subject?.name || typeof body.subject.name !== "string") {
     return NextResponse.json(
-      { ok: false, error: "subject.name required" },
-      { status: 400 },
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
     );
   }
-  if (body.subject.name.length > MAX_NAME_LENGTH) {
+  if (!body?.subject?.name || body.subject.name.length > 500) {
     return NextResponse.json(
-      { ok: false, error: "subject.name too long" },
-      { status: 400 },
+      { ok: false, error: "subject.name required (max 500 chars)" },
+      { status: 400, headers: gate.headers },
     );
   }
-
-  // Sanitise and cap inputs — prevents slow regex processing on huge payloads.
-  const MAX_TEXT = 50_000;
-  const aliases = Array.isArray(body.subject.aliases)
-    ? (body.subject.aliases as unknown[]).filter((a): a is string => typeof a === "string")
-    : [];
-  const mediaText = typeof body.adverseMediaText === "string"
-    ? body.adverseMediaText.slice(0, MAX_TEXT) : "";
-  const roleTextRaw = typeof body.roleText === "string"
-    ? body.roleText.slice(0, MAX_TEXT) : undefined;
 
   try {
     // 0 · Known-entity fixtures — household-name PEPs and documented
@@ -109,20 +101,18 @@ async function handleSuperBrain(req: Request): Promise<NextResponse> {
     const knownAdverse = lookupKnownAdverse(body.subject.name);
 
     // 1 · Quick screen (sanctions/fuzzy match against the seed corpus).
-    const screen = quickScreen(
-      { ...body.subject, aliases },
-      CANDIDATES as Parameters<typeof quickScreen>[1],
-    );
+    const screen = quickScreen(body.subject, CANDIDATES as Parameters<typeof quickScreen>[1]);
 
     // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
     //     to the known-PEP fixture's synthetic role, which lets recognised
     //     names (e.g. serving heads of state) classify without analyst input.
-    const pepRoleText = roleTextRaw ?? knownPep?.role ?? null;
+    const pepRoleText = body.roleText ?? knownPep?.role ?? null;
     const pep = pepRoleText ? classifyPepRole(pepRoleText) : null;
 
     // 3 · Adverse-media category detection. Merge live text classification
     //     with the known-adverse fixture so documented subjects still show a
     //     signal when no mediaText is provided.
+    const mediaText = body.adverseMediaText ?? "";
     const adverseMediaLive = mediaText ? classifyAdverseMedia(mediaText) : [];
     const adverseMedia = knownAdverse
       ? [
@@ -140,7 +130,7 @@ async function handleSuperBrain(req: Request): Promise<NextResponse> {
     const fullText = [
       mediaText,
       body.subject.name,
-      aliases.join(" "),
+      (body.subject.aliases ?? []).join(" "),
       pepRoleText ?? "",
       knownAdverse?.keywords.join(" ") ?? "",
     ].join(" ");
@@ -151,9 +141,9 @@ async function handleSuperBrain(req: Request): Promise<NextResponse> {
     //      to the composite score per KEYWORD_GROUP_WEIGHT.
     const adverseKeywords = classifyAdverseKeywords(fullText);
     const adverseKeywordGroups = adverseKeywordGroupCounts(adverseKeywords);
-    const adverseKeywordPenalty = Math.min(
-      40,
-      adverseKeywordGroups.reduce((acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0), 0),
+    const adverseKeywordPenalty = adverseKeywordGroups.reduce(
+      (acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0),
+      0,
     );
 
     // 4 · Jurisdiction profile.
@@ -162,9 +152,9 @@ async function handleSuperBrain(req: Request): Promise<NextResponse> {
     // 5 · Redlines (charter prohibitions triggered by name/alias keywords).
     const redlineKeywords = [
       body.subject.name,
-      ...aliases,
-      roleTextRaw ?? "",
-      mediaText,
+      ...(body.subject.aliases ?? []),
+      body.roleText ?? "",
+      body.adverseMediaText ?? "",
     ]
       .join(" ")
       .toLowerCase()
@@ -303,18 +293,21 @@ async function handleSuperBrain(req: Request): Promise<NextResponse> {
           pepPenalty,
         },
       },
-    });
+    }, { headers: gate.headers });
   } catch (err) {
-    // Suppress internal error detail from the response — log it server-side only.
-    console.error("[super-brain]", err instanceof Error ? err.message : err);
+    // Log the detail server-side where auditors can see it; return a
+    // generic message to the client so brain-internal stack frames
+    // don't leak into an MLRO's screen as "Cannot find module …".
+    console.error("super-brain failed", err);
     return NextResponse.json(
-      { ok: false, error: "super-brain failed" },
-      { status: 500 },
+      {
+        ok: false,
+        error: "super-brain unavailable",
+      },
+      { status: 503, headers: gate.headers },
     );
   }
 }
-
-export const POST = withGuard(handleSuperBrain);
 
 function resolveJurisdiction(
   input?: string,

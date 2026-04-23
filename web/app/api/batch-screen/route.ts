@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
@@ -7,6 +6,7 @@ import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import { CANDIDATES } from "@/lib/data/candidates";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,29 +43,37 @@ interface RowResult {
   error?: string;
 }
 
-async function handleBatchScreen(req: Request): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
+  // Batch is the single highest-cost endpoint (500 rows × brain
+  // screening each). Gate + rate-limit before touching the body.
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
   }
   if (!Array.isArray(body?.rows)) {
     return NextResponse.json(
       { ok: false, error: "rows must be an array" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (body.rows.length === 0) {
     return NextResponse.json(
       { ok: false, error: "rows is empty" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (body.rows.length > 500) {
     return NextResponse.json(
       { ok: false, error: "batch size exceeds 500-row limit" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -88,7 +96,7 @@ async function handleBatchScreen(req: Request): Promise<NextResponse> {
         continue;
       }
       const t0 = Date.now();
-      // Validate and sanitize alias elements — reject non-string entries.
+      // Validate alias elements — drop non-string entries to prevent type confusion.
       const cleanAliases = Array.isArray(row.aliases)
         ? (row.aliases as unknown[]).filter((a): a is string => typeof a === "string")
         : [];
@@ -148,7 +156,8 @@ async function handleBatchScreen(req: Request): Promise<NextResponse> {
     totalDurationMs: Date.now() - started,
   };
 
-  return NextResponse.json({ ok: true, summary, results });
+  return NextResponse.json(
+    { ok: true, summary, results },
+    { headers: gate.headers },
+  );
 }
-
-export const POST = withGuard(handleBatchScreen);

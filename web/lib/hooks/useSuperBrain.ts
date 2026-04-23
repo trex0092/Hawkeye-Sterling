@@ -150,27 +150,33 @@ async function attemptSuperBrain(
       payload && payload.ok === false ? payload : null;
 
     if (r.status >= 500 && r.status <= 599) {
-      const detail =
-        errBody?.detail ||
-        errBody?.error ||
-        (raw ? raw.slice(0, 200) : undefined);
+      // Log the raw upstream detail for ops; show the operator a clean
+      // message so an MLRO case file never carries "Cannot find module
+      // 'styled-jsx/style'" or other infrastructure stack traces.
+      if (errBody?.detail || errBody?.error || raw) {
+        console.warn(
+          "super-brain 5xx",
+          r.status,
+          errBody?.detail || errBody?.error || raw.slice(0, 300),
+        );
+      }
       return {
         ok: false,
         retryable: true,
-        error: detail
-          ? `Super brain unavailable server ${r.status} ${detail}`
-          : `Super brain unavailable server ${r.status}`,
+        error: "Super brain temporarily unavailable",
       };
     }
 
     if (r.status < 200 || r.status > 299) {
-      const msg = errBody?.error ?? `Super brain unavailable server ${r.status}`;
+      // 4xx — the caller sent something we didn't like. We can safely
+      // show our own validation message (errBody.error), but never the
+      // upstream detail.
+      const msg = errBody?.error ?? "Super brain request rejected";
       return { ok: false, error: msg };
     }
 
     if (!payload || payload.ok !== true) {
-      const msg = errBody?.error ?? "Super brain unavailable malformed response";
-      return { ok: false, error: msg };
+      return { ok: false, error: "Super brain returned no result" };
     }
 
     const { ok: _ok, ...rest } = payload;
@@ -182,13 +188,16 @@ async function attemptSuperBrain(
       return {
         ok: false,
         retryable: true,
-        error: "Super brain unavailable request timed out",
+        error: "Super brain request timed out",
       };
     }
+    // Swallow internal network-error messages — operator just sees
+    // "temporarily unavailable", ops sees the real error via console.
+    console.warn("super-brain fetch failed", err);
     return {
       ok: false,
       retryable: true,
-      error: err instanceof Error ? err.message : "Super brain unavailable",
+      error: "Super brain temporarily unavailable",
     };
   } finally {
     clearTimeout(timer);

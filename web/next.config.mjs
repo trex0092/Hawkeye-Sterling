@@ -19,15 +19,42 @@ const nextConfig = {
   // they're silently ignored (the build emits "Unrecognized key(s) in
   // object: 'outputFileTracingRoot', 'outputFileTracingIncludes'" and the
   // tracing override never takes effect). Promoted to top-level in Next 15.
+  //
+  // Why the extra node_modules entries below:
+  //   Lifting outputFileTracingRoot out of the web/ directory is what
+  //   lets ../dist ride along, but it also suppresses Next's default
+  //   transitive node_modules tracing — which used to pick up
+  //   styled-jsx and the rest of the Next server runtime automatically.
+  //   With the override, the serverless function was crashing on every
+  //   request with `Cannot find module 'styled-jsx/style'` out of
+  //   next/dist/server/require-hook.js. Explicitly including
+  //   styled-jsx + next's server + react/react-dom restores a
+  //   self-contained function bundle. Paths are relative to the app
+  //   directory (web/), not the tracing root.
   experimental: {
     outputFileTracingRoot: path.join(__dirname, ".."),
     outputFileTracingIncludes: {
-      // Include compiled brain for all API routes.
-      "/api/**/*": ["../dist/**/*.js"],
-      // styled-jsx is dynamically required by next/dist/server/require-hook.js
-      // via a string literal, so the static file tracer never detects it.
-      // Explicitly include it for every route so it lands in the Lambda bundle.
-      "/**": ["./node_modules/styled-jsx/**/*"],
+      // Compiled brain is only needed by API routes that import from dist/.
+      "/api/**/*": [
+        "../dist/**/*.js",
+        // web/lib/server/store.ts dynamically requires @netlify/blobs at
+        // first call. Without an explicit trace include the serverless
+        // function silently falls back to in-memory storage — subjects
+        // enrolled via /api/ongoing would vanish on the next cold-start.
+        "./node_modules/@netlify/blobs/**/*",
+      ],
+      // styled-jsx + the React / Next server runtime are dynamically
+      // required by next/dist/server/require-hook.js via string literals
+      // on EVERY server-rendered route, so the static file tracer never
+      // picks them up. Explicitly include them for every route (both
+      // pages and API) so the Lambda bundle is self-contained.
+      "/**": [
+        "./node_modules/styled-jsx/**/*",
+        "./node_modules/next/dist/compiled/**/*",
+        "./node_modules/next/dist/server/**/*",
+        "./node_modules/react/**/*",
+        "./node_modules/react-dom/**/*",
+      ],
     },
   },
 };

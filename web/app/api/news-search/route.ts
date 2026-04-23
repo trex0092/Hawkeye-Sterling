@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
 import {
   classifyAdverseKeywords,
   adverseKeywordGroupCounts,
@@ -10,6 +9,7 @@ import { classifyEsg } from "@/lib/data/esg";
 // past the 10s edge timeout and every news-search request returned 502.
 import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -281,13 +281,20 @@ function emptyResponse(q: string): NewsResponse {
 
 const MAX_Q_LENGTH = 500;
 
-async function handleNewsSearch(req: Request): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  // Gate the 7-locale RSS fan-out behind the per-key rate limiter.
+  // Anonymous callers still get the free-tier burst window; without
+  // this, a single user could trivially pin a Netlify Function into a
+  // quota-exhaustion loop.
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
   if (!q) {
     return NextResponse.json(
       { ok: false, error: "query `q` required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (q.length > MAX_Q_LENGTH) {
@@ -375,14 +382,13 @@ async function handleNewsSearch(req: Request): Promise<NextResponse> {
       source: "google-news-rss",
       languages: langCoverage,
     };
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, { headers: gate.headers });
   } catch {
     // Last-resort safety net. The fan-out already uses allSettled +
     // per-feed timeouts so this branch should be unreachable, but if
     // variantsOf() or keyword classification ever throws we still return
     // a clean empty dossier rather than a 5xx that paints the panel red.
-    return NextResponse.json(emptyResponse(q));
+    return NextResponse.json(emptyResponse(q), { headers: gate.headers });
   }
 }
 
-export const GET = withGuard(handleNewsSearch);
