@@ -41,6 +41,12 @@ const nextConfig = {
         "./node_modules/next/dist/server/**/*",
         "./node_modules/react/**/*",
         "./node_modules/react-dom/**/*",
+        // Every API route goes through web/lib/server/store.ts which
+        // dynamically requires @netlify/blobs at first call. Without
+        // an explicit trace include, the serverless function silently
+        // falls back to in-memory storage — subjects enrolled via
+        // /api/ongoing would vanish on the next cold-start.
+        "./node_modules/@netlify/blobs/**/*",
       ],
     },
   },

@@ -60,9 +60,22 @@ function fingerprints(hits: LastHit[]): Set<string> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  // Optional bearer token protection for manual invocations.
+  // Bearer-token protection for manual invocations. In Netlify /
+  // production we scream if the token is missing so ops gets paged
+  // to fix the misconfig; in local dev we soft-allow.
   const expected = process.env["ONGOING_RUN_TOKEN"];
-  if (expected) {
+  if (!expected) {
+    if (process.env["NETLIFY"] || process.env["NODE_ENV"] === "production") {
+      console.error(
+        "[ongoing/run] ONGOING_RUN_TOKEN is not set — endpoint is PUBLIC. " +
+          "Set ONGOING_RUN_TOKEN in Netlify env vars to gate cron invocations.",
+      );
+    } else {
+      console.warn(
+        "[ongoing/run] ONGOING_RUN_TOKEN unset — accepting unauthenticated calls (dev mode).",
+      );
+    }
+  } else {
     const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
     if (got !== expected) {
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
