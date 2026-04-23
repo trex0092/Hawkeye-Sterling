@@ -259,6 +259,67 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     }
   };
 
+  // Generate a goAML v4 XML envelope for the current subject and trigger
+  // a browser download. The XML is a clean subset of the UAE FIU's goAML
+  // schema, populated from brain data — the operator uploads it via the
+  // FIU portal. reportCode defaults to STR, the most common filing.
+  const handleDownloadGoaml = async () => {
+    if (screening.status !== "success") {
+      showFlash("Screening not complete yet");
+      return;
+    }
+    const composite =
+      superBrain.status === "success"
+        ? superBrain.result.composite.score
+        : screening.result.topScore;
+    const severity = screening.result.severity.toUpperCase();
+    const narrative =
+      `Hawkeye Sterling flagged ${subject.name} (${subject.id}) as requiring a ` +
+      `suspicious-transaction report. Brain severity ${severity}; composite ` +
+      `${composite}/100. Jurisdiction: ${subject.country || "—"}. ` +
+      `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
+      `MLRO to review before goAML submission.`;
+    try {
+      const res = await fetch("/api/goaml", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/xml, application/json",
+        },
+        body: JSON.stringify({
+          reportCode: "STR",
+          subject: {
+            name: subject.name,
+            entityType:
+              subject.entityType === "individual"
+                ? "individual"
+                : subject.entityType === "organisation"
+                  ? "organisation"
+                  : "other",
+            ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
+            ...(subject.aliases ? { aliases: subject.aliases } : {}),
+          },
+          narrative,
+        }),
+      });
+      if (!res.ok) {
+        showFlash(`goAML failed server ${res.status}`);
+        return;
+      }
+      const xml = await res.text();
+      const blob = new Blob([xml], { type: "application/xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `goaml-str-${subject.id}.xml`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showFlash("goAML STR downloaded");
+    } catch {
+      showFlash("goAML request failed");
+    }
+  };
+
   const buildReportPayload = () => ({
     subject: {
       id: subject.id,
@@ -399,6 +460,9 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             <PanelBtn onClick={handleCopy} title="Copy subject ID">⎙</PanelBtn>
             <PanelBtn onClick={handleDownloadPdf} title="Download PDF report">
               💾
+            </PanelBtn>
+            <PanelBtn onClick={handleDownloadGoaml} title="Download goAML STR XML">
+              goAML
             </PanelBtn>
             <PanelBtn onClick={handleDownloadReport} title="Download .txt report">
               .txt

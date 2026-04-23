@@ -160,6 +160,90 @@ function prettyPepTier(tier: string): string {
   return tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
 }
 
+// Inline transliteration map — Arabic + Cyrillic letters to their common
+// Latin equivalents. Kept on the client so we can match the subject
+// queue without a server round-trip. Covers the ~80% that drives
+// sanctions false-negatives: ﻣﺤﻤﺪ → muhammad, Дмитрий → dmitrij, etc.
+const ARABIC_TO_LATIN: Record<string, string> = {
+  "ا": "a", "أ": "a", "إ": "i", "آ": "a", "ب": "b", "ت": "t", "ث": "th",
+  "ج": "j", "ح": "h", "خ": "kh", "د": "d", "ذ": "dh", "ر": "r", "ز": "z",
+  "س": "s", "ش": "sh", "ص": "s", "ض": "d", "ط": "t", "ظ": "z", "ع": "a",
+  "غ": "gh", "ف": "f", "ق": "q", "ك": "k", "ل": "l", "م": "m", "ن": "n",
+  "ه": "h", "و": "w", "ي": "y", "ى": "a", "ة": "h", "ء": "", "ؤ": "w", "ئ": "y",
+};
+const CYRILLIC_TO_LATIN: Record<string, string> = {
+  "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+  "ж": "zh", "з": "z", "и": "i", "й": "j", "к": "k", "л": "l", "м": "m",
+  "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+  "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+  "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+};
+// Arabic-name romanisation families — the brain has the full list; we inline
+// the most common to keep the client bundle small.
+const ROMAN_FAMILIES: Record<string, string> = {
+  mohamed: "muhammad", mohammed: "muhammad", mohammad: "muhammad",
+  mohamad: "muhammad", mohd: "muhammad",
+  ahmed: "ahmad", ahmet: "ahmad",
+  husain: "hussein", husayn: "hussein", hussain: "hussein",
+  yousef: "yusuf", youssef: "yusuf", yousuf: "yusuf",
+  abdulla: "abdullah", abdallah: "abdullah",
+  abdulaziz: "abdul aziz", abdelaziz: "abdul aziz",
+  abdulrahman: "abdul rahman", abdurrahman: "abdul rahman",
+  khaled: "khalid", khaleed: "khalid",
+  fatimah: "fatima", fatma: "fatima",
+  ayesha: "aisha", aicha: "aisha",
+  omar: "umar", omer: "umar",
+  said: "saeed", sayed: "saeed",
+};
+const PARTICLES = new Set(["al", "el", "bin", "ben", "bint", "abu", "ibn"]);
+
+// Full native-script + variant normalisation. Runs on both the query and
+// the subject name before scoring so "محمد" and "Mohamed" both collapse to
+// the same "muhammad" token.
+function normaliseForSearch(input: string): string {
+  if (!input) return "";
+  let s = input.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  // Transliterate Arabic
+  s = s.replace(/./gu, (ch) => ARABIC_TO_LATIN[ch] ?? ch);
+  // Transliterate Cyrillic
+  s = s.replace(/./gu, (ch) => CYRILLIC_TO_LATIN[ch] ?? ch);
+  // Drop anything that isn't letter / space / dash
+  s = s.replace(/[^a-z\s-]/g, " ").replace(/-/g, " ").replace(/\s+/g, " ").trim();
+  // Canonicalise Arabic-name families and drop particles
+  const tokens = s.split(" ").filter(Boolean);
+  const out: string[] = [];
+  for (const t of tokens) {
+    if (PARTICLES.has(t)) continue;
+    out.push(ROMAN_FAMILIES[t] ?? t);
+  }
+  return out.join(" ").trim();
+}
+
+// Simple soundex-style phonetic key — enough to catch "Volkov" ↔ "Volkof"
+// without pulling in the full brain double-metaphone.
+function phoneticKey(word: string): string {
+  if (!word) return "";
+  const s = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!s) return "";
+  const first = s[0]!;
+  const map: Record<string, string> = {
+    b: "1", f: "1", p: "1", v: "1",
+    c: "2", g: "2", j: "2", k: "2", q: "2", s: "2", x: "2", z: "2",
+    d: "3", t: "3",
+    l: "4",
+    m: "5", n: "5",
+    r: "6",
+  };
+  let out = first.toUpperCase();
+  let prev = map[first] ?? "";
+  for (const ch of s.slice(1)) {
+    const code = map[ch] ?? "";
+    if (code && code !== prev) out += code;
+    prev = code;
+  }
+  return (out + "000").slice(0, 4);
+}
+
 // Scored search: returns a relevance score [0..100] for a subject against query q.
 // Higher score = better match. Returns 0 when the subject should not appear.
 function searchScore(s: Subject, q: string): number {
@@ -187,6 +271,24 @@ function searchScore(s: Subject, q: string): number {
     ).length;
     if (matched > 0) return 40 + Math.round((matched / qTokens.length) * 40);
   }
+
+  // Native-script / transliteration match. Catches "محمد" → "Mohamed",
+  // "Дмитрий" → "Dmitrij", "Mohamed" → "Muhammad" alias collapse.
+  const qNorm = normaliseForSearch(q);
+  const nameNorm = normaliseForSearch(s.name);
+  const aliasNorm = (s.aliases ?? []).map(normaliseForSearch).join(" ");
+  if (qNorm && nameNorm) {
+    if (qNorm === nameNorm) return 95;
+    if (nameNorm.includes(qNorm) || qNorm.includes(nameNorm)) return 76;
+    if (aliasNorm && aliasNorm.includes(qNorm)) return 72;
+  }
+
+  // Phonetic soundex-style match — survives spelling variants the
+  // transliteration layer didn't canonicalise ("Volkov" ↔ "Volkoff",
+  // "Assad" ↔ "Asad"). Compare the first token as a cheap proxy.
+  const qPhon = phoneticKey(qNorm.split(" ")[0] ?? q);
+  const namePhon = phoneticKey(nameNorm.split(" ")[0] ?? name);
+  if (qPhon && namePhon && qPhon === namePhon) return 55;
 
   if (meta.includes(q)) return 35;
   return 0;

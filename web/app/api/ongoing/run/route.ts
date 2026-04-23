@@ -8,7 +8,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { CANDIDATES } from "@/lib/data/candidates";
+import { loadCandidates } from "@/lib/server/candidates-loader";
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -120,6 +120,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
   const subjects: EnrolledSubject[] = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
 
+  // Live sanctions corpus (OFAC / UN / EU / UK / EOCN / UAE LTL) from the
+  // Netlify Blobs store populated by netlify/functions/refresh-lists cron.
+  // Falls back to the static seed fixture when blobs aren't populated
+  // (first-run / dev). Loaded once per invocation, not per-subject.
+  const CANDIDATES = await loadCandidates();
+
   const runAt = new Date().toISOString();
   const results: Array<{
     subjectId: string;
@@ -182,6 +188,143 @@ export async function POST(req: Request): Promise<NextResponse> {
         })),
       };
       await setJson(`ongoing/last/${s.id}`, snapshot);
+
+      // Adverse-media sweep — hit Google News RSS for the subject's name.
+      // The /api/news-search route classifies each article (737-keyword
+      // taxonomy across 8 categories), scores for severity, and returns
+      // a summarised list. A high/critical severity article that we
+      // haven't already seen triggers a dedicated Asana alert.
+      const appBaseForNews =
+        process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+      interface NewsArticle {
+        url: string;
+        title: string;
+        severity: string;
+        snippet?: string;
+        source?: string;
+        pubDate?: string;
+        fuzzyScore?: number;
+      }
+      interface NewsResponseShape {
+        ok: boolean;
+        articleCount?: number;
+        topSeverity?: string;
+        articles?: NewsArticle[];
+        keywordGroupCounts?: Array<{ group: string; label: string; count: number }>;
+      }
+      let newsAlertTaskUrl: string | undefined;
+      let newAdverseArticles: NewsArticle[] = [];
+      try {
+        const newsRes = await fetch(
+          new URL(
+            `/api/news-search?q=${encodeURIComponent(s.name)}`,
+            appBaseForNews,
+          ).toString(),
+          {
+            headers: { accept: "application/json" },
+          },
+        );
+        if (newsRes.ok) {
+          const newsPayload = (await newsRes.json().catch(() => null)) as
+            | NewsResponseShape
+            | null;
+          const articles = newsPayload?.articles ?? [];
+          // Find articles whose severity is high/critical AND whose URL
+          // we haven't already logged for this subject.
+          const seen = await getJson<{ urls: string[] }>(
+            `ongoing/adverse-seen/${s.id}`,
+          );
+          const seenUrls = new Set(seen?.urls ?? []);
+          newAdverseArticles = articles.filter(
+            (a) =>
+              (a.severity === "high" || a.severity === "critical") &&
+              a.url &&
+              !seenUrls.has(a.url),
+          );
+          if (articles.length > 0) {
+            const allUrls = new Set<string>(seenUrls);
+            for (const a of articles) {
+              if (a.url) allUrls.add(a.url);
+            }
+            // Cap the seen list so it doesn't grow unbounded.
+            const capped = Array.from(allUrls).slice(-500);
+            await setJson(`ongoing/adverse-seen/${s.id}`, { urls: capped });
+          }
+          if (newAdverseArticles.length > 0) {
+            const asanaToken = process.env["ASANA_TOKEN"];
+            const inboxProject = process.env["ASANA_PROJECT_GID"];
+            if (asanaToken && inboxProject) {
+              try {
+                const topSeverity = newAdverseArticles.some(
+                  (a) => a.severity === "critical",
+                )
+                  ? "CRITICAL"
+                  : "HIGH";
+                const lines: string[] = [];
+                lines.push(
+                  `HAWKEYE STERLING · ADVERSE-MEDIA ALERT`,
+                );
+                lines.push(`Subject     : ${s.name} (${s.id})`);
+                lines.push(`Jurisdiction: ${s.jurisdiction ?? "—"}`);
+                lines.push(`Severity    : ${topSeverity}`);
+                lines.push(`Tick        : ${runAt}`);
+                lines.push(`New items   : ${newAdverseArticles.length}`);
+                lines.push("");
+                lines.push(`── ARTICLES ──`);
+                for (const a of newAdverseArticles.slice(0, 10)) {
+                  lines.push(`• [${a.severity.toUpperCase()}] ${a.title}`);
+                  if (a.source) lines.push(`    source: ${a.source}`);
+                  if (a.pubDate) lines.push(`    date  : ${a.pubDate}`);
+                  lines.push(`    url   : ${a.url}`);
+                }
+                if (newAdverseArticles.length > 10) {
+                  lines.push(`  … and ${newAdverseArticles.length - 10} more`);
+                }
+                lines.push("");
+                lines.push(
+                  `Hawkeye     : https://hawkeye-sterling.netlify.app/screening?open=${s.id}`,
+                );
+                const body = {
+                  data: {
+                    name: `🟥 [ADVERSE-MEDIA · ${topSeverity}] ${s.name} (${s.id}) · ${newAdverseArticles.length} new`,
+                    notes: lines.join("\n"),
+                    projects: [inboxProject],
+                    workspace:
+                      process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
+                    assignee:
+                      process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+                  },
+                };
+                const r = await fetch("https://app.asana.com/api/1.0/tasks", {
+                  method: "POST",
+                  headers: {
+                    "content-type": "application/json",
+                    authorization: `Bearer ${asanaToken}`,
+                  },
+                  body: JSON.stringify(body),
+                });
+                const data = (await r.json().catch(() => null)) as
+                  | { data?: { permalink_url?: string } }
+                  | null;
+                if (data?.data?.permalink_url) {
+                  newsAlertTaskUrl = data.data.permalink_url;
+                }
+              } catch (err) {
+                console.warn(
+                  `[ongoing/run] adverse-media alert POST failed for ${s.id}:`,
+                  err,
+                );
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(
+          `[ongoing/run] adverse-media sweep failed for ${s.id}:`,
+          err,
+        );
+      }
+      void newsAlertTaskUrl;
 
       let asanaTaskUrl: string | undefined;
       // File an Asana task on EVERY tick — ongoing-monitoring subjects must
