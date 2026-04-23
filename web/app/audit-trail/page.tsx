@@ -1,6 +1,6 @@
 "use client";
 
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface AuditEntry {
   id: string;
@@ -15,9 +15,8 @@ const ENTRIES: AuditEntry[] = [];
 
 export default function AuditTrailPage() {
   return (
-    <>
-      <Header />
-      <main className="bg-bg-0 min-h-[calc(100vh-54px)] px-10 py-8">
+    <ModuleLayout>
+      <div>
         <div className="mb-8">
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
             MODULE 05 · IMMUTABLE RECORD
@@ -91,7 +90,7 @@ export default function AuditTrailPage() {
             </tbody>
           </table>
         </div>
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }

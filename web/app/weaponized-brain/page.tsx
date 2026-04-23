@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { BarChart, Donut } from "@/components/ui/Charts";
 
 interface Manifest {
@@ -159,9 +159,8 @@ export default function WeaponizedBrainPage() {
   }, []);
 
   return (
-    <>
-      <Header />
-      <main className="bg-bg-0 min-h-[calc(100vh-54px)] px-10 py-8">
+    <ModuleLayout>
+      <div>
         <div className="mb-8">
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
             MODULE 06 · WEAPONIZED BRAIN
@@ -188,8 +187,8 @@ export default function WeaponizedBrainPage() {
           </div>
         )}
         {state.status === "ready" && <BrainDashboard {...state.data} />}
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }
 

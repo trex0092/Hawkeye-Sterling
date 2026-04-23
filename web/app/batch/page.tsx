@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 interface RowResult {
@@ -285,9 +285,8 @@ export default function BatchPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="bg-bg-0 min-h-[calc(100vh-54px)] px-10 py-8">
+    <ModuleLayout>
+      <div>
         <div className="mb-8">
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
             MODULE 07 · BATCH SCREENING
@@ -477,8 +476,8 @@ export default function BatchPage() {
             </table>
           </div>
         )}
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }
 

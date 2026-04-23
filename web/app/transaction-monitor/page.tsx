@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleShell,
   ModuleHeader,
@@ -222,9 +222,8 @@ export default function TransactionMonitorPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="min-h-[calc(100vh-54px)] bg-bg-0">
+    <ModuleLayout narrow>
+      <div className="min-h-[calc(100vh-54px)]">
         <ModuleShell>
           <ModuleHeader
             title="Transaction Monitor"
@@ -468,7 +467,7 @@ export default function TransactionMonitorPage() {
             </div>
           )}
         </ModuleShell>
-      </main>
+      </div>
       <ReportModal
         open={reportTx !== null}
         title={reportTx?.ref ?? ""}
@@ -483,6 +482,6 @@ export default function TransactionMonitorPage() {
             : null
         }
       />
-    </>
+    </ModuleLayout>
   );
 }

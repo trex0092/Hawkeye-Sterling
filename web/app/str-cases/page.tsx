@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleShell,
   ModuleHeader,
@@ -195,9 +195,8 @@ export default function StrCasesPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="min-h-[calc(100vh-54px)] bg-bg-0">
+    <ModuleLayout narrow>
+      <div className="min-h-[calc(100vh-54px)]">
         <ModuleShell>
           <ModuleHeader
             title="STR Case Management"
@@ -445,7 +444,7 @@ export default function StrCasesPage() {
             </div>
           )}
         </ModuleShell>
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }
