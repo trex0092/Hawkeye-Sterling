@@ -135,32 +135,40 @@ function countThresholdBreaches(txs: Transaction[]): number {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  // Fail-closed: missing env var = endpoint locked, not open.
   const expected = process.env["ONGOING_RUN_TOKEN"];
-  if (expected) {
-    const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-    if (got !== expected) {
-      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-    }
+  if (!expected) {
+    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
+  }
+  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  const { timingSafeEqual } = await import("crypto");
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(expected);
+  const gotRaw = enc.encode(got);
+  const gotBuf = new Uint8Array(expBuf.length);
+  gotBuf.set(gotRaw.slice(0, expBuf.length));
+  if (got.length !== expected.length || !timingSafeEqual(expBuf, gotBuf)) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   const subjectKeys = await listKeys("ongoing/subject/");
-  const subjects: EnrolledSubject[] = [];
-  for (const key of subjectKeys) {
-    const s = await getJson<EnrolledSubject>(key);
-    if (s) subjects.push(s);
-  }
+  const loadedSubjects = await Promise.all(subjectKeys.map((k) => getJson<EnrolledSubject>(k)));
+  const subjects = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
 
   const rolls: SubjectAlertRoll[] = [];
   let totalTx = 0;
   let totalAlerts = 0;
 
-  for (const s of subjects) {
-    const txKeys = await listKeys(`tx/${s.id}/`);
-    const txs: Transaction[] = [];
-    for (const key of txKeys) {
-      const t = await getJson<Transaction>(key);
-      if (t) txs.push(t);
-    }
+  // Load each subject's transactions in parallel to avoid sequential await storms.
+  const perSubjectTxs = await Promise.all(
+    subjects.map(async (s) => {
+      const txKeys = await listKeys(`tx/${s.id}/`);
+      const loaded = await Promise.all(txKeys.map((k) => getJson<Transaction>(k)));
+      return { s, txs: loaded.filter((t): t is Transaction => t !== null) };
+    }),
+  );
+
+  for (const { s, txs } of perSubjectTxs) {
     const structuringAlerts = detectStructuring(txs);
     const smurfingAlerts = detectSmurfing(txs, s);
     const anomalies = detectAnomalies(txs);

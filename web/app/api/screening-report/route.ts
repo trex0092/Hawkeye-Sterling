@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
 
@@ -119,7 +120,7 @@ function buildTaskNotes(b: ReportBody): string {
   return lines.join("\n");
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+async function handleScreeningReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return respond(503, {
@@ -204,3 +205,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
   }
 }
+
+export const POST = withGuard(handleScreeningReport);

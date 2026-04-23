@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import { ANALYSIS, REASONING, SKILLS, TAXONOMY } from "@/lib/data/taxonomy";
 import { ANCHORS } from "@/lib/data/anchors";
 import { PLAYBOOKS } from "@/lib/data/playbooks";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+async function handleTaxonomy(): Promise<NextResponse> {
   return NextResponse.json({
     ok: true,
     counts: {
@@ -25,3 +26,5 @@ export async function GET() {
     playbooks: PLAYBOOKS,
   });
 }
+
+export const GET = withGuard(handleTaxonomy);

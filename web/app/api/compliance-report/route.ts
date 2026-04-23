@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withGuard } from "@/lib/server/guard";
 import {
   buildComplianceReport,
   type ReportInput,
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 // Body: { subject, result, superBrain?, reportingEntity?, mlro? }
 // Returns text/plain — the Hawkeye Sterling MLRO report, generated
 // strictly from the payload (no invented facts, no narrative hallucinations).
-export async function POST(req: Request): Promise<Response> {
+async function handleComplianceReport(req: Request): Promise<Response> {
   let body: ReportInput;
   try {
     body = (await req.json()) as ReportInput;
@@ -33,3 +34,5 @@ export async function POST(req: Request): Promise<Response> {
     },
   });
 }
+
+export const POST = withGuard(handleComplianceReport);
