@@ -61,6 +61,24 @@ export const FATF_RECOMMENDATIONS: FatfRecommendation[] = [
   { id: 'R.38', title: 'Mutual legal assistance — freezing and confiscation', cluster: 'international_cooperation', reasoningModes: [], doctrineIds: [] },
   { id: 'R.39', title: 'Extradition', cluster: 'international_cooperation', reasoningModes: [], doctrineIds: [] },
   { id: 'R.40', title: 'Other forms of international cooperation', cluster: 'international_cooperation', reasoningModes: ['source_triangulation'], doctrineIds: ['egmont_fiu'] },
+  // ── FATF Interpretive Notes (INRs) — selected high-impact ───────────
+  { id: 'INR.1',  title: 'INR to R.1 — NRA methodology and data quality', cluster: 'risk_and_coordination', reasoningModes: ['risk_based_approach', 'data_quality_score'], doctrineIds: ['fatf_rba'] },
+  { id: 'INR.5',  title: 'INR to R.5 — TF offence: ancillary offences and jurisdiction', cluster: 'ml_tf_offences', reasoningModes: ['article_by_article', 'jurisdiction_cascade'], doctrineIds: [] },
+  { id: 'INR.6',  title: 'INR to R.6 — TFS implementation: asset freeze procedures', cluster: 'preventive_cdd', reasoningModes: ['sanctions_regime_matrix', 'list_walk'], doctrineIds: ['uae_cd_74_2020'] },
+  { id: 'INR.7',  title: 'INR to R.7 — Proliferation TFS: DPRK and Iran designation monitoring', cluster: 'preventive_cdd', reasoningModes: ['pf_dual_use_controls', 'escalation_trigger'], doctrineIds: ['uae_cd_74_2020'] },
+  { id: 'INR.10', title: 'INR to R.10 — CDD: beneficial ownership and complex structures', cluster: 'preventive_cdd', reasoningModes: ['ubo_25_threshold', 'ubo_tree_walk', 'ubo_bearer_shares'], doctrineIds: ['wolfsberg_faq'] },
+  { id: 'INR.11', title: 'INR to R.11 — Record-keeping: retention period and format', cluster: 'preventive_cdd', reasoningModes: ['retention_audit', 'documentation_quality'], doctrineIds: ['uae_fdl_10_2025'] },
+  { id: 'INR.15', title: 'INR to R.15 — New technologies: VASP licensing, Travel Rule, DeFi', cluster: 'preventive_cdd', reasoningModes: ['vasp_wallet_screen', 'vasp_travel_rule', 'defi_smart_contract'], doctrineIds: ['fatf_rba'] },
+  { id: 'INR.16', title: 'INR to R.16 — Wire transfers: originator and beneficiary data completeness', cluster: 'preventive_cdd', reasoningModes: ['vasp_travel_rule', 'completeness_audit'], doctrineIds: [] },
+  { id: 'INR.24', title: 'INR to R.24 — Transparency of legal persons: BO registration and verification', cluster: 'transparency_bo', reasoningModes: ['ubo_25_threshold', 'ubo_tree_walk', 'entity_resolution'], doctrineIds: [] },
+  { id: 'INR.25', title: 'INR to R.25 — Transparency of legal arrangements: trust BO obligations', cluster: 'transparency_bo', reasoningModes: ['ubo_effective_control', 'ubo_tree_walk'], doctrineIds: [] },
+  // ── FATF Guidance Documents (supplementary) ──────────────────────────
+  { id: 'FATF-RBA-DNFBPs', title: 'FATF RBA Guidance for DNFBPs (2019)', cluster: 'preventive_cdd', reasoningModes: ['risk_based_approach', 'dpms_retail_threshold'], doctrineIds: ['fatf_rba', 'uae_moe_dnfbp_circulars'] },
+  { id: 'FATF-RBA-VASPs',  title: 'FATF Updated Guidance for VASPs (2021)', cluster: 'preventive_cdd', reasoningModes: ['vasp_wallet_screen', 'vasp_travel_rule', 'chain_analysis'], doctrineIds: ['fatf_rba'] },
+  { id: 'FATF-EnvCrime',   title: 'FATF Guidance on Environmental Crime (2021)', cluster: 'ml_tf_offences', reasoningModes: ['provenance_trace', 'oecd_ddg_annex', 'jurisdiction_cascade'], doctrineIds: ['fatf_rba', 'oecd_ddg'] },
+  { id: 'FATF-ProfML',     title: 'FATF Guidance on Professional Money Laundering (2023)', cluster: 'preventive_cdd', reasoningModes: ['community_detection', 'link_analysis', 'source_triangulation'], doctrineIds: ['fatf_rba'] },
+  { id: 'FATF-RBA-RE',     title: 'FATF Guidance on Real Estate (2022)', cluster: 'preventive_cdd', reasoningModes: ['real_estate_cash', 'ubo_tree_walk', 'source_triangulation'], doctrineIds: ['fatf_rba'] },
+  { id: 'FATF-CPF',        title: 'FATF Countering Proliferation Financing Guidance', cluster: 'preventive_cdd', reasoningModes: ['pf_dual_use_controls', 'sanctions_regime_matrix'], doctrineIds: ['uae_cd_74_2020'] },
 ];
 
 export const FATF_BY_ID: Map<string, FatfRecommendation> = new Map(

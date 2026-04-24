@@ -517,14 +517,17 @@ function computeBrainNarrative(
 
 // ─── Latency anomaly detection ───────────────────────────────────────────────
 // The brain notices when tail latency (p99) drifts far above the median (p50)
-// and surfaces a human-readable hint.
+// and surfaces a human-readable hint. Ratio checks only fire when p99 exceeds
+// a meaningful absolute floor — cold-start jitter on fast functions (p99 < 200ms)
+// is not actionable and should not surface as a warning.
 function annotateLatencyAnomalies(checks: Check[]): Check[] {
   return checks.map((c) => {
     if (!c.p50 || !c.p99 || c.p50 === 0) return c;
+    if (c.p99 < 200) return c; // sub-200ms p99 is healthy regardless of ratio
     const ratio = c.p99 / c.p50;
-    if (ratio >= 5)
+    if (ratio >= 10)
       return { ...c, anomalyHint: `tail latency volatile — p99 is ${ratio.toFixed(1)}× p50; possible memory pressure or cold start` };
-    if (ratio >= 2)
+    if (ratio >= 4)
       return { ...c, anomalyHint: `latency tail widening — p99 is ${ratio.toFixed(1)}× p50; monitor for degradation trend` };
     return c;
   });

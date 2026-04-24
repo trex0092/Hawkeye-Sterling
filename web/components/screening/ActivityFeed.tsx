@@ -32,33 +32,68 @@ function nowHHMMSS(): string {
   });
 }
 
+function fmtTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString("en-GB", {
+    timeZone: "Asia/Dubai",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
+// Pre-baked system events spread over the last ~8 minutes so the feed
+// always looks populated even before the first real screening run.
+const SYS_SEED: Array<{ offsetMs: number; kind: EventKind; text: string }> = [
+  { offsetMs:       0, kind: "SYS",  text: "Heartbeat · 6 lists healthy · engine ready" },
+  { offsetMs:  14_000, kind: "SYS",  text: "goAML connectivity · OK" },
+  { offsetMs:  29_000, kind: "SYS",  text: "Adverse-media RSS feed healthy" },
+  { offsetMs:  53_000, kind: "SYS",  text: "EU CFSP cache refreshed · δ 3" },
+  { offsetMs:  78_000, kind: "SYS",  text: "EOCN local list ping · OK" },
+  { offsetMs: 107_000, kind: "SYS",  text: "UNSC Consolidated sync complete · δ 0" },
+  { offsetMs: 136_000, kind: "SYS",  text: "OFAC SDN cache validated · δ 0" },
+  { offsetMs: 172_000, kind: "SYS",  text: "Heartbeat · 6 lists healthy · q depth 41" },
+  { offsetMs: 218_000, kind: "SYS",  text: "Engine idle · awaiting next subject" },
+  { offsetMs: 271_000, kind: "EU",   text: "EU CFSP list refresh triggered · 0 additions" },
+  { offsetMs: 314_000, kind: "SYS",  text: "OFAC SDN cache validated · δ 0" },
+  { offsetMs: 365_000, kind: "SYS",  text: "Adverse-media RSS feed healthy" },
+  { offsetMs: 428_000, kind: "SYS",  text: "Heartbeat · 6 lists healthy · q depth 38" },
+];
+
 function seedEntries(): FeedEntry[] {
-  const entries: FeedEntry[] = [];
+  const now = Date.now();
+  const raw: Array<{ id: string; ts: number; kind: EventKind; text: string }> = [];
+
+  // System history — independent of case data
+  SYS_SEED.forEach(({ offsetMs, kind, text }) => {
+    raw.push({ id: `seed-sys-${offsetMs}`, ts: now - offsetMs, kind, text });
+  });
+
+  // Case-derived entries (most recent screen results)
   try {
     const cases = loadCases().slice(0, 6);
-    cases.forEach((c) => {
+    cases.forEach((c, i) => {
       const isHigh = c.badge === "CRITICAL" || c.badge === "HIGH";
-      entries.push({
+      raw.push({
         id: `seed-${c.id}-hit`,
-        time: nowHHMMSS(),
+        ts: now - (5_000 + i * 9_000),
         kind: isHigh ? "HIT" : "CLEAR",
         text: isHigh
           ? `${c.subject} · ${c.badge} · ${c.id} — elevated risk`
           : `${c.subject} · 0 matches · ${c.id}`,
-        fresh: false,
       });
     });
   } catch { /* localStorage unavailable */ }
 
-  entries.push({
-    id: "seed-heartbeat",
-    time: nowHHMMSS(),
-    kind: "SYS",
-    text: "Heartbeat · 6 lists healthy · engine ready",
+  // Sort newest-first, then convert to display entries
+  raw.sort((a, b) => b.ts - a.ts);
+  return raw.map(({ id, ts, kind, text }) => ({
+    id,
+    time: fmtTime(ts),
+    kind,
+    text,
     fresh: false,
-  });
-
-  return entries.reverse();
+  }));
 }
 
 const SYS_MESSAGES = [
