@@ -208,7 +208,11 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     id: "data-privacy",
     domain: "legal-regulatory-affairs",
     label: "Data privacy breaches",
-    keywords: ["data breach", "gdpr fine", "privacy violation", "leaked data", "ccpa", "personal data exposed"],
+    keywords: [
+      "data breach", "gdpr fine", "privacy violation", "leaked data",
+      "ccpa", "personal data exposed",
+      "hipaa", "hipaa violation", "iso 27001",
+    ],
     sasb: "Social Capital · Customer Privacy",
     sdg: ["16"],
   },
@@ -256,7 +260,8 @@ export const ESG_CATEGORIES: EsgCategory[] = [
       "ai regulation", "ai act", "eu ai act", "ai liability",
       "automated decision-making", "automated decision making",
       "model risk", "model governance", "ai risk management",
-      "ai audit", "nonhuman ethical gap",
+      "ai risk taxonomy", "ai data governance", "data governance",
+      "ai audit", "algorithmic audit", "nonhuman ethical gap",
       // 2026 regulatory stack — EU AI Act enforcement Aug 2026, NIST AI RMF,
       // ISO/IEC 42001 AIMS; high-risk / prohibited tiers; oversight controls.
       "nist ai rmf", "iso 42001", "iso/iec 42001",
@@ -264,6 +269,11 @@ export const ESG_CATEGORIES: EsgCategory[] = [
       "prohibited ai system",
       "human-in-the-loop", "human in the loop", "kill switch",
       "model card", "ai transparency report", "fairness monitoring",
+      // AI Governance Journey artefacts — documentation / assurance controls
+      // from the 2026 playbook (red-team, AI registry, SBOM).
+      "red team", "red-team", "red teaming", "red-teaming",
+      "ai registry", "model inventory",
+      "sbom", "software bill of materials",
       // Emerging governance frontiers — agentic AI identity/oversight and
       // unmanaged "Shadow AI" sprawl inside the enterprise.
       "agentic ai", "autonomous ai agent", "shadow ai", "unauthorized ai",
@@ -291,7 +301,11 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     id: "cyber-incident",
     domain: "operational-risk-crisis",
     label: "Cyber incident",
-    keywords: ["ransomware", "cyberattack", "data leak", "hacked", "breach notification", "ddos"],
+    keywords: [
+      "ransomware", "cyberattack", "data leak", "hacked",
+      "breach notification", "ddos",
+      "soc 2", "soc2", "cyber resilience act",
+    ],
     sasb: "Business Model & Innovation · Systemic Risk Management",
     sdg: ["9", "16"],
   },

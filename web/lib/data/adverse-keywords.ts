@@ -7,7 +7,7 @@
 // snippet, they fire here with the full group context.
 //
 // Designed to complement the 5-class classifyAdverseMedia() from the brain
-// and the 25-class ESG classifier — this one is the named-keyword floor.
+// and the 28-class ESG classifier — this one is the named-keyword floor.
 
 export type AdverseKeywordGroup =
   | "money-laundering"
