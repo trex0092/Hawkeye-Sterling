@@ -65,12 +65,24 @@
       }
     },
     "/api/news-search": {
-      "get": {
+      "post": {
         "summary": "Multi-lingual adverse-media dossier (7 locales)",
         "tags": ["Adverse Media"],
-        "parameters": [
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }
-        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["q"],
+                "properties": {
+                  "q": { "type": "string", "description": "Subject name or search query" },
+                  "locales": { "type": "array", "items": { "type": "string" }, "description": "ISO locale codes to search (default: all 7)" }
+                }
+              }
+            }
+          }
+        },
         "responses": { "200": { "description": "Clustered article dossier" } }
       }
     },
@@ -78,18 +90,20 @@
       "post": {
         "summary": "Bulk screening (up to 500 rows / call)",
         "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchScreenRequest" }
+            }
+          }
+        },
         "responses": { "200": { "description": "Per-row screening result" } }
       }
     },
     "/api/ongoing": {
-      "get": { "summary": "List enrolled subjects for ongoing monitoring", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } },
-      "post": { "summary": "Enrol a subject for ongoing monitoring", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } },
-      "delete": { "summary": "Remove a subject from ongoing monitoring", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } }
-    },
-    "/api/schedule": {
-      "get": { "summary": "List per-subject rescreening schedules", "tags": ["Monitoring"], "responses": { "200": { "description": "OK" } } },
       "post": {
-        "summary": "Create or update a per-subject schedule",
+        "summary": "List, enrol, or remove a subject from ongoing monitoring",
         "tags": ["Monitoring"],
         "requestBody": {
           "required": true,
@@ -97,9 +111,33 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["subjectId", "cadence"],
+                "required": ["action"],
                 "properties": {
-                  "subjectId": { "type": "string" },
+                  "action": { "type": "string", "enum": ["list", "enrol", "remove"], "description": "Operation to perform" },
+                  "subjectId": { "type": "string", "description": "Required for enrol / remove" },
+                  "subject": { "$ref": "#/components/schemas/Subject", "description": "Required for enrol" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/schedule": {
+      "post": {
+        "summary": "List or create / update a per-subject rescreening schedule",
+        "tags": ["Monitoring"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["list", "upsert"], "description": "list returns all schedules; upsert creates or updates" },
+                  "subjectId": { "type": "string", "description": "Required for upsert" },
                   "cadence": { "type": "string", "enum": ["hourly", "daily", "weekly", "monthly"] },
                   "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1 }
                 }
@@ -107,57 +145,213 @@
             }
           }
         },
-        "responses": { "200": { "description": "Schedule persisted" } }
+        "responses": { "200": { "description": "Schedule persisted / list returned" } }
       }
     },
     "/api/feedback": {
-      "get": { "summary": "Aggregated FP / TM verdict statistics", "tags": ["Learning"], "responses": { "200": { "description": "OK" } } },
       "post": {
-        "summary": "Submit analyst verdict (feedback loop)",
+        "summary": "Retrieve aggregated FP / TM statistics or submit an analyst verdict",
         "tags": ["Learning"],
-        "responses": { "200": { "description": "Verdict recorded" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["stats", "submit"], "description": "stats returns aggregates; submit records a verdict" },
+                  "caseId": { "type": "string" },
+                  "verdict": { "type": "string", "enum": ["true_positive", "false_positive", "escalated"] },
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Stats payload or verdict receipt" } }
       }
     },
     "/api/corrections": {
-      "get": { "summary": "List correction requests", "tags": ["Records"], "responses": { "200": { "description": "OK" } } },
       "post": {
-        "summary": "File a record correction request (public)",
+        "summary": "List, file, fetch or update a data-subject correction request",
         "tags": ["Records"],
-        "security": [],
-        "responses": { "200": { "description": "Receipt with 30-day SLA" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["list", "file", "fetch", "update"], "description": "list = all requests; file = new (public); fetch = single; update = status / appeal" },
+                  "id": { "type": "string", "description": "Required for fetch / update" },
+                  "subjectName": { "type": "string" },
+                  "details": { "type": "string" },
+                  "status": { "type": "string", "enum": ["open", "in_review", "resolved", "rejected"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Correction record or receipt with 30-day SLA" } }
       }
     },
-    "/api/corrections/{id}": {
-      "get": { "summary": "Fetch a correction request", "tags": ["Records"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] },
-      "patch": { "summary": "Update status / appeal", "tags": ["Records"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] }
-    },
     "/api/gdpr/export": {
-      "post": { "summary": "GDPR Art. 15 — right-of-access export", "tags": ["Compliance"], "responses": { "200": { "description": "OK" } } }
+      "post": {
+        "summary": "GDPR Art. 15 — right-of-access export",
+        "tags": ["Compliance"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subjectId"],
+                "properties": {
+                  "subjectId": { "type": "string" },
+                  "format": { "type": "string", "enum": ["json", "pdf"], "default": "json" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Full data export package" } }
+      }
     },
     "/api/gdpr/delete": {
-      "post": { "summary": "GDPR Art. 17 — right-to-erasure", "tags": ["Compliance"], "responses": { "200": { "description": "OK" } } }
+      "post": {
+        "summary": "GDPR Art. 17 — right-to-erasure",
+        "tags": ["Compliance"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subjectId", "reason"],
+                "properties": {
+                  "subjectId": { "type": "string" },
+                  "reason": { "type": "string" },
+                  "retainAuditTrail": { "type": "boolean", "default": true, "description": "FDL 10/2025 Art.24 — audit trail retained even after erasure" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Erasure receipt with regulatory retention notice" } }
+      }
     },
     "/api/keys": {
-      "get": { "summary": "List API keys", "tags": ["Auth"], "responses": { "200": { "description": "OK" } } },
       "post": {
-        "summary": "Issue a new API key (instant signup)",
+        "summary": "List API keys or issue a new API key",
         "tags": ["Auth"],
-        "security": [],
-        "responses": { "200": { "description": "Plaintext returned once" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["list", "issue"], "description": "list requires auth; issue is public (instant signup)" },
+                  "label": { "type": "string", "description": "Human-readable label for the new key" },
+                  "tier": { "type": "string", "enum": ["starter", "professional", "enterprise"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Key list or new plaintext key (returned once)" } }
       }
     },
     "/api/keys/{id}": {
-      "post": { "summary": "Revoke a key", "tags": ["Auth"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] },
-      "delete": { "summary": "Delete a key permanently", "tags": ["Auth"], "responses": { "200": { "description": "OK" } }, "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }] }
+      "post": {
+        "summary": "Revoke or permanently delete an API key",
+        "tags": ["Auth"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["revoke", "delete"], "description": "revoke = soft disable; delete = permanent" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
     },
     "/api/tiers": {
-      "get": { "summary": "List commercial tiers + limits", "tags": ["Auth"], "security": [], "responses": { "200": { "description": "OK" } } }
+      "post": {
+        "summary": "List commercial tiers + limits",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currency": { "type": "string", "default": "USD", "description": "Return pricing in this currency" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Tier definitions and rate limits" } }
+      }
     },
     "/api/analytics": {
-      "get": { "summary": "Operational analytics + 30 DPMS KPIs", "tags": ["Analytics"], "responses": { "200": { "description": "OK" } } }
+      "post": {
+        "summary": "Operational analytics + 30 DPMS KPIs",
+        "tags": ["Analytics"],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "from": { "type": "string", "format": "date", "description": "Start of reporting window (ISO date)" },
+                  "to": { "type": "string", "format": "date", "description": "End of reporting window (ISO date)" },
+                  "include": { "type": "array", "items": { "type": "string" }, "description": "KPI subset to return (default: all)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Analytics payload with 30 DPMS KPIs" } }
+      }
     },
     "/api/status": {
-      "get": { "summary": "Live health status of all services", "tags": ["System"], "security": [], "responses": { "200": { "description": "OK" } } }
+      "post": {
+        "summary": "Live health status of all services",
+        "tags": ["System"],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "verbose": { "type": "boolean", "default": false, "description": "Include full brain-soul manifest in response" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Service health, brain-soul status, and cognitive grade" } }
+      }
     }
   },
   "components": {
@@ -198,6 +392,18 @@
           "candidatesChecked": { "type": "integer" },
           "durationMs": { "type": "integer" },
           "hits": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "BatchScreenRequest": {
+        "type": "object",
+        "required": ["rows"],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "maxItems": 500,
+            "items": { "$ref": "#/components/schemas/Subject" }
+          },
+          "options": { "type": "object" }
         }
       }
     },

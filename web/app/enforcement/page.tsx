@@ -515,6 +515,33 @@ const DEADLINES: Deadline[] = [
     notes:
       "Mid-year review of proliferation financing controls following FATF plenary updates. Confirm DPRK, Iran, Syria, Belarus nexus detection rules are current. Cross-check dual-use goods screening parameters against latest export-control commodity lists. MLRO certifies controls are adequate. Results presented to Board.",
   },
+  {
+    id: "pdpl-annual-audit",
+    title: "PDPL Data Protection Annual Audit",
+    due: "2026-12-31",
+    authority: "UAE MoJ / Internal",
+    cadence: "annual",
+    notes:
+      "Annual audit of compliance with Federal Decree-Law No. 45/2021 on Personal Data Protection (PDPL). Scope: lawful basis mapping for all processing activities, data-subject rights request register (access, correction, erasure, portability), consent management records, cross-border transfer controls, and privacy-impact assessments for any new processing introduced in the year. DPO certifies compliance. Material gaps reported to Board within 30 days.",
+  },
+  {
+    id: "env-crime-controls-review",
+    title: "Environmental-Crime Predicate Controls Review",
+    due: "2026-09-30",
+    authority: "Internal / FATF",
+    cadence: "annual",
+    notes:
+      "Annual review of controls for the FATF 2021 environmental-crime predicate offences: illegal mining, illegal logging, IUU fishing, waste trafficking, and wildlife trafficking. Confirm adverse-keyword classifiers cover all sub-categories, red-flag rules include CAHRA/supply-chain provenance checks, and transaction-monitoring thresholds for environmental-predicate nexus are calibrated. MLRO reviews ESG classifier coverage and certifies adequacy. Results documented in EWRA.",
+  },
+  {
+    id: "board-aml-q1-2026",
+    title: "Board AML/CFT Quarterly Report — Q1 2026",
+    due: "2026-04-30",
+    authority: "Board / FDL 10/2025",
+    cadence: "quarterly",
+    notes:
+      "Q1 2026 quarterly AML/CFT report to Board. Mandatory contents per FDL 10/2025 and CR 134/2025: STR/SAR filing statistics, screening volumes and false-positive rate, CDD queue status, sanctions list effectiveness metrics, training completion rate, open corrective actions, and MLRO attestation. Board must formally acknowledge receipt. Signed minutes retained for 10 years.",
+  },
 ];
 
 function daysUntil(iso: string): number {
