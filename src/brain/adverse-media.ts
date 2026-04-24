@@ -141,6 +141,11 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'Paris Agreement breach', 'NDC non-compliance', 'methane leak',
       'shale-gas flaring', 'fracking violation', 'Arctic drilling controversy',
       'oil-sands pollution',
+      // Carbon-market / VCM integrity (Wave 4) — phantom-credit, double-
+      // counting, offset-washing typologies that underpin sustainability fraud.
+      'phantom credit', 'ghost credit', 'fake offset', 'carbon washing',
+      'carbon double counting', 'double-counted credits',
+      'voluntary carbon market fraud', 'VCM fraud',
       // Social — labour and human rights
       'modern slavery', 'child labour', 'forced labour', 'bonded labour',
       'sweatshop', 'wage theft', 'unpaid overtime', 'union busting',
@@ -162,6 +167,8 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'sustainability-linked loan fraud', 'SFDR breach', 'EU Taxonomy misrepresentation',
       'CSRD breach', 'CSDDD breach', 'TCFD non-compliance', 'ISSB non-compliance',
       'SEC climate disclosure breach',
+      'double materiality', 'integrated reporting misstatement',
+      'Climate VaR misrepresentation', 'transition finance misrepresentation',
       // Sector-specific (DPMS / FMCG / apparel / palm oil)
       'palm-oil controversy', 'cocoa child labour', 'coffee forced labour',
       'garment factory abuse', 'LBMA non-conformance',
@@ -270,10 +277,25 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'AI password cracking',
       // Governance / bias / regulation
       'algorithmic bias', 'AI discrimination', 'algorithmic discrimination lawsuit',
-      'hallucination misuse', 'AI safety violation', 'AI audit failure',
+      'AI safety violation', 'AI audit failure',
       'AI governance breach', 'EU AI Act breach', 'NIST AI RMF non-compliance',
+      'ISO 42001 non-compliance', 'ISO/IEC 42001 non-compliance',
       'biometric-data abuse', 'AI copyright infringement',
       'AI-enabled social engineering',
+      // Paper-sourced ethical gaps (Hartono et al., ICIMCIS 2025) + 2026
+      // regulatory stack (EU AI Act tiers, NIST AI RMF, ISO 42001).
+      'explainability gap', 'nonhuman ethical gap',
+      'black-box AI', 'black box AI',
+      'algorithmic accountability', 'algorithmic transparency',
+      'conformity assessment', 'high-risk AI', 'prohibited AI',
+      'prohibited AI system', 'AI liability',
+      // AI-governance control artefacts from the 2026 playbook.
+      'AI registry', 'model inventory', 'model card',
+      'red team', 'red-team', 'red teaming', 'red-teaming',
+      'SBOM', 'software bill of materials',
+      'fairness monitoring', 'AI transparency report',
+      // Operational failure modes (drift).
+      'model drift', 'concept drift', 'data drift',
     ],
   },
 ];
