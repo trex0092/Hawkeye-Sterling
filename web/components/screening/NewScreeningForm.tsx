@@ -185,6 +185,12 @@ export function NewScreeningForm({
               patch({ checkTypes: { ...form.checkTypes, passport: !form.checkTypes.passport } })
             }
           />
+          <CoverageRow
+            label="Re-screen"
+            detail="Twice daily · changes logged to audit trail"
+            on={form.ongoingScreening}
+            onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
+          />
         </SettingsGroup>
 
         <SettingsGroup label="CDD posture">
@@ -204,17 +210,6 @@ export function NewScreeningForm({
           ))}
         </SettingsGroup>
 
-        <SettingsGroup label="Ongoing screening">
-          <ToggleRow
-            icon="🔁"
-            label="World-check"
-            on={form.ongoingScreening}
-            onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
-          />
-          <p className="text-10.5 text-ink-2 mt-2 leading-snug">
-            Re-screens twice daily. Changes appear in the audit trail.
-          </p>
-        </SettingsGroup>
       </aside>
 
       {/* ── Right: Form fields ───────────────────────────────────── */}

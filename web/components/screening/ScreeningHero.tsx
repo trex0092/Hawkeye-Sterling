@@ -27,17 +27,6 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
         />
       </div>
 
-      {/* Coverage description */}
-      <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-4 border-l-2 border-brand pl-3.5">
-        <strong>
-          Global sanctions · PEP databases · 20,000+ news sources · RCA.
-        </strong>{" "}
-        Every subject cross-referenced against all major international sanctions
-        regimes, classified PEP databases with relatives &amp; close associates
-        (RCA), and 20,000+ adverse-media sources across 50+ languages — bound
-        to the ten-year FDL Art.24 audit trail.
-      </p>
-
       {/* 4-pillar coverage strip */}
       <div className="grid grid-cols-4 gap-3 mt-5">
         <PillarCard
