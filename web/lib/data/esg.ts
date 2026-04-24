@@ -279,13 +279,12 @@ export const ESG_CATEGORIES: EsgCategory[] = [
   // Operational counterpart to ai-governance-ethics: technical failure modes
   // and AI-specific attack surface (OWASP LLM Top 10, model drift, agentic
   // AI harms). Governance sits under legal-regulatory; concrete incidents
-  // sit here so drift/hallucination/prompt-injection news fires operational.
+  // sit here so drift/prompt-injection news fires operational.
   {
     id: "ai-failure-incident",
     domain: "operational-risk-crisis",
     label: "AI failure & incident",
     keywords: [
-      "hallucination", "model hallucination",
       "model drift", "concept drift", "data drift",
       "prompt injection", "jailbreak", "jailbroken model",
       "model inversion", "membership inference",
