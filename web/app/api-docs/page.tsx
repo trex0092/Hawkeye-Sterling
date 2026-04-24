@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Header } from "@/components/layout/Header";
 
 export default function ApiDocsPage() {
   useEffect(() => {
@@ -37,8 +38,11 @@ export default function ApiDocsPage() {
   }, []);
 
   return (
-    <main className="bg-bg-panel min-h-screen">
-      <div id="swagger-root" />
-    </main>
+    <>
+      <Header />
+      <main className="bg-bg-panel min-h-screen">
+        <div id="swagger-root" />
+      </main>
+    </>
   );
 }
