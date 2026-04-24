@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface BarDatum {
   label: string;
@@ -32,10 +32,15 @@ const TONE_HEX: Record<NonNullable<BarDatum["tone"]>, string> = {
   red: "var(--red)",
 };
 
-// Minimal, dependency-free horizontal bar chart.
-// Rendered as HTML/flex so text sizes are independent of container width
-// and stay consistent with the rest of the editorial light theme.
+// Animated horizontal bar chart.
 export function BarChart({ data, height, compact }: Props) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const sorted = useMemo(
     () => [...data].sort((a, b) => b.value - a.value),
     [data],
@@ -52,31 +57,38 @@ export function BarChart({ data, height, compact }: Props) {
       aria-label="Catalogue size chart"
       style={height ? { minHeight: height } : undefined}
     >
-      {sorted.map((d) => {
+      {sorted.map((d, i) => {
         const pct = (d.value / max) * 100;
         const tone = d.tone ?? "brand";
         return (
           <div
             key={d.label}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 group"
             style={{ height: rowHeight }}
           >
-            <div className="w-[160px] shrink-0 text-right font-mono text-11 text-ink-1 truncate">
+            <div className="w-[160px] shrink-0 text-right font-mono text-11 text-ink-1 truncate group-hover:text-ink-0 transition-colors">
               {d.label}
             </div>
             <div
-              className="flex-1 rounded-sm bg-bg-2 relative"
+              className="flex-1 rounded-sm bg-bg-2 relative overflow-hidden"
               style={{ height: barHeight }}
             >
               <div
-                className={`absolute inset-y-0 left-0 rounded-sm ${TONE_CLASS[tone]}`}
+                className="absolute inset-y-0 left-0 rounded-sm"
                 style={{
-                  width: `${Math.max(0.5, pct)}%`,
+                  width: visible ? `${Math.max(0.5, pct)}%` : "0%",
                   background: TONE_HEX[tone],
+                  transition: `width ${0.35 + i * 0.025}s cubic-bezier(0.4, 0, 0.2, 1)`,
                 }}
               />
             </div>
-            <div className="w-[56px] shrink-0 text-right font-mono text-11 font-semibold text-ink-0">
+            <div
+              className="w-[56px] shrink-0 text-right font-mono text-11 font-semibold text-ink-0 transition-opacity"
+              style={{
+                opacity: visible ? 1 : 0,
+                transition: `opacity ${0.3 + i * 0.02}s ease`,
+              }}
+            >
               {d.value.toLocaleString()}
             </div>
           </div>
@@ -100,7 +112,7 @@ interface DonutProps {
   centerLabel?: string;
 }
 
-// Minimal SVG donut. Segments are drawn as stroked circle arcs.
+// Animated SVG donut — segments draw in sequence on mount.
 export function Donut({
   segments,
   size = 220,
@@ -108,10 +120,19 @@ export function Donut({
   centerValue,
   centerLabel,
 }: DonutProps) {
+  const [visible, setVisible] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const total = segments.reduce((t, s) => t + s.value, 0) || 1;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
+
   return (
     <div className="inline-flex flex-col items-center">
       <svg
@@ -121,6 +142,7 @@ export function Donut({
         className="overflow-visible"
         role="img"
       >
+        {/* Track ring */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -129,10 +151,11 @@ export function Donut({
           stroke="var(--bg-2)"
           strokeWidth={stroke}
         />
-        {segments.map((s) => {
+        {segments.map((s, i) => {
           const frac = s.value / total;
           const dash = frac * circumference;
           const gap = circumference - dash;
+          const isHovered = hovered === s.label;
           const el = (
             <circle
               key={s.label}
@@ -141,10 +164,16 @@ export function Donut({
               r={radius}
               fill="none"
               stroke={TONE_HEX[s.tone ?? "brand"]}
-              strokeWidth={stroke}
-              strokeDasharray={`${dash} ${gap}`}
+              strokeWidth={isHovered ? stroke + 6 : stroke}
+              strokeDasharray={visible ? `${dash} ${gap}` : `0 ${circumference}`}
               strokeDashoffset={-offset}
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              style={{
+                transition: `stroke-dasharray ${0.45 + i * 0.08}s cubic-bezier(0.4,0,0.2,1), stroke-width 0.2s ease`,
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setHovered(s.label)}
+              onMouseLeave={() => setHovered(null)}
             >
               <title>{`${s.label} — ${s.value}`}</title>
             </circle>
@@ -152,44 +181,55 @@ export function Donut({
           offset += dash;
           return el;
         })}
-        {centerValue !== undefined && (
-          <text
-            x={size / 2}
-            y={size / 2 - (centerLabel ? 2 : 6)}
-            textAnchor="middle"
-            fontFamily="var(--font-display)"
-            fontSize={size / 6}
-            fill="var(--ink-0)"
-          >
-            {centerValue}
-          </text>
-        )}
-        {centerLabel && (
-          <text
-            x={size / 2}
-            y={size / 2 + 20}
-            textAnchor="middle"
-            fontFamily="var(--font-mono)"
-            fontSize={10}
-            letterSpacing="1.5"
-            fill="var(--ink-2)"
-          >
-            {centerLabel.toUpperCase()}
-          </text>
+
+        {/* Center text */}
+        {hovered ? (
+          <>
+            <text x={size / 2} y={size / 2 - 2} textAnchor="middle"
+              fontFamily="var(--font-display)" fontSize={size / 8} fill="var(--ink-0)">
+              {segments.find((s) => s.label === hovered)?.value}
+            </text>
+            <text x={size / 2} y={size / 2 + 14} textAnchor="middle"
+              fontFamily="var(--font-mono)" fontSize={9} letterSpacing="1" fill="var(--ink-2)">
+              {hovered.toUpperCase().slice(0, 10)}
+            </text>
+          </>
+        ) : (
+          <>
+            {centerValue !== undefined && (
+              <text x={size / 2} y={size / 2 - (centerLabel ? 2 : 6)}
+                textAnchor="middle" fontFamily="var(--font-display)"
+                fontSize={size / 6} fill="var(--ink-0)"
+                style={{ transition: "opacity 0.3s" }}>
+                {centerValue}
+              </text>
+            )}
+            {centerLabel && (
+              <text x={size / 2} y={size / 2 + 20} textAnchor="middle"
+                fontFamily="var(--font-mono)" fontSize={10}
+                letterSpacing="1.5" fill="var(--ink-2)">
+                {centerLabel.toUpperCase()}
+              </text>
+            )}
+          </>
         )}
       </svg>
+
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 justify-center max-w-full">
         {segments.map((s) => (
           <div
             key={s.label}
-            className="flex items-center gap-1.5 text-10 font-mono text-ink-2"
+            className="flex items-center gap-1.5 text-10 font-mono cursor-pointer transition-colors"
+            style={{ color: hovered === s.label ? TONE_HEX[s.tone ?? "brand"] : "var(--ink-2)" }}
+            onMouseEnter={() => setHovered(s.label)}
+            onMouseLeave={() => setHovered(null)}
           >
-            <span
-              className="inline-block w-2 h-2 rounded-full"
-              style={{ background: TONE_HEX[s.tone ?? "brand"] }}
-            />
+            <span className="inline-block w-2 h-2 rounded-full"
+              style={{ background: TONE_HEX[s.tone ?? "brand"] }} />
             {s.label}
-            <span className="text-ink-0">{s.value}</span>
+            <span style={{ color: hovered === s.label ? TONE_HEX[s.tone ?? "brand"] : "var(--ink-0)" }}>
+              {s.value}
+            </span>
           </div>
         ))}
       </div>

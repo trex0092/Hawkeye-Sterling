@@ -72,6 +72,78 @@ const DEFAULT_POLICIES: Policy[] = [
       "10-year retention on all CDD records, STR artefacts, case timelines, audit-chain entries, goAML envelopes, and ongoing-monitoring snapshots per FDL 10/2025 Art.24. Encrypted at rest. Access audited.",
     lastReviewed: "2026-04-01",
   },
+  {
+    id: "customer-acceptance",
+    section: "Onboarding",
+    title: "Customer Acceptance Policy",
+    body:
+      "No business relationship is established until: (1) CDD is complete and documented; (2) sanctions screen returns clear or MLRO-approved; (3) source-of-funds narrative is obtained for any cash or equivalent > AED 55,000; (4) beneficial ownership ≥ 25% is identified and verified. Shell companies with no identifiable UBO are declined.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "wire-transfer",
+    section: "Onboarding",
+    title: "Wire Transfer & Payment Policy",
+    body:
+      "All outbound wires > AED 3,500 require full originator and beneficiary information per FATF R.16. Third-party payments are prohibited without prior MLRO approval. Payments to jurisdictions on the FATF grey/black list require Board-level sign-off and enhanced due diligence on end-use. Correspondent bank accounts must be pre-approved and listed in the authorised counterparty register.",
+    lastReviewed: "2026-03-28",
+  },
+  {
+    id: "str-triage",
+    section: "Reporting",
+    title: "STR Triage & Filing Policy",
+    body:
+      "Any red-flag event must be escalated to the MLRO within 24 hours. MLRO has 7 working days to triage and determine whether to file. goAML submission must be completed within 30 calendar days of the trigger event. No tipping-off: staff must not disclose the existence of an STR to the subject or any third party. MLRO may extend the triage window by 7 days with documented rationale.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "aml-training",
+    section: "Governance",
+    title: "AML/CFT Training Policy",
+    body:
+      "All staff with AML/CFT responsibilities must complete initial training before onboarding and annual refresher training thereafter. Training covers: FATF recommendations, UAE FDL 10/2025, red-flag typologies, goAML filing, and four-eyes procedures. MLRO maintains a training register. Non-completion blocks system access after a 14-day grace period. Board members receive annual AML awareness briefing.",
+    lastReviewed: "2026-03-15",
+  },
+  {
+    id: "sanctions-screening",
+    section: "Screening",
+    title: "Sanctions Screening Policy",
+    body:
+      "All customers, UBOs, and counterparties are screened at onboarding and on every list refresh (minimum 3× daily). Threshold for a positive match: ≥ 85% fuzzy score against OFAC SDN, UN Consolidated, EU Consolidated, UK HMT, or EOCN. Any match ≥ 85% triggers an automatic freeze and MLRO notification. The false-positive rate target is ≤ 1.0%; breaches are reported to the Board.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "nested-structures",
+    section: "Onboarding",
+    title: "Nested Structures & Shell Company Policy",
+    body:
+      "No customer relationship with a legal entity whose UBO cannot be identified through a maximum of two levels of corporate ownership. Any structure with a nominee director or nominee shareholder requires independent verification of the beneficial owner's identity and source of wealth. Bearer shares are not accepted. Regulated financial intermediaries (banks, funds) operating under equivalent AML regimes may be accepted at CO level without piercing to UBO.",
+    lastReviewed: "2026-03-22",
+  },
+  {
+    id: "cash-policy",
+    section: "Screening",
+    title: "Cash & High-Value Dealer Policy",
+    body:
+      "Cash transactions ≥ AED 55,000 (or equivalent) must be reported to the MLRO within one business day. Structuring (splitting transactions to avoid thresholds) is a red flag and triggers immediate escalation. DPMS transactions in precious metals or gemstones above AED 55,000 require full CDD regardless of payment method. No anonymous cash accepted. All cash receipts recorded in the DPMSR register within 24 hours.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "virtual-assets",
+    section: "Sector: VASP",
+    title: "Crypto & Virtual Asset Policy",
+    body:
+      "Virtual asset transactions require on-chain address screening against Chainalysis / Elliptic blacklists before settlement. No interaction with unhosted wallets > AED 3,500 without verified KYC. DeFi protocols on the FATF grey-list require MLRO pre-approval. Travel Rule compliance mandatory for all transfers > USD 1,000 equivalent. VASP counterparties must be VARA-licensed or operating under equivalent regulation.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "ongoing-monitoring",
+    section: "Governance",
+    title: "Ongoing Monitoring Policy",
+    body:
+      "All active customers are subject to continuous transaction monitoring. Tier-1 (PEP / high-risk) customers: daily name-screen refresh, all transactions reviewed. Tier-2 (medium-risk): weekly screen refresh, transaction monitoring via automated rules. Tier-3 (low-risk): monthly screen refresh, statistical anomaly detection only. Any change in customer profile triggers a full re-KYC within 30 days.",
+    lastReviewed: "2026-03-31",
+  },
 ];
 
 function load(): Policy[] {

@@ -384,6 +384,246 @@ const PLAYBOOKS: Playbook[] = [
       },
     ],
   },
+  {
+    id: "real-estate",
+    title: "Real Estate & Property Transaction",
+    typology: "real_estate",
+    family: "REML",
+    steps: [
+      {
+        title: "1. Buyer / seller identity",
+        required: true,
+        checks: [
+          "Full CDD on buyer and seller — individuals and all corporate UBOs",
+          "Verify buyer's source of funds (mortgage statement, sale proceeds, investment income)",
+          "Screen all parties against OFAC / UN / EU / UK sanctions and PEP lists",
+          "Confirm no third-party payer without prior MLRO approval",
+        ],
+      },
+      {
+        title: "2. Property valuation check",
+        required: true,
+        checks: [
+          "Obtain independent RICS-certified valuation",
+          "Flag purchase price >15% below or >15% above certified valuation",
+          "Check if property is listed on any seizure or restraint register",
+          "Review prior transaction history — rapid resale within 12 months is a red flag",
+        ],
+      },
+      {
+        title: "3. Payment method & structure",
+        required: true,
+        checks: [
+          "Confirm all funds are wire-transferred from an account in the buyer's name",
+          "No cash or cryptocurrency accepted without explicit MLRO pre-approval",
+          "Third-party payments trigger enhanced scrutiny — document commercial rationale",
+          "Mortgage provider must be a regulated institution in a FATF-member jurisdiction",
+        ],
+      },
+      {
+        title: "4. Agent / intermediary due diligence",
+        required: false,
+        checks: [
+          "Verify real estate agent holds valid DLD / RERA licence",
+          "Confirm agent has its own AML programme in place",
+          "Obtain agent's KYC package on their client before reliance",
+          "Document reliance arrangement per FDL 10/2025 Art.12",
+        ],
+      },
+    ],
+  },
+  {
+    id: "trade-finance",
+    title: "Trade Finance & Letters of Credit",
+    typology: "trade_finance",
+    family: "TF",
+    steps: [
+      {
+        title: "1. Documentary review",
+        required: true,
+        checks: [
+          "Verify commercial invoice, bill of lading, packing list, and certificate of origin are consistent",
+          "Confirm goods description on LC matches actual goods shipped",
+          "Cross-check unit price against published commodity benchmarks (LME, LBMA, Bloomberg)",
+          "Flag discrepancies between LC terms and shipping documents",
+        ],
+      },
+      {
+        title: "2. Counterparty screening",
+        required: true,
+        checks: [
+          "Screen applicant, beneficiary, issuing bank, and nominated bank against all sanctions lists",
+          "Verify issuing bank is not a shell bank (physical presence + correspondent bank check)",
+          "Obtain Wolfsberg Trade Finance questionnaire from the issuing bank",
+          "Identify UBOs of both applicant and beneficiary entities",
+        ],
+      },
+      {
+        title: "3. Jurisdiction & routing red-flags",
+        required: true,
+        checks: [
+          "Identify all countries in the transaction chain (origin, transit, destination)",
+          "Flag any FATF grey/black-list country in the route",
+          "Check for free-trade zone routing that obscures origin (TBML indicator)",
+          "Verify freight forwarder is registered and not on any debarment list",
+        ],
+      },
+      {
+        title: "4. Unusual structures",
+        required: false,
+        checks: [
+          "Back-to-back LCs with no obvious commercial logic",
+          "Transferable or assignable LC without credible business explanation",
+          "LC value inconsistent with known business volume of applicant",
+          "Repeated amendments to LC after issuance — investigate each amendment",
+        ],
+      },
+    ],
+  },
+  {
+    id: "wire-transfer",
+    title: "Wire Transfer Screening (FATF R.16)",
+    typology: "wire_transfer",
+    family: "Payments",
+    steps: [
+      {
+        title: "1. Originator & beneficiary data",
+        required: true,
+        checks: [
+          "Confirm full originator name, account number, and address are present (R.16 mandatory fields)",
+          "Confirm full beneficiary name and account number are present",
+          "Reject or return any wire missing required R.16 fields — document the rejection",
+          "Cross-check names against sanctions lists before processing",
+        ],
+      },
+      {
+        title: "2. Correspondent bank / SWIFT path",
+        required: true,
+        checks: [
+          "Verify each correspondent bank in the payment chain is SWIFT-registered and licensed",
+          "Flag any intermediary bank in a FATF-listed or high-risk jurisdiction",
+          "Confirm no cover-payment method that obscures originator identity (prohibited per R.16)",
+          "Retain full SWIFT message chain in the case record",
+        ],
+      },
+      {
+        title: "3. Threshold & structuring checks",
+        required: true,
+        checks: [
+          "Aggregate daily transfers to the same beneficiary — flag if total exceeds AED 55,000",
+          "Identify structuring pattern (multiple transfers just below threshold)",
+          "Flag round-dollar amounts with no commercial invoice backing",
+          "Check if transfer currency or amount is inconsistent with customer's declared business",
+        ],
+      },
+      {
+        title: "4. Third-party & pass-through risks",
+        required: false,
+        checks: [
+          "Third-party beneficiary requires MLRO pre-approval",
+          "Pass-through transactions (received + immediately re-sent) are a hard stop for review",
+          "Charitable / NGO destination requires additional EDD on the recipient organisation",
+          "Verify beneficiary bank account matches country of beneficiary's documented address",
+        ],
+      },
+    ],
+  },
+  {
+    id: "digital-assets",
+    title: "Digital Assets & NFT Transactions",
+    typology: "digital_assets",
+    family: "VASP",
+    steps: [
+      {
+        title: "1. Asset classification",
+        required: true,
+        checks: [
+          "Classify the digital asset: payment token, utility token, security token, or NFT",
+          "Confirm asset is not a privacy coin (Monero, Zcash, Dash) — hard stop if so",
+          "Identify the issuing protocol and smart contract address",
+          "Check if asset appears on OFAC Virtual Currency SDN list",
+        ],
+      },
+      {
+        title: "2. On-chain analytics",
+        required: true,
+        checks: [
+          "Run blockchain risk score on all relevant wallet addresses (Chainalysis / Elliptic)",
+          "Flag any address with >5% indirect exposure to darknet markets, mixers, or ransomware",
+          "Trace inbound funds to confirm source is a regulated exchange or identified wallet",
+          "Document cluster analysis results in the case file",
+        ],
+      },
+      {
+        title: "3. NFT-specific ML indicators",
+        required: true,
+        checks: [
+          "Check for wash-trading: same wallet buying and selling the same NFT repeatedly",
+          "Compare sale price to secondary-market floor price — >300% premium is a red flag",
+          "Identify if counterparty is anonymous (unhosted wallet with no KYC backing)",
+          "Escalate to MLRO if NFT value exceeds AED 150,000 with no clear provenance",
+        ],
+      },
+      {
+        title: "4. Travel Rule & settlement",
+        required: false,
+        checks: [
+          "Obtain Travel Rule message for any transfer ≥ USD 1,000 equivalent",
+          "Confirm receiving VASP is VARA-licensed or operates under equivalent regulation",
+          "Hard-stop settlement to unhosted wallets >AED 3,500 without enhanced verification",
+          "Retain on-chain transaction hash and explorer link in case record",
+        ],
+      },
+    ],
+  },
+  {
+    id: "hv-dealer",
+    title: "High-Value Dealer (Non-Gold DPMS)",
+    typology: "hv_dealer",
+    family: "DPMS",
+    steps: [
+      {
+        title: "1. Product scope identification",
+        required: true,
+        checks: [
+          "Classify goods: diamonds, coloured gemstones, watches, luxury goods, or other DPMS items",
+          "Confirm transaction value — DPMSR threshold applies at AED 55,000 per MoE Circular 2/2024",
+          "Obtain provenance documentation: Kimberley Process certificate for rough diamonds",
+          "Verify gemstone or watch serial numbers against reported stolen goods databases",
+        ],
+      },
+      {
+        title: "2. Customer due diligence",
+        required: true,
+        checks: [
+          "Full CDD for any single transaction or linked transactions ≥ AED 55,000",
+          "Screen customer and UBOs against OFAC / UN / EU / UK sanctions and PEP lists",
+          "Source-of-funds narrative required for cash component ≥ AED 25,000",
+          "Retain copy of government-issued ID — no anonymous sales above threshold",
+        ],
+      },
+      {
+        title: "3. Cash & structuring controls",
+        required: true,
+        checks: [
+          "Cash receipts logged in DPMSR register within 24 hours",
+          "DPMSR filed within 30 days of trigger transaction",
+          "Alert on split transactions designed to stay under threshold",
+          "CCTV footage retained for 10 years covering the transaction location",
+        ],
+      },
+      {
+        title: "4. Resale & consignment",
+        required: false,
+        checks: [
+          "Consignment arrangements require full CDD on consignor",
+          "Resale of high-value goods within 30 days at different price is a TBML red flag",
+          "Auction-house transactions: obtain hammer price and buyer's premium documentation",
+          "Escalate to MLRO if consignor cannot provide provenance documentation",
+        ],
+      },
+    ],
+  },
 ];
 
 export default function PlaybookPage() {

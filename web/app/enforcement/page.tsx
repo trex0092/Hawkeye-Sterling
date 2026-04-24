@@ -146,6 +146,105 @@ const DEADLINES: Deadline[] = [
     notes:
       "Annual test of the automated sanctions screening engine using CBUAE-prescribed test names and entities. Measure false-negative rate; document results. CBUAE Guidance on Sanctions Compliance, para 4.3.",
   },
+  {
+    id: "cbuae-inspection",
+    title: "CBUAE AML/CFT On-Site Inspection Readiness",
+    due: "2026-08-31",
+    authority: "CBUAE",
+    cadence: "annual",
+    notes:
+      "Annual self-assessment against CBUAE AML/CFT inspection checklist. Remediate all findings rated 'needs improvement' before the window. Ensure board minutes, training records, STR register, and risk appetite statement are current and accessible.",
+  },
+  {
+    id: "fiu-registration",
+    title: "FIU goAML Registration Annual Renewal",
+    due: "2026-06-15",
+    authority: "UAE FIU",
+    cadence: "annual",
+    notes:
+      "Renew the entity's goAML reporting-entity registration. Update MLRO contact details, confirm reporting categories (STR/SAR/CTR), and complete FIU's annual compliance declaration. Failure to renew suspends the ability to file.",
+  },
+  {
+    id: "correspondent-review",
+    title: "Correspondent Bank Questionnaire Annual Review",
+    due: "2026-07-01",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "Send updated CBQ to all correspondent banking partners. Receive and review responses within 30 days. Escalate any material AML/CFT control deficiency to the MLRO and terminate relationships with non-respondents per de-risking policy.",
+  },
+  {
+    id: "dpms-licence",
+    title: "DPMS Trade Licence Annual Renewal",
+    due: "2026-11-30",
+    authority: "UAE MoE / MOEC",
+    cadence: "annual",
+    notes:
+      "Renew the entity's DPMS trade licence with the relevant emirate authority. Confirm AML/CFT compliance declaration, updated UBO information, and paid regulatory fee. Lapsed licence triggers automatic suspension of precious-metal dealing.",
+  },
+  {
+    id: "internal-audit-aml",
+    title: "Internal Audit — AML/CFT Controls Review",
+    due: "2026-10-31",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Independent internal audit of AML/CFT programme effectiveness covering: CDD file quality, STR triage timelines, sanctions screening coverage, training completion, and board reporting. Output presented to Audit Committee. Corrective-action plan due within 60 days of report.",
+  },
+  {
+    id: "str-quality-board",
+    title: "STR Quality Review — Board Presentation",
+    due: "2026-07-31",
+    authority: "Internal / Board",
+    cadence: "quarterly",
+    notes:
+      "MLRO presents Q2 STR quality metrics: filing timeliness, FIU feedback received, false-positive rate, and lessons-learned from any declined or returned reports. Board confirms MLRO resource adequacy. Per FDL 10/2025 Art.15.",
+  },
+  {
+    id: "risk-model-validation",
+    title: "Customer Risk Scoring Model Annual Validation",
+    due: "2026-09-30",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "Independent validation of the customer risk-scoring model (tier assignment, risk factors, weighting). Confirm model is calibrated against current FATF/CBUAE typologies. Document validation results and any recalibration. Model changes require MLRO and Board approval before deployment.",
+  },
+  {
+    id: "adverse-media-review",
+    title: "Adverse Media Monitoring Review",
+    due: "2026-06-30",
+    authority: "Internal",
+    cadence: "quarterly",
+    notes:
+      "Review coverage and quality of adverse-media monitoring for all tier-1 and tier-2 customers. Confirm keyword lists are current, source languages cover customer geographies, and alert-handling SLA (48h triage) is being met. Present hit-rate statistics to MLRO.",
+  },
+  {
+    id: "ewra-update",
+    title: "Entity-Wide Risk Assessment Annual Update",
+    due: "2026-04-30",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Full update of the Entity-Wide Risk Assessment (EWRA) incorporating changes in customer mix, product/service scope, geography, and delivery channels. Residual-risk ratings reviewed against the risk appetite statement. Board approval required before circulation. Per FATF R.1 and UAE National Risk Assessment 2024.",
+  },
+  {
+    id: "pf-targeted-sanctions",
+    title: "Proliferation Financing Targeted Sanctions Controls Audit",
+    due: "2026-08-15",
+    authority: "Internal / CBUAE",
+    cadence: "annual",
+    notes:
+      "Audit of TFS controls specific to proliferation financing: DPRK / Iran / Syria nexus detection, dual-use goods screening, export-control cross-checks. Review automated detection rules and manual override logs. Report to MLRO and Board within 15 days of audit completion.",
+  },
+  {
+    id: "board-aml-q3",
+    title: "Board AML/CFT Quarterly Report — Q3 2026",
+    due: "2026-10-31",
+    authority: "Internal / Board",
+    cadence: "quarterly",
+    notes:
+      "MLRO presents Q3 AML/CFT metrics to the Board Audit Committee. Includes STR count YTD, sanctions alert volumes, training completion rate, open audit findings, and corrective-action status. Board approves any material policy amendments tabled.",
+  },
 ];
 
 function daysUntil(iso: string): number {
