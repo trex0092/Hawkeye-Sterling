@@ -492,8 +492,8 @@ function SummaryStat({
 }) {
   return (
     <div>
-      <div className="text-10 uppercase tracking-wide-4 text-white/50">{label}</div>
-      <div className={`text-18 font-mono font-semibold ${tone ?? "text-white"}`}>{value}</div>
+      <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">{label}</div>
+      <div className={`text-18 font-mono font-semibold ${tone ?? "text-bg-0"}`}>{value}</div>
     </div>
   );
 }

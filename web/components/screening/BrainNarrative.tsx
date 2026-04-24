@@ -172,13 +172,13 @@ export function BrainNarrative({
   };
 
   return (
-    <div className="bg-gradient-to-br from-ink-0 to-ink-1 text-white rounded-lg p-4 mb-3 border border-brand/30">
+    <div className="bg-gradient-to-br from-ink-0 to-ink-1 text-bg-0 rounded-lg p-4 mb-3 border border-brand/30">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-brand text-white uppercase">
             Brain narrative
           </span>
-          <span className="text-10.5 text-white/60 font-mono">
+          <span className="text-10.5 text-bg-0/60 font-mono">
             auto-generated · deterministic · audit-safe
           </span>
         </div>
@@ -186,7 +186,7 @@ export function BrainNarrative({
           <button
             type="button"
             onClick={handleCopy}
-            className="text-10.5 font-mono px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="text-10.5 font-mono px-2 py-1 rounded bg-bg-0/10 hover:bg-bg-0/20 text-bg-0 transition-colors"
             title="Copy to clipboard"
           >
             {copied ? "✓ copied" : "copy"}
@@ -194,7 +194,7 @@ export function BrainNarrative({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="text-10.5 font-mono px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="text-10.5 font-mono px-2 py-1 rounded bg-bg-0/10 hover:bg-bg-0/20 text-bg-0 transition-colors"
             aria-label={expanded ? "Collapse narrative" : "Expand narrative"}
           >
             {expanded ? "−" : "+"}
@@ -202,7 +202,7 @@ export function BrainNarrative({
         </div>
       </div>
       {expanded && (
-        <div className="space-y-2 text-12 leading-relaxed text-white/95">
+        <div className="space-y-2 text-12 leading-relaxed text-bg-0/95">
           {paragraphs.map((p, i) => (
             <p key={i} className="m-0">
               {p}
