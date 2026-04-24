@@ -129,7 +129,7 @@ async function handleSign(req: Request): Promise<NextResponse> {
     );
   }
   const minRole = ACTION_MIN_ROLE[body.action] ?? "analyst";
-  if (ROLE_POWER[body.actor.role] < ROLE_POWER[minRole]) {
+  if ((ROLE_POWER[body.actor.role] ?? 0) < (ROLE_POWER[minRole] ?? 0)) {
     return NextResponse.json(
       {
         ok: false,
