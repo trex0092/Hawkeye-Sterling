@@ -301,7 +301,7 @@ function HeaderUserCard() {
     setRole(r);
   };
 
-  const initial = name ? name[0].toUpperCase() : "·";
+  const initial = name ? name.charAt(0).toUpperCase() : "·";
 
   return (
     <div className="relative shrink-0" ref={ref}>
