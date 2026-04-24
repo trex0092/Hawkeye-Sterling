@@ -6,6 +6,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // @netlify/blobs is imported dynamically inside ../dist/src/ingestion/blobs-store.js.
+  // Webpack resolves modules relative to each source file's location, so when processing
+  // a file under ../dist/ it looks for node_modules going up from that directory and
+  // never reaches web/node_modules. Adding web/node_modules as an absolute path in
+  // resolve.modules ensures webpack can find @netlify/blobs during the build even when
+  // root node_modules is not installed (local dev). On Netlify, root npm ci installs
+  // the package at the repo root first, so the standard relative resolution still wins.
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.resolve.modules = [
+        ...(Array.isArray(config.resolve.modules)
+          ? config.resolve.modules
+          : ["node_modules"]),
+        path.resolve(__dirname, "node_modules"),
+      ];
+    }
+    return config;
+  },
+
   // The API routes (quick-screen, super-brain, news-search, ongoing/run,
   // compliance-report, sar-report, screening-report, etc.) import the
   // compiled brain from ../dist/src/brain/**. Next.js's default tracing
