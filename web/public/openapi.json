@@ -15,6 +15,7 @@
   ],
   "security": [{ "bearerAuth": [] }],
   "paths": {
+
     "/api/quick-screen": {
       "post": {
         "summary": "Run a quick-screen against the sanctions corpus",
@@ -23,7 +24,15 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/QuickScreenRequest" }
+              "schema": { "$ref": "#/components/schemas/QuickScreenRequest" },
+              "example": {
+                "subject": {
+                  "name": "Zeynep Basak Halac",
+                  "aliases": ["Z. Halac", "Zeynep Halac"],
+                  "entityType": "individual",
+                  "jurisdiction": "TR"
+                }
+              }
             }
           }
         },
@@ -41,6 +50,7 @@
         }
       }
     },
+
     "/api/super-brain": {
       "post": {
         "summary": "Full cognitive fusion: PEP + jurisdiction + ESG + typologies + redlines",
@@ -54,38 +64,33 @@
                 "required": ["subject"],
                 "properties": {
                   "subject": { "$ref": "#/components/schemas/Subject" },
-                  "roleText": { "type": "string" },
-                  "adverseMediaText": { "type": "string" }
+                  "roleText": {
+                    "type": "string",
+                    "description": "PEP role description — e.g. Minister of Finance, Director"
+                  },
+                  "adverseMediaText": {
+                    "type": "string",
+                    "description": "Paste any news / adverse media narrative here for classification"
+                  }
                 }
+              },
+              "example": {
+                "subject": {
+                  "name": "Zeynep Basak Halac",
+                  "aliases": ["Z. Halac"],
+                  "entityType": "individual",
+                  "jurisdiction": "TR"
+                },
+                "roleText": "Director, gold refinery, Ankara",
+                "adverseMediaText": "Arrested in connection with gold smuggling and money laundering operation, Ankara 2024"
               }
             }
           }
         },
-        "responses": { "200": { "description": "Fused brain output" } }
+        "responses": { "200": { "description": "Fused brain output — composite score, PEP, ESG, typologies, redlines, jurisdiction" } }
       }
     },
-    "/api/news-search": {
-      "post": {
-        "summary": "Multi-lingual adverse-media dossier (7 locales)",
-        "tags": ["Adverse Media"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["q"],
-                "properties": {
-                  "q": { "type": "string", "description": "Subject name or search query" },
-                  "locales": { "type": "array", "items": { "type": "string" }, "description": "ISO locale codes to search (default: all 7)" }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Clustered article dossier" } }
-      }
-    },
+
     "/api/batch-screen": {
       "post": {
         "summary": "Bulk screening (up to 500 rows / call)",
@@ -94,16 +99,63 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/BatchScreenRequest" }
+              "schema": { "$ref": "#/components/schemas/BatchScreenRequest" },
+              "example": {
+                "rows": [
+                  {
+                    "name": "Zeynep Basak Halac",
+                    "aliases": ["Z. Halac"],
+                    "entityType": "individual",
+                    "jurisdiction": "TR"
+                  },
+                  {
+                    "name": "Acme Gold Trading LLC",
+                    "entityType": "organisation",
+                    "jurisdiction": "AE"
+                  },
+                  {
+                    "name": "Viktor Petrov",
+                    "entityType": "individual",
+                    "jurisdiction": "RU",
+                    "dob": "1975-03-15"
+                  }
+                ]
+              }
             }
           }
         },
-        "responses": { "200": { "description": "Per-row screening result" } }
+        "responses": { "200": { "description": "Per-row screening results with severity + list coverage" } }
       }
     },
+
+    "/api/news-search": {
+      "get": {
+        "summary": "Multi-lingual adverse-media dossier (8 locales: EN, ES, FR, RU, ZH, AR, PT, TR)",
+        "tags": ["Adverse Media"],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Subject name to search for across all news locales",
+            "schema": { "type": "string", "maxLength": 500 },
+            "example": "Zeynep Basak Halac"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Clustered article dossier with severity, keyword groups and ESG categories" }
+        }
+      }
+    },
+
     "/api/ongoing": {
+      "get": {
+        "summary": "List all subjects enrolled in ongoing monitoring",
+        "tags": ["Monitoring"],
+        "responses": { "200": { "description": "Array of enrolled subjects" } }
+      },
       "post": {
-        "summary": "List, enrol, or remove a subject from ongoing monitoring",
+        "summary": "Enrol a subject in ongoing monitoring",
         "tags": ["Monitoring"],
         "requestBody": {
           "required": true,
@@ -111,22 +163,70 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["action"],
+                "required": ["id", "name"],
                 "properties": {
-                  "action": { "type": "string", "enum": ["list", "enrol", "remove"], "description": "Operation to perform" },
-                  "subjectId": { "type": "string", "description": "Required for enrol / remove" },
-                  "subject": { "$ref": "#/components/schemas/Subject", "description": "Required for enrol" }
+                  "id": {
+                    "type": "string",
+                    "description": "Your internal subject ID — alphanumeric, ._-: only, max 128 chars",
+                    "example": "HS-10001"
+                  },
+                  "name": { "type": "string", "example": "Zeynep Basak Halac" },
+                  "aliases": { "type": "array", "items": { "type": "string" }, "example": ["Z. Halac"] },
+                  "entityType": {
+                    "type": "string",
+                    "enum": ["individual", "organisation", "vessel", "aircraft", "other"],
+                    "example": "individual"
+                  },
+                  "jurisdiction": { "type": "string", "example": "TR" },
+                  "group": { "type": "string", "description": "Business group or unit", "example": "Corporate Banking" },
+                  "caseId": { "type": "string", "description": "Linked case reference", "example": "CAS-10001" },
+                  "cadence": {
+                    "type": "string",
+                    "enum": ["hourly", "thrice_daily", "daily", "weekly", "monthly"],
+                    "default": "thrice_daily",
+                    "example": "daily"
+                  }
                 }
+              },
+              "example": {
+                "id": "HS-10001",
+                "name": "Zeynep Basak Halac",
+                "aliases": ["Z. Halac"],
+                "entityType": "individual",
+                "jurisdiction": "TR",
+                "caseId": "CAS-10001",
+                "cadence": "daily"
               }
             }
           }
         },
-        "responses": { "200": { "description": "OK" } }
+        "responses": { "200": { "description": "Enrolment confirmed with schedule seeded" } }
+      },
+      "delete": {
+        "summary": "Remove a subject from ongoing monitoring",
+        "tags": ["Monitoring"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Subject ID to remove",
+            "schema": { "type": "string" },
+            "example": "HS-10001"
+          }
+        ],
+        "responses": { "200": { "description": "Subject removed from monitoring" } }
       }
     },
+
     "/api/schedule": {
+      "get": {
+        "summary": "List all per-subject rescreening schedules",
+        "tags": ["Monitoring"],
+        "responses": { "200": { "description": "Array of active schedules" } }
+      },
       "post": {
-        "summary": "List or create / update a per-subject rescreening schedule",
+        "summary": "Create or update a per-subject rescreening schedule",
         "tags": ["Monitoring"],
         "requestBody": {
           "required": true,
@@ -134,23 +234,57 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["action"],
+                "required": ["subjectId", "cadence"],
                 "properties": {
-                  "action": { "type": "string", "enum": ["list", "upsert"], "description": "list returns all schedules; upsert creates or updates" },
-                  "subjectId": { "type": "string", "description": "Required for upsert" },
-                  "cadence": { "type": "string", "enum": ["hourly", "daily", "weekly", "monthly"] },
-                  "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1 }
+                  "subjectId": { "type": "string", "description": "Must match an enrolled subject ID", "example": "HS-10001" },
+                  "cadence": {
+                    "type": "string",
+                    "enum": ["hourly", "daily", "weekly", "monthly"],
+                    "example": "weekly"
+                  },
+                  "scoreThreshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Only re-run if composite score exceeds this value",
+                    "example": 0.6
+                  }
                 }
+              },
+              "example": {
+                "subjectId": "HS-10001",
+                "cadence": "weekly",
+                "scoreThreshold": 0.6
               }
             }
           }
         },
-        "responses": { "200": { "description": "Schedule persisted / list returned" } }
+        "responses": { "200": { "description": "Schedule persisted — nextRunAt returned" } }
+      },
+      "delete": {
+        "summary": "Delete a rescreening schedule",
+        "tags": ["Monitoring"],
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "HS-10001"
+          }
+        ],
+        "responses": { "200": { "description": "Schedule deleted" } }
       }
     },
+
     "/api/feedback": {
+      "get": {
+        "summary": "Retrieve aggregated FP / TM statistics",
+        "tags": ["Learning"],
+        "responses": { "200": { "description": "Aggregated false-positive and true-match stats" } }
+      },
       "post": {
-        "summary": "Retrieve aggregated FP / TM statistics or submit an analyst verdict",
+        "summary": "Submit an analyst verdict (false positive, true match, needs review)",
         "tags": ["Learning"],
         "requestBody": {
           "required": true,
@@ -158,23 +292,73 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["action"],
+                "required": ["subjectId", "listId", "listRef", "candidateName", "verdict", "analyst"],
                 "properties": {
-                  "action": { "type": "string", "enum": ["stats", "submit"], "description": "stats returns aggregates; submit records a verdict" },
-                  "caseId": { "type": "string" },
-                  "verdict": { "type": "string", "enum": ["true_positive", "false_positive", "escalated"] },
-                  "notes": { "type": "string" }
+                  "subjectId": { "type": "string", "example": "HS-10001" },
+                  "listId": {
+                    "type": "string",
+                    "description": "Sanctions list identifier",
+                    "example": "OFAC-SDN"
+                  },
+                  "listRef": {
+                    "type": "string",
+                    "description": "Reference number on the list",
+                    "example": "SDN-12345"
+                  },
+                  "candidateName": {
+                    "type": "string",
+                    "description": "Name as it appears on the sanctions list",
+                    "example": "HALAC ZEYNEP BASAK"
+                  },
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["false_positive", "true_match", "needs_review"],
+                    "example": "false_positive"
+                  },
+                  "analyst": { "type": "string", "example": "Luisa Fernandez" },
+                  "reason": {
+                    "type": "string",
+                    "description": "Explanation for the verdict",
+                    "example": "DOB mismatch — different individual, confirmed via passport"
+                  }
                 }
+              },
+              "example": {
+                "subjectId": "HS-10001",
+                "listId": "OFAC-SDN",
+                "listRef": "SDN-12345",
+                "candidateName": "HALAC ZEYNEP BASAK",
+                "verdict": "false_positive",
+                "analyst": "Luisa Fernandez",
+                "reason": "DOB mismatch — different individual, confirmed via passport"
               }
             }
           }
         },
-        "responses": { "200": { "description": "Stats payload or verdict receipt" } }
+        "responses": { "200": { "description": "Verdict recorded — FP rate recalibrated" } }
       }
     },
+
     "/api/corrections": {
+      "get": {
+        "summary": "List data-subject correction requests",
+        "tags": ["Records"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by status",
+            "schema": {
+              "type": "string",
+              "enum": ["received", "under_review", "correction_applied", "record_retained", "escalated"]
+            }
+          }
+        ],
+        "responses": { "200": { "description": "Array of correction requests" } }
+      },
       "post": {
-        "summary": "List, file, fetch or update a data-subject correction request",
+        "summary": "File a new data-subject correction request",
         "tags": ["Records"],
         "requestBody": {
           "required": true,
@@ -182,21 +366,48 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["action"],
+                "required": ["subjectName", "requesterEmail", "claim"],
                 "properties": {
-                  "action": { "type": "string", "enum": ["list", "file", "fetch", "update"], "description": "list = all requests; file = new (public); fetch = single; update = status / appeal" },
-                  "id": { "type": "string", "description": "Required for fetch / update" },
-                  "subjectName": { "type": "string" },
-                  "details": { "type": "string" },
-                  "status": { "type": "string", "enum": ["open", "in_review", "resolved", "rejected"] }
+                  "subjectName": { "type": "string", "example": "Zeynep Basak Halac" },
+                  "requesterEmail": { "type": "string", "format": "email", "example": "legal@counsel.com" },
+                  "requesterName": { "type": "string", "example": "John Smith" },
+                  "requesterCapacity": {
+                    "type": "string",
+                    "enum": ["subject", "legal_representative", "data_controller", "other"],
+                    "default": "subject",
+                    "example": "legal_representative"
+                  },
+                  "claim": {
+                    "type": "string",
+                    "description": "Description of the correction being requested",
+                    "example": "Subject incorrectly matched to OFAC SDN entry — confirmed different individual with different nationality and DOB"
+                  },
+                  "listId": { "type": "string", "example": "OFAC-SDN" },
+                  "listRef": { "type": "string", "example": "SDN-12345" },
+                  "evidenceUrls": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uri" },
+                    "example": ["https://example.com/passport-copy.pdf"]
+                  }
                 }
+              },
+              "example": {
+                "subjectName": "Zeynep Basak Halac",
+                "requesterEmail": "legal@counsel.com",
+                "requesterName": "John Smith",
+                "requesterCapacity": "legal_representative",
+                "claim": "Subject incorrectly matched to OFAC SDN entry — confirmed different individual with different nationality and DOB",
+                "listId": "OFAC-SDN",
+                "listRef": "SDN-12345",
+                "evidenceUrls": ["https://example.com/passport-copy.pdf"]
               }
             }
           }
         },
-        "responses": { "200": { "description": "Correction record or receipt with 30-day SLA" } }
+        "responses": { "200": { "description": "Correction request received — 30-day SLA clock started" } }
       }
     },
+
     "/api/gdpr/export": {
       "post": {
         "summary": "GDPR Art. 15 — right-of-access export",
@@ -207,11 +418,14 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["subjectId"],
+                "description": "Provide subjectId OR email — at least one required",
                 "properties": {
-                  "subjectId": { "type": "string" },
-                  "format": { "type": "string", "enum": ["json", "pdf"], "default": "json" }
+                  "subjectId": { "type": "string", "example": "HS-10001" },
+                  "email": { "type": "string", "format": "email", "example": "subject@example.com" }
                 }
+              },
+              "example": {
+                "subjectId": "HS-10001"
               }
             }
           }
@@ -219,6 +433,7 @@
         "responses": { "200": { "description": "Full data export package" } }
       }
     },
+
     "/api/gdpr/delete": {
       "post": {
         "summary": "GDPR Art. 17 — right-to-erasure",
@@ -229,22 +444,37 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["subjectId", "reason"],
+                "description": "Provide subjectId OR email — at least one required",
                 "properties": {
-                  "subjectId": { "type": "string" },
-                  "reason": { "type": "string" },
-                  "retainAuditTrail": { "type": "boolean", "default": true, "description": "FDL 10/2025 Art.24 — audit trail retained even after erasure" }
+                  "subjectId": { "type": "string", "example": "HS-10001" },
+                  "email": { "type": "string", "format": "email", "example": "subject@example.com" },
+                  "dryRun": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "true = preview what will be deleted without executing",
+                    "example": true
+                  }
                 }
+              },
+              "example": {
+                "subjectId": "HS-10001",
+                "dryRun": true
               }
             }
           }
         },
-        "responses": { "200": { "description": "Erasure receipt with regulatory retention notice" } }
+        "responses": { "200": { "description": "Erasure receipt — FDL 10/2025 Art.24 audit trail retained" } }
       }
     },
+
     "/api/keys": {
+      "get": {
+        "summary": "List all API keys (Admin only)",
+        "tags": ["Auth"],
+        "responses": { "200": { "description": "Array of issued API keys (plaintext never returned)" } }
+      },
       "post": {
-        "summary": "List API keys or issue a new API key",
+        "summary": "Issue a new API key (Admin only)",
         "tags": ["Auth"],
         "requestBody": {
           "required": true,
@@ -252,114 +482,96 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["action"],
+                "required": ["name", "email"],
                 "properties": {
-                  "action": { "type": "string", "enum": ["list", "issue"], "description": "list requires auth; issue is public (instant signup)" },
-                  "label": { "type": "string", "description": "Human-readable label for the new key" },
-                  "tier": { "type": "string", "enum": ["starter", "professional", "enterprise"] }
+                  "name": { "type": "string", "description": "Name of person or application", "example": "Luisa Fernandez" },
+                  "email": { "type": "string", "format": "email", "example": "luisa@company.com" },
+                  "tier": {
+                    "type": "string",
+                    "enum": ["free", "professional", "enterprise"],
+                    "default": "free",
+                    "example": "professional"
+                  }
                 }
+              },
+              "example": {
+                "name": "Luisa Fernandez",
+                "email": "luisa@company.com",
+                "tier": "professional"
               }
             }
           }
         },
-        "responses": { "200": { "description": "Key list or new plaintext key (returned once)" } }
+        "responses": { "200": { "description": "New API key — plaintext returned once, store securely" } }
       }
     },
+
     "/api/keys/{id}": {
       "post": {
-        "summary": "Revoke or permanently delete an API key",
+        "summary": "Revoke an API key (Admin only)",
         "tags": ["Auth"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["action"],
-                "properties": {
-                  "action": { "type": "string", "enum": ["revoke", "delete"], "description": "revoke = soft disable; delete = permanent" }
-                }
-              }
-            }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "API key ID to revoke",
+            "schema": { "type": "string" },
+            "example": "key_abc123"
           }
-        },
-        "responses": { "200": { "description": "OK" } }
+        ],
+        "responses": { "200": { "description": "Key revoked — soft disable, not deleted" } }
+      },
+      "delete": {
+        "summary": "Permanently delete an API key (Admin only)",
+        "tags": ["Auth"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "API key ID to permanently delete",
+            "schema": { "type": "string" },
+            "example": "key_abc123"
+          }
+        ],
+        "responses": { "200": { "description": "Key permanently deleted" } }
       }
     },
+
     "/api/tiers": {
-      "post": {
+      "get": {
         "summary": "List commercial tiers + limits",
         "tags": ["Auth"],
         "security": [],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "currency": { "type": "string", "default": "USD", "description": "Return pricing in this currency" }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Tier definitions and rate limits" } }
+        "responses": { "200": { "description": "All tier definitions with rate limits and monthly quotas" } }
       }
     },
+
     "/api/analytics": {
-      "post": {
+      "get": {
         "summary": "Operational analytics + 30 DPMS KPIs",
         "tags": ["Analytics"],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "from": { "type": "string", "format": "date", "description": "Start of reporting window (ISO date)" },
-                  "to": { "type": "string", "format": "date", "description": "End of reporting window (ISO date)" },
-                  "include": { "type": "array", "items": { "type": "string" }, "description": "KPI subset to return (default: all)" }
-                }
-              }
-            }
-          }
-        },
         "responses": { "200": { "description": "Analytics payload with 30 DPMS KPIs" } }
       }
     },
+
     "/api/status": {
-      "post": {
+      "get": {
         "summary": "Live health status of all services",
         "tags": ["System"],
         "security": [],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "verbose": { "type": "boolean", "default": false, "description": "Include full brain-soul manifest in response" }
-                }
-              }
-            }
-          }
-        },
         "responses": { "200": { "description": "Service health, brain-soul status, and cognitive grade" } }
       }
     }
+
   },
   "components": {
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "API key (hks_live_…)"
+        "bearerFormat": "ADMIN_TOKEN or API key (hks_live_…)"
       }
     },
     "schemas": {
@@ -367,18 +579,30 @@
         "type": "object",
         "required": ["name"],
         "properties": {
-          "name": { "type": "string" },
-          "aliases": { "type": "array", "items": { "type": "string" } },
-          "entityType": { "type": "string", "enum": ["individual", "organisation", "vessel", "aircraft", "other"] },
-          "jurisdiction": { "type": "string" }
+          "name": { "type": "string", "example": "Zeynep Basak Halac" },
+          "aliases": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Z. Halac"]
+          },
+          "entityType": {
+            "type": "string",
+            "enum": ["individual", "organisation", "vessel", "aircraft", "other"],
+            "example": "individual"
+          },
+          "jurisdiction": { "type": "string", "example": "TR" }
         }
       },
       "QuickScreenRequest": {
         "type": "object",
-        "required": ["subject", "candidates"],
+        "required": ["subject"],
         "properties": {
           "subject": { "$ref": "#/components/schemas/Subject" },
-          "candidates": { "type": "array", "items": { "type": "object" } },
+          "candidates": {
+            "type": "array",
+            "items": { "type": "object" },
+            "description": "Custom watchlist to screen against. Omit to use live OFAC/UN/EU/UK/UAE corpus (max 5,000 entries)"
+          },
           "options": { "type": "object" }
         }
       },
@@ -401,9 +625,20 @@
           "rows": {
             "type": "array",
             "maxItems": 500,
-            "items": { "$ref": "#/components/schemas/Subject" }
-          },
-          "options": { "type": "object" }
+            "items": {
+              "allOf": [
+                { "$ref": "#/components/schemas/Subject" },
+                {
+                  "type": "object",
+                  "properties": {
+                    "dob": { "type": "string", "description": "Date of birth (ISO 8601)", "example": "1980-06-15" },
+                    "gender": { "type": "string", "example": "F" },
+                    "idNumber": { "type": "string", "description": "Passport or national ID number", "example": "A1234567" }
+                  }
+                }
+              ]
+            }
+          }
         }
       }
     },
