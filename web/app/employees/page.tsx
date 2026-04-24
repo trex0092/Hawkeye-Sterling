@@ -185,7 +185,6 @@ export default function EmployeesPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 16 · HR registry"
           title="Employee"
@@ -459,7 +458,6 @@ export default function EmployeesPage() {
         <p className="text-10 text-ink-3 mt-3">
           Click any row to expand full details. Document status auto-updates: amber within 30 days of expiry, red after expiry.
         </p>
-      </div>
     </ModuleLayout>
   );
 }

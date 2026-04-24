@@ -224,7 +224,7 @@ export default function TransactionMonitorPage() {
 
   return (
     <ModuleLayout>
-          <ModuleHeader
+      <ModuleHeader
             title="Transaction Monitor"
             subtitle="Module 08 · MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
             dotColor="amber"
@@ -238,15 +238,15 @@ export default function TransactionMonitorPage() {
                 </Btn>
               </>
             }
-          />
+      />
 
-          <KpiGrid cols={3}>
+      <KpiGrid cols={3}>
             <Kpi value={txs.length} label="Transactions" tone="brand" />
             <Kpi value={alerts} label="Alerts" tone="amber" />
             <Kpi value={reportable} label="Reportable (DPMS ≥ 55k)" tone="red" />
-          </KpiGrid>
+      </KpiGrid>
 
-          <Card>
+      <Card>
             <form ref={formRef} onSubmit={log}>
               <CardSection title="Transaction identity">
                 <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
@@ -385,11 +385,11 @@ export default function TransactionMonitorPage() {
                 }
               />
             </form>
-          </Card>
+      </Card>
 
-          {txs.length === 0 ? (
+      {txs.length === 0 ? (
             <Register empty="No transactions being monitored." />
-          ) : (
+      ) : (
             <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
               <table className="w-full text-12">
                 <thead className="bg-bg-1 border-b border-hair-2">
@@ -464,15 +464,15 @@ export default function TransactionMonitorPage() {
                 </tbody>
               </table>
             </div>
-          )}
-          <PaymentScreen />
+      )}
+      <PaymentScreen />
       <ReportModal
         open={reportTx !== null}
         title={reportTx?.ref ?? ""}
         payload={reportTx ? txToReportPayload(reportTx) : null}
         onClose={closeTxReport}
         asanaFile={
-          reportTx
+      reportTx
             ? {
                 endpoint: "/api/tm-report",
                 body: { transaction: reportTx },

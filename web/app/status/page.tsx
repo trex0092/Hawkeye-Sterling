@@ -187,7 +187,6 @@ export default function StatusPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="MODULE 07 · LIVE ENDPOINT HEALTH"
           title="System"
@@ -558,7 +557,6 @@ export default function StatusPage() {
         {!data && !err && (
           <div className="text-12 text-ink-2">Loading status…</div>
         )}
-      </div>
     </ModuleLayout>
   );
 }

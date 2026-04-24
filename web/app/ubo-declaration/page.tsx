@@ -56,8 +56,8 @@ export default function UboDeclarationPage() {
   if (submitted) {
     return (
       <ModuleLayout>
-        <div>
-          <div className="bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="max-w-md w-full bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
             <h1 className="font-display text-24 text-ink-0 m-0 mb-3">
               UBO declaration received

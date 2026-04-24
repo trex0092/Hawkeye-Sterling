@@ -59,22 +59,22 @@ function AccessDeniedScreen({ role }: { role: OperatorRole }) {
     <ModuleLayout>
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="max-w-md text-center p-8 bg-bg-panel border border-hair-2 rounded-xl">
-          <div className="text-3xl mb-4">🔒</div>
-          <h2 className="text-16 font-bold text-ink-0 mb-2">
+      <div className="text-3xl mb-4">🔒</div>
+      <h2 className="text-16 font-bold text-ink-0 mb-2">
             Access restricted — FDL Art. 29
-          </h2>
-          <p className="text-13 text-ink-2 mb-4">
+      </h2>
+      <p className="text-13 text-ink-2 mb-4">
             The STR / SAR case register is restricted to Compliance Officers
             and the MLRO. Viewing this register by unauthorised personnel
             risks tipping-off the subject under investigation.
-          </p>
-          <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-6">
+      </p>
+      <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-6">
             Your current role is <strong>{ROLE_LABEL[role]}</strong>. Switch
             to CO or MLRO in the sidebar to proceed.
-          </div>
-          <p className="text-11 text-ink-3">
+      </div>
+      <p className="text-11 text-ink-3">
             This access attempt has been logged to the immutable audit chain.
-          </p>
+      </p>
         </div>
       </div>
     </ModuleLayout>
@@ -122,13 +122,13 @@ export default function StrCasesPage() {
       loadCases()
         .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
         .map((c) => ({
-          id: c.id,
-          title: c.subject,
-          reportKind: c.meta?.split(" · ")[0] ?? "STR",
-          subject: c.subject,
-          amountAed: "",
-          status: c.statusLabel,
-          openedAt: c.opened,
+      id: c.id,
+      title: c.subject,
+      reportKind: c.meta?.split(" · ")[0] ?? "STR",
+      subject: c.subject,
+      amountAed: "",
+      status: c.statusLabel,
+      openedAt: c.opened,
         })),
     );
   }, [role]);
@@ -197,9 +197,9 @@ export default function StrCasesPage() {
       const res = await fetchJson<{ ok: boolean; taskUrl?: string }>(
         "/api/sar-report",
         {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
             subject: {
               id: `STR-${Date.now()}`,
               name: subject.trim(),
@@ -208,8 +208,8 @@ export default function StrCasesPage() {
             filingType: reportKind,
             narrative: narrative.trim() || undefined,
             mlro,
-          }),
-          label: "Filing failed",
+      }),
+      label: "Filing failed",
         },
       );
       if (!res.ok) {
@@ -221,7 +221,7 @@ export default function StrCasesPage() {
         // Same record powers this page's in-module register (on next
         // hydration) via the loadCases() effect above.
         const caseStatus =
-          status === "Submitted"
+      status === "Submitted"
             ? "reported"
             : status === "Closed"
               ? "closed"
@@ -229,22 +229,22 @@ export default function StrCasesPage() {
                 ? "review"
                 : "active";
         const record = buildCaseRecord({
-          subject: subject.trim(),
-          ...(subjectCountry.trim()
+      subject: subject.trim(),
+      ...(subjectCountry.trim()
             ? { subjectJurisdiction: subjectCountry.trim() }
             : {}),
-          reportKind,
-          ...(amount ? { amountAed: amount } : {}),
-          status: caseStatus,
-          statusLabel: status,
-          statusDetail: `${reportKind} filed by ${mlro || "MLRO"}`,
-          ...(goamlRef.trim() ? { goAMLReference: goamlRef.trim() } : {}),
+      reportKind,
+      ...(amount ? { amountAed: amount } : {}),
+      status: caseStatus,
+      statusLabel: status,
+      statusDetail: `${reportKind} filed by ${mlro || "MLRO"}`,
+      ...(goamlRef.trim() ? { goAMLReference: goamlRef.trim() } : {}),
         });
         appendCase(record);
 
         flashFor("success", "Filed to STR/SAR Asana board");
         setCases((prev) => [
-          {
+      {
             id: record.id,
             title: title.trim() || subject.trim(),
             reportKind,
@@ -252,8 +252,8 @@ export default function StrCasesPage() {
             amountAed: amount,
             status,
             openedAt: record.opened,
-          },
-          ...prev,
+      },
+      ...prev,
         ]);
         clear();
       } else {
@@ -270,7 +270,7 @@ export default function StrCasesPage() {
 
   return (
     <ModuleLayout>
-          <ModuleHeader
+      <ModuleHeader
             title="STR Case Management"
             subtitle="Module 05 · file without delay · no tipping-off"
             dotColor="brand"
@@ -279,20 +279,20 @@ export default function StrCasesPage() {
               tone: "critical",
             }}
             actions={<Btn variant="ghost">+ New case</Btn>}
-          />
+      />
 
-          <ComplianceFlag tone="green">
+      <ComplianceFlag tone="green">
             No tipping off · FDL Art. 29
-          </ComplianceFlag>
+      </ComplianceFlag>
 
-          <KpiGrid cols={4}>
+      <KpiGrid cols={4}>
             <Kpi value={cases.length} label="Total" tone="brand" />
             <Kpi value={open} label="Open" tone="amber" />
             <Kpi value={submitted} label="Submitted" tone="green" />
             <Kpi value={overdue} label="Overdue" tone="red" />
-          </KpiGrid>
+      </KpiGrid>
 
-          <Card>
+      <Card>
             <form onSubmit={openCase}>
               <CardSection title="Case identity">
                 <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
@@ -499,11 +499,11 @@ export default function StrCasesPage() {
               />
               <SignOffPanel />
             </form>
-          </Card>
+      </Card>
 
-          {cases.length === 0 ? (
+      {cases.length === 0 ? (
             <Register title="Register" empty="No STR cases opened yet." />
-          ) : (
+      ) : (
             <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
               <table className="w-full text-12">
                 <thead className="bg-bg-1 border-b border-hair-2">
@@ -555,7 +555,7 @@ export default function StrCasesPage() {
                 </tbody>
               </table>
             </div>
-          )}
+      )}
     </ModuleLayout>
   );
 }

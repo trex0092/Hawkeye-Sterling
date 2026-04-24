@@ -78,7 +78,6 @@ export default function SupplierDdPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 20 · Supply-chain DD"
           title="Supplier"
@@ -179,7 +178,6 @@ export default function SupplierDdPage() {
           Minerals. Critical-tier suppliers get annual Step-4 audit; significant
           tier every 18 months; standard every 24 months per MoE Circular 2/2024.
         </p>
-      </div>
     </ModuleLayout>
   );
 }

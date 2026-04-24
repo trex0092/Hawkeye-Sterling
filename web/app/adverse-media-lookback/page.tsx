@@ -213,7 +213,6 @@ export default function AdverseMediaLookbackPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 21 · Historical Adverse Media"
           title="Adverse media"
@@ -364,7 +363,6 @@ export default function AdverseMediaLookbackPage() {
             <span className="text-11">Use the form above to start building the 10-year audit trail.</span>
           </div>
         )}
-      </div>
     </ModuleLayout>
   );
 }

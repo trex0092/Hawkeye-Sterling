@@ -172,7 +172,6 @@ export default function CddReviewPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 22 · CDD Lifecycle"
           title="Periodic CDD"
@@ -264,7 +263,6 @@ export default function CddReviewPage() {
           Cadences: High risk (PEP / sanctions) — 3 months · Medium risk — 6 months · Low risk — 12 months.
           Per FDL 10/2025 Art.11. Case records auto-imported from the screening register; last activity date used as proxy for last review.
         </p>
-      </div>
     </ModuleLayout>
   );
 }

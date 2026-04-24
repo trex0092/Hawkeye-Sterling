@@ -147,7 +147,6 @@ export default function InvestigationPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 12 · Link Analysis"
           title="Investigation"
@@ -375,7 +374,6 @@ export default function InvestigationPage() {
             ? "Case nodes are loaded from your local case register. UBO and counterparty nodes appear when the subject is open in the screening queue."
             : "Search for any subject to see their case graph, or click a node to isolate its relationships. The default view is demo data (Ozcan Halac)."}
         </p>
-      </div>
     </ModuleLayout>
   );
 }

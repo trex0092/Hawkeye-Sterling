@@ -312,7 +312,6 @@ export default function PoliciesPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 17 · SOP vault"
           title="Policies"
@@ -394,7 +393,6 @@ export default function PoliciesPage() {
             </section>
           ))}
         </div>
-      </div>
     </ModuleLayout>
   );
 }

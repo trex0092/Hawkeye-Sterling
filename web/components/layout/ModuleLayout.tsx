@@ -45,7 +45,7 @@ export function ModuleLayout<K extends string = string>({
       <Header />
       <RegulatoryTicker />
       <div
-        className="grid min-h-[calc(100vh-84px)]"
+        className="grid min-h-[calc(100vh-84px)] print:block"
         style={{ gridTemplateColumns: "220px 1fr 360px" }}
       >
         <SidebarShell>
@@ -75,7 +75,7 @@ export function ModuleLayout<K extends string = string>({
         </main>
 
         {detailPanel ?? (
-          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
+          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
             <ActivityFeed label={engineLabel} />
           </aside>
         )}

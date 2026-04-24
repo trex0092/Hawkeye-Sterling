@@ -60,7 +60,6 @@ export default function DataQualityPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 19 · Per-subject completeness"
           title="Data"
@@ -190,7 +189,6 @@ export default function DataQualityPage() {
             </table>
           </div>
         )}
-      </div>
     </ModuleLayout>
   );
 }

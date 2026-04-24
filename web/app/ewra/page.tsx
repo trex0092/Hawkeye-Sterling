@@ -153,7 +153,6 @@ export default function EwraPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 23 · Risk Assessment"
           title="EWRA / BWRA"
@@ -262,7 +261,6 @@ export default function EwraPage() {
           Residual risk is derived automatically. Board must review and re-approve annually per FDL 10/2025 Art.4 and FATF R.1.
           Changes auto-save to local storage.
         </p>
-      </div>
     </ModuleLayout>
   );
 }

@@ -70,7 +70,6 @@ export default function SarQaPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 14 · Four-eyes peer review"
           title="SAR"
@@ -172,7 +171,6 @@ export default function SarQaPage() {
             })
           )}
         </div>
-      </div>
     </ModuleLayout>
   );
 }

@@ -172,7 +172,6 @@ export default function OngoingMonitorPage() {
 
   return (
     <ModuleLayout>
-      <div>
         <ModuleHero
           eyebrow="Module 24 · Continuous Monitoring"
           title="Ongoing"
@@ -275,7 +274,6 @@ export default function OngoingMonitorPage() {
           Twice-daily cadence is recommended for all sanctions-hit and PEP subjects per FDL 10/2025 Art.12.
           Pausing a subject suspends automatic screening without removing the enrolment record.
         </p>
-      </div>
     </ModuleLayout>
   );
 }
