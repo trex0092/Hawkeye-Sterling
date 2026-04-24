@@ -55,8 +55,8 @@ export default function UboDeclarationPage() {
 
   if (submitted) {
     return (
-      <ModuleLayout narrow>
-        <div className="max-w-2xl mx-auto px-8 py-10">
+      <ModuleLayout>
+        <div className=""">
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
             <h1 className="font-display text-24 text-ink-0 m-0 mb-3">
@@ -78,8 +78,8 @@ export default function UboDeclarationPage() {
   }
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-3xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 21 · Public-facing form"
           title="Beneficial owner"

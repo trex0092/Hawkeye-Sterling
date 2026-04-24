@@ -223,9 +223,7 @@ export default function TransactionMonitorPage() {
   };
 
   return (
-    <ModuleLayout narrow>
-      <div className="min-h-[calc(100vh-54px)]">
-        <ModuleShell>
+    <ModuleLayout>
           <ModuleHeader
             title="Transaction Monitor"
             subtitle="Module 08 · MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
@@ -468,8 +466,6 @@ export default function TransactionMonitorPage() {
             </div>
           )}
           <PaymentScreen />
-        </ModuleShell>
-      </div>
       <ReportModal
         open={reportTx !== null}
         title={reportTx?.ref ?? ""}

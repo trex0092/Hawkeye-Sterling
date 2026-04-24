@@ -59,8 +59,8 @@ export default function DataQualityPage() {
       : Math.round(rows.reduce((a, r) => a + r.score, 0) / rows.length);
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 19 · Per-subject completeness"
           title="Data"

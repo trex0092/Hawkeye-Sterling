@@ -77,8 +77,8 @@ export default function SupplierDdPage() {
   const remove = (id: string) => setSuppliers((vs) => vs.filter((v) => v.id !== id));
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 20 · Supply-chain DD"
           title="Supplier"

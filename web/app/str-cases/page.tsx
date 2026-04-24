@@ -56,8 +56,8 @@ interface CaseRow {
 
 function AccessDeniedScreen({ role }: { role: OperatorRole }) {
   return (
-    <ModuleLayout narrow>
-      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center">
+    <ModuleLayout>
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="max-w-md text-center p-8 bg-bg-panel border border-hair-2 rounded-xl">
           <div className="text-3xl mb-4">🔒</div>
           <h2 className="text-16 font-bold text-ink-0 mb-2">
@@ -269,9 +269,7 @@ export default function StrCasesPage() {
   if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} />;
 
   return (
-    <ModuleLayout narrow>
-      <div className="min-h-[calc(100vh-54px)]">
-        <ModuleShell>
+    <ModuleLayout>
           <ModuleHeader
             title="STR Case Management"
             subtitle="Module 05 · file without delay · no tipping-off"
@@ -558,8 +556,6 @@ export default function StrCasesPage() {
               </table>
             </div>
           )}
-        </ModuleShell>
-      </div>
     </ModuleLayout>
   );
 }
