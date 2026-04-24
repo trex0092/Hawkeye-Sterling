@@ -1192,7 +1192,12 @@ function SuperBrainPanel({
   const r: SuperBrainResult = state.result;
   return (
     <Section title="Super brain">
-      <BrainNarrative result={r} subjectName={subjectName} subjectId={subjectId} />
+      <BrainNarrative
+        result={r}
+        subjectName={subjectName}
+        subjectId={subjectId}
+        newsDossier={news.status === "success" ? news.result : null}
+      />
       <BrainRadar result={r} />
       <BrainConfidence result={r} />
       <BrainReasoningChain result={r} />
