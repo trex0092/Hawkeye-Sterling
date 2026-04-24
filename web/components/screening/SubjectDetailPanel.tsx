@@ -761,7 +761,7 @@ function ScreeningTab({
 }) {
   const title = (
     <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
-      Sanctions &amp; adverse-media matches
+      Sanctions · PEP · Adverse media · RCA
     </div>
   );
 
@@ -1536,7 +1536,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   if (state.status === "loading") {
     return (
       <Section title="Adverse-media dossier">
-        <div className="text-11 text-ink-2">Crawling Google News for live articles…</div>
+        <div className="text-11 text-ink-2">Crawling 20,000+ news sources for live articles…</div>
       </Section>
     );
   }
@@ -1582,7 +1582,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             ))}
           </>
         )}
-        <span className="ml-auto font-mono text-ink-3">source: {r.source}</span>
+        <span className="ml-auto font-mono text-ink-3">20,000+ sources · {r.source}</span>
       </div>
 
       {r.keywordGroupCounts.length > 0 && (

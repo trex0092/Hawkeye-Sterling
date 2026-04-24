@@ -280,15 +280,23 @@ function Badge({ tone, label }: { tone: "violet" | "orange" | "dashed"; label: s
 
 function SanctionTag({ source }: { source: SanctionSource }) {
   const styles: Record<SanctionSource, string> = {
-    OFAC: "bg-violet-dim text-violet",
-    UN: "bg-blue-dim text-blue",
-    EU: "bg-amber-dim text-amber",
-    UK: "bg-green-dim text-green",
-    EOCN: "bg-red-dim text-red",
+    OFAC:     "bg-violet-dim text-violet",
+    UN:       "bg-blue-dim text-blue",
+    EU:       "bg-amber-dim text-amber",
+    UK:       "bg-green-dim text-green",
+    EOCN:     "bg-red-dim text-red",
+    AU:       "bg-orange-dim text-orange",
+    CA:       "bg-red-dim text-red",
+    CH:       "bg-brand-dim text-brand-deep",
+    JP:       "bg-violet-dim text-violet",
+    FATF:     "bg-orange-dim text-orange",
+    INTERPOL: "bg-blue-dim text-blue",
+    WB:       "bg-amber-dim text-amber",
+    ADB:      "bg-green-dim text-green",
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-10.5 font-medium tracking-wide-2 ${styles[source]}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-10.5 font-medium tracking-wide-2 ${styles[source] ?? "bg-bg-2 text-ink-2"}`}
     >
       {source}
     </span>
