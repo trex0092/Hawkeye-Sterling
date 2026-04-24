@@ -139,7 +139,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ]
       : adverseMediaLive;
 
-    // 3b · ESG classifier — 26 ESG-relevant categories across 5 domains,
+    // 3b · ESG classifier — 27 ESG-relevant categories across 5 domains,
     //      mapped to SASB / EU Taxonomy / UN SDGs.
     const fullText = [
       mediaText,

@@ -165,6 +165,14 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "ai-enabled fraud", "ai impersonation", "voice cloning fraud",
       "facial recognition misuse", "ai surveillance abuse",
       "predictive policing bias", "black-box decision",
+      // OWASP LLM Top 10 style attack surface — fires on news of live
+      // AI-system compromise or misuse of unmanaged / agentic AI.
+      "prompt injection", "jailbreak", "jailbroken model",
+      "model inversion", "membership inference",
+      "data poisoning", "training data poisoning",
+      "adversarial attack",
+      "model theft", "training data leak",
+      "shadow ai", "unauthorized ai",
     ],
   },
 ];

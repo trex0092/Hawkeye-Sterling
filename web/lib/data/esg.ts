@@ -1,6 +1,6 @@
 // Hawkeye Sterling — ESG classifier.
 //
-// 26 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
+// 27 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
 // with the globally recognised frameworks they map to (SASB Materiality Matrix,
 // EU Taxonomy, UN Sustainable Development Goals).
 //
@@ -40,7 +40,9 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     label: "Climate change & emissions",
     keywords: [
       "emissions", "ghg", "greenhouse gas", "carbon", "co2", "co₂", "net zero",
-      "climate change", "climate litigation", "scope 3", "stranded assets",
+      "climate change", "climate litigation",
+      "scope 1", "scope 2", "scope 3",
+      "carbon disclosure", "stranded assets",
     ],
     sasb: "Environment · GHG Emissions",
     euTaxonomy: "Climate change mitigation",
@@ -155,7 +157,11 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     id: "esg-disclosure",
     domain: "industry-trends-insights",
     label: "ESG reporting & disclosure",
-    keywords: ["esg disclosure", "sustainability report", "cdp", "tcfd", "issb", "csrd", "greenwashing"],
+    keywords: [
+      "esg disclosure", "sustainability report", "integrated reporting",
+      "cdp", "tcfd", "issb", "csrd", "gri", "sasb",
+      "double materiality", "esg rating", "greenwashing",
+    ],
     sasb: "Leadership & Governance · Business Ethics",
     sdg: ["12", "16"],
   },
@@ -163,7 +169,12 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     id: "green-innovation",
     domain: "industry-trends-insights",
     label: "Green tech & innovation",
-    keywords: ["clean tech", "green bond", "carbon capture", "sustainable finance", "impact investing", "green chemistry"],
+    keywords: [
+      "clean tech", "green bond", "social bond", "carbon capture",
+      "sustainable finance", "sustainability-linked loan", "transition finance",
+      "carbon credit", "climate var",
+      "impact investing", "green chemistry",
+    ],
     euTaxonomy: "Transition activities",
     sdg: ["9", "13"],
   },
@@ -225,7 +236,18 @@ export const ESG_CATEGORIES: EsgCategory[] = [
       "ai governance", "ai ethics", "responsible ai", "ai oversight",
       "ai regulation", "ai act", "eu ai act", "ai liability",
       "automated decision-making", "automated decision making",
-      "model risk", "ai audit", "nonhuman ethical gap",
+      "model risk", "model governance", "ai risk management",
+      "ai audit", "nonhuman ethical gap",
+      // 2026 regulatory stack — EU AI Act enforcement Aug 2026, NIST AI RMF,
+      // ISO/IEC 42001 AIMS; high-risk / prohibited tiers; oversight controls.
+      "nist ai rmf", "iso 42001", "iso/iec 42001",
+      "conformity assessment", "high-risk ai", "prohibited ai",
+      "prohibited ai system",
+      "human-in-the-loop", "human in the loop", "kill switch",
+      "model card", "ai transparency report", "fairness monitoring",
+      // Emerging governance frontiers — agentic AI identity/oversight and
+      // unmanaged "Shadow AI" sprawl inside the enterprise.
+      "agentic ai", "autonomous ai agent", "shadow ai", "unauthorized ai",
     ],
     sasb: "Business Model & Innovation · Systemic Risk Management",
     sdg: ["9", "10", "16"],
@@ -251,6 +273,27 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     domain: "operational-risk-crisis",
     label: "Cyber incident",
     keywords: ["ransomware", "cyberattack", "data leak", "hacked", "breach notification", "ddos"],
+    sasb: "Business Model & Innovation · Systemic Risk Management",
+    sdg: ["9", "16"],
+  },
+  // Operational counterpart to ai-governance-ethics: technical failure modes
+  // and AI-specific attack surface (OWASP LLM Top 10, model drift, agentic
+  // AI harms). Governance sits under legal-regulatory; concrete incidents
+  // sit here so drift/hallucination/prompt-injection news fires operational.
+  {
+    id: "ai-failure-incident",
+    domain: "operational-risk-crisis",
+    label: "AI failure & incident",
+    keywords: [
+      "hallucination", "model hallucination",
+      "model drift", "concept drift", "data drift",
+      "prompt injection", "jailbreak", "jailbroken model",
+      "model inversion", "membership inference",
+      "data poisoning", "training data poisoning",
+      "adversarial attack", "adversarial example",
+      "ai incident", "ai harm", "model failure",
+      "model theft", "training data leak",
+    ],
     sasb: "Business Model & Innovation · Systemic Risk Management",
     sdg: ["9", "16"],
   },
