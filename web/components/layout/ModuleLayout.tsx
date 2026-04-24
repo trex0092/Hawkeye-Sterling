@@ -25,9 +25,6 @@ interface ModuleLayoutProps<K extends string = string> {
   sidebarExtra?: ReactNode | undefined;
   detailPanel?: ReactNode | undefined;
   shift?: string | undefined;
-  // When true the grid uses max-w constrained main content (for centred
-  // report-style pages like Analytics, Status). Defaults to full-width.
-  narrow?: boolean | undefined;
   // Label shown on the live engine feed. Defaults to "Compliance engine".
   engineLabel?: string | undefined;
 }
@@ -41,17 +38,15 @@ export function ModuleLayout<K extends string = string>({
   sidebarExtra,
   detailPanel,
   shift = "09:00–18:00",
-  narrow = false,
   engineLabel = "Compliance engine",
 }: ModuleLayoutProps<K>) {
-  const gridCols = detailPanel ? "220px 1fr 360px" : "220px 1fr";
   return (
     <>
       <Header />
       <RegulatoryTicker />
       <div
         className="grid min-h-[calc(100vh-84px)]"
-        style={{ gridTemplateColumns: gridCols }}
+        style={{ gridTemplateColumns: "220px 1fr 360px" }}
       >
         <SidebarShell>
           <SidebarSection title="Regulatory">
@@ -75,20 +70,15 @@ export function ModuleLayout<K extends string = string>({
           {sidebarExtra}
         </SidebarShell>
 
-        <main
-          className={
-            narrow
-              ? "overflow-y-auto"
-              : "px-10 py-8 overflow-y-auto"
-          }
-        >
+        <main className="px-10 py-8 overflow-y-auto">
           {children}
-          <div className={narrow ? "max-w-4xl mx-auto px-8 pb-10" : "pb-8"}>
-            <ActivityFeed label={engineLabel} />
-          </div>
         </main>
 
-        {detailPanel}
+        {detailPanel ?? (
+          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
+            <ActivityFeed label={engineLabel} />
+          </aside>
+        )}
       </div>
     </>
   );
