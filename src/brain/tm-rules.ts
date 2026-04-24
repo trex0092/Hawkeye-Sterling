@@ -44,6 +44,24 @@ export const TM_RULES: TmRule[] = [
   // Trade finance
   { id: 'tm_tf_unit_price_outlier', name: 'Unit price outlier vs HS-benchmark', ruleClass: 'anomaly', description: 'LC unit price deviates > N% from global HS-code benchmark.', parameters: { deltaPct: 25 }, reasoningModes: ['commodity_price_anomaly', 'regression'], typologies: ['commodity_price_outlier'], defaultPriority: 'medium' },
   { id: 'tm_tf_ais_gap', name: 'Vessel AIS gap during LC route', ruleClass: 'pattern', description: 'Declared vessel has AIS silence exceeding N hours on LC route.', parameters: { gapHours: 12 }, reasoningModes: ['vessel_ais_gap_analysis'], typologies: ['dark_vessel_stss'], defaultPriority: 'high' },
+
+  // ── Wave 4 — insider threat / IP exfiltration ───────────────────────
+  { id: 'tm_insider_bulk_download_pre_exit', name: 'Bulk download preceding offboarding', ruleClass: 'pattern', description: 'Privileged user downloads documents/code > N× role baseline within X days prior to announced exit.', parameters: { multiple: 5, windowDays: 30 }, reasoningModes: ['velocity_analysis', 'pattern_of_life', 'timeline_reconstruction'], typologies: ['insider_threat'], defaultPriority: 'high' },
+
+  // ── Wave 4 — environmental crime (FATF R.3 2021) ────────────────────
+  { id: 'tm_env_cahra_commodity_nexus', name: 'CAHRA-sourced commodity without legal-extraction evidence', ruleClass: 'geo', description: 'Commodity shipment with declared origin in a CAHRA lacks OECD DDG Annex II / legal-extraction documentation.', parameters: {}, reasoningModes: ['oecd_ddg_annex', 'provenance_trace', 'jurisdiction_cascade'], typologies: ['environmental_crime'], defaultPriority: 'high' },
+  { id: 'tm_env_waste_basel_gap', name: 'Cross-border waste shipment without Basel notification', ruleClass: 'geo', description: 'Hazardous-waste HS code ships across borders without Basel Convention notification.', parameters: {}, reasoningModes: ['provenance_trace', 'commodity_price_anomaly'], typologies: ['environmental_crime'], defaultPriority: 'high' },
+
+  // ── Wave 4 — carbon-market fraud ────────────────────────────────────
+  { id: 'tm_carbon_vcm_velocity', name: 'VCM credit churn / velocity spike', ruleClass: 'velocity', description: 'Voluntary-carbon-market credit trading volume or churn on a single project > N× baseline.', parameters: { multiple: 4, windowDays: 30 }, reasoningModes: ['velocity_analysis', 'provenance_trace'], typologies: ['carbon_market_fraud'], defaultPriority: 'medium' },
+  { id: 'tm_carbon_retirement_mismatch', name: 'Retirement-vs-claim mismatch', ruleClass: 'anomaly', description: 'Counterparty claims carbon offsets greater than registry-verified retirements over the reporting window.', parameters: {}, reasoningModes: ['reconciliation'], typologies: ['carbon_market_fraud'], defaultPriority: 'high' },
+
+  // ── Wave 4 — AI governance ──────────────────────────────────────────
+  { id: 'tm_ai_autonomous_agent_spend', name: 'Agentic-AI spend without human approval', ruleClass: 'anomaly', description: 'Agentic AI initiates transactions above a de-minimis threshold without a four-eyes / human-in-the-loop approval.', parameters: { aboveAed: 5000 }, reasoningModes: ['four_eyes_stress', 'control_effectiveness'], typologies: ['ai_governance_breach'], defaultPriority: 'high' },
+  { id: 'tm_ai_shadow_api_egress', name: 'Shadow-AI egress', ruleClass: 'pattern', description: 'Corporate network egress to unregistered generative-AI API endpoint from sensitive-data workstations.', parameters: {}, reasoningModes: ['documentation_quality'], typologies: ['ai_governance_breach'], defaultPriority: 'medium' },
+
+  // ── Wave 4 — AI synthetic-media fraud ───────────────────────────────
+  { id: 'tm_ai_deepfake_ceo_instruction', name: 'Rapid CEO-voice-instructed payment post public deepfake campaign', ruleClass: 'pattern', description: 'Payment instructions attributed to executive voice/video received within a week of a high-profile deepfake campaign targeting the sector.', parameters: {}, reasoningModes: ['linguistic_forensics', 'timeline_reconstruction'], typologies: ['ai_synthetic_media_fraud', 'bec_fraud'], defaultPriority: 'high' },
 ];
 
 export const TM_RULE_BY_ID: Map<string, TmRule> = new Map(TM_RULES.map((r) => [r.id, r]));

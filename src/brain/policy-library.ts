@@ -35,6 +35,20 @@ export const POLICIES: Policy[] = [
   { id: 'pol_gifts_entertainment', title: 'Gifts + Entertainment', owner: 'compliance', reviewMonths: 24, approvedBy: 'senior_management', anchors: ['Internal'] },
   { id: 'pol_conflict_of_interest', title: 'Conflict of Interest', owner: 'compliance', reviewMonths: 12, approvedBy: 'board', anchors: ['Internal'] },
   { id: 'pol_dpms_supply_chain', title: 'DPMS Supply-Chain Due Diligence (LBMA / OECD)', owner: 'operations', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['LBMA RGG', 'OECD DDG Annex II'] },
+
+  // ── Wave 4 — AI governance stack (EU AI Act Aug 2026 + NIST + ISO) ──
+  { id: 'pol_ai_governance', title: 'AI Governance Policy (EU AI Act / NIST AI RMF / ISO 42001)', owner: 'compliance', reviewMonths: 12, approvedBy: 'board', anchors: ['EU AI Act', 'NIST AI RMF', 'ISO/IEC 42001'] },
+  { id: 'pol_ai_model_inventory', title: 'AI Model Inventory & Registry', owner: 'it_security', reviewMonths: 6, approvedBy: 'senior_management', anchors: ['ISO/IEC 42001', 'EU AI Act Art.11'] },
+  { id: 'pol_ai_red_teaming', title: 'AI Red-Teaming & Adversarial Testing', owner: 'it_security', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['OWASP LLM Top 10', 'NIST AI RMF'] },
+  { id: 'pol_ai_incident_reporting', title: 'AI Serious-Incident Reporting (72h)', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['EU AI Act Art.73'] },
+  { id: 'pol_ai_human_oversight', title: 'AI Human-in-the-Loop & Kill-Switch', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['EU AI Act', 'NIST AI RMF Govern'] },
+  { id: 'pol_shadow_ai_detection', title: 'Shadow-AI Detection & Egress Controls', owner: 'it_security', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['ISO/IEC 42001', 'Internal InfoSec'] },
+  { id: 'pol_synthetic_media_defence', title: 'Synthetic-Media / Deepfake Fraud Defence', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.20'] },
+
+  // ── Wave 4 — Wave-4 financial-crime predicates ──────────────────────
+  { id: 'pol_insider_threat_programme', title: 'Insider-Threat Programme', owner: 'it_security', reviewMonths: 12, approvedBy: 'board', anchors: ['Three Lines Model'] },
+  { id: 'pol_environmental_crime_compliance', title: 'Environmental-Crime Compliance (FATF R.3 2021 predicate)', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.3 (2021)', 'OECD DDG Annex II'] },
+  { id: 'pol_carbon_credit_integrity', title: 'Carbon-Credit / VCM Integrity', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['ICVCM Core Carbon Principles', 'Article 6 Paris Agreement'] },
 ];
 
 export const POLICY_BY_ID: Map<string, Policy> = new Map(POLICIES.map((p) => [p.id, p]));

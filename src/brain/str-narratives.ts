@@ -99,4 +99,64 @@ export const STR_SKELETONS: StrSkeleton[] = [
     ],
     requiredCitations: ['oecd_annex_ii_discipline', 'provenance_trace', 'chain_of_custody_break', 'rfx_bullion_cahra_undocumented'],
   },
+  // ── Wave 4 — environmental crime (FATF R.3 2021 predicate) ──────────
+  {
+    typology: 'environmental_crime',
+    title: 'Financial flow linked to FATF R.3 environmental-crime predicate',
+    bullets: [
+      'Counterparty {{ENTITY}} received funds of {{AMOUNT}} {{CURRENCY}} on {{DATE}}.',
+      'Declared commodity was {{COMMODITY}} with declared origin {{JURISDICTION}} (CAHRA / protected area).',
+      'OECD DDG Annex II / CITES / Basel evidence was absent or inconsistent.',
+      'Independent source triangulation ({{SOURCE_LIST}}) indicates inconsistency with any legal extraction / trade footprint.',
+    ],
+    requiredCitations: ['oecd_ddg_annex', 'provenance_trace', 'jurisdiction_cascade', 'rf_env_crime_cahra_flow', 'fatf_r3_env_predicate'],
+  },
+  // ── Wave 4 — carbon-market fraud ────────────────────────────────────
+  {
+    typology: 'carbon_market_fraud',
+    title: 'Carbon-credit issuance / retirement inconsistent with registry',
+    bullets: [
+      'Counterparty {{ENTITY}} claimed {{CREDIT_COUNT}} credits from project {{PROJECT_ID}} on {{DATE}}.',
+      'Registry {{REGISTRY}} shows issued / retired totals of {{REGISTRY_ISSUED}} / {{REGISTRY_RETIRED}}; delta {{DELTA}}.',
+      'No corresponding-adjustment entry found under Article 6 Paris Agreement for cross-border claims.',
+      'Project MRV documentation diverges from independent satellite / baseline evidence on {{MRV_POINTS}}.',
+    ],
+    requiredCitations: ['reconciliation', 'provenance_trace', 'source_triangulation', 'rf_carbon_market_phantom_credit', 'rf_carbon_market_double_count'],
+  },
+  // ── Wave 4 — insider threat ─────────────────────────────────────────
+  {
+    typology: 'insider_threat',
+    title: 'Privileged-user IP / trade-secret exfiltration',
+    bullets: [
+      'Subject {{NAME}} held privileged access to {{SYSTEM}} between {{ACCESS_FROM}} and {{ACCESS_TO}}.',
+      'On {{DATE}} the subject performed {{VOLUME}} of exports to {{VECTOR}} — {{MULTIPLE}}× the role-profile baseline.',
+      'Exfiltration preceded announced offboarding on {{OFFBOARDING_DATE}} by {{DAYS_BEFORE_EXIT}} days.',
+      'Exfiltrated content overlaps subject-matter later appearing at {{EXTERNAL_RECIPIENT}} (patent / publication / product).',
+    ],
+    requiredCitations: ['velocity_analysis', 'pattern_of_life', 'timeline_reconstruction', 'rf_insider_threat_privileged_exfil', 'rf_insider_threat_offboarding_spike'],
+  },
+  // ── Wave 4 — AI synthetic-media fraud ───────────────────────────────
+  {
+    typology: 'ai_synthetic_media_fraud',
+    title: 'Deepfake / voice-clone-authorised payment redirect',
+    bullets: [
+      'Payment instruction of {{AMOUNT}} {{CURRENCY}} attributed to executive {{EXEC_NAME}} on {{DATE}} via {{CHANNEL}}.',
+      'Voice / video authenticity markers (cadence, lip-sync, compression artefacts) indicate synthetic origin.',
+      'Beneficiary account {{BENEFICIARY}} has no prior relationship and was opened {{BENEFICIARY_AGE_DAYS}} days ago.',
+      'Instruction received within {{WINDOW_DAYS}} days of a public deepfake campaign targeting the sector.',
+    ],
+    requiredCitations: ['linguistic_forensics', 'pattern_of_life', 'timeline_reconstruction', 'rf_ai_synthetic_ceo_deepfake', 'rfx_ai_voice_clone_invoice_approval'],
+  },
+  // ── Wave 4 — AI governance breach ───────────────────────────────────
+  {
+    typology: 'ai_governance_breach',
+    title: 'High-risk AI system deployed without EU AI Act conformity assessment',
+    bullets: [
+      'System {{SYSTEM_ID}} in use for {{USE_CASE}} (Annex III high-risk tier).',
+      'No conformity assessment, model card, or risk-management documentation located in the AI registry.',
+      'No pre- or post-deployment red-team evidence; fairness monitoring disabled.',
+      'No human-in-the-loop or kill-switch control documented for irreversible actions.',
+    ],
+    requiredCitations: ['regulatory_mapping', 'control_effectiveness', 'documentation_quality', 'rf_ai_gov_no_model_inventory', 'rf_ai_gov_high_risk_tier_skipped', 'rf_ai_gov_red_team_absent'],
+  },
 ];

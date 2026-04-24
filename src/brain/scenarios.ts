@@ -209,6 +209,88 @@ export const SCENARIOS: Scenario[] = [
     'Late-Friday invoice-redirect email uses stylometric register distinct from vendor baseline; obfuscation markers and hedging cluster in the payment-instruction sentence.',
     'linguistic_forensic_read',
     ['stylometry_shift','obfuscation_pattern','hedging_cluster','bec_fraud']),
+
+  // ─── WAVE 4 — FATF 2021 environmental predicate + Wave-4 crime ──────
+  s('env_crime_cahra_dore', 'Environmental crime — CAHRA doré with no OECD evidence', 'environmental',
+    'Refinery accepts 480 kg doré declared Tanzanian-origin; customs paper trails terminate at a DRC artisanal mine in a CAHRA; OECD Annex II evidence never attached.',
+    'dpms_refiner_cahra',
+    ['cahra_exposure','provenance_mismatch','fatf_r3_env_predicate','lbma_step_gap']),
+
+  s('env_crime_iuu_seafood', 'Environmental crime — IUU seafood supply chain', 'environmental',
+    'Seafood importer sources from vessel listed on IUU register; AIS shows repeated 24-hour gaps over protected fishing grounds; payments layered through two correspondent banks.',
+    undefined,
+    ['iuu_fishing_nexus','vessel_ais_gap','fatf_r3_env_predicate']),
+
+  s('env_crime_waste_trafficking_basel', 'Environmental crime — hazardous-waste trafficking (Basel gap)', 'environmental',
+    'Hazardous-waste HS code shipped cross-border with mis-declared freight class; no Basel Convention notification; buyer is a shell in opaque jurisdiction.',
+    undefined,
+    ['basel_gap','hs_misclassification','shell_buyer','fatf_r3_env_predicate']),
+
+  s('carbon_phantom_credit_issuance', 'Carbon-market — phantom credit issuance', 'carbon',
+    'Carbon project claims 1.2M tCO2e avoided; satellite baseline shows no change; no verified-MRV record at the declared registry; credits retired in Singapore while re-sold in EU.',
+    undefined,
+    ['phantom_credit','registry_gap','mrv_mismatch','carbon_market_fraud']),
+
+  s('carbon_double_counting_a6', 'Carbon-market — Article-6 double counting', 'carbon',
+    'Same tCO2e claimed under a host-country NDC and resold to an EU buyer as a corresponding-adjusted credit; no corresponding-adjustment entry on either ledger.',
+    undefined,
+    ['double_counting','corresponding_adjustment_absent','carbon_market_fraud']),
+
+  s('insider_threat_offboarding_exfil', 'Insider threat — offboarding bulk exfiltration', 'insider',
+    'Privileged engineer exports 6 GB of source + customer data in the 3 weeks before announced resignation; new employer files patents in overlapping subject-matter 4 months later.',
+    undefined,
+    ['privileged_exfil','offboarding_spike','ip_overlap','insider_threat']),
+
+  s('insider_threat_usb_after_hours', 'Insider threat — removable-media after hours', 'insider',
+    'Analyst with access to client dossiers writes repeatedly to USB storage between 23:00 and 02:00 over 12 nights; DLP alerts triaged as false-positives until volume is reviewed.',
+    undefined,
+    ['usb_after_hours','dlp_gap','pattern_of_life','insider_threat']),
+
+  s('synthetic_id_loan_mill', 'Synthetic identity — loan-mill cluster', 'synthetic_identity',
+    'Fifteen unsecured-loan applicants share blended real + fabricated attributes — all with thin-file SSNs, reused device fingerprints, and coordinated first-payment defaults.',
+    undefined,
+    ['synthetic_id_cluster','device_overlap','first_payment_default','synthetic_identity']),
+
+  s('real_estate_ml_layered', 'Real-estate ML — layered purchase', 'real_estate',
+    'AED 28m villa purchased by a 3-layer BVI / Cayman / UAE FZ structure; funds arrived through 4 correspondent hops; cash closure; declared beneficial owner is a nominee.',
+    undefined,
+    ['shell_chain','jurisdiction_cascade','cash_closure','real_estate_cash']),
+
+  s('luxury_yacht_beneficial_opacity', 'Luxury asset — yacht registration opacity', 'luxury_asset',
+    '60m yacht registered through a chain of SPVs across Marshall Islands → Malta → Guernsey; nominee directors; beneficial use by sanctioned PEP relative; AIS silent on repositioning.',
+    undefined,
+    ['yacht_chain_opacity','nominee_directors','ais_silence','pep_proximity']),
+
+  // ─── WAVE 4 — AI governance + AI incidents ──────────────────────────
+  s('ai_gov_high_risk_no_conformity', 'AI governance — high-risk deployment without conformity assessment', 'ai_governance',
+    'Credit-scoring model deployed across retail portfolio; no EU AI Act Annex III conformity assessment on file; no model card or fairness-monitoring metric; business unit unaware of obligations.',
+    undefined,
+    ['eu_ai_act_annex_iii','conformity_assessment_absent','fairness_monitoring_gap','ai_governance_breach']),
+
+  s('ai_gov_shadow_llm_sensitive', 'AI governance — shadow-LLM on sensitive data', 'ai_governance',
+    'Business unit pastes customer PII and M&A plans into a third-party generative-AI web UI; egress logs show 200+ sessions over a month; no AI registry entry.',
+    undefined,
+    ['shadow_ai','pii_egress','registry_gap','ai_governance_breach']),
+
+  s('ai_agentic_autonomous_spend', 'AI governance — agentic AI autonomous spend', 'ai_governance',
+    'Procurement agent LLM-driven workflow issues purchase orders below a de-minimis threshold; vendor diligence bypassed; no human-in-the-loop; total AED 1.4m across 90 days.',
+    undefined,
+    ['agentic_autonomy','no_human_in_loop','vendor_diligence_bypass','ai_governance_breach']),
+
+  s('ai_prompt_injection_data_exfil', 'AI failure — indirect prompt injection exfiltrates data', 'ai_incident',
+    'Customer-support LLM integrated with case-ticket store falls to indirect prompt injection embedded in a PDF; partial dossier content echoed to attacker-controlled URL.',
+    undefined,
+    ['prompt_injection','owasp_llm_top_10','data_exfiltration','ai_failure']),
+
+  s('ai_synthetic_ceo_deepfake_bec', 'AI synthetic-media — CEO deepfake BEC', 'ai_synthetic_media',
+    'CFO receives live video call from apparent CEO requesting urgent AED 9m wire to new beneficiary; voice cadence + lip-sync indicate synthetic origin; beneficiary account opened 12 days prior.',
+    'linguistic_forensic_read',
+    ['deepfake_executive','voice_clone','new_beneficiary','ai_synthetic_media_fraud']),
+
+  s('ai_liveness_bypass_onboarding', 'AI synthetic-media — liveness-bypass KYC onboarding', 'ai_synthetic_media',
+    'KYC flow passes liveness check; post-onboarding selfie fails device / biometric cross-check; deeper review finds AI-generated ID with EXIF anomalies.',
+    undefined,
+    ['liveness_spoof','ai_generated_kyc_doc','biometric_mismatch','ai_synthetic_media_fraud']),
 ];
 
 export const SCENARIO_BY_ID: Map<string, Scenario> = new Map(

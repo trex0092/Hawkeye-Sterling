@@ -73,4 +73,30 @@ export const RED_FLAGS_EXTENDED: RedFlag[] = [
   // — Data quality
   { id: 'rfx_dq_schema_drift', typology: 'governance', indicator: 'Upstream feed schema changed without notice; fields mis-bound.', severity: 'medium', reasoningModes: ['schema_drift_detection', 'reconciliation'], sources: [] },
   { id: 'rfx_dq_freshness_breach', typology: 'governance', indicator: 'Sanctions feed freshness SLA breached for ≥ 24 hours.', severity: 'high', reasoningModes: ['freshness_sla_breach'], sources: ['Charter P8'] },
+
+  // ── Wave 4 — environmental crime (FATF R.3 2021 predicate) ──────────
+  { id: 'rfx_env_supply_iuu_fishing', typology: 'environmental_crime', indicator: 'Seafood supply chain includes vessels listed in IUU fishing registers or with AIS gaps over declared fishing grounds.', severity: 'high', reasoningModes: ['vessel_ais_gap_analysis', 'provenance_trace'], sources: ['FAO Port State Measures'] },
+  { id: 'rfx_env_illegal_mining_dore', typology: 'environmental_crime', indicator: 'Doré imports from jurisdiction with no legal gold-mining production yet declared origin on that jurisdiction.', severity: 'high', reasoningModes: ['provenance_trace', 'jurisdiction_cascade'], sources: ['OECD DDG', 'LBMA RGG'] },
+  { id: 'rfx_env_timber_cites_gap', typology: 'environmental_crime', indicator: 'Timber species regulated under CITES shipped without permit or with forged CITES paperwork.', severity: 'high', reasoningModes: ['provenance_trace'], sources: ['CITES'] },
+
+  // ── Wave 4 — carbon-market fraud ────────────────────────────────────
+  { id: 'rfx_carbon_vcm_register_gap', typology: 'carbon_market_fraud', indicator: 'Claimed voluntary-carbon-market credits not reconcilable against the stated issuing registry.', severity: 'high', reasoningModes: ['reconciliation', 'provenance_trace'], sources: ['ICVCM'] },
+  { id: 'rfx_carbon_retirement_mismatch', typology: 'carbon_market_fraud', indicator: 'Credits retired in one jurisdiction yet sold or claimed as offset in another without corresponding-adjustment entry.', severity: 'high', reasoningModes: ['reconciliation'], sources: ['Article 6 Paris Agreement'] },
+  { id: 'rfx_carbon_baseline_manipulation', typology: 'carbon_market_fraud', indicator: 'Project baseline / additionality documentation materially diverges from independent MRV evidence.', severity: 'medium', reasoningModes: ['narrative_coherence', 'source_triangulation'], sources: ['VCS / Gold Standard MRV'] },
+
+  // ── Wave 4 — insider threat / IP exfiltration ───────────────────────
+  { id: 'rfx_insider_offboarding_bulk_download', typology: 'insider_threat', indicator: 'Privileged user performs bulk document or code export in the window immediately before announced departure.', severity: 'high', reasoningModes: ['velocity_analysis', 'pattern_of_life'], sources: [] },
+  { id: 'rfx_insider_patent_app_after_exit', typology: 'insider_threat', indicator: 'Patent or publication by former employee within 6 months of exit covering subject-matter they accessed in role.', severity: 'medium', reasoningModes: ['timeline_reconstruction'], sources: [] },
+  { id: 'rfx_insider_usb_after_hours', typology: 'insider_threat', indicator: 'Removable-media write events outside business hours on sensitive-data workstations.', severity: 'medium', reasoningModes: ['pattern_of_life'], sources: [] },
+
+  // ── Wave 4 — AI governance breach ───────────────────────────────────
+  { id: 'rfx_ai_shadow_deployment', typology: 'ai_governance_breach', indicator: 'Business unit consuming a third-party generative-AI API without IT / compliance registration (Shadow AI).', severity: 'high', reasoningModes: ['retention_audit', 'documentation_quality'], sources: ['ISO/IEC 42001', 'NIST AI RMF'] },
+  { id: 'rfx_ai_agent_autonomous_spend', typology: 'ai_governance_breach', indicator: 'Agentic AI authorises financial transactions above a de-minimis threshold without human-in-the-loop approval.', severity: 'high', reasoningModes: ['four_eyes_stress', 'control_effectiveness'], sources: ['EU AI Act'] },
+  { id: 'rfx_ai_drift_monitoring_absent', typology: 'ai_governance_breach', indicator: 'High-risk AI system lacks model-drift / concept-drift monitoring in production.', severity: 'medium', reasoningModes: ['freshness_sla_breach'], sources: ['NIST AI RMF Measure'] },
+  { id: 'rfx_ai_fairness_metric_absent', typology: 'ai_governance_breach', indicator: 'No documented fairness monitoring for an AI system making decisions about protected classes.', severity: 'high', reasoningModes: ['control_effectiveness'], sources: ['EU AI Act Art.10'] },
+
+  // ── Wave 4 — AI synthetic-media fraud ───────────────────────────────
+  { id: 'rfx_ai_voice_clone_invoice_approval', typology: 'ai_synthetic_media_fraud', indicator: 'Invoice approval via voice instruction shortly after a high-profile public voice-cloning campaign against the sector.', severity: 'high', reasoningModes: ['linguistic_forensics', 'timeline_reconstruction'], sources: [] },
+  { id: 'rfx_ai_liveness_bypass_onboarding', typology: 'ai_synthetic_media_fraud', indicator: 'KYC onboarding passes liveness but subsequent selfies fail device / biometric cross-check.', severity: 'high', reasoningModes: ['entity_resolution'], sources: [] },
+  { id: 'rfx_ai_generated_kyc_doc', typology: 'ai_synthetic_media_fraud', indicator: 'KYC document carries EXIF / metadata or artefacts consistent with AI-generated imagery.', severity: 'high', reasoningModes: ['documentation_quality'], sources: [] },
 ];
