@@ -29,7 +29,7 @@ interface Article {
   fuzzyScore: number;        // 0..100 — brain matchEnsemble against subject
   fuzzyMethod: string;       // levenshtein | jaro_winkler | soundex | token_set | ...
   matchedVariant?: string;   // variant that produced the top score
-  lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
+  lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt, tr)
 }
 
 // Locales we poll Google News from. Adverse-media coverage for the same
@@ -214,7 +214,7 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 }
 
 // Per-locale RSS timeout. Netlify Functions cap at 10s total wall-clock; with
-// 7 locales fanning out in parallel, any single stalled feed used to sink the
+// 8 locales fanning out in parallel, any single stalled feed used to sink the
 // whole function into a 502. A 4-second AbortSignal bounds each feed so the
 // slowest locale is skipped rather than killing the response.
 const FEED_TIMEOUT_MS = 4_000;
@@ -324,7 +324,7 @@ function emptyResponse(q: string): NewsResponse {
 const MAX_Q_LENGTH = 500;
 
 export async function GET(req: Request): Promise<NextResponse> {
-  // Gate the 7-locale RSS fan-out behind the per-key rate limiter.
+  // Gate the 8-locale RSS fan-out behind the per-key rate limiter.
   // Anonymous callers still get the free-tier burst window; without
   // this, a single user could trivially pin a Netlify Function into a
   // quota-exhaustion loop.
@@ -363,7 +363,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     }
     const variants = Array.from(new Set(rawVariants)).slice(0, 8);
 
-    // Fan out to 7 locales in parallel (EN, ES, FR, RU, ZH, AR, PT). Each
+    // Fan out to 8 locales in parallel (EN, ES, FR, RU, ZH, AR, PT, TR). Each
     // returns up to ~30 articles; we dedupe by URL and fuzzy-filter. Use
     // allSettled so one rejected fetch never rejects the whole batch —
     // combined with the per-feed AbortSignal and the overall timebox
