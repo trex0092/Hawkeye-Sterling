@@ -149,8 +149,8 @@ export default function TrainingPage() {
     setDraft((d) => ({ ...d, [k]: e.target.value }));
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 15 · Staff certification"
           title="Training"

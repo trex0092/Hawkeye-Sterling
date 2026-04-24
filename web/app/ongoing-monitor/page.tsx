@@ -171,8 +171,8 @@ export default function OngoingMonitorPage() {
   const overdue = subjects.filter((s) => s.status === "overdue").length;
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 24 · Continuous Monitoring"
           title="Ongoing"

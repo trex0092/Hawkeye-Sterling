@@ -530,8 +530,8 @@ export default function EnforcementPage() {
   );
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-4xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 18 · Regulatory calendar"
           title="Enforcement"

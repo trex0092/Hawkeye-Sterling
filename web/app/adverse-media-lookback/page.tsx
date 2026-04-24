@@ -212,8 +212,8 @@ export default function AdverseMediaLookbackPage() {
   );
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 21 · Historical Adverse Media"
           title="Adverse media"

@@ -184,8 +184,8 @@ export default function EmployeesPage() {
   const expiring = employees.filter((e) => overallStatus(e) === "expiring").length;
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-6xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div className=""">
         <ModuleHero
           eyebrow="Module 16 · HR registry"
           title="Employee"
