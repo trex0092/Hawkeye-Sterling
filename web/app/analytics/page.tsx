@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { loadCases } from "@/lib/data/case-store";
@@ -386,26 +386,74 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function SparklineBlock({ values }: { values: number[] }) {
   const max = Math.max(...values, 1);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t); }, []);
+
+  const weekLabels = values.map((_, i) => {
+    const weeksAgo = values.length - 1 - i;
+    if (weeksAgo === 0) return "this week";
+    if (weeksAgo === 1) return "last week";
+    return `${weeksAgo}w ago`;
+  });
+
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-      <div className="flex items-end h-32 gap-1">
+      <div className="flex items-end h-40 gap-1 relative">
+        {/* Horizontal gridlines */}
+        {[25, 50, 75, 100].map((pct) => (
+          <div
+            key={pct}
+            className="absolute left-0 right-0 border-t border-hair pointer-events-none"
+            style={{ bottom: `${pct}%` }}
+          />
+        ))}
         {values.map((v, i) => {
           const h = Math.max(2, Math.round((v / max) * 100));
+          const isHot = hovered === i;
           return (
             <div
               key={i}
-              className="flex-1 bg-ink-0 rounded-t-sm"
-              style={{ height: `${h}%` }}
-              title={`W${i + 1}: ${v}`}
-            />
+              className="flex-1 relative flex flex-col justify-end cursor-crosshair group"
+              style={{ height: "100%" }}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* Tooltip */}
+              {isHot && (
+                <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                  <div className="bg-ink-0 text-bg-0 rounded px-2 py-1 text-10 font-mono whitespace-nowrap shadow-lg">
+                    <span className="font-semibold">{v.toLocaleString()}</span>
+                    <span className="text-bg-2 ml-1">screenings</span>
+                    <div className="text-bg-3 text-9">{weekLabels[i]}</div>
+                  </div>
+                  <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-ink-0 mx-auto" />
+                </div>
+              )}
+              {/* Bar */}
+              <div
+                className={`rounded-t-sm transition-all duration-200 ${isHot ? "bg-brand" : "bg-ink-0"}`}
+                style={{
+                  height: mounted ? `${h}%` : "0%",
+                  transition: mounted
+                    ? `height 0.5s cubic-bezier(0.22,1,0.36,1) ${i * 30}ms, background-color 0.15s`
+                    : "none",
+                }}
+              />
+            </div>
           );
         })}
       </div>
       <div className="mt-2 flex justify-between text-10 font-mono text-ink-3">
-        <span>W-11</span>
-        <span>W-6</span>
+        <span>W-{values.length - 1}</span>
+        <span>W-{Math.floor(values.length / 2)}</span>
         <span>this week</span>
       </div>
+      {hovered !== null && (
+        <div className="mt-1 text-10 font-mono text-ink-3 text-right">
+          {weekLabels[hovered]} · <span className="text-ink-1 font-semibold">{values[hovered]?.toLocaleString()}</span> screenings
+        </div>
+      )}
     </div>
   );
 }
@@ -416,6 +464,10 @@ function FindingsBars({
   rows: Array<{ label: string; count: number; pct: number; tone: string }>;
 }) {
   const max = Math.max(...rows.map((r) => r.pct), 1);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t); }, []);
+
   const toneClass: Record<string, string> = {
     red: "bg-red",
     violet: "bg-violet",
@@ -423,21 +475,37 @@ function FindingsBars({
     amber: "bg-amber",
     ink: "bg-ink-0",
   };
+  const toneBg: Record<string, string> = {
+    red: "bg-red-dim",
+    violet: "bg-violet-dim",
+    orange: "bg-orange-dim",
+    amber: "bg-amber-dim",
+    ink: "bg-bg-2",
+  };
   return (
-    <div className="flex flex-col gap-2.5">
-      {rows.map((r) => {
+    <div className="flex flex-col gap-3">
+      {rows.map((r, i) => {
         const w = Math.round((r.pct / max) * 100);
+        const isHot = hovered === r.label;
         return (
-          <div key={r.label} className="grid grid-cols-[180px_1fr_120px] items-center gap-3 text-12">
-            <span className="text-ink-1">{r.label}</span>
-            <div className="h-2 bg-bg-2 rounded-sm overflow-hidden">
+          <div
+            key={r.label}
+            className={`grid grid-cols-[180px_1fr_130px] items-center gap-3 text-12 rounded px-2 py-1.5 transition-colors cursor-default ${isHot ? toneBg[r.tone] ?? "bg-bg-1" : ""}`}
+            onMouseEnter={() => setHovered(r.label)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <span className={`transition-colors ${isHot ? "text-ink-0 font-semibold" : "text-ink-1"}`}>{r.label}</span>
+            <div className="h-2.5 bg-bg-2 rounded-sm overflow-hidden">
               <div
-                className={`h-full ${toneClass[r.tone] ?? "bg-ink-0"}`}
-                style={{ width: `${w}%` }}
+                className={`h-full rounded-sm transition-all ${toneClass[r.tone] ?? "bg-ink-0"} ${isHot ? "opacity-100" : "opacity-75"}`}
+                style={{
+                  width: mounted ? `${w}%` : "0%",
+                  transition: `width 0.6s cubic-bezier(0.22,1,0.36,1) ${i * 80}ms, opacity 0.15s`,
+                }}
               />
             </div>
-            <span className="font-mono text-ink-0 text-right">
-              {r.count}
+            <span className={`font-mono text-right transition-colors ${isHot ? "text-ink-0" : "text-ink-1"}`}>
+              <span className="font-semibold">{r.count}</span>
               <span className="text-ink-3"> · {r.pct.toFixed(1)}%</span>
             </span>
           </div>
@@ -449,22 +517,38 @@ function FindingsBars({
 
 function FilingTile({ code, count }: { code: string; count: number }) {
   const hot = count > 0;
+  const [hovered, setHovered] = useState(false);
   return (
     <div
-      className={`rounded-lg border px-3 py-4 text-center ${
-        hot ? "border-brand bg-brand/10" : "border-hair-2 bg-bg-panel"
+      className={`rounded-lg border px-3 py-4 text-center cursor-default transition-all duration-150 ${
+        hot
+          ? hovered
+            ? "border-brand bg-brand/20 shadow-sm scale-105"
+            : "border-brand bg-brand/10"
+          : hovered
+            ? "border-hair-3 bg-bg-1"
+            : "border-hair-2 bg-bg-panel"
       }`}
+      style={{ transform: hovered ? "translateY(-2px)" : undefined, transition: "transform 0.15s, background-color 0.15s, border-color 0.15s" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={`${count} ${code} filing${count !== 1 ? "s" : ""} this month`}
     >
       <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
         {code}
       </div>
       <div
-        className={`font-display text-24 leading-none mt-1 ${
+        className={`font-display text-24 leading-none mt-1 transition-colors ${
           hot ? "text-brand" : "text-ink-3"
         }`}
       >
         {count}
       </div>
+      {hovered && (
+        <div className="text-9 font-mono text-ink-3 mt-1">
+          {count === 0 ? "none filed" : `filing${count !== 1 ? "s" : ""}`}
+        </div>
+      )}
     </div>
   );
 }
