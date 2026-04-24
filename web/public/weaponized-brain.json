@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-24T17:12:54.163Z",
+  "generatedAt": "2026-04-24T17:22:31.047Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-24T17:12:54.159Z",
+    "generatedAt": "2026-04-24T17:22:31.043Z",
     "charter": {
       "prohibitions": [
         {
@@ -791,7 +791,8 @@
         "cahraSeed": 12,
         "uaeFreeZones": 31,
         "jurisdictionsFull": 264,
-        "dpmsKpis": 30
+        "dpmsKpis": 30,
+        "policies": 40
       },
       "expertise": {
         "skills": 468,
@@ -961,11 +962,11 @@
     },
     "totals": {
       "catalogues": 19,
-      "enhancedCatalogues": 19,
-      "regulatoryRecords": 459,
+      "enhancedCatalogues": 20,
+      "regulatoryRecords": 499,
       "taxonomyRecords": 388,
       "skillsRecords": 468,
-      "totalRecords": 1315
+      "totalRecords": 1355
     }
   }
 }

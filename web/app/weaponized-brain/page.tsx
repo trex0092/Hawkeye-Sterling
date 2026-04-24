@@ -413,6 +413,7 @@ function BrainDashboard({
                   { label: "Typologies", value: enhanced.extended?.taxonomy?.typologies ?? 0, tone: "red" },
                   { label: "FATF recommendations", value: enhanced.extended?.regulatory?.fatfRecommendations ?? 0, tone: "violet" },
                   { label: "Question templates", value: enhanced.extended?.taxonomy?.questionTemplates ?? 0, tone: "blue" },
+                  { label: "Policies", value: enhanced.extended?.regulatory?.policies ?? 0, tone: "green" },
                   { label: "UAE free zones", value: enhanced.extended?.regulatory?.uaeFreeZones ?? 0, tone: "amber" },
                   { label: "DPMS KPIs", value: enhanced.extended?.regulatory?.dpmsKpis ?? 0, tone: "amber" },
                   { label: "Scenarios", value: enhanced.extended?.taxonomy?.scenarios ?? 0, tone: "blue" },
