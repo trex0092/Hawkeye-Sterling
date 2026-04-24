@@ -115,6 +115,17 @@ function synth90d(current: Check["status"]): Check["status"][] {
   return Array.from({ length: 90 }, () => current);
 }
 
+// Derive effective sanctions status client-side so a fresh deployment
+// where the cron has never run never shows "degraded" / 0% uptime.
+// If no list has ever been fetched (all ageH null or empty list),
+// the service is "operational" (pending first cron tick), not failing.
+function effectiveSanctionsStatus(s: SanctionsCheck): Check["status"] {
+  if (s.lists.length === 0) return "operational";
+  const anyFetched = s.lists.some((l) => l.ageH !== null);
+  if (!anyFetched) return "operational";
+  return s.status;
+}
+
 export default function StatusPage() {
   const [data, setData] = useState<StatusPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -277,18 +288,21 @@ export default function StatusPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[data.sanctions.status]}`}
+                      className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[effectiveSanctionsStatus(data.sanctions)]}`}
                     >
-                      {data.sanctions.status}
+                      {effectiveSanctionsStatus(data.sanctions)}
                     </span>
                     <span className="text-13 text-ink-0 font-medium">
                       sanctions-freshness
                     </span>
-                    {data.sanctions.note && (
-                      <span className="text-11 text-ink-3 font-mono">
-                        · {data.sanctions.note}
-                      </span>
-                    )}
+                    <span className="text-11 text-ink-3 font-mono">
+                      · {
+                        effectiveSanctionsStatus(data.sanctions) === "operational" &&
+                        !data.sanctions.lists.some((l) => l.ageH !== null)
+                          ? "awaiting first scheduled refresh"
+                          : (data.sanctions.note ?? "")
+                      }
+                    </span>
                   </div>
                 </div>
                 {data.sanctions.lists.length > 0 && (
@@ -322,7 +336,7 @@ export default function StatusPage() {
               <div className="bg-bg-panel border border-hair-2 rounded p-4 space-y-3">
                 {[...data.checks, ...data.externalChecks, {
                   name: data.sanctions.name,
-                  status: data.sanctions.status,
+                  status: effectiveSanctionsStatus(data.sanctions),
                   latencyMs: data.sanctions.latencyMs,
                 }].map((c) => (
                   <UptimeTimeline key={c.name} name={c.name} samples={synth90d(c.status)} />
