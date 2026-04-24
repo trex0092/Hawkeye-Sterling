@@ -5,16 +5,48 @@ import { usePathname } from "next/navigation";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 
 const NAV_TABS = [
-  { key: "nav.workbench", href: "/workbench" },
-  { key: "nav.screening", href: "/screening" },
-  { key: "nav.batch", href: "/batch" },
-  { key: "nav.cases", href: "/cases" },
-  { key: "nav.tm", href: "/transaction-monitor" },
-  { key: "nav.str", href: "/str-cases" },
-  { key: "nav.audit", href: "/audit-trail" },
-  { key: "nav.analytics", href: "/analytics" },
-  { key: "nav.status", href: "/status" },
+  { key: "nav.workbench", label: "Workbench", href: "/workbench" },
+  { key: "nav.screening", label: "Screening", href: "/screening" },
+  { key: "nav.batch", label: "Batch", href: "/batch" },
+  { key: "nav.cases", label: "Cases", href: "/cases" },
+  { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
+  { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
+  { key: "nav.audit", label: "Audit", href: "/audit-trail" },
+  { key: "nav.analytics", label: "Analytics", href: "/analytics" },
+  { key: "nav.status", label: "Status", href: "/status" },
 ] as const;
+
+// Secondary modules — rendered under a "More" dropdown so the top-row
+// stays readable. Grouped by domain for quick navigation.
+const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: string; hint: string }> }> = [
+  {
+    title: "Intelligence",
+    items: [
+      { label: "Intel", href: "/intel", hint: "Adverse-media ticker" },
+      { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
+    ],
+  },
+  {
+    title: "Governance",
+    items: [
+      { label: "Regulatory", href: "/regulatory", hint: "Searchable library" },
+      { label: "Policies", href: "/policies", hint: "Charter / SOPs" },
+      { label: "Playbook", href: "/playbook", hint: "Typology guides" },
+      { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
+      { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { label: "Client portal", href: "/client-portal", hint: "External KYC" },
+      { label: "UBO declaration", href: "/ubo-declaration", hint: "Public UBO form" },
+      { label: "Vendor DD", href: "/vendor-dd", hint: "Supplier onboarding" },
+      { label: "Training", href: "/training", hint: "Staff certification" },
+      { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
+    ],
+  },
+];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -40,6 +72,7 @@ export function Header() {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [locale, setLocale] = useState<Locale>("en");
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     const storedTheme =
@@ -85,7 +118,7 @@ export function Header() {
         <div className="flex gap-0.5 ml-2 md:ml-8">
           {NAV_TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
-            const label = STRINGS[tab.key] ? t(tab.key, locale) : tab.key;
+            const label = STRINGS[tab.key] ? t(tab.key, locale) : tab.label;
             return (
               <a
                 key={tab.href}
@@ -100,6 +133,56 @@ export function Header() {
               </a>
             );
           })}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMoreOpen((v) => !v)}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 text-12.5 rounded font-medium transition-colors whitespace-nowrap ${
+                MORE_GROUPS.some((g) => g.items.some((it) => isActive(pathname, it.href)))
+                  ? "bg-bg-2 text-ink-0"
+                  : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
+              }`}
+            >
+              More
+              <span className="text-10 text-ink-3">▾</span>
+            </button>
+            {moreOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMoreOpen(false)}
+                  aria-hidden="true"
+                />
+                <div className="absolute left-0 top-full mt-1 z-50 w-[560px] bg-white border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-3 gap-4">
+                  {MORE_GROUPS.map((g) => (
+                    <div key={g.title}>
+                      <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1.5 px-2">
+                        {g.title}
+                      </div>
+                      <ul className="list-none p-0 m-0">
+                        {g.items.map((it) => (
+                          <li key={it.href}>
+                            <a
+                              href={it.href}
+                              onClick={() => setMoreOpen(false)}
+                              className={`block px-2 py-1.5 rounded no-underline transition-colors ${
+                                isActive(pathname, it.href)
+                                  ? "bg-brand-dim text-brand-deep"
+                                  : "text-ink-0 hover:bg-bg-1"
+                              }`}
+                            >
+                              <div className="text-12 font-medium">{it.label}</div>
+                              <div className="text-10 text-ink-3">{it.hint}</div>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">

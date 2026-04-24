@@ -256,11 +256,23 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
   });
 
   if (!r.ok) {
+    // Netlify Blobs not bound (local dev, preview without env, siteID/token
+    // unset) throws MissingBlobsEnvironmentError. That's a config state,
+    // not an outage — degrade cleanly instead of flagging the whole site
+    // as DOWN and triggering the red "MLRO attention required" banner.
+    const errLower = (r.error ?? "").toLowerCase();
+    const looksLikeBlobConfig =
+      errLower.includes("netlify blobs") ||
+      errLower.includes("missingblobsenvironment") ||
+      errLower.includes("siteid") ||
+      errLower.includes("not been configured");
     return {
       name: "sanctions-freshness",
-      status: "down",
+      status: looksLikeBlobConfig ? "degraded" : "down",
       latencyMs: r.latencyMs,
-      note: r.error,
+      note: looksLikeBlobConfig
+        ? "blobs not configured — sanctions-refresh cron not yet bound"
+        : r.error,
       lists: [],
     };
   }
@@ -270,7 +282,7 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
       name: "sanctions-freshness",
       status: "degraded",
       latencyMs: r.latencyMs,
-      note: "netlify blobs unavailable",
+      note: "no refresh recorded yet — cron has not ticked",
       lists: [],
     };
   }

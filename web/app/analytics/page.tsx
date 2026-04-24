@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
 
   return (
     <ModuleLayout narrow>
-      <div className="bg-bg-0 min-h-[calc(100vh-54px)] print:bg-white">
+      <div className="min-h-[calc(100vh-54px)] print:bg-white">
         <div className="max-w-5xl mx-auto px-8 py-10 print:max-w-none print:px-6 print:py-6">
           {/* Cover band */}
           <div className="flex items-start justify-between border-b-2 border-ink-0 pb-4 mb-6 print:mb-4">

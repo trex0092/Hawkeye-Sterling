@@ -283,12 +283,14 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       return;
     }
     const payload = buildReportPayload();
+    const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
     try {
       const res = await fetch("/api/compliance-report?format=html", {
         method: "POST",
         headers: {
           "content-type": "application/json",
           accept: "text/html, application/json",
+          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -344,12 +346,14 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       `${composite}/100. Jurisdiction: ${subject.country || "—"}. ` +
       `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
       `MLRO to review before goAML submission.`;
+    const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
     try {
       const res = await fetch("/api/goaml", {
         method: "POST",
         headers: {
           "content-type": "application/json",
           accept: "application/xml, application/json",
+          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify({
           reportCode: "STR",
@@ -475,12 +479,14 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 15_000);
       try {
+        const adminTokenTxt = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
         const res = await fetch("/api/compliance-report", {
           method: "POST",
           headers: {
             "content-type": "application/json",
             accept: "application/json, text/plain, */*",
             "user-agent": "hawkeye-screening-client/1.0",
+            ...(adminTokenTxt ? { authorization: `Bearer ${adminTokenTxt}` } : {}),
           },
           body: JSON.stringify(payload),
           signal: ctl.signal,
