@@ -55,6 +55,28 @@ export const RED_FLAGS: RedFlag[] = [
   { id: 'rf_ctl_four_eyes_bypass', typology: 'governance', indicator: 'Second approver role repeatedly overridden by same user.', severity: 'high', reasoningModes: ['four_eyes_stress', 'policy_drift', 'exception_log'], sources: ['CR 134/2025 Art.19', 'Three Lines Model'] },
   { id: 'rf_ctl_training_gap', typology: 'governance', indicator: 'AML training overdue for users handling high-risk disposition.', severity: 'medium', reasoningModes: ['training_inadequacy', 'documentation_quality'], sources: ['FATF R.18'] },
   { id: 'rf_ctl_record_gap', typology: 'governance', indicator: 'Screening evidence missing for a disposition already recorded.', severity: 'high', reasoningModes: ['retention_audit', 'audit_trail_reconstruction', 'reconciliation'], sources: ['FDL 10/2025 Art.24'] },
+
+  // ── Wave 4 — environmental crime (FATF 2021 predicate) ──────────────
+  { id: 'rf_env_crime_cahra_flow', typology: 'environmental_crime', indicator: 'Commodity flows linked to CAHRA supply chain without OECD / provenance evidence of legal extraction.', severity: 'high', reasoningModes: ['oecd_ddg_annex', 'provenance_trace', 'jurisdiction_cascade'], sources: ['FATF R.3 (2021)', 'OECD DDG'] },
+  { id: 'rf_env_crime_waste_trafficking', typology: 'environmental_crime', indicator: 'Cross-border waste shipment without Basel Convention notification or with false HS-code classification.', severity: 'high', reasoningModes: ['provenance_trace', 'commodity_price_anomaly'], sources: ['Basel Convention', 'FATF R.3'] },
+
+  // ── Wave 4 — carbon-market fraud ────────────────────────────────────
+  { id: 'rf_carbon_market_phantom_credit', typology: 'carbon_market_fraud', indicator: 'Carbon credits issued against a project with no verifiable baseline or with a registry-registration gap.', severity: 'high', reasoningModes: ['provenance_trace', 'source_triangulation'], sources: ['ICVCM Core Carbon Principles'] },
+  { id: 'rf_carbon_market_double_count', typology: 'carbon_market_fraud', indicator: 'Same tonne of emissions claimed under more than one corresponding-adjustment ledger or retirement registry.', severity: 'high', reasoningModes: ['reconciliation', 'provenance_trace'], sources: ['Article 6 Paris Agreement'] },
+
+  // ── Wave 4 — insider threat / IP exfiltration ───────────────────────
+  { id: 'rf_insider_threat_privileged_exfil', typology: 'insider_threat', indicator: 'Privileged user downloads or exports data volume materially above role-profile baseline in short window.', severity: 'high', reasoningModes: ['velocity_analysis', 'peer_group_anomaly', 'timeline_reconstruction'], sources: ['Three Lines Model'] },
+  { id: 'rf_insider_threat_offboarding_spike', typology: 'insider_threat', indicator: 'Material access, print, or external-drive activity in the 30 days preceding announced resignation or role change.', severity: 'high', reasoningModes: ['timeline_reconstruction', 'pattern_of_life'], sources: [] },
+
+  // ── Wave 4 — AI governance breach (EU AI Act / NIST / ISO 42001) ────
+  { id: 'rf_ai_gov_no_model_inventory', typology: 'ai_governance_breach', indicator: 'AI system in production not recorded in the AI registry / model inventory required by ISO/IEC 42001.', severity: 'high', reasoningModes: ['retention_audit', 'documentation_quality'], sources: ['ISO/IEC 42001', 'EU AI Act Art.11'] },
+  { id: 'rf_ai_gov_high_risk_tier_skipped', typology: 'ai_governance_breach', indicator: 'AI use-case fits a high-risk tier (hiring, credit, health, education, law-enforcement) yet no EU AI Act conformity assessment has been executed.', severity: 'high', reasoningModes: ['regulatory_mapping', 'control_effectiveness'], sources: ['EU AI Act Annex III'] },
+  { id: 'rf_ai_gov_red_team_absent', typology: 'ai_governance_breach', indicator: 'High-risk AI system deployed without pre- and post-deployment red-team evidence (OWASP LLM Top 10).', severity: 'medium', reasoningModes: ['attack_tree', 'control_effectiveness'], sources: ['OWASP LLM Top 10', 'EU AI Act'] },
+  { id: 'rf_ai_gov_no_kill_switch', typology: 'ai_governance_breach', indicator: 'Agentic AI acting on irreversible actions without documented kill-switch, approval-gate, or human-in-the-loop control.', severity: 'high', reasoningModes: ['control_effectiveness', 'four_eyes_stress'], sources: ['EU AI Act', 'NIST AI RMF'] },
+
+  // ── Wave 4 — AI synthetic-media fraud ───────────────────────────────
+  { id: 'rf_ai_synthetic_ceo_deepfake', typology: 'ai_synthetic_media_fraud', indicator: 'Payment or policy instruction apparently authorised via live video/voice call matching the profile of a known deepfake CEO-fraud pattern.', severity: 'high', reasoningModes: ['linguistic_forensics', 'pattern_of_life', 'timeline_reconstruction'], sources: [] },
+  { id: 'rf_ai_synthetic_kyc_bypass', typology: 'ai_synthetic_media_fraud', indicator: 'Onboarding liveness / biometric check shows indicators of face-swap, liveness spoof, or AI-generated document.', severity: 'high', reasoningModes: ['linguistic_forensics', 'entity_resolution'], sources: [] },
 ];
 
 export const RED_FLAGS_BY_TYPOLOGY: Record<string, RedFlag[]> = RED_FLAGS.reduce(
