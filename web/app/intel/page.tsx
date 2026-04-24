@@ -83,8 +83,8 @@ export default function IntelPage() {
   };
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div>
         <ModuleHero
           eyebrow="Module 10 · Adverse-media Intel"
           title="Intel"

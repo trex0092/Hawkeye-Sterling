@@ -187,7 +187,7 @@ export default function StatusPage() {
 
   return (
     <ModuleLayout>
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div>
         <ModuleHero
           eyebrow="MODULE 07 · LIVE ENDPOINT HEALTH"
           title="System"

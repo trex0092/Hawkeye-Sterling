@@ -465,8 +465,8 @@ export default function RegulatoryPage() {
   }, [query, activeTag]);
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div>
         <ModuleHero
           eyebrow="Module 11 · Regulatory Reference"
           title="Regulatory"

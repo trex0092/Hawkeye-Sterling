@@ -1315,8 +1315,8 @@ export default function PlaybookPage() {
   };
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div>
         <ModuleHero
           eyebrow="Module 16 · Guided due-diligence"
           title="Playbook"

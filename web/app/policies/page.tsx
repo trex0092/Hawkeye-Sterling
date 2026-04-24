@@ -311,8 +311,8 @@ export default function PoliciesPage() {
   const sections = Array.from(new Set(policies.map((p) => p.section)));
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-4xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div>
         <ModuleHero
           eyebrow="Module 17 · SOP vault"
           title="Policies"

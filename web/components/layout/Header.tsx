@@ -12,7 +12,6 @@ const NAV_TABS = [
   { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
   { key: "nav.monitor", label: "Monitoring", href: "/ongoing-monitor" },
-  { key: "nav.analytics", label: "Analytics", href: "/analytics" },
   { key: "nav.status", label: "Status", href: "/status" },
 ] as const;
 
@@ -22,6 +21,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
   {
     title: "Intelligence",
     items: [
+      { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
       { label: "Intel", href: "/intel", hint: "Adverse-media ticker" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },

@@ -152,8 +152,8 @@ export default function EwraPage() {
   const highRiskCount = state.dimensions.filter((d) => residual(d) >= 4).length;
 
   return (
-    <ModuleLayout narrow>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+    <ModuleLayout>
+      <div>
         <ModuleHero
           eyebrow="Module 23 · Risk Assessment"
           title="EWRA / BWRA"
