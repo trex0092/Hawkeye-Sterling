@@ -40,8 +40,6 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Money laundering & financial crime",
     terms: [
       "money laundering", "money launder", "launder",
-      // Turkish
-      "kara para aklama", "kara para",
       "financial crime", "economic crime",
       "embezzle", "embezzlement", "misappropriation", "asset misappropriation",
       "extort", "extortion", "kickback",
@@ -53,6 +51,20 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "luxury goods laundering", "art laundering", "yacht laundering",
       "crypto laundering", "crypto mixer", "crypto tumbler",
       "chain hopping", "chain-hopping",
+      // Spanish
+      "lavado de dinero", "blanqueo de capitales", "blanqueo de dinero", "blanquear dinero",
+      // French
+      "blanchiment d'argent", "blanchiment de capitaux", "blanchir",
+      // Russian
+      "отмывание денег", "отмывание капитала",
+      // Arabic
+      "غسيل الأموال", "غسل الأموال", "تبييض الأموال",
+      // Chinese
+      "洗钱", "洗黑钱",
+      // Portuguese
+      "lavagem de dinheiro", "lavagem de capitais", "branqueamento de capitais",
+      // Turkish
+      "kara para aklama", "kara para",
     ],
   },
   {
@@ -62,6 +74,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "bribe", "bribery", "corrupt", "corruption",
       "abuse of power", "conflict of interest", "misuse of funds",
       "kleptocracy", "state capture",
+      // Spanish
+      "soborno", "corrupción", "cohecho", "malversación",
+      // French
+      "pot-de-vin", "détournement de fonds", "malversation",
+      // Russian
+      "взятка", "коррупция", "взяточничество", "хищение",
+      // Arabic
+      "رشوة", "فساد", "اختلاس",
+      // Chinese
+      "贿赂", "腐败", "行贿", "受贿", "贪腐",
+      // Portuguese
+      "suborno", "corrupção", "propina", "desvio de verbas",
       // Turkish
       "rüşvet", "yolsuzluk", "zimmet",
     ],
@@ -74,6 +98,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "financing of terrorism", "terror funding",
       "extremist", "radicalisation", "radicalization",
       "designated terrorist", "militant",
+      // Spanish
+      "terrorismo", "terrorista", "financiamiento del terrorismo",
+      // French
+      "terrorisme", "terroriste", "financement du terrorisme",
+      // Russian
+      "терроризм", "террорист", "финансирование терроризма",
+      // Arabic
+      "إرهاب", "إرهابي", "تمويل الإرهاب",
+      // Chinese
+      "恐怖主义", "恐怖分子", "恐怖融资",
+      // Portuguese
+      "terrorismo", "terrorista", "financiamento do terrorismo",
       // Turkish
       "terör", "terörizm", "terör örgütü",
     ],
@@ -99,6 +135,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     terms: [
       "organised crime", "organized crime",
       "drug trafficking", "narcotics", "cartel", "mafia",
+      // Spanish
+      "crimen organizado", "narcotráfico", "cártel",
+      // French
+      "crime organisé", "trafic de drogue",
+      // Russian
+      "организованная преступность", "наркоторговля", "мафия",
+      // Arabic
+      "الجريمة المنظمة", "تهريب المخدرات",
+      // Chinese
+      "有组织犯罪", "毒品走私", "黑社会",
+      // Portuguese
+      "crime organizado", "narcotráfico", "máfia",
       // Turkish
       "organize suç", "uyuşturucu kaçakçılığı",
     ],
@@ -114,6 +162,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       // Wave 4 — trafficking typologies split by exploitation mode.
       "sex trafficking", "labor trafficking", "labour trafficking",
       "debt bondage", "domestic servitude", "organ trafficking",
+      // Spanish
+      "trata de personas", "tráfico de personas", "trabajo forzado", "esclavitud moderna",
+      // French
+      "traite des êtres humains", "traite des personnes", "travail forcé", "esclavage moderne",
+      // Russian
+      "торговля людьми", "принудительный труд",
+      // Arabic
+      "الاتجار بالبشر", "العمل القسري", "الرق الحديث",
+      // Chinese
+      "人口贩卖", "人口走私", "强迫劳动",
+      // Portuguese
+      "tráfico de pessoas", "trabalho forçado", "escravidão moderna",
     ],
   },
   {
@@ -135,6 +195,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       // Wave 4 — synthetic / fabricated identity fraud typology.
       "synthetic identity", "synthetic identity fraud",
       "fabricated identity", "ghost identity", "identity stacking",
+      // Spanish
+      "fraude", "estafa", "falsificación", "robo de identidad",
+      // French
+      "escroquerie", "falsification", "usurpation d'identité",
+      // Russian
+      "мошенничество", "мошенник", "подделка",
+      // Arabic
+      "احتيال", "تزوير", "سرقة الهوية",
+      // Chinese
+      "欺诈", "诈骗", "伪造", "身份盗窃",
+      // Portuguese
+      "estelionato", "falsificação", "roubo de identidade",
       // Turkish
       "dolandırıcılık", "sahtecilik", "dolandırıcı",
     ],
@@ -144,6 +216,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Tax crime",
     terms: [
       "tax evasion", "tax fraud", "vat fraud",
+      // Spanish
+      "evasión fiscal", "fraude fiscal",
+      // French
+      "fraude fiscale", "évasion fiscale",
+      // Russian
+      "уклонение от налогов", "налоговое мошенничество",
+      // Arabic
+      "التهرب الضريبي", "الاحتيال الضريبي",
+      // Chinese
+      "逃税", "税务欺诈",
+      // Portuguese
+      "sonegação fiscal", "fraude fiscal",
     ],
   },
   {
@@ -163,6 +247,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "litigate", "litigation",
       "murder", "prosecute", "prosecuted", "prosecution",
       "theft", "unlawful", "verdict",
+      // Spanish
+      "arrestado", "detenido", "condenado", "encarcelado", "procesado", "juicio", "sentencia", "culpable",
+      // French
+      "arrêté", "condamné", "emprisonné", "poursuivi", "jugement", "verdict", "coupable",
+      // Russian
+      "арестован", "осуждён", "осужден", "заключён под стражу", "судебное преследование", "приговор",
+      // Arabic
+      "اعتقال", "إدانة", "سجن", "محاكمة", "حكم", "مذنب",
+      // Chinese
+      "逮捕", "定罪", "监禁", "起诉", "审判", "判决",
+      // Portuguese
+      "preso", "condenado", "encarcerado", "processado", "julgamento", "sentença", "culpado",
       // Turkish
       "tutuklama", "tutuklandı", "gözaltı", "mahkumiyet", "suçlandı", "hapis", "dava",
     ],
@@ -174,6 +270,18 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "sanctions", "sanctioned",
       "debarred", "debarment", "blacklisted", "blacklist",
       "regulatory breach", "breach",
+      // Spanish
+      "sanción", "sancionado", "lista negra", "inhabilitado",
+      // French
+      "sanction", "sanctionné", "liste noire", "interdit",
+      // Russian
+      "санкции", "санкционирован", "чёрный список",
+      // Arabic
+      "عقوبات", "قائمة سوداء", "محظور",
+      // Chinese
+      "制裁", "黑名单", "被制裁",
+      // Portuguese
+      "sanção", "sancionado", "lista negra",
       // Turkish
       "yaptırım", "kara liste",
     ],
