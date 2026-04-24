@@ -34,7 +34,6 @@ import {
   BrainDataFreshness,
   BrainInputValidator,
   BrainModuleWeights,
-  BrainCanaryBench,
   BrainVerdictConsistency,
   BrainCrossReference,
   BrainCoherenceCheck,
@@ -1243,7 +1242,6 @@ function SuperBrainPanel({
       <BrainLatencyBreakdown result={r} />
       <BrainDataFreshness result={r} />
       <BrainChainOfCustody result={r} />
-      <BrainCanaryBench />
       <BrainModuleWeights />
       <div className="bg-ink-0 text-bg-0 rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
