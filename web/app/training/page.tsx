@@ -239,8 +239,7 @@ export default function TrainingPage() {
 
   return (
     <ModuleLayout>
-      <div className="max-w-7xl mx-auto px-8 py-10">
-        <ModuleHero
+      <ModuleHero
           eyebrow="Module 15 · Staff certification"
           title="Training"
           titleEm="log."
@@ -428,7 +427,6 @@ export default function TrainingPage() {
             </div>
           </>
         )}
-      </div>
     </ModuleLayout>
   );
 }

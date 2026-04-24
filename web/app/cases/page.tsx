@@ -11,6 +11,7 @@ import { ReportModal } from "@/components/reports/ReportModal";
 import { CASE_FILTERS } from "@/lib/data/cases";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import type { CaseFilter, CaseFilterKey, CaseRecord } from "@/lib/types";
+import { ActivityFeed } from "@/components/screening/ActivityFeed";
 
 // Shape a case record into the compliance-report payload so the modal
 // renders the same MLRO dossier the screening panel produces.
@@ -143,12 +144,16 @@ export default function CasesPage() {
           />
         </main>
 
-        {selected && (
+        {selected ? (
           <CaseDetailPanel
             record={selected}
             onExport={() => setReportCase(selected)}
             onViewTimeline={() => setTimelineOpen(true)}
           />
+        ) : (
+          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
+            <ActivityFeed label="Compliance engine" />
+          </aside>
         )}
       </div>
       <ReportModal

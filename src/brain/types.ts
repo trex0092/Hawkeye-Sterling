@@ -36,7 +36,14 @@ export type ReasoningCategory =
   | 'crypto_defi'
   | 'sectoral_typology'
   | 'osint'
-  | 'esg';
+  | 'esg'
+  | 'predicate_crime'
+  | 'proliferation'
+  | 'correspondent_banking'
+  | 'hawala_ivt'
+  | 'ftz_risk'
+  | 'professional_ml'
+  | 'regulatory_aml';
 
 export type Verdict =
   | 'clear'

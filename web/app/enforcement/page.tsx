@@ -515,6 +515,114 @@ const DEADLINES: Deadline[] = [
     notes:
       "Mid-year review of proliferation financing controls following FATF plenary updates. Confirm DPRK, Iran, Syria, Belarus nexus detection rules are current. Cross-check dual-use goods screening parameters against latest export-control commodity lists. MLRO certifies controls are adequate. Results presented to Board.",
   },
+  {
+    id: "pdpl-annual-audit",
+    title: "PDPL Data Protection Annual Audit",
+    due: "2026-12-31",
+    authority: "UAE MoJ / Internal",
+    cadence: "annual",
+    notes:
+      "Annual audit of compliance with Federal Decree-Law No. 45/2021 on Personal Data Protection (PDPL). Scope: lawful basis mapping for all processing activities, data-subject rights request register (access, correction, erasure, portability), consent management records, cross-border transfer controls, and privacy-impact assessments for any new processing introduced in the year. DPO certifies compliance. Material gaps reported to Board within 30 days.",
+  },
+  {
+    id: "env-crime-controls-review",
+    title: "Environmental-Crime Predicate Controls Review",
+    due: "2026-09-30",
+    authority: "Internal / FATF",
+    cadence: "annual",
+    notes:
+      "Annual review of controls for the FATF 2021 environmental-crime predicate offences: illegal mining, illegal logging, IUU fishing, waste trafficking, and wildlife trafficking. Confirm adverse-keyword classifiers cover all sub-categories, red-flag rules include CAHRA/supply-chain provenance checks, and transaction-monitoring thresholds for environmental-predicate nexus are calibrated. MLRO reviews ESG classifier coverage and certifies adequacy. Results documented in EWRA.",
+  },
+  {
+    id: "board-aml-q1-2026",
+    title: "Board AML/CFT Quarterly Report — Q1 2026",
+    due: "2026-04-30",
+    authority: "Board / FDL 10/2025",
+    cadence: "quarterly",
+    notes:
+      "Q1 2026 quarterly AML/CFT report to Board. Mandatory contents per FDL 10/2025 and CR 134/2025: STR/SAR filing statistics, screening volumes and false-positive rate, CDD queue status, sanctions list effectiveness metrics, training completion rate, open corrective actions, and MLRO attestation. Board must formally acknowledge receipt. Signed minutes retained for 10 years.",
+  },
+  {
+    id: "eu-ai-act-review",
+    title: "EU AI Act High-Risk System Compliance Review",
+    due: "2026-08-02",
+    authority: "EU AI Act / Internal",
+    cadence: "annual",
+    notes:
+      "Annual review of all AI systems deployed in AML/CFT workflows classified as high-risk under the EU AI Act (Annex III). Scope: conformity assessment documentation, technical specifications, fundamental-rights impact assessment, post-market monitoring logs, and human-oversight controls. Any AI system lacking a current conformity assessment must be suspended. Board approves final report before deadline.",
+  },
+  {
+    id: "ai-model-card-sbom",
+    title: "AI Model Card & SBOM Annual Publication",
+    due: "2026-09-30",
+    authority: "ISO/IEC 42001 / Internal",
+    cadence: "annual",
+    notes:
+      "Annual publication of model cards and software bills of materials (SBOM) for all AI models used in screening, adverse-media classification, and risk scoring. Model cards must document training data provenance, bias-testing results, performance metrics, and known limitations. SBOMs must enumerate all open-source dependencies with version and licence. Published to internal governance portal; summary disclosed to regulators on request.",
+  },
+  {
+    id: "vasp-travel-rule-audit",
+    title: "VASP / Crypto Travel Rule Compliance Audit",
+    due: "2026-06-30",
+    authority: "FATF R.15 / CBUAE",
+    cadence: "annual",
+    notes:
+      "Annual audit of Travel Rule (FATF R.16) compliance for all virtual asset transfers above USD 1,000. Scope: originator/beneficiary data completeness rate, VASP counterparty due-diligence register, sunrise-issue handling procedures, and Travel Rule messaging protocol (IVMS 101) accuracy. Confirm CBUAE VARA rulebook requirements are met. MLRO certifies <2 % data-completeness failure rate. Gaps must be remediated within 90 days.",
+  },
+  {
+    id: "carbon-vcm-controls",
+    title: "Carbon-Credit / VCM Integrity Controls Review",
+    due: "2026-07-31",
+    authority: "ICVCM / Internal",
+    cadence: "annual",
+    notes:
+      "Annual review of controls for voluntary carbon market (VCM) instruments: carbon credits, renewable-energy certificates, and Article 6 Kyoto/Paris transfers. Confirm registry reconciliation against ICVCM Core Carbon Principles, screen for double-counting anomalies (A6 transfers issued to multiple registries), and verify that counterparties are not on adverse-media or sanctions lists for greenwashing or carbon fraud. MLRO reviews findings; material risks escalated to Board.",
+  },
+  {
+    id: "deepfake-defence-test",
+    title: "Deepfake / Synthetic-ID Defence Test",
+    due: "2026-08-31",
+    authority: "Internal / CBUAE",
+    cadence: "annual",
+    notes:
+      "Annual red-team exercise testing resilience of the KYC pipeline against deepfake video, voice-clone liveness bypass, and AI-generated document forgery. Scope: liveness-detection vendor evaluation, document-authenticity classifier performance, and manual-review escalation triggers. At least 50 synthetic-ID attack samples per modality. Pass threshold: <5 % bypass rate. Results reported to MLRO and Head of Technology; vendor SLAs updated where performance is inadequate.",
+  },
+  {
+    id: "goaml-sar-reconcile-q2",
+    title: "goAML SAR/STR Reconciliation — Q2 2026",
+    due: "2026-07-31",
+    authority: "UAE FIU",
+    cadence: "quarterly",
+    notes:
+      "Q2 2026 reconciliation of Suspicious Activity Reports (SAR) and Suspicious Transaction Reports (STR) submitted via goAML. Confirm all internal SARs/STRs generated between 1 April and 30 June 2026 are reflected in the goAML portal with correct schema (goAML XML v4.0+), acknowledgement receipts archived, and no pending submissions older than 15 business days. MLRO signs reconciliation certificate. Discrepancies reported to UAE FIU within 5 business days.",
+  },
+  {
+    id: "goaml-sar-reconcile-q4",
+    title: "goAML SAR/STR Reconciliation — Q4 2026",
+    due: "2027-01-31",
+    authority: "UAE FIU",
+    cadence: "quarterly",
+    notes:
+      "Q4 2026 reconciliation of Suspicious Activity Reports (SAR) and Suspicious Transaction Reports (STR) submitted via goAML. Confirm all internal SARs/STRs generated between 1 October and 31 December 2026 are reflected in the goAML portal with correct schema, acknowledgement receipts archived, and no pending submissions older than 15 business days. MLRO signs reconciliation certificate. Annual goAML performance summary also compiled for Board year-end report.",
+  },
+  {
+    id: "wire-transfer-travel-rule-test",
+    title: "Wire Transfer & Travel Rule Monthly Test",
+    due: "2026-05-31",
+    authority: "FATF R.16 / CBUAE",
+    cadence: "monthly",
+    notes:
+      "Monthly end-to-end test of wire transfer originator/beneficiary data capture and Travel Rule messaging (FATF R.16). Test suite: 20 synthetic cross-border transfers above USD 1,000, 10 below threshold, and 5 with deliberately incomplete originator data. Confirm SWIFT MT103 / ISO 20022 pacs.008 fields are populated, incomplete transfers are quarantined, and downstream beneficiary institution acknowledges receipt within SLA. Pass threshold: 100 % data-completeness on above-threshold transfers. Results logged in compliance monitoring register.",
+  },
+  {
+    id: "fatf-plenary-feb-2026",
+    title: "FATF Plenary — February 2026 List Update Review",
+    due: "2026-03-31",
+    authority: "Internal / FATF",
+    cadence: "ad-hoc",
+    notes:
+      "Post-plenary review of any changes to the FATF grey list (Jurisdictions under Increased Monitoring) and black list (High-Risk Jurisdictions subject to a Call for Action) announced at the February 2026 FATF plenary session. Scope: update jurisdiction-risk ratings in the EWRA, recalibrate enhanced due-diligence triggers for newly listed countries, and confirm any de-listed jurisdictions are updated before over-screening creates operational drag. MLRO communicates changes to business within 10 business days of plenary publication.",
+  },
 ];
 
 function daysUntil(iso: string): number {

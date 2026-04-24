@@ -262,6 +262,25 @@ export const JURISDICTIONS_FULL: JurisdictionRow[] = [
   { iso2: 'ZA', iso3: 'ZAF', name: 'South Africa', region: 'Africa', seedOnly: true },
   { iso2: 'ZM', iso3: 'ZMB', name: 'Zambia', region: 'Africa', seedOnly: true },
   { iso2: 'ZW', iso3: 'ZWE', name: 'Zimbabwe', region: 'Africa', seedOnly: true },
+
+  // ── AML-relevant financial centres (non-ISO-3166-1, X-prefix reserved) ──
+  // These are FSRA/regulatory-recognised free zones and international financial
+  // centres that have their own AML/CFT frameworks distinct from the host state.
+  { iso2: 'XA', iso3: 'ADG', name: 'Abu Dhabi Global Market (ADGM)', region: 'Asia', seedOnly: true },
+  { iso2: 'XD', iso3: 'DIF', name: 'Dubai International Financial Centre (DIFC)', region: 'Asia', seedOnly: true },
+  { iso2: 'XJ', iso3: 'JAF', name: 'Jebel Ali Free Zone (JAFZA)', region: 'Asia', seedOnly: true },
+  { iso2: 'XQ', iso3: 'DAF', name: 'Dubai Airport Free Zone (DAFZA)', region: 'Asia', seedOnly: true },
+  { iso2: 'XG', iso3: 'GIF', name: 'GIFT City International Financial Services Centre (India)', region: 'Asia', seedOnly: true },
+  { iso2: 'XI', iso3: 'IFS', name: 'IFSC Dublin (International Financial Services Centre, Ireland)', region: 'Europe', seedOnly: true },
+  { iso2: 'XL', iso3: 'LFC', name: 'Luxembourg Fund Centre', region: 'Europe', seedOnly: true },
+  { iso2: 'XM', iso3: 'MFX', name: 'Malta Financial Services Authority jurisdiction', region: 'Europe', seedOnly: true },
+  { iso2: 'XK', iso3: 'KAI', name: 'Labuan International Business and Financial Centre (Malaysia)', region: 'Asia', seedOnly: true },
+  { iso2: 'XB', iso3: 'BCX', name: 'Bahrain Financial Harbour / BIBF', region: 'Asia', seedOnly: true },
+  { iso2: 'XR', iso3: 'QFC', name: 'Qatar Financial Centre (QFC)', region: 'Asia', seedOnly: true },
+  { iso2: 'XW', iso3: 'KWX', name: 'Kuwait Finance House Regulatory Zone', region: 'Asia', seedOnly: true },
+  { iso2: 'XN', iso3: 'NAI', name: 'Nauru Special Financial Zone', region: 'Oceania', seedOnly: true },
+  { iso2: 'XP', iso3: 'PAM', name: 'Panama City International Banking Centre', region: 'Americas', seedOnly: true },
+  { iso2: 'XV', iso3: 'VGX', name: 'BVI Financial Services Commission jurisdiction', region: 'Americas', seedOnly: true },
 ];
 
 export const JURISDICTION_BY_ISO2: Map<string, JurisdictionRow> = new Map(

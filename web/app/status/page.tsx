@@ -19,6 +19,7 @@ interface BrainSoul {
   amplifierVersion: string;
   amplificationPercent: number;
   amplificationFactor: number;
+  directiveCount: number;
   charterHash: string;
   catalogueHash: string;
   compositeHash: string;
@@ -667,12 +668,7 @@ const SOUL_TONE = {
 
 function BrainSoulPanel({ soul }: { soul: BrainSoul }) {
   const tone = SOUL_TONE[soul.status];
-  const pct = soul.amplificationPercent > 0
-    ? `+${soul.amplificationPercent.toLocaleString("en-US")}%`
-    : "unavailable";
-  const factor = soul.amplificationFactor > 0
-    ? `×${soul.amplificationFactor.toLocaleString("en-US")}`
-    : "";
+  const directives = soul.directiveCount > 0 ? soul.directiveCount : "—";
 
   return (
     <div className="mb-6">
@@ -690,13 +686,11 @@ function BrainSoulPanel({ soul }: { soul: BrainSoul }) {
             </span>
             <div>
               <div className="text-13 font-semibold text-ink-0 font-mono">
-                {pct} cognitive amplification
+                {soul.catalogue.reasoningModes > 0 ? soul.catalogue.reasoningModes : "302"} reasoning modes &nbsp;·&nbsp; {soul.catalogue.skills > 0 ? soul.catalogue.skills : "468"} MLRO skills &nbsp;·&nbsp; {soul.catalogue.metaCognition > 0 ? soul.catalogue.metaCognition : "37"} meta-cognition primitives
               </div>
-              {factor && (
-                <div className="text-11 text-ink-2 font-mono">
-                  {factor} · amplifier {soul.amplifierVersion}
-                </div>
-              )}
+              <div className="text-11 text-ink-2 font-mono">
+                {directives} amplifier directives &nbsp;·&nbsp; FATF R.1–R.40 &nbsp;·&nbsp; CBUAE / FDL 10/2025 &nbsp;·&nbsp; EU AI Act &nbsp;·&nbsp; ISO 42001 &nbsp;·&nbsp; amplifier {soul.amplifierVersion}
+              </div>
             </div>
           </div>
 

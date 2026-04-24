@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-24T16:17:14.760Z",
+  "generatedAt": "2026-04-24T17:30:34.043Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-24T16:17:14.757Z",
+    "generatedAt": "2026-04-24T17:30:34.038Z",
     "charter": {
       "prohibitions": [
         {
@@ -255,7 +255,7 @@
         }
       ],
       "reasoningModes": {
-        "total": 273,
+        "total": 302,
         "byCategory": {
           "logic": 21,
           "cognitive_science": 22,
@@ -271,14 +271,21 @@
           "behavioral_signals": 5,
           "data_quality": 10,
           "governance": 16,
-          "crypto_defi": 16,
+          "crypto_defi": 19,
           "sectoral_typology": 24,
           "osint": 6,
-          "esg": 4
+          "esg": 4,
+          "predicate_crime": 6,
+          "proliferation": 4,
+          "correspondent_banking": 4,
+          "hawala_ivt": 3,
+          "ftz_risk": 2,
+          "professional_ml": 3,
+          "regulatory_aml": 4
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 100,
+          "wave2": 129,
           "wave3": 73
         }
       },
@@ -378,7 +385,7 @@
         }
       },
       "typologies": {
-        "total": 46,
+        "total": 71,
         "ids": [
           "structuring",
           "smurfing",
@@ -425,7 +432,32 @@
           "carbon_market_fraud",
           "insider_threat",
           "ai_governance_breach",
-          "ai_synthetic_media_fraud"
+          "ai_synthetic_media_fraud",
+          "hawala_network",
+          "cyber_extortion",
+          "romance_fraud",
+          "tax_evasion_offshore",
+          "customs_fraud",
+          "social_media_investment_fraud",
+          "precious_stones",
+          "gambling_ml",
+          "loan_stacking",
+          "bust_out_fraud",
+          "real_estate_over_valuation",
+          "luxury_goods_ml",
+          "legal_services_ml",
+          "crypto_ransomware",
+          "payroll_fraud",
+          "professional_money_laundering",
+          "funnel_account",
+          "cash_intensive_business",
+          "correspondent_shell",
+          "virtual_iban_abuse",
+          "invoice_discounting_fraud",
+          "crypto_p2p_exchange",
+          "daigou_parallel_import",
+          "construction_ml",
+          "healthcare_billing_fraud"
         ]
       },
       "matching": {
@@ -493,7 +525,7 @@
         ]
       },
       "playbooks": {
-        "total": 12,
+        "total": 22,
         "ids": [
           "pb_confirmed_sanctions_match",
           "pb_partial_sanctions_match",
@@ -506,11 +538,21 @@
           "pb_tipping_off_risk",
           "pb_exit_relationship",
           "pb_lbma_rgg_cahra",
-          "pb_ubo_opacity"
+          "pb_ubo_opacity",
+          "pb_insider_threat_exfil",
+          "pb_environmental_crime_nexus",
+          "pb_deepfake_synthetic_kyc",
+          "pb_ai_governance_breach",
+          "pb_adverse_media_escalation",
+          "pb_dormant_account_reactivation",
+          "pb_real_estate_layering",
+          "pb_correspondent_nested_account",
+          "pb_proliferation_dual_use",
+          "pb_carbon_market_fraud"
         ]
       },
       "redlines": {
-        "total": 8,
+        "total": 20,
         "ids": [
           "rl_eocn_confirmed",
           "rl_un_consolidated_confirmed",
@@ -519,11 +561,23 @@
           "rl_dpms_cahra_without_oecd",
           "rl_four_eyes_violated",
           "rl_training_data_as_sanctions_source",
-          "rl_missing_charter_hash"
+          "rl_missing_charter_hash",
+          "rl_eu_cfsp_confirmed",
+          "rl_uk_ofsi_confirmed",
+          "rl_str_filing_deadline_exceeded",
+          "rl_pep_edd_not_completed",
+          "rl_kyc_expired_high_risk",
+          "rl_ubo_threshold_missing",
+          "rl_data_retention_premature_destruction",
+          "rl_ai_high_risk_no_human_in_loop",
+          "rl_proliferation_dual_use_no_end_user_cert",
+          "rl_insider_bulk_data_exfil",
+          "rl_consent_not_obtained_data_sharing",
+          "rl_goaml_system_unavailable_str_due"
         ]
       },
       "fatf": {
-        "total": 40,
+        "total": 56,
         "ids": [
           "R.1",
           "R.2",
@@ -564,7 +618,23 @@
           "R.37",
           "R.38",
           "R.39",
-          "R.40"
+          "R.40",
+          "INR.1",
+          "INR.5",
+          "INR.6",
+          "INR.7",
+          "INR.10",
+          "INR.11",
+          "INR.15",
+          "INR.16",
+          "INR.24",
+          "INR.25",
+          "FATF-RBA-DNFBPs",
+          "FATF-RBA-VASPs",
+          "FATF-EnvCrime",
+          "FATF-ProfML",
+          "FATF-RBA-RE",
+          "FATF-CPF"
         ]
       },
       "dispositions": {
@@ -584,27 +654,27 @@
         ]
       },
       "skills": {
-        "total": 397,
+        "total": 468,
         "byLayer": {
-          "competency": 115,
-          "reasoning": 106,
-          "analysis": 176
+          "competency": 141,
+          "reasoning": 126,
+          "analysis": 201
         },
         "byDomain": {
-          "AML_CORE": 70,
+          "AML_CORE": 124,
           "REGULATORY": 35,
-          "RISK_ASSESSMENT": 33,
-          "KYC_CDD": 27,
-          "SANCTIONS_TFS": 14,
-          "INVESTIGATIONS": 40,
-          "GOVERNANCE": 28,
-          "SUPPLY_CHAIN": 49,
+          "RISK_ASSESSMENT": 35,
+          "KYC_CDD": 28,
+          "SANCTIONS_TFS": 19,
+          "INVESTIGATIONS": 41,
+          "GOVERNANCE": 29,
+          "SUPPLY_CHAIN": 50,
           "SOFT_SKILLS": 17,
           "DOCUMENTATION": 23,
-          "REPORTING": 11,
+          "REPORTING": 12,
           "TRAINING": 16,
           "COMPLIANCE_SYS": 21,
-          "DIGITAL_ASSETS": 9,
+          "DIGITAL_ASSETS": 14,
           "DATA_PRIVACY": 4
         }
       },
@@ -627,7 +697,15 @@
           "When an AI model, agentic system, or automated decision is in scope, traverse the full 2026 governance stack — EU AI Act tiers (prohibited / high-risk / limited / minimal), NIST AI RMF (Govern / Map / Measure / Manage), ISO/IEC 42001 AIMS, OWASP LLM Top 10, red-teaming evidence, model inventory, SBOM, model card, fairness monitoring, kill switch, human-in-the-loop — and cite every missing control as a gap.",
           "Trace insider-threat signals along the full privilege-abuse chain: authorised access → abnormal pattern → exfiltration vector → external recipient → monetisation path. Do not short-circuit on \"disgruntled employee\" without every link evidenced.",
           "For FATF 2021 environmental-crime predicate (illegal mining, logging, fishing, waste trafficking, wildlife), require explicit CAHRA / supply-chain provenance evidence linking the predicate to a financial flow; ESG-only signals without the nexus are not AML predicates.",
-          "Escalate any serious AI incident (harm, drift, prompt-injection, data-poisoning, model-theft, autonomous agent failure) within 72 hours under EU AI Act reporting expectations, and attach the full audit-ready artefact pack (model card, eval report, SBOM, decision log, drift trace)."
+          "Escalate any serious AI incident (harm, drift, prompt-injection, data-poisoning, model-theft, autonomous agent failure) within 72 hours under EU AI Act reporting expectations, and attach the full audit-ready artefact pack (model card, eval report, SBOM, decision log, drift trace).",
+          "When a professional money-laundering network (PMLN) indicator fires, immediately map the full ecosystem: service provider, criminal-client pipeline, layering mechanism, fee structure, and any correspondent or VASP nexus — cite community_detection and link_analysis mode ids.",
+          "Apply multi-jurisdictional conflict resolution at every turn: where two or more sanction regimes, data-protection laws, or AML statutes produce conflicting obligations, surface the conflict explicitly, apply the highest standard where legally permissible, and emit a cross-regime conflict note with the applicable doctrine ids.",
+          "Run the full CAHRA cascade for every DPMS supply-chain segment: mine → trader → consolidator → refinery → exporter → importer; do not treat any segment as verified unless a primary-source OECD DDG Annex II document is on file for that segment.",
+          "For every STR / goAML filing, pre-flight-check completeness against the goAML schema before submission: originator, beneficiary, account, transaction, and narrative fields must all pass the filing_str_narrative mode; emit a BLOCKED verdict if any mandatory field is absent.",
+          "Apply the PDPL data-minimisation test to every data-collection, data-sharing, and data-retention step: purpose limitation, storage limitation, and lawful-basis verification must each return a PASS before data flows cross a legal entity or jurisdiction boundary.",
+          "When evaluating carbon-market, ESG, or sustainability-linked products, require three-layer verification: (i) registry reconciliation, (ii) additionality / MRV evidence, (iii) corresponding-adjustment under Paris Agreement Article 6; surface any of the three as absent if not documented.",
+          "Invoke the proportionality_test meta-cognition primitive for every control recommendation: a control that is costlier than the residual risk it mitigates must be flagged as disproportionate with an alternative proposed.",
+          "For every adverse-media finding classified HIGH or CRITICAL, conduct a source triangulation across ≥3 independent outlets, assess publication credibility (peer-reviewed registry, mainstream financial press, or regulator notice), and record the source quality tier in the finding."
         ]
       },
       "metaCognition": {
@@ -684,58 +762,71 @@
     },
     "integrity": {
       "charterHash": "ed3b0986",
-      "catalogueHash": "ec393b3a"
+      "catalogueHash": "4c29dd19"
     }
   },
   "integrity": {
     "charterHash": "ed3b0986",
-    "catalogueHash": "ec393b3a",
-    "compositeHash": "813b0108"
+    "catalogueHash": "4c29dd19",
+    "compositeHash": "a7bd3c87"
   },
   "enhanced": {
     "extended": {
       "taxonomy": {
-        "questionTemplates": 50,
+        "questionTemplates": 72,
         "sectorRubrics": 5,
-        "scenarios": 54,
-        "typologies": 46,
+        "scenarios": 69,
+        "typologies": 71,
         "redFlags": 33,
-        "redFlagsExtended": 61,
+        "redFlagsExtended": 93,
         "adverseMediaCategories": 8,
         "metaCognition": 37
       },
       "regulatory": {
-        "fatfRecommendations": 40,
+        "fatfRecommendations": 56,
         "sanctionRegimes": 22,
         "dispositions": 11,
-        "redlines": 8,
+        "redlines": 20,
         "riskAppetite": 13,
         "cahraSeed": 12,
         "uaeFreeZones": 31,
-        "jurisdictionsFull": 249,
-        "dpmsKpis": 30
+        "jurisdictionsFull": 264,
+        "dpmsKpis": 30,
+        "policies": 40
       },
       "expertise": {
-        "skills": 397,
-        "cognitiveAmplifier": 15
+        "skills": 468,
+        "cognitiveAmplifier": 23
       }
     },
     "crossReferences": {
       "redFlagsByTypology": [
         {
+          "typology": "banking",
+          "count": 11
+        },
+        {
+          "typology": "tbml",
+          "count": 9
+        },
+        {
           "typology": "crypto",
           "count": 8
         },
         {
-          "typology": "banking",
-          "count": 5
+          "typology": "bec_fraud",
+          "count": 6
+        },
+        {
+          "typology": "vasp",
+          "count": 6
         },
         {
           "typology": "real_estate",
           "count": 5
         },
         {
-          "typology": "tbml",
+          "typology": "environmental_crime",
           "count": 5
         },
         {
@@ -751,14 +842,6 @@
           "count": 3
         },
         {
-          "typology": "bec_fraud",
-          "count": 3
-        },
-        {
-          "typology": "environmental_crime",
-          "count": 3
-        },
-        {
           "typology": "carbon_market_fraud",
           "count": 3
         },
@@ -768,6 +851,14 @@
         },
         {
           "typology": "ai_synthetic_media_fraud",
+          "count": 3
+        },
+        {
+          "typology": "real_estate_cash",
+          "count": 3
+        },
+        {
+          "typology": "insurance_wrap",
           "count": 3
         },
         {
@@ -789,43 +880,35 @@
         {
           "typology": "governance",
           "count": 2
-        },
-        {
-          "typology": "yacht_jet",
-          "count": 1
-        },
-        {
-          "typology": "insider_trading",
-          "count": 1
         }
       ],
       "jurisdictionsByRegion": [
+        {
+          "region": "Asia",
+          "count": 60
+        },
         {
           "region": "Africa",
           "count": 58
         },
         {
           "region": "Americas",
-          "count": 55
+          "count": 57
         },
         {
           "region": "Europe",
-          "count": 52
-        },
-        {
-          "region": "Asia",
-          "count": 51
+          "count": 55
         },
         {
           "region": "Oceania",
-          "count": 28
+          "count": 29
         },
         {
           "region": "Antarctic",
           "count": 5
         }
       ],
-      "typologyCount": 46,
+      "typologyCount": 71,
       "topTypologies": [
         {
           "id": "structuring",
@@ -879,11 +962,11 @@
     },
     "totals": {
       "catalogues": 19,
-      "enhancedCatalogues": 19,
-      "regulatoryRecords": 416,
-      "taxonomyRecords": 294,
-      "skillsRecords": 397,
-      "totalRecords": 1107
+      "enhancedCatalogues": 20,
+      "regulatoryRecords": 499,
+      "taxonomyRecords": 388,
+      "skillsRecords": 468,
+      "totalRecords": 1355
     }
   }
 }

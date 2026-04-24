@@ -72,6 +72,7 @@ function len(k, obj) {
         uaeFreeZones: len("UAE_FREE_ZONES", b),
         jurisdictionsFull: len("JURISDICTIONS_FULL", b),
         dpmsKpis: len("DPMS_KPIS", b),
+        policies: len("POLICIES", b),
       },
       expertise: {
         skills: len("SKILLS", b),

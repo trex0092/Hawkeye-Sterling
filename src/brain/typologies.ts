@@ -53,7 +53,33 @@ export type TypologyId =
   | 'carbon_market_fraud'
   | 'insider_threat'
   | 'ai_governance_breach'
-  | 'ai_synthetic_media_fraud';
+  | 'ai_synthetic_media_fraud'
+  // Wave 5 — expanded typology surface
+  | 'hawala_network'
+  | 'cyber_extortion'
+  | 'romance_fraud'
+  | 'tax_evasion_offshore'
+  | 'customs_fraud'
+  | 'social_media_investment_fraud'
+  | 'precious_stones'
+  | 'gambling_ml'
+  | 'loan_stacking'
+  | 'bust_out_fraud'
+  | 'real_estate_over_valuation'
+  | 'luxury_goods_ml'
+  | 'legal_services_ml'
+  | 'crypto_ransomware'
+  | 'payroll_fraud'
+  | 'professional_money_laundering'
+  | 'funnel_account'
+  | 'cash_intensive_business'
+  | 'correspondent_shell'
+  | 'virtual_iban_abuse'
+  | 'invoice_discounting_fraud'
+  | 'crypto_p2p_exchange'
+  | 'daigou_parallel_import'
+  | 'construction_ml'
+  | 'healthcare_billing_fraud';
 
 export interface Typology {
   id: TypologyId;
@@ -112,6 +138,32 @@ export const TYPOLOGIES: Typology[] = [
   { id: 'insider_threat', displayName: 'Insider threat — IP / trade-secret exfiltration', describes: 'Privileged-access abuse exfiltrating intellectual property, trade secrets, or sensitive data to external parties; distinct from insider_trading (MNPI).', redFlagIds: [], reasoningModes: ['timeline_reconstruction', 'pattern_of_life', 'velocity_analysis'], doctrines: ['three_lines_defence'] },
   { id: 'ai_governance_breach', displayName: 'AI governance breach (EU AI Act / NIST / ISO 42001)', describes: 'Deployment or operation of an AI system in breach of the 2026 governance stack — conformity assessment skipped, high-risk tier mis-classified, model inventory absent, fairness monitoring disabled, or kill-switch / human-in-the-loop bypassed.', redFlagIds: [], reasoningModes: ['narrative_coherence', 'source_triangulation'], doctrines: [] },
   { id: 'ai_synthetic_media_fraud', displayName: 'AI synthetic-media fraud', describes: 'Deepfake / voice-clone / generative-AI fraud used to impersonate executives, bypass KYC liveness, or fabricate evidence. Includes CEO deepfake BEC, AI-generated KYC documents, and autonomous-agent scams.', redFlagIds: [], reasoningModes: ['linguistic_forensics', 'entity_resolution', 'timeline_reconstruction'], doctrines: [] },
+  // ── Wave 5 — expanded typology surface ──────────────────────────────
+  { id: 'hawala_network', displayName: 'Hawala / informal value transfer', describes: 'Value transfer outside formal banking using trust-based brokers (hawaladars); settlement via commodity, trade, or bilateral netting.', redFlagIds: [], reasoningModes: ['pattern_of_life', 'jurisdiction_cascade'], doctrines: ['fatf_rba'] },
+  { id: 'cyber_extortion', displayName: 'Cyber extortion / ransomware proceeds', describes: 'Ransom payments in crypto laundered via chain-hopping, mixers, and OTC desk cash-outs.', redFlagIds: [], reasoningModes: ['chain_analysis', 'taint_propagation', 'velocity_analysis'], doctrines: [] },
+  { id: 'romance_fraud', displayName: 'Romance / pig-butchering fraud', describes: 'Victim cultivated through social media and induced to transfer funds or crypto to fraudster.', redFlagIds: [], reasoningModes: ['pattern_of_life', 'narrative_coherence'], doctrines: [] },
+  { id: 'tax_evasion_offshore', describes: 'Undeclared income routed through offshore structures to avoid domestic tax obligations; FATF all-crimes predicate.', displayName: 'Tax evasion — offshore structuring', redFlagIds: [], reasoningModes: ['jurisdiction_cascade', 'source_triangulation'], doctrines: ['fatf_rba'] },
+  { id: 'customs_fraud', displayName: 'Customs / tariff fraud', describes: 'Mis-classification, under-valuation, or country-of-origin falsification on import / export declarations.', redFlagIds: [], reasoningModes: ['tbml_over_invoicing', 'provenance_trace'], doctrines: [] },
+  { id: 'social_media_investment_fraud', displayName: 'Social-media investment fraud', describes: 'Fraudulent investment schemes promoted via social media; victims wire to mule accounts.', redFlagIds: [], reasoningModes: ['narrative_coherence', 'pattern_of_life'], doctrines: [] },
+  { id: 'precious_stones', displayName: 'Precious stones / gemstone smuggling', describes: 'Uncut diamonds, rubies, emeralds used as value-transfer mechanism across jurisdictions.', redFlagIds: [], reasoningModes: ['provenance_trace', 'jurisdiction_cascade'], doctrines: ['fatf_rba'] },
+  { id: 'gambling_ml', displayName: 'Gambling / casino ML', describes: 'Cash placement through casino chips, online gambling accounts, or sports-betting promo-abuse.', redFlagIds: [], reasoningModes: ['casino_junket_flow', 'velocity_analysis'], doctrines: [] },
+  { id: 'loan_stacking', displayName: 'Loan stacking / credit abuse', describes: 'Multiple simultaneous loan applications to different lenders using same collateral or fabricated documents.', redFlagIds: [], reasoningModes: ['velocity_analysis', 'entity_resolution'], doctrines: [] },
+  { id: 'bust_out_fraud', displayName: 'Bust-out / credit-card fraud', describes: 'Credit facility built up and then maxed out with no intent to repay; proceeds laundered.', redFlagIds: [], reasoningModes: ['pattern_of_life', 'velocity_analysis'], doctrines: [] },
+  { id: 'real_estate_over_valuation', displayName: 'Real-estate over / under-valuation', describes: 'Deliberate mispricing of property to transfer value between buyer and seller parties.', redFlagIds: [], reasoningModes: ['real_estate_cash', 'source_triangulation'], doctrines: ['fatf_rba'] },
+  { id: 'luxury_goods_ml', displayName: 'Luxury goods as value transfer', describes: 'Watches, handbags, jewellery purchased to store or transfer illicit value with minimal paper trail.', redFlagIds: [], reasoningModes: ['pattern_of_life', 'provenance_trace'], doctrines: [] },
+  { id: 'legal_services_ml', displayName: 'Legal-services / lawyer ML', describes: 'Client account, escrow, or legal privilege misused to layer funds.', redFlagIds: [], reasoningModes: ['source_triangulation', 'narrative_coherence'], doctrines: ['wolfsberg_faq'] },
+  { id: 'crypto_ransomware', displayName: 'Crypto ransomware monetisation', describes: 'Ransomware operator cash-out path: ransom wallet → mixing → OTC → fiat; UN Consolidated / OFAC SDN exposure.', redFlagIds: [], reasoningModes: ['chain_analysis', 'taint_propagation', 'sanctions_regime_matrix'], doctrines: [] },
+  { id: 'payroll_fraud', displayName: 'Payroll / ghost-employee fraud', describes: 'Fictitious payees added to payroll; funds routed to mule accounts controlled by fraudster.', redFlagIds: [], reasoningModes: ['reconciliation', 'pattern_of_life'], doctrines: [] },
+  { id: 'professional_money_laundering', displayName: 'Professional money laundering network', describes: 'Specialist third-party services providing layering infrastructure for multiple criminal clients.', redFlagIds: [], reasoningModes: ['community_detection', 'link_analysis'], doctrines: ['fatf_rba'] },
+  { id: 'funnel_account', displayName: 'Funnel / mule account', describes: 'Account that aggregates proceeds from multiple victims then rapidly disburses to third parties; a key money-mule indicator.', redFlagIds: [], reasoningModes: ['velocity_analysis', 'pattern_of_life'], doctrines: [] },
+  { id: 'cash_intensive_business', displayName: 'Cash-intensive business ML', describes: 'Commingling illicit cash into revenues of a cash-heavy business (restaurant, carwash, parking).', redFlagIds: [], reasoningModes: ['pattern_of_life', 'risk_adjusted'], doctrines: [] },
+  { id: 'correspondent_shell', displayName: 'Correspondent banking — shell respondent', describes: 'Shell bank or unregulated entity accessing the formal system through a correspondent relationship.', redFlagIds: [], reasoningModes: ['corresp_nested_bank_flow', 'kyb_strict'], doctrines: ['wolfsberg_correspondent'] },
+  { id: 'virtual_iban_abuse', displayName: 'Virtual IBAN / EMI account abuse', describes: 'Electronic money institution or virtual IBAN account used to obscure ultimate beneficiary or aggregate mule payments.', redFlagIds: [], reasoningModes: ['velocity_analysis', 'entity_resolution'], doctrines: [] },
+  { id: 'invoice_discounting_fraud', displayName: 'Invoice discounting / factoring fraud', describes: 'Fictitious or inflated receivables discounted to obtain financing; linked to TBML variants.', redFlagIds: [], reasoningModes: ['tbml_over_invoicing', 'reconciliation'], doctrines: [] },
+  { id: 'crypto_p2p_exchange', displayName: 'Crypto P2P exchange / OTC desk ML', describes: 'Peer-to-peer crypto trading or unlicensed OTC desk used to convert illicit crypto to fiat without KYC.', redFlagIds: [], reasoningModes: ['chain_analysis', 'vasp_travel_rule'], doctrines: ['fatf_rba'] },
+  { id: 'daigou_parallel_import', displayName: 'Daigou / parallel-import trade ML', describes: 'Cross-border resale of luxury or restricted goods using parallel-import channels to exploit price arbitrage and obscure value transfer.', redFlagIds: [], reasoningModes: ['tbml_overlay', 'provenance_trace'], doctrines: [] },
+  { id: 'construction_ml', displayName: 'Construction / infrastructure ML', describes: 'Inflated contracts, ghost sub-contractors, and kickbacks in large-scale construction projects.', redFlagIds: [], reasoningModes: ['source_triangulation', 'reconciliation'], doctrines: ['fatf_rba'] },
+  { id: 'healthcare_billing_fraud', displayName: 'Healthcare / insurance billing fraud', describes: 'Fraudulent claims, phantom procedures, or upcoding generating illicit proceeds then laundered.', redFlagIds: [], reasoningModes: ['reconciliation', 'pattern_of_life'], doctrines: [] },
 ];
 
 export const TYPOLOGY_BY_ID: Map<TypologyId, Typology> = new Map(

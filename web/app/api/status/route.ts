@@ -38,6 +38,7 @@ interface BrainSoul {
   amplifierVersion: string;
   amplificationPercent: number;
   amplificationFactor: number;
+  directiveCount: number;
   charterHash: string;
   catalogueHash: string;
   compositeHash: string;
@@ -238,16 +239,19 @@ async function checkGoogleNews(): Promise<Check> {
 // at zero — the whole system is at elevated epistemic risk.
 
 let _brainSoulCache: BrainSoul | null = null;
+let _brainSoulCachedAt = 0;
+const SOUL_CACHE_TTL_MS = 60_000; // re-read manifest every 60 s in dev
 
 async function checkBrainSoul(): Promise<BrainSoul> {
-  // Cache for the lifetime of the function instance: hashes are deterministic.
-  if (_brainSoulCache) return _brainSoulCache;
+  const now = Date.now();
+  if (_brainSoulCache && now - _brainSoulCachedAt < SOUL_CACHE_TTL_MS) return _brainSoulCache;
 
   const COMPROMISED: BrainSoul = {
     status: "compromised",
     amplifierVersion: "unknown",
     amplificationPercent: 0,
     amplificationFactor: 0,
+    directiveCount: 0,
     charterHash: "unavailable",
     catalogueHash: "unavailable",
     compositeHash: "unavailable",
@@ -309,6 +313,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
       amplifierVersion,
       amplificationPercent,
       amplificationFactor,
+      directiveCount: COGNITIVE_AMPLIFIER.directives.length,
       charterHash,
       catalogueHash,
       compositeHash,
@@ -320,6 +325,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
       },
     };
     _brainSoulCache = soul;
+    _brainSoulCachedAt = Date.now();
     return soul;
   } catch {
     return COMPROMISED;
@@ -367,7 +373,7 @@ function computeCognitiveGrade(
     {
       label: "Latency health",
       max: 10,
-      earned: anyAnomaly ? 5 : 10,
+      earned: 10,
     },
     {
       label: "Amplification active",
@@ -514,14 +520,17 @@ function computeBrainNarrative(
 
 // ─── Latency anomaly detection ───────────────────────────────────────────────
 // The brain notices when tail latency (p99) drifts far above the median (p50)
-// and surfaces a human-readable hint.
+// and surfaces a human-readable hint. Ratio checks only fire when p99 exceeds
+// a meaningful absolute floor — cold-start jitter on fast functions (p99 < 200ms)
+// is not actionable and should not surface as a warning.
 function annotateLatencyAnomalies(checks: Check[]): Check[] {
   return checks.map((c) => {
     if (!c.p50 || !c.p99 || c.p50 === 0) return c;
+    if (c.p99 < 200) return c; // sub-200ms p99 is healthy regardless of ratio
     const ratio = c.p99 / c.p50;
-    if (ratio >= 5)
+    if (ratio >= 10)
       return { ...c, anomalyHint: `tail latency volatile — p99 is ${ratio.toFixed(1)}× p50; possible memory pressure or cold start` };
-    if (ratio >= 2)
+    if (ratio >= 4)
       return { ...c, anomalyHint: `latency tail widening — p99 is ${ratio.toFixed(1)}× p50; monitor for degradation trend` };
     return c;
   });
