@@ -10,12 +10,27 @@
 // enough to enforce the four-eyes UX today and the audit chain cares
 // about the signed intent anyway (see /api/audit/sign).
 
-// analyst   — front-line screening; may propose actions, never sees STR register
-// co        — Compliance Officer; can view STR register, assist preparation
-// mlro      — Money Laundering Reporting Officer; full authority, final sign-off
-export type OperatorRole = "analyst" | "co" | "mlro";
+// analyst              — front-line screening; may propose actions
+// compliance_assistant — supports CO; same action scope as analyst
+// co                   — Compliance Officer; can view STR register, assist preparation
+// mlro                 — Money Laundering Reporting Officer; full authority, final sign-off
+// managing_director    — Executive authority; same action scope as MLRO
+export type OperatorRole =
+  | "analyst"
+  | "compliance_assistant"
+  | "co"
+  | "mlro"
+  | "managing_director";
 
 const ROLE_STORAGE_KEY = "hawkeye.operator-role";
+
+const ALL_ROLES: OperatorRole[] = [
+  "analyst",
+  "compliance_assistant",
+  "co",
+  "mlro",
+  "managing_director",
+];
 
 export function isBrowser(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -25,7 +40,7 @@ export function loadOperatorRole(): OperatorRole {
   if (!isBrowser()) return "analyst";
   try {
     const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
-    if (raw === "mlro" || raw === "analyst" || raw === "co") return raw;
+    if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
   } catch {
     /* localStorage disabled */
   }
@@ -43,31 +58,30 @@ export function saveOperatorRole(role: OperatorRole): void {
 }
 
 export const ROLE_LABEL: Record<OperatorRole, string> = {
-  analyst: "Analyst",
-  co: "CO",
-  mlro: "MLRO",
+  analyst:              "Analyst",
+  compliance_assistant: "C. Assistant",
+  co:                   "CO",
+  mlro:                 "MLRO",
+  managing_director:    "MD",
 };
 
 export const ROLE_POWER: Record<OperatorRole, number> = {
-  analyst: 1,
-  co: 2,
-  mlro: 3,
+  analyst:              1,
+  compliance_assistant: 1,
+  co:                   2,
+  mlro:                 3,
+  managing_director:    3,
 };
 
-// Action → minimum role required. The UI uses this to gate buttons; the
-// server-side audit-signing endpoint enforces it independently so a
-// modified client can't bypass.
-//
-// str_read: viewing the STR case register — CO and above (tipping-off guard)
-// str/freeze/dispose/goaml_submit: MLRO only (final sign-off authority)
+// Action → minimum role required.
 export const ACTION_MIN_ROLE: Record<string, OperatorRole> = {
-  clear: "analyst",
-  escalate: "analyst",
-  str_read: "co",
-  str: "mlro",
-  freeze: "mlro",
-  dispose: "mlro",
-  goaml_submit: "mlro",
+  clear:         "analyst",
+  escalate:      "analyst",
+  str_read:      "co",
+  str:           "mlro",
+  freeze:        "mlro",
+  dispose:       "mlro",
+  goaml_submit:  "mlro",
 };
 
 export function canPerform(role: OperatorRole, action: string): boolean {
@@ -75,3 +89,5 @@ export function canPerform(role: OperatorRole, action: string): boolean {
   if (!min) return true;
   return ROLE_POWER[role] >= ROLE_POWER[min];
 }
+
+export { ALL_ROLES };

@@ -36,6 +36,7 @@ import {
   ROLE_LABEL,
   type OperatorRole,
 } from "@/lib/data/operator-role";
+import { SignOffPanel } from "@/components/ui/SignOffPanel";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -179,7 +180,9 @@ export default function StrCasesPage() {
 
   const flashFor = (tone: FlashTone, msg: string) => {
     setFlash({ tone, msg });
-    window.setTimeout(() => setFlash(null), 3500);
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => setFlash(null), 3500);
+    }
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -496,6 +499,7 @@ export default function StrCasesPage() {
                   </div>
                 }
               />
+              <SignOffPanel />
             </form>
           </Card>
 

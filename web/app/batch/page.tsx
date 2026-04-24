@@ -324,7 +324,7 @@ export default function BatchPage() {
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => fileInput.current?.click()}
-              className="px-4 py-2 bg-ink-0 text-white rounded text-12.5 font-semibold hover:bg-ink-1"
+              className="px-4 py-2 bg-ink-0 text-bg-0 rounded text-12.5 font-semibold hover:bg-ink-1"
             >
               Choose CSV
             </button>
@@ -383,7 +383,7 @@ export default function BatchPage() {
         )}
 
         {summary && (
-          <div className="bg-ink-0 text-white rounded-xl p-4 mb-4 flex flex-wrap gap-6 items-end">
+          <div className="bg-ink-0 text-bg-0 rounded-xl p-4 mb-4 flex flex-wrap gap-6 items-end">
             <SummaryStat label="Total" value={summary.total} />
             <SummaryStat label="Critical" value={summary.critical} tone="text-red" />
             <SummaryStat label="High" value={summary.high} tone="text-orange" />
@@ -492,8 +492,8 @@ function SummaryStat({
 }) {
   return (
     <div>
-      <div className="text-10 uppercase tracking-wide-4 text-white/50">{label}</div>
-      <div className={`text-18 font-mono font-semibold ${tone ?? "text-white"}`}>{value}</div>
+      <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">{label}</div>
+      <div className={`text-18 font-mono font-semibold ${tone ?? "text-bg-0"}`}>{value}</div>
     </div>
   );
 }

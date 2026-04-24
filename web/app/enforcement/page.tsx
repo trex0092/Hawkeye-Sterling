@@ -3,10 +3,6 @@
 import { useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
-// Enforcement Tracker — calendar of regulatory deadlines (MoE annual
-// report, FIU STR reconciliation, CDD review dates, etc.). The MLRO
-// sees what's coming up and what's overdue.
-
 interface Deadline {
   id: string;
   title: string;
@@ -14,6 +10,13 @@ interface Deadline {
   authority: string;
   cadence: "annual" | "quarterly" | "monthly" | "ad-hoc";
   notes?: string;
+}
+
+/** "2026-05-31" → "31/05/2026" */
+function fmtDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 const DEADLINES: Deadline[] = [
@@ -28,7 +31,7 @@ const DEADLINES: Deadline[] = [
   },
   {
     id: "fiu-recon",
-    title: "FIU STR / SAR quarterly reconciliation",
+    title: "FIU STR / SAR Quarterly Reconciliation",
     due: "2026-06-30",
     authority: "UAE FIU",
     cadence: "quarterly",
@@ -37,7 +40,7 @@ const DEADLINES: Deadline[] = [
   },
   {
     id: "lbma-audit",
-    title: "LBMA Responsible Gold Guidance audit",
+    title: "LBMA Responsible Gold Guidance — Step-4 Audit",
     due: "2026-09-15",
     authority: "LBMA",
     cadence: "annual",
@@ -46,7 +49,7 @@ const DEADLINES: Deadline[] = [
   },
   {
     id: "cdd-review-tier1",
-    title: "Tier-1 EDD refresh sweep",
+    title: "Tier-1 EDD Refresh Sweep",
     due: "2026-05-31",
     authority: "Internal",
     cadence: "annual",
@@ -55,7 +58,7 @@ const DEADLINES: Deadline[] = [
   },
   {
     id: "sanctions-list-board",
-    title: "Sanctions-list effectiveness board review",
+    title: "Sanctions-List Effectiveness Board Review",
     due: "2026-07-15",
     authority: "Internal",
     cadence: "quarterly",
@@ -64,12 +67,84 @@ const DEADLINES: Deadline[] = [
   },
   {
     id: "training-renewal",
-    title: "AML/CFT staff training renewal cycle",
+    title: "AML/CFT Staff Training Renewal Cycle",
     due: "2026-06-18",
     authority: "Internal",
     cadence: "annual",
     notes:
       "All AML/CFT team members must have completed refresher training within 12 months. Per FDL 10/2025 Art.16.",
+  },
+  {
+    id: "eocn-declaration",
+    title: "EOCN Annual Mineral Supply-Chain Declaration",
+    due: "2026-03-31",
+    authority: "EOCN",
+    cadence: "annual",
+    notes:
+      "Annual responsible-sourcing declaration submitted to the Emirates Official Cargoes Network. Covers all upstream smelters and refiners per OECD Annex II 5-Step framework. Deadline 31 March.",
+  },
+  {
+    id: "ubo-register",
+    title: "UBO Register Annual Verification",
+    due: "2026-06-30",
+    authority: "UAE MoE / MOEC",
+    cadence: "annual",
+    notes:
+      "Verify and re-file the Beneficial Ownership Register with the relevant authority. Any change in UBO must be reported within 15 business days per Cabinet Decision 58/2020.",
+  },
+  {
+    id: "risk-appetite",
+    title: "Risk Appetite Statement Annual Review",
+    due: "2026-04-30",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Board reviews and re-approves the AML/CFT Risk Appetite Statement per FDL 10/2025 Art.4. Output feeds the Entity-Wide Risk Assessment update.",
+  },
+  {
+    id: "board-aml-q2",
+    title: "Board AML/CFT Quarterly Report — Q2 2026",
+    due: "2026-07-31",
+    authority: "Internal / Board",
+    cadence: "quarterly",
+    notes:
+      "MLRO presents quarterly AML/CFT metrics to the Board Audit Committee per FDL 10/2025 Art.15. Includes STR count, screening volumes, training status, and open corrective actions.",
+  },
+  {
+    id: "goaml-test",
+    title: "goAML System Connectivity & Version Test",
+    due: "2026-05-15",
+    authority: "UAE FIU",
+    cadence: "annual",
+    notes:
+      "Annual end-to-end connectivity test of the goAML Web submission system. Confirm current software version, test report submission in sandbox, and update MLRO credentials. FIU technical bulletin TBN-2025-04.",
+  },
+  {
+    id: "pf-risk-assessment",
+    title: "Proliferation Financing Risk Assessment Update",
+    due: "2026-07-31",
+    authority: "Internal / CBUAE",
+    cadence: "annual",
+    notes:
+      "Standalone PF risk assessment required under FATF R.1 and UAE National PF Risk Assessment 2024. Covers dual-use goods exposure, DPRK/Iran nexus, and effectiveness of targeted financial sanctions controls.",
+  },
+  {
+    id: "tier2-cdd-review",
+    title: "Tier-2 High-Risk CDD Periodic Review",
+    due: "2026-09-30",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "CDD refresh for all high-risk (non-PEP) customers not refreshed in 12 months. Minimum: updated ID documents, re-run sanctions screen, refresh source-of-funds narrative. Per FDL 10/2025 Art.11.",
+  },
+  {
+    id: "sanctions-system-test",
+    title: "Sanctions Screening System Effectiveness Test",
+    due: "2026-05-30",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "Annual test of the automated sanctions screening engine using CBUAE-prescribed test names and entities. Measure false-negative rate; document results. CBUAE Guidance on Sanctions Compliance, para 4.3.",
   },
 ];
 
@@ -129,13 +204,13 @@ export default function EnforcementPage() {
                     {d.title}
                   </h3>
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 font-semibold uppercase ${tone}`}
+                    className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 font-semibold uppercase whitespace-nowrap ${tone}`}
                   >
                     {label}
                   </span>
                 </div>
                 <div className="font-mono text-10 text-ink-3 mb-2">
-                  {d.authority} · due {d.due} · {d.cadence}
+                  {d.authority} · due {fmtDate(d.due)} · {d.cadence}
                 </div>
                 {d.notes && (
                   <p className="text-11 text-ink-2 m-0 leading-relaxed">

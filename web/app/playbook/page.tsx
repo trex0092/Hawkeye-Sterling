@@ -3,11 +3,6 @@
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
-// Playbook Engine — operator picks a typology; the app walks them
-// through the specific due-diligence questions that typology
-// requires. Codifies institutional knowledge into a guided workflow
-// so no step is missed on a high-risk onboarding.
-
 interface Playbook {
   id: string;
   title: string;
@@ -185,6 +180,206 @@ const PLAYBOOKS: Playbook[] = [
           "Every gold bar / coin logged with LBMA-compliant mass & assay",
           "Chain-of-custody from refiner documented",
           "Random 10% audit of incoming lot",
+        ],
+      },
+    ],
+  },
+  {
+    id: "proliferation",
+    title: "Proliferation Financing (FATF R.7 / UNSCR)",
+    typology: "pf",
+    family: "PF",
+    steps: [
+      {
+        title: "1. Sanctions screening — PF-specific lists",
+        required: true,
+        checks: [
+          "Screen against UNSCR 1267 (Al-Qaeda), 1718 (DPRK), 2231 (Iran) consolidated lists",
+          "Screen against OFAC SDN + Non-SDN NS-MBS and NPWMD lists",
+          "Screen against EU Regulation 267/2012 (Iran) and 2017/1509 (DPRK) lists",
+          "Screen all UBOs, directors, and counterparties — not just the entity name",
+        ],
+      },
+      {
+        title: "2. Dual-use goods / sector red-flags",
+        required: true,
+        checks: [
+          "Check if goods or services could be dual-use (nuclear, chemical, biological, radiological)",
+          "Verify end-use certificate where product has export-control classification",
+          "Flag customers operating in aerospace, defence, electronics, chemicals or mining equipment sectors",
+        ],
+      },
+      {
+        title: "3. Jurisdiction exposure",
+        required: true,
+        checks: [
+          "Identify any nexus to DPRK, Iran, Syria, Belarus, Russia (full or sectoral sanctions)",
+          "Check transit countries in supply chain against UN Panel of Experts reports",
+          "Escalate to MLRO if any leg of the transaction touches a PF-sanctioned jurisdiction",
+        ],
+      },
+      {
+        title: "4. Financial indicators",
+        required: false,
+        checks: [
+          "Unusual payment routes inconsistent with normal trade finance",
+          "Front or shell companies with no obvious commercial purpose",
+          "Requests to split shipments to stay under export thresholds",
+          "Reluctance to provide end-use certificates or final consignee details",
+        ],
+      },
+    ],
+  },
+  {
+    id: "conflict-minerals",
+    title: "Conflict Minerals — OECD 5-Step / EOCN",
+    typology: "conflict_minerals",
+    family: "EOCN",
+    steps: [
+      {
+        title: "1. Supply-chain mapping (Step 1)",
+        required: true,
+        checks: [
+          "Identify all smelters and refiners in the upstream supply chain",
+          "Obtain LBMA / RJC Chain-of-Custody certificates from each refiner",
+          "Map origin of minerals to mine level where possible",
+          "Cross-check smelters/refiners against EOCN List B (prohibited suppliers)",
+        ],
+      },
+      {
+        title: "2. Risk identification (Step 2)",
+        required: true,
+        checks: [
+          "Identify whether any source or transit country is on the CAHRA list",
+          "Check IPIS, Global Witness, and UN GoE reports for relevant supply-chain actors",
+          "Assess risk of serious abuses: forced labour, child labour, environmental crimes",
+          "Identify any direct or indirect benefit to non-state armed groups",
+        ],
+      },
+      {
+        title: "3. Risk mitigation strategy (Step 3)",
+        required: true,
+        checks: [
+          "Suspend or disengage from suppliers if serious abuses are identified",
+          "Where engagement is maintained, document measurable improvement plan",
+          "Escalate to MLRO + Board for any CAHRA-origin material decision",
+          "Obtain written commitment from supplier to OECD DD Guidance requirements",
+        ],
+      },
+      {
+        title: "4. Third-party audit (Step 4)",
+        required: true,
+        checks: [
+          "Commission independent LBMA-accredited auditor for annual Step-4 audit",
+          "Audit scope: due diligence systems, supply-chain mapping, grievance mechanism",
+          "Resolve all major findings within 90 days of audit report date",
+          "Submit audit summary to LBMA and retain full report for 5 years",
+        ],
+      },
+      {
+        title: "5. Annual public reporting (Step 5)",
+        required: true,
+        checks: [
+          "Publish annual responsible sourcing report per OECD Annex II",
+          "Report to include: supply-chain policies, risk-identification findings, mitigation actions",
+          "Submit EOCN Annual Declaration by 31 March each year",
+          "Board sign-off on published report",
+        ],
+      },
+    ],
+  },
+  {
+    id: "vasp",
+    title: "VASP / Virtual-Asset Customer (FATF R.15)",
+    typology: "vasp",
+    family: "VASP",
+    steps: [
+      {
+        title: "1. VASP licensing verification",
+        required: true,
+        checks: [
+          "Confirm VASP holds a licence from a FATF-member jurisdiction regulator (e.g. VARA UAE, FCA, MAS)",
+          "Obtain VASP's AML/CFT policy and most recent independent audit report",
+          "Verify VASP applies the Travel Rule (FATF R.16) for transfers ≥ USD/AED equivalent 1,000",
+          "Check VASP against OFAC Virtual Currency-related SDN designations",
+        ],
+      },
+      {
+        title: "2. Blockchain analytics",
+        required: true,
+        checks: [
+          "Run on-chain address screening through Chainalysis / Elliptic or equivalent",
+          "Flag any address with exposure >10% to darknet, mixer, sanctioned entity or ransomware cluster",
+          "Document source-of-crypto funds (exchange, mining, staking, DeFi protocol)",
+          "Retain blockchain analytics report in case file",
+        ],
+      },
+      {
+        title: "3. Customer identity — Travel Rule",
+        required: true,
+        checks: [
+          "Collect originator VASP name, jurisdiction and LEI/registration number",
+          "Collect beneficiary VASP details if outgoing transfer",
+          "Confirm Travel Rule message received and validated for inbound transfers",
+          "Hard-stop any transfer from unhosted wallet exceeding AED 3,500 without enhanced verification",
+        ],
+      },
+      {
+        title: "4. Risk classification",
+        required: false,
+        checks: [
+          "High-risk: privacy coins (Monero, Zcash), mixers/tumblers, unregistered DeFi protocols",
+          "High-risk: VASP domiciled in FATF-listed or non-cooperative jurisdiction",
+          "Escalate to MLRO if any high-risk indicator present before transacting",
+          "Quarterly re-screen of active VASP counterparties",
+        ],
+      },
+    ],
+  },
+  {
+    id: "shell-complex",
+    title: "Shell Company / Complex Structure (FATF R.24/25)",
+    typology: "shell_company",
+    family: "UBO",
+    steps: [
+      {
+        title: "1. Ownership mapping",
+        required: true,
+        checks: [
+          "Obtain certified registry extract and shareholder register from jurisdiction of incorporation",
+          "Map all ownership layers until natural-person UBO(s) holding ≥25% are identified",
+          "Identify nominee shareholders or directors — require disclosure of principal behind nominee",
+          "Cross-check UBO against UAE MoE UBO Register and MOEC beneficial ownership filings",
+        ],
+      },
+      {
+        title: "2. Purpose and substance test",
+        required: true,
+        checks: [
+          "Document the commercial rationale for the corporate structure",
+          "Verify entity has genuine business activity (not purely a holding / tax vehicle)",
+          "Confirm registered address is not a mass-registration address (virtual office red flag)",
+          "Obtain at least one of: audited accounts, bank reference, or regulatory filing",
+        ],
+      },
+      {
+        title: "3. Trust / foundation screening",
+        required: true,
+        checks: [
+          "If trust structure: obtain trust deed, identify settlor, trustees, protector, and all beneficiaries",
+          "If foundation: obtain foundation charter and identify founder and council members",
+          "Screen all identified individuals (settlor, trustees, beneficiaries) against sanctions + PEP lists",
+          "Confirm jurisdiction of trust/foundation is not on FATF non-cooperative list",
+        ],
+      },
+      {
+        title: "4. Ongoing monitoring — enhanced",
+        required: false,
+        checks: [
+          "Annual ownership refresh — request updated registry extract",
+          "Monitor for changes in UBO via public registry alerts where available",
+          "Any change in UBO triggers full re-KYC within 30 days per FDL 10/2025 Art.11",
+          "Escalate to MLRO if UBO identity cannot be confirmed after two requests",
         ],
       },
     ],

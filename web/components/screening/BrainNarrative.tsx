@@ -2,20 +2,22 @@
 
 import { useMemo, useState } from "react";
 import type { SuperBrainResult } from "@/lib/hooks/useSuperBrain";
+import type { NewsDossier } from "@/lib/hooks/useNewsSearch";
 
 interface BrainNarrativeProps {
   result: SuperBrainResult;
   subjectName: string;
   subjectId: string;
+  newsDossier?: NewsDossier | null;
 }
 
 // Pure, deterministic narrative synthesis from the super-brain result.
 // No LLM, no non-determinism — the same input always produces the same
 // narrative so the audit chain stays reproducible. Every claim cites a
 // specific field from the brain payload; nothing is fabricated.
-function buildNarrative(r: SuperBrainResult, name: string, id: string): string[] {
+function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: NewsDossier | null): string[] {
   const paragraphs: string[] = [];
-  const composite = r.composite.score;
+  const composite = r.composite?.score ?? 0;
   const severity = r.screen.severity.toUpperCase();
   const listsHit = Array.from(new Set(r.screen.hits.map((h) => h.listId)));
   const pepTier = r.pep && r.pep.salience > 0 ? r.pep.tier : null;
@@ -41,7 +43,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string): string[]
     );
   } else {
     paragraphs.push(
-      `No sanctions-list hits were returned above the 82% confidence threshold across any screened corpus.`,
+      `No sanctions-list hits were returned above the minimum confidence threshold across ${r.screen.listsChecked} screened corpora.`,
     );
   }
 
@@ -56,24 +58,40 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string): string[]
     paragraphs.push(`No PEP classification was raised by the brain on this screen.`);
   }
 
-  // Adverse media + ESG.
-  if (amLabels.length > 0 || (r.esg && r.esg.length > 0)) {
+  // Adverse media + ESG — combines static keyword classifier AND live news dossier.
+  const newsHits = news && news.articleCount > 0 ? news : null;
+  const hasAm = amLabels.length > 0 || newsHits !== null;
+  const hasEsg = (r.esg && r.esg.length > 0) || (newsHits?.esgDomains?.length ?? 0) > 0;
+
+  if (hasAm || hasEsg) {
     const bits: string[] = [];
-    if (amLabels.length > 0) {
+    if (newsHits) {
+      const topGroups = newsHits.keywordGroupCounts
+        .slice(0, 3)
+        .map((g) => `${g.label} ${g.count}`)
+        .join(", ");
       bits.push(
-        `adverse-media signals fired on ${amLabels.length} categor${amLabels.length === 1 ? "y" : "ies"} (${amLabels.join("; ")})`,
+        `live open-source intelligence returned ${newsHits.articleCount} article${newsHits.articleCount === 1 ? "" : "s"} (top severity: ${newsHits.topSeverity.toUpperCase()})${topGroups ? ` — categories: ${topGroups}` : ""}`,
       );
     }
-    if (r.esg && r.esg.length > 0) {
+    if (amLabels.length > 0) {
       bits.push(
-        `ESG overlay matched ${r.esg.length} categor${r.esg.length === 1 ? "y" : "ies"} across SASB / EU-Taxonomy / SDG frameworks`,
+        `keyword classifier fired on ${amLabels.length} categor${amLabels.length === 1 ? "y" : "ies"} (${amLabels.join("; ")})`,
+      );
+    }
+    if (hasEsg) {
+      const esgSources = newsHits?.esgDomains?.length
+        ? newsHits.esgDomains.slice(0, 3).join(", ")
+        : null;
+      bits.push(
+        `ESG overlay matched ${(r.esg?.length ?? 0) || newsHits?.esgDomains?.length} categor${((r.esg?.length ?? 0) || (newsHits?.esgDomains?.length ?? 0)) === 1 ? "y" : "ies"}${esgSources ? ` (${esgSources})` : ""} across SASB / EU-Taxonomy / SDG frameworks`,
       );
     }
     paragraphs.push(
       `Open-source analysis: ${bits.join("; ")}. These signals require analyst corroboration before constructive-knowledge can be asserted under FDL 10/2025 Art.2(3).`,
     );
   } else {
-    paragraphs.push(`No adverse-media or ESG signals fired on this tick.`);
+    paragraphs.push(`No adverse-media or ESG signals returned on this tick (keyword classifier: 0 hits; live news: no articles indexed).`);
   }
 
   // Jurisdiction.
@@ -109,7 +127,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string): string[]
   // Recommendation.
   const rec = (() => {
     if (r.screen.hits.length > 0 && severity === "CRITICAL") {
-      return "FREEZE relationship, file FFR + parallel SAR via goAML within 5 business days, notify EOCN + MoE, escalate to CEO and Board Chair.";
+      return "FREEZE relationship, file FFR + parallel SAR via goAML without delay, notify EOCN + MoE, escalate to CEO and Board Chair.";
     }
     if (r.screen.hits.length > 0 || severity === "HIGH") {
       return "Escalate to MLRO for enhanced due diligence; defer clearance pending analyst review of source-of-wealth / source-of-funds.";
@@ -117,10 +135,13 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string): string[]
     if (pepTier || pepAssessmentTier) {
       return "Apply EDD and obtain senior-management approval; enrol in thrice-daily ongoing monitoring.";
     }
-    if (amLabels.length > 0 || redlines.length > 0) {
+    if (newsHits && (newsHits.topSeverity === "critical" || newsHits.topSeverity === "high")) {
+      return `Defer clearance — live news dossier contains ${newsHits.articleCount} article${newsHits.articleCount === 1 ? "" : "s"} at ${newsHits.topSeverity.toUpperCase()} severity; analyst corroboration required before constructive-knowledge threshold (FDL 10/2025 Art.2(3)) is met; enrol in ongoing monitoring.`;
+    }
+    if (amLabels.length > 0 || redlines.length > 0 || newsHits) {
       return "Defer clearance pending analyst review and live-news corroboration; enrol in ongoing monitoring.";
     }
-    return "Proceed with standard CDD; enrol in ongoing monitoring at thrice_daily cadence (08:30 / 15:00 / 17:30 Dubai).";
+    return "Proceed with standard CDD; enrol in ongoing monitoring.";
   })();
   paragraphs.push(`Recommendation: ${rec}`);
 
@@ -131,15 +152,17 @@ export function BrainNarrative({
   result,
   subjectName,
   subjectId,
+  newsDossier,
 }: BrainNarrativeProps) {
   const paragraphs = useMemo(
-    () => buildNarrative(result, subjectName, subjectId),
-    [result, subjectName, subjectId],
+    () => buildNarrative(result, subjectName, subjectId, newsDossier),
+    [result, subjectName, subjectId, newsDossier],
   );
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(true);
 
   const handleCopy = async () => {
+    if (typeof navigator === "undefined" || typeof window === "undefined") return;
     try {
       await navigator.clipboard.writeText(paragraphs.join("\n\n"));
       setCopied(true);
@@ -150,13 +173,13 @@ export function BrainNarrative({
   };
 
   return (
-    <div className="bg-gradient-to-br from-ink-0 to-ink-1 text-white rounded-lg p-4 mb-3 border border-brand/30">
+    <div className="bg-gradient-to-br from-ink-0 to-ink-1 text-bg-0 rounded-lg p-4 mb-3 border border-brand/30">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-brand text-white uppercase">
             Brain narrative
           </span>
-          <span className="text-10.5 text-white/60 font-mono">
+          <span className="text-10.5 text-bg-0/60 font-mono">
             auto-generated · deterministic · audit-safe
           </span>
         </div>
@@ -164,7 +187,7 @@ export function BrainNarrative({
           <button
             type="button"
             onClick={handleCopy}
-            className="text-10.5 font-mono px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="text-10.5 font-mono px-2 py-1 rounded bg-bg-0/10 hover:bg-bg-0/20 text-bg-0 transition-colors"
             title="Copy to clipboard"
           >
             {copied ? "✓ copied" : "copy"}
@@ -172,7 +195,7 @@ export function BrainNarrative({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="text-10.5 font-mono px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="text-10.5 font-mono px-2 py-1 rounded bg-bg-0/10 hover:bg-bg-0/20 text-bg-0 transition-colors"
             aria-label={expanded ? "Collapse narrative" : "Expand narrative"}
           >
             {expanded ? "−" : "+"}
@@ -180,7 +203,7 @@ export function BrainNarrative({
         </div>
       </div>
       {expanded && (
-        <div className="space-y-2 text-12 leading-relaxed text-white/95">
+        <div className="space-y-2 text-12 leading-relaxed text-bg-0/95">
           {paragraphs.map((p, i) => (
             <p key={i} className="m-0">
               {p}

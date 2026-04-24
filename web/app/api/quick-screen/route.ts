@@ -73,7 +73,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     candidates = callerCandidates;
   } else {
     // No candidates provided → use the live watchlist corpus.
-    candidates = await loadCandidates() as QuickScreenCandidate[];
+    try {
+      candidates = await loadCandidates() as QuickScreenCandidate[];
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error("[quick-screen] loadCandidates failed", detail);
+      return respond(503, { ok: false, error: "watchlist corpus unavailable", detail }, gate.headers);
+    }
   }
 
   try {

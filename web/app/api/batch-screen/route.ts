@@ -12,6 +12,11 @@ import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
+import { postWebhook } from "@/lib/server/webhook";
+
+const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
+const DEFAULT_WORKSPACE_GID = "1213645083721316";
+const DEFAULT_ASSIGNEE_GID  = "1213645083721304";
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -167,8 +172,85 @@ export async function POST(req: Request): Promise<NextResponse> {
     totalDurationMs: Date.now() - started,
   };
 
+  // Post an Asana task for any CRITICAL / HIGH hits so the MLRO is
+  // notified even when the analyst doesn't manually review the results.
+  const elevated = results.filter(
+    (r) => r.severity === "critical" || r.severity === "high",
+  );
+  let asanaTaskUrl: string | undefined;
+  const token = process.env["ASANA_TOKEN"];
+  if (elevated.length > 0 && token) {
+    const topSeverity = elevated.some((r) => r.severity === "critical")
+      ? "CRITICAL"
+      : "HIGH";
+    const runAt = new Date().toISOString();
+    const lines: string[] = [
+      `HAWKEYE STERLING · BATCH SCREENING ALERT`,
+      `Run at           : ${runAt}`,
+      `Batch size       : ${results.length} subjects`,
+      `Elevated (≥HIGH) : ${elevated.length}`,
+      ``,
+      `── ELEVATED SUBJECTS ──`,
+    ];
+    for (const r of elevated.slice(0, 30)) {
+      lines.push(
+        `• [${r.severity.toUpperCase()}] ${r.name}` +
+          (r.jurisdiction ? ` · ${r.jurisdiction}` : "") +
+          ` · score ${r.topScore} · ${r.hitCount} hit(s)` +
+          (r.listCoverage.length ? ` · lists: ${r.listCoverage.join(", ")}` : ""),
+      );
+    }
+    if (elevated.length > 30) lines.push(`  … and ${elevated.length - 30} more`);
+    lines.push(``);
+    lines.push(`Summary: critical ${summary.critical} · high ${summary.high} · medium ${summary.medium} · low ${summary.low} · clear ${summary.clear}`);
+    lines.push(`Legal   : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18`);
+    try {
+      const res = await fetch("https://app.asana.com/api/1.0/tasks", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          data: {
+            name: `[BATCH · ${topSeverity}] ${elevated.length} elevated subject(s) — ${results.length} total screened`,
+            notes: lines.join("\n"),
+            projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
+            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
+            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+          },
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { data?: { permalink_url?: string } }
+        | null;
+      if (payload?.data?.permalink_url) asanaTaskUrl = payload.data.permalink_url;
+    } catch {
+      /* non-fatal — batch results still returned to caller */
+    }
+  }
+
+  // Fire webhook for batch completion (elevated subjects only surfaced
+  // in newHits so the consumer can page/route without parsing the full list).
+  void postWebhook({
+    type: "screening.completed",
+    subjectId: "BATCH",
+    subjectName: `Batch · ${results.length} subjects`,
+    severity: summary.critical > 0 ? "critical" : summary.high > 0 ? "high" : summary.medium > 0 ? "medium" : "clear",
+    topScore: Math.max(...results.map((r) => r.topScore), 0),
+    newHits: elevated.slice(0, 10).map((r) => ({
+      listId: r.listCoverage[0] ?? "batch",
+      listRef: r.name,
+      candidateName: r.name,
+    })),
+    ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
+    generatedAt: new Date().toISOString(),
+    source: "hawkeye-sterling",
+  }).catch((err) => console.error("[batch-screen] webhook failed", err));
+
   return NextResponse.json(
-    { ok: true, summary, results },
+    { ok: true, summary, results, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) },
     { headers: gate.headers },
   );
 }

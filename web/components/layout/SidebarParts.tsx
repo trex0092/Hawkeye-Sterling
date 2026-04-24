@@ -6,6 +6,7 @@ import {
   loadOperatorRole,
   saveOperatorRole,
   ROLE_LABEL,
+  ALL_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 
@@ -103,8 +104,7 @@ export function SidebarMLROCard() {
   }, []);
 
   const toggleRole = () => {
-    const cycle: OperatorRole[] = ["analyst", "co", "mlro"];
-    const next = cycle[(cycle.indexOf(role) + 1) % cycle.length];
+    const next = ALL_ROLES[(ALL_ROLES.indexOf(role) + 1) % ALL_ROLES.length]!;
     saveOperatorRole(next);
     setRole(next);
   };
@@ -182,7 +182,7 @@ export function SidebarMLROCard() {
             type="button"
             onClick={toggleRole}
             className="inline-flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white border border-white/20"
-            title={`Click to cycle role (Analyst → CO → MLRO)`}
+            title="Click to cycle role (Analyst → C.Assistant → CO → MLRO → MD)"
           >
             {ROLE_LABEL[role]}
             <span className="text-10 opacity-75">⇄</span>

@@ -204,7 +204,7 @@ export default function UboDeclarationPage() {
             </div>
             <button
               type="submit"
-              className="text-12 font-semibold px-4 py-2 rounded bg-ink-0 text-white hover:bg-ink-1"
+              className="text-12 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
             >
               Submit declaration
             </button>

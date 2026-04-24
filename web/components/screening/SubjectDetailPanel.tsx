@@ -1192,7 +1192,12 @@ function SuperBrainPanel({
   const r: SuperBrainResult = state.result;
   return (
     <Section title="Super brain">
-      <BrainNarrative result={r} subjectName={subjectName} subjectId={subjectId} />
+      <BrainNarrative
+        result={r}
+        subjectName={subjectName}
+        subjectId={subjectId}
+        newsDossier={news.status === "success" ? news.result : null}
+      />
       <BrainRadar result={r} />
       <BrainConfidence result={r} />
       <BrainReasoningChain result={r} />
@@ -1237,7 +1242,7 @@ function SuperBrainPanel({
       <BrainChainOfCustody result={r} />
       <BrainCanaryBench />
       <BrainModuleWeights />
-      <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
+      <div className="bg-ink-0 text-bg-0 rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
           <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
             Composite score

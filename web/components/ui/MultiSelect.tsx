@@ -155,8 +155,10 @@ export function MultiSelect({
                         role="option"
                         aria-selected={on}
                         onClick={() => toggle(o.value)}
-                        className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-12 hover:bg-brand-dim ${
-                          on ? "text-brand-deep" : "text-ink-1"
+                        className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-12 transition-colors ${
+                          on
+                            ? "bg-brand-dim text-brand-deep hover:bg-brand-dim"
+                            : "text-ink-1 hover:bg-brand-dim"
                         }`}
                       >
                         <span

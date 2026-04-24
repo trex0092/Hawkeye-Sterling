@@ -121,12 +121,20 @@ html[data-theme="dark"] {
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Native <select> option hover — Chromium honours option styling on
-     most platforms. The default is a solid dark-grey bar; override to a
-     semi-transparent brand pink so dropdown panels feel continuous with
-     the rest of the UI. Hover + checked states both land on the same
-     tint. Firefox and Safari will fall back to OS defaults on some
-     platforms (browser-controlled). */
+  /* Native <select> — tell the browser the theme so the OS-rendered
+     popup respects it. In dark mode we also need color-scheme: dark on
+     the element itself so Chromium/Safari use a dark dropdown sheet.
+     Option background/color are set for Chromium (which honours them);
+     Firefox and Safari fall back to OS defaults but color-scheme hint
+     covers them on most platforms. */
+  select {
+    color-scheme: light;
+    background-color: var(--bg-panel);
+    color: var(--ink-0);
+  }
+  html[data-theme="dark"] select {
+    color-scheme: dark;
+  }
   select option {
     background-color: var(--bg-0);
     color: var(--ink-0);
@@ -181,4 +189,19 @@ html[data-theme="dark"] {
   .risk-bar-fill {
     background: linear-gradient(90deg, var(--brand), var(--violet));
   }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes feed-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

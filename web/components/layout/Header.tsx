@@ -24,6 +24,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "Intel", href: "/intel", hint: "Adverse-media ticker" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
+      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
+      { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
     ],
   },
   {
@@ -34,6 +36,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Playbook", href: "/playbook", hint: "Typology guides" },
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
+      { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
+      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
+      { label: "Pricing", href: "/pricing", hint: "Plans & API key signup" },
     ],
   },
   {
@@ -44,6 +49,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Vendor DD", href: "/vendor-dd", hint: "Supplier onboarding" },
       { label: "Training", href: "/training", hint: "Staff certification" },
       { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
+      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
+      { label: "Monitoring", href: "/ongoing-monitor", hint: "Ongoing screening scheduler" },
+      { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
     ],
   },
 ];
@@ -218,12 +226,44 @@ export function Header() {
           >
             {theme === "light" ? "☾ Dark" : "☀ Light"}
           </button>
-          <span className="hidden md:flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green" />
-            <span className="font-medium">live</span>
-          </span>
+          <LiveBadge />
         </div>
       </nav>
     </header>
+  );
+}
+
+function LiveBadge() {
+  const [time, setTime] = useState<string>("");
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setTime(
+        now.toLocaleTimeString("en-GB", {
+          timeZone: "Asia/Dubai",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }),
+      );
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!time) return null;
+
+  return (
+    <span className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-dim text-green font-mono text-10.5 font-semibold border border-green/20">
+      <span
+        className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
+        style={{ animation: "live-pulse 2s ease-in-out infinite" }}
+      />
+      live
+      <span className="text-green/70 font-normal tracking-tight">{time}</span>
+    </span>
   );
 }

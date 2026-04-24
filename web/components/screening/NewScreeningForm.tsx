@@ -28,7 +28,7 @@ export interface ScreeningFormData {
   caseId: string;
   group: string;
   gender?: "male" | "female";
-  dob?: { day?: string; month?: string; year?: string };
+  dob?: string; // "dd/mm/yyyy"
   placeOfBirth?: string;
   countryLocation?: string;
   citizenship?: string;
@@ -65,10 +65,6 @@ const EMPTY_FORM = (caseId: string): ScreeningFormData => ({
   cddPosture: "CDD",
 });
 
-const MONTHS = [
-  "01", "02", "03", "04", "05", "06",
-  "07", "08", "09", "10", "11", "12",
-];
 
 export function NewScreeningForm({
   suggestedCaseId,
@@ -103,13 +99,14 @@ export function NewScreeningForm({
   const validateAndSubmit = (action: "screen" | "save") => {
     // DOB validation
     if (form.entityType === "individual" && form.dob) {
-      const { day, month, year } = form.dob;
-      if ((day || month || year) && !(day && month && year)) {
-        setDobError("Complete all date-of-birth fields or leave all blank.");
+      const m = form.dob.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!m) {
+        setDobError("Enter date of birth as dd/mm/yyyy.");
         return;
       }
-      if (year && (year.length !== 4 || Number(year) < 1900 || Number(year) > new Date().getFullYear())) {
-        setDobError("Enter a valid 4-digit birth year.");
+      const yr = parseInt(m[3]!, 10);
+      if (yr < 1900 || yr > new Date().getFullYear()) {
+        setDobError("Enter a valid birth year.");
         return;
       }
     }
@@ -343,40 +340,13 @@ export function NewScreeningForm({
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Date of birth">
-                <div className="grid grid-cols-3 gap-2">
-                  <select
-                    value={form.dob?.day ?? ""}
-                    onChange={(e) => patch({ dob: { ...form.dob, day: e.target.value } })}
-                    className={inputCls}
-                  >
-                    <option value="">Day</option>
-                    {Array.from({ length: 31 }, (_, i) =>
-                      String(i + 1).padStart(2, "0"),
-                    ).map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={form.dob?.month ?? ""}
-                    onChange={(e) => patch({ dob: { ...form.dob, month: e.target.value } })}
-                    className={inputCls}
-                  >
-                    <option value="">Month</option>
-                    {MONTHS.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                  <input
-                    value={form.dob?.year ?? ""}
-                    onChange={(e) =>
-                      patch({ dob: { ...form.dob, year: e.target.value } })
-                    }
-                    placeholder="YYYY"
-                    maxLength={4}
-                    inputMode="numeric"
-                    className={inputCls}
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={form.dob ?? ""}
+                  onChange={(e) => patch({ dob: e.target.value })}
+                  placeholder="dd/mm/yyyy"
+                  className={inputCls}
+                />
                 {dobError && (
                   <p className="text-10.5 text-red mt-1">{dobError}</p>
                 )}
