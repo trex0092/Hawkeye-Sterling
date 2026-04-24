@@ -1,6 +1,22 @@
 export type SortKey = "name" | "riskScore" | "slaNotify" | "status" | "cddPosture";
 
-export type SanctionSource = "OFAC" | "UN" | "EU" | "UK" | "EOCN";
+// Global sanctions list identifiers — ordered by jurisdiction prominence.
+// OFAC, UN, EU, UK, EOCN are the primary Gulf/international regimes;
+// AU/CA/CH/JP/FATF/INTERPOL/WB/ADB round out full global coverage.
+export type SanctionSource =
+  | "OFAC"      // US Treasury – SDN + Non-SDN + CAPTA
+  | "UN"        // UN Security Council Consolidated (1267/1988/2231+)
+  | "EU"        // EU CFSP Consolidated Financial Sanctions
+  | "UK"        // UK OFSI Financial Sanctions
+  | "EOCN"      // UAE Executive Office for Control & Non-Proliferation
+  | "AU"        // Australia DFAT Consolidated Sanctions
+  | "CA"        // Canada SEMA / OSFI
+  | "CH"        // Switzerland SECO
+  | "JP"        // Japan MoF / METI
+  | "FATF"      // FATF High-risk & monitored jurisdictions
+  | "INTERPOL"  // Interpol Red / Blue / Yellow Notices
+  | "WB"        // World Bank Debarment List
+  | "ADB";      // Asian Development Bank Sanctions List
 
 export interface SanctionMatch {
   source: SanctionSource | "OFAC SDN" | "EU Consolidated" | "UK OFSI" | "Adverse media";
@@ -55,6 +71,7 @@ export interface Subject {
   listCoverage: SanctionSource[];
   adverseMedia?: AdverseMediaMatch;
   pep?: { tier: string; rationale?: string };
+  rca?: { screened: boolean; linkedAssociates?: string[] };
   exposureAED: string;
   slaNotify: string;
   mostSerious: string;

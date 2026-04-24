@@ -38,7 +38,7 @@ export interface ScreeningFormData {
     issuerCountry?: string;
     idType?: string;
   };
-  checkTypes: { worldCheck: boolean; passport: boolean };
+  checkTypes: { worldCheck: boolean; passport: boolean; rca: boolean };
   ongoingScreening: boolean;
   relationshipType?: string;
   cddPosture?: CDDPosture;
@@ -60,7 +60,7 @@ const EMPTY_FORM = (caseId: string): ScreeningFormData => ({
   enableTransposition: false,
   caseId,
   group: "",
-  checkTypes: { worldCheck: true, passport: false },
+  checkTypes: { worldCheck: true, passport: false, rca: true },
   ongoingScreening: true,
   cddPosture: "CDD",
 });
@@ -150,26 +150,28 @@ export function NewScreeningForm({
           />
         </SettingsGroup>
 
-        <SettingsGroup label="Check types">
-          <ToggleRow
-            icon="🌐"
-            label="World-check"
-            on
-            locked
-            onToggle={() => {}}
+        <SettingsGroup label="Optional checks">
+          <CoverageRow
+            label="RCA"
+            detail="Relatives &amp; close associates"
+            on={form.checkTypes.rca}
+            onToggle={() =>
+              patch({ checkTypes: { ...form.checkTypes, rca: !form.checkTypes.rca } })
+            }
           />
-          <ToggleRow
-            icon="🛂"
+          <CoverageRow
             label="Passport check"
+            detail="Document validation"
             on={form.checkTypes.passport}
             onToggle={() =>
-              patch({
-                checkTypes: {
-                  ...form.checkTypes,
-                  passport: !form.checkTypes.passport,
-                },
-              })
+              patch({ checkTypes: { ...form.checkTypes, passport: !form.checkTypes.passport } })
             }
+          />
+          <CoverageRow
+            label="Re-screen"
+            detail="Twice daily · audit trail logged"
+            on={form.ongoingScreening}
+            onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
           />
         </SettingsGroup>
 
@@ -190,17 +192,6 @@ export function NewScreeningForm({
           ))}
         </SettingsGroup>
 
-        <SettingsGroup label="Ongoing screening">
-          <ToggleRow
-            icon="🔁"
-            label="World-check"
-            on={form.ongoingScreening}
-            onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
-          />
-          <p className="text-10.5 text-ink-2 mt-2 leading-snug">
-            Re-screens twice daily. Changes appear in the audit trail.
-          </p>
-        </SettingsGroup>
       </aside>
 
       {/* ── Right: Form fields ───────────────────────────────────── */}
@@ -505,24 +496,31 @@ function EntityTypeRow({
   );
 }
 
-function ToggleRow({
-  icon, label, on, locked, onToggle,
+function CoverageRow({
+  label,
+  detail,
+  on,
+  locked,
+  onToggle,
 }: {
-  icon: string; label: string; on: boolean; locked?: boolean; onToggle: () => void;
+  label: string;
+  detail: string;
+  on: boolean;
+  locked?: boolean;
+  onToggle?: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between px-2.5 py-1.5 rounded">
-      <div className="flex items-center gap-2 text-12.5 text-ink-1">
-        <span>{icon}</span>
-        <span className="uppercase tracking-wide-1 font-medium">{label}</span>
-        {locked && <span className="text-10 text-ink-3">🔒</span>}
+    <div className="flex items-start justify-between gap-2 px-2 py-1.5 rounded">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-12 font-medium text-ink-0 uppercase tracking-wide-1">{label}</span>
+        <span className="text-10 text-ink-3 leading-snug">{detail}</span>
       </div>
       <button
         type="button"
         onClick={locked ? undefined : onToggle}
         aria-pressed={on}
         disabled={locked}
-        className={`relative w-10 h-5 rounded-full transition-colors ${on ? "bg-brand" : "bg-hair-3"} ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}
+        className={`relative w-10 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${on ? "bg-brand" : "bg-hair-3"} ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span
           className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${on ? "left-[22px]" : "left-0.5"}`}

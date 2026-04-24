@@ -6,13 +6,11 @@ import {
   loadOperatorRole,
   saveOperatorRole,
   ROLE_LABEL,
-  ALL_ROLES,
+  CARD_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 
 const OPERATOR_STORAGE_KEY = "hawkeye.operator";
-const OPERATOR_DESIGNATION_KEY = "hawkeye.operator.designation";
-const OPERATOR_REGION_KEY = "hawkeye.operator.region";
 
 export function SidebarShell({ children }: { children: ReactNode }) {
   return (
@@ -87,61 +85,56 @@ export function SidebarFilterList<K extends string>({
 
 export function SidebarMLROCard() {
   const [name, setName] = useState("");
-  const [designation, setDesignation] = useState("");
-  const [region, setRegion] = useState("");
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
-  const [draftDesignation, setDraftDesignation] = useState("");
-  const [draftRegion, setDraftRegion] = useState("");
-  const [role, setRole] = useState<OperatorRole>("analyst");
+  const [role, setRole] = useState<OperatorRole>("mlro");
 
   useEffect(() => {
     try {
-      const ls = window.localStorage;
-      const n = ls.getItem(OPERATOR_STORAGE_KEY);
-      const d = ls.getItem(OPERATOR_DESIGNATION_KEY);
-      const r = ls.getItem(OPERATOR_REGION_KEY);
+      const n = window.localStorage.getItem(OPERATOR_STORAGE_KEY);
       if (n) setName(n);
-      if (d) setDesignation(d);
-      if (r) setRegion(r);
     } catch { /* localStorage disabled */ }
     setRole(loadOperatorRole());
-    const onRoleChange = () => setRole(loadOperatorRole());
-    window.addEventListener("hawkeye:operator-role-updated", onRoleChange);
-    return () =>
-      window.removeEventListener("hawkeye:operator-role-updated", onRoleChange);
+    const sync = () => {
+      setRole(loadOperatorRole());
+      try {
+        const n = window.localStorage.getItem(OPERATOR_STORAGE_KEY);
+        setName(n ?? "");
+      } catch { /* ignore */ }
+    };
+    window.addEventListener("hawkeye:operator-role-updated", sync);
+    window.addEventListener("hawkeye:operator-updated", sync);
+    return () => {
+      window.removeEventListener("hawkeye:operator-role-updated", sync);
+      window.removeEventListener("hawkeye:operator-updated", sync);
+    };
   }, []);
 
-  const toggleRole = () => {
-    const next = ALL_ROLES[(ALL_ROLES.indexOf(role) + 1) % ALL_ROLES.length]!;
-    saveOperatorRole(next);
-    setRole(next);
+  const selectRole = (r: OperatorRole) => {
+    saveOperatorRole(r);
+    setRole(r);
   };
 
   const save = () => {
     const n = draftName.trim();
-    const d = draftDesignation.trim();
-    const r = draftRegion.trim();
     setName(n);
-    setDesignation(d);
-    setRegion(r);
     try {
-      const ls = window.localStorage;
-      n ? ls.setItem(OPERATOR_STORAGE_KEY, n) : ls.removeItem(OPERATOR_STORAGE_KEY);
-      d ? ls.setItem(OPERATOR_DESIGNATION_KEY, d) : ls.removeItem(OPERATOR_DESIGNATION_KEY);
-      r ? ls.setItem(OPERATOR_REGION_KEY, r) : ls.removeItem(OPERATOR_REGION_KEY);
+      n
+        ? window.localStorage.setItem(OPERATOR_STORAGE_KEY, n)
+        : window.localStorage.removeItem(OPERATOR_STORAGE_KEY);
+      window.dispatchEvent(new CustomEvent("hawkeye:operator-updated"));
     } catch { /* localStorage disabled */ }
     setEditing(false);
   };
 
   const startEdit = () => {
     setDraftName(name);
-    setDraftDesignation(designation);
-    setDraftRegion(region);
     setEditing(true);
   };
 
-  const inputCls = "w-full bg-white/15 text-white placeholder-white/40 rounded px-2 py-1 text-12 font-medium outline-none border border-white/30 focus:border-white mb-1.5";
+  const initial = name ? name[0].toUpperCase() : "·";
+  const inputCls =
+    "w-full bg-white/15 text-white placeholder-white/40 rounded px-2 py-1 text-12 font-medium outline-none border border-white/30 focus:border-white mb-1.5";
 
   return (
     <div className="bg-brand text-white p-3 rounded-lg">
@@ -151,25 +144,33 @@ export function SidebarMLROCard() {
             autoFocus
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") setEditing(false);
+            }}
             placeholder="Full name"
             className={inputCls}
           />
-          <input
-            value={draftDesignation}
-            onChange={(e) => setDraftDesignation(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
-            placeholder="Designation (e.g. MLRO)"
-            className={inputCls}
-          />
-          <input
-            value={draftRegion}
-            onChange={(e) => setDraftRegion(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
-            placeholder="Region (e.g. UAE)"
-            className={inputCls}
-          />
-          <div className="mt-1 flex gap-1.5">
+          <div className="text-10 uppercase tracking-wide-3 text-white/70 mb-1.5">
+            Role
+          </div>
+          <div className="flex flex-col gap-1 mb-2">
+            {CARD_ROLES.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => selectRole(r)}
+                className={`text-left px-2 py-1 rounded text-11 font-medium transition-colors ${
+                  r === role
+                    ? "bg-white text-brand"
+                    : "bg-white/15 hover:bg-white/25 text-white"
+                }`}
+              >
+                {ROLE_LABEL[r]}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1.5">
             <button
               type="button"
               onClick={save}
@@ -187,40 +188,50 @@ export function SidebarMLROCard() {
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={startEdit}
-          className="w-full text-left"
-          title="Click to edit name, designation and region"
-        >
-          <div className="text-13 font-semibold truncate mb-0.5">
-            {name || "Set your name"}
-          </div>
-          <div className="text-11 opacity-85 truncate">
-            {designation || "Designation"}
-          </div>
-          {region && (
-            <div className="text-10 opacity-70 uppercase tracking-wide-2 mt-0.5">
-              {region}
-            </div>
-          )}
-        </button>
-      )}
-      {!editing && (
-        <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-          <span className="text-10 uppercase tracking-wide-3 text-white/70">
-            Role
-          </span>
+        <>
           <button
             type="button"
-            onClick={toggleRole}
-            className="inline-flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white border border-white/20"
-            title="Click to cycle role (Analyst → C.Assistant → CO → MLRO → MD)"
+            onClick={startEdit}
+            className="w-full text-left"
+            title="Click to edit name"
           >
-            {ROLE_LABEL[role]}
-            <span className="text-10 opacity-75">⇄</span>
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 border border-white/60 flex items-center justify-center font-display text-[14px] font-semibold text-white leading-none shrink-0">
+                {initial}
+              </span>
+              <span className="text-13 font-semibold truncate">
+                {name || "Set your name"}
+              </span>
+            </div>
           </button>
-        </div>
+          <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+            <span className="text-10 uppercase tracking-wide-3 text-white/70">
+              Role
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const idx = CARD_ROLES.indexOf(role);
+                const next =
+                  CARD_ROLES[(idx === -1 ? 0 : idx + 1) % CARD_ROLES.length]!;
+                selectRole(next);
+              }}
+              className="inline-flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white border border-white/20"
+              title="Click to cycle role"
+            >
+              {ROLE_LABEL[role]}
+              <span className="text-10 opacity-75">⇄</span>
+            </button>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between">
+            <span className="text-10 uppercase tracking-wide-3 text-white/70">
+              Shift
+            </span>
+            <span className="text-11 font-semibold font-mono text-white/90">
+              09:00–18:00
+            </span>
+          </div>
+        </>
       )}
     </div>
   );

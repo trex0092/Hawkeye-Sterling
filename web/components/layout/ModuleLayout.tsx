@@ -11,7 +11,7 @@ import {
   type SidebarFilterItem,
 } from "./SidebarParts";
 
-// Unified module shell — Header + left sidebar (MLRO / Shift / optional
+// Unified module shell — Header + left sidebar (operator card / optional
 // queue filters) + main content. Mirrors the /screening layout pattern
 // across every module in the app so the tool has one consistent look.
 
@@ -23,7 +23,6 @@ interface ModuleLayoutProps<K extends string = string> {
   filtersTitle?: string | undefined;
   sidebarExtra?: ReactNode | undefined;
   detailPanel?: ReactNode | undefined;
-  shift?: string | undefined;
   // Label shown on the live engine feed. Defaults to "Compliance engine".
   engineLabel?: string | undefined;
 }
@@ -36,7 +35,6 @@ export function ModuleLayout<K extends string = string>({
   filtersTitle = "Queue filters",
   sidebarExtra,
   detailPanel,
-  shift = "09:00–18:00",
   engineLabel = "Compliance engine",
 }: ModuleLayoutProps<K>) {
   return (
@@ -49,10 +47,6 @@ export function ModuleLayout<K extends string = string>({
         <SidebarShell>
           <SidebarSection title="Regulatory">
             <SidebarMLROCard />
-          </SidebarSection>
-
-          <SidebarSection title="Shift">
-            <div className="text-12 text-ink-1 px-2">{shift}</div>
           </SidebarSection>
 
           {filters && activeFilter !== undefined && onFilterChange && (

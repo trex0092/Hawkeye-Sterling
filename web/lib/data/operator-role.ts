@@ -37,14 +37,14 @@ export function isBrowser(): boolean {
 }
 
 export function loadOperatorRole(): OperatorRole {
-  if (!isBrowser()) return "analyst";
+  if (!isBrowser()) return "mlro";
   try {
     const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
     if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
   } catch {
     /* localStorage disabled */
   }
-  return "analyst";
+  return "mlro";
 }
 
 export function saveOperatorRole(role: OperatorRole): void {
@@ -59,11 +59,18 @@ export function saveOperatorRole(role: OperatorRole): void {
 
 export const ROLE_LABEL: Record<OperatorRole, string> = {
   analyst:              "Analyst",
-  compliance_assistant: "C. Assistant",
+  compliance_assistant: "CO Assistant",
   co:                   "CO",
-  mlro:                 "MLRO",
+  mlro:                 "MLRO / CO",
   managing_director:    "MD",
 };
+
+// Roles available in the user-profile card (MLRO/CO, CO Assistant, MD).
+export const CARD_ROLES: OperatorRole[] = [
+  "mlro",
+  "compliance_assistant",
+  "managing_director",
+];
 
 export const ROLE_POWER: Record<OperatorRole, number> = {
   analyst:              1,
