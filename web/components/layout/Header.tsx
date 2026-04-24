@@ -24,6 +24,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "Intel", href: "/intel", hint: "Adverse-media ticker" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
+      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
     ],
   },
   {
@@ -34,6 +35,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Playbook", href: "/playbook", hint: "Typology guides" },
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
+      { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
     ],
   },
   {
@@ -44,6 +46,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Vendor DD", href: "/vendor-dd", hint: "Supplier onboarding" },
       { label: "Training", href: "/training", hint: "Staff certification" },
       { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
+      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
+      { label: "Monitoring", href: "/ongoing-monitor", hint: "Ongoing screening scheduler" },
     ],
   },
 ];
