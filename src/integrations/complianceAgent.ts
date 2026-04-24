@@ -460,6 +460,7 @@ export type ChatCall = (input: {
 }) => Promise<{ ok: boolean; text?: string; error?: string }>;
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
+  if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
   const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
     'https://api.anthropic.com/v1/messages',
     {
@@ -490,9 +491,16 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   if (signal?.aborted) return { ok: false, error: 'aborted' };
   if (!result.ok || !result.json) {
     const prefix = result.partial ? 'partial_response:' : '';
+    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
+    if (result.body && !result.partial) {
+      try {
+        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
+        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
+      } catch { /* keep default error detail */ }
+    }
     return {
       ok: false,
-      error: `${prefix}${result.error ?? `HTTP ${result.status ?? 'unknown'}`} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
+      error: `${prefix}${errorDetail} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
   const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
