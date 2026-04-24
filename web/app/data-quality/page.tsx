@@ -40,7 +40,17 @@ export default function DataQualityPage() {
         (REQUIRED_FIELDS.length + 1)) *
         100,
     );
-    return { c, missing, score, evidenceCount };
+    // Derive days-since-last-screening from the most recent timeline event.
+    const lastTs = c.timeline?.length
+      ? Math.max(...c.timeline.map((e) => new Date(e.timestamp).getTime()))
+      : c.opened
+        ? new Date(c.opened.split("/").reverse().join("-")).getTime()
+        : 0;
+    const daysSinceScreen = lastTs
+      ? Math.floor((Date.now() - lastTs) / 86_400_000)
+      : null;
+    const screeningOverdue = daysSinceScreen !== null && daysSinceScreen > 90;
+    return { c, missing, score, evidenceCount, daysSinceScreen, screeningOverdue };
   });
 
   const avgScore =
@@ -73,6 +83,11 @@ export default function DataQualityPage() {
               label: "cases with gaps",
             },
             { value: String(rows.length), label: "cases in register" },
+            {
+              value: String(rows.filter((r) => r.screeningOverdue).length),
+              label: "re-screen overdue (>90d)",
+              tone: rows.some((r) => r.screeningOverdue) ? "red" : undefined,
+            },
           ]}
         />
 
@@ -100,6 +115,9 @@ export default function DataQualityPage() {
                   </th>
                   <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                     Evidence
+                  </th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                    Re-screen
                   </th>
                 </tr>
               </thead>
@@ -152,6 +170,19 @@ export default function DataQualityPage() {
                       </td>
                       <td className="px-3 py-2 font-mono text-11">
                         {r.evidenceCount}
+                      </td>
+                      <td className="px-3 py-2">
+                        {r.daysSinceScreen === null ? (
+                          <span className="text-ink-3 text-11">—</span>
+                        ) : r.screeningOverdue ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 font-semibold bg-red-dim text-red">
+                            {r.daysSinceScreen}d overdue
+                          </span>
+                        ) : (
+                          <span className="font-mono text-10 text-ink-2">
+                            {r.daysSinceScreen}d ago
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
