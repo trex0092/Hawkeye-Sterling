@@ -40,7 +40,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
       { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
-      { label: "Pricing", href: "/pricing", hint: "Plans & API key signup" },
     ],
   },
   {
