@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 type Capacity =
   | "subject"
@@ -65,19 +65,24 @@ export default function CorrectionsPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        <h1 className="font-display text-36 text-ink-0 mb-1">
-          Record correction request
-        </h1>
-        <p className="text-12 text-ink-2 mb-3">
-          Dispute or request correction of a watchlist or adverse-media record
-          that mentions you. Reviewed within 30 days of receipt. Appeals can be
-          escalated via <code>/api/corrections/&lt;id&gt;</code> using the
-          receipt ID you&apos;ll receive on submission.
-        </p>
-        <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 mb-8 text-12 text-ink-1">
+    <ModuleLayout>
+      <div>
+        <ModuleHero
+          eyebrow="Public-facing form"
+          title="Record correction"
+          titleEm="request."
+          intro={
+            <>
+              Dispute or request correction of a watchlist or adverse-media
+              record that mentions you. Reviewed within 30 days of receipt.
+              Appeals can be escalated via{" "}
+              <code>/api/corrections/&lt;id&gt;</code> using the receipt ID
+              you&apos;ll receive on submission.
+            </>
+          }
+        />
+
+        <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 mb-6 text-12 text-ink-1">
           <strong>Review SLA:</strong> 30 calendar days · <strong>Appeals:</strong>{" "}
           unlimited, routed to MLRO · <strong>Lawful basis:</strong> GDPR Art.
           16 (Rectification) / Art. 17 (Erasure).
@@ -190,8 +195,8 @@ export default function CorrectionsPage() {
             </button>
           </form>
         )}
-      </main>
-    </>
+      </div>
+    </ModuleLayout>
   );
 }
 
