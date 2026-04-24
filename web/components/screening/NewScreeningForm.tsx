@@ -150,25 +150,7 @@ export function NewScreeningForm({
           />
         </SettingsGroup>
 
-        <SettingsGroup label="Coverage">
-          <CoverageRow
-            label="Global sanctions"
-            detail="OFAC · UN · EU · UK · EOCN + 8 more"
-            on
-            locked
-          />
-          <CoverageRow
-            label="PEP databases"
-            detail="Tier 1–4 · HoS · Ministers · SOE"
-            on
-            locked
-          />
-          <CoverageRow
-            label="Adverse media"
-            detail="20,000+ sources · 50+ languages"
-            on
-            locked
-          />
+        <SettingsGroup label="Optional checks">
           <CoverageRow
             label="RCA"
             detail="Relatives &amp; close associates"
@@ -187,7 +169,7 @@ export function NewScreeningForm({
           />
           <CoverageRow
             label="Re-screen"
-            detail="Twice daily · changes logged to audit trail"
+            detail="Twice daily · audit trail logged"
             on={form.ongoingScreening}
             onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
           />
