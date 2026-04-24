@@ -43,6 +43,7 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
   { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
   { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
+  { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
@@ -55,6 +56,7 @@ const LOCALE_MODIFIERS: Record<string, string> = {
   zh: "制裁 OR 欺诈 OR 腐败 OR 贿赂 OR 逮捕 OR 洗钱 OR 贩运 OR 恐怖主义",
   ar: "عقوبات OR احتيال OR فساد OR رشوة OR اعتقال OR غسل OR تهريب OR إرهاب",
   pt: "sanções OR fraude OR corrupção OR suborno OR prisão OR lavagem OR tráfico OR terrorismo",
+  tr: "yaptırım OR dolandırıcılık OR yolsuzluk OR rüşvet OR tutuklama OR kara para aklama OR kaçakçılık OR terör",
 };
 
 interface NewsResponse {
@@ -121,6 +123,15 @@ function sanitizeLink(raw: string): string {
   return "";
 }
 
+// Strip combining diacritics (NFD decomposition) + Turkish dotless-ı so that
+// a query token like "basak" matches article text containing "başak".
+function normalizeDiacritics(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ı/g, "i"); // Turkish dotless ı is not a combining mark
+}
+
 function parseRss(xml: string, subject: string, variants: string[], lang: string): Article[] {
   const items = xml.split(/<item>/i).slice(1);
   const out: Article[] = [];
@@ -166,12 +177,14 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     }
     // Supplement: token presence in full text (title + snippet) catches
     // articles where the person's name appears in the body but not the
-    // headline. Cap at 0.72 so a genuine title match always outranks it.
+    // headline. Normalize diacritics on both sides so "Başak" → "basak"
+    // matches the ASCII query token "basak". Cap at 0.72.
+    const fullTextNorm = normalizeDiacritics(fullTextLower);
     if (fuzzyScore < 0.72) {
       for (const v of variants) {
         const vTokens = v.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
         if (vTokens.length === 0) continue;
-        const hits = vTokens.filter((t) => fullTextLower.includes(t)).length;
+        const hits = vTokens.filter((t) => fullTextNorm.includes(normalizeDiacritics(t))).length;
         const tokenScore = (hits / vTokens.length) * 0.72;
         if (tokenScore > fuzzyScore) {
           fuzzyScore = tokenScore;

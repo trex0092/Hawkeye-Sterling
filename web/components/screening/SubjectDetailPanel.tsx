@@ -34,7 +34,6 @@ import {
   BrainDataFreshness,
   BrainInputValidator,
   BrainModuleWeights,
-  BrainCanaryBench,
   BrainVerdictConsistency,
   BrainCrossReference,
   BrainCoherenceCheck,
@@ -54,7 +53,6 @@ import {
   BrainRegulatoryPredictor,
   BrainContextualEnrichment,
   BrainChainAttribution,
-  BrainDefensibility,
   BrainAlternativeHypotheses,
   BrainSimilarityCorpus,
   BrainSignalInterference,
@@ -1255,7 +1253,6 @@ function SuperBrainPanel({
       <BrainRegulatoryPredictor result={r} />
       <BrainContextualEnrichment result={r} />
       <BrainChainAttribution result={r} />
-      <BrainDefensibility result={r} subjectName={subjectName} />
       <BrainAlternativeHypotheses result={r} />
       <BrainSimilarityCorpus result={r} subjectName={subjectName} />
       <BrainSignalInterference result={r} />
@@ -1285,7 +1282,6 @@ function SuperBrainPanel({
       <BrainLatencyBreakdown result={r} />
       <BrainDataFreshness result={r} />
       <BrainChainOfCustody result={r} />
-      <BrainCanaryBench />
       <BrainModuleWeights />
       <div className="bg-ink-0 text-bg-0 rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">

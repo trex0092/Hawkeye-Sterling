@@ -40,6 +40,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Money laundering & financial crime",
     terms: [
       "money laundering", "money launder", "launder",
+      // Turkish
+      "kara para aklama", "kara para",
       "financial crime", "economic crime",
       "embezzle", "embezzlement", "misappropriation", "asset misappropriation",
       "extort", "extortion", "kickback",
@@ -60,6 +62,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "bribe", "bribery", "corrupt", "corruption",
       "abuse of power", "conflict of interest", "misuse of funds",
       "kleptocracy", "state capture",
+      // Turkish
+      "rüşvet", "yolsuzluk", "zimmet",
     ],
   },
   {
@@ -70,6 +74,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "financing of terrorism", "terror funding",
       "extremist", "radicalisation", "radicalization",
       "designated terrorist", "militant",
+      // Turkish
+      "terör", "terörizm", "terör örgütü",
     ],
   },
   {
@@ -93,6 +99,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     terms: [
       "organised crime", "organized crime",
       "drug trafficking", "narcotics", "cartel", "mafia",
+      // Turkish
+      "organize suç", "uyuşturucu kaçakçılığı",
     ],
   },
   {
@@ -127,6 +135,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       // Wave 4 — synthetic / fabricated identity fraud typology.
       "synthetic identity", "synthetic identity fraud",
       "fabricated identity", "ghost identity", "identity stacking",
+      // Turkish
+      "dolandırıcılık", "sahtecilik", "dolandırıcı",
     ],
   },
   {
@@ -153,6 +163,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "litigate", "litigation",
       "murder", "prosecute", "prosecuted", "prosecution",
       "theft", "unlawful", "verdict",
+      // Turkish
+      "tutuklama", "tutuklandı", "gözaltı", "mahkumiyet", "suçlandı", "hapis", "dava",
     ],
   },
   {
@@ -162,6 +174,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "sanctions", "sanctioned",
       "debarred", "debarment", "blacklisted", "blacklist",
       "regulatory breach", "breach",
+      // Turkish
+      "yaptırım", "kara liste",
     ],
   },
   {
