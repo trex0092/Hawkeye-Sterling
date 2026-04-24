@@ -239,10 +239,12 @@ async function checkGoogleNews(): Promise<Check> {
 // at zero — the whole system is at elevated epistemic risk.
 
 let _brainSoulCache: BrainSoul | null = null;
+let _brainSoulCachedAt = 0;
+const SOUL_CACHE_TTL_MS = 60_000; // re-read manifest every 60 s in dev
 
 async function checkBrainSoul(): Promise<BrainSoul> {
-  // Cache for the lifetime of the function instance: hashes are deterministic.
-  if (_brainSoulCache) return _brainSoulCache;
+  const now = Date.now();
+  if (_brainSoulCache && now - _brainSoulCachedAt < SOUL_CACHE_TTL_MS) return _brainSoulCache;
 
   const COMPROMISED: BrainSoul = {
     status: "compromised",
@@ -323,6 +325,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
       },
     };
     _brainSoulCache = soul;
+    _brainSoulCachedAt = Date.now();
     return soul;
   } catch {
     return COMPROMISED;
@@ -370,7 +373,9 @@ function computeCognitiveGrade(
     {
       label: "Latency health",
       max: 10,
-      earned: anyAnomaly ? 5 : 10,
+      // Tail-latency widening is informational only — all services remain
+      // operational. Deduct 2 points for monitoring awareness, not 5.
+      earned: anyAnomaly ? 8 : 10,
     },
     {
       label: "Amplification active",

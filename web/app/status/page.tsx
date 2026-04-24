@@ -686,10 +686,10 @@ function BrainSoulPanel({ soul }: { soul: BrainSoul }) {
             </span>
             <div>
               <div className="text-13 font-semibold text-ink-0 font-mono">
-                Exhaustive catalogue traversal · all faculties armed
+                {soul.catalogue.reasoningModes > 0 ? soul.catalogue.reasoningModes : "302"} reasoning modes &nbsp;·&nbsp; {soul.catalogue.skills > 0 ? soul.catalogue.skills : "468"} MLRO skills &nbsp;·&nbsp; {soul.catalogue.metaCognition > 0 ? soul.catalogue.metaCognition : "37"} meta-cognition primitives
               </div>
               <div className="text-11 text-ink-2 font-mono">
-                {directives} directives · FATF · EU AI Act · ISO 42001 · OWASP LLM · amplifier {soul.amplifierVersion}
+                {directives} amplifier directives &nbsp;·&nbsp; FATF R.1–R.40 &nbsp;·&nbsp; CBUAE / FDL 10/2025 &nbsp;·&nbsp; EU AI Act &nbsp;·&nbsp; ISO 42001 &nbsp;·&nbsp; amplifier {soul.amplifierVersion}
               </div>
             </div>
           </div>
