@@ -20,7 +20,6 @@ const NAV_TABS = [
   { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
   { key: "nav.monitor", label: "Monitoring", href: "/ongoing-monitor" },
-  { key: "nav.status", label: "Status", href: "/status" },
 ] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
@@ -60,6 +59,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
       { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
+      { label: "Status", href: "/status", hint: "Live endpoint health" },
     ],
   },
 ];
