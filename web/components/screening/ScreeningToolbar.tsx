@@ -43,7 +43,7 @@ export function ScreeningToolbar({
 
   return (
     <div className="mb-5 space-y-2">
-      <div className="flex items-center gap-3 px-4 py-3 bg-white border border-hair-2 rounded-lg">
+      <div className="flex items-center gap-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
         <div className="flex-1 relative">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 text-[14px] pointer-events-none">
             ⌕
@@ -53,7 +53,7 @@ export function ScreeningToolbar({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search subjects — name, ID, country…"
-            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-white"
+            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
           />
         </div>
 
@@ -65,7 +65,7 @@ export function ScreeningToolbar({
               <span className="font-semibold">{activeSortLabel}</span>
               <span className="text-ink-3 font-mono text-10">{sortDir === "asc" ? "↑" : "↓"}</span>
             </ToolbarButton>
-            <div className="absolute top-full left-0 mt-1 bg-white border border-hair-2 rounded-lg shadow-lg z-20 w-40 hidden group-hover:block">
+            <div className="absolute top-full left-0 mt-1 bg-bg-panel border border-hair-2 rounded-lg shadow-lg z-20 w-40 hidden group-hover:block">
               {SORT_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}
@@ -104,7 +104,7 @@ export function ScreeningToolbar({
             className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
               statusFilter === opt.value
                 ? "bg-ink-0 text-white border-ink-0"
-                : "bg-white text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
+                : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
             }`}
           >
             {opt.label}
@@ -131,7 +131,7 @@ function ToolbarButton({
   const size = small ? "px-2.5 py-[5px] text-11.5 font-medium" : "px-3.5 py-[7px] text-12.5 font-medium";
   const variant = primary
     ? "bg-ink-0 text-white border-ink-0 font-semibold hover:bg-ink-1 hover:border-ink-1"
-    : "bg-white text-ink-0 border-hair-2 hover:border-hair-3 hover:bg-bg-2";
+    : "bg-bg-panel text-ink-0 border-hair-2 hover:border-hair-3 hover:bg-bg-2";
   return (
     <button type="button" onClick={onClick} className={`${base} ${size} ${variant}`}>
       {children}

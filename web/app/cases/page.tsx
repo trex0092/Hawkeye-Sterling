@@ -180,7 +180,7 @@ function TimelineModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[720px] max-h-[80vh] bg-white rounded-xl shadow-xl flex flex-col"
+        className="w-full max-w-[720px] max-h-[80vh] bg-bg-panel rounded-xl shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2">

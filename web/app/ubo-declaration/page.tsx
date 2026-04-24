@@ -31,7 +31,7 @@ export default function UboDeclarationPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const inputCls =
-    "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0";
+    "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
 
   const update = (idx: number, key: keyof UboEntry, value: string) => {
     const next = [...ubos];
@@ -57,7 +57,7 @@ export default function UboDeclarationPage() {
     return (
       <ModuleLayout narrow>
         <div className="max-w-2xl mx-auto px-8 py-10">
-          <div className="bg-white border border-hair-2 rounded-lg p-8 text-center">
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
             <h1 className="font-display text-24 text-ink-0 m-0 mb-3">
               UBO declaration received
@@ -96,7 +96,7 @@ export default function UboDeclarationPage() {
 
         <form
           onSubmit={submit}
-          className="bg-white border border-hair-2 rounded-lg p-5 mt-6 space-y-4"
+          className="bg-bg-panel border border-hair-2 rounded-lg p-5 mt-6 space-y-4"
         >
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
@@ -192,7 +192,7 @@ export default function UboDeclarationPage() {
           <button
             type="button"
             onClick={addUbo}
-            className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0 hover:bg-bg-1"
+            className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1"
           >
             + Add UBO
           </button>

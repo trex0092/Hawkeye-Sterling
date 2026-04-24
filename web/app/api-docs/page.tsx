@@ -37,7 +37,7 @@ export default function ApiDocsPage() {
   }, []);
 
   return (
-    <main className="bg-white min-h-screen">
+    <main className="bg-bg-panel min-h-screen">
       <div id="swagger-root" />
     </main>
   );

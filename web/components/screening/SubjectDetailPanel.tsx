@@ -47,6 +47,18 @@ import {
   BrainAnomalyDetector,
   BrainCounterfactual,
   BrainOutcomeForecast,
+  BrainSourceTriangulation,
+  BrainTemporalPattern,
+  BrainTypologyConfidence,
+  BrainJurisdictionClusters,
+  BrainRegulatoryPredictor,
+  BrainContextualEnrichment,
+  BrainChainAttribution,
+  BrainDefensibility,
+  BrainAlternativeHypotheses,
+  BrainSimilarityCorpus,
+  BrainSignalInterference,
+  BrainEscalationLadder,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import {
@@ -569,7 +581,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   };
 
   return (
-    <aside className="bg-white border-l border-hair-2 p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-hair-2 p-6 overflow-y-auto">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
@@ -1084,7 +1096,7 @@ function PanelBtn({
     "inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium transition-colors";
   const variant = brand
     ? "bg-brand border-brand text-white font-semibold hover:bg-brand-hover"
-    : "bg-white border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2";
+    : "bg-bg-panel border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2";
   const interact = disabled
     ? "opacity-60 cursor-not-allowed"
     : "cursor-pointer";
@@ -1186,6 +1198,18 @@ function SuperBrainPanel({
       <BrainReasoningChain result={r} />
       <BrainCausalChain result={r} />
       <BrainOutcomeForecast result={r} />
+      <BrainSourceTriangulation result={r} />
+      <BrainTemporalPattern result={r} />
+      <BrainTypologyConfidence result={r} />
+      <BrainJurisdictionClusters result={r} />
+      <BrainRegulatoryPredictor result={r} />
+      <BrainContextualEnrichment result={r} />
+      <BrainChainAttribution result={r} />
+      <BrainDefensibility result={r} subjectName={subjectName} />
+      <BrainAlternativeHypotheses result={r} />
+      <BrainSimilarityCorpus result={r} subjectName={subjectName} />
+      <BrainSignalInterference result={r} />
+      <BrainEscalationLadder result={r} />
       <BrainDecomposition result={r} />
       <BrainConfidenceInterval result={r} />
       <BrainVerdictConsistency result={r} />

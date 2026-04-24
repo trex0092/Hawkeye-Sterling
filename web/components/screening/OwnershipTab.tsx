@@ -162,7 +162,7 @@ export function OwnershipTab({ subject }: { subject: Subject }) {
           live-feed pending · OpenCorporates / Orbis integration
         </span>
       </div>
-      <div className="bg-white border border-hair-2 rounded-lg p-3">
+      <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
         <Node node={chain} />
       </div>
       <p className="text-10.5 text-ink-3 mt-3 leading-relaxed">

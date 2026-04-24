@@ -26,7 +26,7 @@ export function CoveragePanel({ selectedModeIds }: CoveragePanelProps) {
   }, [selectedModeIds]);
 
   return (
-    <div className="bg-white border border-hair-2 rounded-xl p-5 mt-5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 mt-5">
       <div className="flex justify-between items-baseline mb-1">
         <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2">
           Regulatory coverage · MLRO playbooks
@@ -246,7 +246,7 @@ function PlaybookRow({
 function CovCell({ label, covered, total }: { label: string; covered: number; total: number }) {
   const p = total === 0 ? 100 : Math.round((covered / total) * 100);
   return (
-    <div className="bg-white rounded p-2 border border-hair">
+    <div className="bg-bg-panel rounded p-2 border border-hair">
       <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">{label}</div>
       <div className="font-mono text-12 text-ink-0">
         <span className={p === 100 ? "text-green font-semibold" : p > 0 ? "text-amber" : "text-red"}>

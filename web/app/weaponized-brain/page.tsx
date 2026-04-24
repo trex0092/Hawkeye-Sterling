@@ -403,7 +403,7 @@ function BrainDashboard({
 
           {/* Catalogue size chart */}
           <Section title="Catalogue sizes">
-            <div className="bg-white border border-hair-2 rounded-xl p-5">
+            <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
               <BarChart
                 data={([
                   { label: "Skills", value: enhanced.extended?.expertise?.skills ?? 0, tone: "brand" },
@@ -433,7 +433,7 @@ function BrainDashboard({
           {/* Jurisdictions-by-region donut */}
           {(enhanced.crossReferences?.jurisdictionsByRegion?.length ?? 0) > 0 && (
             <Section title="Jurisdictional coverage · by region">
-              <div className="bg-white border border-hair-2 rounded-xl p-5 flex flex-wrap items-center justify-around gap-6">
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 flex flex-wrap items-center justify-around gap-6">
                 <Donut
                   size={240}
                   stroke={30}
@@ -544,7 +544,7 @@ function BrainDashboard({
 
       {/* Integrity signature */}
       <Section title="Integrity signature">
-        <div className="bg-white border border-hair-2 rounded-xl p-4">
+        <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
           <table className="w-full text-12">
             <tbody>
               <IntegrityRow label="Charter hash" value={integrity.charterHash} />
@@ -609,7 +609,7 @@ function Card({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-3">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
       <div className="flex justify-between items-baseline mb-2">
         <div className="text-10.5 font-semibold uppercase tracking-wide-3 text-ink-2">
           {title}

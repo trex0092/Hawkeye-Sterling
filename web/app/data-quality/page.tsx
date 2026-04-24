@@ -82,7 +82,7 @@ export default function DataQualityPage() {
             cases are filed via the screening panel.
           </div>
         ) : (
-          <div className="mt-6 bg-white border border-hair-2 rounded-lg overflow-hidden">
+          <div className="mt-6 bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
             <table className="w-full text-12">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>

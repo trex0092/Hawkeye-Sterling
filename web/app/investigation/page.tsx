@@ -76,7 +76,7 @@ export default function InvestigationPage() {
           }
         />
 
-        <div className="bg-white border border-hair-2 rounded-lg p-3 mt-6">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mt-6">
           <svg
             width="100%"
             viewBox="0 0 800 500"

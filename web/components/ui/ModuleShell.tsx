@@ -101,7 +101,7 @@ const KPI_TONE: Record<NonNullable<KpiProps["tone"]>, string> = {
 
 export function Kpi({ value, label, tone = "brand" }: KpiProps) {
   return (
-    <div className="relative bg-white border border-hair-2 rounded-xl p-5 pl-6 overflow-hidden hover:border-hair-3 transition-colors">
+    <div className="relative bg-bg-panel border border-hair-2 rounded-xl p-5 pl-6 overflow-hidden hover:border-hair-3 transition-colors">
       <span
         className={`absolute top-0 left-0 bottom-0 w-[3px] ${KPI_TONE[tone]} opacity-80`}
       />
@@ -137,7 +137,7 @@ export function KpiGrid({
 
 export function Card({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-white border border-hair-2 rounded-xl p-7">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-7">
       {children}
     </div>
   );
@@ -226,7 +226,7 @@ export function Btn({
       "bg-brand text-white border-brand hover:bg-brand-hover hover:border-brand-hover",
     ghost: "bg-brand-dim text-brand-deep border-brand-line hover:bg-brand/15",
     secondary:
-      "bg-white text-ink-1 border-hair-2 hover:border-hair-3 hover:text-ink-0",
+      "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:text-ink-0",
   };
   return (
     <button

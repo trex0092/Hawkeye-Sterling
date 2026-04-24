@@ -104,7 +104,7 @@ export default function SarQaPage() {
               return (
                 <div
                   key={c.id}
-                  className="bg-white border border-hair-2 rounded-lg p-4"
+                  className="bg-bg-panel border border-hair-2 rounded-lg p-4"
                 >
                   <div className="flex items-baseline justify-between mb-1">
                     <h3 className="text-13 font-semibold text-ink-0 m-0">
@@ -140,7 +140,7 @@ export default function SarQaPage() {
                         }
                         placeholder="Peer-review note (optional)"
                         rows={2}
-                        className="w-full text-11 px-3 py-2 rounded border border-hair-2 bg-white text-ink-0 mb-2"
+                        className="w-full text-11 px-3 py-2 rounded border border-hair-2 bg-bg-panel text-ink-0 mb-2"
                       />
                       <div className="flex gap-2">
                         <button

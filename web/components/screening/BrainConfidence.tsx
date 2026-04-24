@@ -55,7 +55,7 @@ export function BrainConfidence({ result }: BrainConfidenceProps) {
   const tone = pct >= 60 ? "#dc2626" : pct >= 30 ? "#f59e0b" : "#10b981";
 
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-3 mb-3 flex items-center gap-3">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mb-3 flex items-center gap-3">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
         <circle
           cx={size / 2}

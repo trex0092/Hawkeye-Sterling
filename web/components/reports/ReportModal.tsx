@@ -171,7 +171,7 @@ export function ReportModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[960px] max-h-[90vh] bg-white rounded-xl shadow-xl flex flex-col"
+        className="w-full max-w-[960px] max-h-[90vh] bg-bg-panel rounded-xl shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2">
@@ -186,7 +186,7 @@ export function ReportModal({
               type="button"
               onClick={handleDownload}
               disabled={state.status !== "ready"}
-              className="px-3 py-1.5 text-11 font-medium rounded border border-hair-2 bg-white text-ink-0 hover:bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-11 font-medium rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Download .txt
             </button>

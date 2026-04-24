@@ -119,7 +119,7 @@ export function BrainReasoningChain({ result }: { result: SuperBrainResult }) {
   const steps = useMemo(() => stepsFromResult(result), [result]);
 
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-4 mb-3">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-3">
       <div className="flex items-baseline justify-between mb-3">
         <span className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2">
           Reasoning chain

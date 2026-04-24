@@ -194,7 +194,7 @@ export default function WorkbenchPage() {
           <WorkbenchHero />
 
           {/* Subject name input */}
-          <div className="flex items-center gap-3 mb-3 px-4 py-3 bg-white border border-hair-2 rounded-lg">
+          <div className="flex items-center gap-3 mb-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
             <label className="text-11.5 font-semibold text-ink-2 whitespace-nowrap tracking-wide-3 uppercase">
               Subject
             </label>
@@ -208,7 +208,7 @@ export default function WorkbenchPage() {
                 }
               }}
               placeholder="Full name to screen — e.g. Mohammed Al-Hassan, Владимир Путин, محمد"
-              className="flex-1 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-white"
+              className="flex-1 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
             />
             {subjectName.trim() === "" && (
               <span className="text-11 text-ink-3 whitespace-nowrap">
@@ -249,7 +249,7 @@ export default function WorkbenchPage() {
                 </div>
               )}
               {brainResult && (
-                <div className="bg-white border border-hair-2 rounded-xl p-5">
+                <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
                   <div className="flex items-baseline justify-between mb-4">
                     <div>
                       <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-1">
@@ -403,7 +403,7 @@ export default function WorkbenchPage() {
 
               {/* Pipeline run info */}
               {runResult && (
-                <div className="bg-white border border-hair-2 rounded-xl p-5">
+                <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
                   <div className="flex items-baseline justify-between mb-3">
                     <div>
                       <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-1">

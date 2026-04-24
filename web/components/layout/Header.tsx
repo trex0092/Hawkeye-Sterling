@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 
@@ -73,6 +73,8 @@ export function Header() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [locale, setLocale] = useState<Locale>("en");
   const [moreOpen, setMoreOpen] = useState(false);
+  const moreButtonRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
 
   useEffect(() => {
     const storedTheme =
@@ -103,7 +105,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-hair-2 shadow-header">
+    <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
         <a
           href="/"
@@ -133,10 +135,16 @@ export function Header() {
               </a>
             );
           })}
-          <div className="relative">
+          <div className="relative" ref={moreButtonRef}>
             <button
               type="button"
-              onClick={() => setMoreOpen((v) => !v)}
+              onClick={() => {
+                if (!moreOpen && moreButtonRef.current) {
+                  const rect = moreButtonRef.current.getBoundingClientRect();
+                  setDropdownPos({ left: rect.left, top: rect.bottom + 4 });
+                }
+                setMoreOpen((v) => !v);
+              }}
               className={`inline-flex items-center gap-1 px-3 py-1.5 text-12.5 rounded font-medium transition-colors whitespace-nowrap ${
                 MORE_GROUPS.some((g) => g.items.some((it) => isActive(pathname, it.href)))
                   ? "bg-bg-2 text-ink-0"
@@ -146,14 +154,17 @@ export function Header() {
               More
               <span className="text-10 text-ink-3">▾</span>
             </button>
-            {moreOpen && (
+            {moreOpen && dropdownPos && (
               <>
                 <div
                   className="fixed inset-0 z-40"
                   onClick={() => setMoreOpen(false)}
                   aria-hidden="true"
                 />
-                <div className="absolute left-0 top-full mt-1 z-50 w-[560px] bg-white border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-3 gap-4">
+                <div
+                  className="fixed z-50 w-[560px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-3 gap-4"
+                  style={{ left: dropdownPos.left, top: dropdownPos.top }}
+                >
                   {MORE_GROUPS.map((g) => (
                     <div key={g.title}>
                       <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1.5 px-2">
@@ -201,12 +212,11 @@ export function Header() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0"
-            title="Toggle theme"
+            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0 transition-colors"
+            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           >
-            {theme === "light"
-              ? t("common.theme.dark", locale)
-              : t("common.theme.light", locale)}
+            {theme === "light" ? "☾ Dark" : "☀ Light"}
           </button>
           <span className="hidden md:flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-green" />
