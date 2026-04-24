@@ -57,7 +57,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Supplier DD", href: "/vendor-dd", hint: "Supplier onboarding" },
       { label: "Employees", href: "/employees", hint: "HR registry & doc expiry" },
       { label: "Training", href: "/training", hint: "Staff certification" },
-      { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
+      { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
       { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
     ],
@@ -301,7 +301,7 @@ function HeaderUserCard() {
     setRole(r);
   };
 
-  const initial = name ? name[0].toUpperCase() : "·";
+  const initial = name ? name.charAt(0).toUpperCase() : "·";
 
   return (
     <div className="relative shrink-0" ref={ref}>
