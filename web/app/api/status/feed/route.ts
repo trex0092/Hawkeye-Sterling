@@ -116,7 +116,7 @@ ${items
     status: 200,
     headers: {
       "content-type": "application/rss+xml; charset=utf-8",
-      "cache-control": "public, max-age=60",
+      "cache-control": "no-store",
     },
   });
 }

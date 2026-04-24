@@ -200,6 +200,70 @@ const DEFAULT_POLICIES: Policy[] = [
       "Customer personal data is processed solely for the purposes of AML/CFT compliance under FDL 10/2025 and UAE Federal Decree-Law No. 45/2021 on Personal Data Protection. Data is retained for exactly 10 years from the end of the business relationship and then securely destroyed. Subject access requests are acknowledged within 5 business days and fulfilled within 30 days. Data shared with regulators or FIU is logged. International data transfers require a documented lawful basis. Breaches involving personal data are reported to the relevant authority within 72 hours.",
     lastReviewed: "2026-04-01",
   },
+  {
+    id: "customer-exit",
+    section: "Onboarding",
+    title: "Customer Exit & De-risking Policy",
+    body:
+      "A customer relationship must be terminated where: (1) CDD cannot be completed within 30 days of a re-KYC trigger; (2) a confirmed sanctions match exists with no licence to continue; (3) the customer refuses to provide UBO information; (4) an STR has been filed and the MLRO determines continued relationship poses unacceptable risk. Exit decisions require MLRO sign-off and are logged in the audit chain. Funds are returned to a verified account in the customer's name — no cash exits. A post-exit monitoring flag is maintained for 12 months. Exits driven by regulatory direction require Board notification within 5 business days.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "third-party-reliance",
+    section: "Onboarding",
+    title: "Third-Party Reliance Policy",
+    body:
+      "The firm may rely on CDD conducted by a regulated third party (bank, DNFBP, or equivalent) where: (a) the third party is subject to AML/CFT regulation and supervision equivalent to UAE standards; (b) a written reliance agreement is in place; (c) the third party agrees to provide CDD documentation within 5 business days on request. Reliance does not transfer regulatory liability — the MLRO retains full accountability. High-risk customers, PEPs, and TFS-flagged subjects are excluded from third-party reliance regardless of the relying institution's status. Third-party reliance arrangements are reviewed annually.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "internal-audit-scope",
+    section: "Governance",
+    title: "Internal Audit Scope & AML Testing",
+    body:
+      "Internal Audit must conduct an independent AML/CFT effectiveness review at least annually covering: (1) adequacy of policies and procedures; (2) quality of CDD files including PEP and high-risk subjects; (3) transaction monitoring alert quality and closure rationale; (4) STR filing timeliness and completeness; (5) training completion rates; (6) four-eyes control operation; (7) sanctions screening configuration and false-positive rates. Audit findings are reported to the Board Audit Committee within 15 business days. Open findings are tracked to closure with MLRO sign-off. Any critical finding (risk-rated High) triggers an immediate interim review.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "sanctions-evasion-redflags",
+    section: "Screening",
+    title: "Sanctions Evasion Red-Flag Policy",
+    body:
+      "The following patterns constitute sanctions-evasion red flags requiring immediate MLRO escalation: (1) transaction routed through a jurisdiction on the FATF grey/black list for no documented commercial reason; (2) third-party payment from an unrelated entity in a high-risk jurisdiction; (3) counterparty name phonetically or typographically similar to a listed person with no clear distinction; (4) use of corporate vehicles with nominee structures in secrecy jurisdictions; (5) requests to split transactions below AED 55,000 thresholds; (6) pressure from the customer to process rapidly without explanation; (7) shipment routes inconsistent with stated origin or destination of goods. Each red flag is documented in the case file and dispositioned by the MLRO within 48 hours.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "cross-border-wire",
+    section: "Reporting",
+    title: "Cross-Border Wire Transfer Policy",
+    body:
+      "All cross-border wire transfers must include full originator and beneficiary information per FATF R.16 / CBUAE Notice 35/2021. Transfers to or from FATF grey-list jurisdictions require MLRO pre-approval and enhanced due diligence on the stated purpose. Transfers to FATF black-list jurisdictions are prohibited absent a specific regulatory licence. The Travel Rule applies to all transfers ≥ USD 1,000 (or equivalent): originator name, account number, address, and beneficiary name and account number must accompany the payment instruction. Correspondent banks must be pre-approved and included in the authorised counterparty register. Outbound wire instructions without complete beneficiary data are rejected and the customer notified within 1 business day.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "account-dormancy",
+    section: "Data",
+    title: "Dormant Account & Inactive Customer Policy",
+    body:
+      "A customer account is classified dormant where no transaction or documented contact has occurred for 12 consecutive months. Dormant accounts are flagged in the CRM within 5 business days of the trigger date. The MLRO is notified of all dormant accounts quarterly. Before reactivation: full re-KYC must be completed, sanctions re-screen performed, and source-of-funds re-verified. Dormant accounts with a risk rating of High or with open adverse-media flags require Board-level approval to reactivate. Unclaimed assets are handled per UAE Central Bank Notice 29/2019. Records for dormant accounts are retained for the full 10-year statutory period from last activity.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "new-product-risk",
+    section: "Governance",
+    title: "New Product & Service Risk Assessment Policy",
+    body:
+      "No new product, service, delivery channel, or technology is launched without a documented AML/CFT risk assessment approved by the MLRO and Board. The assessment must address: ML/TF typologies specific to the product; customer segments likely to use it; jurisdictional exposure; controls needed to mitigate identified risks; and monitoring mechanisms. The assessment is completed before commercial launch — no exceptions. Where the product involves virtual assets, crypto-to-fiat conversion, or non-face-to-face onboarding, CBUAE/VARA notification may be required. Post-launch monitoring report is submitted to the MLRO within 90 days of launch. Significant product modifications trigger a re-assessment.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "gifts-entertainment",
+    section: "Governance",
+    title: "Gifts, Entertainment & Anti-Bribery Policy",
+    body:
+      "No employee may solicit or accept gifts, hospitality, or entertainment from customers, suppliers, or counterparties with a value exceeding AED 500 per occasion or AED 1,000 per calendar year from the same source. All gifts and entertainment received above AED 200 must be declared in the Gifts Register within 5 business days. Gifts of cash or cash equivalents (gift cards, vouchers) are prohibited regardless of value. Providing gifts to public officials or regulators is prohibited in all circumstances. Facilitation payments are never acceptable. Breaches are reported to the MLRO and may constitute grounds for disciplinary action or referral to law enforcement. The Gifts Register is reviewed by Internal Audit annually.",
+    lastReviewed: "2026-04-01",
+  },
 ];
 
 function load(): Policy[] {
