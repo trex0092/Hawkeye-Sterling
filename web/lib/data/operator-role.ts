@@ -10,7 +10,10 @@
 // enough to enforce the four-eyes UX today and the audit chain cares
 // about the signed intent anyway (see /api/audit/sign).
 
-export type OperatorRole = "analyst" | "mlro";
+// analyst   — front-line screening; may propose actions, never sees STR register
+// co        — Compliance Officer; can view STR register, assist preparation
+// mlro      — Money Laundering Reporting Officer; full authority, final sign-off
+export type OperatorRole = "analyst" | "co" | "mlro";
 
 const ROLE_STORAGE_KEY = "hawkeye.operator-role";
 
@@ -22,7 +25,7 @@ export function loadOperatorRole(): OperatorRole {
   if (!isBrowser()) return "analyst";
   try {
     const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
-    if (raw === "mlro" || raw === "analyst") return raw;
+    if (raw === "mlro" || raw === "analyst" || raw === "co") return raw;
   } catch {
     /* localStorage disabled */
   }
@@ -41,20 +44,26 @@ export function saveOperatorRole(role: OperatorRole): void {
 
 export const ROLE_LABEL: Record<OperatorRole, string> = {
   analyst: "Analyst",
+  co: "CO",
   mlro: "MLRO",
 };
 
 export const ROLE_POWER: Record<OperatorRole, number> = {
   analyst: 1,
-  mlro: 2,
+  co: 2,
+  mlro: 3,
 };
 
 // Action → minimum role required. The UI uses this to gate buttons; the
 // server-side audit-signing endpoint enforces it independently so a
 // modified client can't bypass.
+//
+// str_read: viewing the STR case register — CO and above (tipping-off guard)
+// str/freeze/dispose/goaml_submit: MLRO only (final sign-off authority)
 export const ACTION_MIN_ROLE: Record<string, OperatorRole> = {
   clear: "analyst",
   escalate: "analyst",
+  str_read: "co",
   str: "mlro",
   freeze: "mlro",
   dispose: "mlro",

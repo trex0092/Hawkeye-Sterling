@@ -34,28 +34,30 @@ export const dynamic = "force-dynamic";
 const ALLOWED_ACTIONS = new Set([
   "clear",
   "escalate",
+  "str_read",
   "str",
   "freeze",
   "dispose",
   "goaml_submit",
 ]);
 
-const ACTION_MIN_ROLE: Record<string, "analyst" | "mlro"> = {
+const ACTION_MIN_ROLE: Record<string, "analyst" | "co" | "mlro"> = {
   clear: "analyst",
   escalate: "analyst",
+  str_read: "co",
   str: "mlro",
   freeze: "mlro",
   dispose: "mlro",
   goaml_submit: "mlro",
 };
 
-const ROLE_POWER = { analyst: 1, mlro: 2 };
+const ROLE_POWER: Record<string, number> = { analyst: 1, co: 2, mlro: 3 };
 
 interface SignBody {
   action: string;
   target: string;
   actor: {
-    role: "analyst" | "mlro";
+    role: "analyst" | "co" | "mlro";
     name?: string;
   };
   body?: Record<string, unknown>;

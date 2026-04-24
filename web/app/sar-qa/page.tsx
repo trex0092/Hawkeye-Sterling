@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
-import { loadOperatorRole } from "@/lib/data/operator-role";
+import { loadOperatorRole, ROLE_LABEL, type OperatorRole } from "@/lib/data/operator-role";
 import type { CaseRecord } from "@/lib/types";
 
 // SAR QA — four-eyes peer review. Any STR / SAR case that's
@@ -45,7 +45,7 @@ function saveReviews(r: Record<string, QaReview>) {
 export default function SarQaPage() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [reviews, setReviews] = useState<Record<string, QaReview>>({});
-  const [role, setRole] = useState<"analyst" | "mlro">("analyst");
+  const [role, setRole] = useState<OperatorRole>("analyst");
   const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -87,8 +87,8 @@ export default function SarQaPage() {
 
         {role !== "mlro" && (
           <div className="mt-6 rounded-lg p-3 bg-amber-dim text-amber text-12">
-            You are logged in as <strong>Analyst</strong>. Switch to the MLRO
-            role from the sidebar to stamp reviews.
+            You are logged in as <strong>{ROLE_LABEL[role]}</strong>. Switch to
+            the MLRO role from the sidebar to stamp reviews.
           </div>
         )}
 
