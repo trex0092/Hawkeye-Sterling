@@ -737,6 +737,7 @@ export async function GET(): Promise<NextResponse> {
       amplifierVersion: "unknown",
       amplificationPercent: 0,
       amplificationFactor: 0,
+      directiveCount: 0,
       charterHash: "unavailable",
       catalogueHash: "unavailable",
       compositeHash: "unavailable",
