@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { Header } from "./Header";
+import { RegulatoryTicker } from "./RegulatoryTicker";
+import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import {
   SidebarFilterList,
   SidebarMLROCard,
@@ -26,6 +28,8 @@ interface ModuleLayoutProps<K extends string = string> {
   // When true the grid uses max-w constrained main content (for centred
   // report-style pages like Analytics, Status). Defaults to full-width.
   narrow?: boolean | undefined;
+  // Label shown on the live engine feed. Defaults to "Compliance engine".
+  engineLabel?: string | undefined;
 }
 
 export function ModuleLayout<K extends string = string>({
@@ -38,13 +42,15 @@ export function ModuleLayout<K extends string = string>({
   detailPanel,
   shift = "09:00–18:00",
   narrow = false,
+  engineLabel = "Compliance engine",
 }: ModuleLayoutProps<K>) {
   const gridCols = detailPanel ? "220px 1fr 360px" : "220px 1fr";
   return (
     <>
       <Header />
+      <RegulatoryTicker />
       <div
-        className="grid min-h-[calc(100vh-54px)]"
+        className="grid min-h-[calc(100vh-84px)]"
         style={{ gridTemplateColumns: gridCols }}
       >
         <SidebarShell>
@@ -77,6 +83,9 @@ export function ModuleLayout<K extends string = string>({
           }
         >
           {children}
+          <div className={narrow ? "max-w-4xl mx-auto px-8 pb-10" : "pb-8"}>
+            <ActivityFeed label={engineLabel} />
+          </div>
         </main>
 
         {detailPanel}
