@@ -91,9 +91,92 @@ export default function DataQualityPage() {
         />
 
         {rows.length === 0 ? (
-          <div className="text-12 text-ink-2 py-8 text-center mt-6">
-            No cases in the register yet. Data-quality ranks kick in once
-            cases are filed via the screening panel.
+          <div className="mt-8 space-y-6">
+            {/* CTA */}
+            <div className="bg-brand-dim border border-brand-line rounded-lg px-5 py-4 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-13 font-semibold text-ink-0 mb-0.5">No cases in the register yet</div>
+                <div className="text-12 text-ink-2">Data-quality scores appear once subjects are escalated from the screening panel.</div>
+              </div>
+              <a
+                href="/screening"
+                className="shrink-0 px-4 py-2 rounded bg-brand text-white text-12 font-semibold no-underline hover:bg-brand-hover transition-colors"
+              >
+                Go to Screening →
+              </a>
+            </div>
+
+            {/* Completeness dimensions */}
+            <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+              <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-4">
+                Completeness dimensions scored per case
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  { field: "Subject name", note: "Full legal name on file" },
+                  { field: "Meta / tags", note: "Risk category or sector tag" },
+                  { field: "Status set", note: "Active, closed, reported…" },
+                  { field: "Opened-at date", note: "Case creation timestamp" },
+                  { field: "Evidence attached", note: "At least one document" },
+                  { field: "goAML reference", note: "Required if status = reported" },
+                ].map(({ field, note }) => (
+                  <div key={field} className="flex items-start gap-2">
+                    <span className="mt-0.5 w-4 h-4 rounded-full bg-green-dim text-green flex items-center justify-center text-10 font-bold shrink-0">✓</span>
+                    <div>
+                      <div className="text-12 font-medium text-ink-0">{field}</div>
+                      <div className="text-10.5 text-ink-3">{note}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quality thresholds by risk tier */}
+            <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+              <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-4">
+                Target completeness by risk tier
+              </div>
+              <div className="flex gap-6 flex-wrap">
+                {[
+                  { tier: "High risk", target: "≥ 95%", tone: "text-red", bar: "bg-red" },
+                  { tier: "Standard risk", target: "≥ 85%", tone: "text-amber", bar: "bg-amber" },
+                  { tier: "Low risk", target: "≥ 75%", tone: "text-green", bar: "bg-green" },
+                ].map(({ tier, target, tone, bar }) => (
+                  <div key={tier} className="flex items-center gap-3 min-w-[160px]">
+                    <div className={`w-1.5 h-8 rounded-full ${bar} opacity-70`} />
+                    <div>
+                      <div className="text-11 text-ink-2 uppercase tracking-wide-3 font-mono">{tier}</div>
+                      <div className={`text-20 font-semibold font-mono ${tone}`}>{target}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-10.5 text-ink-3 font-mono">
+                Cases below threshold appear in red in the completeness table. MLRO receives weekly remediation digest.
+              </div>
+            </div>
+
+            {/* Re-screen policy */}
+            <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+              <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
+                Re-screening policy
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                {[
+                  { label: "High risk", cadence: "Every 30 days", tone: "text-red" },
+                  { label: "Standard risk", cadence: "Every 90 days", tone: "text-amber" },
+                  { label: "Low risk", cadence: "Every 180 days", tone: "text-green" },
+                ].map(({ label, cadence, tone }) => (
+                  <div key={label} className="bg-bg-1 rounded p-3">
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-mono mb-1">{label}</div>
+                    <div className={`text-13 font-semibold ${tone}`}>{cadence}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-10.5 text-ink-3 font-mono">
+                Cases overdue for re-screening (&gt;90d default) are flagged red in the Re-screen column. FDL 10/2025 Art. 19 — 10-year lookback obligation applies.
+              </div>
+            </div>
           </div>
         ) : (
           <div className="mt-6 bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
