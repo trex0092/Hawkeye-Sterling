@@ -134,7 +134,8 @@ function ShareholderCard({
         <div>
           <label className={labelCls}>Shares %</label>
           <input value={sh.sharesPct} onChange={set("sharesPct")} placeholder="e.g. 51"
-            type="text" inputMode="decimal" className={inputCls} />
+            type="text" inputMode="decimal" className={inputCls}
+            style={{ MozAppearance: "textfield", WebkitAppearance: "none" }} />
         </div>
       </div>
 

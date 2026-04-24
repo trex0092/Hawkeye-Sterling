@@ -46,7 +46,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "Client portal", href: "/client-portal", hint: "External KYC" },
       { label: "UBO declaration", href: "/ubo-declaration", hint: "Public UBO form" },
-      { label: "Vendor DD", href: "/vendor-dd", hint: "Supplier onboarding" },
+      { label: "Supplier DD", href: "/vendor-dd", hint: "Supplier onboarding" },
       { label: "Training", href: "/training", hint: "Staff certification" },
       { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },

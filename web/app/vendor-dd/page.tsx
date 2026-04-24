@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
-interface Vendor {
+interface Supplier {
   id: string;
   name: string;
   jurisdiction: string;
@@ -21,7 +21,7 @@ function fmtDate(iso: string): string {
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
-const DEFAULT_VENDORS: Vendor[] = [
+const DEFAULT_SUPPLIERS: Supplier[] = [
   {
     id: "v1",
     name: "Valcambi SA",
@@ -71,17 +71,17 @@ const XIcon = () => (
   </svg>
 );
 
-export default function VendorDdPage() {
-  const [vendors, setVendors] = useState<Vendor[]>(DEFAULT_VENDORS);
+export default function SupplierDdPage() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
 
-  const remove = (id: string) => setVendors((vs) => vs.filter((v) => v.id !== id));
+  const remove = (id: string) => setSuppliers((vs) => vs.filter((v) => v.id !== id));
 
   return (
     <ModuleLayout narrow>
       <div className="max-w-5xl mx-auto px-8 py-10">
         <ModuleHero
           eyebrow="Module 20 · Supply-chain DD"
-          title="Vendor"
+          title="Supplier"
           titleEm="due diligence."
           intro={
             <>
@@ -92,14 +92,14 @@ export default function VendorDdPage() {
             </>
           }
           kpis={[
-            { value: String(vendors.length), label: "active vendors" },
+            { value: String(suppliers.length), label: "active suppliers" },
             {
-              value: String(vendors.filter((v) => v.tier === "critical").length),
+              value: String(suppliers.filter((v) => v.tier === "critical").length),
               label: "tier-critical",
               tone: "red",
             },
             {
-              value: String(vendors.filter((v) => !v.lbmaListed).length),
+              value: String(suppliers.filter((v) => !v.lbmaListed).length),
               label: "not LBMA-listed",
               tone: "amber",
             },
@@ -107,7 +107,7 @@ export default function VendorDdPage() {
         />
 
         <div className="mt-6 space-y-2">
-          {vendors.map((v) => (
+          {suppliers.map((v) => (
             <div
               key={v.id}
               className="bg-bg-panel border border-hair-2 rounded-lg p-4"
@@ -175,8 +175,8 @@ export default function VendorDdPage() {
         </div>
 
         <p className="text-11 text-ink-3 mt-6 leading-relaxed">
-          Vendor reviews follow LBMA RGG v9 + OECD Due Diligence Guidance for
-          Minerals. Critical-tier vendors get annual Step-4 audit; significant
+          Supplier reviews follow LBMA RGG v9 + OECD Due Diligence Guidance for
+          Minerals. Critical-tier suppliers get annual Step-4 audit; significant
           tier every 18 months; standard every 24 months per MoE Circular 2/2024.
         </p>
       </div>
