@@ -47,6 +47,18 @@ import {
   BrainAnomalyDetector,
   BrainCounterfactual,
   BrainOutcomeForecast,
+  BrainSourceTriangulation,
+  BrainTemporalPattern,
+  BrainTypologyConfidence,
+  BrainJurisdictionClusters,
+  BrainRegulatoryPredictor,
+  BrainContextualEnrichment,
+  BrainChainAttribution,
+  BrainDefensibility,
+  BrainAlternativeHypotheses,
+  BrainSimilarityCorpus,
+  BrainSignalInterference,
+  BrainEscalationLadder,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import {
@@ -1186,6 +1198,18 @@ function SuperBrainPanel({
       <BrainReasoningChain result={r} />
       <BrainCausalChain result={r} />
       <BrainOutcomeForecast result={r} />
+      <BrainSourceTriangulation result={r} />
+      <BrainTemporalPattern result={r} />
+      <BrainTypologyConfidence result={r} />
+      <BrainJurisdictionClusters result={r} />
+      <BrainRegulatoryPredictor result={r} />
+      <BrainContextualEnrichment result={r} />
+      <BrainChainAttribution result={r} />
+      <BrainDefensibility result={r} subjectName={subjectName} />
+      <BrainAlternativeHypotheses result={r} />
+      <BrainSimilarityCorpus result={r} subjectName={subjectName} />
+      <BrainSignalInterference result={r} />
+      <BrainEscalationLadder result={r} />
       <BrainDecomposition result={r} />
       <BrainConfidenceInterval result={r} />
       <BrainVerdictConsistency result={r} />

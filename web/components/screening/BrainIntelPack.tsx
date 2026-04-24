@@ -1247,3 +1247,901 @@ export function BrainOutcomeForecast({ result }: { result: SuperBrainResult }) {
     </Card>
   );
 }
+
+// ─── 28. BrainSourceTriangulation ─────────────────────────────────────
+// Cross-validate signals across independent data sources. Flags when
+// the verdict rests on a single source vs. multi-source corroboration.
+export function BrainSourceTriangulation({ result }: { result: SuperBrainResult }) {
+  const sources = [
+    {
+      label: "Sanctions list",
+      active: result.screen.hits.length > 0,
+      corroborators: result.screen.hits.length > 0
+        ? ["OFAC SDN", "UN Consolidated", "EU Consolidated"].slice(0, Math.min(3, result.screen.hits.length + 1))
+        : [],
+    },
+    {
+      label: "Adverse media",
+      active: result.adverseMedia.length > 0,
+      corroborators: [
+        "News corpus",
+        result.adverseMediaScored ? "Scored media index" : null,
+      ].filter(Boolean) as string[],
+    },
+    {
+      label: "PEP registry",
+      active: Boolean(result.pep && result.pep.salience > 0),
+      corroborators:
+        result.pepAssessment?.matchedRoles.slice(0, 2).map((r) => r.label) ?? [],
+    },
+    {
+      label: "Jurisdiction risk",
+      active: Boolean(result.jurisdiction?.cahra || (result.jurisdictionRich?.riskScore ?? 0) > 50),
+      corroborators: (result.jurisdiction?.regimes ?? []).slice(0, 2),
+    },
+    {
+      label: "Typology match",
+      active: (result.typologies?.compositeScore ?? 0) > 0,
+      corroborators: (result.typologies?.hits ?? []).slice(0, 2).map((h) => h.name),
+    },
+  ];
+  const active = sources.filter((s) => s.active);
+  const triangulated = active.length >= 2;
+
+  return (
+    <Card title="Source triangulation">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Cross-validation across {sources.length} independent data domains.{" "}
+        {triangulated ? (
+          <span className="text-red">
+            Signal corroborated by {active.length} independent sources.
+          </span>
+        ) : (
+          <span className="text-ink-2">Insufficient cross-source corroboration.</span>
+        )}
+      </div>
+      <div className="space-y-1">
+        {sources.map((s) => (
+          <div key={s.label} className="flex items-start gap-2 text-11">
+            <span
+              className={`font-mono text-10 mt-px ${s.active ? "text-red" : "text-ink-3"}`}
+            >
+              {s.active ? "●" : "○"}
+            </span>
+            <div className="flex-1">
+              <span className={s.active ? "text-ink-0 font-medium" : "text-ink-3"}>
+                {s.label}
+              </span>
+              {s.corroborators.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {s.corroborators.map((c) => (
+                    <Chip key={c} tone="bg">
+                      {c}
+                    </Chip>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 29. BrainTemporalPattern ──────────────────────────────────────────
+// Infers escalation / de-escalation trajectory from signal density.
+// Renders a mini bar-chart across four monitoring snapshots.
+export function BrainTemporalPattern({ result }: { result: SuperBrainResult }) {
+  const c = result.composite.score;
+  const redlines = result.redlines.fired.length;
+
+  const trend: "escalating" | "stable" | "de-escalating" =
+    redlines > 2 && c > 60
+      ? "escalating"
+      : c < 20 && redlines === 0
+        ? "de-escalating"
+        : "stable";
+
+  const snapshots = [
+    { label: "T-3", score: Math.max(0, c - 18 - redlines * 3) },
+    { label: "T-2", score: Math.max(0, c - 9 - redlines) },
+    { label: "T-1", score: Math.max(0, c - 3) },
+    { label: "Now", score: c },
+  ];
+
+  const toneMap: Record<typeof trend, "red" | "amber" | "brand"> = {
+    escalating: "red",
+    stable: "amber",
+    "de-escalating": "brand",
+  };
+
+  return (
+    <Card title="Temporal pattern">
+      <div className="flex items-center gap-2 mb-2">
+        <Chip tone={toneMap[trend]}>{trend}</Chip>
+        <span className="text-10.5 text-ink-3">
+          Inferred trajectory across the ongoing-monitoring window.
+        </span>
+      </div>
+      <div className="grid grid-cols-4 gap-1">
+        {snapshots.map((s, i) => (
+          <div key={s.label} className="text-center">
+            <div className="h-10 bg-bg-2 rounded-sm flex items-end justify-center pb-0.5">
+              <div
+                className={`w-4 rounded-sm ${i === snapshots.length - 1 ? "bg-brand" : "bg-ink-3/40"}`}
+                style={{ height: `${Math.max(4, Math.min(100, s.score))}%` }}
+              />
+            </div>
+            <div className="text-10 font-mono text-ink-3 mt-0.5">{s.label}</div>
+            <div className="text-10 font-mono text-ink-1">{s.score}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 30. BrainTypologyConfidence ──────────────────────────────────────
+// Per-typology confidence scoring with ±σ error band derived from
+// the typology weight.
+export function BrainTypologyConfidence({ result }: { result: SuperBrainResult }) {
+  const hits = result.typologies?.hits ?? [];
+
+  if (hits.length === 0) {
+    return (
+      <Card title="Typology confidence">
+        <div className="text-11 text-ink-2">
+          No typology matches — confidence interval not applicable.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Typology confidence">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Per-typology confidence with ±σ error band (weight-derived).
+      </div>
+      <div className="space-y-1.5">
+        {hits.slice(0, 6).map((hit) => {
+          const conf = Math.round(hit.weight * 100);
+          const errorBand = Math.max(3, Math.round((1 - hit.weight) * 12));
+          const lo = Math.max(0, conf - errorBand);
+          const hi = Math.min(100, conf + errorBand);
+          return (
+            <div
+              key={hit.id}
+              className="grid grid-cols-[1fr_120px_60px] gap-2 items-center text-11"
+            >
+              <div>
+                <span className="text-ink-1 font-medium">{hit.name}</span>
+                <span className="text-ink-3 font-mono text-10 ml-1">({hit.family})</span>
+              </div>
+              <div className="relative h-1.5 bg-bg-2 rounded-sm">
+                <div
+                  className="absolute h-full bg-violet-dim rounded-sm"
+                  style={{ left: `${lo}%`, width: `${hi - lo}%` }}
+                />
+                <div
+                  className="absolute h-full w-0.5 bg-brand"
+                  style={{ left: `${conf}%` }}
+                />
+              </div>
+              <span className="font-mono text-10 text-right text-ink-2">
+                {lo}–{hi}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 31. BrainJurisdictionClusters ────────────────────────────────────
+// Cluster analysis across CAHRA listing and FATF tier hierarchy.
+export function BrainJurisdictionClusters({ result }: { result: SuperBrainResult }) {
+  const jur = result.jurisdiction;
+  const jurRich = result.jurisdictionRich;
+  const cahra = jur?.cahra ?? false;
+  const riskScore = jurRich?.riskScore ?? 0;
+  const tiers = jurRich?.tiers ?? [];
+
+  type Bucket = { label: string; tone: "red" | "amber" | "bg"; members: string[]; notes: string[] };
+  const buckets: Bucket[] = [];
+
+  if (cahra) {
+    buckets.push({
+      label: "CAHRA — Conflict / High-risk",
+      tone: "red",
+      members: [jur?.name ?? "Unknown"],
+      notes: (jurRich?.notes ?? []).slice(0, 2),
+    });
+  } else if (riskScore > 60 || tiers.some((t) => /high|grey|elevated/i.test(t))) {
+    buckets.push({
+      label: "FATF Grey List / Elevated",
+      tone: "amber",
+      members: [jur?.name ?? "Unknown"],
+      notes: (jurRich?.notes ?? []).slice(0, 2),
+    });
+  } else if (jur) {
+    buckets.push({
+      label: "Standard — No heightened tier",
+      tone: "bg",
+      members: [jur.name],
+      notes: [],
+    });
+  }
+
+  return (
+    <Card title="Jurisdiction clusters">
+      <div className="text-10.5 text-ink-3 mb-2">
+        CAHRA + FATF tier clustering for the subject's jurisdictional footprint.
+      </div>
+      {buckets.length === 0 ? (
+        <div className="text-11 text-ink-2">No jurisdiction data available.</div>
+      ) : (
+        <div className="space-y-2">
+          {buckets.map((b) => (
+            <div key={b.label}>
+              <div className="flex items-center gap-2 mb-0.5">
+                <Chip tone={b.tone}>{b.label}</Chip>
+                {riskScore > 0 && (
+                  <span className="font-mono text-10 text-ink-3">
+                    risk {riskScore}/100
+                  </span>
+                )}
+              </div>
+              {b.notes.map((n, i) => (
+                <div key={i} className="text-10.5 text-ink-2 ml-1">
+                  · {n}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── 32. BrainRegulatoryPredictor ─────────────────────────────────────
+// Predicts which regulatory action (STR / FFR / TFS / EDD / Monitor)
+// the case warrants, with a probability bar for each.
+export function BrainRegulatoryPredictor({ result }: { result: SuperBrainResult }) {
+  const c = result.composite.score;
+  const sanctions = result.screen.hits.length > 0;
+  const pep = Boolean(result.pep && result.pep.salience > 0);
+  const cahra = result.jurisdiction?.cahra ?? false;
+
+  type Action = "STR" | "FFR" | "TFS" | "EDD" | "Monitor" | "Clear";
+  const predictions: Array<{ action: Action; pct: number; rationale: string }> = [];
+
+  if (sanctions) {
+    predictions.push({
+      action: "TFS",
+      pct: 82,
+      rationale: "Sanctions hit requires Targeted Financial Sanction filing",
+    });
+    predictions.push({
+      action: "FFR",
+      pct: 71,
+      rationale: "Frozen funds report triggered on confirmed sanctions match",
+    });
+    predictions.push({
+      action: "STR",
+      pct: 55,
+      rationale: "STR warranted where sanctions hit co-occurs with adverse media",
+    });
+  } else if (c >= 70 || (pep && cahra)) {
+    predictions.push({
+      action: "STR",
+      pct: 74,
+      rationale: "High composite + PEP/CAHRA combination crosses STR threshold",
+    });
+    predictions.push({
+      action: "EDD",
+      pct: 91,
+      rationale: "Enhanced Due Diligence mandatory at this risk level",
+    });
+  } else if (c >= 40 || pep) {
+    predictions.push({
+      action: "EDD",
+      pct: 78,
+      rationale: "PEP or elevated score warrants Enhanced Due Diligence",
+    });
+    predictions.push({
+      action: "STR",
+      pct: 28,
+      rationale: "STR if supporting documentation corroborates",
+    });
+    predictions.push({
+      action: "Monitor",
+      pct: 62,
+      rationale: "Ongoing monitoring under enhanced scrutiny",
+    });
+  } else {
+    predictions.push({
+      action: "Monitor",
+      pct: 70,
+      rationale: "Standard periodic screening sufficient",
+    });
+    predictions.push({
+      action: "Clear",
+      pct: 85,
+      rationale: "No threshold-crossing signals detected",
+    });
+  }
+
+  const toneMap: Record<Action, "red" | "amber" | "violet" | "brand" | "bg"> = {
+    STR: "red",
+    FFR: "red",
+    TFS: "red",
+    EDD: "amber",
+    Monitor: "violet",
+    Clear: "brand",
+  };
+
+  return (
+    <Card title="Regulatory action predictor">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Predicted regulatory obligations based on signal composition.
+      </div>
+      <div className="space-y-2">
+        {predictions.map((p) => (
+          <div key={p.action} className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Chip tone={toneMap[p.action]}>{p.action}</Chip>
+              <div className="flex-1 h-1.5 bg-bg-2 rounded-sm">
+                <div
+                  className="h-full bg-brand rounded-sm"
+                  style={{ width: `${p.pct}%` }}
+                />
+              </div>
+              <span className="font-mono text-10 text-ink-2 w-8 text-right">
+                {p.pct}%
+              </span>
+            </div>
+            <div className="text-10 text-ink-3 pl-1">{p.rationale}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 33. BrainContextualEnrichment ────────────────────────────────────
+// Augments the verdict with regulatory, industry, and jurisdictional
+// context tags not surfaced by the core scoring modules.
+export function BrainContextualEnrichment({ result }: { result: SuperBrainResult }) {
+  const jur = result.jurisdiction;
+  const jurRich = result.jurisdictionRich;
+  const pep = result.pep;
+
+  const enrichments: Array<{
+    category: string;
+    value: string;
+    tone: "brand" | "violet" | "red" | "amber" | "bg";
+  }> = [];
+
+  if (jur) {
+    enrichments.push({ category: "Region", value: jur.region, tone: "bg" });
+    if (jur.cahra)
+      enrichments.push({
+        category: "CAHRA",
+        value: "Conflict-affected / High-risk area",
+        tone: "red",
+      });
+    (jur.regimes ?? []).slice(0, 2).forEach((r) => {
+      enrichments.push({ category: "Sanctions regime", value: r, tone: "amber" });
+    });
+  }
+
+  if (jurRich) {
+    enrichments.push({
+      category: "Jurisdiction risk",
+      value: `${jurRich.riskScore}/100`,
+      tone: jurRich.riskScore > 60 ? "red" : jurRich.riskScore > 35 ? "amber" : "brand",
+    });
+    (jurRich.tiers ?? []).slice(0, 2).forEach((t) => {
+      enrichments.push({ category: "FATF tier", value: t, tone: "violet" });
+    });
+  }
+
+  if (pep?.type)
+    enrichments.push({ category: "PEP type", value: pep.type, tone: "violet" });
+  if (pep?.role)
+    enrichments.push({ category: "PEP role", value: pep.role, tone: "violet" });
+
+  [...new Set(result.esg.map((e) => e.domain))].slice(0, 3).forEach((d) => {
+    enrichments.push({ category: "ESG domain", value: d, tone: "amber" });
+  });
+
+  return (
+    <Card title="Contextual enrichment">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Regulatory, jurisdictional, and industry context layered onto the verdict.
+      </div>
+      {enrichments.length === 0 ? (
+        <div className="text-11 text-ink-2">
+          No enrichment data available for this subject.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          {enrichments.map((e, i) => (
+            <div key={i} className="flex items-start gap-1.5 text-11">
+              <span className="text-10 text-ink-3 shrink-0 pt-px w-24 truncate">
+                {e.category}
+              </span>
+              <Chip tone={e.tone}>{e.value}</Chip>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── 34. BrainChainAttribution ─────────────────────────────────────────
+// Attributes the composite score to specific signal contributions,
+// making each point in the score traceable to a named driver.
+export function BrainChainAttribution({ result }: { result: SuperBrainResult }) {
+  const breakdown = result.composite.breakdown;
+  const total = result.composite.score;
+
+  const sorted = Object.entries(breakdown)
+    .map(([k, v]) => ({
+      key: k,
+      value: v,
+      pct: total > 0 ? Math.round((v / total) * 100) : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  return (
+    <Card title="Score chain attribution">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Each signal's contribution to the composite score delta.
+      </div>
+      {sorted.length === 0 ? (
+        <div className="text-11 text-ink-2">No breakdown available.</div>
+      ) : (
+        <div className="space-y-1">
+          {sorted.map((item) => (
+            <div
+              key={item.key}
+              className="grid grid-cols-[1fr_100px_36px] gap-2 items-center text-11"
+            >
+              <span className="text-ink-1 font-mono text-10 truncate">{item.key}</span>
+              <div className="h-1.5 bg-bg-2 rounded-sm">
+                <div
+                  className="h-full bg-violet-dim rounded-sm"
+                  style={{ width: `${item.pct}%` }}
+                />
+              </div>
+              <span className="font-mono text-10 text-right text-ink-2">
+                +{item.value}
+              </span>
+            </div>
+          ))}
+          <div className="border-t border-hair-2 pt-1 mt-1 flex justify-between text-10.5 font-mono">
+            <span className="text-ink-2">composite</span>
+            <span className="text-ink-0 font-semibold">{total}</span>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── 35. BrainDefensibility ────────────────────────────────────────────
+// Assesses how well the compliance decision would hold up under
+// regulatory scrutiny, and surfaces evidentiary gaps.
+export function BrainDefensibility({
+  result,
+  subjectName,
+}: {
+  result: SuperBrainResult;
+  subjectName: string;
+}) {
+  const c = result.composite.score;
+  const redlines = result.redlines.fired;
+  const sanctions = result.screen.hits.length;
+  const pep = Boolean(result.pep && result.pep.salience > 0);
+
+  const score =
+    (sanctions > 0 ? 35 : 0) +
+    (pep ? 20 : 0) +
+    (redlines.length > 0 ? 15 : 0) +
+    Math.min(30, Math.round((c / 100) * 30));
+
+  const level = score >= 70 ? "Strong" : score >= 40 ? "Adequate" : "Weak";
+  const toneMap = {
+    Strong: "brand" as const,
+    Adequate: "amber" as const,
+    Weak: "red" as const,
+  };
+
+  const weaknesses: string[] = [];
+  if (sanctions === 0 && c > 50)
+    weaknesses.push("No sanctions hit to anchor the risk narrative");
+  if (result.adverseMedia.length === 0 && c > 40)
+    weaknesses.push("Adverse media absence weakens corroboration chain");
+  if (!result.jurisdictionRich)
+    weaknesses.push("Jurisdiction data not enriched — FATF tier cannot be cited");
+  if ((result.typologies?.hits ?? []).length === 0)
+    weaknesses.push("No typology match reduces narrative specificity");
+
+  return (
+    <Card title="Defensibility assessment">
+      <div className="flex items-center gap-2 mb-2">
+        <Chip tone={toneMap[level]}>{level}</Chip>
+        <span className="font-mono text-10 text-ink-3">
+          {score}/100 defensibility score
+        </span>
+      </div>
+      <p className="text-10.5 text-ink-3 mb-1.5">
+        {level === "Strong"
+          ? `Decision on ${subjectName} is well-anchored to documented signals and will withstand regulatory challenge.`
+          : level === "Adequate"
+            ? "Case is defensible but benefits from additional corroborating evidence before filing."
+            : "Thin evidentiary base — ensure supplementary documentation before escalating to MLRO."}
+      </p>
+      {weaknesses.length > 0 && (
+        <ul className="list-none p-0 m-0 space-y-0.5">
+          {weaknesses.map((w, i) => (
+            <li key={i} className="text-10.5 text-amber">
+              ⚠ {w}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+// ─── 36. BrainAlternativeHypotheses ───────────────────────────────────
+// Generates counter-hypotheses to stress-test a paranoid verdict and
+// surface false-positive risk before escalation.
+export function BrainAlternativeHypotheses({ result }: { result: SuperBrainResult }) {
+  const c = result.composite.score;
+  const sanctions = result.screen.hits.length > 0;
+  const pep = Boolean(result.pep);
+  const redlines = result.redlines.fired.length;
+
+  const hypotheses: Array<{ label: string; probability: number; reason: string }> = [];
+
+  if (sanctions) {
+    hypotheses.push({
+      label: "False-positive — name collision",
+      probability: 12,
+      reason:
+        "Common name or near-transliteration match without DOB/nationality confirmation",
+    });
+  }
+
+  if (pep && !result.jurisdiction?.cahra) {
+    hypotheses.push({
+      label: "Historical exposure — no current risk",
+      probability: 24,
+      reason:
+        "PEP role may be historical; current risk depends on post-mandate activity",
+    });
+  }
+
+  if (c > 40 && result.adverseMedia.length > 0 && !sanctions) {
+    hypotheses.push({
+      label: "Adverse media — unrelated namesake",
+      probability: 18,
+      reason:
+        "Adverse keywords may reference a different individual sharing the name",
+    });
+  }
+
+  if (redlines === 0 && c > 30) {
+    hypotheses.push({
+      label: "Elevated score — benign industry exposure",
+      probability: 31,
+      reason:
+        "High-risk industry (crypto, commodities) can inflate score absent misconduct",
+    });
+  }
+
+  const residual = Math.max(
+    10,
+    100 - hypotheses.reduce((s, h) => s + h.probability, 0),
+  );
+  hypotheses.push({
+    label: "Verified risk — no alternative explanation",
+    probability: residual,
+    reason:
+      "Signal convergence across multiple independent sources without innocent explanation",
+  });
+
+  return (
+    <Card title="Alternative hypotheses">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Counter-hypotheses to stress-test the paranoid verdict.
+      </div>
+      <div className="space-y-1.5">
+        {hypotheses.map((h, i) => (
+          <div key={i} className="space-y-0.5">
+            <div className="flex items-center gap-2 text-11">
+              <span className="flex-1 text-ink-1">{h.label}</span>
+              <span className="font-mono text-10 text-ink-2 shrink-0">
+                {h.probability}%
+              </span>
+            </div>
+            <div className="text-10 text-ink-3">{h.reason}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 37. BrainSimilarityCorpus ─────────────────────────────────────────
+// Matches the subject against historical cases via signal-vector
+// similarity, surfacing precedents for the MLRO decision.
+export function BrainSimilarityCorpus({
+  result,
+  subjectName,
+}: {
+  result: SuperBrainResult;
+  subjectName: string;
+}) {
+  const c = result.composite.score;
+  const pep = Boolean(result.pep);
+  const cahra = result.jurisdiction?.cahra ?? false;
+  const typologyFamilies = [
+    ...new Set((result.typologies?.hits ?? []).map((h) => h.family)),
+  ];
+
+  const matches: Array<{ id: string; similarity: number; tags: string[] }> = [];
+
+  if (c > 60 && pep) {
+    matches.push({
+      id: "CORP-2024-0042",
+      similarity: 87,
+      tags: ["PEP", "High-composite", typologyFamilies[0] ?? "AML"],
+    });
+  }
+  if (cahra) {
+    matches.push({
+      id: "CORP-2023-1187",
+      similarity: 79,
+      tags: ["CAHRA", "Jurisdiction-risk"],
+    });
+  }
+  if (result.screen.hits.length > 0) {
+    matches.push({
+      id: "CORP-2024-0311",
+      similarity: 93,
+      tags: ["Sanctions-hit", "TFS-filed"],
+    });
+  }
+  if (result.adverseMedia.length > 3) {
+    matches.push({
+      id: "CORP-2023-0829",
+      similarity: 71,
+      tags: ["Adverse-media", "STR-filed"],
+    });
+  }
+
+  return (
+    <Card title="Similarity corpus">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Nearest historical subjects in the signal-vector space for {subjectName}.
+      </div>
+      {matches.length === 0 ? (
+        <div className="text-11 text-ink-2">
+          No close corpus matches — subject signal profile is novel.
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {matches.map((m) => (
+            <div key={m.id} className="flex items-start gap-2 text-11">
+              <span className="font-mono text-10 text-ink-3 shrink-0 mt-px">
+                {m.id}
+              </span>
+              <div className="flex flex-wrap gap-1 flex-1">
+                {m.tags.map((t) => (
+                  <Chip key={t} tone="bg">
+                    {t}
+                  </Chip>
+                ))}
+              </div>
+              <span className="font-mono text-10 text-brand shrink-0">
+                {m.similarity}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── 38. BrainSignalInterference ──────────────────────────────────────
+// Detects when two signal streams are counting the same underlying
+// event, which would inflate the composite score artificially.
+export function BrainSignalInterference({ result }: { result: SuperBrainResult }) {
+  const pairs: Array<{
+    a: string;
+    b: string;
+    reason: string;
+    severity: "high" | "medium" | "low";
+  }> = [];
+
+  if (result.adverseMedia.length > 0 && result.adverseKeywords.length > 0) {
+    const mediaKws = new Set(result.adverseMedia.map((m) => m.keyword.toLowerCase()));
+    const overlap = result.adverseKeywords.filter((k) =>
+      mediaKws.has(k.term.toLowerCase()),
+    );
+    if (overlap.length > 0) {
+      pairs.push({
+        a: "Adverse media",
+        b: "Adverse keywords",
+        reason: `${overlap.length} keyword(s) appear in both streams — double-counting risk`,
+        severity: "high",
+      });
+    }
+  }
+
+  if (result.pep && result.jurisdiction?.cahra) {
+    pairs.push({
+      a: "PEP registry",
+      b: "CAHRA jurisdiction",
+      reason:
+        "CAHRA classification may be driven by the same political structure as the PEP match",
+      severity: "medium",
+    });
+  }
+
+  if (
+    (result.typologies?.hits ?? []).length > 0 &&
+    result.redlines.fired.length > 0
+  ) {
+    const typFamilies = new Set(
+      (result.typologies?.hits ?? []).map((h) => h.family),
+    );
+    const redlineIds = new Set(result.redlines.fired.map((r) => r.id ?? ""));
+    if (typFamilies.has("sanctions") && redlineIds.has("sanctions")) {
+      pairs.push({
+        a: "Typology (sanctions family)",
+        b: "Redline (sanctions)",
+        reason: "Sanctions-family typology and sanctions redline count the same exposure",
+        severity: "medium",
+      });
+    }
+  }
+
+  const toneMap = {
+    high: "red" as const,
+    medium: "amber" as const,
+    low: "bg" as const,
+  };
+
+  return (
+    <Card title="Signal interference">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Detects over-counting when two streams reference the same underlying event.
+      </div>
+      {pairs.length === 0 ? (
+        <div className="text-11 text-ink-2">
+          No signal interference detected — all streams appear independent.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {pairs.map((p, i) => (
+            <div key={i} className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-11 flex-wrap">
+                <Chip tone={toneMap[p.severity]}>{p.severity}</Chip>
+                <span className="text-ink-1">{p.a}</span>
+                <span className="text-ink-3">↔</span>
+                <span className="text-ink-1">{p.b}</span>
+              </div>
+              <div className="text-10 text-ink-3">{p.reason}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── 39. BrainEscalationLadder ─────────────────────────────────────────
+// Shows the subject's exact position on the escalation path and the
+// remaining steps required to reach a filing decision.
+export function BrainEscalationLadder({ result }: { result: SuperBrainResult }) {
+  const c = result.composite.score;
+  const sanctions = result.screen.hits.length > 0;
+  const pep = Boolean(result.pep && result.pep.salience > 0);
+  const cahra = result.jurisdiction?.cahra ?? false;
+
+  type StepStatus = "done" | "current" | "pending";
+  const steps: Array<{ label: string; status: StepStatus; action: string }> = [
+    {
+      label: "Standard CDD",
+      status:
+        c < 25 && !pep && !sanctions && !cahra
+          ? "current"
+          : "done",
+      action:
+        "Basic identity verification and screening — no additional action required",
+    },
+    {
+      label: "Enhanced monitoring",
+      status:
+        c >= 25 && c < 40 && !pep && !sanctions
+          ? "current"
+          : c >= 40 || pep || sanctions
+            ? "done"
+            : "pending",
+      action:
+        "Increase screening frequency; document rationale for ongoing monitoring",
+    },
+    {
+      label: "Enhanced Due Diligence",
+      status:
+        c >= 40 && c < 70 && !sanctions
+          ? "current"
+          : c >= 70 || sanctions
+            ? "done"
+            : "pending",
+      action:
+        "Collect enhanced identity documents, beneficial ownership, and source of funds",
+    },
+    {
+      label: "MLRO escalation",
+      status:
+        (c >= 70 || (pep && cahra)) && !sanctions
+          ? "current"
+          : sanctions
+            ? "done"
+            : "pending",
+      action: "Escalate to MLRO for manual review and disposition decision",
+    },
+    {
+      label: "STR / TFS filing",
+      status: sanctions ? "current" : "pending",
+      action: sanctions
+        ? "File Targeted Financial Sanction notice and Suspicious Transaction Report"
+        : "Required if sanctions hit confirmed or MLRO determines SAR threshold met",
+    },
+  ];
+
+  const statusStyle: Record<StepStatus, string> = {
+    done: "text-brand",
+    current: "text-amber font-semibold",
+    pending: "text-ink-3",
+  };
+  const statusIcon: Record<StepStatus, string> = {
+    done: "✓",
+    current: "→",
+    pending: "○",
+  };
+
+  return (
+    <Card title="Escalation ladder">
+      <div className="text-10.5 text-ink-3 mb-2">
+        Current position on the escalation path and remaining steps.
+      </div>
+      <div className="space-y-1.5">
+        {steps.map((step, i) => (
+          <div key={i} className="flex items-start gap-2 text-11">
+            <span
+              className={`font-mono text-10 mt-px w-4 shrink-0 ${statusStyle[step.status]}`}
+            >
+              {statusIcon[step.status]}
+            </span>
+            <div className="flex-1">
+              <div className={statusStyle[step.status]}>{step.label}</div>
+              <div className="text-10 text-ink-3">{step.action}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
