@@ -342,6 +342,7 @@ export default function AnalyticsPage() {
             <div className="text-12 text-ink-2 mt-6">Loading…</div>
           )}
         </div>
+      </div>
     </ModuleLayout>
   );
 }
