@@ -203,7 +203,7 @@ export function BrainChainOfCustody({ result }: { result: SuperBrainResult }) {
     { signal: "PEP classification", source: "classifyPepRole + assessPEP", freshness: "static" },
     { signal: "Adverse-media", source: "classifyAdverseMedia (737kw)", freshness: "static" },
     { signal: "Adverse-keyword", source: "classifyAdverseKeywords", freshness: "static" },
-    { signal: "ESG overlay", source: "classifyEsg (25 categories)", freshness: "static" },
+    { signal: "ESG overlay", source: "classifyEsg (28 categories)", freshness: "static" },
     { signal: "Redlines", source: "evaluateRedlines", freshness: "static" },
     { signal: "Typologies", source: "matchTypologies (41 fingerprints)", freshness: "static" },
     { signal: "Jurisdiction risk", source: "jurisdictionProfile + isCahra", freshness: "static" },

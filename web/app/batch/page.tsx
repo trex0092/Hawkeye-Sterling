@@ -296,8 +296,8 @@ export default function BatchPage() {
           </h1>
           <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
             <strong>Drop a CSV · screen up to 500 subjects at once.</strong> Every row
-            is run through quickScreen (sanctions / fuzzy match), the 13-group
-            adverse-keyword classifier and the 25-category ESG classifier — same
+            is run through quickScreen (sanctions / fuzzy match), the 16-group
+            adverse-keyword classifier and the 28-category ESG classifier — same
             brain as single screening. Export the result as CSV for audit.
           </p>
         </div>

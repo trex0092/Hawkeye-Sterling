@@ -64,8 +64,8 @@ const KEYWORD_GROUP_WEIGHT: Record<AdverseKeywordGroup, number> = {
   "tax-crime": 10,
   "cybercrime": 10,
   "insider-threat": 10,
+  "ai-misuse": 10,
   "law-enforcement": 6,
-  "ai-misuse": 6,
   "political-exposure": 2,
 };
 

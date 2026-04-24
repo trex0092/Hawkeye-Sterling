@@ -78,6 +78,11 @@ function classifyArticleSeverity(
 ): Article["severity"] {
   if (hits.length === 0) return "clear";
   // Critical groups → critical severity
+  // Severity tiers mirror KEYWORD_GROUP_WEIGHT in super-brain/route.ts so
+  // news-severity and composite score stay aligned. Weight ≥14 (and its
+  // critical-regime neighbours) → critical/high; weight ≥10 → medium;
+  // lower-weight informational groups (law-enforcement, political-exposure)
+  // fall through to "low".
   const critical = new Set([
     "terrorism-financing",
     "proliferation-wmd",
@@ -89,8 +94,15 @@ function classifyArticleSeverity(
     "organised-crime",
     "human-trafficking",
     "fraud-forgery",
+    "environmental-crime",
   ]);
-  const medium = new Set(["market-abuse", "tax-crime", "cybercrime"]);
+  const medium = new Set([
+    "market-abuse",
+    "tax-crime",
+    "cybercrime",
+    "insider-threat",
+    "ai-misuse",
+  ]);
   if (hits.some((h) => critical.has(h.group))) return "critical";
   if (hits.some((h) => high.has(h.group))) return "high";
   if (hits.some((h) => medium.has(h.group))) return "medium";
