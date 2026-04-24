@@ -912,6 +912,390 @@ const PLAYBOOKS: Playbook[] = [
       },
     ],
   },
+  {
+    id: "private-banking",
+    title: "Private Banking & Wealth Management",
+    typology: "private_banking",
+    family: "PEP",
+    steps: [
+      {
+        title: "1. Client acceptance & source-of-wealth",
+        required: true,
+        checks: [
+          "Obtain detailed source-of-wealth narrative — business sale, inheritance, employment income, investment returns",
+          "Triangulate declared SoW against publicly available information (company filings, press reports, property records)",
+          "Document the gap between known income history and accumulated wealth — challenge any unexplained accumulation",
+          "Senior relationship manager and compliance co-sign the acceptance memo",
+        ],
+      },
+      {
+        title: "2. PEP & connected-persons screen",
+        required: true,
+        checks: [
+          "Screen the client, spouse, children, parents, siblings, and known business associates against PEP databases",
+          "Classify PEP tier: foreign (mandatory EDD), domestic (risk-based EDD), international organisation (risk-based)",
+          "Confirm out-of-office date — PEP status persists for at least 12 months post-position per FATF R.12",
+          "Obtain CEO + Board Chair approval for Tier-1 PEP relationships per FDL 10/2025 Art.17",
+        ],
+      },
+      {
+        title: "3. Ongoing monitoring — enhanced",
+        required: true,
+        checks: [
+          "Enrol client in daily adverse-media monitoring across all relevant languages and jurisdictions",
+          "Annual EDD refresh with updated SoW, source-of-funds for new flows, and sanctions re-screen",
+          "Quarterly relationship review meeting documented on file by relationship manager",
+          "Any material change in wealth profile triggers an out-of-cycle EDD within 30 days",
+        ],
+      },
+      {
+        title: "4. Complex structure & fiduciary risk",
+        required: false,
+        checks: [
+          "Map all trust, foundation, and holding-company layers; identify all principals",
+          "Obtain trust deed / foundation charter — confirm trustee discretion and beneficiary class",
+          "Verify all intermediary fiduciaries (trustees, lawyers) hold AML licences in their jurisdiction",
+          "Escalate to MLRO if beneficial ownership cannot be confirmed through two layers of structure",
+        ],
+      },
+    ],
+  },
+  {
+    id: "ngo",
+    title: "Non-Profit Organisation / NGO / Charity (FATF R.8)",
+    typology: "ngo",
+    family: "CFT",
+    steps: [
+      {
+        title: "1. Registration & governance verification",
+        required: true,
+        checks: [
+          "Confirm the NPO is registered with the relevant authority in its home jurisdiction (e.g. UAE MOSA, UK Charity Commission)",
+          "Obtain the NPO's constitutional documents, board member list, and audited accounts",
+          "Verify the NPO appears on the official national NPO register — unregistered charities are a hard stop",
+          "Screen all board members, trustees, and senior officers against sanctions and PEP lists",
+        ],
+      },
+      {
+        title: "2. Programme & geographic risk assessment",
+        required: true,
+        checks: [
+          "Identify all countries where the NPO operates programmes — flag any FATF grey/black-list or conflict-affected jurisdiction",
+          "Review the NPO's stated mission vs actual fund deployment — divergence is a red flag",
+          "Assess whether any programme activities could benefit armed groups or sanctioned entities",
+          "Obtain references from at least two institutional donors (government, UN agency, or major foundation)",
+        ],
+      },
+      {
+        title: "3. Funding source analysis",
+        required: true,
+        checks: [
+          "Obtain a full list of donors contributing > 10% of the NPO's annual income",
+          "Screen major donors against sanctions and adverse-media databases",
+          "Flag any anonymous or cash donations — these are a CFT red flag for NPOs",
+          "Verify that restricted donations are used only for their stated purpose (donor intent compliance)",
+        ],
+      },
+      {
+        title: "4. Cash & remittance controls",
+        required: false,
+        checks: [
+          "NPO cash disbursements in high-risk geographies require MLRO pre-approval",
+          "Wire transfers to programme countries must be to accounts in the NPO's own name — no third-party payments",
+          "Obtain beneficiary acknowledgement receipts for aid disbursements above threshold",
+          "Escalate immediately if the NPO requests payments to individuals in sanctioned jurisdictions",
+        ],
+      },
+    ],
+  },
+  {
+    id: "luxury-goods",
+    title: "Luxury Goods & High-Value Assets (Art, Watches, Cars)",
+    typology: "luxury_goods",
+    family: "DPMS",
+    steps: [
+      {
+        title: "1. Asset identification & provenance",
+        required: true,
+        checks: [
+          "Document asset: description, serial/VIN/lot number, condition report, and appraised value",
+          "Verify provenance — chain-of-title from original seller to current vendor; flag gaps exceeding 5 years",
+          "For art: check against the Art Loss Register, Interpol Works of Art database, and IFAR claims register",
+          "For vehicles: check HPI/equivalent for finance, theft, or write-off records",
+        ],
+      },
+      {
+        title: "2. Buyer & seller CDD",
+        required: true,
+        checks: [
+          "Full CDD on both buyer and seller for transactions ≥ AED 55,000",
+          "Source-of-funds narrative — cash and crypto payments are a hard stop without MLRO pre-approval",
+          "Screen all parties against OFAC, UN, EU, UK HMT sanctions lists and PEP databases",
+          "Third-party payers require documented commercial rationale and MLRO approval",
+        ],
+      },
+      {
+        title: "3. Valuation integrity",
+        required: true,
+        checks: [
+          "Obtain an independent valuation from a qualified appraiser for transactions > AED 150,000",
+          "Flag purchase price > 20% above or below independent valuation — potential ML indicator",
+          "Verify the auction record or sale history — rapid resale at inflated price is a red flag",
+          "Check for insurance value discrepancy vs sale price",
+        ],
+      },
+      {
+        title: "4. Freeport & storage risk",
+        required: false,
+        checks: [
+          "Identify if the asset is stored in a freeport — freeport storage is elevated risk for ML",
+          "Verify the freeport operator is subject to AML/CFT obligations in its jurisdiction",
+          "Flag if title has changed multiple times while the asset remained in the same freeport",
+          "Escalate to MLRO if the asset has an opaque ownership history involving shell companies",
+        ],
+      },
+    ],
+  },
+  {
+    id: "insurance",
+    title: "Insurance Products / Life Assurance",
+    typology: "insurance",
+    family: "ML",
+    steps: [
+      {
+        title: "1. Policy inception CDD",
+        required: true,
+        checks: [
+          "Full CDD on the policyholder, life assured, and any nominated beneficiary",
+          "Screen all parties against sanctions and PEP lists at inception",
+          "Verify source-of-premium-funds for single-premium or large regular-premium policies > AED 55,000 p.a.",
+          "Flag if the beneficiary is a third party with no apparent insurable interest",
+        ],
+      },
+      {
+        title: "2. Policy lifecycle red-flags",
+        required: true,
+        checks: [
+          "Early surrender (within 24 months of inception) with loss accepted — major ML indicator",
+          "Premium overpayment followed by refund request to a third party",
+          "Assignment of policy to an unrelated third party without plausible commercial reason",
+          "Frequent address or beneficiary changes inconsistent with normal life events",
+        ],
+      },
+      {
+        title: "3. Claims screening",
+        required: true,
+        checks: [
+          "Re-screen policyholder and beneficiary against sanctions/PEP lists at claim stage",
+          "Verify death claim with independent evidence — fraudulent claims are an insurance-fraud indicator",
+          "Confirm payment to the policyholder's own bank account — third-party payment requires MLRO approval",
+          "Flag where claim follows immediately after policy assignment to a new beneficiary",
+        ],
+      },
+      {
+        title: "4. STR trigger assessment",
+        required: false,
+        checks: [
+          "Assess whether early surrender or unusual claim pattern constitutes ML indicator per FDL 10/2025 Art.15",
+          "If STR is filed, maintain policy records — do not cancel policy without FIU guidance to avoid tipping-off",
+          "Retain all underwriting, claims, and KYC records for 10 years from policy end per FDL 10/2025 Art.24",
+          "Notify MLRO of any intermediary (broker) involved in facilitating a suspicious policy",
+        ],
+      },
+    ],
+  },
+  {
+    id: "account-takeover",
+    title: "Account Takeover & Social Engineering Fraud",
+    typology: "account_takeover",
+    family: "Fraud",
+    steps: [
+      {
+        title: "1. Detection indicators",
+        required: true,
+        checks: [
+          "Sudden change in contact details (phone, email, address) shortly before a large withdrawal",
+          "Login from new device or unusual geolocation immediately followed by fund transfer",
+          "Callback to a number different from the registered number on file",
+          "Customer reports not recognising transactions — initiate freeze and investigation immediately",
+        ],
+      },
+      {
+        title: "2. Containment",
+        required: true,
+        checks: [
+          "Freeze the account and suspend all outbound payments pending verification",
+          "Attempt to contact the customer on the verified number held before the change",
+          "Reverse any same-day transactions if the receiving institution's fraud team can be reached",
+          "Preserve all authentication logs, IP addresses, device fingerprints, and session data",
+        ],
+      },
+      {
+        title: "3. Customer re-authentication",
+        required: true,
+        checks: [
+          "Require in-person or video-verified identity re-authentication before restoring account access",
+          "Issue new credentials and invalidate all prior sessions and API tokens",
+          "Obtain a signed fraud declaration from the customer for insurance and regulatory purposes",
+          "Update the customer's risk rating — ATO victims are higher risk for repeat targeting",
+        ],
+      },
+      {
+        title: "4. Regulatory notification",
+        required: false,
+        checks: [
+          "Assess whether the ATO proceeds constitute ML — if so, STR to FIU within 30 days",
+          "Notify cyber-crime reporting authority (UAE eCrime / Interpol) if funds were transferred abroad",
+          "Preserve evidence for potential law-enforcement request — do not destroy logs",
+          "Review whether internal controls failure contributed to the ATO — escalate to Audit Committee if so",
+        ],
+      },
+    ],
+  },
+  {
+    id: "remittance",
+    title: "Remittance & Money Transfer Operator",
+    typology: "remittance",
+    family: "MSB",
+    steps: [
+      {
+        title: "1. MTO licensing verification",
+        required: true,
+        checks: [
+          "Confirm the MTO holds a valid payment service licence from CBUAE or equivalent regulator",
+          "Obtain the MTO's AML/CFT programme, most recent audit report, and MLRO contact",
+          "Verify the MTO is not on FinCEN or CBUAE lists of unlicensed money transmitters",
+          "Screen the MTO entity and its UBOs against OFAC / UN / EU sanctions lists",
+        ],
+      },
+      {
+        title: "2. Corridor risk assessment",
+        required: true,
+        checks: [
+          "Identify the top 10 destination countries by volume — flag any FATF grey/black-list corridors",
+          "Assess CAHRA exposure in high-volume corridors",
+          "Review the MTO's de-risking policy — corridors they have exited may indicate risk they've identified",
+          "Compare corridor mix against known hawala/informal transfer corridors",
+        ],
+      },
+      {
+        title: "3. Transaction monitoring",
+        required: true,
+        checks: [
+          "Flag structuring: multiple sub-threshold transactions to the same beneficiary within 24 hours",
+          "Review round-number cash-funded transfers — these are the most common ML indicator in remittances",
+          "Identify frequent transfers from the same sender to multiple different beneficiaries (possible controller)",
+          "Check if the MTO's reported transaction volumes are consistent with its AML resource levels",
+        ],
+      },
+      {
+        title: "4. Agent network risk",
+        required: false,
+        checks: [
+          "Obtain a list of all sub-agents used by the MTO in the UAE and abroad",
+          "Confirm sub-agents are registered and supervised at the local level",
+          "Flag any agent operating in a high-risk or unregulated market",
+          "Escalate to MLRO if the MTO cannot provide a complete agent list — this is a material gap",
+        ],
+      },
+    ],
+  },
+  {
+    id: "gaming",
+    title: "Gaming & Gambling Operations",
+    typology: "gaming",
+    family: "ML",
+    steps: [
+      {
+        title: "1. Licensing & jurisdiction",
+        required: true,
+        checks: [
+          "Confirm the gaming operator holds a valid licence from a reputable gambling regulator (MGA, UKGC, GRA)",
+          "Note: gambling is generally prohibited in the UAE — any gaming-related business must document its legal basis",
+          "Screen the operator, its UBOs, and key management against sanctions and PEP lists",
+          "Obtain the operator's AML/CFT programme and most recent independent audit",
+        ],
+      },
+      {
+        title: "2. ML typologies specific to gaming",
+        required: true,
+        checks: [
+          "Chip dumping: deliberately losing chips to another player to transfer value",
+          "Buy-in with illicit funds, minimal play, and cashout as 'winnings'",
+          "Third-party funding: customer's account funded by a third party with no relationship",
+          "Online gaming: account-to-account transfers used as a payment rail for illicit value",
+        ],
+      },
+      {
+        title: "3. Customer due diligence",
+        required: true,
+        checks: [
+          "Full CDD for any customer depositing or withdrawing > EUR/USD 2,000 in a session",
+          "Enhanced scrutiny for frequent high-value players with no verifiable source of income",
+          "Screen against problem-gambling exclusion lists and self-exclusion registers",
+          "Verify payment method — flag cash or crypto funding above threshold",
+        ],
+      },
+      {
+        title: "4. Reporting obligations",
+        required: false,
+        checks: [
+          "Assess whether the operator files SARs / STRs in its home jurisdiction",
+          "Review the operator's STR triage process — gaming operators are high-risk DNFBPs under FATF R.22",
+          "Confirm the operator reports cross-border transactions above threshold to its FIU",
+          "Escalate to MLRO if the operator cannot demonstrate an effective AML/CFT programme",
+        ],
+      },
+    ],
+  },
+  {
+    id: "real-estate-agent",
+    title: "Real Estate Agent / Broker Reliance (FATF R.22)",
+    typology: "real_estate_agent",
+    family: "REML",
+    steps: [
+      {
+        title: "1. Agent registration & AML programme",
+        required: true,
+        checks: [
+          "Verify the agent holds a valid DLD / RERA / ADRA licence in the relevant emirate",
+          "Obtain the agent's AML/CFT policy and confirm it covers FATF R.22 obligations for DNFBPs",
+          "Confirm the agent has a designated MLRO or compliance officer and staff training records",
+          "Screen the agency, its principals, and key staff against sanctions and PEP lists",
+        ],
+      },
+      {
+        title: "2. Reliance conditions",
+        required: true,
+        checks: [
+          "Confirm reliance is permissible under FDL 10/2025 Art.12 — the introducing agent must be regulated",
+          "Execute a written reliance agreement specifying which CDD elements the agent has performed",
+          "Obtain copies of the agent's CDD documentation on the customer — do not solely rely on their summary",
+          "Retain accountability: reliance does not transfer regulatory liability from the firm to the agent",
+        ],
+      },
+      {
+        title: "3. Customer CDD review",
+        required: true,
+        checks: [
+          "Review the agent-provided CDD for completeness: ID, address, source-of-funds, UBO identification",
+          "Re-screen the customer against your own sanctions/PEP databases even where the agent has screened",
+          "Flag any gap in CDD that the agent could not satisfy — obtain the missing element directly from the customer",
+          "Assess whether the agent's CDD meets your firm's own CDD standards, not just the agent's home-jurisdiction minimum",
+        ],
+      },
+      {
+        title: "4. Ongoing monitoring of reliance",
+        required: false,
+        checks: [
+          "Annual review of all reliance arrangements — confirm agent remains licensed and AML-compliant",
+          "Terminate reliance immediately if agent loses its licence or is found non-compliant with AML obligations",
+          "Re-perform CDD directly if the agent-provided file cannot be verified or is more than 24 months old",
+          "Document termination of reliance and direct CDD in the customer file",
+        ],
+      },
+    ],
+  },
 ];
 
 export default function PlaybookPage() {

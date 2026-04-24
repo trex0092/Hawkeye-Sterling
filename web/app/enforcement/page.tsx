@@ -344,6 +344,177 @@ const DEADLINES: Deadline[] = [
     notes:
       "Quarterly review of transaction volumes and patterns across all correspondent bank channels. Flag material deviations from baseline, any new high-risk payment corridors, and outstanding CBQ responses. MLRO signs off on the review. Results feed the annual correspondent bank questionnaire renewal cycle.",
   },
+  {
+    id: "board-aml-q1-2027",
+    title: "Board AML/CFT Quarterly Report — Q1 2027",
+    due: "2027-04-30",
+    authority: "Internal / Board",
+    cadence: "quarterly",
+    notes:
+      "MLRO presents Q1 2027 AML/CFT metrics to the Board Audit Committee. Covers STR filings, sanctions alerts, CDD completion rate, training status, and corrective-action progress. First board meeting of 2027 AML programme cycle.",
+  },
+  {
+    id: "va-risk-assessment",
+    title: "Virtual Assets Risk Assessment Update",
+    due: "2026-08-31",
+    authority: "Internal / VARA",
+    cadence: "annual",
+    notes:
+      "Annual update of the Virtual Assets risk assessment covering: new protocol/token exposure, Travel Rule compliance gaps, VASP counterparty risk changes, and on-chain analytics tool adequacy. Benchmarked against FATF R.15 and VARA Regulations 2023. Board approval required before deployment of any new VA product or service line.",
+  },
+  {
+    id: "dpmsr-q1",
+    title: "DPMSR Q1 Filing Reconciliation",
+    due: "2026-04-30",
+    authority: "UAE MoE",
+    cadence: "quarterly",
+    notes:
+      "Reconcile all DPMSR-eligible transactions from Q1 (January–March 2026) against MoE filings. Confirm no qualifying transaction was missed. Late filings must be submitted with MLRO-signed explanatory memo. Per MoE Circular 2/2024.",
+  },
+  {
+    id: "dpmsr-q4",
+    title: "DPMSR Q4 Filing Reconciliation",
+    due: "2027-01-15",
+    authority: "UAE MoE",
+    cadence: "quarterly",
+    notes:
+      "Reconcile all DPMSR-eligible transactions from Q4 (October–December 2026) against MoE filings. Full-year summary report attached. MLRO countersigns year-end DPMSR register. Per MoE Circular 2/2024.",
+  },
+  {
+    id: "pep-refresh-h1",
+    title: "PEP Portfolio Semi-Annual EDD Refresh",
+    due: "2026-06-30",
+    authority: "Internal",
+    cadence: "ad-hoc",
+    notes:
+      "Full EDD refresh on all active PEP-classified customers (Tier 1 and 2). Includes: re-run sanctions screen, updated source-of-wealth narrative, adverse-media review for the prior 6 months, and relationship profitability vs risk assessment. MLRO sign-off required for each file. Files not refreshed within 30 days of due date trigger automatic escalation.",
+  },
+  {
+    id: "pep-refresh-h2",
+    title: "PEP Portfolio Semi-Annual EDD Refresh — H2",
+    due: "2026-12-31",
+    authority: "Internal",
+    cadence: "ad-hoc",
+    notes:
+      "Second semi-annual EDD refresh on all active PEP-classified customers. H2 refresh additionally includes annual relationship review meeting notes and confirmation of continued senior-management approval per FDL 10/2025 Art.17.",
+  },
+  {
+    id: "oecd-step4-audit",
+    title: "OECD Step-4 Supply-Chain Audit Commissioning",
+    due: "2026-06-01",
+    authority: "LBMA / Internal",
+    cadence: "annual",
+    notes:
+      "Commission the independent LBMA-accredited Step-4 audit for delivery by 15 September 2026. Scope must cover: due diligence systems, supply-chain mapping, grievance mechanism, and corrective actions from prior year. Auditor must be on the LBMA accredited auditor list. Audit contract signed and scope agreed by this date.",
+  },
+  {
+    id: "fatf-grey-list-review",
+    title: "FATF Grey/Black-List Customer Exposure Review",
+    due: "2026-05-31",
+    authority: "Internal",
+    cadence: "ad-hoc",
+    notes:
+      "Following each FATF plenary (February, June, October), review customer and counterparty base for exposure to newly listed or delisted jurisdictions. Update risk-scoring model for affected customers within 30 days. Escalate any new high-risk exposure to MLRO. Results documented in the EWRA update.",
+  },
+  {
+    id: "fatf-plenary-oct",
+    title: "FATF Plenary — October 2026 List Update Review",
+    due: "2026-11-30",
+    authority: "Internal",
+    cadence: "ad-hoc",
+    notes:
+      "Review FATF October plenary outcomes. Update customer risk scores for any jurisdiction changes within 30 days. Notify Board of any material new exposure within 5 business days of list publication.",
+  },
+  {
+    id: "goaml-sar-reconcile-q1",
+    title: "goAML SAR/STR Quarterly Reconciliation — Q1 2026",
+    due: "2026-04-30",
+    authority: "UAE FIU",
+    cadence: "quarterly",
+    notes:
+      "Reconcile all STRs/SARs filed via goAML in Q1 against the MLRO's internal case register. Investigate any discrepancy — missing or duplicate filings — within 10 business days. Confirm FIU acknowledgement receipts are on file for each submission. Per CR 134/2025 Art.18.",
+  },
+  {
+    id: "goaml-sar-reconcile-q3",
+    title: "goAML SAR/STR Quarterly Reconciliation — Q3 2026",
+    due: "2026-10-31",
+    authority: "UAE FIU",
+    cadence: "quarterly",
+    notes:
+      "Reconcile all STRs/SARs filed via goAML in Q3 against the MLRO's internal case register. Investigate discrepancies within 10 business days. Confirm all FIU acknowledgement receipts are filed. Prepare Q3 STR quality metrics for Q3 Board report.",
+  },
+  {
+    id: "cdd-standard-refresh",
+    title: "Standard-Risk CDD Annual Refresh Sweep",
+    due: "2026-11-30",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "CDD refresh for all standard-risk customers whose files have not been updated in 24 months. Minimum: re-run sanctions screen, confirm contact details, review transaction profile. Files found materially changed trigger a full re-KYC within 30 days. MLRO reviews summary report of sweep outcomes.",
+  },
+  {
+    id: "sanctions-list-q1-review",
+    title: "Sanctions Screening Configuration Q1 Review",
+    due: "2026-04-15",
+    authority: "Internal",
+    cadence: "quarterly",
+    notes:
+      "Quarterly review of sanctions screening configuration: confirm all 7 list adapters (OFAC SDN, UN Consolidated, EU FSF, UK OFSI, UAE EOCN, UAE LTL, OFAC Cons) are active and refreshing on schedule. Review false-positive rate against 1.0% target. Adjust fuzzy-match threshold if required. MLRO approves any threshold changes.",
+  },
+  {
+    id: "sanctions-list-q4-review",
+    title: "Sanctions Screening Configuration Q4 Review",
+    due: "2026-10-15",
+    authority: "Internal",
+    cadence: "quarterly",
+    notes:
+      "Q4 sanctions configuration review including year-end calibration. Prepare summary of list-refresh SLA performance for the year. Flag any periods where any list was stale > 24h. Results included in MLRO Annual Report and FATF self-assessment.",
+  },
+  {
+    id: "training-assessment",
+    title: "AML/CFT Staff Training Assessment & Certification",
+    due: "2026-09-30",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "All staff with AML/CFT responsibilities must complete the annual assessment with a passing score of ≥ 80%. Training register updated within 5 business days of completion. Non-completions escalated to line manager and MLRO. Staff who fail twice in 12 months are restricted from AML-sensitive system access. Board members complete AML awareness e-learning separately.",
+  },
+  {
+    id: "new-product-approval",
+    title: "New Product / Service AML Risk Sign-Off — Annual Review",
+    due: "2026-07-31",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Annual review of all new products, services, or delivery channels launched in the prior 12 months. Confirm each received a pre-launch AML/CFT risk assessment per FDL 10/2025 Art.6. Any product launched without documented risk assessment triggers a retrospective assessment and board disclosure.",
+  },
+  {
+    id: "de-risking-review",
+    title: "Customer De-risking & Exit Register Annual Review",
+    due: "2026-10-31",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "Annual review of all customer exits and de-risking decisions made in the prior 12 months. Confirm each exit was documented with MLRO rationale, that no tipping-off occurred, and that STR was filed where required. Review de-risking decisions for consistency and potential discriminatory patterns. Report to Board Audit Committee.",
+  },
+  {
+    id: "insider-threat-audit",
+    title: "Insider Threat & Internal Controls Annual Audit",
+    due: "2026-09-30",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Annual internal audit of insider-threat controls: system access logs, four-eyes compliance, manual override records, and whistleblower report register. Identify any employee with unusual access patterns or unreviewed overrides. Corrective actions due within 60 days. Report to Audit Committee with MLRO co-signature.",
+  },
+  {
+    id: "pbf-risk-update",
+    title: "Proliferation Finance Controls Bi-Annual Review",
+    due: "2026-06-30",
+    authority: "Internal / CBUAE",
+    cadence: "ad-hoc",
+    notes:
+      "Mid-year review of proliferation financing controls following FATF plenary updates. Confirm DPRK, Iran, Syria, Belarus nexus detection rules are current. Cross-check dual-use goods screening parameters against latest export-control commodity lists. MLRO certifies controls are adequate. Results presented to Board.",
+  },
 ];
 
 function daysUntil(iso: string): number {

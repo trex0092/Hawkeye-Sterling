@@ -5,6 +5,7 @@ import { ANCHORS } from "@/lib/data/anchors";
 import { PLAYBOOKS } from "@/lib/data/playbooks";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function handleTaxonomy(): Promise<NextResponse> {
   return NextResponse.json({

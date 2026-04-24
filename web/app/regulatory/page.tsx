@@ -127,6 +127,325 @@ const LIBRARY: RegEntry[] = [
       "5-step framework: management systems, risk identification, response, independent audit, public reporting. Annex II lists the specific Conflict-Affected and High-Risk Area (CAHRA) red flags.",
     tags: ["OECD", "CAHRA", "supply-chain"],
   },
+  // ── Additional FATF Recommendations ────────────────────────────────────────
+  {
+    code: "FATF R.1",
+    title: "FATF Recommendation 1 — Risk-Based Approach",
+    authority: "FATF",
+    citation: "FATF Rec. 1",
+    summary:
+      "Countries and financial institutions should identify, assess and understand ML/TF/PF risks. Enhanced measures apply where risks are higher; simplified measures may apply where risks are lower. The RBA is the foundation of all FATF Recommendations.",
+    tags: ["FATF", "primary", "AML", "CFT"],
+  },
+  {
+    code: "FATF R.6",
+    title: "FATF Recommendation 6 — Targeted Financial Sanctions (Terrorism & TF)",
+    authority: "FATF",
+    citation: "FATF Rec. 6",
+    summary:
+      "Implement UN Security Council resolutions on terrorist financing (UNSCRs 1267, 1373, 1988). Immediately freeze assets of designated persons without prior notice. No funds or services to be made available to listed persons. Compliance is mandatory with no threshold.",
+    tags: ["FATF", "TFS", "sanctions", "terrorism"],
+  },
+  {
+    code: "FATF R.7",
+    title: "FATF Recommendation 7 — Targeted Financial Sanctions (Proliferation)",
+    authority: "FATF",
+    citation: "FATF Rec. 7",
+    summary:
+      "Implement UNSCRs on proliferation financing (1718/DPRK, 2231/Iran). Immediately freeze assets of designated entities. Applies to all transactions regardless of amount or purpose. PF-TFS controls must be independent from AML/CFT screening.",
+    tags: ["FATF", "TFS", "sanctions", "proliferation"],
+  },
+  {
+    code: "FATF R.13",
+    title: "FATF Recommendation 13 — Correspondent Banking",
+    authority: "FATF",
+    citation: "FATF Rec. 13",
+    summary:
+      "Gather sufficient information to understand fully the nature of the respondent's business. Assess AML/CFT controls; obtain senior-management approval. Do not establish or continue relationships with shell banks. Document respective responsibilities.",
+    tags: ["FATF", "banking", "CDD"],
+  },
+  {
+    code: "FATF R.15",
+    title: "FATF Recommendation 15 — New Technologies / Virtual Assets",
+    authority: "FATF",
+    citation: "FATF Rec. 15",
+    summary:
+      "Virtual asset service providers (VASPs) must be regulated for AML/CFT purposes, licensed, and subject to the Travel Rule. Countries must apply FATF standards to VASPs as they do to financial institutions. Includes NFTs where used for investment or payment.",
+    tags: ["FATF", "VASP", "crypto"],
+  },
+  {
+    code: "FATF R.16",
+    title: "FATF Recommendation 16 — Wire Transfers (Travel Rule)",
+    authority: "FATF",
+    citation: "FATF Rec. 16",
+    summary:
+      "Originating institution must include full originator and beneficiary information with all wire transfers ≥ USD 1,000. Beneficiary institution must screen and may reject transfers missing required information. Applies to both traditional wire transfers and virtual asset transfers.",
+    tags: ["FATF", "wire", "VASP", "payments"],
+  },
+  {
+    code: "FATF R.24",
+    title: "FATF Recommendation 24 — Transparency of Legal Persons",
+    authority: "FATF",
+    citation: "FATF Rec. 24",
+    summary:
+      "Countries must ensure adequate, accurate and timely information on the beneficial ownership of legal persons is available to competent authorities. UBO registers or equivalent mechanisms required. Shell companies used to conceal ownership are a major ML vulnerability.",
+    tags: ["FATF", "UBO", "CDD"],
+  },
+  {
+    code: "FATF R.25",
+    title: "FATF Recommendation 25 — Transparency of Legal Arrangements (Trusts)",
+    authority: "FATF",
+    citation: "FATF Rec. 25",
+    summary:
+      "Trustees must hold and disclose basic and beneficial ownership information on express trusts. Equivalent measures apply to other legal arrangements. Professional trustees must be subject to AML/CFT obligations. Settlor, trustee, protector, and beneficiaries all in scope.",
+    tags: ["FATF", "UBO", "trust", "CDD"],
+  },
+  {
+    code: "FATF R.40",
+    title: "FATF Recommendation 40 — International Co-operation",
+    authority: "FATF",
+    citation: "FATF Rec. 40",
+    summary:
+      "Countries must provide the widest possible range of international co-operation. FIU-to-FIU information exchange (Egmont Group); law-enforcement co-operation; mutual legal assistance. Dual criminality cannot be used as a sole basis for refusing cooperation in ML/TF cases.",
+    tags: ["FATF", "FIU", "international"],
+  },
+  // ── UAE Cabinet / CBUAE / MoE ───────────────────────────────────────────────
+  {
+    code: "CD 58/2020",
+    title: "Cabinet Decision No. 58 of 2020 — Beneficial Ownership Register",
+    authority: "UAE Cabinet",
+    citation: "Cabinet Decision 58/2020",
+    summary:
+      "Requires all UAE legal persons to maintain and file an accurate UBO register. Changes in beneficial ownership must be reported within 15 business days. The register is filed with the relevant authority (MoE / MOEC / ADGM etc.) and is subject to audit.",
+    tags: ["UAE", "UBO", "CDD", "regulation"],
+  },
+  {
+    code: "CD 74/2020",
+    title: "Cabinet Decision No. 74 of 2020 — AML/CFT for DNFBPs",
+    authority: "UAE Cabinet",
+    citation: "Cabinet Decision 74/2020",
+    summary:
+      "Extends AML/CFT obligations to Designated Non-Financial Businesses and Professions (DNFBPs) including DPMS dealers, real estate agents, lawyers, accountants, and trust service providers. Mirrors financial-sector requirements for CDD, record-keeping, and STR filing.",
+    tags: ["UAE", "DNFBP", "DPMS", "AML"],
+  },
+  {
+    code: "FL 7/2014",
+    title: "Federal Law No. 7 of 2014 — Combating Terrorism Offences",
+    authority: "UAE Federal",
+    citation: "Federal Law 7/2014",
+    summary:
+      "Primary UAE counter-terrorism law. Defines terrorism financing as a criminal offence independent of whether a terrorist act is committed. Enables asset freezing and forfeiture. Criminalises provision of funds, weapons, or services to terrorists or terrorist organisations.",
+    tags: ["UAE", "terrorism", "TFS", "primary"],
+  },
+  {
+    code: "FDL 45/2021",
+    title: "Federal Decree-Law No. 45 of 2021 — Personal Data Protection",
+    authority: "UAE Federal",
+    citation: "Federal Decree-Law 45/2021",
+    summary:
+      "UAE data protection law governing collection, processing, storage and transfer of personal data. AML/CFT processing has a lawful basis under public-interest exemptions. Data subjects have access and rectification rights; destruction obligations apply at end of retention period.",
+    tags: ["UAE", "data", "privacy", "regulation"],
+  },
+  {
+    code: "CBUAE AML",
+    title: "CBUAE AML/CFT Standards for Licensed Financial Institutions",
+    authority: "CBUAE",
+    citation: "CBUAE AML/CFT Standards 2021",
+    summary:
+      "Comprehensive standards issued by the Central Bank of UAE covering: customer risk classification, CDD procedures, PEP identification, STR filing timelines, and AML programme governance. Inspection checklist used for on-site supervision of LFIs.",
+    tags: ["UAE", "CBUAE", "AML", "CDD", "primary"],
+  },
+  {
+    code: "CBUAE SAN",
+    title: "CBUAE Guidance on Sanctions Compliance",
+    authority: "CBUAE",
+    citation: "CBUAE Sanctions Guidance 2022",
+    summary:
+      "Detailed guidance on TFS implementation for UAE financial institutions. Prescribes test names and entities for annual screening effectiveness tests (para 4.3). Addresses screening of transactions, customers, UBOs, and counterparties. Defines false-negative remediation procedures.",
+    tags: ["UAE", "CBUAE", "sanctions", "TFS"],
+  },
+  {
+    code: "VARA 2023",
+    title: "VARA Virtual Assets & Related Activities Regulations 2023",
+    authority: "VARA (Dubai)",
+    citation: "VARA Regulations 2023",
+    summary:
+      "Dubai Virtual Assets Regulatory Authority framework for licensing and supervising VASPs in Dubai. Mandates AML/CFT compliance, Travel Rule implementation, and blockchain analytics for on-chain address screening. Non-Dubai VASPs must be equivalently licensed.",
+    tags: ["UAE", "VASP", "crypto", "regulation"],
+  },
+  {
+    code: "EOCN DEC",
+    title: "EOCN Circular — Conflict Minerals Annual Declaration",
+    authority: "EOCN",
+    citation: "EOCN Annual Declaration",
+    summary:
+      "The Emirates Official Cargoes Network requires an annual responsible-sourcing declaration covering all upstream smelters and refiners. Deadline: 31 March each year. Declaration must be supported by LBMA / RJC Chain-of-Custody certificates.",
+    tags: ["UAE", "CAHRA", "EOCN", "supply-chain", "DPMS"],
+  },
+  // ── International / Multilateral ───────────────────────────────────────────
+  {
+    code: "UNSCR 1267",
+    title: "UN Security Council Resolution 1267/1989/2253 — ISIL / Al-Qaeda Consolidated",
+    authority: "UN Security Council",
+    citation: "UNSCR 1267/2253",
+    summary:
+      "Establishes the ISIL (Da'esh) and Al-Qaeda Sanctions Committee and the Consolidated Sanctions List. Asset freeze, travel ban, and arms embargo on all listed persons and entities. Listing and delisting procedures governed by Ombudsperson Office. List updated continuously.",
+    tags: ["sanctions", "terrorism", "TFS", "international"],
+  },
+  {
+    code: "UNSCR 1718",
+    title: "UN Security Council Resolution 1718 (2006) — DPRK Sanctions",
+    authority: "UN Security Council",
+    citation: "UNSCR 1718/2270",
+    summary:
+      "Comprehensive sanctions regime against the Democratic People's Republic of Korea (DPRK). Asset freeze, arms embargo, and prohibition on financial services that could contribute to DPRK's nuclear or ballistic missile programmes. Enforced by the 1718 Sanctions Committee and Panel of Experts.",
+    tags: ["sanctions", "proliferation", "TFS", "DPRK", "international"],
+  },
+  {
+    code: "UNSCR 2231",
+    title: "UN Security Council Resolution 2231 (2015) — Iran (JCPOA)",
+    authority: "UN Security Council",
+    citation: "UNSCR 2231",
+    summary:
+      "Endorses the Joint Comprehensive Plan of Action (JCPOA) and modifies Iran sanctions. Residual restrictions remain on arms, ballistic missiles, and proliferation-sensitive activities. JCPOA snapback mechanism can reimpose full UN sanctions. Monitor Iran-nexus transactions carefully regardless of JCPOA status.",
+    tags: ["sanctions", "proliferation", "TFS", "Iran", "international"],
+  },
+  {
+    code: "EU 6AMLD",
+    title: "EU 6th Anti-Money Laundering Directive (6AMLD)",
+    authority: "European Union",
+    citation: "Directive (EU) 2018/1673",
+    summary:
+      "Harmonises predicate offences for ML across EU member states (22 categories including cybercrime, tax crimes, environmental offences). Extends criminal liability to legal persons. Criminalises self-laundering and aiding/abetting. Minimum 4-year custodial sentence.",
+    tags: ["EU", "AML", "regulation", "international"],
+  },
+  {
+    code: "EU TFR",
+    title: "EU Regulation 2023/1113 — Transfer of Funds / Travel Rule",
+    authority: "European Union",
+    citation: "EU Regulation 2023/1113",
+    summary:
+      "Extends the Travel Rule to crypto-asset transfers — all transfers require full originator and beneficiary information regardless of amount. Covers PSPs and CASPs operating in the EU. Unhosted wallet transfers require enhanced due diligence. Aligned with FATF R.16.",
+    tags: ["EU", "VASP", "crypto", "wire", "payments", "international"],
+  },
+  {
+    code: "Wolfsberg CBDDQ",
+    title: "Wolfsberg Group — Correspondent Banking Due Diligence Questionnaire",
+    authority: "Wolfsberg Group",
+    citation: "Wolfsberg CBDDQ 2018",
+    summary:
+      "Industry-standard questionnaire for assessing the AML/CFT programme of correspondent banking respondents. Covers: ownership, regulatory status, AML programme, CDD, PEP policy, sanctions screening, STR filing, and independent audit. Annual renewal expected.",
+    tags: ["banking", "CDD", "international"],
+  },
+  {
+    code: "Wolfsberg PB",
+    title: "Wolfsberg Group — AML Principles for Private Banking",
+    authority: "Wolfsberg Group",
+    citation: "Wolfsberg Private Banking Principles 2012",
+    summary:
+      "Guidance for private banks and wealth managers on: client acceptance, source-of-wealth verification, PEP handling, high-risk indicator detection, and suspicious activity reporting. Emphasises relationship manager accountability and senior-management oversight.",
+    tags: ["banking", "PEP", "CDD", "EDD", "international"],
+  },
+  {
+    code: "Basel ML",
+    title: "Basel Committee — Sound Management of Risks Related to ML and TF",
+    authority: "Basel Committee on Banking Supervision",
+    citation: "BCBS 275 (2017)",
+    summary:
+      "Comprehensive guidance for banks on AML/CFT risk management: governance, customer due diligence, correspondent banking, wire transfers, and group-wide programmes. Emphasises the board's responsibility and the three-lines-of-defence model.",
+    tags: ["banking", "CDD", "AML", "governance", "international"],
+  },
+  {
+    code: "Egmont",
+    title: "Egmont Group — Principles for Information Exchange Between FIUs",
+    authority: "Egmont Group",
+    citation: "Egmont Principles 2013",
+    summary:
+      "Framework for spontaneous and upon-request FIU-to-FIU information exchange. Governs use and confidentiality of shared intelligence. Covers 170+ member FIUs including the UAE's UAEFIU. Requests should be made via Egmont Secure Web when possible.",
+    tags: ["FIU", "international", "STR"],
+  },
+  {
+    code: "RJC COS",
+    title: "Responsible Jewellery Council — Chain of Custody Standard",
+    authority: "RJC",
+    citation: "RJC Chain of Custody Standard 2019",
+    summary:
+      "Certification system for responsible gold, silver and PGMs through the supply chain. RJC COS certification can substitute for LBMA RGG Step-4 audit for certain refiner categories. Requires documented provenance, conflict-minerals policy, and third-party audit.",
+    tags: ["LBMA", "gold", "DPMS", "supply-chain"],
+  },
+  {
+    code: "KPCS",
+    title: "Kimberley Process Certification Scheme",
+    authority: "Kimberley Process",
+    citation: "KPCS 2003",
+    summary:
+      "International certification scheme for rough diamonds. Participants certify that rough diamonds are conflict-free. KP Certificate required for all rough diamond imports/exports. Note: KPCS does not cover polished diamonds or jewellery; separate provenance documentation needed.",
+    tags: ["DPMS", "supply-chain", "gold"],
+  },
+  // ── AI Governance ──────────────────────────────────────────────────────────
+  {
+    code: "EU AI Act",
+    title: "EU AI Act — Regulation (EU) 2024/1689 on Artificial Intelligence",
+    authority: "European Union",
+    citation: "EU AI Act 2024/1689",
+    summary:
+      "World's first comprehensive AI regulatory framework. AML/CFT screening engines and risk-scoring models used in financial crime compliance are classified as high-risk AI systems (Annex III). High-risk systems require: conformity assessment, human oversight, transparency disclosures, accuracy/robustness standards, and registration in the EU AI database. Effective August 2026 for most provisions.",
+    tags: ["AI", "regulation", "governance", "international"],
+  },
+  {
+    code: "FATF AI",
+    title: "FATF Guidance on AI/ML Tools for AML/CFT",
+    authority: "FATF",
+    citation: "FATF AI Guidance 2023",
+    summary:
+      "Guidance on opportunities and risks of AI/ML in AML/CFT. AI transaction monitoring and screening tools must be explainable to regulators; black-box models are discouraged. Model validation, bias testing, and human-in-the-loop review are expected. FIUs may request explanation of AI-generated alerts used to support STR filings.",
+    tags: ["FATF", "AI", "AML", "governance"],
+  },
+  {
+    code: "UAE AI",
+    title: "UAE National Artificial Intelligence Strategy 2031",
+    authority: "UAE Government",
+    citation: "UAE AI Strategy 2031",
+    summary:
+      "National strategy positioning UAE as a global AI hub by 2031. Mandates responsible and ethical AI deployment across sectors including financial services. Requires AI systems to be transparent, explainable, and free from discriminatory bias. Compliance with UAE AI ethics principles is expected of all AI-powered compliance tools deployed in the UAE.",
+    tags: ["UAE", "AI", "governance", "regulation"],
+  },
+  {
+    code: "CBUAE AI",
+    title: "CBUAE Guidance on Responsible Use of AI in Financial Services",
+    authority: "CBUAE",
+    citation: "CBUAE AI Guidance 2024",
+    summary:
+      "CBUAE expects licensed financial institutions to apply a risk-based governance framework to all AI systems used in compliance, credit, and customer service. Key requirements: documented model inventories, bias and fairness audits, model validation by independent parties, explainability to supervisors, and incident reporting when AI systems behave unexpectedly.",
+    tags: ["UAE", "CBUAE", "AI", "governance", "AML"],
+  },
+  {
+    code: "ISO 42001",
+    title: "ISO/IEC 42001:2023 — AI Management System Standard",
+    authority: "ISO / IEC",
+    citation: "ISO/IEC 42001:2023",
+    summary:
+      "International standard for AI management systems. Provides a framework for responsible development and use of AI including: risk assessment, AI impact assessment, transparency requirements, and continuous monitoring. Certifiable by third-party auditors. Increasingly cited by regulators as the baseline for AI governance in financial services.",
+    tags: ["AI", "governance", "international"],
+  },
+  {
+    code: "MAS FSG AI",
+    title: "MAS Fairness, Ethics, Accountability & Transparency (FEAT) Principles",
+    authority: "Monetary Authority of Singapore",
+    citation: "MAS FEAT 2019",
+    summary:
+      "Principles for use of AI and data analytics in financial services. FEAT covers: fairness (no bias or discrimination), ethics (human oversight), accountability (board-level responsibility), and transparency (explainability to customers and regulators). Widely adopted by global financial institutions as a governance benchmark alongside the EU AI Act.",
+    tags: ["AI", "governance", "international"],
+  },
+  {
+    code: "FCA AI",
+    title: "FCA Discussion Paper: AI in UK Financial Services (DP5/22)",
+    authority: "FCA (UK)",
+    citation: "FCA DP5/22",
+    summary:
+      "FCA's regulatory position on AI in financial services. Principles-based approach: firms remain responsible for AI-driven decisions regardless of model complexity. Expects explainability, non-discrimination, and documented validation for all AI systems used in regulated activities including AML screening and customer risk scoring.",
+    tags: ["AI", "governance", "international", "AML"],
+  },
 ];
 
 const ALL_TAGS = Array.from(new Set(LIBRARY.flatMap((e) => e.tags)));
