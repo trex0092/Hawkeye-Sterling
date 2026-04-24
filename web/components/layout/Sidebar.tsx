@@ -22,7 +22,7 @@ export function Sidebar({ filters, activeFilter, onFilterChange }: SidebarProps)
       </SidebarSection>
 
       <SidebarSection title="Shift">
-        <div className="text-12 text-ink-1 px-2">08:00–16:00</div>
+        <div className="text-12 text-ink-1 px-2">09:00–18:00</div>
       </SidebarSection>
 
       <SidebarSection title="Queue filters">

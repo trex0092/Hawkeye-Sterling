@@ -36,7 +36,7 @@ export function ModuleLayout<K extends string = string>({
   filtersTitle = "Queue filters",
   sidebarExtra,
   detailPanel,
-  shift = "08:00–16:00",
+  shift = "09:00–18:00",
   narrow = false,
 }: ModuleLayoutProps<K>) {
   const gridCols = detailPanel ? "220px 1fr 360px" : "220px 1fr";
