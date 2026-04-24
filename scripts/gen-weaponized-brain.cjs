@@ -75,7 +75,7 @@ function len(k, obj) {
       },
       expertise: {
         skills: len("SKILLS", b),
-        cognitiveAmplifier: len("COGNITIVE_AMPLIFIER", b),
+        cognitiveAmplifier: (b.COGNITIVE_AMPLIFIER && Array.isArray(b.COGNITIVE_AMPLIFIER.directives)) ? b.COGNITIVE_AMPLIFIER.directives.length : len("COGNITIVE_AMPLIFIER", b),
       },
     };
     const typologies = Array.isArray(b.TYPOLOGIES) ? b.TYPOLOGIES : [];
