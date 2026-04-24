@@ -81,8 +81,9 @@ function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
     const body = raw.split(/<\/item>/i)[0] ?? "";
     const pick = (tag: string): string => {
       const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
-      if (!m?.[1]) return "";
-      return stripHtml(m[1].trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));
+      const val = m?.[1];
+      if (!val) return "";
+      return stripHtml(val.trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));
     };
     const title = pick("title");
     const link = sanitizeUrl(pick("link"));
