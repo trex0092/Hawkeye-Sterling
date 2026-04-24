@@ -63,7 +63,7 @@ export default function PricingPage() {
           {tiers.map((t) => (
             <div
               key={t.id}
-              className={`bg-white rounded-lg p-5 border ${
+              className={`bg-bg-panel rounded-lg p-5 border ${
                 t.id === "pro" ? "border-brand" : "border-hair-2"
               }`}
             >
@@ -117,7 +117,7 @@ export default function PricingPage() {
         </div>
 
         {signup.open && !signup.apiKey && (
-          <form onSubmit={submitSignup} className="bg-white border border-hair-2 rounded-lg p-5 mb-6">
+          <form onSubmit={submitSignup} className="bg-bg-panel border border-hair-2 rounded-lg p-5 mb-6">
             <div className="text-12 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
               Sign up — {signup.tier}
             </div>
@@ -125,7 +125,7 @@ export default function PricingPage() {
               <input
                 required
                 placeholder="Name"
-                className="rounded border border-hair-2 bg-white px-3 py-2 text-13"
+                className="rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13"
                 value={signup.name}
                 onChange={(e) => setSignup((s) => ({ ...s, name: e.target.value }))}
               />
@@ -133,7 +133,7 @@ export default function PricingPage() {
                 required
                 type="email"
                 placeholder="Email"
-                className="rounded border border-hair-2 bg-white px-3 py-2 text-13"
+                className="rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13"
                 value={signup.email}
                 onChange={(e) =>
                   setSignup((s) => ({ ...s, email: e.target.value }))
@@ -157,7 +157,7 @@ export default function PricingPage() {
         {signup.apiKey && (
           <div className="bg-green-dim text-green rounded-lg p-5 mb-6">
             <div className="font-semibold mb-2">Your API key</div>
-            <div className="font-mono text-12 text-ink-0 break-all bg-white rounded px-3 py-2 border border-green/20">
+            <div className="font-mono text-12 text-ink-0 break-all bg-bg-panel rounded px-3 py-2 border border-green/20">
               {signup.apiKey}
             </div>
             <div className="text-11 text-ink-2 mt-2">

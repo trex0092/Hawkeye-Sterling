@@ -392,7 +392,7 @@ export default function TransactionMonitorPage() {
           {txs.length === 0 ? (
             <Register empty="No transactions being monitored." />
           ) : (
-            <div className="mt-8 bg-white border border-hair-2 rounded-xl overflow-hidden">
+            <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
               <table className="w-full text-12">
                 <thead className="bg-bg-1 border-b border-hair-2">
                   <tr>

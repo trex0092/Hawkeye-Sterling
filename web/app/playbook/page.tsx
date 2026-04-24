@@ -233,7 +233,7 @@ export default function PlaybookPage() {
               className={`text-left text-12 px-3 py-2 rounded border ${
                 active === p.id
                   ? "border-brand bg-brand-dim text-brand-deep font-semibold"
-                  : "border-hair-2 bg-white text-ink-0 hover:bg-bg-1"
+                  : "border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1"
               }`}
             >
               <span className="font-mono text-10 text-ink-3 block">
@@ -244,7 +244,7 @@ export default function PlaybookPage() {
           ))}
         </div>
 
-        <div className="bg-white border border-hair-2 rounded-lg p-5">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
           <div className="flex items-baseline justify-between mb-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0">{pb.title}</h2>
             <span className="font-mono text-10 text-ink-3">

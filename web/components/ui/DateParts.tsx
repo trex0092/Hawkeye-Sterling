@@ -64,8 +64,8 @@ export function DateParts({
     }
   };
 
-  const selectCls = className || "border border-hair-2 rounded px-2 py-1.5 text-12 bg-white text-ink-0";
-  const inputCls = className || "border border-hair-2 rounded px-2 py-1.5 text-12 bg-white text-ink-0";
+  const selectCls = className || "border border-hair-2 rounded px-2 py-1.5 text-12 bg-bg-panel text-ink-0";
+  const inputCls = className || "border border-hair-2 rounded px-2 py-1.5 text-12 bg-bg-panel text-ink-0";
 
   return (
     <div aria-label={ariaLabel}>

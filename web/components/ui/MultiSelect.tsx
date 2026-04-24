@@ -112,7 +112,7 @@ export function MultiSelect({
         <div
           role="listbox"
           aria-multiselectable="true"
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-hair-2 rounded-lg shadow-lg max-h-[400px] flex flex-col overflow-hidden"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-bg-panel border border-hair-2 rounded-lg shadow-lg max-h-[400px] flex flex-col overflow-hidden"
         >
           <div className="p-2 border-b border-hair bg-bg-1">
             <input
@@ -127,7 +127,7 @@ export function MultiSelect({
               }}
               placeholder="Search…"
               aria-label="Search options"
-              className="w-full px-2.5 py-1.5 text-12 bg-white border border-hair-2 rounded focus:outline-none focus:border-brand"
+              className="w-full px-2.5 py-1.5 text-12 bg-bg-panel border border-hair-2 rounded focus:outline-none focus:border-brand"
             />
           </div>
           <div className="flex-1 overflow-y-auto p-1.5">
@@ -163,7 +163,7 @@ export function MultiSelect({
                           className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center ${
                             on
                               ? "bg-brand border-brand"
-                              : "border-hair-3 bg-white"
+                              : "border-hair-3 bg-bg-panel"
                           }`}
                         >
                           {on && (

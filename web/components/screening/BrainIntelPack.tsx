@@ -659,7 +659,7 @@ export function BrainCrossReference({ result }: { result: SuperBrainResult }) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-3 mb-3">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mb-3">
       <div className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2 mb-2">
         {title}
       </div>

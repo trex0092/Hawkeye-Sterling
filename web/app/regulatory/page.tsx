@@ -161,12 +161,12 @@ export default function RegulatoryPage() {
           }
         />
 
-        <div className="bg-white border border-hair-2 rounded-lg p-3 mt-6 mb-4">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mt-6 mb-4">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search title / code / tag"
-            className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-white text-ink-0"
+            className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-panel text-ink-0"
           />
           <div className="flex flex-wrap gap-1.5 mt-3">
             <button
@@ -199,7 +199,7 @@ export default function RegulatoryPage() {
 
         <div className="space-y-2">
           {filtered.map((e) => (
-            <div key={e.code} className="bg-white border border-hair-2 rounded-lg p-4">
+            <div key={e.code} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="flex items-baseline justify-between gap-3 mb-1">
                 <h3 className="text-13 font-semibold text-ink-0 m-0">{e.title}</h3>
                 <span className="font-mono text-10 text-ink-3 shrink-0">

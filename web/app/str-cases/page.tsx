@@ -391,7 +391,7 @@ export default function StrCasesPage() {
           {cases.length === 0 ? (
             <Register title="Register" empty="No STR cases opened yet." />
           ) : (
-            <div className="mt-8 bg-white border border-hair-2 rounded-xl overflow-hidden">
+            <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
               <table className="w-full text-12">
                 <thead className="bg-bg-1 border-b border-hair-2">
                   <tr>

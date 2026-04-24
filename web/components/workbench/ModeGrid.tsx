@@ -12,7 +12,7 @@ interface ModeGridProps {
 
 export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty }: ModeGridProps) {
   return (
-    <div className="bg-white border border-hair-2 rounded-xl p-5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
       <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-1">
         Reasoning modes catalogue
       </div>
@@ -33,7 +33,7 @@ export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty }: ModeG
               className={`text-left px-3 py-2.5 rounded border transition-all duration-100 cursor-pointer ${
                 selected
                   ? "bg-brand border-brand text-white"
-                  : "bg-white border-hair-2 hover:border-brand hover:bg-brand-dim"
+                  : "bg-bg-panel border-hair-2 hover:border-brand hover:bg-brand-dim"
               }`}
             >
               <div

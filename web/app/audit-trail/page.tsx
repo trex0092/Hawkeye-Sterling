@@ -31,7 +31,7 @@ export default function AuditTrailPage() {
           </p>
         </div>
 
-        <div className="bg-white border border-hair-2 rounded-xl overflow-hidden">
+        <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
           <table className="w-full border-collapse text-12.5">
             <thead className="bg-bg-1 border-b border-hair-2">
               <tr>

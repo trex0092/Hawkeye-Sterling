@@ -131,7 +131,7 @@ export function NewScreeningForm({
 
   return (
     <div
-      className="bg-white border border-hair-2 rounded-xl overflow-hidden grid"
+      className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden grid"
       style={{ gridTemplateColumns: "240px 1fr" }}
     >
       {/* ── Left: Screening settings ─────────────────────────────── */}
@@ -207,7 +207,7 @@ export function NewScreeningForm({
       </aside>
 
       {/* ── Right: Form fields ───────────────────────────────────── */}
-      <section className="bg-white p-6">
+      <section className="bg-bg-panel p-6">
         <SettingsHeading>Single screening</SettingsHeading>
 
         <div className="grid grid-cols-2 gap-4">
@@ -493,7 +493,7 @@ export function NewScreeningForm({
 }
 
 const inputCls =
-  "w-full bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand focus:bg-white";
+  "w-full bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand focus:bg-bg-panel";
 
 function SettingsHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -582,7 +582,7 @@ function ActionBtn({
   const base = "px-4 py-1.5 text-11.5 font-semibold uppercase tracking-wide-2 rounded border transition-colors";
   const variant = primary
     ? "bg-brand border-brand text-white hover:bg-brand-hover disabled:opacity-50"
-    : "bg-white border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2 disabled:opacity-40";
+    : "bg-bg-panel border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2 disabled:opacity-40";
   const interact = disabled ? "cursor-not-allowed" : "cursor-pointer";
   return (
     <button type="button" onClick={onClick} disabled={disabled} className={`${base} ${variant} ${interact}`}>

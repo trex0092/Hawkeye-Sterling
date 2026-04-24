@@ -99,7 +99,7 @@ export default function IntelPage() {
           }
         />
 
-        <div className="bg-white border border-hair-2 rounded-lg p-4 mt-6 mb-6">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6 mb-6">
           <div className="flex items-baseline justify-between mb-3">
             <span className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2">
               Watchlist
@@ -139,12 +139,12 @@ export default function IntelPage() {
                 if (e.key === "Enter") add();
               }}
               placeholder="+ Add subject to watch"
-              className="flex-1 text-12 px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0"
+              className="flex-1 text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0"
             />
             <button
               type="button"
               onClick={add}
-              className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0 hover:bg-bg-1"
+              className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1"
             >
               Add
             </button>
@@ -164,7 +164,7 @@ export default function IntelPage() {
                 href={a.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block bg-white border border-hair-2 rounded-lg p-3 no-underline hover:border-brand transition-colors"
+                className="block bg-bg-panel border border-hair-2 rounded-lg p-3 no-underline hover:border-brand transition-colors"
               >
                 <div className="flex items-baseline justify-between gap-3 mb-1">
                   <span className="text-13 font-medium text-ink-0 flex-1">

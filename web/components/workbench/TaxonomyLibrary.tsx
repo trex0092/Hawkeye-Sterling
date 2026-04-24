@@ -57,7 +57,7 @@ export function TaxonomyLibrary() {
   };
 
   return (
-    <div className="bg-white border border-hair-2 rounded-xl p-5 mt-5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 mt-5">
       <div className="flex justify-between items-baseline mb-1">
         <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2">
           Competency &amp; reasoning library
@@ -104,7 +104,7 @@ export function TaxonomyLibrary() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${activeTab.label.toLowerCase()}…`}
-            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-white"
+            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
           />
         </div>
         <div className="text-11 text-ink-2 font-mono">

@@ -211,7 +211,7 @@ export default function StatusPage() {
               </div>
             )}
 
-            <div className="bg-white border border-hair-2 rounded-lg p-6 mb-6">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <span
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-mono text-11 font-semibold ${STATUS_TONE[data.status]}`}
@@ -273,7 +273,7 @@ export default function StatusPage() {
             </Section>
 
             <Section title="Sanctions-list freshness">
-              <div className="bg-white border border-hair-2 rounded px-4 py-3 mb-2">
+              <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 mb-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span
@@ -319,7 +319,7 @@ export default function StatusPage() {
             </Section>
 
             <Section title="90-day uptime">
-              <div className="bg-white border border-hair-2 rounded p-4 space-y-3">
+              <div className="bg-bg-panel border border-hair-2 rounded p-4 space-y-3">
                 {[...data.checks, ...data.externalChecks, {
                   name: data.sanctions.name,
                   status: data.sanctions.status,
@@ -332,7 +332,7 @@ export default function StatusPage() {
 
             <Section title="Incident history">
               {data.incidents.length === 0 ? (
-                <div className="bg-white border border-hair-2 rounded px-4 py-3 text-12 text-ink-2">
+                <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 text-12 text-ink-2">
                   No incidents recorded in the last 90 days.
                 </div>
               ) : (
@@ -340,7 +340,7 @@ export default function StatusPage() {
                   {data.incidents.map((i) => (
                     <div
                       key={i.id}
-                      className="bg-white border border-hair-2 rounded px-4 py-3"
+                      className="bg-bg-panel border border-hair-2 rounded px-4 py-3"
                     >
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="text-13 text-ink-0 font-medium">
@@ -376,7 +376,7 @@ export default function StatusPage() {
             </Section>
 
             <Section title="Data-feed versions">
-              <div className="bg-white border border-hair-2 rounded px-4 py-3 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1 text-11 font-mono">
+              <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1 text-11 font-mono">
                 <div className="flex justify-between">
                   <span className="text-ink-2">brain</span>
                   <span className="text-ink-0">{data.feedVersions.brain}</span>
@@ -405,7 +405,7 @@ export default function StatusPage() {
             </Section>
 
             <Section title="Recent deploys">
-              <div className="bg-white border border-hair-2 rounded divide-y divide-hair">
+              <div className="bg-bg-panel border border-hair-2 rounded divide-y divide-hair">
                 {data.deploys.map((d) => (
                   <div
                     key={d.id}
@@ -435,7 +435,7 @@ export default function StatusPage() {
             </Section>
 
             <Section title="Dependency graph">
-              <div className="bg-white border border-hair-2 rounded p-4">
+              <div className="bg-bg-panel border border-hair-2 rounded p-4">
                 <DependencyGraphSvg graph={data.dependencyGraph} />
                 <p className="text-10.5 text-ink-3 mt-2">
                   Service dependency chain. An outage upstream propagates to
@@ -503,7 +503,7 @@ function ServiceRow({ check }: { check: Check }) {
     check.p95 !== undefined ||
     check.p99 !== undefined;
   return (
-    <div className="flex items-center justify-between bg-white border border-hair-2 rounded px-4 py-3">
+    <div className="flex items-center justify-between bg-bg-panel border border-hair-2 rounded px-4 py-3">
       <div className="flex items-center gap-3">
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[check.status]}`}

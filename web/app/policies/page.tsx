@@ -141,7 +141,7 @@ export default function PoliciesPage() {
                   .map((p) => (
                     <div
                       key={p.id}
-                      className="bg-white border border-hair-2 rounded-lg p-4"
+                      className="bg-bg-panel border border-hair-2 rounded-lg p-4"
                     >
                       <div className="flex items-baseline justify-between mb-2">
                         <h3 className="text-13 font-semibold text-ink-0 m-0">
@@ -157,7 +157,7 @@ export default function PoliciesPage() {
                             value={draft}
                             onChange={(e) => setDraft(e.target.value)}
                             rows={5}
-                            className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-white text-ink-0"
+                            className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-panel text-ink-0"
                           />
                           <div className="mt-2 flex gap-2">
                             <button

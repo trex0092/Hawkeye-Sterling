@@ -122,7 +122,7 @@ export default function EnforcementPage() {
             return (
               <div
                 key={d.id}
-                className="bg-white border border-hair-2 rounded-lg p-4"
+                className="bg-bg-panel border border-hair-2 rounded-lg p-4"
               >
                 <div className="flex items-baseline justify-between gap-3 mb-1">
                   <h3 className="text-13 font-semibold text-ink-0 m-0">

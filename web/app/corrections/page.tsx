@@ -103,7 +103,7 @@ export default function CorrectionsPage() {
             <Row label="Subject name on the record *">
               <input
                 required
-                className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0"
+                className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
                 value={form.subjectName}
                 onChange={update("subjectName")}
               />
@@ -111,7 +111,7 @@ export default function CorrectionsPage() {
             <div className="grid grid-cols-2 gap-3">
               <Row label="List ID">
                 <input
-                  className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0 font-mono"
+                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
                   placeholder="OFAC-SDN"
                   value={form.listId}
                   onChange={update("listId")}
@@ -119,7 +119,7 @@ export default function CorrectionsPage() {
               </Row>
               <Row label="List reference">
                 <input
-                  className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0 font-mono"
+                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
                   placeholder="OFAC-12345"
                   value={form.listRef}
                   onChange={update("listRef")}
@@ -130,7 +130,7 @@ export default function CorrectionsPage() {
               <Row label="Your name *">
                 <input
                   required
-                  className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0"
+                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
                   value={form.requesterName}
                   onChange={update("requesterName")}
                 />
@@ -139,7 +139,7 @@ export default function CorrectionsPage() {
                 <input
                   required
                   type="email"
-                  className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0"
+                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
                   value={form.requesterEmail}
                   onChange={update("requesterEmail")}
                 />
@@ -148,7 +148,7 @@ export default function CorrectionsPage() {
             <Row label="Filing as *">
               <select
                 required
-                className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0"
+                className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
                 value={form.requesterCapacity}
                 onChange={update("requesterCapacity")}
               >
@@ -162,7 +162,7 @@ export default function CorrectionsPage() {
               <textarea
                 required
                 rows={5}
-                className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0"
+                className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
                 placeholder="Describe why the record is inaccurate, outdated or unlawful."
                 value={form.claim}
                 onChange={update("claim")}
@@ -171,7 +171,7 @@ export default function CorrectionsPage() {
             <Row label="Evidence URLs (one per line)">
               <textarea
                 rows={3}
-                className="w-full rounded border border-hair-2 bg-white px-3 py-2 text-13 text-ink-0 font-mono"
+                className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
                 value={form.evidenceUrls}
                 onChange={update("evidenceUrls")}
               />

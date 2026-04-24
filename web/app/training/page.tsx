@@ -117,7 +117,7 @@ export default function TrainingPage() {
           }
         />
 
-        <div className="bg-white border border-hair-2 rounded-lg overflow-hidden mt-6">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden mt-6">
           <table className="w-full text-12">
             <thead className="bg-bg-1 border-b border-hair-2">
               <tr>
@@ -165,7 +165,7 @@ export default function TrainingPage() {
           </table>
         </div>
 
-        <div className="bg-white border border-hair-2 rounded-lg p-4 mt-4">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-4">
           <div className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2 mb-2">
             Log new training
           </div>
@@ -174,25 +174,25 @@ export default function TrainingPage() {
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               placeholder="Name"
-              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0"
+              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0"
             />
             <input
               value={draft.course}
               onChange={(e) => setDraft({ ...draft, course: e.target.value })}
               placeholder="Course"
-              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0"
+              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0"
             />
             <input
               type="date"
               value={draft.completed}
               onChange={(e) => setDraft({ ...draft, completed: e.target.value })}
-              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0"
+              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0"
             />
             <input
               type="date"
               value={draft.expires}
               onChange={(e) => setDraft({ ...draft, expires: e.target.value })}
-              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-white text-ink-0"
+              className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0"
             />
           </div>
           <button

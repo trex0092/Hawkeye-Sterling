@@ -87,7 +87,7 @@ export function BrainRadar({ result, size = 220 }: BrainRadarProps) {
   const toneAlpha = avg >= 70 ? "rgba(220,38,38,0.22)" : avg >= 40 ? "rgba(245,158,11,0.20)" : "rgba(236,72,153,0.18)";
 
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-3 mb-3">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mb-3">
       <div className="flex items-baseline justify-between mb-1">
         <span className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2">
           Risk radar · 6-axis

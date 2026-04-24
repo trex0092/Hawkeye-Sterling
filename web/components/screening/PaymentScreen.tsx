@@ -108,7 +108,7 @@ export function PaymentScreen() {
   };
 
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-4 mt-6">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
       <div className="flex items-baseline justify-between mb-2">
         <h2 className="text-12 font-semibold text-ink-0 m-0 uppercase tracking-wide-3">
           SWIFT MT103 payment-rail screening

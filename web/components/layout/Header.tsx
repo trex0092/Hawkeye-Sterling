@@ -105,7 +105,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-hair-2 shadow-header">
+    <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
         <a
           href="/"
@@ -162,7 +162,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[560px] bg-white border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-3 gap-4"
+                  className="fixed z-50 w-[560px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-3 gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (
@@ -212,12 +212,11 @@ export function Header() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0"
-            title="Toggle theme"
+            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0 transition-colors"
+            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           >
-            {theme === "light"
-              ? t("common.theme.dark", locale)
-              : t("common.theme.light", locale)}
+            {theme === "light" ? "☾ Dark" : "☀ Light"}
           </button>
           <span className="hidden md:flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-green" />

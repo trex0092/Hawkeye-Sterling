@@ -305,7 +305,7 @@ export default function BatchPage() {
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
-          className="border-2 border-dashed border-hair-3 rounded-xl p-8 bg-white text-center mb-6"
+          className="border-2 border-dashed border-hair-3 rounded-xl p-8 bg-bg-panel text-center mb-6"
         >
           <div className="text-12 text-ink-2 mb-3">
             Drop a CSV here, or choose a file. Columns:{" "}
@@ -338,7 +338,7 @@ export default function BatchPage() {
         </div>
 
         {rows.length > 0 && (
-          <div className="bg-white border border-hair-2 rounded-lg p-4 mb-4">
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-4 flex-wrap mb-3">
               <div className="text-13 text-ink-0 font-semibold">
                 {rows.length} row{rows.length === 1 ? "" : "s"} ready
@@ -405,7 +405,7 @@ export default function BatchPage() {
         )}
 
         {results.length > 0 && (
-          <div className="bg-white border border-hair-2 rounded-xl overflow-hidden">
+          <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
             <table className="w-full text-12">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>

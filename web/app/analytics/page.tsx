@@ -387,7 +387,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 function SparklineBlock({ values }: { values: number[] }) {
   const max = Math.max(...values, 1);
   return (
-    <div className="bg-white border border-hair-2 rounded-lg p-4">
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
       <div className="flex items-end h-32 gap-1">
         {values.map((v, i) => {
           const h = Math.max(2, Math.round((v / max) * 100));
@@ -452,7 +452,7 @@ function FilingTile({ code, count }: { code: string; count: number }) {
   return (
     <div
       className={`rounded-lg border px-3 py-4 text-center ${
-        hot ? "border-brand bg-brand/10" : "border-hair-2 bg-white"
+        hot ? "border-brand bg-brand/10" : "border-hair-2 bg-bg-panel"
       }`}
     >
       <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
