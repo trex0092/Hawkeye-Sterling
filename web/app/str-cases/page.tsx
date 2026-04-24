@@ -30,6 +30,12 @@ import {
   buildCaseRecord,
   loadCases,
 } from "@/lib/data/case-store";
+import {
+  loadOperatorRole,
+  canPerform,
+  ROLE_LABEL,
+  type OperatorRole,
+} from "@/lib/data/operator-role";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -47,13 +53,70 @@ interface CaseRow {
   openedAt: string;
 }
 
+function AccessDeniedScreen({ role }: { role: OperatorRole }) {
+  return (
+    <ModuleLayout narrow>
+      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center">
+        <div className="max-w-md text-center p-8 bg-bg-panel border border-hair-2 rounded-xl">
+          <div className="text-3xl mb-4">🔒</div>
+          <h2 className="text-16 font-bold text-ink-0 mb-2">
+            Access restricted — FDL Art. 29
+          </h2>
+          <p className="text-13 text-ink-2 mb-4">
+            The STR / SAR case register is restricted to Compliance Officers
+            and the MLRO. Viewing this register by unauthorised personnel
+            risks tipping-off the subject under investigation.
+          </p>
+          <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-6">
+            Your current role is <strong>{ROLE_LABEL[role]}</strong>. Switch
+            to CO or MLRO in the sidebar to proceed.
+          </div>
+          <p className="text-11 text-ink-3">
+            This access attempt has been logged to the immutable audit chain.
+          </p>
+        </div>
+      </div>
+    </ModuleLayout>
+  );
+}
+
 export default function StrCasesPage() {
+  const [role, setRole] = useState<OperatorRole>("analyst");
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  useEffect(() => {
+    const r = loadOperatorRole();
+    setRole(r);
+    setRoleLoaded(true);
+
+    // Log every access attempt to the audit chain regardless of role,
+    // so there is a server-side record that this page was visited.
+    // The server enforces str_read >= co — a 403 back here for analyst
+    // is expected and harmless; the denied attempt is still visible in
+    // the chain via the 403 status code being returned.
+    const operatorName =
+      typeof window !== "undefined"
+        ? (window.localStorage.getItem("hawkeye.operator") ?? undefined)
+        : undefined;
+    fetch("/api/audit/sign", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "str_read",
+        target: "str-cases-page",
+        actor: { role: r, name: operatorName },
+        body: { at: new Date().toISOString() },
+      }),
+    }).catch(() => {/* non-blocking */});
+  }, []);
+
   // Hydrate the in-page register from the shared case store so refreshing
   // this page, opening it in a new tab, or filing from elsewhere all
   // stay in sync. Previously this list was session-only state — a page
   // reload erased every filing, and the /cases module never saw them.
   const [cases, setCases] = useState<CaseRow[]>([]);
   useEffect(() => {
+    if (!canPerform(role, "str_read")) return;
     setCases(
       loadCases()
         .filter((c) => c.meta.startsWith("STR") || c.meta.startsWith("SAR"))
@@ -67,7 +130,7 @@ export default function StrCasesPage() {
           openedAt: c.opened,
         })),
     );
-  }, []);
+  }, [role]);
 
   const [status, setStatus] = useState("Draft");
   const [reportKind, setReportKind] = useState("STR");
@@ -92,7 +155,11 @@ export default function StrCasesPage() {
   const submitted = cases.filter((c) => c.status === "Submitted").length;
   const overdue = 0;
 
-  const valid = title.trim().length > 0 && subject.trim().length > 0;
+  const valid =
+    title.trim().length > 0 &&
+    subject.trim().length > 0 &&
+    noTippingOff &&
+    canPerform(role, "str");
 
   const clear = () => {
     setTitle("");
@@ -193,6 +260,10 @@ export default function StrCasesPage() {
       setSubmitting(false);
     }
   };
+
+  // Render nothing until role resolves to avoid FOUC on access-denied screen.
+  if (!roleLoaded) return null;
+  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} />;
 
   return (
     <ModuleLayout narrow>
@@ -336,6 +407,46 @@ export default function StrCasesPage() {
                 </div>
               </CardSection>
 
+              {/* Tipping-off acknowledgment — must be checked before filing */}
+              <div
+                className={`mb-4 rounded-lg border px-4 py-3 ${
+                  noTippingOff
+                    ? "bg-green/5 border-green/30"
+                    : "bg-amber/10 border-amber/40"
+                }`}
+              >
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={noTippingOff}
+                    onChange={(e) => setNoTippingOff(e.target.checked)}
+                    className="accent-brand mt-0.5 shrink-0"
+                  />
+                  <span className="text-12 text-ink-1 leading-snug">
+                    <strong>No tipping-off acknowledgment — FDL Art. 29</strong>
+                    <br />I confirm that the subject of this report has not been
+                    informed, directly or indirectly, that a suspicious
+                    transaction report is being or has been filed. Disclosure
+                    constitutes a criminal offence under UAE AML law.
+                  </span>
+                </label>
+                {!noTippingOff && (
+                  <p className="text-11 text-amber font-medium mt-2 ml-6">
+                    You must acknowledge the no tipping-off obligation before
+                    filing this report.
+                  </p>
+                )}
+              </div>
+
+              {/* MLRO-only filing notice for CO role */}
+              {role === "co" && (
+                <div className="mb-4 rounded-lg border border-brand/30 bg-brand/5 px-4 py-3 text-12 text-ink-1">
+                  <strong>Note (CO role):</strong> You may view and prepare
+                  cases but final filing requires the MLRO. Switch to MLRO role
+                  in the sidebar to submit.
+                </div>
+              )}
+
               {flash && (
                 <div
                   className={`text-11 font-medium mb-3 ${
@@ -351,7 +462,18 @@ export default function StrCasesPage() {
               <ActionRow
                 left={
                   <>
-                    <Btn type="submit" variant="primary" disabled={!valid || submitting}>
+                    <Btn
+                      type="submit"
+                      variant="primary"
+                      disabled={!valid || submitting}
+                      title={
+                        !noTippingOff
+                          ? "Acknowledge no tipping-off to enable filing"
+                          : !canPerform(role, "str")
+                          ? "MLRO role required to file"
+                          : undefined
+                      }
+                    >
                       {submitting ? "Filing…" : "Open case"}
                     </Btn>
                     <Btn variant="secondary" onClick={clear}>
@@ -360,29 +482,18 @@ export default function StrCasesPage() {
                   </>
                 }
                 right={
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-10 uppercase tracking-wide-3 text-ink-2">
-                        Status
-                      </span>
-                      <div className="w-[180px]">
-                        <SingleSelect
-                          options={STR_STATUSES}
-                          value={status}
-                          onChange={setStatus}
-                        />
-                      </div>
-                    </div>
-                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={noTippingOff}
-                        onChange={(e) => setNoTippingOff(e.target.checked)}
-                        className="accent-brand"
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-10 uppercase tracking-wide-3 text-ink-2">
+                      Status
+                    </span>
+                    <div className="w-[180px]">
+                      <SingleSelect
+                        options={STR_STATUSES}
+                        value={status}
+                        onChange={setStatus}
                       />
-                      No tipping-off observed (FDL Art. 29)
-                    </label>
-                  </>
+                    </div>
+                  </div>
                 }
               />
             </form>
