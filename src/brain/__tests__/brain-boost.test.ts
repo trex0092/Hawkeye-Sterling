@@ -20,9 +20,9 @@ import {
 } from '../weaponized.js';
 
 describe('cognitive amplifier', () => {
-  it('declares the 1,000,000% brain-gain', () => {
-    expect(BRAIN_AMPLIFICATION_PERCENT).toBe(1_000_000);
-    expect(BRAIN_AMPLIFICATION_FACTOR).toBe(10_000);
+  it('declares the 1,000,000,000,000,000% brain-gain', () => {
+    expect(BRAIN_AMPLIFICATION_PERCENT).toBe(1_000_000_000_000_000);
+    expect(BRAIN_AMPLIFICATION_FACTOR).toBe(10_000_000_000_000);
     expect(COGNITIVE_AMPLIFIER.percent).toBe(BRAIN_AMPLIFICATION_PERCENT);
     expect(COGNITIVE_AMPLIFIER.factor).toBe(BRAIN_AMPLIFICATION_FACTOR);
   });
@@ -33,8 +33,8 @@ describe('cognitive amplifier', () => {
       expect(d.length).toBeGreaterThan(0);
     }
     const block = cognitiveAmplifierBlock();
-    expect(block).toContain('+1,000,000%');
-    expect(block).toContain('×10,000');
+    expect(block).toContain('+1,000,000,000,000,000%');
+    expect(block).toContain('×10,000,000,000,000');
   });
 });
 
@@ -110,8 +110,8 @@ describe('meta-cognition layer', () => {
 describe('weaponized manifest — brain boost integration', () => {
   it('manifest exposes the amplifier + meta-cognition blocks', () => {
     const m = buildWeaponizedBrainManifest();
-    expect(m.cognitiveCatalogue.amplifier.percent).toBe(1_000_000);
-    expect(m.cognitiveCatalogue.amplifier.factor).toBe(10_000);
+    expect(m.cognitiveCatalogue.amplifier.percent).toBe(1_000_000_000_000_000);
+    expect(m.cognitiveCatalogue.amplifier.factor).toBe(10_000_000_000_000);
     expect(m.cognitiveCatalogue.metaCognition.total).toBe(META_COGNITION.length);
     expect(
       Object.values(m.cognitiveCatalogue.metaCognition.byCategory).reduce(
@@ -125,7 +125,7 @@ describe('weaponized manifest — brain boost integration', () => {
     const prompt = weaponizedSystemPrompt({ taskRole: 'TEST' });
     expect(prompt).toContain('COGNITIVE AMPLIFICATION — BRAIN-GAIN DIRECTIVE');
     expect(prompt).toContain('META-COGNITION — REASONING ABOUT YOUR REASONING');
-    expect(prompt).toContain('+1,000,000%');
+    expect(prompt).toContain('+1,000,000,000,000,000%');
     const report = assertWeaponized(prompt);
     expect(report.missing).toEqual([]);
     expect(report.ok).toBe(true);

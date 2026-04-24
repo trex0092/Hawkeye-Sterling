@@ -19,20 +19,20 @@
 // for.
 
 /**
- * Declared brain-gain: 1,000,000% means "consider one million more reasoning
- * paths than a base model would", implemented in practice as "exhaustive
- * traversal of the catalogue on every turn".
+ * Declared brain-gain: 1,000,000,000,000,000% means "consider one quadrillion
+ * more reasoning paths than a base model would", implemented in practice as
+ * "exhaustive traversal of the catalogue on every turn at maximum depth".
  */
-export const BRAIN_AMPLIFICATION_PERCENT = 1_000_000 as const;
+export const BRAIN_AMPLIFICATION_PERCENT = 1_000_000_000_000_000 as const;
 
-/** Multiplier form of {@link BRAIN_AMPLIFICATION_PERCENT}. 1,000,000% = ×10,000. */
+/** Multiplier form of {@link BRAIN_AMPLIFICATION_PERCENT}. 1,000,000,000,000,000% = ×10,000,000,000,000. */
 export const BRAIN_AMPLIFICATION_FACTOR = BRAIN_AMPLIFICATION_PERCENT / 100;
 
 /**
  * Version of the amplifier contract. Bump this whenever the directive below
  * changes so the catalogueHash shifts and callers refresh their prompts.
  */
-export const COGNITIVE_AMPLIFIER_VERSION = 'v1.0.0' as const;
+export const COGNITIVE_AMPLIFIER_VERSION = 'v2.0.0' as const;
 
 export interface CognitiveAmplifier {
   readonly version: string;
