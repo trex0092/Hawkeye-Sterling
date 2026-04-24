@@ -82,11 +82,15 @@ function buildGraph(
   return { nodes, edges };
 }
 
+type SearchKind = "entity" | "individual";
+
 // ── Component ──────────────────────────────────────────────────────────────
 export default function InvestigationPage() {
   const [focus, setFocus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [committed, setCommitted] = useState<string | null>(null); // the active subject
+  const [searchKind, setSearchKind] = useState<SearchKind>("entity");
+  const [committedKind, setCommittedKind] = useState<SearchKind>("entity");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [allCases, setAllCases] = useState<CaseRecord[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +131,7 @@ export default function InvestigationPage() {
     const trimmed = name.trim();
     if (!trimmed) return;
     setCommitted(trimmed);
+    setCommittedKind(searchKind);
     setQuery(trimmed);
     setShowSuggestions(false);
     setFocus(null);
@@ -160,11 +165,34 @@ export default function InvestigationPage() {
         {/* ── Search bar ──────────────────────────────────────────────── */}
         <div className="relative mt-6 mb-4">
           <div className="flex gap-2 items-center">
+
+            {/* Entity / Individual toggle */}
+            <div className="flex rounded border border-hair-2 overflow-hidden shrink-0">
+              {(["entity", "individual"] as SearchKind[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setSearchKind(k)}
+                  className={`px-3 py-2 font-mono text-10.5 font-medium transition-colors ${
+                    searchKind === k
+                      ? "bg-brand text-white"
+                      : "bg-bg-panel text-ink-2 hover:bg-bg-1"
+                  }`}
+                >
+                  {k === "entity" ? "Entity" : "Individual"}
+                </button>
+              ))}
+            </div>
+
             <div className="relative flex-1">
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Search any company or individual…"
+                placeholder={
+                  searchKind === "entity"
+                    ? "Search company or organisation name…"
+                    : "Search individual name…"
+                }
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -188,6 +216,9 @@ export default function InvestigationPage() {
                       onMouseDown={() => submit(name)}
                       className="w-full text-left px-3 py-2 font-mono text-11 text-ink-1 hover:bg-brand-dim hover:text-brand-deep transition-colors"
                     >
+                      <span className="text-ink-4 mr-2">
+                        {searchKind === "entity" ? "⬡" : "◉"}
+                      </span>
                       {name}
                     </button>
                   ))}
@@ -216,6 +247,13 @@ export default function InvestigationPage() {
 
           {committed && (
             <p className="mt-1.5 text-10 font-mono text-ink-3">
+              <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold mr-2 ${
+                committedKind === "entity"
+                  ? "bg-blue-dim text-blue"
+                  : "bg-violet-dim text-violet"
+              }`}>
+                {committedKind}
+              </span>
               Showing graph for{" "}
               <span className="text-ink-1 font-semibold">{committed}</span>
               {" · "}
