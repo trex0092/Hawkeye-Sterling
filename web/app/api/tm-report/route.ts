@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
+import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -171,6 +172,16 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
       { status: mappedStatus },
     );
   }
+
+  void postWebhook({
+    type: "screening.completed",
+    subjectId: t.ref,
+    subjectName: t.counterparty,
+    severity,
+    ...(payload.data.permalink_url ? { asanaTaskUrl: payload.data.permalink_url } : {}),
+    generatedAt: t.loggedAt,
+    source: "hawkeye-sterling",
+  });
 
   return NextResponse.json(
     {

@@ -169,7 +169,7 @@ export default function PoliciesPage() {
                             <button
                               type="button"
                               onClick={() => saveEdit(p.id)}
-                              className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-white"
+                              className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0"
                             >
                               Save
                             </button>

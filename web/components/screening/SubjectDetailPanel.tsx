@@ -1242,7 +1242,7 @@ function SuperBrainPanel({
       <BrainChainOfCustody result={r} />
       <BrainCanaryBench />
       <BrainModuleWeights />
-      <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
+      <div className="bg-ink-0 text-bg-0 rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
           <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
             Composite score

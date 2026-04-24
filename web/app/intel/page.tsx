@@ -108,7 +108,7 @@ export default function IntelPage() {
               type="button"
               onClick={sweep}
               disabled={loading || watch.length === 0}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-white hover:bg-ink-1 disabled:opacity-40"
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
             >
               {loading ? "Sweeping…" : "Run sweep"}
             </button>

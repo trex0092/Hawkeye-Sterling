@@ -208,7 +208,7 @@ export default function AnalyticsPage() {
             <button
               type="button"
               onClick={handleExportPdf}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-white hover:bg-ink-1 print:hidden"
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 print:hidden"
             >
               Export PDF
             </button>

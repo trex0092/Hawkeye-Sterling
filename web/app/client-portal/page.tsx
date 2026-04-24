@@ -283,7 +283,7 @@ export default function ClientPortalPage() {
               Reference: HS-{Date.now().toString().slice(-6)}
             </div>
             <button type="button" onClick={() => setSubmitted(false)}
-              className="mt-5 text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-white hover:bg-ink-1">
+              className="mt-5 text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">
               Submit another
             </button>
           </div>
@@ -404,7 +404,7 @@ export default function ClientPortalPage() {
               Decision 58/2020.
             </p>
             <button type="submit" disabled={!entity.name || !sharesValid}
-              className="whitespace-nowrap text-12 font-semibold px-5 py-2 rounded bg-ink-0 text-white hover:bg-ink-1 disabled:opacity-40">
+              className="whitespace-nowrap text-12 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
               Submit for screening
             </button>
           </div>
