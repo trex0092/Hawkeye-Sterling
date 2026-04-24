@@ -37,14 +37,14 @@ export function isBrowser(): boolean {
 }
 
 export function loadOperatorRole(): OperatorRole {
-  if (!isBrowser()) return "analyst";
+  if (!isBrowser()) return "mlro";
   try {
     const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
     if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
   } catch {
     /* localStorage disabled */
   }
-  return "analyst";
+  return "mlro";
 }
 
 export function saveOperatorRole(role: OperatorRole): void {

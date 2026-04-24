@@ -148,6 +148,7 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     ...(knownPep
       ? { pep: { tier: knownPep.tier, rationale: knownPep.rationale } }
       : {}),
+    rca: { screened: data.checkTypes.rca },
     exposureAED: "0",
     slaNotify: "+72h 00m",
     mostSerious: "—",

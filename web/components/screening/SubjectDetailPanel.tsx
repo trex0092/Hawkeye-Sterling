@@ -728,6 +728,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           <ScreeningTab
             state={screening}
             adverseMedia={subject.adverseMedia}
+            rca={subject.rca}
           />
         )}
 
@@ -755,9 +756,11 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 function ScreeningTab({
   state,
   adverseMedia,
+  rca,
 }: {
   state: ReturnType<typeof useQuickScreen>;
   adverseMedia?: AdverseMediaMatch | undefined;
+  rca?: { screened: boolean; linkedAssociates?: string[] } | undefined;
 }) {
   const title = (
     <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
@@ -776,6 +779,7 @@ function ScreeningTab({
           <SkeletonRow />
         </div>
         {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+        <RcaRow rca={rca} />
       </>
     );
   }
@@ -794,6 +798,7 @@ function ScreeningTab({
           {state.error}
         </div>
         {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+        <RcaRow rca={rca} />
       </>
     );
   }
@@ -805,7 +810,44 @@ function ScreeningTab({
       <BrainDiagnostics result={state.result} />
       <HitsList hits={state.result.hits} />
       {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+      <RcaRow rca={rca} />
     </>
+  );
+}
+
+function RcaRow({
+  rca,
+}: {
+  rca?: { screened: boolean; linkedAssociates?: string[] } | undefined;
+}) {
+  if (!rca) return null;
+  return (
+    <div className="mt-3 pt-3 border-t border-hair">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+          RCA — Relatives &amp; Close Associates
+        </span>
+        <span
+          className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-10 font-semibold ${
+            rca.screened ? "bg-green-dim text-green" : "bg-bg-2 text-ink-3"
+          }`}
+        >
+          {rca.screened ? "Screened" : "Not screened"}
+        </span>
+      </div>
+      {rca.screened && rca.linkedAssociates && rca.linkedAssociates.length > 0 && (
+        <ul className="list-none p-0 m-0 space-y-1">
+          {rca.linkedAssociates.map((a) => (
+            <li key={a} className="text-11 text-ink-1 pl-2 border-l-2 border-hair-2">
+              {a}
+            </li>
+          ))}
+        </ul>
+      )}
+      {rca.screened && (!rca.linkedAssociates || rca.linkedAssociates.length === 0) && (
+        <p className="text-11 text-ink-2 m-0">No linked associates identified.</p>
+      )}
+    </div>
   );
 }
 

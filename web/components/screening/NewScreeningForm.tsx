@@ -530,33 +530,6 @@ function CoverageRow({
   );
 }
 
-function ToggleRow({
-  icon, label, on, locked, onToggle,
-}: {
-  icon: string; label: string; on: boolean; locked?: boolean; onToggle: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between px-2.5 py-1.5 rounded">
-      <div className="flex items-center gap-2 text-12.5 text-ink-1">
-        <span>{icon}</span>
-        <span className="uppercase tracking-wide-1 font-medium">{label}</span>
-        {locked && <span className="text-10 text-ink-3">🔒</span>}
-      </div>
-      <button
-        type="button"
-        onClick={locked ? undefined : onToggle}
-        aria-pressed={on}
-        disabled={locked}
-        className={`relative w-10 h-5 rounded-full transition-colors ${on ? "bg-brand" : "bg-hair-3"} ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}
-      >
-        <span
-          className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${on ? "left-[22px]" : "left-0.5"}`}
-        />
-      </button>
-    </div>
-  );
-}
-
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block mb-4">

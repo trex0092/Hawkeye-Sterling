@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 interface ScreeningHeroProps {
   inQueue: number;
   critical: number;
@@ -136,7 +138,7 @@ function FeatureCard({
   title,
   body,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   body: string;
 }) {

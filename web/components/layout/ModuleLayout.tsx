@@ -11,7 +11,7 @@ import {
   type SidebarFilterItem,
 } from "./SidebarParts";
 
-// Unified module shell — Header + left sidebar (MLRO / Shift / optional
+// Unified module shell — Header + left sidebar (operator card / optional
 // queue filters) + main content. Mirrors the /screening layout pattern
 // across every module in the app so the tool has one consistent look.
 
