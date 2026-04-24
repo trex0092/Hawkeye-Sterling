@@ -32,6 +32,9 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
   if (!url) return { delivered: false, error: "HAWKEYE_WEBHOOK_URL not set" };
 
   const secret = process.env["HAWKEYE_WEBHOOK_SECRET"] ?? "";
+  if (!secret) {
+    console.warn("[webhook] HAWKEYE_WEBHOOK_SECRET not set — outbound events will be unsigned");
+  }
   const body = JSON.stringify(event);
   const timestamp = Date.now().toString();
   const signature = secret

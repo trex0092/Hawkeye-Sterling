@@ -452,7 +452,7 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       ...(payload.data.permalink_url ? { asanaTaskUrl: payload.data.permalink_url } : {}),
       generatedAt: body.result.generatedAt,
       source: "hawkeye-sterling",
-    });
+    }).catch((err) => console.error("[screening-report] webhook failed", err));
     return respond(201, {
       ok: true,
       taskGid: payload.data.gid,

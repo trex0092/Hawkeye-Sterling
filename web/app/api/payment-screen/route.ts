@@ -53,7 +53,17 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
   }
 
   const parsed = parseMt103(body.message);
-  const candidates = await loadCandidates();
+  let candidates: Awaited<ReturnType<typeof loadCandidates>>;
+  try {
+    candidates = await loadCandidates();
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[payment-screen] loadCandidates failed", detail);
+    return NextResponse.json(
+      { ok: false, error: "watchlist corpus unavailable", detail },
+      { status: 503 },
+    );
+  }
 
   const orderingName = parsed.ordering?.name;
   const beneficiaryName = parsed.beneficiary?.name;

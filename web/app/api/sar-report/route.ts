@@ -319,7 +319,7 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
       : {}),
     generatedAt: now,
     source: "hawkeye-sterling",
-  });
+  }).catch((err) => console.error("[sar-report] webhook failed", err));
 
   return NextResponse.json({
     ok: true,

@@ -247,7 +247,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
     generatedAt: new Date().toISOString(),
     source: "hawkeye-sterling",
-  });
+  }).catch((err) => console.error("[batch-screen] webhook failed", err));
 
   return NextResponse.json(
     { ok: true, summary, results, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) },

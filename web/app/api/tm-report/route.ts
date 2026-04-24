@@ -181,7 +181,7 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
     ...(payload.data.permalink_url ? { asanaTaskUrl: payload.data.permalink_url } : {}),
     generatedAt: t.loggedAt,
     source: "hawkeye-sterling",
-  });
+  }).catch((err) => console.error("[tm-report] webhook failed", err));
 
   return NextResponse.json(
     {
