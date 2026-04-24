@@ -174,7 +174,7 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
   }
 
   void postWebhook({
-    type: "screening.completed",
+    type: "tm.filed",
     subjectId: t.ref,
     subjectName: t.counterparty,
     severity,

@@ -7,6 +7,7 @@ export interface WebhookEvent {
     | "screening.escalated"
     | "ongoing.rerun"
     | "str.raised"
+    | "tm.filed"
     | "escalation";
   subjectId: string;
   subjectName: string;
