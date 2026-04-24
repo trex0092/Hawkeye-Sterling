@@ -17,7 +17,7 @@ interface BrainNarrativeProps {
 // specific field from the brain payload; nothing is fabricated.
 function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: NewsDossier | null): string[] {
   const paragraphs: string[] = [];
-  const composite = r.composite.score;
+  const composite = r.composite?.score ?? 0;
   const severity = r.screen.severity.toUpperCase();
   const listsHit = Array.from(new Set(r.screen.hits.map((h) => h.listId)));
   const pepTier = r.pep && r.pep.salience > 0 ? r.pep.tier : null;
@@ -162,6 +162,7 @@ export function BrainNarrative({
   const [expanded, setExpanded] = useState(true);
 
   const handleCopy = async () => {
+    if (typeof navigator === "undefined" || typeof window === "undefined") return;
     try {
       await navigator.clipboard.writeText(paragraphs.join("\n\n"));
       setCopied(true);

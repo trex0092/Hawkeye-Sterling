@@ -180,7 +180,9 @@ export default function StrCasesPage() {
 
   const flashFor = (tone: FlashTone, msg: string) => {
     setFlash({ tone, msg });
-    window.setTimeout(() => setFlash(null), 3500);
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => setFlash(null), 3500);
+    }
   };
 
   const openCase = async (e: React.FormEvent) => {
