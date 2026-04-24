@@ -32,7 +32,7 @@ export const BRAIN_AMPLIFICATION_FACTOR = BRAIN_AMPLIFICATION_PERCENT / 100;
  * Version of the amplifier contract. Bump this whenever the directive below
  * changes so the catalogueHash shifts and callers refresh their prompts.
  */
-export const COGNITIVE_AMPLIFIER_VERSION = 'v3.0.0' as const;
+export const COGNITIVE_AMPLIFIER_VERSION = 'v3.2.0' as const;
 
 export interface CognitiveAmplifier {
   readonly version: string;
@@ -67,6 +67,14 @@ const DIRECTIVES: readonly string[] = Object.freeze([
   'When evaluating carbon-market, ESG, or sustainability-linked products, require three-layer verification: (i) registry reconciliation, (ii) additionality / MRV evidence, (iii) corresponding-adjustment under Paris Agreement Article 6; surface any of the three as absent if not documented.',
   'Invoke the proportionality_test meta-cognition primitive for every control recommendation: a control that is costlier than the residual risk it mitigates must be flagged as disproportionate with an alternative proposed.',
   'For every adverse-media finding classified HIGH or CRITICAL, conduct a source triangulation across ≥3 independent outlets, assess publication credibility (peer-reviewed registry, mainstream financial press, or regulator notice), and record the source quality tier in the finding.',
+  // v3.2.0 additions — sector-expanded, multi-regime, and financial-crime predicate directives.
+  'For correspondent banking relationships, execute the nested-bank and payable-through-account sub-chain walk at every review cycle: identify every legal entity that can originate or receive payments through the account and verify each against all declared sanction regimes before clearing.',
+  'When evaluating NPO or charity relationships, apply the FATF R.8 programme-level risk assessment: map every geographic programme delivery zone against the CAHRA registry and the active-CAHRA gate; treat any programme in an active-CAHRA zone as a hard-escalation signal absent independent humanitarian-organisation certification.',
+  'Apply the sector-rubric scoring engine to every case where a sector tag is present: load the applicable SectorRubric by id, score all dimensions using observable evidence, and surface the sector risk tier (LOW / MEDIUM / HIGH / VERY HIGH) as a named artefact in the output alongside the dimension breakdown.',
+  'For every tax-crime or fiscal-fraud indicator that fires, trace the predicate-to-proceeds chain under FATF R.3: identify the predicate offence, the financial flow that constitutes proceeds, the layering mechanism used, and the integration endpoint — all four must be evidenced before a HIGH verdict is emitted.',
+  'When a human-trafficking or modern-slavery indicator fires, apply the ILO 11 Forced Labour Indicators framework as the structured evidence template: for each indicator that is positively evidenced, record the raw observable, the ILO indicator label, and the severity weight before computing the aggregated forced-labour risk score.',
+  'For VASP and digital-asset cases, traverse the full on-chain provenance chain from wallet to fiat off-ramp: mixer exposure, privacy-coin swap, chain-hop, VASP counterparty licence status, and travel-rule compliance must each be assessed and cited by mode id before the chain_analysis verdict is emitted.',
+  'When a multi-jurisdictional sanctions exposure is detected, rank applicable sanction regimes by strictness using the highest-standard principle (US OFAC > EU consolidated > UK OFSI > bilateral), emit a cross-regime conflict note for any obligation that differs across regimes, and apply the strictest lawful obligation.',
 ]);
 
 export const COGNITIVE_AMPLIFIER: CognitiveAmplifier = Object.freeze({

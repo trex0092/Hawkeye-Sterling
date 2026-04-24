@@ -152,7 +152,12 @@ export type AdverseMediaCategoryId =
   | 'legal_criminal_regulatory'
   | 'esg'
   | 'cybercrime'
-  | 'ai';
+  | 'ai'
+  | 'sanctions_violations'
+  | 'human_trafficking_modern_slavery'
+  | 'tax_crimes'
+  | 'environmental_crime'
+  | 'drug_trafficking';
 
 export interface AdverseMediaCategory {
   id: AdverseMediaCategoryId;
