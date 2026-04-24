@@ -32,6 +32,15 @@ export const CAHRA_SEED: CahraEntry[] = [
   { iso2: 'MM', name: 'Myanmar', status: 'active_cahra', drivers: ['armed conflict', 'military rule'], observedAt: '2025-01-01T00:00:00Z', sources: ['OHCHR Myanmar'] },
   { iso2: 'YE', name: 'Yemen', status: 'active_cahra', drivers: ['armed conflict'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN GoE Yemen'] },
   { iso2: 'VE', name: 'Venezuela', status: 'watch_list', drivers: ['systemic corruption', 'illicit gold flows'], observedAt: '2025-01-01T00:00:00Z', sources: ['OECD DDG reference'] },
+  { iso2: 'LY', name: 'Libya', status: 'active_cahra', drivers: ['armed conflict', 'fragmented governance', 'illicit gold and oil flows'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN Panel of Experts Libya', 'OECD DDG reference'] },
+  { iso2: 'ET', name: 'Ethiopia (Tigray region)', status: 'active_cahra', drivers: ['armed conflict', 'humanitarian crisis', 'ASGM in conflict zone'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN OCHA Ethiopia', 'OECD DDG reference'] },
+  { iso2: 'TD', name: 'Chad', status: 'watch_list', drivers: ['political instability', 'cross-border armed conflict', 'ASGM activity'], observedAt: '2025-01-01T00:00:00Z', sources: ['OECD DDG reference'] },
+  { iso2: 'MZ', name: 'Mozambique (Cabo Delgado)', status: 'active_cahra', drivers: ['armed insurgency', 'ASGM in conflict zone', 'natural resource exploitation'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN OCHA Mozambique', 'OECD DDG reference'] },
+  { iso2: 'CM', name: 'Cameroon (North-West / South-West)', status: 'watch_list', drivers: ['armed conflict', 'Anglophone crisis', 'governance gaps'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN OCHA Cameroon', 'OECD DDG reference'] },
+  { iso2: 'HT', name: 'Haiti', status: 'active_cahra', drivers: ['gang-controlled territory', 'state collapse', 'systemic corruption'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN SC Haiti', 'FATF grey-list status 2023'] },
+  { iso2: 'IQ', name: 'Iraq (north and border regions)', status: 'watch_list', drivers: ['residual armed conflict', 'militia control', 'corruption'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN Assistance Mission Iraq', 'OECD DDG reference'] },
+  { iso2: 'SY', name: 'Syria', status: 'active_cahra', drivers: ['armed conflict', 'sanctions environment', 'fragmented control'], observedAt: '2025-01-01T00:00:00Z', sources: ['UN COI Syria', 'OFAC Syria sanctions'] },
+  { iso2: 'NG', name: 'Nigeria (North-East and Niger Delta)', status: 'watch_list', drivers: ['Boko Haram insurgency', 'artisanal oil theft', 'illegal mineral extraction'], observedAt: '2025-01-01T00:00:00Z', sources: ['OECD DDG reference', 'UN OCHA Nigeria'] },
 ];
 
 export const CAHRA_BY_ISO: Map<string, CahraEntry> = new Map(
