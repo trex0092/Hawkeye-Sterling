@@ -401,21 +401,14 @@ export async function GET(): Promise<NextResponse> {
     storage,
   ]);
   const externalChecks: Check[] = enrichWithLatencyStats([asana, googleNews]);
-  const allChecks = [...internalChecks, ...externalChecks, {
-    name: sanctions.name,
-    status: sanctions.status,
-    latencyMs: sanctions.latencyMs,
-    ...(sanctions.note ? { note: sanctions.note } : {}),
-  }];
 
   // Derive banner status from core services only. sanctions-freshness is a
   // data-quality check shown in its own dedicated UI section; including it
   // in the banner causes "All services degraded" whenever the cron hasn't
   // ticked yet (expected on a fresh deployment).
-  const bannerChecks = [...internalChecks, ...externalChecks];
-  const worstStatus: Check["status"] = bannerChecks.some((c) => c.status === "down")
+  const worstStatus: Check["status"] = [...internalChecks, ...externalChecks].some((c) => c.status === "down")
     ? "down"
-    : bannerChecks.some((c) => c.status === "degraded")
+    : [...internalChecks, ...externalChecks].some((c) => c.status === "degraded")
       ? "degraded"
       : "operational";
 
