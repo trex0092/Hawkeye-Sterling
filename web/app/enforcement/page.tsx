@@ -245,6 +245,105 @@ const DEADLINES: Deadline[] = [
     notes:
       "MLRO presents Q3 AML/CFT metrics to the Board Audit Committee. Includes STR count YTD, sanctions alert volumes, training completion rate, open audit findings, and corrective-action status. Board approves any material policy amendments tabled.",
   },
+  {
+    id: "board-aml-q4",
+    title: "Board AML/CFT Quarterly Report — Q4 2026",
+    due: "2027-01-31",
+    authority: "Internal / Board",
+    cadence: "quarterly",
+    notes:
+      "MLRO presents Q4 and full-year AML/CFT metrics to the Board Audit Committee. Includes annual STR count, false-positive trend, training completion, closed corrective actions, and EWRA status. Board approves the AML programme plan for the coming year.",
+  },
+  {
+    id: "board-policy-approval",
+    title: "Annual AML/CFT Policy Suite Board Approval",
+    due: "2026-12-15",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Full AML/CFT policy suite reviewed and re-approved by the Board annually before 15 December. Includes MLRO Charter, Risk Appetite Statement, Sanctions Policy, PEP Policy, CAP, and all sector-specific policies. All changes from the prior year marked and documented. Board minutes reference each policy and version number.",
+  },
+  {
+    id: "mlro-annual-report",
+    title: "MLRO Annual Report to Board",
+    due: "2026-11-30",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Comprehensive annual report by the MLRO to the Board covering: STR filings YTD, open investigations, resource adequacy, training status, regulator correspondence, control deficiencies, and proposed programme improvements. Per FDL 10/2025 Art.15. Board provides written acknowledgement within 15 days.",
+  },
+  {
+    id: "data-retention-audit",
+    title: "Data Retention & Destruction Audit",
+    due: "2026-09-15",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "Annual audit to confirm: (1) all records required to be retained under FDL 10/2025 Art.24 are stored and accessible; (2) records older than 10 years from end of relationship are securely destroyed per the data destruction schedule; (3) destruction logs are maintained and reviewed by the MLRO. Report findings to the Data Protection Officer and Board Audit Committee.",
+  },
+  {
+    id: "outsourcing-register",
+    title: "Outsourcing Register Annual Review",
+    due: "2026-11-15",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "MLRO reviews the outsourcing register to confirm: all AML/CFT outsourcing arrangements are documented, third-party providers have been assessed against annual risk criteria, and written agreements are current. Any provider failing the assessment is placed on a remediation or exit plan. Board approval required for any new outsourcing arrangement. Per FDL 10/2025 and CBUAE Outsourcing Guidance.",
+  },
+  {
+    id: "aml-programme-effectiveness",
+    title: "AML Programme Effectiveness Review",
+    due: "2026-10-15",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Annual assessment of overall AML programme effectiveness including: alert-to-STR conversion rate, CDD quality scores, screening coverage, training completion, and internal-audit open findings. Benchmarked against FATF Immediate Outcomes 3, 4, and 6. MLRO prepares written effectiveness statement for the Board. Gaps must have a documented remediation plan with target dates.",
+  },
+  {
+    id: "fatf-self-assessment",
+    title: "FATF Technical Compliance Self-Assessment",
+    due: "2026-12-01",
+    authority: "Internal",
+    cadence: "annual",
+    notes:
+      "Annual internal self-assessment against FATF 40 Recommendations, scored using the four-level FATF methodology (NC / PC / LC / C). Focus Recommendations: R.10 (CDD), R.11 (record-keeping), R.12 (PEPs), R.15 (new technologies), R.16 (wire transfers), R.24/25 (beneficial ownership). Results reviewed by MLRO and presented to the Board. Gaps fed into the following year's AML programme plan.",
+  },
+  {
+    id: "dpmsr-q2",
+    title: "DPMSR Quarterly Filing Reconciliation — Q2 2026",
+    due: "2026-07-15",
+    authority: "UAE MoE",
+    cadence: "quarterly",
+    notes:
+      "Reconcile all DPMSR-eligible transactions from Q2 (April–June 2026) against filings submitted to MoE. Confirm no qualifying transaction was missed. Any gap must be remediated with a late filing and documented MLRO explanation. Per MoE Circular 2/2024 and FDL 10/2025 Art.17.",
+  },
+  {
+    id: "dpmsr-q3",
+    title: "DPMSR Quarterly Filing Reconciliation — Q3 2026",
+    due: "2026-10-15",
+    authority: "UAE MoE",
+    cadence: "quarterly",
+    notes:
+      "Reconcile all DPMSR-eligible transactions from Q3 (July–September 2026) against filings submitted to MoE. Confirm no qualifying transaction was missed. Any gap must be remediated with a late filing and documented MLRO explanation. Per MoE Circular 2/2024.",
+  },
+  {
+    id: "mlro-succession-review",
+    title: "MLRO Succession & Continuity Plan Review",
+    due: "2026-08-31",
+    authority: "Internal / Board",
+    cadence: "annual",
+    notes:
+      "Board reviews the MLRO Succession Plan and confirms the designated Deputy MLRO is appropriately qualified and authorised. Plan covers: notification timelines to CBUAE / MoE, handover procedures, access continuity, and interim reporting lines. Reviewed and approved by Board Audit Committee. Any vacancy in the MLRO role triggers an immediate Board notification to regulators within 30 days per FDL 10/2025 Art.15(5).",
+  },
+  {
+    id: "correspondent-q3",
+    title: "Correspondent Bank Quarterly Monitoring Review",
+    due: "2026-10-01",
+    authority: "Internal",
+    cadence: "quarterly",
+    notes:
+      "Quarterly review of transaction volumes and patterns across all correspondent bank channels. Flag material deviations from baseline, any new high-risk payment corridors, and outstanding CBQ responses. MLRO signs off on the review. Results feed the annual correspondent bank questionnaire renewal cycle.",
+  },
 ];
 
 function daysUntil(iso: string): number {

@@ -577,6 +577,294 @@ const PLAYBOOKS: Playbook[] = [
     ],
   },
   {
+    id: "hawala",
+    title: "Hawala / Money Service Business (MSB)",
+    typology: "hawala",
+    family: "MSB",
+    steps: [
+      {
+        title: "1. Licensing & registration verification",
+        required: true,
+        checks: [
+          "Confirm hawala operator holds a valid CBUAE licence or equivalent MSB registration",
+          "Verify the operator is not on OFAC or FinCEN lists of unlicensed money transmitters",
+          "Obtain copy of the operator's AML/CFT programme and training records",
+          "Confirm the operator files Currency Transaction Reports / SARs as required",
+        ],
+      },
+      {
+        title: "2. Correspondent hawaladars",
+        required: true,
+        checks: [
+          "Map the network of correspondent hawaladars used by the operator",
+          "Screen all correspondents against OFAC / UN / EU sanctions lists",
+          "Identify jurisdictions served — flag any FATF grey/black-list countries",
+          "Obtain list of settlement accounts used by the operator",
+        ],
+      },
+      {
+        title: "3. Transaction pattern analysis",
+        required: true,
+        checks: [
+          "Review transaction logs for round-number transfers with no invoice backing",
+          "Flag discrepancies between transfer volume and the operator's declared turnover",
+          "Identify customers sending to the same beneficiary in multiple smaller amounts (structuring)",
+          "Check if transfers are consistently just below the AED 3,500 CTR threshold",
+        ],
+      },
+      {
+        title: "4. Settlement & netting",
+        required: false,
+        checks: [
+          "Verify settlement method — gold, commodities, or informal netting are red flags",
+          "Confirm any physical cash settlement is within permitted limits and documented",
+          "Obtain evidence of invoice or contract backing for commodity settlements",
+          "Escalate to MLRO if settlement route cannot be fully documented",
+        ],
+      },
+    ],
+  },
+  {
+    id: "bribery",
+    title: "Bribery & Corruption (FCPA / UK Bribery Act)",
+    typology: "bribery",
+    family: "ABC",
+    steps: [
+      {
+        title: "1. Red-flag identification",
+        required: true,
+        checks: [
+          "Identify payments to government officials, SOE employees, or their associates",
+          "Flag unusual commission arrangements, facilitation payments, or gifts above policy threshold",
+          "Check for payments routed via intermediary or consultant in a high-corruption jurisdiction (CPI < 40)",
+          "Review contracts for success fees tied to regulatory approvals or government contracts",
+        ],
+      },
+      {
+        title: "2. Third-party due diligence",
+        required: true,
+        checks: [
+          "Screen agents, consultants, and JV partners against PEP and sanctions lists",
+          "Obtain anti-bribery representations and warranties in all third-party contracts",
+          "Verify third-party services are genuine and fee is proportionate to market rate",
+          "Check third-party registration, ownership, and references in home jurisdiction",
+        ],
+      },
+      {
+        title: "3. Jurisdiction risk assessment",
+        required: true,
+        checks: [
+          "Score the transaction jurisdiction using Transparency International CPI",
+          "Apply enhanced procedures for any jurisdiction with CPI < 40",
+          "Review FATF, GRECO, and US State Dept. reports on corruption risk in the jurisdiction",
+          "Obtain legal opinion on local anti-bribery law applicability",
+        ],
+      },
+      {
+        title: "4. SAR / STR consideration",
+        required: false,
+        checks: [
+          "Assess whether identified bribery indicators constitute grounds for an STR under FDL 10/2025 Art.15",
+          "Consider FCPA or UK Bribery Act extraterritorial exposure for USD-denominated or UK-nexus transactions",
+          "Document the MLRO's triage rationale in the case file regardless of filing decision",
+          "Escalate to General Counsel if criminal referral or self-disclosure is under consideration",
+        ],
+      },
+    ],
+  },
+  {
+    id: "human-trafficking",
+    title: "Human Trafficking & Modern Slavery",
+    typology: "human_trafficking",
+    family: "TF/ML",
+    steps: [
+      {
+        title: "1. Victim & controller indicators",
+        required: true,
+        checks: [
+          "Flag multiple individuals transacting from the same device, IP, or address",
+          "Identify accounts receiving multiple small cash deposits from different senders",
+          "Check for hotel, escort-service, or transport-sector cash receipts inconsistent with declared occupation",
+          "Screen names against INTERPOL Purple Notices and national trafficking watchlists",
+        ],
+      },
+      {
+        title: "2. Recruitment & control patterns",
+        required: true,
+        checks: [
+          "Identify payments to recruitment agencies in high-risk source countries (Philippines, Ethiopia, Bangladesh, Nepal)",
+          "Flag visa-fee or 'debt-bondage' style repayments deducted from wages",
+          "Review payroll structures where one entity controls wages for many workers",
+          "Check for travel-agency or airline bookings inconsistent with business profile",
+        ],
+      },
+      {
+        title: "3. Financial flow analysis",
+        required: true,
+        checks: [
+          "Map beneficiary accounts — flag if funds quickly moved to a controlling third party",
+          "Identify regular, small-amount transfers to the same international beneficiary (remittance controller)",
+          "Assess whether the volume of inflows is consistent with the customer's declared lawful income",
+          "Cross-reference with law enforcement tipoffs or court records if available",
+        ],
+      },
+      {
+        title: "4. Escalation",
+        required: true,
+        checks: [
+          "Escalate to MLRO immediately if trafficking indicators are present — do not tip off the customer",
+          "File STR within 24 hours of MLRO determination to report",
+          "Preserve all account records and do not close the account without FIU guidance",
+          "Notify law enforcement via FIU if immediate risk to a victim is suspected",
+        ],
+      },
+    ],
+  },
+  {
+    id: "tax-evasion",
+    title: "Tax Evasion Red Flags",
+    typology: "tax_evasion",
+    family: "ML",
+    steps: [
+      {
+        title: "1. Undeclared offshore structures",
+        required: true,
+        checks: [
+          "Identify accounts in secrecy jurisdictions (BVI, Cayman, Panama, Seychelles) with no disclosed tax reason",
+          "Flag shell companies with no substance — nominee directors, no employees, no office",
+          "Screen for use of multiple jurisdictions to obscure the trail between income and asset",
+          "Check if the customer's declared tax residency is consistent with their transaction geography",
+        ],
+      },
+      {
+        title: "2. Invoice manipulation",
+        required: true,
+        checks: [
+          "Compare declared revenues against transactional inflows — material gap is a red flag",
+          "Flag round-number invoices with vague service descriptions ('consultancy', 'advisory')",
+          "Check for payments to related parties at non-arm's-length prices",
+          "Identify credit notes or invoices reversed immediately after period-end",
+        ],
+      },
+      {
+        title: "3. Cash & unreported income",
+        required: true,
+        checks: [
+          "Flag lifestyle discrepancy — assets and expenditure inconsistent with declared income",
+          "Identify large cash deposits without corresponding business revenue",
+          "Check for high-value purchases (property, luxury goods, vehicles) paid via private accounts",
+          "Review source-of-funds declarations for completeness and credibility",
+        ],
+      },
+      {
+        title: "4. STR obligation under FATF R.3",
+        required: false,
+        checks: [
+          "Tax evasion is a predicate offence for money laundering under UAE AML framework",
+          "Assess whether proceeds of evasion are being laundered through the customer's accounts",
+          "If ML indicators are present, file STR — tax motive does not reduce the ML risk",
+          "Document MLRO decision and legal basis regardless of filing outcome",
+        ],
+      },
+    ],
+  },
+  {
+    id: "insider-threat",
+    title: "Insider Threat & Internal Fraud",
+    typology: "insider_threat",
+    family: "Fraud",
+    steps: [
+      {
+        title: "1. Access & behaviour monitoring",
+        required: true,
+        checks: [
+          "Review system access logs for unusual after-hours access to customer records or case files",
+          "Flag bulk data exports or large file downloads outside normal workflows",
+          "Identify employees accessing records of accounts they are not assigned to",
+          "Monitor for repeated failed authentication or use of shared credentials",
+        ],
+      },
+      {
+        title: "2. Transaction anomalies",
+        required: true,
+        checks: [
+          "Identify transactions approved by the same employee repeatedly outside their authorisation limit",
+          "Flag manual overrides of automated screening alerts by a single analyst",
+          "Check for customer accounts linked to employee addresses, phone numbers, or emails",
+          "Review refund, reversal, or credit transactions processed by a single employee without dual approval",
+        ],
+      },
+      {
+        title: "3. Whistleblower intelligence",
+        required: true,
+        checks: [
+          "Treat all whistleblower reports of internal fraud as immediately MLRO-reportable",
+          "Preserve relevant system logs and records before notifying the suspected employee",
+          "Involve HR, Legal, and the MLRO in parallel — do not conduct informal investigation alone",
+          "Assess whether the internal fraud constitutes predicate ML requiring STR",
+        ],
+      },
+      {
+        title: "4. Escalation & containment",
+        required: true,
+        checks: [
+          "Suspend system access of the suspected employee immediately upon reasonable grounds",
+          "Engage forensic IT to preserve evidence without alerting the subject",
+          "File STR if employee-facilitated ML is suspected — notify Board and Audit Committee",
+          "Review all cases handled by the suspected employee in the prior 24 months",
+        ],
+      },
+    ],
+  },
+  {
+    id: "environmental-crime",
+    title: "Environmental Crime & Illegal Extraction",
+    typology: "environmental_crime",
+    family: "EOCN",
+    steps: [
+      {
+        title: "1. Supply-chain provenance",
+        required: true,
+        checks: [
+          "Obtain documentation of mine of origin for all metals and minerals",
+          "Check against IPIS, Global Witness, and UN GoE reports for illegal mining in the source region",
+          "Verify no source mine appears on any environmental-crime watchlist or debarment register",
+          "Confirm LBMA / RJC Chain-of-Custody certification covers the full upstream chain",
+        ],
+      },
+      {
+        title: "2. Regulatory permit verification",
+        required: true,
+        checks: [
+          "Obtain valid mining, export, and transport permits for each shipment",
+          "Cross-check permit numbers against the issuing government's public registry",
+          "Flag permits that appear altered, expired, or issued by unauthorised authorities",
+          "Confirm taxes and royalties have been declared and paid to the source-country government",
+        ],
+      },
+      {
+        title: "3. CAHRA & conflict nexus",
+        required: true,
+        checks: [
+          "Identify if source area is on the CAHRA list or subject to UN arms embargo",
+          "Check for any nexus to artisanal and small-scale mining (ASM) operations",
+          "Screen counterparties against EOCN List B and UN Panel of Experts named entities",
+          "Escalate to MLRO if any CAHRA or conflict-mineral indicator is present",
+        ],
+      },
+      {
+        title: "4. Environmental due diligence",
+        required: false,
+        checks: [
+          "Obtain environmental impact assessment or equivalent for the source mine",
+          "Check for NGO or investigative-journalism reports of illegal logging, fishing, or dumping linked to the supplier",
+          "Assess whether proceeds appear to derive from environmental crime (illegal wildlife trade, illegal logging)",
+          "Document and escalate if environmental crime indicators are present — these are predicate ML offences under FATF",
+        ],
+      },
+    ],
+  },
+  {
     id: "hv-dealer",
     title: "High-Value Dealer (Non-Gold DPMS)",
     typology: "hv_dealer",
