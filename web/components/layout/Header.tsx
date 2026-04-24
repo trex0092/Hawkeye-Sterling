@@ -16,6 +16,7 @@ const NAV_TABS = [
   { key: "nav.workbench", label: "Workbench", href: "/workbench" },
   { key: "nav.screening", label: "Screening", href: "/screening" },
   { key: "nav.batch", label: "Batch", href: "/batch" },
+  { key: "nav.intel", label: "Intel", href: "/intel" },
   { key: "nav.cases", label: "Cases", href: "/cases" },
   { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
@@ -30,7 +31,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Intelligence",
     items: [
       { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
-      { label: "Intel", href: "/intel", hint: "Adverse-media ticker" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
