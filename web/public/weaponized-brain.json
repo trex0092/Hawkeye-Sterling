@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-23T11:12:32.025Z",
+  "generatedAt": "2026-04-24T13:23:34.981Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-23T11:12:32.021Z",
+    "generatedAt": "2026-04-24T13:23:34.977Z",
     "charter": {
       "prohibitions": [
         {
@@ -69,7 +69,6 @@
         "Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025)",
         "Cabinet Decision No. 74 of 2020 (Terrorism Lists & TFS)",
         "Cabinet Resolution No. 16 of 2021 (administrative penalties)",
-        "Cabinet Resolution No. 156 of 2025 (Schedule of Goods Subject to Due-Diligence · Precious Metals & Gemstones)",
         "MoE DNFBP circulars and guidance (precious-metals sector)",
         "FATF Recommendations and Methodology",
         "LBMA Responsible Gold Guidance"
@@ -315,7 +314,7 @@
           {
             "id": "cybercrime",
             "displayName": "Cybercrime & Digital-Asset Abuse",
-            "keywordCount": 47
+            "keywordCount": 48
           },
           {
             "id": "ai",
@@ -323,7 +322,7 @@
             "keywordCount": 101
           }
         ],
-        "totalKeywords": 737,
+        "totalKeywords": 738,
         "queryLength": 1353
       },
       "doctrines": {
@@ -593,9 +592,9 @@
         }
       },
       "amplifier": {
-        "version": "v1.0.0",
-        "percent": 1000000,
-        "factor": 10000,
+        "version": "v2.0.0",
+        "percent": 1000000000000000,
+        "factor": 10000000000000,
         "directives": [
           "Traverse every registered faculty before emitting a verdict; do not sample.",
           "Apply every named reasoning mode that plausibly fires against the evidence and cite each one by id.",
@@ -651,13 +650,13 @@
     },
     "integrity": {
       "charterHash": "ed3b0986",
-      "catalogueHash": "0568967a"
+      "catalogueHash": "9d076995"
     }
   },
   "integrity": {
     "charterHash": "ed3b0986",
-    "catalogueHash": "0568967a",
-    "compositeHash": "8ff3bff3"
+    "catalogueHash": "9d076995",
+    "compositeHash": "cd19fb3a"
   },
   "enhanced": {
     "extended": {
@@ -684,7 +683,7 @@
       },
       "expertise": {
         "skills": 397,
-        "cognitiveAmplifier": 4
+        "cognitiveAmplifier": 10
       }
     },
     "crossReferences": {
@@ -828,9 +827,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 19,
       "regulatoryRecords": 416,
-      "taxonomyRecords": 230,
+      "taxonomyRecords": 233,
       "skillsRecords": 397,
-      "totalRecords": 1043
+      "totalRecords": 1046
     }
   }
 }
