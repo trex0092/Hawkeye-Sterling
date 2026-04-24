@@ -326,8 +326,195 @@ async function checkBrainSoul(): Promise<BrainSoul> {
   }
 }
 
-// Latency anomaly detection — the brain notices when tail latency (p99)
-// drifts far above the median (p50) and surfaces a human-readable hint.
+// ─── Cognitive grade ────────────────────────────────────────────────────────
+// The brain scores itself and the system on a 100-point scale, then maps the
+// score to a letter grade. Each breakdown item is surfaced in the UI so the
+// MLRO can see exactly why a point was deducted.
+
+interface GradeBreakdown { label: string; max: number; earned: number }
+interface CognitiveGrade {
+  grade: "A+" | "A" | "B" | "C" | "F";
+  score: number;
+  breakdown: GradeBreakdown[];
+}
+
+function computeCognitiveGrade(
+  internal: Check[],
+  external: Check[],
+  soul: BrainSoul,
+): CognitiveGrade {
+  const all = [...internal, ...external];
+  const anyAnomaly = all.some((c) => c.anomalyHint);
+
+  const breakdown: GradeBreakdown[] = [
+    {
+      label: "Soul integrity",
+      max: 35,
+      earned: soul.status === "intact" ? 35 : soul.status === "degraded" ? 15 : 0,
+    },
+    {
+      label: "Internal services",
+      max: 35,
+      earned: internal.every((c) => c.status === "operational") ? 35
+        : internal.every((c) => c.status !== "down") ? 18 : 0,
+    },
+    {
+      label: "External dependencies",
+      max: 15,
+      earned: external.every((c) => c.status === "operational") ? 15
+        : external.every((c) => c.status !== "down") ? 8 : 0,
+    },
+    {
+      label: "Latency health",
+      max: 10,
+      earned: anyAnomaly ? 5 : 10,
+    },
+    {
+      label: "Amplification active",
+      max: 5,
+      earned: soul.amplificationPercent > 0 ? 5 : 0,
+    },
+  ];
+
+  const score = breakdown.reduce((s, b) => s + b.earned, 0);
+  const grade: CognitiveGrade["grade"] =
+    score >= 98 ? "A+" : score >= 85 ? "A" : score >= 70 ? "B" : score >= 50 ? "C" : "F";
+
+  return { grade, score, breakdown };
+}
+
+// ─── Compliance threat surface ───────────────────────────────────────────────
+// When a service degrades or goes down, the brain maps the failure to every
+// compliance function that depends on it — giving the MLRO an immediate
+// picture of what screening capabilities are impaired.
+
+interface ThreatEntry {
+  complianceFunction: string;
+  severity: "critical" | "major" | "minor";
+  affectedService: string;
+  serviceStatus: "degraded" | "down";
+}
+interface ThreatSurface { clear: boolean; impaired: ThreatEntry[] }
+
+const COMPLIANCE_MAP: Record<string, Array<{ fn: string; sev: "critical" | "major" | "minor" }>> = {
+  "screening": [
+    { fn: "Sanctions screening (UN / OFAC / EU / UK / UAE)", sev: "critical" },
+    { fn: "PEP detection & EDD initiation",                  sev: "critical" },
+    { fn: "KYC / CDD subject intake",                        sev: "critical" },
+    { fn: "STR trigger evaluation",                           sev: "major"    },
+  ],
+  "weaponized-brain": [
+    { fn: "Charter-compliant verdict generation (P1–P10)",   sev: "critical" },
+    { fn: "Amplified reasoning chain — all 10 faculties",    sev: "critical" },
+    { fn: "Integrity-sealed audit line (charter + catalogue hashes)", sev: "major" },
+  ],
+  "super-brain": [
+    { fn: "Redline evaluation — hard-stop rules",            sev: "critical" },
+    { fn: "Multi-layer cognitive analysis",                   sev: "major"    },
+    { fn: "quickScreen verdict composition",                  sev: "major"    },
+  ],
+  "adverse-media": [
+    { fn: "Adverse media classification (5 categories, 180+ keywords)", sev: "major" },
+    { fn: "Negative news enrichment for PEP / EDD reports",  sev: "major"    },
+  ],
+  "storage": [
+    { fn: "Case & maintenance-window persistence",            sev: "major"    },
+    { fn: "Sanctions list report store",                      sev: "minor"    },
+  ],
+  "asana": [
+    { fn: "MLRO inbox delivery",                              sev: "minor"    },
+    { fn: "STR / SAR task creation",                          sev: "minor"    },
+  ],
+  "news-feed": [
+    { fn: "Real-time adverse media feed (Google / GDELT)",    sev: "minor"    },
+  ],
+};
+
+function computeThreatSurface(internal: Check[], external: Check[]): ThreatSurface {
+  const impaired: ThreatEntry[] = [];
+  for (const c of [...internal, ...external]) {
+    if (c.status === "operational") continue;
+    const map = COMPLIANCE_MAP[c.name.toLowerCase()];
+    if (!map) continue;
+    for (const { fn, sev } of map) {
+      impaired.push({
+        complianceFunction: fn,
+        severity: sev,
+        affectedService: c.name,
+        serviceStatus: c.status,
+      });
+    }
+  }
+  impaired.sort((a, b) => ({ critical: 0, major: 1, minor: 2 }[a.severity] - { critical: 0, major: 1, minor: 2 }[b.severity]));
+  return { clear: impaired.length === 0, impaired };
+}
+
+// ─── Brain narrative ─────────────────────────────────────────────────────────
+// The brain writes a concise, MLRO-style system assessment every cycle.
+// This is deterministic — no LLM call — computed from the live check results.
+
+function computeBrainNarrative(
+  internal: Check[],
+  external: Check[],
+  soul: BrainSoul,
+  grade: CognitiveGrade,
+): string {
+  const all = [...internal, ...external];
+  const down     = all.filter((c) => c.status === "down");
+  const degraded = all.filter((c) => c.status === "degraded");
+  const anomalies = all.filter((c) => c.anomalyHint);
+
+  if (soul.status === "compromised") {
+    return (
+      "CRITICAL — Brain soul integrity cannot be verified: the weaponized manifest is absent or corrupt. " +
+      "All compliance screening outputs must be treated as unverified until the soul is restored. " +
+      "MLRO review is required before any case decisions are issued."
+    );
+  }
+
+  if (down.length > 0) {
+    const names = down.map((c) => c.name).join(", ");
+    return (
+      `${down.length} service${down.length > 1 ? "s are" : " is"} DOWN (${names}). ` +
+      "Compliance screening capacity is materially impaired — affected functions cannot produce auditable verdicts. " +
+      `MLRO escalation required. Cognitive grade: ${grade.grade} (${grade.score}/100). ` +
+      "Brain continues self-monitoring; recovery will be reflected on the next 15-second poll."
+    );
+  }
+
+  if (degraded.length > 0) {
+    const names = degraded.map((c) => c.name).join(", ");
+    const anomalyClause = anomalies.length > 0
+      ? ` Latency tail widening on ${anomalies.map((c) => c.name).join(", ")} — tail risk elevated.`
+      : "";
+    return (
+      `${degraded.length} service${degraded.length > 1 ? "s" : ""} degraded (${names}). ` +
+      "Screening remains operational but confidence bands are wider than nominal. " +
+      `MLRO should apply additional manual review to cases touching affected services.${anomalyClause}`
+    );
+  }
+
+  if (anomalies.length > 0) {
+    return (
+      `All ${all.length} services operational. ` +
+      `Latency tail widening detected on ${anomalies.map((c) => c.name).join(", ")} — no screening capacity impact confirmed; monitoring recommended. ` +
+      `Charter integrity seal: ${soul.compositeHash}.`
+    );
+  }
+
+  return (
+    `All ${all.length} services operational. ` +
+    `${soul.catalogue.faculties} faculties, ${soul.catalogue.reasoningModes} reasoning modes, ` +
+    `${soul.catalogue.skills} MLRO skills, and ${soul.catalogue.metaCognition} meta-cognition primitives active and verified. ` +
+    `System cleared for full-amplification compliance screening at ` +
+    `+${soul.amplificationPercent.toLocaleString("en-US")}% cognitive gain. ` +
+    `Integrity seal: ${soul.compositeHash}.`
+  );
+}
+
+// ─── Latency anomaly detection ───────────────────────────────────────────────
+// The brain notices when tail latency (p99) drifts far above the median (p50)
+// and surfaces a human-readable hint.
 function annotateLatencyAnomalies(checks: Check[]): Check[] {
   return checks.map((c) => {
     if (!c.p50 || !c.p99 || c.p50 === 0) return c;
@@ -566,6 +753,12 @@ export async function GET(): Promise<NextResponse> {
       ? "degraded"
       : "operational";
 
+  // Brain intelligence — grade, narrative, and threat surface are synchronous
+  // derivations from the already-resolved checks and soul. No extra I/O.
+  const cognitiveGrade   = computeCognitiveGrade(internalChecks, externalChecks, brainSoul);
+  const brainNarrative   = computeBrainNarrative(internalChecks, externalChecks, brainSoul, cognitiveGrade);
+  const threatSurface    = computeThreatSurface(internalChecks, externalChecks);
+
   const nowMs = Date.now();
   const startedMs = Date.parse(STARTED_AT);
   const uptimeSec = Math.max(0, Math.round((nowMs - startedMs) / 1_000));
@@ -671,6 +864,9 @@ export async function GET(): Promise<NextResponse> {
     dependencyGraph,
     errorHeatmap,
     brainSoul,
+    cognitiveGrade,
+    brainNarrative,
+    threatSurface,
     sla: {
       uptimeTargetPct: 99.99,
       rolling: currentSla(worstStatus),

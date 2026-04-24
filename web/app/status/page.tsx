@@ -30,6 +30,21 @@ interface BrainSoul {
   };
 }
 
+interface GradeBreakdown { label: string; max: number; earned: number }
+interface CognitiveGrade {
+  grade: "A+" | "A" | "B" | "C" | "F";
+  score: number;
+  breakdown: GradeBreakdown[];
+}
+
+interface ThreatEntry {
+  complianceFunction: string;
+  severity: "critical" | "major" | "minor";
+  affectedService: string;
+  serviceStatus: "degraded" | "down";
+}
+interface ThreatSurface { clear: boolean; impaired: ThreatEntry[] }
+
 interface SanctionsList {
   id: string;
   ageH: number | null;
@@ -100,6 +115,9 @@ interface StatusPayload {
   deploys: DeployEntry[];
   dependencyGraph: DependencyGraph;
   brainSoul?: BrainSoul;
+  cognitiveGrade?: CognitiveGrade;
+  brainNarrative?: string;
+  threatSurface?: ThreatSurface;
   sla: {
     uptimeTargetPct: number;
     rolling: { window30d: number; window90d: number; windowYtd: number };
@@ -252,6 +270,20 @@ export default function StatusPage() {
                   All services{" "}
                   {data.status === "operational" ? "operational" : data.status}
                 </span>
+                {data.cognitiveGrade && (
+                  <div className="ml-auto text-right">
+                    <div className={`font-mono text-26 font-bold leading-none ${
+                      data.cognitiveGrade.grade === "A+" || data.cognitiveGrade.grade === "A" ? "text-green"
+                      : data.cognitiveGrade.grade === "B" ? "text-amber"
+                      : "text-red"
+                    }`}>
+                      {data.cognitiveGrade.grade}
+                    </div>
+                    <div className="font-mono text-10 text-ink-3">
+                      {data.cognitiveGrade.score}/100
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex gap-8 text-12 text-ink-2 font-mono flex-wrap">
                 <span>
@@ -286,6 +318,19 @@ export default function StatusPage() {
             </div>
 
             {data.brainSoul && <BrainSoulPanel soul={data.brainSoul} />}
+
+            {data.brainNarrative && data.brainSoul && (
+              <BrainNarrativePanel
+                narrative={data.brainNarrative}
+                compositeHash={data.brainSoul.compositeHash}
+                grade={data.cognitiveGrade}
+                now={data.now}
+              />
+            )}
+
+            {data.threatSurface && !data.threatSurface.clear && (
+              <ThreatSurfacePanel surface={data.threatSurface} />
+            )}
 
             <Section title="Internal services">
               <div className="space-y-2">
@@ -515,6 +560,104 @@ export default function StatusPage() {
         )}
       </div>
     </ModuleLayout>
+  );
+}
+
+const GRADE_COLOR: Record<CognitiveGrade["grade"], string> = {
+  "A+": "text-green",
+  "A":  "text-green",
+  "B":  "text-amber",
+  "C":  "text-orange-500",
+  "F":  "text-red",
+};
+
+function BrainNarrativePanel({
+  narrative,
+  compositeHash,
+  grade,
+  now,
+}: {
+  narrative: string;
+  compositeHash: string;
+  grade?: CognitiveGrade;
+  now: string;
+}) {
+  return (
+    <div className="mb-6">
+      <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">
+        Brain assessment
+      </div>
+      <div className="bg-bg-panel border border-hair-2 rounded-lg px-5 py-4">
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="font-mono text-10 text-ink-3 uppercase tracking-wide">
+            Cognitive assessment · {new Date(now).toISOString().slice(0, 10)}
+          </span>
+          {grade && (
+            <div className="flex items-baseline gap-2">
+              {grade.breakdown.map((b) => (
+                <span key={b.label} className="font-mono text-10 text-ink-3" title={b.label}>
+                  {b.label.split(" ")[0].toLowerCase()}:{" "}
+                  <span className={b.earned === b.max ? "text-green" : b.earned > 0 ? "text-amber" : "text-red"}>
+                    {b.earned}/{b.max}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="font-mono text-12 text-ink-1 leading-relaxed">{narrative}</p>
+        <div className="mt-3 pt-3 border-t border-hair flex items-center justify-between">
+          <span className="font-mono text-10 text-ink-3">
+            seal: <span className="text-ink-2">{compositeHash}</span>
+          </span>
+          {grade && (
+            <span className={`font-mono text-11 font-bold ${GRADE_COLOR[grade.grade]}`}>
+              grade {grade.grade} · {grade.score}/100
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const THREAT_SEV_TONE = {
+  critical: { bg: "bg-red-dim",   text: "text-red",   label: "CRITICAL" },
+  major:    { bg: "bg-amber-dim", text: "text-amber",  label: "MAJOR"    },
+  minor:    { bg: "bg-blue-dim",  text: "text-blue",   label: "MINOR"    },
+};
+
+function ThreatSurfacePanel({ surface }: { surface: ThreatSurface }) {
+  const critCount = surface.impaired.filter((e) => e.severity === "critical").length;
+  const headline = critCount > 0
+    ? `${critCount} critical compliance function${critCount > 1 ? "s" : ""} impaired — MLRO escalation required`
+    : `${surface.impaired.length} compliance function${surface.impaired.length > 1 ? "s" : ""} impaired — additional manual review required`;
+
+  return (
+    <div className="mb-6">
+      <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">
+        Compliance threat surface
+      </div>
+      <div className={`bg-bg-panel border rounded-lg p-4 ${critCount > 0 ? "border-red/40" : "border-amber/40"}`}>
+        <div className="text-12 text-ink-0 font-medium mb-3">{headline}</div>
+        <div className="space-y-1.5">
+          {surface.impaired.map((e, i) => {
+            const tone = THREAT_SEV_TONE[e.severity];
+            return (
+              <div key={i} className="flex items-center gap-3 flex-wrap">
+                <span className={`font-mono text-10 font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${tone.bg} ${tone.text}`}>
+                  {tone.label}
+                </span>
+                <span className="text-12 text-ink-1 flex-1 min-w-0">{e.complianceFunction}</span>
+                <span className="font-mono text-10 text-ink-3 flex-shrink-0">
+                  {e.affectedService} · {e.serviceStatus}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
