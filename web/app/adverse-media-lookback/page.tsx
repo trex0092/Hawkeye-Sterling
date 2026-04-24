@@ -19,6 +19,46 @@ type AmCategory =
   | "terrorism"
   | "environmental"
   | "labour"
+  | "tax_evasion"
+  | "drug_trafficking"
+  | "human_trafficking"
+  | "cybercrime"
+  | "insider_trading"
+  | "embezzlement"
+  | "regulatory_action"
+  | "asset_seizure"
+  | "reputational"
+  | "insolvency"
+  | "data_breach"
+  | "market_manipulation"
+  | "trade_sanctions"
+  | "weapons"
+  | "organised_crime"
+  | "real_estate_ml"
+  | "pf_nuclear"
+  | "political_risk"
+  | "conflict_minerals"
+  | "vasp_crypto"
+  | "document_fraud"
+  | "extortion"
+  | "illegal_mining"
+  | "wildlife_crime"
+  | "illegal_fishing"
+  | "deforestation"
+  | "antitrust"
+  | "counterfeit"
+  | "insurance_fraud"
+  | "healthcare_fraud"
+  | "procurement_fraud"
+  | "piracy"
+  | "ngo_misuse"
+  | "privacy_gdpr"
+  | "bribery_public"
+  | "securities_fraud"
+  | "ponzi_scheme"
+  | "bankruptcy_fraud"
+  | "identity_theft"
+  | "smuggling"
   | "other";
 
 interface AmEntry {
@@ -39,16 +79,56 @@ const CURRENT_YEAR = new Date().getFullYear();
 const LOOKBACK_YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
 
 const CAT_LABELS: Record<AmCategory, string> = {
-  fraud_forgery: "Fraud / Forgery",
-  law_enforcement: "Law Enforcement",
-  money_laundering: "Money Laundering",
-  sanctions: "Sanctions / Watchlist",
-  proliferation: "Proliferation",
-  corruption: "Corruption / Bribery",
-  terrorism: "Terrorism / TF",
-  environmental: "Environmental Crime",
-  labour: "Labour / Human Rights",
-  other: "Other",
+  fraud_forgery:      "Fraud / Forgery",
+  law_enforcement:    "Law Enforcement",
+  money_laundering:   "Money Laundering",
+  sanctions:          "Sanctions / Watchlist",
+  proliferation:      "Proliferation / WMD",
+  corruption:         "Corruption / Bribery",
+  terrorism:          "Terrorism / TF",
+  environmental:      "Environmental Crime",
+  labour:             "Labour / Human Rights",
+  tax_evasion:        "Tax Evasion / Tax Crime",
+  drug_trafficking:   "Drug Trafficking / Narcotics",
+  human_trafficking:  "Human Trafficking / Modern Slavery",
+  cybercrime:         "Cybercrime / Hacking",
+  insider_trading:    "Insider Trading",
+  embezzlement:       "Embezzlement / Misappropriation",
+  regulatory_action:  "Regulatory Action / Fine",
+  asset_seizure:      "Asset Seizure / Confiscation",
+  reputational:       "Reputational / Misconduct",
+  insolvency:         "Insolvency / Bankruptcy",
+  data_breach:        "Data Breach / Privacy Violation",
+  market_manipulation:"Market Manipulation / Price Fixing",
+  trade_sanctions:    "Trade Sanctions / Export Control",
+  weapons:            "Weapons / Arms Trade",
+  organised_crime:    "Organised Crime / Racketeering",
+  real_estate_ml:     "Real Estate Money Laundering",
+  pf_nuclear:         "Nuclear / Radiological / CBRN",
+  political_risk:     "Political Risk / State Actors",
+  conflict_minerals:  "Conflict Minerals / EOCN",
+  vasp_crypto:        "Crypto / Virtual Asset Fraud",
+  document_fraud:     "Document Fraud / Identity Theft",
+  extortion:          "Extortion / Blackmail",
+  illegal_mining:     "Illegal Mining / Extraction",
+  wildlife_crime:     "Wildlife Trafficking / CITES",
+  illegal_fishing:    "Illegal Fishing / IUU",
+  deforestation:      "Deforestation / Forestry Crime",
+  antitrust:          "Antitrust / Cartel / Competition",
+  counterfeit:        "Counterfeit Goods / IP Crime",
+  insurance_fraud:    "Insurance Fraud",
+  healthcare_fraud:   "Healthcare / Pharmaceutical Fraud",
+  procurement_fraud:  "Construction / Procurement Fraud",
+  piracy:             "Maritime Piracy / Smuggling",
+  ngo_misuse:         "NGO / Charity Misuse",
+  privacy_gdpr:       "Privacy / GDPR / Data Protection",
+  bribery_public:     "Public Official Bribery / FCPA",
+  securities_fraud:   "Securities Fraud / Capital Markets",
+  ponzi_scheme:       "Ponzi / Pyramid Scheme",
+  bankruptcy_fraud:   "Bankruptcy / Creditor Fraud",
+  identity_theft:     "Identity Theft / Impersonation",
+  smuggling:          "Smuggling / Customs Fraud",
+  other:              "Other",
 };
 
 const SEV_TONE: Record<AmSeverity, string> = {
