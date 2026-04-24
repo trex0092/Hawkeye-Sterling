@@ -57,11 +57,13 @@ const KEYWORD_GROUP_WEIGHT: Record<AdverseKeywordGroup, number> = {
   "bribery-corruption": 14,
   "money-laundering": 14,
   "organised-crime": 14,
+  "environmental-crime": 12,
   "human-trafficking": 12,
   "fraud-forgery": 12,
   "market-abuse": 10,
   "tax-crime": 10,
   "cybercrime": 10,
+  "insider-threat": 10,
   "law-enforcement": 6,
   "ai-misuse": 6,
   "political-exposure": 2,
@@ -139,7 +141,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ]
       : adverseMediaLive;
 
-    // 3b · ESG classifier — 27 ESG-relevant categories across 5 domains,
+    // 3b · ESG classifier — 28 ESG-relevant categories across 5 domains,
     //      mapped to SASB / EU Taxonomy / UN SDGs.
     const fullText = [
       mediaText,

@@ -1,6 +1,6 @@
 // Hawkeye Sterling — ESG classifier.
 //
-// 27 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
+// 28 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
 // with the globally recognised frameworks they map to (SASB Materiality Matrix,
 // EU Taxonomy, UN Sustainable Development Goals).
 //
@@ -219,6 +219,25 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     keywords: ["sec fine", "consent decree", "regulatory fine", "enforcement action", "debarment", "settlement with doj"],
     sasb: "Leadership & Governance · Management of the Legal Environment",
     sdg: ["16"],
+  },
+  // Wave 4 — carbon-market fraud pillar. Sits in legal-regulatory because
+  // it's a financial-crime typology (false offsets, phantom credits, double
+  // counting) distinct from the emissions / green-innovation categories.
+  {
+    id: "carbon-market-fraud",
+    domain: "legal-regulatory-affairs",
+    label: "Carbon market & offset fraud",
+    keywords: [
+      "carbon fraud", "carbon credit fraud",
+      "offset fraud", "carbon offset fraud",
+      "phantom credit", "ghost credit", "fake offset",
+      "carbon washing",
+      "carbon double counting", "double-counted credits",
+      "voluntary carbon market fraud", "vcm fraud",
+    ],
+    sasb: "Leadership & Governance · Business Ethics",
+    euTaxonomy: "Climate change mitigation",
+    sdg: ["13", "16"],
   },
   // AI governance pillar sourced from Hartono et al., "The Dual Persona of AI",
   // ICIMCIS 2025 (DOI 10.1109/ICIMCIS68501.2025.11327424): captures the shift
