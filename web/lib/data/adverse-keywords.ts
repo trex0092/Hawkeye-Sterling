@@ -22,7 +22,8 @@ export type AdverseKeywordGroup =
   | "market-abuse"
   | "law-enforcement"
   | "regulatory-action"
-  | "political-exposure";
+  | "political-exposure"
+  | "ai-misuse";
 
 export interface AdverseKeywordRule {
   group: AdverseKeywordGroup;
@@ -147,6 +148,23 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Political exposure",
     terms: [
       "politic", "political", "politician",
+    ],
+  },
+  // AI-misuse / algorithmic-harm floor, informed by Hartono et al., "The Dual
+  // Persona of AI", ICIMCIS 2025. Fires on the concrete harms the paper's
+  // Dilemma Persona anticipates: biased automated decisions, opaque models,
+  // synthetic-media abuse, and AI-enabled fraud.
+  {
+    group: "ai-misuse",
+    label: "AI misuse & algorithmic harm",
+    terms: [
+      "algorithmic bias", "algorithmic discrimination",
+      "ai bias", "biased algorithm", "automated discrimination",
+      "deepfake", "deep fake", "synthetic media abuse",
+      "ai-generated disinformation", "generative ai abuse",
+      "ai-enabled fraud", "ai impersonation", "voice cloning fraud",
+      "facial recognition misuse", "ai surveillance abuse",
+      "predictive policing bias", "black-box decision",
     ],
   },
 ];

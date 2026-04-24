@@ -1,6 +1,6 @@
 // Hawkeye Sterling — ESG classifier.
 //
-// 25 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
+// 26 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
 // with the globally recognised frameworks they map to (SASB Materiality Matrix,
 // EU Taxonomy, UN Sustainable Development Goals).
 //
@@ -208,6 +208,27 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     keywords: ["sec fine", "consent decree", "regulatory fine", "enforcement action", "debarment", "settlement with doj"],
     sasb: "Leadership & Governance · Management of the Legal Environment",
     sdg: ["16"],
+  },
+  // AI governance pillar sourced from Hartono et al., "The Dual Persona of AI",
+  // ICIMCIS 2025 (DOI 10.1109/ICIMCIS68501.2025.11327424): captures the shift
+  // from AI-as-tool to AI-as-subject and the three ethical gaps the paper
+  // names — Explainability Gap, Algorithmic Bias, and Nonhuman Ethical Gap.
+  {
+    id: "ai-governance-ethics",
+    domain: "legal-regulatory-affairs",
+    label: "AI governance & algorithmic ethics",
+    keywords: [
+      "algorithmic bias", "algorithm bias", "ai bias", "biased algorithm",
+      "algorithmic discrimination", "automated discrimination",
+      "algorithmic accountability", "algorithmic transparency",
+      "explainability gap", "explainable ai", "black-box ai", "black box ai",
+      "ai governance", "ai ethics", "responsible ai", "ai oversight",
+      "ai regulation", "ai act", "eu ai act", "ai liability",
+      "automated decision-making", "automated decision making",
+      "model risk", "ai audit", "nonhuman ethical gap",
+    ],
+    sasb: "Business Model & Innovation · Systemic Risk Management",
+    sdg: ["9", "10", "16"],
   },
 
   // ── Operational Risk & Crisis ────────────────────────────────
