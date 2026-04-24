@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
+import {
+  loadOperatorRole,
+  saveOperatorRole,
+  ROLE_LABEL,
+  CARD_ROLES,
+  type OperatorRole,
+} from "@/lib/data/operator-role";
 
 const NAV_TABS = [
   { key: "nav.workbench", label: "Workbench", href: "/workbench" },
@@ -209,6 +216,7 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
+          <HeaderUserCard />
           <select
             value={locale}
             onChange={(e) => pickLocale(e.target.value as Locale)}
@@ -235,6 +243,140 @@ export function Header() {
       </nav>
       <RegulatoryTicker />
     </header>
+  );
+}
+
+function HeaderUserCard() {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<OperatorRole>("mlro");
+  const [open, setOpen] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const n = localStorage.getItem("hawkeye.operator");
+      if (n) setName(n);
+    } catch { /* localStorage disabled */ }
+    setRole(loadOperatorRole());
+    const sync = () => {
+      setRole(loadOperatorRole());
+      try {
+        const n = localStorage.getItem("hawkeye.operator");
+        setName(n ?? "");
+      } catch { /* ignore */ }
+    };
+    window.addEventListener("hawkeye:operator-role-updated", sync);
+    window.addEventListener("hawkeye:operator-updated", sync);
+    return () => {
+      window.removeEventListener("hawkeye:operator-role-updated", sync);
+      window.removeEventListener("hawkeye:operator-updated", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const saveName = () => {
+    const n = draftName.trim();
+    setName(n);
+    try {
+      n
+        ? localStorage.setItem("hawkeye.operator", n)
+        : localStorage.removeItem("hawkeye.operator");
+      window.dispatchEvent(new CustomEvent("hawkeye:operator-updated"));
+    } catch { /* localStorage disabled */ }
+    setOpen(false);
+  };
+
+  const selectRole = (r: OperatorRole) => {
+    saveOperatorRole(r);
+    setRole(r);
+  };
+
+  const initial = name ? name[0].toUpperCase() : "·";
+
+  return (
+    <div className="relative shrink-0" ref={ref}>
+      <button
+        type="button"
+        onClick={() => {
+          setDraftName(name);
+          setOpen((v) => !v);
+        }}
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-hair-2 hover:border-hair text-ink-1 hover:text-ink-0 transition-colors"
+        title="User profile"
+      >
+        <span className="w-[18px] h-[18px] border border-ink-2 flex items-center justify-center font-display text-[10px] font-semibold text-ink-1 leading-none shrink-0">
+          {initial}
+        </span>
+        <span className="hidden lg:flex flex-col leading-none gap-[1px] text-left">
+          <span className="text-[11px] font-semibold text-ink-0 truncate max-w-[90px]">
+            {name || "Set name"}
+          </span>
+          <span className="text-[8.5px] font-mono uppercase tracking-[0.1em] text-ink-3">
+            {ROLE_LABEL[role]} · 09:00–18:00
+          </span>
+        </span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 z-50 w-52 bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3">
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
+            Name
+          </div>
+          <input
+            autoFocus
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveName();
+              if (e.key === "Escape") setOpen(false);
+            }}
+            placeholder="Full name"
+            className="w-full bg-bg-1 border border-hair-2 rounded px-2 py-1 text-12 text-ink-0 outline-none focus:border-brand mb-3"
+          />
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
+            Role
+          </div>
+          <div className="flex flex-col gap-1 mb-3">
+            {CARD_ROLES.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => selectRole(r)}
+                className={`text-left px-2 py-1 rounded text-12 font-medium transition-colors ${
+                  r === role
+                    ? "bg-brand text-white"
+                    : "hover:bg-bg-2 text-ink-1"
+                }`}
+              >
+                {ROLE_LABEL[r]}
+              </button>
+            ))}
+          </div>
+          <div className="text-10 text-ink-3 border-t border-hair pt-2 mb-2">
+            Shift:{" "}
+            <span className="font-mono font-semibold text-ink-1">
+              09:00–18:00
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={saveName}
+            className="w-full text-11 font-semibold bg-brand text-white px-2 py-1 rounded hover:bg-brand/90"
+          >
+            Save
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

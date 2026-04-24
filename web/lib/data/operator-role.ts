@@ -59,11 +59,18 @@ export function saveOperatorRole(role: OperatorRole): void {
 
 export const ROLE_LABEL: Record<OperatorRole, string> = {
   analyst:              "Analyst",
-  compliance_assistant: "C. Assistant",
+  compliance_assistant: "CO Assistant",
   co:                   "CO",
-  mlro:                 "MLRO",
+  mlro:                 "MLRO / CO",
   managing_director:    "MD",
 };
+
+// Roles available in the user-profile card (MLRO/CO, CO Assistant, MD).
+export const CARD_ROLES: OperatorRole[] = [
+  "mlro",
+  "compliance_assistant",
+  "managing_director",
+];
 
 export const ROLE_POWER: Record<OperatorRole, number> = {
   analyst:              1,
