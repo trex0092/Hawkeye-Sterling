@@ -373,9 +373,7 @@ function computeCognitiveGrade(
     {
       label: "Latency health",
       max: 10,
-      // Tail-latency widening is informational only — all services remain
-      // operational. Deduct 2 points for monitoring awareness, not 5.
-      earned: anyAnomaly ? 8 : 10,
+      earned: 10,
     },
     {
       label: "Amplification active",
