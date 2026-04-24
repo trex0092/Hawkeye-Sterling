@@ -63,6 +63,7 @@ const KEYWORD_GROUP_WEIGHT: Record<AdverseKeywordGroup, number> = {
   "tax-crime": 10,
   "cybercrime": 10,
   "law-enforcement": 6,
+  "ai-misuse": 6,
   "political-exposure": 2,
 };
 
@@ -138,7 +139,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ]
       : adverseMediaLive;
 
-    // 3b · ESG classifier — 25 ESG-relevant categories across 5 domains,
+    // 3b · ESG classifier — 27 ESG-relevant categories across 5 domains,
     //      mapped to SASB / EU Taxonomy / UN SDGs.
     const fullText = [
       mediaText,
