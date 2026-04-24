@@ -3,19 +3,22 @@
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
-// Vendor Due Diligence — supplier-specific onboarding workflow.
-// Different risk rubric from customer-facing screening; focuses on
-// supply-chain integrity, LBMA compliance, conflict-mineral risk.
-
 interface Vendor {
   id: string;
   name: string;
   jurisdiction: string;
   tier: "critical" | "significant" | "standard";
   lbmaListed: boolean;
-  lastReview: string;
+  lastReview: string; // stored as YYYY-MM-DD
   nextReview: string;
   flags: string[];
+}
+
+/** "2026-03-12" → "12/03/2026" */
+function fmtDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 const DEFAULT_VENDORS: Vendor[] = [
@@ -51,8 +54,27 @@ const DEFAULT_VENDORS: Vendor[] = [
   },
 ];
 
+const XIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
 export default function VendorDdPage() {
-  const [vendors] = useState<Vendor[]>(DEFAULT_VENDORS);
+  const [vendors, setVendors] = useState<Vendor[]>(DEFAULT_VENDORS);
+
+  const remove = (id: string) => setVendors((vs) => vs.filter((v) => v.id !== id));
 
   return (
     <ModuleLayout narrow>
@@ -94,17 +116,27 @@ export default function VendorDdPage() {
                 <h3 className="text-13 font-semibold text-ink-0 m-0">
                   {v.name}
                 </h3>
-                <span
-                  className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${
-                    v.tier === "critical"
-                      ? "bg-red-dim text-red"
-                      : v.tier === "significant"
-                        ? "bg-amber-dim text-amber"
-                        : "bg-green-dim text-green"
-                  }`}
-                >
-                  {v.tier}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${
+                      v.tier === "critical"
+                        ? "bg-red-dim text-red"
+                        : v.tier === "significant"
+                          ? "bg-amber-dim text-amber"
+                          : "bg-green-dim text-green"
+                    }`}
+                  >
+                    {v.tier}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => remove(v.id)}
+                    aria-label={`Delete ${v.name}`}
+                    className="text-ink-3 hover:text-red transition-colors"
+                  >
+                    <XIcon />
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-4 gap-4 text-11 font-mono mt-2">
                 <div>
@@ -113,19 +145,17 @@ export default function VendorDdPage() {
                 </div>
                 <div>
                   <span className="text-ink-3">LBMA: </span>
-                  <span
-                    className={v.lbmaListed ? "text-green" : "text-amber"}
-                  >
+                  <span className={v.lbmaListed ? "text-green" : "text-amber"}>
                     {v.lbmaListed ? "Good Delivery" : "not listed"}
                   </span>
                 </div>
                 <div>
                   <span className="text-ink-3">Last review: </span>
-                  <span className="text-ink-0">{v.lastReview}</span>
+                  <span className="text-ink-0">{fmtDate(v.lastReview)}</span>
                 </div>
                 <div>
                   <span className="text-ink-3">Next review: </span>
-                  <span className="text-ink-0">{v.nextReview}</span>
+                  <span className="text-ink-0">{fmtDate(v.nextReview)}</span>
                 </div>
               </div>
               {v.flags.length > 0 && (

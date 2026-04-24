@@ -175,10 +175,9 @@ export default function ClientPortalPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
-                Contact email *
+                Contact email
               </label>
               <input
-                required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

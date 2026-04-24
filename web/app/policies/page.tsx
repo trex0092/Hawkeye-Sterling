@@ -7,6 +7,12 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 // policies. Brain cites these inline on every disposition. Versioned
 // locally; operators can edit inline.
 
+function fmtDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 interface Policy {
   id: string;
   section: string;
@@ -148,7 +154,7 @@ export default function PoliciesPage() {
                           {p.title}
                         </h3>
                         <span className="font-mono text-10 text-ink-3">
-                          reviewed {p.lastReviewed}
+                          reviewed {fmtDate(p.lastReviewed)}
                         </span>
                       </div>
                       {editing === p.id ? (
