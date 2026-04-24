@@ -11,7 +11,7 @@ const NAV_TABS = [
   { key: "nav.cases", label: "Cases", href: "/cases" },
   { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
-  { key: "nav.audit", label: "Audit", href: "/audit-trail" },
+  { key: "nav.monitor", label: "Monitoring", href: "/ongoing-monitor" },
   { key: "nav.analytics", label: "Analytics", href: "/analytics" },
   { key: "nav.status", label: "Status", href: "/status" },
 ] as const;
@@ -31,6 +31,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
   {
     title: "Governance",
     items: [
+      { label: "Audit", href: "/audit-trail", hint: "Immutable audit chain" },
       { label: "Regulatory", href: "/regulatory", hint: "Searchable library" },
       { label: "Policies", href: "/policies", hint: "Charter / SOPs" },
       { label: "Playbook", href: "/playbook", hint: "Typology guides" },
@@ -50,7 +51,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Training", href: "/training", hint: "Staff certification" },
       { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
-      { label: "Monitoring", href: "/ongoing-monitor", hint: "Ongoing screening scheduler" },
       { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
     ],
   },
