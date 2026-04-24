@@ -296,7 +296,7 @@ export default function StatusPage() {
                     {data.sanctions.lists.map((l) => {
                       const tone =
                         l.ageH == null
-                          ? "text-amber"
+                          ? "text-ink-3"
                           : l.ageH > 48
                             ? "text-red"
                             : l.ageH > 24

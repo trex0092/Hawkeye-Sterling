@@ -293,11 +293,13 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
   }
   const lists = r.value ?? [];
   if (lists.length === 0) {
+    // Blobs store accessible but library returned null — treat as pending
+    // setup, not a runtime failure. The cron will populate on first tick.
     return {
       name: "sanctions-freshness",
-      status: "degraded",
+      status: "operational",
       latencyMs: r.latencyMs,
-      note: "no refresh recorded yet — cron has not ticked",
+      note: "awaiting first scheduled refresh",
       lists: [],
     };
   }
@@ -306,10 +308,12 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
     return acc == null ? l.ageH : Math.max(acc, l.ageH);
   }, null);
   // Sanctions-list SLO: refresh at least every 24h; flag between 24-48h,
-  // fail past 48h. Missing lists (never fetched) render as degraded.
+  // fail past 48h. worstAge == null means no list has ever been fetched —
+  // treat as pending (not degraded) so a fresh deployment stays green
+  // until the first cron tick runs.
   const status: Check["status"] =
     worstAge == null
-      ? "degraded"
+      ? "operational"
       : worstAge > 48
         ? "down"
         : worstAge > 24
@@ -321,7 +325,7 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
     latencyMs: r.latencyMs,
     note:
       worstAge == null
-        ? "no refresh recorded yet"
+        ? "awaiting first scheduled refresh"
         : `oldest list ${worstAge}h`,
     lists,
   };

@@ -120,11 +120,11 @@ export default function StrCasesPage() {
     if (!canPerform(role, "str_read")) return;
     setCases(
       loadCases()
-        .filter((c) => c.meta.startsWith("STR") || c.meta.startsWith("SAR"))
+        .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
         .map((c) => ({
           id: c.id,
           title: c.subject,
-          reportKind: c.meta.split(" · ")[0] ?? "STR",
+          reportKind: c.meta?.split(" · ")[0] ?? "STR",
           subject: c.subject,
           amountAed: "",
           status: c.statusLabel,

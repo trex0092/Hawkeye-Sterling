@@ -7,9 +7,9 @@ import type { CaseRecord } from "@/lib/types";
 
 // Periodic CDD Review — tracks which customers are due for re-KYC based
 // on their risk tier. Review cadences per FDL 10/2025 Art.11:
-//   High risk (PEP / sanctions hit): 12 months
-//   Medium / elevated risk:          24 months
-//   Standard / low risk:             36 months
+//   High risk (PEP / sanctions hit): 3 months
+//   Medium / elevated risk:          6 months
+//   Standard / low risk:             12 months
 
 type ReviewTier = "high" | "medium" | "standard";
 type ReviewStatus = "overdue" | "due-soon" | "current" | "unknown";
@@ -25,9 +25,15 @@ interface ReviewRecord {
 
 const STORAGE = "hawkeye.cdd-review.v1";
 const CADENCE_DAYS: Record<ReviewTier, number> = {
-  high: 365,
-  medium: 730,
-  standard: 1095,
+  high: 90,
+  medium: 180,
+  standard: 365,
+};
+
+const TIER_LABEL: Record<ReviewTier, string> = {
+  high: "High risk",
+  medium: "Medium risk",
+  standard: "Low risk",
 };
 
 /** "dd/mm/yyyy" → Date | null */
@@ -175,7 +181,7 @@ export default function CddReviewPage() {
             <>
               <strong>Who needs re-KYC and when.</strong> Risk-tiered review
               cadences per FDL 10/2025 Art.11 — high-risk (PEP / sanctions)
-              annually, medium every 24 months, standard every 36 months.
+              every 3 months, medium every 6 months, low risk annually.
               Cases auto-imported; manual subjects can be added.
             </>
           }
@@ -192,9 +198,9 @@ export default function CddReviewPage() {
           <div className="grid grid-cols-4 gap-2">
             <input value={draft.subject} onChange={set("subject")} placeholder="Subject name" className={inputCls} />
             <select value={draft.tier} onChange={set("tier")} className={inputCls}>
-              <option value="high">High risk (12 months)</option>
-              <option value="medium">Medium risk (24 months)</option>
-              <option value="standard">Standard (36 months)</option>
+              <option value="high">High risk (3 months)</option>
+              <option value="medium">Medium risk (6 months)</option>
+              <option value="standard">Low risk (12 months)</option>
             </select>
             <input value={draft.lastReview} onChange={set("lastReview")} placeholder="Last review dd/mm/yyyy" className={inputCls} />
             <input value={draft.notes} onChange={set("notes")} placeholder="Notes (optional)" className={inputCls} />
@@ -225,7 +231,7 @@ export default function CddReviewPage() {
                   <td className="px-3 py-2 text-ink-0 font-medium">{r.subject}</td>
                   <td className="px-3 py-2">
                     <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${TIER_TONE[r.tier]}`}>
-                      {r.tier}
+                      {TIER_LABEL[r.tier]}
                     </span>
                   </td>
                   <td className="px-3 py-2 font-mono text-10 text-ink-2">{r.lastReview || "—"}</td>
@@ -255,7 +261,7 @@ export default function CddReviewPage() {
         </div>
 
         <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
-          Cadences: High risk (PEP / sanctions hit) — 12 months · Medium — 24 months · Standard — 36 months.
+          Cadences: High risk (PEP / sanctions) — 3 months · Medium risk — 6 months · Low risk — 12 months.
           Per FDL 10/2025 Art.11. Case records auto-imported from the screening register; last activity date used as proxy for last review.
         </p>
       </div>

@@ -72,7 +72,7 @@ const SYS_MESSAGES = [
   "goAML connectivity · OK",
 ];
 
-export function ActivityFeed() {
+export function ActivityFeed({ label = "Screening engine" }: { label?: string }) {
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const counterRef = useRef(0);
 
@@ -104,7 +104,7 @@ export function ActivityFeed() {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-hair-2 bg-bg-1">
         <div className="flex items-center gap-2">
-          <span className="text-12 font-semibold text-ink-0 font-mono">Screening engine</span>
+          <span className="text-12 font-semibold text-ink-0 font-mono">{label}</span>
           <span className="text-ink-3 font-mono text-10">·</span>
           <span className="inline-flex items-center gap-1 text-10 font-mono text-green font-semibold">
             <span

@@ -72,6 +72,134 @@ const DEFAULT_POLICIES: Policy[] = [
       "10-year retention on all CDD records, STR artefacts, case timelines, audit-chain entries, goAML envelopes, and ongoing-monitoring snapshots per FDL 10/2025 Art.24. Encrypted at rest. Access audited.",
     lastReviewed: "2026-04-01",
   },
+  {
+    id: "customer-acceptance",
+    section: "Onboarding",
+    title: "Customer Acceptance Policy",
+    body:
+      "No business relationship is established until: (1) CDD is complete and documented; (2) sanctions screen returns clear or MLRO-approved; (3) source-of-funds narrative is obtained for any cash or equivalent > AED 55,000; (4) beneficial ownership ≥ 25% is identified and verified. Shell companies with no identifiable UBO are declined.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "wire-transfer",
+    section: "Onboarding",
+    title: "Wire Transfer & Payment Policy",
+    body:
+      "All outbound wires > AED 3,500 require full originator and beneficiary information per FATF R.16. Third-party payments are prohibited without prior MLRO approval. Payments to jurisdictions on the FATF grey/black list require Board-level sign-off and enhanced due diligence on end-use. Correspondent bank accounts must be pre-approved and listed in the authorised counterparty register.",
+    lastReviewed: "2026-03-28",
+  },
+  {
+    id: "str-triage",
+    section: "Reporting",
+    title: "STR Triage & Filing Policy",
+    body:
+      "Any red-flag event must be escalated to the MLRO within 24 hours. MLRO has 7 working days to triage and determine whether to file. goAML submission must be completed within 30 calendar days of the trigger event. No tipping-off: staff must not disclose the existence of an STR to the subject or any third party. MLRO may extend the triage window by 7 days with documented rationale.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "aml-training",
+    section: "Governance",
+    title: "AML/CFT Training Policy",
+    body:
+      "All staff with AML/CFT responsibilities must complete initial training before onboarding and annual refresher training thereafter. Training covers: FATF recommendations, UAE FDL 10/2025, red-flag typologies, goAML filing, and four-eyes procedures. MLRO maintains a training register. Non-completion blocks system access after a 14-day grace period. Board members receive annual AML awareness briefing.",
+    lastReviewed: "2026-03-15",
+  },
+  {
+    id: "sanctions-screening",
+    section: "Screening",
+    title: "Sanctions Screening Policy",
+    body:
+      "All customers, UBOs, and counterparties are screened at onboarding and on every list refresh (minimum 3× daily). Threshold for a positive match: ≥ 85% fuzzy score against OFAC SDN, UN Consolidated, EU Consolidated, UK HMT, or EOCN. Any match ≥ 85% triggers an automatic freeze and MLRO notification. The false-positive rate target is ≤ 1.0%; breaches are reported to the Board.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "nested-structures",
+    section: "Onboarding",
+    title: "Nested Structures & Shell Company Policy",
+    body:
+      "No customer relationship with a legal entity whose UBO cannot be identified through a maximum of two levels of corporate ownership. Any structure with a nominee director or nominee shareholder requires independent verification of the beneficial owner's identity and source of wealth. Bearer shares are not accepted. Regulated financial intermediaries (banks, funds) operating under equivalent AML regimes may be accepted at CO level without piercing to UBO.",
+    lastReviewed: "2026-03-22",
+  },
+  {
+    id: "cash-policy",
+    section: "Screening",
+    title: "Cash & High-Value Dealer Policy",
+    body:
+      "Cash transactions ≥ AED 55,000 (or equivalent) must be reported to the MLRO within one business day. Structuring (splitting transactions to avoid thresholds) is a red flag and triggers immediate escalation. DPMS transactions in precious metals or gemstones above AED 55,000 require full CDD regardless of payment method. No anonymous cash accepted. All cash receipts recorded in the DPMSR register within 24 hours.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "virtual-assets",
+    section: "Sector: VASP",
+    title: "Crypto & Virtual Asset Policy",
+    body:
+      "Virtual asset transactions require on-chain address screening against Chainalysis / Elliptic blacklists before settlement. No interaction with unhosted wallets > AED 3,500 without verified KYC. DeFi protocols on the FATF grey-list require MLRO pre-approval. Travel Rule compliance mandatory for all transfers > USD 1,000 equivalent. VASP counterparties must be VARA-licensed or operating under equivalent regulation.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "ongoing-monitoring",
+    section: "Governance",
+    title: "Ongoing Monitoring Policy",
+    body:
+      "All active customers are subject to continuous transaction monitoring. Tier-1 (PEP / high-risk) customers: daily name-screen refresh, all transactions reviewed. Tier-2 (medium-risk): weekly screen refresh, transaction monitoring via automated rules. Tier-3 (low-risk): monthly screen refresh, statistical anomaly detection only. Any change in customer profile triggers a full re-KYC within 30 days.",
+    lastReviewed: "2026-03-31",
+  },
+  {
+    id: "whistleblowing",
+    section: "Governance",
+    title: "Escalation & Whistleblowing Policy",
+    body:
+      "Any employee who becomes aware of actual or suspected money laundering, terrorist financing, or sanctions breaches must report to the MLRO immediately and no later than the next business day. Anonymous reports may be submitted via the confidential whistleblowing channel. No employee shall be subject to retaliation, demotion, or dismissal for a good-faith report. The MLRO maintains a secure escalation register. Failure to report is a disciplinary offence and may constitute a criminal act under FDL 10/2025 Art.25. Board Audit Committee reviews the escalation register annually.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "tfs-policy",
+    section: "Screening",
+    title: "Targeted Financial Sanctions (TFS) Policy",
+    body:
+      "All persons and entities are screened against TFS lists before any transaction is processed. Lists covered: OFAC SDN & Blocked Persons, UN Security Council Consolidated, EU Financial Sanctions, UK OFSI, EOCN, and UAE Local Terrorist List. Screening uses fuzzy matching at ≥ 85% confidence. Any potential match triggers an immediate freeze of funds and assets and a no-tipping-off obligation. The MLRO must be notified within 2 hours of a TFS freeze. Unblocking requires written MLRO approval and, where required, regulator no-objection. Records of all TFS freezes and releases are retained for 10 years.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "four-eyes",
+    section: "Governance",
+    title: "Four-Eyes / Dual-Authorisation Control",
+    body:
+      "All STR filings, customer offboarding decisions, TFS freeze/release actions, and EDD approvals for tier-1 PEPs require two independent authorisations. The initiating analyst and approving MLRO must be different individuals. No single officer may initiate and approve the same action. Dual-approval is logged in the audit chain with timestamps and individual identities. Automated controls block single-operator approval for designated actions. Quarterly review of four-eyes logs by Internal Audit.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "dpmsr-filing",
+    section: "Reporting",
+    title: "DPMSR Filing Policy",
+    body:
+      "A Dealers in Precious Metals and Stones Report (DPMSR) must be filed with MoE within 30 calendar days of any single or linked cash transaction(s) ≥ AED 55,000. The DPMSR register is updated within 24 hours of each qualifying transaction. The MLRO countersigns every DPMSR before submission. Amendments to filed DPMSRs must be submitted within 5 business days of discovering an error. A copy of each DPMSR and supporting documentation is retained for 10 years. Monthly reconciliation of DPMSR filings against the transaction ledger is mandatory.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "outsourcing",
+    section: "Governance",
+    title: "Outsourcing & Third-Party Risk Policy",
+    body:
+      "Any outsourcing of AML/CFT functions (screening, CDD, goAML filing) requires prior Board approval and a written outsourcing agreement specifying AML obligations, audit rights, and data-protection requirements. The MLRO retains full regulatory accountability for outsourced functions — liability cannot be contracted away. Third-party providers are assessed annually against the same risk criteria as customers. Material failures by a third-party provider are reported to the relevant regulator within 5 business days. Access to customer data by third parties is logged and reviewed quarterly.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "mlro-succession",
+    section: "Governance",
+    title: "MLRO Succession & Continuity Policy",
+    body:
+      "A designated Deputy MLRO is authorised to exercise all MLRO powers in the event of absence, incapacity, or vacancy. The Deputy MLRO must hold equivalent AML/CFT qualifications. Any MLRO vacancy must be filled and the replacement notified to CBUAE / MoE within 30 calendar days per FDL 10/2025 Art.15(5). A succession plan is reviewed annually by the Board. The outgoing MLRO must complete a structured handover including case briefings, open investigations, and regulatory correspondence within 10 business days.",
+    lastReviewed: "2026-04-01",
+  },
+  {
+    id: "data-privacy",
+    section: "Data",
+    title: "Data Privacy & Subject Access Policy",
+    body:
+      "Customer personal data is processed solely for the purposes of AML/CFT compliance under FDL 10/2025 and UAE Federal Decree-Law No. 45/2021 on Personal Data Protection. Data is retained for exactly 10 years from the end of the business relationship and then securely destroyed. Subject access requests are acknowledged within 5 business days and fulfilled within 30 days. Data shared with regulators or FIU is logged. International data transfers require a documented lawful basis. Breaches involving personal data are reported to the relevant authority within 72 hours.",
+    lastReviewed: "2026-04-01",
+  },
 ];
 
 function load(): Policy[] {
