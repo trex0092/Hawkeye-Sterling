@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { withGuard } from "@/lib/server/guard";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 
@@ -41,7 +41,7 @@ const ALLOWED_ACTIONS = new Set([
   "goaml_submit",
 ]);
 
-const ACTION_MIN_ROLE: Record<string, "analyst" | "co" | "mlro"> = {
+const ACTION_MIN_ROLE: Record<string, string> = {
   clear: "analyst",
   escalate: "analyst",
   str_read: "co",
@@ -51,13 +51,22 @@ const ACTION_MIN_ROLE: Record<string, "analyst" | "co" | "mlro"> = {
   goaml_submit: "mlro",
 };
 
-const ROLE_POWER: Record<string, number> = { analyst: 1, co: 2, mlro: 3 };
+// Must mirror operator-role.ts ROLE_POWER. All 5 roles must be present —
+// any role missing from this map gets power undefined, which passes NaN
+// comparisons and would grant full MLRO access to lower roles.
+const ROLE_POWER: Record<string, number> = {
+  analyst:              1,
+  compliance_assistant: 1,
+  co:                   2,
+  mlro:                 3,
+  managing_director:    3,
+};
 
 interface SignBody {
   action: string;
   target: string;
   actor: {
-    role: "analyst" | "co" | "mlro";
+    role: "analyst" | "compliance_assistant" | "co" | "mlro" | "managing_director";
     name?: string;
   };
   body?: Record<string, unknown>;
@@ -81,7 +90,7 @@ interface AuditHead {
 }
 
 function sha256Hex(input: string): string {
-  return createHmac("sha256", "").update(input).digest("hex");
+  return createHash("sha256").update(input).digest("hex");
 }
 
 async function handleSign(req: Request): Promise<NextResponse> {
