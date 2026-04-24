@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-24T14:04:25.940Z",
+  "generatedAt": "2026-04-24T16:17:14.760Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-24T14:04:25.935Z",
+    "generatedAt": "2026-04-24T16:17:14.757Z",
     "charter": {
       "prohibitions": [
         {
@@ -312,7 +312,7 @@
           {
             "id": "esg",
             "displayName": "ESG & Responsible-Sourcing Controversies",
-            "keywordCount": 173
+            "keywordCount": 185
           },
           {
             "id": "cybercrime",
@@ -322,17 +322,17 @@
           {
             "id": "ai",
             "displayName": "AI-Enabled Risk & Synthetic-Media Abuse",
-            "keywordCount": 101
+            "keywordCount": 127
           }
         ],
-        "totalKeywords": 738,
+        "totalKeywords": 776,
         "queryLength": 1353
       },
       "doctrines": {
-        "total": 19,
-        "mandatoryInUAE": 13,
+        "total": 25,
+        "mandatoryInUAE": 14,
         "byAuthority": {
-          "Financial Action Task Force": 2,
+          "Financial Action Task Force": 3,
           "The Wolfsberg Group": 2,
           "London Bullion Market Association": 1,
           "Organisation for Economic Co-operation and Development": 1,
@@ -342,17 +342,21 @@
           "UAE Cabinet": 4,
           "UAE": 2,
           "UAE Ministry of Economy": 1,
-          "International Organization for Standardization": 1,
+          "International Organization for Standardization": 2,
           "Committee of Sponsoring Organizations of the Treadway Commission": 1,
-          "Institute of Internal Auditors": 1
+          "Institute of Internal Auditors": 1,
+          "Hartono et al., ICIMCIS 2025": 1,
+          "European Union": 1,
+          "US National Institute of Standards and Technology": 1,
+          "OWASP Foundation": 1
         }
       },
       "redFlags": {
-        "total": 21,
+        "total": 33,
         "bySeverity": {
           "low": 0,
-          "medium": 5,
-          "high": 16
+          "medium": 6,
+          "high": 27
         },
         "byTypology": {
           "structuring": 2,
@@ -365,11 +369,16 @@
           "ubo": 2,
           "vasp": 2,
           "adverse_media": 1,
-          "governance": 3
+          "governance": 3,
+          "environmental_crime": 2,
+          "carbon_market_fraud": 2,
+          "insider_threat": 2,
+          "ai_governance_breach": 4,
+          "ai_synthetic_media_fraud": 2
         }
       },
       "typologies": {
-        "total": 41,
+        "total": 46,
         "ids": [
           "structuring",
           "smurfing",
@@ -411,7 +420,12 @@
           "privacy_coin_laundering",
           "mixer_usage",
           "nft_wash_trade",
-          "defi_exploit"
+          "defi_exploit",
+          "environmental_crime",
+          "carbon_market_fraud",
+          "insider_threat",
+          "ai_governance_breach",
+          "ai_synthetic_media_fraud"
         ]
       },
       "matching": {
@@ -595,7 +609,7 @@
         }
       },
       "amplifier": {
-        "version": "v2.0.0",
+        "version": "v3.0.0",
         "percent": 1000000000000000,
         "factor": 10000000000000,
         "directives": [
@@ -608,16 +622,21 @@
           "Cite the firing meta-cognition primitive id (mc.*) alongside the faculty/mode/skill ids whenever it shaped the conclusion.",
           "When unsure, prefer expanding the reasoning chain over truncating it. Time pressure is not a lawful reason to skip a faculty or a meta-cognition primitive.",
           "Every assertion must name the faculty id, mode id, skill id, doctrine id, redline id, or meta-cognition id that produced it.",
-          "Declare unknowns, gaps, and stale evidence explicitly — amplified reasoning does not manufacture certainty. Widen confidence bands before narrowing them."
+          "Declare unknowns, gaps, and stale evidence explicitly — amplified reasoning does not manufacture certainty. Widen confidence bands before narrowing them.",
+          "Apply the Hartono dual-persona lens (ICIMCIS 2025) to every AI reference: the system is BOTH a productivity tool (Solution Persona) AND a subject demanding governance (Dilemma Persona); emit findings for each persona and audit the three ethical gaps (explainability, algorithmic bias, nonhuman ethical).",
+          "When an AI model, agentic system, or automated decision is in scope, traverse the full 2026 governance stack — EU AI Act tiers (prohibited / high-risk / limited / minimal), NIST AI RMF (Govern / Map / Measure / Manage), ISO/IEC 42001 AIMS, OWASP LLM Top 10, red-teaming evidence, model inventory, SBOM, model card, fairness monitoring, kill switch, human-in-the-loop — and cite every missing control as a gap.",
+          "Trace insider-threat signals along the full privilege-abuse chain: authorised access → abnormal pattern → exfiltration vector → external recipient → monetisation path. Do not short-circuit on \"disgruntled employee\" without every link evidenced.",
+          "For FATF 2021 environmental-crime predicate (illegal mining, logging, fishing, waste trafficking, wildlife), require explicit CAHRA / supply-chain provenance evidence linking the predicate to a financial flow; ESG-only signals without the nexus are not AML predicates.",
+          "Escalate any serious AI incident (harm, drift, prompt-injection, data-poisoning, model-theft, autonomous agent failure) within 72 hours under EU AI Act reporting expectations, and attach the full audit-ready artefact pack (model card, eval report, SBOM, decision log, drift trace)."
         ]
       },
       "metaCognition": {
-        "total": 32,
+        "total": 37,
         "byCategory": {
-          "truth-seeking": 4,
+          "truth-seeking": 6,
           "belief-update": 4,
           "adversarial": 5,
-          "decomposition": 5,
+          "decomposition": 8,
           "calibration": 4,
           "foresight": 4,
           "hygiene": 6
@@ -654,31 +673,36 @@
           "mc.mece-decomposition",
           "mc.confidence-interval",
           "mc.butterfly-sensitivity",
-          "mc.contradiction-sweep"
+          "mc.contradiction-sweep",
+          "mc.ai-dual-persona-lens",
+          "mc.ethical-gap-audit",
+          "mc.insider-threat-causal-chain",
+          "mc.environmental-predicate-nexus",
+          "mc.synthetic-identity-composition"
         ]
       }
     },
     "integrity": {
       "charterHash": "ed3b0986",
-      "catalogueHash": "0037bb23"
+      "catalogueHash": "ec393b3a"
     }
   },
   "integrity": {
     "charterHash": "ed3b0986",
-    "catalogueHash": "0037bb23",
-    "compositeHash": "884a33f4"
+    "catalogueHash": "ec393b3a",
+    "compositeHash": "813b0108"
   },
   "enhanced": {
     "extended": {
       "taxonomy": {
         "questionTemplates": 50,
         "sectorRubrics": 5,
-        "scenarios": 38,
-        "typologies": 41,
-        "redFlags": 21,
-        "redFlagsExtended": 45,
+        "scenarios": 54,
+        "typologies": 46,
+        "redFlags": 33,
+        "redFlagsExtended": 61,
         "adverseMediaCategories": 8,
-        "metaCognition": 32
+        "metaCognition": 37
       },
       "regulatory": {
         "fatfRecommendations": 40,
@@ -693,7 +717,7 @@
       },
       "expertise": {
         "skills": 397,
-        "cognitiveAmplifier": 10
+        "cognitiveAmplifier": 15
       }
     },
     "crossReferences": {
@@ -719,11 +743,31 @@
           "count": 4
         },
         {
+          "typology": "ai_governance_breach",
+          "count": 4
+        },
+        {
           "typology": "insurance",
           "count": 3
         },
         {
           "typology": "bec_fraud",
+          "count": 3
+        },
+        {
+          "typology": "environmental_crime",
+          "count": 3
+        },
+        {
+          "typology": "carbon_market_fraud",
+          "count": 3
+        },
+        {
+          "typology": "insider_threat",
+          "count": 3
+        },
+        {
+          "typology": "ai_synthetic_media_fraud",
           "count": 3
         },
         {
@@ -781,7 +825,7 @@
           "count": 5
         }
       ],
-      "typologyCount": 41,
+      "typologyCount": 46,
       "topTypologies": [
         {
           "id": "structuring",
@@ -837,9 +881,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 19,
       "regulatoryRecords": 416,
-      "taxonomyRecords": 240,
+      "taxonomyRecords": 294,
       "skillsRecords": 397,
-      "totalRecords": 1053
+      "totalRecords": 1107
     }
   }
 }
