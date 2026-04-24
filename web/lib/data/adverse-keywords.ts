@@ -7,7 +7,7 @@
 // snippet, they fire here with the full group context.
 //
 // Designed to complement the 5-class classifyAdverseMedia() from the brain
-// and the 25-class ESG classifier — this one is the named-keyword floor.
+// and the 28-class ESG classifier — this one is the named-keyword floor.
 
 export type AdverseKeywordGroup =
   | "money-laundering"
@@ -23,7 +23,9 @@ export type AdverseKeywordGroup =
   | "law-enforcement"
   | "regulatory-action"
   | "political-exposure"
-  | "ai-misuse";
+  | "ai-misuse"
+  | "insider-threat"
+  | "environmental-crime";
 
 export interface AdverseKeywordRule {
   group: AdverseKeywordGroup;
@@ -41,6 +43,14 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "financial crime", "economic crime",
       "embezzle", "embezzlement", "misappropriation", "asset misappropriation",
       "extort", "extortion", "kickback",
+      // Wave 4 typologies — placement / layering / integration vehicles.
+      "shell company", "shell structure", "shell entity",
+      "trade-based money laundering", "tbml",
+      "round-tripping", "round tripping", "smurfing", "cuckoo smurfing",
+      "real estate laundering", "real-estate laundering", "property laundering",
+      "luxury goods laundering", "art laundering", "yacht laundering",
+      "crypto laundering", "crypto mixer", "crypto tumbler",
+      "chain hopping", "chain-hopping",
     ],
   },
   {
@@ -72,6 +82,9 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "sanctions evasion", "sanction evasion",
       "arms trafficking", "weapons smuggling",
       "nuclear", "chemical weapons", "biological weapons",
+      // Wave 4 — export-control / dual-use diversion typologies.
+      "missile technology", "end-user diversion", "end user diversion",
+      "export control violation", "trans-shipment", "transhipment",
     ],
   },
   {
@@ -90,6 +103,9 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "forced labour", "forced labor",
       "modern slavery", "child labor", "child labour",
       "wildlife trafficking",
+      // Wave 4 — trafficking typologies split by exploitation mode.
+      "sex trafficking", "labor trafficking", "labour trafficking",
+      "debt bondage", "domestic servitude", "organ trafficking",
     ],
   },
   {
@@ -98,6 +114,8 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     terms: [
       "cybercrime", "cyber crime", "ransomware", "darknet", "dark web",
       "cyber fraud", "wire fraud",
+      // Wave 4 — high-volume cyber-enabled fraud predicates.
+      "business email compromise", "sim swap", "sim-swap fraud",
     ],
   },
   {
@@ -106,6 +124,9 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     terms: [
       "fraud", "ponzi", "pyramid scheme",
       "accounting fraud", "forgery", "counterfeiting", "identity theft",
+      // Wave 4 — synthetic / fabricated identity fraud typology.
+      "synthetic identity", "synthetic identity fraud",
+      "fabricated identity", "ghost identity", "identity stacking",
     ],
   },
   {
@@ -148,6 +169,33 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Political exposure",
     terms: [
       "politic", "political", "politician",
+    ],
+  },
+  // Wave 4 — insider-threat typology (malicious-insider IP exfiltration,
+  // privileged-access abuse). Distinct from cybercrime because many insider
+  // cases are physical / policy-layer, not network intrusion.
+  {
+    group: "insider-threat",
+    label: "Insider threat & IP exfiltration",
+    terms: [
+      "insider threat", "malicious insider", "rogue employee",
+      "privileged access abuse", "privileged-access abuse",
+      "data exfiltration", "intellectual property theft", "ip theft",
+      "trade secret theft", "trade-secret theft",
+      "corporate espionage", "industrial espionage",
+      "whistleblower retaliation",
+    ],
+  },
+  // Wave 4 — FATF-listed environmental-crime predicate offence (2021+):
+  // illegal mining / logging / fishing / waste trafficking as ML predicates.
+  {
+    group: "environmental-crime",
+    label: "Environmental crime",
+    terms: [
+      "environmental crime", "eco-crime", "eco crime",
+      "illegal mining", "illegal logging", "illegal fishing",
+      "iuu fishing", "illegal waste dumping", "illegal dumping",
+      "waste trafficking", "pollution crime",
     ],
   },
   // AI-misuse / algorithmic-harm floor, informed by Hartono et al., "The Dual

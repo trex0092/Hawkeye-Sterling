@@ -1,6 +1,6 @@
 // Hawkeye Sterling — ESG classifier.
 //
-// 27 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
+// 28 ESG-relevant adverse-media categories grouped into 5 domains, each tagged
 // with the globally recognised frameworks they map to (SASB Materiality Matrix,
 // EU Taxonomy, UN Sustainable Development Goals).
 //
@@ -208,7 +208,11 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     id: "data-privacy",
     domain: "legal-regulatory-affairs",
     label: "Data privacy breaches",
-    keywords: ["data breach", "gdpr fine", "privacy violation", "leaked data", "ccpa", "personal data exposed"],
+    keywords: [
+      "data breach", "gdpr fine", "privacy violation", "leaked data",
+      "ccpa", "personal data exposed",
+      "hipaa", "hipaa violation", "iso 27001",
+    ],
     sasb: "Social Capital · Customer Privacy",
     sdg: ["16"],
   },
@@ -219,6 +223,25 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     keywords: ["sec fine", "consent decree", "regulatory fine", "enforcement action", "debarment", "settlement with doj"],
     sasb: "Leadership & Governance · Management of the Legal Environment",
     sdg: ["16"],
+  },
+  // Wave 4 — carbon-market fraud pillar. Sits in legal-regulatory because
+  // it's a financial-crime typology (false offsets, phantom credits, double
+  // counting) distinct from the emissions / green-innovation categories.
+  {
+    id: "carbon-market-fraud",
+    domain: "legal-regulatory-affairs",
+    label: "Carbon market & offset fraud",
+    keywords: [
+      "carbon fraud", "carbon credit fraud",
+      "offset fraud", "carbon offset fraud",
+      "phantom credit", "ghost credit", "fake offset",
+      "carbon washing",
+      "carbon double counting", "double-counted credits",
+      "voluntary carbon market fraud", "vcm fraud",
+    ],
+    sasb: "Leadership & Governance · Business Ethics",
+    euTaxonomy: "Climate change mitigation",
+    sdg: ["13", "16"],
   },
   // AI governance pillar sourced from Hartono et al., "The Dual Persona of AI",
   // ICIMCIS 2025 (DOI 10.1109/ICIMCIS68501.2025.11327424): captures the shift
@@ -237,7 +260,8 @@ export const ESG_CATEGORIES: EsgCategory[] = [
       "ai regulation", "ai act", "eu ai act", "ai liability",
       "automated decision-making", "automated decision making",
       "model risk", "model governance", "ai risk management",
-      "ai audit", "nonhuman ethical gap",
+      "ai risk taxonomy", "ai data governance", "data governance",
+      "ai audit", "algorithmic audit", "nonhuman ethical gap",
       // 2026 regulatory stack — EU AI Act enforcement Aug 2026, NIST AI RMF,
       // ISO/IEC 42001 AIMS; high-risk / prohibited tiers; oversight controls.
       "nist ai rmf", "iso 42001", "iso/iec 42001",
@@ -245,6 +269,11 @@ export const ESG_CATEGORIES: EsgCategory[] = [
       "prohibited ai system",
       "human-in-the-loop", "human in the loop", "kill switch",
       "model card", "ai transparency report", "fairness monitoring",
+      // AI Governance Journey artefacts — documentation / assurance controls
+      // from the 2026 playbook (red-team, AI registry, SBOM).
+      "red team", "red-team", "red teaming", "red-teaming",
+      "ai registry", "model inventory",
+      "sbom", "software bill of materials",
       // Emerging governance frontiers — agentic AI identity/oversight and
       // unmanaged "Shadow AI" sprawl inside the enterprise.
       "agentic ai", "autonomous ai agent", "shadow ai", "unauthorized ai",
@@ -272,20 +301,23 @@ export const ESG_CATEGORIES: EsgCategory[] = [
     id: "cyber-incident",
     domain: "operational-risk-crisis",
     label: "Cyber incident",
-    keywords: ["ransomware", "cyberattack", "data leak", "hacked", "breach notification", "ddos"],
+    keywords: [
+      "ransomware", "cyberattack", "data leak", "hacked",
+      "breach notification", "ddos",
+      "soc 2", "soc2", "cyber resilience act",
+    ],
     sasb: "Business Model & Innovation · Systemic Risk Management",
     sdg: ["9", "16"],
   },
   // Operational counterpart to ai-governance-ethics: technical failure modes
   // and AI-specific attack surface (OWASP LLM Top 10, model drift, agentic
   // AI harms). Governance sits under legal-regulatory; concrete incidents
-  // sit here so drift/hallucination/prompt-injection news fires operational.
+  // sit here so drift/prompt-injection news fires operational.
   {
     id: "ai-failure-incident",
     domain: "operational-risk-crisis",
     label: "AI failure & incident",
     keywords: [
-      "hallucination", "model hallucination",
       "model drift", "concept drift", "data drift",
       "prompt injection", "jailbreak", "jailbroken model",
       "model inversion", "membership inference",
