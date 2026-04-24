@@ -19,6 +19,7 @@ interface BrainSoul {
   amplifierVersion: string;
   amplificationPercent: number;
   amplificationFactor: number;
+  directiveCount: number;
   charterHash: string;
   catalogueHash: string;
   compositeHash: string;
@@ -667,12 +668,7 @@ const SOUL_TONE = {
 
 function BrainSoulPanel({ soul }: { soul: BrainSoul }) {
   const tone = SOUL_TONE[soul.status];
-  const pct = soul.amplificationPercent > 0
-    ? `+${soul.amplificationPercent.toLocaleString("en-US")}%`
-    : "unavailable";
-  const factor = soul.amplificationFactor > 0
-    ? `×${soul.amplificationFactor.toLocaleString("en-US")}`
-    : "";
+  const directives = soul.directiveCount > 0 ? soul.directiveCount : "—";
 
   return (
     <div className="mb-6">
@@ -690,13 +686,11 @@ function BrainSoulPanel({ soul }: { soul: BrainSoul }) {
             </span>
             <div>
               <div className="text-13 font-semibold text-ink-0 font-mono">
-                {pct} cognitive amplification
+                Exhaustive catalogue traversal · all faculties armed
               </div>
-              {factor && (
-                <div className="text-11 text-ink-2 font-mono">
-                  {factor} · amplifier {soul.amplifierVersion}
-                </div>
-              )}
+              <div className="text-11 text-ink-2 font-mono">
+                {directives} directives · FATF · EU AI Act · ISO 42001 · OWASP LLM · amplifier {soul.amplifierVersion}
+              </div>
             </div>
           </div>
 

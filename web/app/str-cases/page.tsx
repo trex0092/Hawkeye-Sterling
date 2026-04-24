@@ -32,8 +32,10 @@ import {
 } from "@/lib/data/case-store";
 import {
   loadOperatorRole,
+  saveOperatorRole,
   canPerform,
   ROLE_LABEL,
+  ALL_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { SignOffPanel } from "@/components/ui/SignOffPanel";
@@ -54,27 +56,51 @@ interface CaseRow {
   openedAt: string;
 }
 
-function AccessDeniedScreen({ role }: { role: OperatorRole }) {
+function AccessDeniedScreen({
+  role,
+  onRoleChange,
+}: {
+  role: OperatorRole;
+  onRoleChange: (r: OperatorRole) => void;
+}) {
+  const elevate = (r: OperatorRole) => {
+    saveOperatorRole(r);
+    window.dispatchEvent(new Event("hawkeye:operator-role-updated"));
+    onRoleChange(r);
+  };
+
   return (
     <ModuleLayout>
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="max-w-md text-center p-8 bg-bg-panel border border-hair-2 rounded-xl">
-      <div className="text-3xl mb-4">🔒</div>
-      <h2 className="text-16 font-bold text-ink-0 mb-2">
+          <div className="text-3xl mb-4">🔒</div>
+          <h2 className="text-16 font-bold text-ink-0 mb-2">
             Access restricted — FDL Art. 29
-      </h2>
-      <p className="text-13 text-ink-2 mb-4">
+          </h2>
+          <p className="text-13 text-ink-2 mb-4">
             The STR / SAR case register is restricted to Compliance Officers
             and the MLRO. Viewing this register by unauthorised personnel
             risks tipping-off the subject under investigation.
-      </p>
-      <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-6">
+          </p>
+          <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-5">
             Your current role is <strong>{ROLE_LABEL[role]}</strong>. Switch
-            to CO or MLRO in the sidebar to proceed.
-      </div>
-      <p className="text-11 text-ink-3">
+            to CO or MLRO to proceed.
+          </div>
+          <div className="flex justify-center gap-2 mb-5">
+            {ALL_ROLES.filter((r) => canPerform(r, "str_read")).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => elevate(r)}
+                className="px-4 py-1.5 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand hover:text-white transition-colors"
+              >
+                Switch to {ROLE_LABEL[r]}
+              </button>
+            ))}
+          </div>
+          <p className="text-11 text-ink-3">
             This access attempt has been logged to the immutable audit chain.
-      </p>
+          </p>
         </div>
       </div>
     </ModuleLayout>
@@ -266,7 +292,7 @@ export default function StrCasesPage() {
 
   // Render nothing until role resolves to avoid FOUC on access-denied screen.
   if (!roleLoaded) return null;
-  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} />;
+  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} onRoleChange={setRole} />;
 
   return (
     <ModuleLayout>

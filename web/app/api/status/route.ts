@@ -38,6 +38,7 @@ interface BrainSoul {
   amplifierVersion: string;
   amplificationPercent: number;
   amplificationFactor: number;
+  directiveCount: number;
   charterHash: string;
   catalogueHash: string;
   compositeHash: string;
@@ -248,6 +249,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
     amplifierVersion: "unknown",
     amplificationPercent: 0,
     amplificationFactor: 0,
+    directiveCount: 0,
     charterHash: "unavailable",
     catalogueHash: "unavailable",
     compositeHash: "unavailable",
@@ -309,6 +311,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
       amplifierVersion,
       amplificationPercent,
       amplificationFactor,
+      directiveCount: COGNITIVE_AMPLIFIER.directives.length,
       charterHash,
       catalogueHash,
       compositeHash,
