@@ -11,6 +11,8 @@ import {
 } from "@/lib/data/operator-role";
 
 const OPERATOR_STORAGE_KEY = "hawkeye.operator";
+const OPERATOR_DESIGNATION_KEY = "hawkeye.operator.designation";
+const OPERATOR_REGION_KEY = "hawkeye.operator.region";
 
 export function SidebarShell({ children }: { children: ReactNode }) {
   return (
@@ -85,17 +87,24 @@ export function SidebarFilterList<K extends string>({
 
 export function SidebarMLROCard() {
   const [name, setName] = useState("");
+  const [designation, setDesignation] = useState("");
+  const [region, setRegion] = useState("");
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [draftName, setDraftName] = useState("");
+  const [draftDesignation, setDraftDesignation] = useState("");
+  const [draftRegion, setDraftRegion] = useState("");
   const [role, setRole] = useState<OperatorRole>("analyst");
 
   useEffect(() => {
     try {
-      const stored = window.localStorage.getItem(OPERATOR_STORAGE_KEY);
-      if (stored) setName(stored);
-    } catch {
-      /* localStorage disabled */
-    }
+      const ls = window.localStorage;
+      const n = ls.getItem(OPERATOR_STORAGE_KEY);
+      const d = ls.getItem(OPERATOR_DESIGNATION_KEY);
+      const r = ls.getItem(OPERATOR_REGION_KEY);
+      if (n) setName(n);
+      if (d) setDesignation(d);
+      if (r) setRegion(r);
+    } catch { /* localStorage disabled */ }
     setRole(loadOperatorRole());
     const onRoleChange = () => setRole(loadOperatorRole());
     window.addEventListener("hawkeye:operator-role-updated", onRoleChange);
@@ -110,21 +119,29 @@ export function SidebarMLROCard() {
   };
 
   const save = () => {
-    const trimmed = draft.trim();
-    setName(trimmed);
+    const n = draftName.trim();
+    const d = draftDesignation.trim();
+    const r = draftRegion.trim();
+    setName(n);
+    setDesignation(d);
+    setRegion(r);
     try {
-      if (trimmed) window.localStorage.setItem(OPERATOR_STORAGE_KEY, trimmed);
-      else window.localStorage.removeItem(OPERATOR_STORAGE_KEY);
-    } catch {
-      /* localStorage disabled */
-    }
+      const ls = window.localStorage;
+      n ? ls.setItem(OPERATOR_STORAGE_KEY, n) : ls.removeItem(OPERATOR_STORAGE_KEY);
+      d ? ls.setItem(OPERATOR_DESIGNATION_KEY, d) : ls.removeItem(OPERATOR_DESIGNATION_KEY);
+      r ? ls.setItem(OPERATOR_REGION_KEY, r) : ls.removeItem(OPERATOR_REGION_KEY);
+    } catch { /* localStorage disabled */ }
     setEditing(false);
   };
 
   const startEdit = () => {
-    setDraft(name);
+    setDraftName(name);
+    setDraftDesignation(designation);
+    setDraftRegion(region);
     setEditing(true);
   };
+
+  const inputCls = "w-full bg-white/15 text-white placeholder-white/40 rounded px-2 py-1 text-12 font-medium outline-none border border-white/30 focus:border-white mb-1.5";
 
   return (
     <div className="bg-brand text-white p-3 rounded-lg">
@@ -132,16 +149,27 @@ export function SidebarMLROCard() {
         <div>
           <input
             autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") save();
-              if (e.key === "Escape") setEditing(false);
-            }}
-            placeholder="Your name"
-            className="w-full bg-white/15 text-white placeholder-white/50 rounded px-2 py-1 text-13 font-semibold outline-none border border-white/30 focus:border-white"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+            placeholder="Full name"
+            className={inputCls}
           />
-          <div className="mt-2 flex gap-1.5">
+          <input
+            value={draftDesignation}
+            onChange={(e) => setDraftDesignation(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+            placeholder="Designation (e.g. MLRO)"
+            className={inputCls}
+          />
+          <input
+            value={draftRegion}
+            onChange={(e) => setDraftRegion(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+            placeholder="Region (e.g. UAE)"
+            className={inputCls}
+          />
+          <div className="mt-1 flex gap-1.5">
             <button
               type="button"
               onClick={save}
@@ -163,14 +191,19 @@ export function SidebarMLROCard() {
           type="button"
           onClick={startEdit}
           className="w-full text-left"
-          title="Click to edit name"
+          title="Click to edit name, designation and region"
         >
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-13 font-semibold truncate">
-              {name || "Set your name"}
-            </span>
+          <div className="text-13 font-semibold truncate mb-0.5">
+            {name || "Set your name"}
           </div>
-          <div className="text-11 opacity-85">On duty</div>
+          <div className="text-11 opacity-85 truncate">
+            {designation || "Designation"}
+          </div>
+          {region && (
+            <div className="text-10 opacity-70 uppercase tracking-wide-2 mt-0.5">
+              {region}
+            </div>
+          )}
         </button>
       )}
       {!editing && (

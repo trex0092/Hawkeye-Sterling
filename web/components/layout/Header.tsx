@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { RegulatoryTicker } from "./RegulatoryTicker";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 
 const NAV_TABS = [
@@ -118,12 +119,15 @@ export function Header() {
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
         <a
           href="/"
-          className="inline-flex items-center gap-2 text-ink-0 no-underline text-13 font-semibold shrink-0"
+          className="inline-flex items-center gap-2.5 text-ink-0 no-underline shrink-0"
         >
-          <span className="w-[18px] h-[18px] bg-ink-0 rounded-sm flex items-center justify-center text-white font-mono text-[10px] font-bold">
+          <span className="w-[22px] h-[22px] border border-ink-0 flex items-center justify-center font-display text-[14px] font-semibold text-ink-0 leading-none">
             H
           </span>
-          <span className="hidden sm:inline">Hawkeye Sterling</span>
+          <span className="hidden sm:flex flex-col leading-none gap-[2px]">
+            <span className="text-[13px] font-semibold tracking-tight text-ink-0">Hawkeye Sterling</span>
+            <span className="text-[8.5px] font-mono uppercase tracking-[0.14em] text-ink-3">Precision Screening · UAE</span>
+          </span>
         </a>
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
@@ -230,6 +234,7 @@ export function Header() {
           <LiveBadge />
         </div>
       </nav>
+      <RegulatoryTicker />
     </header>
   );
 }

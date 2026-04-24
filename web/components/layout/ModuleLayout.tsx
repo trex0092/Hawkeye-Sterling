@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { Header } from "./Header";
-import { RegulatoryTicker } from "./RegulatoryTicker";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import {
   SidebarFilterList,
@@ -43,7 +42,6 @@ export function ModuleLayout<K extends string = string>({
   return (
     <>
       <Header />
-      <RegulatoryTicker />
       <div
         className="grid min-h-[calc(100vh-84px)] print:block"
         style={{ gridTemplateColumns: "220px 1fr 360px" }}
