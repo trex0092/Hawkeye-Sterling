@@ -78,7 +78,7 @@ export default function SupplierDdPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 20 · Supply-chain DD"
           title="Supplier"

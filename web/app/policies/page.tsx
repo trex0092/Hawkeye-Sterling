@@ -312,7 +312,7 @@ export default function PoliciesPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 17 · SOP vault"
           title="Policies"

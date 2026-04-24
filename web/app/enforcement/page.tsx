@@ -531,7 +531,7 @@ export default function EnforcementPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 18 · Regulatory calendar"
           title="Enforcement"

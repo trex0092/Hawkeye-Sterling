@@ -147,7 +147,7 @@ export default function InvestigationPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 12 · Link Analysis"
           title="Investigation"

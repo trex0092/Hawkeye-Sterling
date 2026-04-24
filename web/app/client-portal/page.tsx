@@ -268,7 +268,7 @@ export default function ClientPortalPage() {
   if (submitted) {
     return (
       <ModuleLayout>
-        <div className=""">
+        <div>
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
             <h1 className="font-display text-24 text-ink-0 m-0 mb-3">
@@ -295,7 +295,7 @@ export default function ClientPortalPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 13 · Self-service KYC"
           title="Client"

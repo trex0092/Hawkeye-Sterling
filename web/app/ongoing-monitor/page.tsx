@@ -172,7 +172,7 @@ export default function OngoingMonitorPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 24 · Continuous Monitoring"
           title="Ongoing"

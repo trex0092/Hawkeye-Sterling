@@ -150,7 +150,7 @@ export default function TrainingPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 15 · Staff certification"
           title="Training"

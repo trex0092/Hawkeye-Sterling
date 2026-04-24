@@ -466,7 +466,7 @@ export default function RegulatoryPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 11 · Regulatory Reference"
           title="Regulatory"
