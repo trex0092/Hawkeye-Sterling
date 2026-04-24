@@ -17,20 +17,20 @@ export interface ScopeDeclaration {
   adverseMediaTo?: string;
 }
 
-function canonical(obj: Record<string, unknown>): string {
+function canonical(obj: object): string {
   // Stable stringify: keys sorted, arrays sorted, nullables normalised.
   const entries = Object.entries(obj).sort(([a], [b]) => a.localeCompare(b));
   const norm: Record<string, unknown> = {};
   for (const [k, v] of entries) {
     if (Array.isArray(v)) norm[k] = [...v].map(String).sort();
-    else if (v && typeof v === 'object') norm[k] = canonical(v as Record<string, unknown>);
+    else if (v && typeof v === 'object') norm[k] = canonical(v);
     else norm[k] = v ?? null;
   }
   return JSON.stringify(norm);
 }
 
 export function scopeHash(s: ScopeDeclaration): string {
-  return fnv1a(canonical(s as unknown as Record<string, unknown>));
+  return fnv1a(canonical(s));
 }
 
 export function scopeCoverageReport(s: ScopeDeclaration): {

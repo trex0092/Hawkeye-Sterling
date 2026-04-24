@@ -15,7 +15,7 @@ let cached: BlobsStore | null = null;
 type BlobsModule = typeof import('@netlify/blobs');
 async function loadBlobs(): Promise<BlobsModule | null> {
   try {
-    return (await import('@netlify/blobs')) as unknown as BlobsModule;
+    return await import('@netlify/blobs') as unknown as BlobsModule;
   } catch {
     return null;
   }

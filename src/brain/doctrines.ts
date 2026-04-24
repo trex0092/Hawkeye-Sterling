@@ -144,7 +144,7 @@ export const DOCTRINES: Doctrine[] = [
     authority: 'UAE Cabinet',
     title: 'Cabinet Resolution No. 134 of 2025',
     scope: 'Governance updates; four-eyes / SoD (Art.19).',
-    reasoningModes: ['four_eyes_stress', 'three_lines_defence', 'governance' as unknown as string],
+    reasoningModes: ['four_eyes_stress', 'three_lines_defence', 'control_effectiveness'],
     mandatoryInUAE: true,
   },
   {
@@ -160,7 +160,7 @@ export const DOCTRINES: Doctrine[] = [
     authority: 'UAE Ministry of Economy',
     title: 'DNFBP circulars and guidance (precious-metals sector)',
     scope: 'Sector-specific obligations for DPMS.',
-    reasoningModes: ['circular_walk', 'kpi_dpms_thirty', 'dpms_refiner_cahra' as unknown as string],
+    reasoningModes: ['circular_walk', 'kpi_dpms_thirty', 'lbma_rgg_five_step'],
     mandatoryInUAE: true,
   },
   {

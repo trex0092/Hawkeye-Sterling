@@ -68,8 +68,9 @@ export class AuditChain {
   private entries: AuditEntry[] = [];
   private hasher: Hasher;
 
-  constructor(hasher: Hasher = sha256hex) {
+  constructor(hasher: Hasher = sha256hex, initialEntries: AuditEntry[] = []) {
     this.hasher = hasher;
+    this.entries = initialEntries.map((e) => ({ ...e }));
   }
 
   append(actor: string, action: string, payload: unknown = null): AuditEntry {
@@ -108,8 +109,6 @@ export class AuditChain {
   }
 
   static fromEntries(entries: AuditEntry[], hasher: Hasher = sha256hex): AuditChain {
-    const chain = new AuditChain(hasher);
-    (chain as unknown as { entries: AuditEntry[] }).entries = entries.map((e) => ({ ...e }));
-    return chain;
+    return new AuditChain(hasher, entries);
   }
 }
