@@ -78,7 +78,7 @@ export interface WeaponizedBrainManifest {
     reasoningModes: {
       total: number;
       byCategory: Record<string, number>;
-      byWave: { wave1: number; wave2: number };
+      byWave: { wave1: number; wave2: number; wave3: number };
     };
     adverseMedia: {
       categories: Array<{ id: string; displayName: string; keywordCount: number }>;
@@ -168,10 +168,11 @@ function fnv1a(input: string): string {
 
 export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrainManifest {
   const byCategory: Record<string, number> = {};
-  const byWave = { wave1: 0, wave2: 0 };
+  const byWave = { wave1: 0, wave2: 0, wave3: 0 };
   for (const mode of REASONING_MODES) {
     byCategory[mode.category] = (byCategory[mode.category] ?? 0) + 1;
     if (mode.wave === 1) byWave.wave1 += 1;
+    else if (mode.wave === 3) byWave.wave3 += 1;
     else byWave.wave2 += 1;
   }
 
@@ -389,7 +390,7 @@ export function weaponizedSystemPrompt(
         '================================================================================',
         '',
         `Faculties: ${manifest.cognitiveCatalogue.faculties.length} (${manifest.cognitiveCatalogue.faculties.map((f) => f.id).join(', ')}).`,
-        `Reasoning modes: ${manifest.cognitiveCatalogue.reasoningModes.total} registered (wave 1: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave1}, wave 2: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave2}).`,
+        `Reasoning modes: ${manifest.cognitiveCatalogue.reasoningModes.total} registered (wave 1: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave1}, wave 2: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave2}, wave 3: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave3}).`,
         `Adverse-media categories: ${manifest.cognitiveCatalogue.adverseMedia.categories.length} (${manifest.cognitiveCatalogue.adverseMedia.totalKeywords} keywords).`,
         `Doctrines: ${manifest.cognitiveCatalogue.doctrines.total} (${manifest.cognitiveCatalogue.doctrines.mandatoryInUAE} mandatory in UAE).`,
         `Red flags: ${manifest.cognitiveCatalogue.redFlags.total} (high=${manifest.cognitiveCatalogue.redFlags.bySeverity.high}, medium=${manifest.cognitiveCatalogue.redFlags.bySeverity.medium}, low=${manifest.cognitiveCatalogue.redFlags.bySeverity.low}).`,

@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-24T13:53:30.164Z",
+  "generatedAt": "2026-04-24T14:04:25.940Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-24T13:53:30.160Z",
+    "generatedAt": "2026-04-24T14:04:25.935Z",
     "charter": {
       "prohibitions": [
         {
@@ -278,7 +278,8 @@
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 173
+          "wave2": 100,
+          "wave3": 73
         }
       },
       "adverseMedia": {
