@@ -5,10 +5,14 @@ import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Operator-triggered sanctions-list refresh. The authoritative refresh is
-// the scheduled Netlify Function at netlify/functions/refresh-lists.ts
-// (cron: 0 3 * * * = 03:00 UTC daily). This route lets an MLRO kick off
-// an ad-hoc refresh without waiting for the next cron tick.
+// Operator-triggered sanctions-list cache invalidation.
+// Authoritative scheduled refreshes are handled by:
+//   netlify/functions/refresh-lists.ts         — 03:00 UTC (direct blob write)
+//   netlify/functions/sanctions-watch-cron.mts — 04:30 UTC  ↘
+//   netlify/functions/sanctions-watch-1100.mts — 11:00 UTC   ↗ via /api/sanctions/watch
+//   netlify/functions/sanctions-watch-1330.mts — 13:30 UTC  ↗
+// This route lets an MLRO kick off an ad-hoc cache invalidation
+// without waiting for the next cron tick.
 //
 // We don't duplicate the adapter code here — instead we invalidate the
 // in-process candidate cache and return a JSON response telling the
