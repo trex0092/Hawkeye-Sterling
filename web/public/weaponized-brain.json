@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-24T16:57:33.381Z",
+  "generatedAt": "2026-04-24T17:12:54.163Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-24T16:57:33.378Z",
+    "generatedAt": "2026-04-24T17:12:54.159Z",
     "charter": {
       "prohibitions": [
         {
@@ -255,7 +255,7 @@
         }
       ],
       "reasoningModes": {
-        "total": 273,
+        "total": 302,
         "byCategory": {
           "logic": 21,
           "cognitive_science": 22,
@@ -271,14 +271,21 @@
           "behavioral_signals": 5,
           "data_quality": 10,
           "governance": 16,
-          "crypto_defi": 16,
+          "crypto_defi": 19,
           "sectoral_typology": 24,
           "osint": 6,
-          "esg": 4
+          "esg": 4,
+          "predicate_crime": 6,
+          "proliferation": 4,
+          "correspondent_banking": 4,
+          "hawala_ivt": 3,
+          "ftz_risk": 2,
+          "professional_ml": 3,
+          "regulatory_aml": 4
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 100,
+          "wave2": 129,
           "wave3": 73
         }
       },
@@ -647,27 +654,27 @@
         ]
       },
       "skills": {
-        "total": 397,
+        "total": 468,
         "byLayer": {
-          "competency": 115,
-          "reasoning": 106,
-          "analysis": 176
+          "competency": 141,
+          "reasoning": 126,
+          "analysis": 201
         },
         "byDomain": {
-          "AML_CORE": 70,
+          "AML_CORE": 124,
           "REGULATORY": 35,
-          "RISK_ASSESSMENT": 33,
-          "KYC_CDD": 27,
-          "SANCTIONS_TFS": 14,
-          "INVESTIGATIONS": 40,
-          "GOVERNANCE": 28,
-          "SUPPLY_CHAIN": 49,
+          "RISK_ASSESSMENT": 35,
+          "KYC_CDD": 28,
+          "SANCTIONS_TFS": 19,
+          "INVESTIGATIONS": 41,
+          "GOVERNANCE": 29,
+          "SUPPLY_CHAIN": 50,
           "SOFT_SKILLS": 17,
           "DOCUMENTATION": 23,
-          "REPORTING": 11,
+          "REPORTING": 12,
           "TRAINING": 16,
           "COMPLIANCE_SYS": 21,
-          "DIGITAL_ASSETS": 9,
+          "DIGITAL_ASSETS": 14,
           "DATA_PRIVACY": 4
         }
       },
@@ -755,18 +762,18 @@
     },
     "integrity": {
       "charterHash": "ed3b0986",
-      "catalogueHash": "2ea78e75"
+      "catalogueHash": "4c29dd19"
     }
   },
   "integrity": {
     "charterHash": "ed3b0986",
-    "catalogueHash": "2ea78e75",
-    "compositeHash": "8319c263"
+    "catalogueHash": "4c29dd19",
+    "compositeHash": "a7bd3c87"
   },
   "enhanced": {
     "extended": {
       "taxonomy": {
-        "questionTemplates": 50,
+        "questionTemplates": 72,
         "sectorRubrics": 5,
         "scenarios": 69,
         "typologies": 71,
@@ -783,11 +790,11 @@
         "riskAppetite": 13,
         "cahraSeed": 12,
         "uaeFreeZones": 31,
-        "jurisdictionsFull": 249,
+        "jurisdictionsFull": 264,
         "dpmsKpis": 30
       },
       "expertise": {
-        "skills": 397,
+        "skills": 468,
         "cognitiveAmplifier": 23
       }
     },
@@ -876,24 +883,24 @@
       ],
       "jurisdictionsByRegion": [
         {
+          "region": "Asia",
+          "count": 60
+        },
+        {
           "region": "Africa",
           "count": 58
         },
         {
           "region": "Americas",
-          "count": 55
+          "count": 57
         },
         {
           "region": "Europe",
-          "count": 52
-        },
-        {
-          "region": "Asia",
-          "count": 51
+          "count": 55
         },
         {
           "region": "Oceania",
-          "count": 28
+          "count": 29
         },
         {
           "region": "Antarctic",
@@ -955,10 +962,10 @@
     "totals": {
       "catalogues": 19,
       "enhancedCatalogues": 19,
-      "regulatoryRecords": 444,
-      "taxonomyRecords": 366,
-      "skillsRecords": 397,
-      "totalRecords": 1207
+      "regulatoryRecords": 459,
+      "taxonomyRecords": 388,
+      "skillsRecords": 468,
+      "totalRecords": 1315
     }
   }
 }

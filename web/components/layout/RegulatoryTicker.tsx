@@ -30,6 +30,7 @@ const TONE_DOT: Record<TickerItem["tone"], string> = {
 
 export function RegulatoryTicker() {
   const [syncTime, setSyncTime] = useState<string>("");
+  const [liveItems, setLiveItems] = useState<TickerItem[]>([]);
 
   useEffect(() => {
     const tick = () => {
@@ -48,10 +49,31 @@ export function RegulatoryTicker() {
     return () => clearInterval(id);
   }, []);
 
+  // Fetch top priority items from the regulatory feed and surface them in the ticker.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/regulatory-feed");
+        if (!res.ok) return;
+        const data = await res.json() as { ok: boolean; items?: Array<{ title: string; source: string; tone: string }> };
+        if (!data.ok || !Array.isArray(data.items)) return;
+        const top = data.items
+          .filter((i) => i.tone === "red" || i.tone === "amber")
+          .slice(0, 6)
+          .map((i) => ({
+            label: `${i.source} · ${i.title.toUpperCase().slice(0, 70)}`,
+            tone: i.tone as TickerItem["tone"],
+          }));
+        setLiveItems(top);
+      } catch { /* silently ignore */ }
+    })();
+  }, []);
+
   const items: TickerItem[] = [
     ...BASE_ITEMS.slice(0, 1),
     { label: `UNSC CONSOLIDATED · LAST SYNC ${syncTime || "--:--"}`, tone: "green" },
     ...BASE_ITEMS.slice(1),
+    ...liveItems,
   ];
 
   // Duplicate for seamless loop

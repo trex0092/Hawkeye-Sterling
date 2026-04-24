@@ -49,6 +49,18 @@ export const POLICIES: Policy[] = [
   { id: 'pol_insider_threat_programme', title: 'Insider-Threat Programme', owner: 'it_security', reviewMonths: 12, approvedBy: 'board', anchors: ['Three Lines Model'] },
   { id: 'pol_environmental_crime_compliance', title: 'Environmental-Crime Compliance (FATF R.3 2021 predicate)', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.3 (2021)', 'OECD DDG Annex II'] },
   { id: 'pol_carbon_credit_integrity', title: 'Carbon-Credit / VCM Integrity', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['ICVCM Core Carbon Principles', 'Article 6 Paris Agreement'] },
+
+  // ── Wave 5 — extended AML/CFT operational policies ───────────────────
+  { id: 'pol_customer_risk_rating', title: 'Customer Risk Rating Methodology', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF RBA', 'FDL 10/2025 Art.7', 'CBUAE AML/CFT Standards'] },
+  { id: 'pol_correspondent_banking', title: 'Correspondent Banking Minimum Standards', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FATF R.13', 'Wolfsberg Correspondent Banking Principles', 'Basel CDD Paper'] },
+  { id: 'pol_virtual_asset_policy', title: 'Virtual Asset / VASP Policy and Controls', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FATF R.15/16', 'VARA Rulebook', 'CBUAE VASP Framework'] },
+  { id: 'pol_dpms_threshold_reporting', title: 'DPMS Threshold Reporting Procedure (AED 55k)', owner: 'operations', reviewMonths: 6, approvedBy: 'senior_management', anchors: ['MoE Circular 2/2024', 'FDL 10/2025', 'goAML DPMS Module'] },
+  { id: 'pol_ngo_charity_due_diligence', title: 'NGO / Charity Customer Due Diligence', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.8 NPO Guidance', 'FATF Updated Guidance 2023'] },
+  { id: 'pol_funds_transfer_travel_rule', title: 'Funds Transfer and Travel Rule (FATF R.16)', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.16', 'SWIFT gpi Standards', 'VARA Travel Rule'] },
+  { id: 'pol_name_screening_standards', title: 'Name Screening Standards and Threshold Policy', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.6/10', 'CR 74/2020', 'OFAC SDN Programme'] },
+  { id: 'pol_outsourcing_compliance', title: 'Compliance Outsourcing and Delegation Policy', owner: 'compliance', reviewMonths: 12, approvedBy: 'board', anchors: ['FATF R.17', 'CBUAE Outsourcing Standards', 'FDL 10/2025 Art.20'] },
+  { id: 'pol_proliferation_financing', title: 'Proliferation Financing Risk Controls', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FATF R.7', 'CR 74/2020', 'UN SC Res 1718/2231'] },
+  { id: 'pol_ewra_methodology', title: 'Enterprise-Wide Risk Assessment Methodology', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FATF RBA', 'FDL 10/2025 Art.4', 'CBUAE EWRA Guidance'] },
 ];
 
 export const POLICY_BY_ID: Map<string, Policy> = new Map(POLICIES.map((p) => [p.id, p]));
