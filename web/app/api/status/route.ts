@@ -230,7 +230,19 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
     }
     if (!blobsMod) return null;
     const { getStore } = blobsMod;
-    const reports = getStore({ name: "hawkeye-list-reports" });
+    // Mirror the explicit-credential pattern from lib/server/store.ts so this
+    // check works even when Netlify's auto-injected blob context is absent
+    // (monorepo builds, custom runtimes, background function instances).
+    const blobSiteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const blobToken =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const reportsOpts =
+      blobSiteId && blobToken
+        ? { name: "hawkeye-list-reports", siteID: blobSiteId, token: blobToken, consistency: "strong" as const }
+        : { name: "hawkeye-list-reports" };
+    const reports = getStore(reportsOpts);
     const now = Date.now();
     const per: SanctionsFreshness["lists"] = [];
     for (const id of ADAPTER_IDS) {
