@@ -43,16 +43,19 @@ const TONE_DOT: Record<RegulatoryItem["tone"], string> = {
 };
 
 const SOURCE_BADGE: Record<string, string> = {
-  MoET:       "bg-violet-dim text-violet",
-  "UAE IEC":  "bg-blue-dim text-blue",
-  CBUAE:      "bg-brand-dim text-brand-deep",
-  UAEFIU:     "bg-red-dim text-red",
-  FATF:       "bg-orange-dim text-orange",
-  VARA:       "bg-amber-dim text-amber",
-  OECD:       "bg-bg-2 text-ink-2",
-  LBMA:       "bg-bg-2 text-ink-2",
+  MoET:          "bg-violet-dim text-violet",
+  "UAE IEC":     "bg-blue-dim text-blue",
+  CBUAE:         "bg-brand-dim text-brand-deep",
+  UAEFIU:        "bg-red-dim text-red",
+  "FIU UAE":     "bg-red-dim text-red",
+  FATF:          "bg-orange-dim text-orange",
+  VARA:          "bg-amber-dim text-amber",
+  OECD:          "bg-teal-dim text-teal",
+  LBMA:          "bg-teal-dim text-teal",
+  RMI:           "bg-orange-dim text-orange",
+  "EOCN UAE":    "bg-red-dim text-red",
   "UAE Cabinet": "bg-red-dim text-red",
-  "UAE PDPL": "bg-violet-dim text-violet",
+  "UAE PDPL":    "bg-violet-dim text-violet",
   "UAE Digital": "bg-blue-dim text-blue",
   "MoET / DPMS": "bg-violet-dim text-violet",
 };
@@ -332,15 +335,15 @@ export default function IntelPage() {
         intro={
           <>
             <strong>Two live panels.</strong> The UAE Regulatory Feed polls
-            MoET, UAE IEC, CBUAE, UAEFIU, FATF and Google News every 30 minutes
-            for circulars, enforcement actions and guidance updates.
-            The adverse-media panel sweeps any named subject across 7 language
-            feeds and surfaces HIGH / CRITICAL items first.
+            MoET, UAE IEC, CBUAE, FIU UAE, FATF, LBMA, OECD, RMI and EOCN UAE
+            via Google News every 30 minutes for circulars, enforcement actions
+            and guidance updates. The adverse-media panel sweeps any named
+            subject across 7 language feeds and surfaces HIGH / CRITICAL items first.
           </>
         }
         kpis={[
           { value: "4", label: "live government sources" },
-          { value: "10", label: "Google News queries" },
+          { value: "15", label: "Google News queries" },
           { value: "7", label: "adverse-media languages" },
           { value: "30m", label: "regulatory refresh cadence" },
         ]}

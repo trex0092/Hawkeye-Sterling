@@ -72,6 +72,11 @@ const GNEWS_QUERIES: GNewsQuery[] = [
   { q: 'PDPL UAE data protection law regulation 2025 2026', source: "UAE PDPL", category: "PDPL", tone: "amber" },
   { q: 'UAE Ministry Economy DPMS gold precious metals 2025 2026', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
   { q: 'UAE AI artificial intelligence regulation governance 2025 2026', source: "UAE Digital", category: "AI Governance", tone: "green" },
+  { q: 'LBMA "London Bullion Market Association" gold precious metals responsible sourcing standard 2025 2026', source: "LBMA", category: "DPMS", tone: "green" },
+  { q: 'OECD "due diligence" minerals responsible supply chain conflict 2025 2026', source: "OECD", category: "DPMS", tone: "green" },
+  { q: '"Responsible Minerals Initiative" RMI smelter refiner audit RMAP conflict minerals 2025 2026', source: "RMI", category: "DPMS", tone: "amber" },
+  { q: '"FIU UAE" OR "UAE Financial Intelligence Unit" goAML suspicious transaction report 2025 2026', source: "FIU UAE", category: "AML/CFT", tone: "red" },
+  { q: '"EOCN" UAE "Executive Office for Control and Non-Proliferation" sanctions proliferation WMD 2025 2026', source: "EOCN UAE", category: "Sanctions", tone: "red" },
 ];
 
 function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
