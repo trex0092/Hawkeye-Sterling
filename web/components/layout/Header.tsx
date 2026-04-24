@@ -361,12 +361,6 @@ function HeaderUserCard() {
               </button>
             ))}
           </div>
-          <div className="text-10 text-ink-3 border-t border-hair pt-2 mb-2">
-            Shift:{" "}
-            <span className="font-mono font-semibold text-ink-1">
-              09:00–18:00
-            </span>
-          </div>
           <button
             type="button"
             onClick={saveName}
