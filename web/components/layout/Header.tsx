@@ -25,6 +25,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Intel", href: "/intel", hint: "Adverse-media ticker" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
+      { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
     ],
   },
   {
@@ -36,6 +37,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
       { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
+      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
   },
   {
@@ -48,6 +50,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Data quality", href: "/data-quality", hint: "Per-case completeness" },
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
       { label: "Monitoring", href: "/ongoing-monitor", hint: "Ongoing screening scheduler" },
+      { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
     ],
   },
 ];
