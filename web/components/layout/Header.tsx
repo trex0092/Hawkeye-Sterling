@@ -222,12 +222,44 @@ export function Header() {
           >
             {theme === "light" ? "☾ Dark" : "☀ Light"}
           </button>
-          <span className="hidden md:flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green" />
-            <span className="font-medium">live</span>
-          </span>
+          <LiveBadge />
         </div>
       </nav>
     </header>
+  );
+}
+
+function LiveBadge() {
+  const [time, setTime] = useState<string>("");
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setTime(
+        now.toLocaleTimeString("en-GB", {
+          timeZone: "Asia/Dubai",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }),
+      );
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!time) return null;
+
+  return (
+    <span className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-dim text-green font-mono text-10.5 font-semibold border border-green/20">
+      <span
+        className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
+        style={{ animation: "live-pulse 2s ease-in-out infinite" }}
+      />
+      live
+      <span className="text-green/70 font-normal tracking-tight">{time}</span>
+    </span>
   );
 }

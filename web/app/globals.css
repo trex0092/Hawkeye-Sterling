@@ -190,3 +190,8 @@ html[data-theme="dark"] {
     background: linear-gradient(90deg, var(--brand), var(--violet));
   }
 }
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
