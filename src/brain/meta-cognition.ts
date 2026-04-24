@@ -242,6 +242,63 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
       'Before emission, run the output against every ABSOLUTE PROHIBITION, the tipping-off guard (P4), the observable-facts linter (P3/P5), the risk-methodology clause (P9), and the redline registry. A single violation forces a BLOCKED verdict.',
     firesWhen: 'Any output is about to be emitted.',
   },
+  // ── Wave 3 additions ────────────────────────────────────────────────────
+  {
+    id: 'mc.falsifiability-test',
+    label: 'Falsifiability Test',
+    category: 'truth-seeking',
+    directive:
+      'For every hypothesis, state the observable evidence that would definitively refute it. If no such evidence can be named, downgrade the hypothesis to unfalsifiable speculation and treat it as inadmissible for risk-scoring.',
+    firesWhen: 'A causal claim or risk hypothesis is being formed.',
+  },
+  {
+    id: 'mc.base-rate-anchor',
+    label: 'Base-Rate Anchor',
+    category: 'belief-update',
+    directive:
+      'Before updating on case-specific signals, state the empirical base rate for the phenomenon (e.g. SAR conversion rate for the sector, fraud prevalence in the population). Use it as the Bayesian prior; never let narrative override it without explicit likelihood-ratio justification.',
+    firesWhen: 'A probability or risk level is being assigned.',
+  },
+  {
+    id: 'mc.galaxy-brain-guard',
+    label: 'Galaxy-Brain Guard',
+    category: 'adversarial',
+    directive:
+      'Audit every multi-step reasoning chain: if a sequence of individually plausible steps leads to an implausible or convenient conclusion, flag it as galaxy-brained and restart from first principles. A chain is suspect when each step subtly weakens a constraint.',
+    firesWhen: 'A conclusion is reached via more than three inferential steps.',
+  },
+  {
+    id: 'mc.mece-decomposition',
+    label: 'MECE Decomposition',
+    category: 'decomposition',
+    directive:
+      'Every problem decomposition must be Mutually Exclusive and Collectively Exhaustive. Name the partitioning criterion explicitly. Identify any residual bucket and analyse it — residuals often hide the most important signals.',
+    firesWhen: 'A problem, typology space, or risk surface is being broken down into parts.',
+  },
+  {
+    id: 'mc.confidence-interval',
+    label: 'Confidence-Interval Discipline',
+    category: 'calibration',
+    directive:
+      'Report all uncertain quantities as intervals (or probability distributions) not point estimates. State the methodology: frequentist CI, Bayesian credible interval, or expert-elicited range. Never present a single number as if it were certain.',
+    firesWhen: 'A risk score, probability, or quantitative estimate is produced.',
+  },
+  {
+    id: 'mc.butterfly-sensitivity',
+    label: 'Butterfly Sensitivity',
+    category: 'foresight',
+    directive:
+      'Identify the assumption your conclusion is most sensitive to. Perturb it by ±10% and ±50%. If the verdict flips under a plausible perturbation, downgrade confidence and flag the fragility explicitly.',
+    firesWhen: 'A HIGH or CONFIRMED verdict is about to be emitted.',
+  },
+  {
+    id: 'mc.contradiction-sweep',
+    label: 'Contradiction Sweep',
+    category: 'hygiene',
+    directive:
+      'Before emission, scan the entire output for internal contradictions: a claim in one section that conflicts with a claim in another, or a risk rating inconsistent with the cited evidence. Resolve every conflict before releasing the output.',
+    firesWhen: 'Any multi-section output is being finalised.',
+  },
 ]);
 
 export const META_COGNITION: ReadonlyArray<MetaCognitionPrimitive> = RAW;

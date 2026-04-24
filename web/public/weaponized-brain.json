@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-24T13:23:34.981Z",
+  "generatedAt": "2026-04-24T13:53:30.164Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-24T13:23:34.977Z",
+    "generatedAt": "2026-04-24T13:53:30.160Z",
     "charter": {
       "prohibitions": [
         {
@@ -255,28 +255,30 @@
         }
       ],
       "reasoningModes": {
-        "total": 200,
+        "total": 273,
         "byCategory": {
           "logic": 21,
-          "cognitive_science": 15,
+          "cognitive_science": 22,
           "decision_theory": 15,
-          "forensic": 23,
-          "compliance_framework": 20,
+          "forensic": 37,
+          "compliance_framework": 30,
           "legal_reasoning": 10,
           "strategic": 10,
           "causal": 5,
-          "statistical": 14,
-          "graph_analysis": 4,
-          "threat_modeling": 7,
+          "statistical": 18,
+          "graph_analysis": 10,
+          "threat_modeling": 14,
           "behavioral_signals": 5,
           "data_quality": 10,
           "governance": 16,
-          "crypto_defi": 8,
-          "sectoral_typology": 17
+          "crypto_defi": 16,
+          "sectoral_typology": 24,
+          "osint": 6,
+          "esg": 4
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 100
+          "wave2": 173
         }
       },
       "adverseMedia": {
@@ -609,15 +611,15 @@
         ]
       },
       "metaCognition": {
-        "total": 25,
+        "total": 32,
         "byCategory": {
-          "truth-seeking": 3,
-          "belief-update": 3,
-          "adversarial": 4,
-          "decomposition": 4,
-          "calibration": 3,
-          "foresight": 3,
-          "hygiene": 5
+          "truth-seeking": 4,
+          "belief-update": 4,
+          "adversarial": 5,
+          "decomposition": 5,
+          "calibration": 4,
+          "foresight": 4,
+          "hygiene": 6
         },
         "ids": [
           "mc.first-principles",
@@ -644,19 +646,26 @@
           "mc.definition-discipline",
           "mc.numerical-discipline",
           "mc.source-tagging",
-          "mc.charter-compliance"
+          "mc.charter-compliance",
+          "mc.falsifiability-test",
+          "mc.base-rate-anchor",
+          "mc.galaxy-brain-guard",
+          "mc.mece-decomposition",
+          "mc.confidence-interval",
+          "mc.butterfly-sensitivity",
+          "mc.contradiction-sweep"
         ]
       }
     },
     "integrity": {
       "charterHash": "ed3b0986",
-      "catalogueHash": "9d076995"
+      "catalogueHash": "0037bb23"
     }
   },
   "integrity": {
     "charterHash": "ed3b0986",
-    "catalogueHash": "9d076995",
-    "compositeHash": "cd19fb3a"
+    "catalogueHash": "0037bb23",
+    "compositeHash": "884a33f4"
   },
   "enhanced": {
     "extended": {
@@ -668,7 +677,7 @@
         "redFlags": 21,
         "redFlagsExtended": 45,
         "adverseMediaCategories": 8,
-        "metaCognition": 25
+        "metaCognition": 32
       },
       "regulatory": {
         "fatfRecommendations": 40,
@@ -827,9 +836,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 19,
       "regulatoryRecords": 416,
-      "taxonomyRecords": 233,
+      "taxonomyRecords": 240,
       "skillsRecords": 397,
-      "totalRecords": 1046
+      "totalRecords": 1053
     }
   }
 }
