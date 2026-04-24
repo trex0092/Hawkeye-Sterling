@@ -54,7 +54,6 @@ const SOURCE_BADGE: Record<string, string> = {
   "UAE Cabinet": "bg-red-dim text-red",
   "UAE PDPL": "bg-violet-dim text-violet",
   "UAE Digital": "bg-blue-dim text-blue",
-  "UAE IEC":  "bg-blue-dim text-blue",
   "MoET / DPMS": "bg-violet-dim text-violet",
 };
 
