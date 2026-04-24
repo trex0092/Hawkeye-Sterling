@@ -25,7 +25,7 @@ const m = (
   faculties: FacultyId[],
   description: string,
 ): ReasoningMode => ({
-  id, name, category, faculties, wave: 4 as unknown as 1, description,
+  id, name, category, faculties, wave: 4, description,
   apply: stubApply(id, category, faculties),
 });
 

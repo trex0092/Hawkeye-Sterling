@@ -1,5 +1,5 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 273 modes across 16+ categories, wave 1 + wave 2 + wave 3.
+// 302 modes across 25 categories, wave 1 + wave 2 + wave 3 + wave 4.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
 // inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7.
