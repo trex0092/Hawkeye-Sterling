@@ -596,7 +596,7 @@ function BrainNarrativePanel({
             <div className="flex items-baseline gap-2">
               {grade.breakdown.map((b) => (
                 <span key={b.label} className="font-mono text-10 text-ink-3" title={b.label}>
-                  {b.label.split(" ")[0].toLowerCase()}:{" "}
+                  {b.label.replace(/ .*$/, "").toLowerCase()}:{" "}
                   <span className={b.earned === b.max ? "text-green" : b.earned > 0 ? "text-amber" : "text-red"}>
                     {b.earned}/{b.max}
                   </span>
