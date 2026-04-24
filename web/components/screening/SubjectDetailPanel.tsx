@@ -16,6 +16,38 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainRadar } from "@/components/screening/BrainRadar";
 import { BrainConfidence } from "@/components/screening/BrainConfidence";
+import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
+import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
+import { BrainWhatIf } from "@/components/screening/BrainWhatIf";
+import {
+  BrainAdversarial,
+  BrainTypologyMap,
+  BrainKeywordExplorer,
+  BrainLatencyBreakdown,
+  BrainCapabilityAudit,
+  BrainChainOfCustody,
+  BrainConfidenceInterval,
+  BrainRegimeExposure,
+  BrainScenarioMatcher,
+  BrainBiasCheck,
+  BrainPolicySimulator,
+  BrainDataFreshness,
+  BrainInputValidator,
+  BrainModuleWeights,
+  BrainCanaryBench,
+  BrainVerdictConsistency,
+  BrainCrossReference,
+  BrainCoherenceCheck,
+  BrainRedFlagCombinator,
+  BrainCausalChain,
+  BrainPolicyCitation,
+  BrainFATFAlignment,
+  BrainSanctionsPathway,
+  BrainSoWPlausibility,
+  BrainAnomalyDetector,
+  BrainCounterfactual,
+  BrainOutcomeForecast,
+} from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import {
   canPerform,
@@ -1151,6 +1183,36 @@ function SuperBrainPanel({
       <BrainNarrative result={r} subjectName={subjectName} subjectId={subjectId} />
       <BrainRadar result={r} />
       <BrainConfidence result={r} />
+      <BrainReasoningChain result={r} />
+      <BrainCausalChain result={r} />
+      <BrainOutcomeForecast result={r} />
+      <BrainDecomposition result={r} />
+      <BrainConfidenceInterval result={r} />
+      <BrainVerdictConsistency result={r} />
+      <BrainCoherenceCheck result={r} subjectName={subjectName} />
+      <BrainBiasCheck result={r} />
+      <BrainAnomalyDetector result={r} />
+      <BrainRedFlagCombinator result={r} />
+      <BrainSanctionsPathway result={r} />
+      <BrainSoWPlausibility result={r} />
+      <BrainCounterfactual result={r} />
+      <BrainWhatIf result={r} />
+      <BrainPolicySimulator result={r} />
+      <BrainTypologyMap result={r} />
+      <BrainScenarioMatcher result={r} />
+      <BrainRegimeExposure result={r} />
+      <BrainAdversarial result={r} subjectName={subjectName} />
+      <BrainKeywordExplorer result={r} />
+      <BrainCrossReference result={r} />
+      <BrainInputValidator result={r} subjectName={subjectName} />
+      <BrainPolicyCitation result={r} />
+      <BrainFATFAlignment result={r} />
+      <BrainCapabilityAudit result={r} />
+      <BrainLatencyBreakdown result={r} />
+      <BrainDataFreshness result={r} />
+      <BrainChainOfCustody result={r} />
+      <BrainCanaryBench />
+      <BrainModuleWeights />
       <div className="bg-ink-0 text-white rounded-lg p-3 mb-3">
         <div className="flex justify-between items-baseline mb-1">
           <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
