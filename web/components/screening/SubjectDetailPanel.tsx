@@ -37,6 +37,16 @@ import {
   BrainCanaryBench,
   BrainVerdictConsistency,
   BrainCrossReference,
+  BrainCoherenceCheck,
+  BrainRedFlagCombinator,
+  BrainCausalChain,
+  BrainPolicyCitation,
+  BrainFATFAlignment,
+  BrainSanctionsPathway,
+  BrainSoWPlausibility,
+  BrainAnomalyDetector,
+  BrainCounterfactual,
+  BrainOutcomeForecast,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import {
@@ -1174,10 +1184,18 @@ function SuperBrainPanel({
       <BrainRadar result={r} />
       <BrainConfidence result={r} />
       <BrainReasoningChain result={r} />
+      <BrainCausalChain result={r} />
+      <BrainOutcomeForecast result={r} />
       <BrainDecomposition result={r} />
       <BrainConfidenceInterval result={r} />
       <BrainVerdictConsistency result={r} />
+      <BrainCoherenceCheck result={r} subjectName={subjectName} />
       <BrainBiasCheck result={r} />
+      <BrainAnomalyDetector result={r} />
+      <BrainRedFlagCombinator result={r} />
+      <BrainSanctionsPathway result={r} />
+      <BrainSoWPlausibility result={r} />
+      <BrainCounterfactual result={r} />
       <BrainWhatIf result={r} />
       <BrainPolicySimulator result={r} />
       <BrainTypologyMap result={r} />
@@ -1187,6 +1205,8 @@ function SuperBrainPanel({
       <BrainKeywordExplorer result={r} />
       <BrainCrossReference result={r} />
       <BrainInputValidator result={r} subjectName={subjectName} />
+      <BrainPolicyCitation result={r} />
+      <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
       <BrainLatencyBreakdown result={r} />
       <BrainDataFreshness result={r} />

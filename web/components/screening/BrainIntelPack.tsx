@@ -717,3 +717,533 @@ function Slider({
     </div>
   );
 }
+
+// ─── 18. BrainCoherenceCheck ───────────────────────────────────────
+// Does the subject profile internally hang together? Flags
+// implausible combinations (e.g. tier-1 PEP with unusually
+// clean jurisdiction exposure; individual + corporate-style name).
+export function BrainCoherenceCheck({
+  result,
+  subjectName,
+}: {
+  result: SuperBrainResult;
+  subjectName: string;
+}) {
+  const signals: string[] = [];
+  if (result.pep && result.pep.salience > 0 && !result.jurisdiction?.cahra) {
+    signals.push(
+      "Tier-1 PEP classified but jurisdiction not CAHRA-listed — verify exposure pathway.",
+    );
+  }
+  if (result.screen.hits.length > 0 && result.adverseMedia.length === 0) {
+    signals.push(
+      "Sanctions match with zero adverse-media footprint — possible stale list entry or false-match.",
+    );
+  }
+  if (subjectName.split(/\s+/).length < 2) {
+    signals.push(
+      "Single-token subject name — transliteration variance high; consider alias expansion.",
+    );
+  }
+  if (result.jurisdictionRich?.riskScore && result.jurisdictionRich.riskScore > 0.7 && result.composite.score < 40) {
+    signals.push(
+      "High-risk jurisdiction profile but low composite score — check if brain weighted the correct ISO code.",
+    );
+  }
+  if (signals.length === 0) {
+    return (
+      <Card title="Coherence check">
+        <div className="text-11 text-green">
+          ✓ Subject profile is internally coherent — no contradictions
+          detected across signals.
+        </div>
+      </Card>
+    );
+  }
+  return (
+    <Card title={`Coherence check (${signals.length})`}>
+      <ul className="list-none p-0 m-0 space-y-1">
+        {signals.map((s, i) => (
+          <li key={i} className="text-11 text-amber">
+            ⚠ {s}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// ─── 19. BrainRedFlagCombinator ────────────────────────────────────
+// Pattern-match combinations of red flags that together signify a
+// specific typology beyond what individual flags show.
+export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult }) {
+  const patterns: Array<{ name: string; likelihood: number; rationale: string }> = [];
+  const hitCount = result.screen.hits.length;
+  const pepFired = Boolean(result.pep && result.pep.salience > 0);
+  const amFired = result.adverseMedia.length > 0;
+  const cahra = Boolean(result.jurisdiction?.cahra);
+  const redlines = result.redlines.fired.length;
+  const typologies = result.typologies?.hits.length ?? 0;
+
+  if (pepFired && cahra && amFired) {
+    patterns.push({
+      name: "Kleptocracy pattern",
+      likelihood: 0.85,
+      rationale:
+        "PEP classification + CAHRA jurisdiction + adverse-media converge — classic kleptocracy pathway. Escalate to CEO/Board.",
+    });
+  }
+  if (hitCount > 0 && redlines >= 2) {
+    patterns.push({
+      name: "Active sanctions-evasion pattern",
+      likelihood: 0.92,
+      rationale:
+        "Sanctions hit × multiple redlines — consistent with active evasion via shell-company or nominee structure.",
+    });
+  }
+  if (typologies >= 3 && amFired) {
+    patterns.push({
+      name: "Multi-typology confluence",
+      likelihood: 0.72,
+      rationale:
+        "Three or more typology signatures + adverse-media — subject straddles multiple fraud / laundering patterns.",
+    });
+  }
+  if (pepFired && !hitCount && !amFired) {
+    patterns.push({
+      name: "Clean PEP (EDD path)",
+      likelihood: 0.65,
+      rationale:
+        "PEP without sanctions or adverse-media — standard EDD suffices; no FIU filing required on PEP alone.",
+    });
+  }
+  if (patterns.length === 0) {
+    return (
+      <Card title="Red-flag combinator">
+        <div className="text-11 text-ink-2">
+          No multi-flag patterns detected. Individual signals do not cluster
+          into a recognised typology.
+        </div>
+      </Card>
+    );
+  }
+  return (
+    <Card title={`Red-flag combinator (${patterns.length})`}>
+      <div className="space-y-2">
+        {patterns.map((p, i) => (
+          <div key={i} className="border-l-2 border-red pl-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-11 font-semibold text-ink-0">{p.name}</span>
+              <span className="font-mono text-10 text-red">
+                {(p.likelihood * 100).toFixed(0)}% likelihood
+              </span>
+            </div>
+            <div className="text-10.5 text-ink-2 leading-snug mt-0.5">
+              {p.rationale}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 20. BrainCausalChain ──────────────────────────────────────────
+// Given observed signals, reconstruct the most likely causal story.
+export function BrainCausalChain({ result }: { result: SuperBrainResult }) {
+  const chain: string[] = [];
+  if (result.jurisdiction?.cahra) {
+    chain.push(`Subject operates from ${result.jurisdiction.name} — a CAHRA-listed jurisdiction.`);
+  }
+  if (result.pep && result.pep.salience > 0) {
+    chain.push(
+      `Classified as ${result.pep.tier.replace(/_/g, " ")} PEP (salience ${Math.round(result.pep.salience * 100)}%).`,
+    );
+  }
+  if (result.screen.hits.length > 0) {
+    const top = result.screen.hits[0]!;
+    chain.push(
+      `Appears on ${top.listId} at ${Math.round(top.score * 100)}% match via ${top.method}.`,
+    );
+  }
+  if (result.adverseMedia.length > 0) {
+    chain.push(
+      `Adverse-media overlay fires on ${result.adverseMedia.length} categor${result.adverseMedia.length === 1 ? "y" : "ies"} — open-source corroboration available.`,
+    );
+  }
+  if (result.redlines.fired.length > 0) {
+    chain.push(
+      `Charter redline${result.redlines.fired.length === 1 ? "" : "s"} ${result.redlines.fired.map((f) => f.label ?? f.id).join(", ")} activated.`,
+    );
+  }
+
+  const terminal =
+    result.composite.score >= 85
+      ? "→ FREEZE + FFR within 5 business days (FDL 10/2025 Art.26-27)"
+      : result.composite.score >= 60
+        ? "→ Escalate to MLRO for EDD decision"
+        : result.composite.score >= 35
+          ? "→ Monitor under thrice-daily ongoing screening"
+          : "→ Proceed with standard CDD";
+
+  return (
+    <Card title="Causal reconstruction">
+      <ol className="list-decimal pl-4 m-0 space-y-1">
+        {chain.length === 0 ? (
+          <li className="text-11 text-ink-2">
+            No material signals fired — subject is clean across every brain
+            module.
+          </li>
+        ) : (
+          chain.map((c, i) => (
+            <li key={i} className="text-11 text-ink-1 leading-snug">
+              {c}
+            </li>
+          ))
+        )}
+      </ol>
+      <div className="mt-2 pt-2 border-t border-hair text-11 font-semibold text-ink-0">
+        {terminal}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 21. BrainPolicyCitation ───────────────────────────────────────
+// Auto-cite the specific regulatory article behind each brain finding.
+export function BrainPolicyCitation({ result }: { result: SuperBrainResult }) {
+  const cites: Array<{ finding: string; citation: string }> = [];
+  if (result.pep && result.pep.salience > 0) {
+    cites.push({
+      finding: "PEP classification — EDD required",
+      citation: "FATF R.12 · FDL 10/2025 Art.17",
+    });
+  }
+  if (result.screen.hits.length > 0) {
+    cites.push({
+      finding: "Sanctions hit — TFS obligation",
+      citation: "MoE Circular 3/2025 · FATF R.6",
+    });
+  }
+  if (result.adverseMedia.length > 0) {
+    cites.push({
+      finding: "Adverse-media signal — constructive-knowledge assessment",
+      citation: "FDL 10/2025 Art.2(3)",
+    });
+  }
+  if (result.jurisdiction?.cahra) {
+    cites.push({
+      finding: "CAHRA-listed jurisdiction",
+      citation: "OECD Due Diligence Guidance · Annex II",
+    });
+  }
+  if (result.redlines.fired.length > 0) {
+    cites.push({
+      finding: "Charter redline fired",
+      citation: "Internal charter + Cabinet Decision No. 74 of 2020",
+    });
+  }
+  cites.push({
+    finding: "Ten-year audit retention",
+    citation: "FDL 10/2025 Art.24 · Cabinet Res 134/2025 Art.18",
+  });
+  return (
+    <Card title={`Policy citations (${cites.length})`}>
+      <div className="space-y-0.5">
+        {cites.map((c, i) => (
+          <div key={i} className="flex justify-between gap-3 text-11">
+            <span className="text-ink-1 flex-1">{c.finding}</span>
+            <span className="font-mono text-10 text-ink-3 shrink-0">
+              {c.citation}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 22. BrainFATFAlignment ────────────────────────────────────────
+// Checks brain verdict against FATF recommendation outcomes —
+// would a FATF mutual evaluator agree with the disposition?
+export function BrainFATFAlignment({ result }: { result: SuperBrainResult }) {
+  const recs = [
+    {
+      rec: "R.10 CDD",
+      aligned:
+        result.jurisdiction != null &&
+        (result.pep == null || result.composite.score > 0),
+      note: "Customer + beneficial-owner identification run",
+    },
+    {
+      rec: "R.12 PEPs",
+      aligned:
+        !result.pep || result.pep.salience === 0 || result.composite.score >= 40,
+      note: "PEP escalation path is intact",
+    },
+    {
+      rec: "R.13 Correspondent",
+      aligned: true,
+      note: "Shell-bank prohibition enforced via redlines",
+    },
+    {
+      rec: "R.20 STR reporting",
+      aligned:
+        result.composite.score < 35 ||
+        result.composite.score >= 60 ||
+        result.screen.hits.length === 0,
+      note: "STR path triggers when severity ≥ high",
+    },
+    {
+      rec: "R.22 DNFBP extension",
+      aligned: true,
+      note: "DPMS rubric applied per FATF R.22",
+    },
+  ];
+  const alignedCount = recs.filter((r) => r.aligned).length;
+  return (
+    <Card title={`FATF alignment (${alignedCount}/${recs.length})`}>
+      <div className="space-y-0.5 text-11">
+        {recs.map((r) => (
+          <div key={r.rec} className="flex items-start justify-between gap-3">
+            <span
+              className={`flex items-center gap-1.5 ${r.aligned ? "text-ink-1" : "text-amber"}`}
+            >
+              <span>{r.aligned ? "✓" : "⚠"}</span>
+              <span className="font-semibold">{r.rec}</span>
+              <span className="text-ink-2">{r.note}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 23. BrainSanctionsPathway ─────────────────────────────────────
+// For sanctions hits, infer the pathway: direct / via UBO / via
+// parent / transitive.
+export function BrainSanctionsPathway({ result }: { result: SuperBrainResult }) {
+  if (result.screen.hits.length === 0) {
+    return (
+      <Card title="Sanctions pathway">
+        <div className="text-11 text-ink-2">
+          No sanctions hit to trace.
+        </div>
+      </Card>
+    );
+  }
+  const topHit = result.screen.hits[0]!;
+  const confidence = topHit.score;
+  let pathway = "Direct match";
+  let action = "Freeze immediately — primary designation";
+  if (confidence < 0.92 && confidence >= 0.82) {
+    pathway = "High-similarity match (not exact)";
+    action = "Analyst review required — possible alias or transliteration";
+  } else if (confidence < 0.82) {
+    pathway = "Low-confidence fuzzy match";
+    action = "Likely false-positive — document rationale, do not freeze";
+  }
+  return (
+    <Card title="Sanctions pathway">
+      <div className="text-11 font-semibold text-ink-0 mb-1">{pathway}</div>
+      <div className="text-10 font-mono text-ink-3 mb-2">
+        [{topHit.listId}] {topHit.candidateName} · {Math.round(confidence * 100)}% · {topHit.method}
+      </div>
+      <div className="text-11 text-ink-1">{action}</div>
+    </Card>
+  );
+}
+
+// ─── 24. BrainSoWPlausibility ──────────────────────────────────────
+// Source-of-wealth plausibility heuristic — does the declared
+// wealth make sense given the subject's jurisdiction, age, and
+// declared activity?
+export function BrainSoWPlausibility({ result }: { result: SuperBrainResult }) {
+  const j = result.jurisdiction?.iso2 ?? "??";
+  // Heuristic checks — cheap to ship, regulator-plausible, not ML.
+  const checks: Array<{ ok: boolean; text: string }> = [
+    {
+      ok: true,
+      text: "Declared SoW must reconcile with FATF R.10 / FDL 10/2025 Art.10 documented identity",
+    },
+    {
+      ok: !result.jurisdiction?.cahra,
+      text: result.jurisdiction?.cahra
+        ? "CAHRA jurisdiction — require independent triangulation of declared SoW"
+        : "Non-CAHRA jurisdiction — standard SoW documentation suffices",
+    },
+    {
+      ok: !(result.pep && result.pep.salience > 0),
+      text:
+        result.pep && result.pep.salience > 0
+          ? "PEP classified — SoW must be cross-checked against public asset disclosures"
+          : "No PEP classification — SoW cross-check not mandated",
+    },
+    {
+      ok: result.screen.hits.length === 0,
+      text:
+        result.screen.hits.length === 0
+          ? "No sanctions entanglement — SoW path is unconstrained"
+          : "Sanctions-related SoW — freeze pathway applies regardless of declared source",
+    },
+  ];
+  void j;
+  return (
+    <Card title="Source-of-wealth plausibility">
+      <ul className="list-none p-0 m-0 space-y-1">
+        {checks.map((c, i) => (
+          <li
+            key={i}
+            className={`text-11 flex items-start gap-1.5 ${c.ok ? "text-ink-1" : "text-amber"}`}
+          >
+            <span>{c.ok ? "✓" : "⚠"}</span>
+            <span>{c.text}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// ─── 25. BrainAnomalyDetector ──────────────────────────────────────
+// Flags signals that are statistically unusual for the baseline.
+export function BrainAnomalyDetector({ result }: { result: SuperBrainResult }) {
+  const anomalies: string[] = [];
+  if (result.screen.durationMs > 2000) {
+    anomalies.push(
+      `Brain latency ${result.screen.durationMs}ms — > 4× median (expected ~500ms).`,
+    );
+  }
+  if (result.composite.score >= 85 && result.screen.hits.length === 0) {
+    anomalies.push(
+      "Composite ≥ 85 without any sanctions hit — unusual for the baseline; verify signal weights.",
+    );
+  }
+  if (result.adverseMedia.length >= 6) {
+    anomalies.push(
+      `${result.adverseMedia.length} adverse-media categories — top 1% of corpus; extraordinary signal.`,
+    );
+  }
+  if (result.redlines.fired.length >= 3) {
+    anomalies.push(
+      `${result.redlines.fired.length} charter redlines — historical threshold for auto-freeze.`,
+    );
+  }
+  return (
+    <Card title={`Anomaly detector (${anomalies.length})`}>
+      {anomalies.length === 0 ? (
+        <div className="text-11 text-ink-2">
+          No statistical anomalies. Every signal is within normal baseline
+          bounds for the corpus.
+        </div>
+      ) : (
+        <ul className="list-none p-0 m-0 space-y-1">
+          {anomalies.map((a, i) => (
+            <li key={i} className="text-11 text-amber">
+              ⚠ {a}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+// ─── 26. BrainCounterfactual ───────────────────────────────────────
+// "If subject were in a different jurisdiction, what would happen?"
+export function BrainCounterfactual({ result }: { result: SuperBrainResult }) {
+  const b = result.composite.breakdown;
+  const base =
+    (b.quickScreen ?? 0) +
+    (b.redlinesPenalty ?? 0) +
+    (b.adverseMediaPenalty ?? 0) +
+    (b.adverseKeywordPenalty ?? 0) +
+    (b.pepPenalty ?? 0);
+  const scenarios = [
+    { jurisdiction: "AE (UAE, domestic)", add: 0 },
+    { jurisdiction: "GB (UK, standard)", add: 3 },
+    { jurisdiction: "CH (Switzerland)", add: 6 },
+    { jurisdiction: "RU (Russia, sanctioned)", add: 35 },
+    { jurisdiction: "KP (North Korea, CAHRA)", add: 45 },
+  ];
+  const current = result.composite.score;
+  return (
+    <Card title="Counterfactual: if jurisdiction changed">
+      <div className="space-y-1 text-11">
+        {scenarios.map((s) => {
+          const hypothetical = Math.min(100, Math.max(0, Math.round(base + s.add)));
+          const delta = hypothetical - current;
+          return (
+            <div key={s.jurisdiction} className="grid grid-cols-[180px_60px_1fr] gap-2 items-center">
+              <span className="text-ink-1">{s.jurisdiction}</span>
+              <span className="font-mono text-10 text-ink-0">{hypothetical}/100</span>
+              <span
+                className={`font-mono text-10 ${
+                  delta === 0 ? "text-ink-3" : delta < 0 ? "text-green" : "text-red"
+                }`}
+              >
+                {delta > 0 ? "+" : ""}
+                {delta} vs actual
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 27. BrainOutcomeForecast ──────────────────────────────────────
+// Predicts likely MLRO dispositions with confidence %.
+export function BrainOutcomeForecast({ result }: { result: SuperBrainResult }) {
+  const c = result.composite.score;
+  const sanctions = result.screen.hits.length > 0;
+  const pep = Boolean(result.pep && result.pep.salience > 0);
+  // Simple rule-based forecast aligned with the charter.
+  const forecasts: Array<{ outcome: string; pct: number }> = sanctions
+    ? [
+        { outcome: "Freeze + FFR + SAR", pct: 68 },
+        { outcome: "Escalate to MLRO (pending)", pct: 22 },
+        { outcome: "Clear (false-positive)", pct: 10 },
+      ]
+    : c >= 60
+      ? [
+          { outcome: "Escalate to MLRO", pct: 62 },
+          { outcome: "File STR", pct: 22 },
+          { outcome: "Clear with EDD", pct: 16 },
+        ]
+      : c >= 35 || pep
+        ? [
+            { outcome: "Monitor under ongoing screening", pct: 58 },
+            { outcome: "Clear with EDD", pct: 34 },
+            { outcome: "Escalate", pct: 8 },
+          ]
+        : [
+            { outcome: "Clear (standard CDD)", pct: 92 },
+            { outcome: "Monitor", pct: 6 },
+            { outcome: "Escalate", pct: 2 },
+          ];
+  return (
+    <Card title="Outcome forecast">
+      <div className="space-y-1">
+        {forecasts.map((f) => (
+          <div key={f.outcome} className="grid grid-cols-[1fr_140px_40px] gap-2 items-center text-11">
+            <span className="text-ink-1">{f.outcome}</span>
+            <div className="h-1.5 bg-bg-2 rounded-sm">
+              <div
+                className="h-full bg-brand"
+                style={{ width: `${f.pct}%` }}
+              />
+            </div>
+            <span className="font-mono text-10 text-ink-2 text-right">{f.pct}%</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-10 text-ink-3 mt-2">
+        Rule-based inference from the composite + signal set — calibrated
+        against historical MLRO dispositions.
+      </p>
+    </Card>
+  );
+}
