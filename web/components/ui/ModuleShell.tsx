@@ -212,12 +212,14 @@ export function Btn({
   type = "button",
   onClick,
   disabled,
+  title,
 }: {
   children: ReactNode;
   variant?: "primary" | "ghost" | "secondary";
   type?: "button" | "submit";
   onClick?: () => void;
   disabled?: boolean;
+  title?: string;
 }) {
   const base =
     "font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
@@ -233,6 +235,7 @@ export function Btn({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={`${base} ${variants[variant]}`}
     >
       {children}

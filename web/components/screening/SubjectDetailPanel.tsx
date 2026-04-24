@@ -744,6 +744,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         state={superBrain}
         subjectName={subject.name}
         subjectId={subject.id}
+        news={news}
       />
       <NewsDossierPanel state={news} />
 
@@ -1164,10 +1165,12 @@ function SuperBrainPanel({
   state,
   subjectName,
   subjectId,
+  news,
 }: {
   state: import("@/lib/hooks/useSuperBrain").SuperBrainState;
   subjectName: string;
   subjectId: string;
+  news: NewsSearchState;
 }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
