@@ -461,10 +461,7 @@ export default function ScreeningPage() {
       <RegulatoryTicker />
       <div
         className="grid min-h-[calc(100vh-84px)]"
-        style={{
-          gridTemplateColumns:
-            selected && !formOpen ? "220px 1fr 380px" : "220px 1fr",
-        }}
+        style={{ gridTemplateColumns: "220px 1fr 360px" }}
       >
         <Sidebar
           filters={dynamicFilters}
@@ -508,16 +505,17 @@ export default function ScreeningPage() {
             sortDir={sortDir}
             onSortChange={handleSortChange}
           />
-          <div className="mt-6">
-            <ActivityFeed />
-          </div>
         </main>
 
-        {selected && !formOpen && (
+        {selected && !formOpen ? (
           <SubjectDetailPanel
             subject={selected}
             onUpdate={handleUpdateSubject}
           />
+        ) : (
+          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
+            <ActivityFeed />
+          </aside>
         )}
       </div>
     </>
