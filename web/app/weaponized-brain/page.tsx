@@ -26,7 +26,7 @@ interface Manifest {
     reasoningModes: {
       total: number;
       byCategory: Record<string, number>;
-      byWave?: { wave1: number; wave2: number };
+      byWave?: { wave1: number; wave2: number; wave3?: number; wave4?: number };
     };
     adverseMedia: {
       categories: Array<{ id: string; displayName: string; keywordCount: number }>;

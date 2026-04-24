@@ -107,7 +107,7 @@ export interface ReasoningMode {
   name: string;
   category: ReasoningCategory;
   faculties: FacultyId[];
-  wave: 1 | 2 | 3;
+  wave: 1 | 2 | 3 | 4;
   description: string;
   apply: (ctx: BrainContext) => Promise<Finding>;
 }

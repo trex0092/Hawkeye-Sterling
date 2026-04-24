@@ -1,5 +1,5 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 273 modes across 16+ categories, wave 1 + wave 2 + wave 3.
+// 333 modes across 18 categories, wave 1 + wave 2 + wave 3 + wave 4.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
 // inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7.
@@ -9,6 +9,7 @@ import type {
 } from './types.js';
 import { MODE_OVERRIDES } from './modes/registry.js';
 import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
+import { WAVE4_MODES } from './reasoning-modes-wave4.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -279,13 +280,23 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
 // Merge Wave 3: new modes + real-implementation upgrades for existing wave 1/2 stubs.
 const existingIds = new Set(REASONING_MODES.map((r) => r.id));
 for (const m of WAVE3_MODES) {
-  if (!existingIds.has(m.id)) REASONING_MODES.push(m);
+  if (!existingIds.has(m.id)) {
+    REASONING_MODES.push(m);
+    existingIds.add(m.id);
+  }
 }
 // Apply WAVE3_OVERRIDES — replaces stubs in wave 1/2 with working implementations.
 for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]!;
   const w3override = WAVE3_OVERRIDES.find((o) => o.id === r.id);
   if (w3override) REASONING_MODES[i] = w3override;
+}
+// Wave 4 — AI governance + financial-crime-predicate expansion (60 modes).
+for (const m of WAVE4_MODES) {
+  if (!existingIds.has(m.id)) {
+    REASONING_MODES.push(m);
+    existingIds.add(m.id);
+  }
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
