@@ -132,7 +132,7 @@ export function SidebarMLROCard() {
     setEditing(true);
   };
 
-  const initial = name ? name[0].toUpperCase() : "·";
+  const initial = name ? name.charAt(0).toUpperCase() : "·";
   const inputCls =
     "w-full bg-white/15 text-white placeholder-white/40 rounded px-2 py-1 text-12 font-medium outline-none border border-white/30 focus:border-white mb-1.5";
 
