@@ -64,6 +64,7 @@ function parseDMY(s: string): string {
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!m) return "";
   const [, d, mo, y] = m;
+  if (!d || !mo) return "";
   return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
