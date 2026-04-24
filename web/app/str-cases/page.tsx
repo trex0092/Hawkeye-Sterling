@@ -36,6 +36,7 @@ import {
   ROLE_LABEL,
   type OperatorRole,
 } from "@/lib/data/operator-role";
+import { SignOffPanel } from "@/components/ui/SignOffPanel";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -496,6 +497,7 @@ export default function StrCasesPage() {
                   </div>
                 }
               />
+              <SignOffPanel />
             </form>
           </Card>
 

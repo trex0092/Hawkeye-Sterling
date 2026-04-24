@@ -15,6 +15,8 @@ import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import { lookupKnownPEP } from "@/lib/data/known-entities";
 import type { CDDPosture, FilterKey, QueueFilter, SortKey, Subject } from "@/lib/types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
+import { RegulatoryTicker } from "@/components/layout/RegulatoryTicker";
+import { ActivityFeed } from "@/components/screening/ActivityFeed";
 
 const CRITICAL_THRESHOLD = 85;
 const SLA_BREACH_THRESHOLD_H = 24;
@@ -456,8 +458,9 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
+      <RegulatoryTicker />
       <div
-        className="grid min-h-[calc(100vh-54px)]"
+        className="grid min-h-[calc(100vh-84px)]"
         style={{
           gridTemplateColumns:
             selected && !formOpen ? "220px 1fr 380px" : "220px 1fr",
@@ -505,6 +508,9 @@ export default function ScreeningPage() {
             sortDir={sortDir}
             onSortChange={handleSortChange}
           />
+          <div className="mt-6">
+            <ActivityFeed />
+          </div>
         </main>
 
         {selected && !formOpen && (
