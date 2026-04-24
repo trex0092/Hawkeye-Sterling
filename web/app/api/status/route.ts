@@ -6,6 +6,7 @@ import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
+import { COGNITIVE_AMPLIFIER } from "../../../../dist/src/brain/cognitive-amplifier.js";
 
 async function safe<T>(label: string, fn: () => Promise<T> | T, fallback: T): Promise<T> {
   try {
@@ -29,6 +30,34 @@ interface Check {
   p50?: number;
   p95?: number;
   p99?: number;
+  anomalyHint?: string;
+}
+
+interface BrainSoul {
+  status: "intact" | "degraded" | "compromised";
+  amplifierVersion: string;
+  amplificationPercent: number;
+  amplificationFactor: number;
+  charterHash: string;
+  catalogueHash: string;
+  compositeHash: string;
+  catalogue: {
+    faculties: number;
+    reasoningModes: number;
+    metaCognition: number;
+    skills: number;
+  };
+}
+
+// Inline FNV-1a — mirrors weaponized.ts so we can verify the composite
+// hash independently without importing the full brain module.
+function fnv1aInline(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
 // Per-process latency samples. Real status pages pull from durable
@@ -199,6 +228,116 @@ async function checkGoogleNews(): Promise<Check> {
     return { name: "news-feed", status: "down", latencyMs: r.latencyMs, note: r.error };
   }
   return { name: "news-feed", status: "operational", latencyMs: r.latencyMs };
+}
+
+// ─── Brain soul ────────────────────────────────────────────────────────────
+// The brain is the soul of the tool. Every status response includes a live
+// self-assessment: amplification level, charter integrity hashes, and
+// catalogue vitals (faculties, reasoning modes, meta-cognition, skills).
+// If the soul is compromised — manifest missing, hashes absent, amplifier
+// at zero — the whole system is at elevated epistemic risk.
+
+let _brainSoulCache: BrainSoul | null = null;
+
+async function checkBrainSoul(): Promise<BrainSoul> {
+  // Cache for the lifetime of the function instance: hashes are deterministic.
+  if (_brainSoulCache) return _brainSoulCache;
+
+  const COMPROMISED: BrainSoul = {
+    status: "compromised",
+    amplifierVersion: "unknown",
+    amplificationPercent: 0,
+    amplificationFactor: 0,
+    charterHash: "unavailable",
+    catalogueHash: "unavailable",
+    compositeHash: "unavailable",
+    catalogue: { faculties: 0, reasoningModes: 0, metaCognition: 0, skills: 0 },
+  };
+
+  // Read the weaponized-brain.json manifest already present in public/.
+  const candidates = [
+    path.join(process.cwd(), "web", "public", "weaponized-brain.json"),
+    path.join(process.cwd(), "public", "weaponized-brain.json"),
+  ];
+  let raw: string | null = null;
+  for (const p of candidates) {
+    try { raw = await fs.readFile(p, "utf8"); break; } catch { /* try next */ }
+  }
+  if (!raw) return COMPROMISED;
+
+  try {
+    const parsed = JSON.parse(raw) as {
+      ok?: boolean;
+      manifest?: {
+        cognitiveCatalogue?: {
+          amplifier?: { version?: string; percent?: number; factor?: number };
+          faculties?: unknown[];
+          reasoningModes?: { total?: number };
+          metaCognition?: { total?: number };
+          skills?: { total?: number };
+        };
+        integrity?: { charterHash?: string; catalogueHash?: string };
+      };
+    };
+    if (!parsed.ok || !parsed.manifest) return COMPROMISED;
+
+    const cat = parsed.manifest.cognitiveCatalogue;
+    const integ = parsed.manifest.integrity;
+    const charterHash = integ?.charterHash ?? "missing";
+    const catalogueHash = integ?.catalogueHash ?? "missing";
+    const compositeHash = fnv1aInline(`${charterHash}·${catalogueHash}`);
+
+    // Prefer live COGNITIVE_AMPLIFIER constants (always current) over the
+    // static JSON — they reflect any in-flight version bump immediately.
+    const livePercent = COGNITIVE_AMPLIFIER.percent;
+    const liveFactor = COGNITIVE_AMPLIFIER.factor;
+    const liveVersion = COGNITIVE_AMPLIFIER.version;
+
+    const amplificationPercent = livePercent > 0 ? livePercent : (cat?.amplifier?.percent ?? 0);
+    const amplificationFactor = liveFactor > 0 ? liveFactor : (cat?.amplifier?.factor ?? 0);
+    const amplifierVersion = liveVersion ?? cat?.amplifier?.version ?? "unknown";
+
+    const soulStatus: BrainSoul["status"] =
+      amplificationPercent > 0 && charterHash !== "missing" && catalogueHash !== "missing"
+        ? "intact"
+        : amplificationPercent > 0
+          ? "degraded"
+          : "compromised";
+
+    const soul: BrainSoul = {
+      status: soulStatus,
+      amplifierVersion,
+      amplificationPercent,
+      amplificationFactor,
+      charterHash,
+      catalogueHash,
+      compositeHash,
+      catalogue: {
+        faculties: cat?.faculties?.length ?? 0,
+        reasoningModes: cat?.reasoningModes?.total ?? 0,
+        metaCognition: cat?.metaCognition?.total ?? 0,
+        skills: cat?.skills?.total ?? 0,
+      },
+    };
+    _brainSoulCache = soul;
+    return soul;
+  } catch {
+    return COMPROMISED;
+  }
+}
+
+// Latency anomaly detection — the brain notices when tail latency (p99)
+// drifts far above the median (p50) and surfaces a human-readable hint.
+function annotateLatencyAnomalies(checks: Check[]): Check[] {
+  return checks.map((c) => {
+    if (!c.p50 || !c.p99 || c.p50 === 0) return c;
+    const ratio = c.p99 / c.p50;
+    if (ratio >= 5)
+      return { ...c, anomalyHint: `tail latency volatile — p99 is ${ratio.toFixed(1)}× p50; possible memory pressure or cold start` };
+    if (ratio >= 2)
+      return { ...c, anomalyHint: `latency tail widening — p99 is ${ratio.toFixed(1)}× p50; monitor for degradation trend` };
+    return c;
+  });
 }
 
 // Sanctions-list freshness — reads the report blobs written by the
@@ -386,6 +525,7 @@ export async function GET(): Promise<NextResponse> {
     googleNews,
     sanctions,
     incidents,
+    brainSoul,
   ] = await Promise.all([
     checkScreening(),
     checkSuperBrain(),
@@ -396,15 +536,25 @@ export async function GET(): Promise<NextResponse> {
     checkGoogleNews(),
     checkSanctionsFreshness(),
     incidentHistory(),
+    safe("brain-soul", checkBrainSoul, {
+      status: "compromised" as const,
+      amplifierVersion: "unknown",
+      amplificationPercent: 0,
+      amplificationFactor: 0,
+      charterHash: "unavailable",
+      catalogueHash: "unavailable",
+      compositeHash: "unavailable",
+      catalogue: { faculties: 0, reasoningModes: 0, metaCognition: 0, skills: 0 },
+    }),
   ]);
-  const internalChecks: Check[] = enrichWithLatencyStats([
+  const internalChecks: Check[] = annotateLatencyAnomalies(enrichWithLatencyStats([
     screening,
     superBrain,
     adverseMedia,
     weaponizedBrain,
     storage,
-  ]);
-  const externalChecks: Check[] = enrichWithLatencyStats([asana, googleNews]);
+  ]));
+  const externalChecks: Check[] = annotateLatencyAnomalies(enrichWithLatencyStats([asana, googleNews]));
 
   // Derive banner status from core services only. sanctions-freshness is a
   // data-quality check shown in its own dedicated UI section; including it
@@ -520,6 +670,7 @@ export async function GET(): Promise<NextResponse> {
     deploys,
     dependencyGraph,
     errorHeatmap,
+    brainSoul,
     sla: {
       uptimeTargetPct: 99.99,
       rolling: currentSla(worstStatus),

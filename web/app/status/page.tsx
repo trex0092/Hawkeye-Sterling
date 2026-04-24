@@ -11,6 +11,23 @@ interface Check {
   p50?: number;
   p95?: number;
   p99?: number;
+  anomalyHint?: string;
+}
+
+interface BrainSoul {
+  status: "intact" | "degraded" | "compromised";
+  amplifierVersion: string;
+  amplificationPercent: number;
+  amplificationFactor: number;
+  charterHash: string;
+  catalogueHash: string;
+  compositeHash: string;
+  catalogue: {
+    faculties: number;
+    reasoningModes: number;
+    metaCognition: number;
+    skills: number;
+  };
 }
 
 interface SanctionsList {
@@ -82,6 +99,7 @@ interface StatusPayload {
   feedVersions: FeedVersions;
   deploys: DeployEntry[];
   dependencyGraph: DependencyGraph;
+  brainSoul?: BrainSoul;
   sla: {
     uptimeTargetPct: number;
     rolling: { window30d: number; window90d: number; windowYtd: number };
@@ -266,6 +284,8 @@ export default function StatusPage() {
                 </span>
               </div>
             </div>
+
+            {data.brainSoul && <BrainSoulPanel soul={data.brainSoul} />}
 
             <Section title="Internal services">
               <div className="space-y-2">
@@ -498,6 +518,95 @@ export default function StatusPage() {
   );
 }
 
+const SOUL_TONE = {
+  intact:      { border: "border-green/40",  badge: "bg-green-dim text-green",    label: "SOUL INTACT" },
+  degraded:    { border: "border-amber/40",  badge: "bg-amber-dim text-amber",    label: "SOUL DEGRADED" },
+  compromised: { border: "border-red/40",    badge: "bg-red-dim text-red",        label: "SOUL COMPROMISED" },
+};
+
+function BrainSoulPanel({ soul }: { soul: BrainSoul }) {
+  const tone = SOUL_TONE[soul.status];
+  const pct = soul.amplificationPercent > 0
+    ? `+${soul.amplificationPercent.toLocaleString("en-US")}%`
+    : "unavailable";
+  const factor = soul.amplificationFactor > 0
+    ? `×${soul.amplificationFactor.toLocaleString("en-US")}`
+    : "";
+
+  return (
+    <div className="mb-6">
+      <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">
+        Brain · soul
+      </div>
+      <div className={`bg-bg-panel border ${tone.border} rounded-lg p-5`}>
+
+        {/* Top row — status badge + amplification */}
+        <div className="flex items-start justify-between gap-6 flex-wrap">
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-mono text-11 font-semibold ${tone.badge}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              {tone.label}
+            </span>
+            <div>
+              <div className="text-13 font-semibold text-ink-0 font-mono">
+                {pct} cognitive amplification
+              </div>
+              {factor && (
+                <div className="text-11 text-ink-2 font-mono">
+                  {factor} · amplifier {soul.amplifierVersion}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Catalogue vitals */}
+          <div className="flex gap-5 text-center">
+            {(
+              [
+                { label: "Faculties",      value: soul.catalogue.faculties },
+                { label: "Reason. modes",  value: soul.catalogue.reasoningModes },
+                { label: "Meta-cognition", value: soul.catalogue.metaCognition },
+                { label: "Skills",         value: soul.catalogue.skills },
+              ] as const
+            ).map(({ label, value }) => (
+              <div key={label}>
+                <div className={`text-18 font-semibold font-mono ${soul.status === "intact" ? "text-green" : soul.status === "degraded" ? "text-amber" : "text-red"}`}>
+                  {value > 0 ? value : "—"}
+                </div>
+                <div className="text-10 text-ink-3 uppercase tracking-wide whitespace-nowrap">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Integrity seal */}
+        <div className="mt-4 pt-4 border-t border-hair grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-1.5 text-10.5 font-mono">
+          {(
+            [
+              { label: "charterHash",   value: soul.charterHash },
+              { label: "catalogueHash", value: soul.catalogueHash },
+              { label: "compositeHash", value: soul.compositeHash },
+            ] as const
+          ).map(({ label, value }) => (
+            <div key={label} className="flex justify-between gap-3">
+              <span className="text-ink-3">{label}</span>
+              <span className={value === "unavailable" || value === "missing" ? "text-red" : "text-ink-1"}>
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {soul.status !== "intact" && (
+          <div className="mt-3 text-11 text-amber font-mono">
+            ⚠ Soul degraded or compromised — verify the weaponized-brain.json manifest and rerun the weaponize-brain script.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Section({
   title,
   children,
@@ -521,28 +630,36 @@ function ServiceRow({ check }: { check: Check }) {
     check.p95 !== undefined ||
     check.p99 !== undefined;
   return (
-    <div className="flex items-center justify-between bg-bg-panel border border-hair-2 rounded px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[check.status]}`}
-        >
-          {check.status}
-        </span>
-        <span className="text-13 text-ink-0 font-medium">{check.name}</span>
-        {check.note && (
-          <span className="text-11 text-ink-3 font-mono">· {check.note}</span>
-        )}
+    <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[check.status]}`}
+          >
+            {check.status}
+          </span>
+          <span className="text-13 text-ink-0 font-medium">{check.name}</span>
+          {check.note && (
+            <span className="text-11 text-ink-3 font-mono truncate">· {check.note}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 font-mono text-10 text-ink-3 flex-shrink-0">
+          {hasPercentiles && (
+            <>
+              <span title="50th percentile latency">p50 {check.p50}ms</span>
+              <span title="95th percentile latency">p95 {check.p95}ms</span>
+              <span title="99th percentile latency">p99 {check.p99}ms</span>
+            </>
+          )}
+          <span className="text-ink-2 text-11">now {check.latencyMs}ms</span>
+        </div>
       </div>
-      <div className="flex items-center gap-3 font-mono text-10 text-ink-3">
-        {hasPercentiles && (
-          <>
-            <span title="50th percentile latency">p50 {check.p50}ms</span>
-            <span title="95th percentile latency">p95 {check.p95}ms</span>
-            <span title="99th percentile latency">p99 {check.p99}ms</span>
-          </>
-        )}
-        <span className="text-ink-2 text-11">now {check.latencyMs}ms</span>
-      </div>
+      {check.anomalyHint && (
+        <div className="mt-1.5 flex items-start gap-1.5 text-10 text-amber font-mono">
+          <span className="flex-shrink-0">⚡</span>
+          <span>{check.anomalyHint}</span>
+        </div>
+      )}
     </div>
   );
 }
