@@ -60,7 +60,7 @@ export default function DataQualityPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 19 · Per-subject completeness"
           title="Data"

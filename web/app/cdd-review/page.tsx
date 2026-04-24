@@ -172,7 +172,7 @@ export default function CddReviewPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 22 · CDD Lifecycle"
           title="Periodic CDD"

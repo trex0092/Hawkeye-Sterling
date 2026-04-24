@@ -1316,7 +1316,7 @@ export default function PlaybookPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 16 · Guided due-diligence"
           title="Playbook"

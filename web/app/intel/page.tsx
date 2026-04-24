@@ -84,7 +84,7 @@ export default function IntelPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 10 · Adverse-media Intel"
           title="Intel"

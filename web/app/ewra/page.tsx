@@ -153,7 +153,7 @@ export default function EwraPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 23 · Risk Assessment"
           title="EWRA / BWRA"

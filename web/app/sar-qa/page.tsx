@@ -70,7 +70,7 @@ export default function SarQaPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 14 · Four-eyes peer review"
           title="SAR"

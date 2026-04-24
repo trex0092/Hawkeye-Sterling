@@ -185,7 +185,7 @@ export default function EmployeesPage() {
 
   return (
     <ModuleLayout>
-      <div className=""">
+      <div>
         <ModuleHero
           eyebrow="Module 16 · HR registry"
           title="Employee"
