@@ -45,7 +45,15 @@ export type TypologyId =
   | 'privacy_coin_laundering'
   | 'mixer_usage'
   | 'nft_wash_trade'
-  | 'defi_exploit';
+  | 'defi_exploit'
+  // Wave 4 — FATF 2021 environmental-crime predicate + carbon-market fraud +
+  // insider-threat (distinct from insider_trading MNPI) + AI-governance /
+  // AI-enabled synthetic-media fraud typologies.
+  | 'environmental_crime'
+  | 'carbon_market_fraud'
+  | 'insider_threat'
+  | 'ai_governance_breach'
+  | 'ai_synthetic_media_fraud';
 
 export interface Typology {
   id: TypologyId;
@@ -98,6 +106,12 @@ export const TYPOLOGIES: Typology[] = [
   { id: 'mixer_usage', displayName: 'Mixer / tumbler usage', describes: 'Funds routed through coin mixers or tumblers.', redFlagIds: ['rf_vasp_mixer'], reasoningModes: ['chain_analysis', 'taint_propagation'], doctrines: [] },
   { id: 'nft_wash_trade', displayName: 'NFT wash trade', describes: 'Self-dealing NFT trades to launder or manipulate price.', redFlagIds: [], reasoningModes: ['nft_wash', 'wash_trade'], doctrines: [] },
   { id: 'defi_exploit', displayName: 'DeFi smart-contract exploit', describes: 'Illicit proceeds from DeFi protocol exploit.', redFlagIds: [], reasoningModes: ['defi_smart_contract', 'chain_analysis'], doctrines: [] },
+  // ── Wave 4 typologies ────────────────────────────────────────────────
+  { id: 'environmental_crime', displayName: 'Environmental crime (FATF 2021 predicate)', describes: 'Illegal mining, logging, fishing, or waste trafficking laundered through trade or commodity rails.', redFlagIds: ['rf_dpms_refiner_cahra'], reasoningModes: ['oecd_ddg_annex', 'provenance_trace', 'jurisdiction_cascade'], doctrines: ['fatf_rba', 'oecd_ddg'] },
+  { id: 'carbon_market_fraud', displayName: 'Carbon-market & VCM offset fraud', describes: 'Phantom, double-counted, or washed carbon credits in voluntary or compliance carbon markets.', redFlagIds: [], reasoningModes: ['provenance_trace', 'source_triangulation', 'narrative_coherence'], doctrines: ['fatf_rba'] },
+  { id: 'insider_threat', displayName: 'Insider threat — IP / trade-secret exfiltration', describes: 'Privileged-access abuse exfiltrating intellectual property, trade secrets, or sensitive data to external parties; distinct from insider_trading (MNPI).', redFlagIds: [], reasoningModes: ['timeline_reconstruction', 'pattern_of_life', 'velocity_analysis'], doctrines: ['three_lines_defence'] },
+  { id: 'ai_governance_breach', displayName: 'AI governance breach (EU AI Act / NIST / ISO 42001)', describes: 'Deployment or operation of an AI system in breach of the 2026 governance stack — conformity assessment skipped, high-risk tier mis-classified, model inventory absent, fairness monitoring disabled, or kill-switch / human-in-the-loop bypassed.', redFlagIds: [], reasoningModes: ['narrative_coherence', 'source_triangulation'], doctrines: [] },
+  { id: 'ai_synthetic_media_fraud', displayName: 'AI synthetic-media fraud', describes: 'Deepfake / voice-clone / generative-AI fraud used to impersonate executives, bypass KYC liveness, or fabricate evidence. Includes CEO deepfake BEC, AI-generated KYC documents, and autonomous-agent scams.', redFlagIds: [], reasoningModes: ['linguistic_forensics', 'entity_resolution', 'timeline_reconstruction'], doctrines: [] },
 ];
 
 export const TYPOLOGY_BY_ID: Map<TypologyId, Typology> = new Map(

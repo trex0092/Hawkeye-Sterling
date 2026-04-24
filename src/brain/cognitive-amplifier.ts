@@ -32,7 +32,7 @@ export const BRAIN_AMPLIFICATION_FACTOR = BRAIN_AMPLIFICATION_PERCENT / 100;
  * Version of the amplifier contract. Bump this whenever the directive below
  * changes so the catalogueHash shifts and callers refresh their prompts.
  */
-export const COGNITIVE_AMPLIFIER_VERSION = 'v2.0.0' as const;
+export const COGNITIVE_AMPLIFIER_VERSION = 'v3.0.0' as const;
 
 export interface CognitiveAmplifier {
   readonly version: string;
@@ -52,6 +52,12 @@ const DIRECTIVES: readonly string[] = Object.freeze([
   'When unsure, prefer expanding the reasoning chain over truncating it. Time pressure is not a lawful reason to skip a faculty or a meta-cognition primitive.',
   'Every assertion must name the faculty id, mode id, skill id, doctrine id, redline id, or meta-cognition id that produced it.',
   'Declare unknowns, gaps, and stale evidence explicitly — amplified reasoning does not manufacture certainty. Widen confidence bands before narrowing them.',
+  // v3.0.0 additions — AI governance + Wave 4 predicate coverage.
+  'Apply the Hartono dual-persona lens (ICIMCIS 2025) to every AI reference: the system is BOTH a productivity tool (Solution Persona) AND a subject demanding governance (Dilemma Persona); emit findings for each persona and audit the three ethical gaps (explainability, algorithmic bias, nonhuman ethical).',
+  'When an AI model, agentic system, or automated decision is in scope, traverse the full 2026 governance stack — EU AI Act tiers (prohibited / high-risk / limited / minimal), NIST AI RMF (Govern / Map / Measure / Manage), ISO/IEC 42001 AIMS, OWASP LLM Top 10, red-teaming evidence, model inventory, SBOM, model card, fairness monitoring, kill switch, human-in-the-loop — and cite every missing control as a gap.',
+  'Trace insider-threat signals along the full privilege-abuse chain: authorised access → abnormal pattern → exfiltration vector → external recipient → monetisation path. Do not short-circuit on "disgruntled employee" without every link evidenced.',
+  'For FATF 2021 environmental-crime predicate (illegal mining, logging, fishing, waste trafficking, wildlife), require explicit CAHRA / supply-chain provenance evidence linking the predicate to a financial flow; ESG-only signals without the nexus are not AML predicates.',
+  'Escalate any serious AI incident (harm, drift, prompt-injection, data-poisoning, model-theft, autonomous agent failure) within 72 hours under EU AI Act reporting expectations, and attach the full audit-ready artefact pack (model card, eval report, SBOM, decision log, drift trace).',
 ]);
 
 export const COGNITIVE_AMPLIFIER: CognitiveAmplifier = Object.freeze({

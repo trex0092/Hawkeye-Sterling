@@ -299,6 +299,48 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
       'Before emission, scan the entire output for internal contradictions: a claim in one section that conflicts with a claim in another, or a risk rating inconsistent with the cited evidence. Resolve every conflict before releasing the output.',
     firesWhen: 'Any multi-section output is being finalised.',
   },
+
+  // ── Wave-4 primitives — AI governance + Wave-4 predicates (adds 5). ──
+  {
+    id: 'mc.ai-dual-persona-lens',
+    label: 'AI Dual-Persona Lens',
+    category: 'decomposition',
+    directive:
+      'When the scope involves an AI model, automated decision, or agentic system, reason about it as BOTH a productivity tool (Solution Persona) AND a subject demanding governance (Dilemma Persona). Emit separate findings for each persona. Source: Hartono et al., "The Dual Persona of AI", ICIMCIS 2025.',
+    firesWhen: 'The scope references an AI/ML system, automated decision, LLM, or agentic AI.',
+  },
+  {
+    id: 'mc.ethical-gap-audit',
+    label: 'Ethical-Gap Audit (Explainability · Bias · Nonhuman)',
+    category: 'truth-seeking',
+    directive:
+      'For any AI-enabled finding, audit the three Hartono ethical gaps explicitly: (1) Explainability Gap — can the decision be traced to auditable features? (2) Algorithmic Bias — has fairness been tested against protected classes and representative slices? (3) Nonhuman Ethical Gap — are non-anthropocentric stakeholders (ecosystems, future generations, autonomous agents) represented? Missing gap = downgrade confidence.',
+    firesWhen: 'An AI system is cited as evidence or as an actor in the risk picture.',
+  },
+  {
+    id: 'mc.insider-threat-causal-chain',
+    label: 'Insider-Threat Causal Chain',
+    category: 'decomposition',
+    directive:
+      'Reconstruct insider-threat findings along the full chain: authorised access → abnormal access pattern → exfiltration vector (print/usb/cloud/email) → external recipient → monetisation path. Refuse to conclude "disgruntled employee" without every link populated and evidenced.',
+    firesWhen: 'A finding touches IP theft, trade-secret exfiltration, privileged-access abuse, or corporate espionage.',
+  },
+  {
+    id: 'mc.environmental-predicate-nexus',
+    label: 'Environmental Predicate Nexus',
+    category: 'truth-seeking',
+    directive:
+      'For any environmental-crime signal (FATF 2021 predicate: illegal mining, logging, fishing, waste trafficking, wildlife), require nexus evidence linking the environmental predicate to a financial flow. Without the nexus, the finding is an ESG issue, not an AML predicate — mark it as such.',
+    firesWhen: 'Evidence references illegal extraction, eco-crime, CAHRA sourcing, or FATF R.3 scope.',
+  },
+  {
+    id: 'mc.synthetic-identity-composition',
+    label: 'Synthetic-Identity Composition',
+    category: 'decomposition',
+    directive:
+      'Decompose identity claims into attribute layers (SSN/NI, DOB, address, device, biometric, behavioural). Flag any attribute combination where real+fabricated attributes are mixed without plausible provenance. A fully-real identity or a fully-fabricated identity is not synthetic; mixed is the signal.',
+    firesWhen: 'Identity verification, KYC refresh, or fraud triage is in scope.',
+  },
 ]);
 
 export const META_COGNITION: ReadonlyArray<MetaCognitionPrimitive> = RAW;
