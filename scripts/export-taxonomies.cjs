@@ -35,6 +35,9 @@ const redFlags = readItems(
   path.join(__dirname, '..', 'src/brain/mlro-red-flags-taxonomy.generated.ts'),
   ['id', 'label', 'bucket'],
 );
+if (redFlags.length === 0) {
+  throw new Error('export-taxonomies: extracted 0 red flags — source file format probably changed, refusing to write empty taxonomy');
+}
 fs.writeFileSync(path.join(outDir, 'red-flags.json'), JSON.stringify(redFlags, null, 2));
 console.error('wrote', redFlags.length, 'red flags →', path.join('public/taxonomies/red-flags.json'));
 
@@ -42,5 +45,8 @@ const capabilities = readItems(
   path.join(__dirname, '..', 'src/brain/mlro-capabilities.generated.ts'),
   ['id', 'label', 'bucket'],
 );
+if (capabilities.length === 0) {
+  throw new Error('export-taxonomies: extracted 0 capabilities — source file format probably changed, refusing to write empty taxonomy');
+}
 fs.writeFileSync(path.join(outDir, 'capabilities.json'), JSON.stringify(capabilities, null, 2));
 console.error('wrote', capabilities.length, 'capabilities →', path.join('public/taxonomies/capabilities.json'));
