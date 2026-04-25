@@ -535,7 +535,7 @@ export default function ScreeningPage() {
       <Header />
       <div
         className="grid min-h-[calc(100vh-84px)]"
-        style={{ gridTemplateColumns: "220px 1fr 360px" }}
+        style={{ gridTemplateColumns: "220px 1fr 480px" }}
       >
         <Sidebar
           filters={dynamicFilters}
