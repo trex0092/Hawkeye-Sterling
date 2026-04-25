@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { writeAuditEvent } from "@/lib/audit";
 
 // Ongoing Monitoring Scheduler — manages which subjects are enrolled
 // in continuous screening, at what cadence, and tracks last/next run.
@@ -125,9 +126,16 @@ const XIcon = () => (
   </svg>
 );
 
+interface ScreenResult {
+  severity: string;
+  topScore: number;
+}
+
 export default function OngoingMonitorPage() {
   const [subjects, setSubjects] = useState<MonitoredSubject[]>([]);
   const [draft, setDraft] = useState(BLANK);
+  const [screening, setScreening] = useState<Record<string, boolean>>({});
+  const [lastResults, setLastResults] = useState<Record<string, ScreenResult>>({});
 
   useEffect(() => { setSubjects(load()); }, []);
 
@@ -150,6 +158,11 @@ export default function OngoingMonitorPage() {
     save(next);
     setSubjects(next);
     setDraft(BLANK);
+    writeAuditEvent(
+      draft.enrolledBy || "analyst",
+      "ongoing.enrolled",
+      `${subject.name} — ${subject.cadence} cadence`,
+    );
   };
 
   const togglePause = (id: string) => {
@@ -164,6 +177,32 @@ export default function OngoingMonitorPage() {
     const next = subjects.filter((s) => s.id !== id);
     save(next);
     setSubjects(next);
+  };
+
+  const screenNow = async (s: MonitoredSubject) => {
+    setScreening((prev) => ({ ...prev, [s.id]: true }));
+    try {
+      const res = await fetch("/api/quick-screen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subject: { name: s.name } }),
+      });
+      const data = (await res.json()) as { ok: boolean; topScore?: number; severity?: string };
+      const nowStr = fmtDateTime(new Date().toISOString());
+      const next = subjects.map((sub) =>
+        sub.id === s.id
+          ? { ...sub, lastRun: nowStr, nextDue: computeNextDue(nowStr, sub.cadence), status: "active" as const }
+          : sub,
+      );
+      save(next);
+      setSubjects(next);
+      if (data.ok && data.topScore !== undefined) {
+        setLastResults((prev) => ({ ...prev, [s.id]: { severity: data.severity ?? "low", topScore: data.topScore ?? 0 } }));
+        writeAuditEvent("system", "screening.completed", `${s.name} (${s.id}) — score ${data.topScore} · ${data.severity ?? "low"}`);
+      }
+    } catch { /* non-fatal */ } finally {
+      setScreening((prev) => ({ ...prev, [s.id]: false }));
+    }
   };
 
   const active = subjects.filter((s) => s.status === "active").length;
@@ -225,7 +264,7 @@ export default function OngoingMonitorPage() {
           <table className="w-full text-11">
             <thead className="bg-bg-1 border-b border-hair-2">
               <tr>
-                {["Subject", "Case", "Tier", "Cadence", "Last Run", "Next Due", "Status", "Enrolled by", ""].map((h) => (
+                {["Subject", "Case", "Tier", "Cadence", "Last Run / Result", "Next Due", "Status", "Enrolled by", ""].map((h) => (
                   <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">{h}</th>
                 ))}
               </tr>
@@ -245,7 +284,25 @@ export default function OngoingMonitorPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 font-mono text-10 text-ink-1">{CADENCE_LABEL[s.cadence]}</td>
-                  <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.lastRun || "—"}</td>
+                  <td className="px-3 py-2 font-mono text-10 text-ink-2">
+                    <div>{s.lastRun || "—"}</div>
+                    {lastResults[s.id] && (
+                      <div className={`text-10 font-semibold mt-0.5 ${
+                        lastResults[s.id]!.severity === "critical" ? "text-red" :
+                        lastResults[s.id]!.severity === "high" ? "text-amber" : "text-green"
+                      }`}>
+                        {lastResults[s.id]!.severity.toUpperCase()} · {lastResults[s.id]!.topScore}/100
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => { void screenNow(s); }}
+                      disabled={screening[s.id]}
+                      className="mt-1 text-10 font-mono text-brand hover:text-brand-deep underline disabled:opacity-50"
+                    >
+                      {screening[s.id] ? "screening…" : "screen now"}
+                    </button>
+                  </td>
                   <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.nextDue || "—"}</td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1.5">

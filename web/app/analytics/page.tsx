@@ -5,6 +5,7 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
+import { loadAuditEntries } from "@/lib/audit";
 
 interface Analytics {
   ok: true;
@@ -81,11 +82,20 @@ export default function AnalyticsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [txs, setTxs] = useState<TxRow[]>([]);
+  const [auditCount, setAuditCount] = useState(0);
+  const [fourEyesCount, setFourEyesCount] = useState(0);
+  const [fourEyesTotal, setFourEyesTotal] = useState(0);
   const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
     setCases(loadCases());
     setTxs(loadTxs());
+    // Compute audit trail and four-eyes metrics from localStorage
+    const auditEntries = loadAuditEntries();
+    setAuditCount(auditEntries.length);
+    const strEntries = auditEntries.filter((e) => e.action === "str.filed");
+    setFourEyesTotal(strEntries.length);
+    setFourEyesCount(strEntries.filter((e) => e.target.includes("approver:") && !e.target.includes("approver: none")).length);
     let active = true;
     (async () => {
       const result = await fetchJson<Analytics>("/api/analytics", {
@@ -239,7 +249,10 @@ export default function AnalyticsPage() {
                 value={String(strsThisMonth)}
                 caption={`STRs filed · ${formatPeriod(now).split(" ")[0]}`}
               />
-              <Headline value="100%" caption="Ten-year audit coverage" />
+              <Headline
+                value={auditCount > 0 ? `${auditCount}` : "0"}
+                caption="Audit entries logged"
+              />
             </div>
           </Section>
 
@@ -274,11 +287,15 @@ export default function AnalyticsPage() {
                 label={`SLA compliance (critical within 24h)`}
                 value={cases.length === 0 ? "n/a" : "100%"}
               />
-              <PostureItem ok label="Four-eyes sign-off" value="100%" />
               <PostureItem
-                ok
+                ok={fourEyesTotal === 0 || fourEyesCount === fourEyesTotal}
+                label="Four-eyes sign-off (STR filings)"
+                value={fourEyesTotal === 0 ? "n/a" : `${fourEyesCount}/${fourEyesTotal}`}
+              />
+              <PostureItem
+                ok={auditCount > 0}
                 label="Audit-trail completeness (ten-year retention)"
-                value="100%"
+                value={auditCount > 0 ? `${auditCount} entries` : "0 — no events logged yet"}
               />
               <PostureItem
                 ok={fpRate <= 0.01}

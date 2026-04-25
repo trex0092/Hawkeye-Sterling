@@ -26,6 +26,26 @@ type FilingType =
   | "PEPR"
   | "FTFR";
 
+// Phrases that constitute tipping-off under FDL 10/2025 Art.29
+const TIPPING_OFF_PATTERNS = [
+  /\byou\s+are\s+(being\s+)?investigated\b/i,
+  /\bSTR\s+has\s+been\s+filed\b/i,
+  /\bsuspicious\s+transaction\s+report\b/i,
+  /\bwe\s+have\s+reported\s+you\b/i,
+  /\bauthorities\s+have\s+been\s+notified\b/i,
+  /\bFIU\s+has\s+been\s+informed\b/i,
+  /\bgoAML\s+filing\b/i,
+  /\banti.?money\s+laundering\s+investigation\b/i,
+  /\byour\s+account.{0,30}(suspended|blocked|flagged)\b/i,
+];
+
+function checkTippingOff(text: string): string | null {
+  for (const pat of TIPPING_OFF_PATTERNS) {
+    if (pat.test(text)) return pat.source;
+  }
+  return null;
+}
+
 interface Body {
   subject: {
     id: string;
@@ -39,6 +59,7 @@ interface Body {
   };
   filingType: FilingType;
   narrative?: string;   // Optional MLRO draft; otherwise auto-drafted.
+  approver?: string;    // Four-eyes: second officer name
   result?: {
     topScore: number;
     severity: string;
@@ -90,11 +111,36 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Server-side tipping-off check — FDL 10/2025 Art.29
+  if (body.narrative) {
+    const tipOff = checkTippingOff(body.narrative);
+    if (tipOff) {
+      return NextResponse.json(
+        { ok: false, error: "tipping_off_detected", detail: `Narrative contains potential tipping-off language (pattern: ${tipOff}). Remove the disclosure before filing.` },
+        { status: 422 },
+      );
+    }
+  }
+
+  // Four-eyes gate — approver must be set and differ from filer
+  const mlro = body.mlro ?? "Luisa Fernanda";
+  if (!body.approver?.trim()) {
+    return NextResponse.json(
+      { ok: false, error: "four_eyes_required", detail: "A second approver (four-eyes) is required before this filing can proceed." },
+      { status: 422 },
+    );
+  }
+  if (body.approver.trim().toLowerCase() === mlro.trim().toLowerCase()) {
+    return NextResponse.json(
+      { ok: false, error: "four_eyes_same_person", detail: "The approver must be a different person from the MLRO filing this report." },
+      { status: 422 },
+    );
+  }
+
   const projectGid =
     process.env["ASANA_SAR_PROJECT_GID"] ?? DEFAULT_SAR_PROJECT_GID;
   const workspaceGid =
     process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID;
-  const mlro = body.mlro ?? "Luisa Fernanda";
   const now = new Date().toISOString();
 
   const name = `[${body.filingType}] DRAFT · ${body.subject.name}${
@@ -114,6 +160,7 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     lines.push(`Jurisdiction        : ${body.subject.jurisdiction}`);
   if (body.subject.dob) lines.push(`DOB / Registration  : ${body.subject.dob}`);
   lines.push(`MLRO                : ${mlro}`);
+  lines.push(`Four-eyes approver  : ${body.approver ?? "—"}`);
   lines.push(`Generated           : ${now}`);
   lines.push("");
 
