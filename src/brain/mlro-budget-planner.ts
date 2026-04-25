@@ -2,7 +2,7 @@
 // Given N modes + a total budget, hand back per-step budgets that respect
 // the 25s hard ceiling and leave a safety margin for merging + gating.
 
-export const HARD_CEILING_MS = 25_000;
+export const HARD_CEILING_MS = 60_000;
 export const SAFETY_MARGIN_MS = 500;
 
 export interface StepWeight {

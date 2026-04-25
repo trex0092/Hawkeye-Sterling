@@ -29,7 +29,7 @@ export interface ComplianceAgentConfig {
   apiKey: string;
   model?: string;
   maxTokens?: number;
-  /** Hard ceiling per request. Default 25s. */
+  /** Hard ceiling per request. Default 60s. */
   budgetMs?: number;
 }
 
@@ -483,8 +483,8 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
     },
     {
       ...(signal ? { signal } : {}),
-      perAttemptMs: Math.min(15_000, maxTokens * 40 + 8_000),
-      idleReadMs: 12_000,
+      perAttemptMs: Math.min(55_000, maxTokens * 40 + 8_000),
+      idleReadMs: 25_000,
       maxAttempts: 2,
     },
   );
@@ -510,7 +510,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
 function withBudget<T>(
   ms: number,
   fn: (signal: AbortSignal) => Promise<T>,
-): Promise<{ result?: T; timedOut: boolean }> {
+): Promise<{ result?: T; timedOut: boolean; thrownError?: string }> {
   return new Promise((resolve) => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
@@ -522,7 +522,8 @@ function withBudget<T>(
       (err: unknown) => {
         clearTimeout(timer);
         const isAbort = err instanceof DOMException && err.name === 'AbortError';
-        resolve({ timedOut: isAbort });
+        const thrownError = isAbort ? undefined : (err instanceof Error ? err.message : String(err));
+        resolve({ timedOut: isAbort, thrownError });
       },
     );
   });
@@ -545,7 +546,7 @@ export async function invokeComplianceAgent(
   chat: ChatCall = defaultChat,
 ): Promise<ComplianceReviewResult> {
   const t0 = Date.now();
-  const hardCeiling = Math.min(cfg.budgetMs ?? 25_000, 25_000);
+  const hardCeiling = Math.min(cfg.budgetMs ?? 60_000, 60_000);
   const trail: AgentTrailStep[] = [];
 
   // ── Stage 1: deterministic prechecks.
@@ -614,7 +615,7 @@ export async function invokeComplianceAgent(
   const user = buildComplianceUserMessage(req);
   const advStart = new Date().toISOString();
   const remaining = Math.max(1, hardCeiling - (Date.now() - t0));
-  const { result: advRes, timedOut } = await withBudget(remaining, (signal) =>
+  const { result: advRes, timedOut, thrownError: advThrown } = await withBudget(remaining, (signal) =>
     chat({
       model: cfg.model ?? DEFAULT_MODEL,
       system,
@@ -654,7 +655,7 @@ export async function invokeComplianceAgent(
       charterIntegrityHash,
       agentTrail: trail,
       guidance: BUDGET_GUIDANCE,
-      error: timedOut ? 'Advisor budget exceeded' : advRes?.error,
+      error: timedOut ? 'Advisor budget exceeded' : (advRes?.error ?? advThrown),
     };
   }
 

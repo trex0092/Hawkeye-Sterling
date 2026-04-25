@@ -19,12 +19,12 @@ export interface ModeBudget {
   advisorMs?: number;
 }
 
-// Per-mode budgets. The hard ceiling is 25s per request to match the
-// operator-visible SLA; modes below pack into it.
+// Per-mode budgets. The hard ceiling is 60s per request; modes pack into it.
+// Claude Sonnet needs up to 25s and Opus up to 35s for an 8 k-token response.
 export const MODE_BUDGETS: Record<ReasoningMode, ModeBudget> = {
-  speed:             { totalMs: 12_000, executorMs: 12_000 },
-  balanced:          { totalMs: 20_000, advisorMs: 20_000 },
-  multi_perspective: { totalMs: 25_000, executorMs: 12_000, advisorMs: 13_000 },
+  speed:             { totalMs: 20_000, executorMs: 20_000 },
+  balanced:          { totalMs: 45_000, advisorMs: 45_000 },
+  multi_perspective: { totalMs: 60_000, executorMs: 25_000, advisorMs: 35_000 },
 };
 
 export interface MlroAdvisorConfig {
@@ -32,7 +32,7 @@ export interface MlroAdvisorConfig {
   executorModel?: string;  // defaults to Claude Sonnet
   advisorModel?: string;   // defaults to Claude Opus
   maxTokens?: number;
-  /** Hard ceiling per request. Default 25s. */
+  /** Hard ceiling per request. Default 60s. */
   budgetMs?: number;
 }
 
@@ -208,10 +208,11 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
     },
     {
       ...(signal ? { signal } : {}),
-      // The outer withBudget() in this file already enforces the per-mode
-      // ceiling; keep per-attempt tight so we can retry inside that budget.
-      perAttemptMs: Math.min(15_000, maxTokens * 40 + 8_000),
-      idleReadMs: 12_000,
+      // The outer withBudget() enforces the per-mode ceiling. Per-attempt and
+      // idle timeouts must be generous enough that the model can finish a full
+      // 8 k-token response (~25-35s) before the HTTP layer fires independently.
+      perAttemptMs: Math.min(55_000, maxTokens * 40 + 8_000),
+      idleReadMs: 25_000,
       maxAttempts: 2,
     },
   );
@@ -234,7 +235,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   return { ok: true, text };
 };
 
-function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<{ result?: T; timedOut: boolean }> {
+function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<{ result?: T; timedOut: boolean; thrownError?: string }> {
   return new Promise((resolve) => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
@@ -246,7 +247,8 @@ function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Pro
       (err: unknown) => {
         clearTimeout(timer);
         const isAbort = err instanceof DOMException && err.name === 'AbortError';
-        resolve({ timedOut: isAbort });
+        const thrownError = isAbort ? undefined : (err instanceof Error ? err.message : String(err));
+        resolve({ timedOut: isAbort, thrownError });
       },
     );
   });
@@ -260,7 +262,7 @@ export async function invokeMlroAdvisor(
   if (!req.question.trim()) throw new Error('MlroAdvisorRequest.question must be non-empty');
   const mode: ReasoningMode = req.mode ?? 'multi_perspective';
   const budget = MODE_BUDGETS[mode];
-  const hardCeiling = Math.min(cfg.budgetMs ?? 25_000, 25_000);
+  const hardCeiling = Math.min(cfg.budgetMs ?? 60_000, 60_000);
   const totalBudget = Math.min(budget.totalMs, hardCeiling);
   const t0 = Date.now();
   const trail: ReasoningTrailStep[] = [];
@@ -291,12 +293,12 @@ export async function invokeMlroAdvisor(
     const executor = buildExecutorRequest(req);
     const execStart = new Date().toISOString();
     const execBudget = Math.min(budget.executorMs ?? totalBudget, totalBudget);
-    const { result: execRes, timedOut } = await withBudget(execBudget, (signal) =>
+    const { result: execRes, timedOut, thrownError: execThrown } = await withBudget(execBudget, (signal) =>
       chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: cfg.maxTokens ?? 8000, apiKey: cfg.apiKey, signal }),
     );
     if (timedOut || !execRes?.ok) {
       trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
-      return makeResult(true, execRes?.text, 'incomplete', timedOut ? undefined : execRes?.error);
+      return makeResult(true, execRes?.text, 'incomplete', timedOut ? undefined : (execRes?.error ?? execThrown));
     }
     executorBody = execRes.text ?? '';
     trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: 'Executor draft produced.', body: executorBody, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
@@ -314,12 +316,12 @@ export async function invokeMlroAdvisor(
   const advStart = new Date().toISOString();
   const remaining = Math.max(1, totalBudget - (Date.now() - t0));
   const advBudget = Math.min(budget.advisorMs ?? remaining, remaining);
-  const { result: advRes, timedOut: advTimedOut } = await withBudget(advBudget, (signal) =>
+  const { result: advRes, timedOut: advTimedOut, thrownError: advThrown } = await withBudget(advBudget, (signal) =>
     chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? 8000, apiKey: cfg.apiKey, signal }),
   );
   if (advTimedOut || !advRes?.ok) {
     trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
-    return makeResult(true, advRes?.text ?? executorBody, 'incomplete', advTimedOut ? undefined : advRes?.error);
+    return makeResult(true, advRes?.text ?? executorBody, 'incomplete', advTimedOut ? undefined : (advRes?.error ?? advThrown));
   }
   const body = advRes.text ?? '';
   trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: 'Advisor review + final narrative.', body, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });

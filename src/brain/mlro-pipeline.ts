@@ -15,6 +15,7 @@ import { AuditChain } from './audit-chain.js';
 import { validateResponse } from './validator.js';
 import { tippingOffScan } from './tipping-off-guard.js';
 import { BUDGET_GUIDANCE, type MlroAdvisorResult, type ReasoningMode } from '../integrations/mlroAdvisor.js';
+import { HARD_CEILING_MS } from './mlro-budget-planner.js';
 
 export interface PipelineStep {
   modeId: MlroModeId;
@@ -26,7 +27,7 @@ export interface PipelineStep {
 export interface PipelineInput {
   question: string;
   steps: readonly PipelineStep[];
-  totalBudgetMs?: number; // default 25_000 ms, hard-capped
+  totalBudgetMs?: number; // default 60_000 ms, hard-capped
 }
 
 export type PipelineRunStep = (modeId: MlroModeId, question: string, budgetMs: number, signal: AbortSignal) =>
@@ -66,8 +67,6 @@ export interface MlroPipelineResult {
   totalElapsedMs: number;
   budgetMs: number;
 }
-
-const HARD_CEILING_MS = 25_000;
 
 const SECTION_HEADERS = [
   'SUBJECT_IDENTIFIERS',
