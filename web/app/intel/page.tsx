@@ -289,9 +289,9 @@ function AdverseMediaPanel() {
 
       {articles.length > 0 && (
         <div className="border-t border-hair-2 divide-y divide-hair max-h-[400px] overflow-y-auto">
-          {articles.map((a, i) => (
+          {articles.map((a) => (
             <a
-              key={i}
+              key={a.url}
               href={a.url}
               target="_blank"
               rel="noreferrer"

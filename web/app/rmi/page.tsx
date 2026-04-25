@@ -406,7 +406,7 @@ export default function RmiPage() {
               </thead>
               <tbody>
                 {auditLog.map((e, i) => (
-                  <tr key={i} className={i < auditLog.length - 1 ? "border-b border-hair" : ""}>
+                  <tr key={`${e.date}-${e.smelterName}`} className={i < auditLog.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2 font-mono text-10 text-ink-3 whitespace-nowrap">{e.date}</td>
                     <td className="px-3 py-2 font-medium text-ink-0">{e.smelterName}</td>
                     <td className="px-3 py-2 text-ink-1">{e.action}</td>

@@ -27,9 +27,9 @@ export function SignOffPanel() {
         Filing authorisation
       </div>
       <div className="grid grid-cols-3 gap-px bg-hair-2">
-        {signers.map((s, i) => (
+        {signers.map((s) => (
           <SignerColumn
-            key={i}
+            key={s.role}
             role={s.role}
             name={s.name}
             editable={s.editable}

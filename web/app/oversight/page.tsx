@@ -437,7 +437,7 @@ export default function OversightPage() {
                         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Topics discussed</div>
                         <ul className="flex flex-col gap-1.5">
                           {m.topics.map((topic, i) => (
-                            <li key={i} className="flex gap-2 text-12 text-ink-1">
+                            <li key={topic} className="flex gap-2 text-12 text-ink-1">
                               <span className="font-mono text-10 text-brand shrink-0 mt-0.5">{i + 1}.</span>
                               {topic}
                             </li>

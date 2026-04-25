@@ -136,7 +136,7 @@ export default function UboDeclarationPage() {
 
           {ubos.map((u, idx) => (
             <div
-              key={idx}
+              key={`ubo-${idx}`}
               className="bg-bg-1 rounded p-3 space-y-2"
             >
               <div className="flex items-center justify-between">

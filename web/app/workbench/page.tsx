@@ -372,7 +372,7 @@ export default function WorkbenchPage() {
                       <div className="space-y-1.5">
                         {brainResult.screen.hits.slice(0, 10).map((h, i) => (
                           <div
-                            key={i}
+                            key={h.candidateName ?? i}
                             className="flex items-baseline justify-between bg-bg-1 rounded px-3 py-1.5 border border-hair-1 text-12"
                           >
                             <div className="flex items-baseline gap-2">
@@ -464,8 +464,8 @@ export default function WorkbenchPage() {
                         Redlines fired ({brainResult.redlines.fired.length})
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {brainResult.redlines.fired.map((r, i) => (
-                          <span key={i} className="bg-red-600 text-white rounded px-2 py-0.5 text-11 font-medium">
+                        {brainResult.redlines.fired.map((r) => (
+                          <span key={r.keyword} className="bg-red-600 text-white rounded px-2 py-0.5 text-11 font-medium">
                             {r.keyword}
                           </span>
                         ))}
@@ -645,8 +645,8 @@ export default function WorkbenchPage() {
                         Charter compliance issues
                       </div>
                       <ul className="list-disc list-inside space-y-0.5">
-                        {drResult.complianceReview.issues.map((issue, i) => (
-                          <li key={i} className="text-12 text-amber-800">{issue}</li>
+                        {drResult.complianceReview.issues.map((issue) => (
+                          <li key={issue} className="text-12 text-amber-800">{issue}</li>
                         ))}
                       </ul>
                     </div>
