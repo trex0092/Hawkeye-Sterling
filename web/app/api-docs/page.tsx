@@ -26,6 +26,8 @@ export default function ApiDocsPage() {
           dom_id: "#swagger-root",
           docExpansion: "list",
           defaultModelsExpandDepth: 0,
+          persistAuthorization: true,
+          filter: true,
         });
       }
     };

@@ -206,20 +206,20 @@ function BrainDashboard({
   return (
     <>
       {/* Top signature strip */}
-      <div className="bg-ink-0 text-bg-0 rounded-xl p-5 mb-8 flex flex-wrap gap-6 items-end">
+      <div className="bg-ink-0 text-bg-0 rounded-lg px-4 py-2.5 mb-6 flex flex-wrap gap-5 items-center">
         <div>
-          <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">Product</div>
-          <div className="text-16 font-semibold">{manifest.product}</div>
+          <div className="text-9 uppercase tracking-wide-4 text-bg-0/50">Product</div>
+          <div className="text-13 font-semibold leading-tight">{manifest.product}</div>
         </div>
         <div>
-          <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">Version</div>
-          <div className="text-14 font-mono">{manifest.version}</div>
+          <div className="text-9 uppercase tracking-wide-4 text-bg-0/50">Version</div>
+          <div className="text-12 font-mono leading-tight">{manifest.version}</div>
         </div>
         <div>
-          <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">Generated</div>
-          <div className="text-14 font-mono">{new Date(manifest.generatedAt).toLocaleString()}</div>
+          <div className="text-9 uppercase tracking-wide-4 text-bg-0/50">Generated</div>
+          <div className="text-12 font-mono leading-tight">{new Date(manifest.generatedAt).toLocaleString()}</div>
         </div>
-        <div className="ml-auto flex gap-6">
+        <div className="ml-auto flex gap-5">
           <Stat label="Charter directives" value={manifest.charter.prohibitions.length} />
           <Stat label="Catalogues fused" value={cataloguesFused} />
         </div>
