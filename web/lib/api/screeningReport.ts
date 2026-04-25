@@ -32,6 +32,7 @@ export async function postScreeningReport(
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
     label: "Screening report failed",
+    retries: 0,
     ...(init.signal ? { signal: init.signal } : {}),
   });
   if (!res.ok) {

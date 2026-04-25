@@ -24,15 +24,22 @@ interface Consignment {
   refinery: string;
   refineryLbmaId: string;
   grossWeightKg: number;
+  weightGms: number;
   fineness: number; // e.g. 999.9
   bars: number;
   usdValue: number;
+  description: string;
   dispatchDate: string;
   eta: string;
+  direction: "Import" | "Export";
   carrier: string;
-  awb: string;       // airway bill / courier ref
+  transportationAgent: string;
+  awb: string;
+  invoiceNumber: string;
+  clearanceDate: string;
   transitProgress: number; // 0–100
   vaultLocation: string;
+  consignee: string;
   assayPending: boolean;
   rggStep: 1 | 2 | 3 | 4 | 5; // highest OECD step completed
   flags: string[];
@@ -64,15 +71,22 @@ const CONSIGNMENTS: Consignment[] = [
     refinery: "Rand Refinery Ltd",
     refineryLbmaId: "LBMA-RR-001",
     grossWeightKg: 124.8,
+    weightGms: 124_800,
     fineness: 999.9,
     bars: 10,
     usdValue: 11_240_000,
+    description: "Gold bullion bars — 24K Good Delivery, cast & stamped, serialised",
     dispatchDate: "21/04/2025",
     eta: "26/04/2025",
+    direction: "Import",
     carrier: "Malca-Amit",
+    transportationAgent: "Malca-Amit Secure Logistics",
     awb: "MA-20250421-0099",
+    invoiceNumber: "RR-INV-2025-0441",
+    clearanceDate: "—",
     transitProgress: 68,
     vaultLocation: "DMCC Tradeflow Vault, Dubai",
+    consignee: "DMCC Member 77341",
     assayPending: true,
     rggStep: 3,
     flags: [],
@@ -103,15 +117,22 @@ const CONSIGNMENTS: Consignment[] = [
     refinery: "Argor-Heraeus",
     refineryLbmaId: "LBMA-AH-003",
     grossWeightKg: 249.6,
+    weightGms: 249_600,
     fineness: 999.5,
     bars: 20,
     usdValue: 22_410_000,
+    description: "Gold bullion — 24K Good Delivery bars, recycled European scrap origin",
     dispatchDate: "14/04/2025",
     eta: "16/04/2025",
+    direction: "Import",
     carrier: "Brinks",
+    transportationAgent: "Brinks International",
     awb: "BRK-DXB-20250414",
+    invoiceNumber: "AH-INV-2025-0318",
+    clearanceDate: "16/04/2025",
     transitProgress: 100,
     vaultLocation: "Emirates Gold Vault, Almas Tower",
+    consignee: "Emirates Gold DMCC",
     assayPending: true,
     rggStep: 4,
     flags: [],
@@ -144,15 +165,22 @@ const CONSIGNMENTS: Consignment[] = [
     refinery: "Valcambi",
     refineryLbmaId: "LBMA-VC-002",
     grossWeightKg: 62.2,
+    weightGms: 62_200,
     fineness: 999.9,
     bars: 5,
     usdValue: 5_590_000,
+    description: "Gold bullion bars — 24K Good Delivery, Valcambi Suisse certified",
     dispatchDate: "10/04/2025",
     eta: "12/04/2025",
+    direction: "Import",
     carrier: "G4S Courier",
+    transportationAgent: "G4S Security Solutions",
     awb: "G4S-DXB-20250410",
+    invoiceNumber: "VC-INV-2025-0209",
+    clearanceDate: "12/04/2025",
     transitProgress: 100,
     vaultLocation: "DMCC Tradeflow Vault, Dubai",
+    consignee: "DMCC Member 61209",
     assayPending: true,
     rggStep: 4,
     flags: ["Assay overdue 12d"],
@@ -182,15 +210,22 @@ const CONSIGNMENTS: Consignment[] = [
     refinery: "Unidentified",
     refineryLbmaId: "—",
     grossWeightKg: 37.5,
+    weightGms: 37_500,
     fineness: 995.0,
     bars: 3,
     usdValue: 3_330_000,
+    description: "Gold bars — fineness 995, origin undocumented, no CoA",
     dispatchDate: "02/04/2025",
     eta: "05/04/2025",
+    direction: "Import",
     carrier: "Private courier",
+    transportationAgent: "Unknown",
     awb: "PRIV-2025-0402",
+    invoiceNumber: "—",
+    clearanceDate: "—",
     transitProgress: 100,
     vaultLocation: "Dubai Airport FTZ, Holding Bay",
+    consignee: "Anonymous broker",
     assayPending: true,
     rggStep: 1,
     flags: ["Unknown origin", "No LBMA certification", "Broker — no CDD"],
@@ -220,15 +255,22 @@ const CONSIGNMENTS: Consignment[] = [
     refinery: "PAMP SA",
     refineryLbmaId: "LBMA-PAMP-004",
     grossWeightKg: 124.4,
+    weightGms: 124_400,
     fineness: 999.9,
     bars: 10,
     usdValue: 11_170_000,
+    description: "Gold bullion bars — 24K Good Delivery, PAMP Suisse certified, serialised",
     dispatchDate: "15/03/2025",
     eta: "17/03/2025",
+    direction: "Import",
     carrier: "Brinks",
+    transportationAgent: "Brinks International",
     awb: "BRK-DXB-20250315",
+    invoiceNumber: "PAMP-INV-2025-0144",
+    clearanceDate: "17/03/2025",
     transitProgress: 100,
     vaultLocation: "Emirates Gold Vault, Almas Tower",
+    consignee: "Emirates Gold DMCC",
     assayPending: false,
     rggStep: 5,
     flags: [],
@@ -472,6 +514,8 @@ export default function ShipmentsPage() {
                   <div className="text-10 font-mono uppercase tracking-wide-3 text-brand mb-1.5">§1 Origin</div>
                   <Row label="Mine of origin" value={detail.mineOfOrigin} />
                   <Row label="Mining country" value={`${COUNTRY_FLAG[detail.originCountry] ?? ""} ${detail.miningCountry}`} />
+                  <Row label="Description" value={detail.description} />
+                  <Row label="Weight (gms)" value={detail.weightGms.toLocaleString("en-US")} mono />
                   <Row label="Export licence" value={detail.exportLicence} mono />
                   <Row label="Dispatch date" value={detail.dispatchDate} mono />
                 </div>
@@ -488,17 +532,21 @@ export default function ShipmentsPage() {
                 {/* §3 Trading counterparty */}
                 <div>
                   <div className="text-10 font-mono uppercase tracking-wide-3 text-brand mb-1.5">§3 Counterparty</div>
-                  <Row label="Name" value={detail.counterparty} />
+                  <Row label="Supplier" value={detail.counterparty} />
+                  <Row label="Consignee" value={detail.consignee} />
                   <Row label="Jurisdiction" value={detail.counterpartyJurisdiction} />
                   <Row label="CDD ref" value={detail.counterpartyCddRef} mono />
-                  <Row label="Carrier" value={detail.carrier} />
+                  <Row label="Invoice no." value={detail.invoiceNumber} mono />
                 </div>
 
                 {/* §4 Logistics & vault */}
                 <div>
-                  <div className="text-10 font-mono uppercase tracking-wide-3 text-brand mb-1.5">§4 Custody</div>
+                  <div className="text-10 font-mono uppercase tracking-wide-3 text-brand mb-1.5">§4 Logistics</div>
+                  <Row label="Import / Export" value={detail.direction} />
+                  <Row label="Transportation agent" value={detail.transportationAgent} />
+                  <Row label="AWB" value={detail.awb} mono />
+                  <Row label="Clearance date" value={detail.clearanceDate} mono />
                   <Row label="Custodian" value={detail.custodian} />
-                  <Row label="AWB / ref" value={detail.awb} mono />
                   <Row label="Vault cert" value={detail.vaultCertRef} mono />
                   <Row label="Insurance" value={detail.insuranceRef} mono />
                 </div>
