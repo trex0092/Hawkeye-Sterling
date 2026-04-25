@@ -17,6 +17,33 @@ import {
 } from "@/lib/data/modes";
 import type { FacultyFilterKey, ReasoningPreset } from "@/lib/types";
 
+type ReasoningMode = "speed" | "balanced" | "multi_perspective";
+
+interface ReasoningStep {
+  stepNo: number;
+  actor: "executor" | "advisor";
+  modelId: string;
+  at: string;
+  summary: string;
+  body: string;
+}
+
+interface AdvisorResult {
+  ok: boolean;
+  mode: string;
+  elapsedMs: number;
+  partial: boolean;
+  guidance?: string;
+  reasoningTrail: ReasoningStep[];
+  narrative?: string;
+  complianceReview: {
+    advisorVerdict: "approved" | "returned_for_revision" | "blocked" | "incomplete";
+    issues: string[];
+  };
+  charterIntegrityHash?: string;
+  error?: string;
+}
+
 interface ScreenHit {
   listId: string;
   listRef: string;
@@ -72,6 +99,14 @@ export default function WorkbenchPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [brainResult, setBrainResult] = useState<BrainResult | null>(null);
   const [brainError, setBrainError] = useState<string | null>(null);
+
+  // Deep reasoning (MLRO Advisor) state
+  const [drQuestion, setDrQuestion] = useState("");
+  const [drMode, setDrMode] = useState<ReasoningMode>("multi_perspective");
+  const [drRunning, setDrRunning] = useState(false);
+  const [drResult, setDrResult] = useState<AdvisorResult | null>(null);
+  const [drError, setDrError] = useState<string | null>(null);
+  const [drExpanded, setDrExpanded] = useState<Set<number>>(new Set());
 
   const [runResult, setRunResult] = useState<
     | null
@@ -174,6 +209,45 @@ export default function WorkbenchPage() {
           block: "start",
         });
       });
+    }
+  };
+
+  const handleAsk = async () => {
+    const q = drQuestion.trim();
+    if (!q || !subjectName.trim() || !brainResult) return;
+    setDrRunning(true);
+    setDrError(null);
+    setDrResult(null);
+    try {
+      const res = await fetch("/api/mlro-advisor", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          question: q,
+          subjectName: subjectName.trim(),
+          mode: drMode,
+          audience: "regulator",
+          jurisdiction: brainResult.jurisdiction?.iso2,
+          typologyIds: brainResult.typologies.hits.map((t) => t.id),
+          adverseGroups: brainResult.adverseKeywordGroups.map((g) => g.group),
+        }),
+      });
+      const data = (await res.json()) as AdvisorResult & { error?: string };
+      if (!res.ok || !data.ok) {
+        setDrError(data.error ?? `HTTP ${res.status}`);
+      } else {
+        setDrResult(data);
+        window.requestAnimationFrame(() => {
+          document.getElementById("deep-reasoning-result")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      }
+    } catch (err) {
+      setDrError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setDrRunning(false);
     }
   };
 
@@ -451,6 +525,213 @@ export default function WorkbenchPage() {
               )}
             </div>
           )}
+
+          {/* Deep Reasoning (MLRO Advisor) panel */}
+          <div className="my-6">
+            <div className="bg-bg-panel border border-brand/30 rounded-xl p-5">
+              <div className="flex items-baseline justify-between mb-4">
+                <div>
+                  <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
+                    Deep Reasoning · MLRO Advisor
+                  </div>
+                  <div className="text-12 text-ink-2">
+                    Sonnet executor → Opus advisor · 86 directives · charter P1–P10
+                    {!brainResult && (
+                      <span className="ml-2 text-amber-600">— run Super-brain first to unlock</span>
+                    )}
+                  </div>
+                </div>
+                {drResult && (
+                  <button
+                    type="button"
+                    onClick={() => { setDrResult(null); setDrError(null); }}
+                    className="text-11 text-ink-3 hover:text-ink-0"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Question + controls */}
+              <div className="space-y-2 mb-4">
+                <textarea
+                  value={drQuestion}
+                  onChange={(e) => setDrQuestion(e.target.value)}
+                  disabled={!brainResult || drRunning}
+                  rows={3}
+                  placeholder={
+                    brainResult
+                      ? `Ask the MLRO Advisor about ${subjectName} — e.g. "What is the risk level and should we file an STR?"`
+                      : "Run Super-brain screening above first, then ask questions here"
+                  }
+                  className="w-full px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Mode selector */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-11 font-semibold text-ink-2 uppercase tracking-wide-3">Mode</span>
+                    {(["speed", "balanced", "multi_perspective"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setDrMode(m)}
+                        className={`px-2.5 py-1 rounded text-11 font-medium border transition-colors ${
+                          drMode === m
+                            ? "bg-brand text-white border-brand"
+                            : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
+                        }`}
+                      >
+                        {m === "multi_perspective" ? "Multi" : m.charAt(0).toUpperCase() + m.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1" />
+                  <button
+                    type="button"
+                    onClick={() => { void handleAsk(); }}
+                    disabled={!brainResult || !drQuestion.trim() || drRunning}
+                    className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  >
+                    {drRunning ? "Analysing…" : "Ask Advisor"}
+                  </button>
+                </div>
+              </div>
+
+              {drRunning && (
+                <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center">
+                  <span className="animate-pulse font-mono text-brand">●</span>
+                  Dual-model pipeline running — Sonnet executor → Opus advisor…
+                </div>
+              )}
+
+              {drError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-13 text-red-700">
+                  <span className="font-semibold">Advisor error:</span> {drError}
+                </div>
+              )}
+
+              {drResult && (
+                <div id="deep-reasoning-result" className="space-y-4">
+                  {/* Compliance verdict badge */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-12 font-semibold uppercase tracking-wide-3 ${
+                        drResult.complianceReview.advisorVerdict === "approved"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                          : drResult.complianceReview.advisorVerdict === "blocked"
+                          ? "bg-red-100 text-red-700 border-red-300"
+                          : drResult.complianceReview.advisorVerdict === "returned_for_revision"
+                          ? "bg-amber-50 text-amber-700 border-amber-300"
+                          : "bg-gray-100 text-gray-600 border-gray-300"
+                      }`}
+                    >
+                      {drResult.complianceReview.advisorVerdict.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-11 text-ink-3 font-mono">
+                      mode:{drResult.mode} · {drResult.elapsedMs}ms
+                      {drResult.partial && " · partial"}
+                    </span>
+                    {drResult.charterIntegrityHash && (
+                      <span className="text-10 text-ink-3 font-mono hidden sm:inline">
+                        hash:{drResult.charterIntegrityHash.slice(0, 12)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Charter compliance issues */}
+                  {drResult.complianceReview.issues.length > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-700 mb-1">
+                        Charter compliance issues
+                      </div>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {drResult.complianceReview.issues.map((issue, i) => (
+                          <li key={i} className="text-12 text-amber-800">{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Guidance summary */}
+                  {drResult.guidance && (
+                    <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 text-13 text-ink-0 leading-relaxed">
+                      <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">
+                        Guidance
+                      </div>
+                      <p className="m-0 whitespace-pre-wrap">{drResult.guidance}</p>
+                    </div>
+                  )}
+
+                  {/* Narrative */}
+                  {drResult.narrative && (
+                    <div className="bg-bg-1 border border-hair-2 rounded-lg p-4">
+                      <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">
+                        Regulator-facing narrative
+                      </div>
+                      <div
+                        className="text-13 text-ink-0 leading-relaxed prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: drResult.narrative.replace(/\n/g, "<br/>") }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Reasoning trail */}
+                  {drResult.reasoningTrail.length > 0 && (
+                    <div>
+                      <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">
+                        Reasoning trail ({drResult.reasoningTrail.length} steps)
+                      </div>
+                      <div className="space-y-2">
+                        {drResult.reasoningTrail.map((step) => {
+                          const isExpanded = drExpanded.has(step.stepNo);
+                          return (
+                            <div
+                              key={step.stepNo}
+                              className="border border-hair-2 rounded-lg bg-bg-1 overflow-hidden"
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setDrExpanded((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(step.stepNo)) next.delete(step.stepNo);
+                                    else next.add(step.stepNo);
+                                    return next;
+                                  })
+                                }
+                                className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-bg-panel transition-colors"
+                              >
+                                <span
+                                  className={`text-10 font-mono font-bold px-1.5 py-0.5 rounded uppercase ${
+                                    step.actor === "executor"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-purple-100 text-purple-700"
+                                  }`}
+                                >
+                                  {step.actor}
+                                </span>
+                                <span className="text-10 font-mono text-ink-3">{step.modelId}</span>
+                                <span className="text-10 text-ink-3">{step.at}</span>
+                                <span className="flex-1 text-12 text-ink-0 truncate">{step.summary}</span>
+                                <span className="text-11 text-ink-3">{isExpanded ? "▲" : "▼"}</span>
+                              </button>
+                              {isExpanded && (
+                                <div className="px-3 pb-3 pt-1 border-t border-hair-1">
+                                  <pre className="text-11 text-ink-1 whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto">
+                                    {step.body}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
           <TaxonomyLibrary />
         </main>
