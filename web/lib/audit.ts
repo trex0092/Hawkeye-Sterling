@@ -44,7 +44,7 @@ export function writeAuditEvent(
   const entries = loadAuditEntries();
   const prevHash = entries.length > 0 ? (entries[entries.length - 1]?.hash ?? GENESIS) : GENESIS;
   const partial: Omit<AuditEntry, "hash"> = {
-    id: `ae-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `ae-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
     timestamp: new Date().toISOString(),
     actor,
     action,

@@ -45,6 +45,8 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
         .digest("hex")
     : "";
 
+  const ctl = new AbortController();
+  const timeout = setTimeout(() => ctl.abort(), 8_000);
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -55,6 +57,7 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
         "user-agent": "HawkeyeSterling/0.2 (+https://hawkeye-sterling.netlify.app)",
       },
       body,
+      signal: ctl.signal,
     });
     return {
       delivered: res.ok,

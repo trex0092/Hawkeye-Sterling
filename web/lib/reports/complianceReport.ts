@@ -272,7 +272,6 @@ function formatFacts(
       `Adverse-media overlay fired ${amCount} category/categories — see matrix.`,
     );
   }
-  void type;
   return lines;
 }
 

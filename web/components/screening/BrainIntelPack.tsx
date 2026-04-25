@@ -513,7 +513,7 @@ export function BrainInputValidator({
   if (subjectName.length < 4) issues.push("Subject name is shorter than 4 characters — high false-match risk.");
   if (!result.jurisdiction) issues.push("No jurisdiction bound — CAHRA + regime checks skipped.");
   if (!result.pep) issues.push("PEP classification skipped — role text not supplied.");
-  if (result.variants.nameVariants.length < 3) {
+  if ((result.variants?.nameVariants?.length ?? 0) < 3) {
     issues.push("Few transliteration variants generated — consider supplying aliases.");
   }
   if (issues.length === 0) {
@@ -544,11 +544,11 @@ export function BrainModuleWeights() {
   const weights = [
     { name: "Sanctions (quickScreen)", weight: 1.0, note: "Top-score direct multiplier" },
     { name: "Jurisdiction (CAHRA)", weight: 0.15, note: "+15 points if CAHRA-listed" },
-    { name: "Regimes", weight: 0.03, note: "+3 points per active regime" },
+    { name: "Regimes", weight: 0.03, note: "+3 points per active regime, capped at 12" },
     { name: "Redlines", weight: 0.10, note: "+10 points per redline fired" },
     { name: "Adverse-media (category)", weight: 0.08, note: "+8 points per category, capped at 30" },
-    { name: "Adverse-keyword (group)", weight: 0.2, note: "Up to +20 points per group" },
-    { name: "PEP salience", weight: 0.2, note: "+20 * salience (0-1)" },
+    { name: "Adverse-keyword (group)", weight: 0.2, note: "2–20 points per group by crime type" },
+    { name: "PEP salience", weight: 0.2, note: "+20 × salience (0–1)" },
   ];
   return (
     <Card title="Brain weight configuration">
@@ -580,7 +580,7 @@ export function BrainCanaryBench() {
     { id: "KNOWN-GOOD-02", name: "Jane Smith (fixture)", expected: "clear", observed: "clear", ok: true },
   ];
   return (
-    <Card title="Canary benchmark · last run">
+    <Card title="Canary benchmark · reference fixtures">
       <div className="space-y-0.5 text-11">
         {canaries.map((c) => (
           <div key={c.id} className="flex justify-between">
@@ -594,8 +594,9 @@ export function BrainCanaryBench() {
         ))}
       </div>
       <p className="text-10 text-ink-3 mt-2">
-        Runs daily against a fixed set of known-bad / known-good subjects.
-        Any drift triggers a page to the MLRO + Board Audit Committee.
+        Static reference fixtures — not live test runs. Confirms expected
+        classification for well-known subjects. Run /brain:audit to execute
+        a live canary check and compare against these baselines.
       </p>
     </Card>
   );
@@ -616,8 +617,9 @@ export function BrainVerdictConsistency({ result }: { result: SuperBrainResult }
   else if (pepFired) expected = "medium";
   else if (composite > 0) expected = "low";
 
-  const actual = result.screen.severity;
-  const consistent = actual.toLowerCase() === expected;
+  const actual =
+    composite >= 85 ? "critical" : composite >= 60 ? "high" : composite >= 35 ? "medium" : composite > 0 ? "low" : "clear";
+  const consistent = actual === expected;
   return (
     <Card title="Verdict consistency">
       <div className="flex items-baseline justify-between">
@@ -1399,7 +1401,7 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
         Boolean(result.pep && result.pep.salience > 0) ||
         Boolean(result.pepAssessment?.isLikelyPEP),
       corroborators:
-        result.pepAssessment?.matchedRoles.slice(0, 2).map((r) => r.label) ?? [],
+        result.pepAssessment?.matchedRoles?.slice(0, 2).map((r) => r.label) ?? [],
     },
     {
       label: "News & adverse media",
@@ -1517,50 +1519,33 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
 // Renders a mini bar-chart across four monitoring snapshots.
 export function BrainTemporalPattern({ result }: { result: SuperBrainResult }) {
   const c = result.composite.score;
-  const redlines = result.redlines.fired.length;
-
-  const trend: "escalating" | "stable" | "de-escalating" =
-    redlines > 2 && c > 60
-      ? "escalating"
-      : c < 20 && redlines === 0
-        ? "de-escalating"
-        : "stable";
-
-  const snapshots = [
-    { label: "T-3", score: Math.max(0, c - 18 - redlines * 3) },
-    { label: "T-2", score: Math.max(0, c - 9 - redlines) },
-    { label: "T-1", score: Math.max(0, c - 3) },
-    { label: "Now", score: c },
-  ];
-
-  const toneMap: Record<typeof trend, "red" | "amber" | "brand"> = {
-    escalating: "red",
-    stable: "amber",
-    "de-escalating": "brand",
-  };
-
   return (
     <Card title="Temporal pattern">
-      <div className="flex items-center gap-2 mb-2">
-        <Chip tone={toneMap[trend]}>{trend}</Chip>
-        <span className="text-10.5 text-ink-3">
-          Inferred trajectory across the ongoing-monitoring window.
-        </span>
-      </div>
-      <div className="grid grid-cols-4 gap-1">
-        {snapshots.map((s, i) => (
-          <div key={s.label} className="text-center">
+      <div className="grid grid-cols-4 gap-1 mb-2">
+        {(["T-3", "T-2", "T-1"] as const).map((label) => (
+          <div key={label} className="text-center">
             <div className="h-10 bg-bg-2 rounded-sm flex items-end justify-center pb-0.5">
-              <div
-                className={`w-4 rounded-sm ${i === snapshots.length - 1 ? "bg-brand" : "bg-ink-3/40"}`}
-                style={{ height: `${Math.max(4, Math.min(100, s.score))}%` }}
-              />
+              <div className="w-4 rounded-sm bg-ink-3/20" style={{ height: "8%" }} />
             </div>
-            <div className="text-10 font-mono text-ink-3 mt-0.5">{s.label}</div>
-            <div className="text-10 font-mono text-ink-1">{s.score}</div>
+            <div className="text-10 font-mono text-ink-3 mt-0.5">{label}</div>
+            <div className="text-10 font-mono text-ink-3">—</div>
           </div>
         ))}
+        <div className="text-center">
+          <div className="h-10 bg-bg-2 rounded-sm flex items-end justify-center pb-0.5">
+            <div
+              className="w-4 rounded-sm bg-brand"
+              style={{ height: `${Math.max(4, Math.min(100, c))}%` }}
+            />
+          </div>
+          <div className="text-10 font-mono text-ink-3 mt-0.5">Now</div>
+          <div className="text-10 font-mono text-ink-1">{c}</div>
+        </div>
       </div>
+      <p className="text-10 text-ink-3">
+        No historical snapshots available. Enable ongoing monitoring to build
+        a trend line across screening cycles.
+      </p>
     </Card>
   );
 }
@@ -1837,7 +1822,7 @@ export function BrainContextualEnrichment({ result }: { result: SuperBrainResult
   if (pep?.role)
     enrichments.push({ category: "PEP role", value: pep.role, tone: "violet" });
 
-  [...new Set(result.esg.map((e) => e.domain))].slice(0, 3).forEach((d) => {
+  [...new Set((result.esg ?? []).map((e) => e.domain))].slice(0, 3).forEach((d) => {
     enrichments.push({ category: "ESG domain", value: d, tone: "amber" });
   });
 
@@ -1995,7 +1980,7 @@ export function BrainDefensibility({
 export function BrainAlternativeHypotheses({ result }: { result: SuperBrainResult }) {
   const c = result.composite.score;
   const sanctions = result.screen.hits.length > 0;
-  const pep = Boolean(result.pep);
+  const pep = Boolean(result.pep && result.pep.salience > 0);
   const redlines = result.redlines.fired.length;
 
   const hypotheses: Array<{ label: string; probability: number; reason: string }> = [];

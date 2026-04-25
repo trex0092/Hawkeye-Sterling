@@ -94,19 +94,22 @@ export function attachEvidenceToCase(
   if (idx < 0) return;
   const existing = all[idx]!;
   const now = new Date();
+  const newEvidence = {
+    category: entry.category,
+    title: entry.title,
+    meta: entry.meta,
+    detail: entry.detail,
+  };
+  // Deduplicate by title+category — guard against double-submits.
+  const alreadyExists = existing.evidence.some(
+    (e) => e.title === newEvidence.title && e.category === newEvidence.category,
+  );
+  if (alreadyExists) return;
   const next: CaseRecord = {
     ...existing,
     evidenceCount: String(existing.evidence.length + 1).padStart(2, "0"),
     lastActivity: "just now",
-    evidence: [
-      ...existing.evidence,
-      {
-        category: entry.category,
-        title: entry.title,
-        meta: entry.meta,
-        detail: entry.detail,
-      },
-    ],
+    evidence: [...existing.evidence, newEvidence],
     timeline: [
       ...existing.timeline,
       {

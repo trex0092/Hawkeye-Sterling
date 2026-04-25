@@ -15,7 +15,7 @@ import { extractKey, validateAndConsume } from "./api-keys";
 import type { ApiKeyRecord } from "./api-keys";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 export interface EnforcementAllow {
   ok: true;
@@ -41,7 +41,12 @@ export async function enforce(
   // This lets the portal UI call every gated route without per-page token
   // management, while ADMIN_TOKEN itself never leaves the server env var.
   const adminToken = process.env["ADMIN_TOKEN"];
-  if (adminToken && plaintext === adminToken) {
+  const adminMatch =
+    adminToken &&
+    plaintext !== null &&
+    plaintext.length === adminToken.length &&
+    timingSafeEqual(Buffer.from(plaintext), Buffer.from(adminToken));
+  if (adminMatch) {
     const rl = await consumeRateLimit("portal_admin", "enterprise");
     if (!rl.allowed) {
       return {

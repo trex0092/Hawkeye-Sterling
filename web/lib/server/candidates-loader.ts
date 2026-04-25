@@ -164,8 +164,8 @@ export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
     _cached = [...live, ...extras];
     _cachedAt = now;
     return _cached;
-  } catch {
-    // Any unexpected error — fall back silently.
+  } catch (err) {
+    console.warn("[candidates-loader] unexpected error, falling back to static corpus:", err);
     return STATIC_CANDIDATES;
   }
 }

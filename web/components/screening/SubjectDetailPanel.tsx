@@ -122,15 +122,13 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
   const news = useNewsSearch(subject.name);
+  const newsArticles = news.status === "success" ? news.result.articles : null;
   const adverseMediaText = useMemo(() => {
-    if (news.status === "success" && news.result.articles.length > 0) {
-      return news.result.articles
-        .slice(0, 15)
-        .map((a) => a.title)
-        .join(". ");
+    if (newsArticles && newsArticles.length > 0) {
+      return newsArticles.slice(0, 15).map((a) => a.title).join(". ");
     }
     return subject.adverseMedia?.name ?? subject.meta ?? "";
-  }, [news, subject.adverseMedia, subject.meta]);
+  }, [newsArticles, subject.adverseMedia, subject.meta]);
   const superBrain = useSuperBrain(qsSubject, { adverseMediaText });
 
   const asanaReport = useAutoReport({

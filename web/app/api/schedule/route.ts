@@ -33,11 +33,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  const keys = await listKeys(PREFIX);
+  let keys: string[];
+  try {
+    keys = await listKeys(PREFIX);
+  } catch (err) {
+    console.error("[schedule] listKeys failed:", err);
+    return NextResponse.json({ ok: false, error: "store unavailable" }, { status: 503 });
+  }
   const out: Schedule[] = [];
   for (const k of keys) {
-    const s = await getJson<Schedule>(k);
-    if (s) out.push(s);
+    try {
+      const s = await getJson<Schedule>(k);
+      if (s) out.push(s);
+    } catch { /* skip malformed entry */ }
   }
   return NextResponse.json({ ok: true, count: out.length, schedules: out });
 }
@@ -107,7 +115,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     createdAt: now.toISOString(),
     nextRunAt: new Date(now.getTime() + CADENCE_MS[cadence]).toISOString(),
   };
-  await setJson(`${PREFIX}${subjectId}`, record);
+  try {
+    await setJson(`${PREFIX}${subjectId}`, record);
+  } catch (err) {
+    console.error("[schedule] setJson failed:", err);
+    return NextResponse.json({ ok: false, error: "store unavailable" }, { status: 503 });
+  }
   return NextResponse.json({ ok: true, schedule: record });
 }
 
@@ -123,6 +136,11 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
-  await del(`${PREFIX}${id}`);
+  try {
+    await del(`${PREFIX}${id}`);
+  } catch (err) {
+    console.error("[schedule] del failed:", err);
+    return NextResponse.json({ ok: false, error: "store unavailable" }, { status: 503 });
+  }
   return NextResponse.json({ ok: true });
 }
