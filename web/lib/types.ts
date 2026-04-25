@@ -188,7 +188,17 @@ export type Faculty =
   | "adversarial"
   | "regulatory"
   | "behavioral"
-  | "systemic";
+  | "systemic"
+  | "narrative"
+  | "geopolitical"
+  | "reputational"
+  | "operational"
+  | "sociological"
+  | "semantic"
+  | "epidemiological"
+  | "contractual"
+  | "predictive"
+  | "computational";
 
 export interface ReasoningMode {
   id: string;
