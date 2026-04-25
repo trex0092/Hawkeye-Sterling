@@ -820,8 +820,8 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
   if (patterns.length === 0) {
     return (
       <Card title="Red-flag combinator">
-        <div className="text-11 text-ink-2">
-          No multi-flag patterns detected. Individual signals do not cluster
+        <div className="text-11 text-green">
+          ✓ No multi-flag patterns detected. Individual signals do not cluster
           into a recognised typology.
         </div>
       </Card>
@@ -1027,8 +1027,8 @@ export function BrainSanctionsPathway({ result }: { result: SuperBrainResult }) 
   if (result.screen.hits.length === 0) {
     return (
       <Card title="Sanctions pathway">
-        <div className="text-11 text-ink-2">
-          No sanctions hit to trace.
+        <div className="text-11 text-green">
+          ✓ No sanctions hit to trace.
         </div>
       </Card>
     );
@@ -1133,8 +1133,8 @@ export function BrainAnomalyDetector({ result }: { result: SuperBrainResult }) {
   return (
     <Card title={`Anomaly detector (${anomalies.length})`}>
       {anomalies.length === 0 ? (
-        <div className="text-11 text-ink-2">
-          No statistical anomalies. Every signal is within normal baseline
+        <div className="text-11 text-green">
+          ✓ No statistical anomalies. Every signal is within normal baseline
           bounds for the corpus.
         </div>
       ) : (
