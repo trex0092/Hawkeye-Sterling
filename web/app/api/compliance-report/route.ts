@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { enforce } from "@/lib/server/enforce";
 import {
   buildComplianceReport,
   type ReportInput,
@@ -104,6 +104,9 @@ function renderHtmlReport(text: string, subjectName: string): string {
 }
 
 async function handleComplianceReport(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const url = new URL(req.url);
   const format = (url.searchParams.get("format") ?? "text").toLowerCase();
 
@@ -111,12 +114,12 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as ReportInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
   if (!body?.subject?.name || !body?.result) {
     return NextResponse.json(
       { ok: false, error: "subject and result are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   let report: string;
@@ -154,4 +157,4 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   });
 }
 
-export const POST = withGuard(handleComplianceReport);
+export const POST = handleComplianceReport;

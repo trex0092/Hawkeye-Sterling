@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { enforce } from "@/lib/server/enforce";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
@@ -68,16 +68,19 @@ function splitFullName(full: string): { first: string; last: string; middle?: st
 }
 
 async function handleGoaml(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
   if (!body?.subject?.name || !body?.reportCode || !body?.narrative) {
     return NextResponse.json(
       { ok: false, error: "subject.name, reportCode and narrative are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (!VALID_REPORT_CODES.has(body.reportCode)) {
@@ -196,4 +199,4 @@ async function handleGoaml(req: Request): Promise<Response> {
   });
 }
 
-export const POST = withGuard(handleGoaml);
+export const POST = handleGoaml;
