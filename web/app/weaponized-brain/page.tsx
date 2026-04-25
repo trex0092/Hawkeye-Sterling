@@ -391,7 +391,7 @@ function BrainDashboard({
         <>
           {/* Top-line enhanced totals */}
           <Section title="Enhanced totals">
-            <div className="bg-ink-0 text-bg-0 rounded-xl p-5 flex flex-wrap gap-8 items-end">
+            <div className="bg-ink-0 text-bg-0 rounded-lg px-4 py-3 flex flex-wrap gap-5 items-center">
               <Stat label="Catalogues (core)" value={enhanced.totals?.catalogues} />
               <Stat label="Extended catalogues" value={enhanced.totals?.enhancedCatalogues} />
               <Stat label="Taxonomy records" value={enhanced.totals?.taxonomyRecords} />
@@ -648,8 +648,8 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "violet" })
 function Stat({ label, value }: { label: string; value: number | undefined }) {
   return (
     <div>
-      <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">{label}</div>
-      <div className="text-18 font-mono font-semibold text-brand">{value ?? "—"}</div>
+      <div className="text-9 uppercase tracking-wide-4 text-bg-0/50">{label}</div>
+      <div className="text-14 font-mono font-semibold text-brand">{value ?? "—"}</div>
     </div>
   );
 }
