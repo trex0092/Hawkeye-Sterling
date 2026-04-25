@@ -247,7 +247,11 @@ function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Pro
     }, ms);
     fn(controller.signal).then(
       (result) => { clearTimeout(timer); resolve({ result, timedOut: false }); },
-      () => { clearTimeout(timer); resolve({ timedOut: true }); },
+      (err: unknown) => {
+        clearTimeout(timer);
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        resolve({ timedOut: isAbort });
+      },
     );
   });
 }

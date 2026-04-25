@@ -308,3 +308,45 @@ describe('complianceAgent — invokeComplianceAgent', () => {
     expect(res.ok).toBe(true);
   });
 });
+
+describe('complianceAgent — parseSemanticVerdict case-insensitivity', () => {
+  it('parses lowercase approved from chat response', async () => {
+    const fakeChat: ChatCall = async () => ({ ok: true, text: 'All checks pass.\napproved' });
+    const res = await invokeComplianceAgent(
+      { caseReport: baseReport(), draftNarrative: CLEAN_NARRATIVE },
+      { apiKey: 'x' },
+      fakeChat,
+    );
+    expect(res.verdict).toBe('approved');
+  });
+
+  it('parses lowercase blocked from chat response', async () => {
+    const fakeChat: ChatCall = async () => ({ ok: true, text: 'Critical violation found.\nblocked' });
+    const res = await invokeComplianceAgent(
+      { caseReport: baseReport(), draftNarrative: CLEAN_NARRATIVE },
+      { apiKey: 'x' },
+      fakeChat,
+    );
+    expect(res.verdict).toBe('blocked');
+  });
+
+  it('parses lowercase returned_for_revision from chat response', async () => {
+    const fakeChat: ChatCall = async () => ({ ok: true, text: 'Minor issues.\nreturned_for_revision' });
+    const res = await invokeComplianceAgent(
+      { caseReport: baseReport(), draftNarrative: CLEAN_NARRATIVE },
+      { apiKey: 'x' },
+      fakeChat,
+    );
+    expect(res.verdict).toBe('returned_for_revision');
+  });
+
+  it('returns incomplete when chat response contains no verdict token', async () => {
+    const fakeChat: ChatCall = async () => ({ ok: true, text: 'No verdict here.' });
+    const res = await invokeComplianceAgent(
+      { caseReport: baseReport(), draftNarrative: CLEAN_NARRATIVE },
+      { apiKey: 'x' },
+      fakeChat,
+    );
+    expect(res.verdict).toBe('incomplete');
+  });
+});

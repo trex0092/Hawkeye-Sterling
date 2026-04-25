@@ -519,15 +519,19 @@ function withBudget<T>(
     }, ms);
     fn(controller.signal).then(
       (result) => { clearTimeout(timer); resolve({ result, timedOut: false }); },
-      () => { clearTimeout(timer); resolve({ timedOut: true }); },
+      (err: unknown) => {
+        clearTimeout(timer);
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        resolve({ timedOut: isAbort });
+      },
     );
   });
 }
 
 function parseSemanticVerdict(body: string): Verdict {
-  if (/\bBLOCKED\b/.test(body)) return 'blocked';
-  if (/\bRETURNED_FOR_REVISION\b/.test(body)) return 'returned_for_revision';
-  if (/\bAPPROVED\b/.test(body)) return 'approved';
+  if (/\bBLOCKED\b/i.test(body)) return 'blocked';
+  if (/\bRETURNED_FOR_REVISION\b/i.test(body)) return 'returned_for_revision';
+  if (/\bAPPROVED\b/i.test(body)) return 'approved';
   return 'incomplete';
 }
 
@@ -650,7 +654,7 @@ export async function invokeComplianceAgent(
       charterIntegrityHash,
       agentTrail: trail,
       guidance: BUDGET_GUIDANCE,
-      error: timedOut ? undefined : advRes?.error,
+      error: timedOut ? 'Advisor budget exceeded' : advRes?.error,
     };
   }
 
