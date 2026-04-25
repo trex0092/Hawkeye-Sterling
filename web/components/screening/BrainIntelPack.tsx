@@ -362,16 +362,18 @@ export function BrainBiasCheck({ result }: { result: SuperBrainResult }) {
   const flags: Array<{ level: "info" | "warn"; text: string }> = [];
   const composite = result.composite.score;
   const signals = Object.values(result.composite.breakdown).filter((v) => v > 0).length;
-  if (composite >= 85 && signals <= 1) {
+  const hasAdverseSignal =
+    result.adverseMedia.length > 0 || (result.adverseKeywordGroups?.length ?? 0) > 0;
+  if (composite >= 85 && signals <= 1 && !hasAdverseSignal) {
     flags.push({
       level: "warn",
       text: "High composite with only 1 signal firing — corroborate before freeze.",
     });
   }
-  if (composite < 35 && result.adverseMedia.length >= 3) {
+  if (composite < 35 && hasAdverseSignal) {
     flags.push({
       level: "warn",
-      text: "Low composite despite 3+ adverse-media categories — verify classifier thresholds.",
+      text: "Low composite despite adverse-media/keyword signals — verify classifier thresholds.",
     });
   }
   if ((result.pep?.salience ?? 0) > 0.8 && result.jurisdiction?.cahra) {
@@ -752,7 +754,11 @@ export function BrainCoherenceCheck({
       "Tier-1 PEP classified but jurisdiction not CAHRA-listed — verify exposure pathway.",
     );
   }
-  if (result.screen.hits.length > 0 && result.adverseMedia.length === 0) {
+  if (
+    result.screen.hits.length > 0 &&
+    result.adverseMedia.length === 0 &&
+    (result.adverseKeywordGroups?.length ?? 0) === 0
+  ) {
     signals.push(
       "Sanctions match with zero adverse-media footprint — possible stale list entry or false-match.",
     );
@@ -797,11 +803,20 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
   const patterns: Array<{ name: string; likelihood: number; rationale: string }> = [];
   const hitCount = result.screen.hits.length;
   const pepFired = Boolean(result.pep && result.pep.salience > 0);
-  const amFired = result.adverseMedia.length > 0;
+  const amFired =
+    result.adverseMedia.length > 0 || (result.adverseKeywordGroups?.length ?? 0) > 0;
   const cahra = Boolean(result.jurisdiction?.cahra);
   const redlines = result.redlines.fired.length;
   const typologies = result.typologies?.hits.length ?? 0;
 
+  if (hitCount > 0 && amFired && !pepFired) {
+    patterns.push({
+      name: "Sanctions-linked adverse-media",
+      likelihood: 0.88,
+      rationale:
+        "Sanctions match corroborated by adverse-media coverage — consistent with trade-based money laundering, sanctions evasion, or fraud. Adverse-media evidence strengthens the case for regulatory filing.",
+    });
+  }
   if (pepFired && cahra && amFired) {
     patterns.push({
       name: "Kleptocracy pattern",
@@ -1934,11 +1949,16 @@ export function BrainDefensibility({
   const weaknesses: string[] = [];
   if (sanctions === 0 && c > 50)
     weaknesses.push("No sanctions hit to anchor the risk narrative");
-  if (result.adverseMedia.length === 0 && c > 40)
+  const hasAdverseCorroboration =
+    result.adverseMedia.length > 0 || (result.adverseKeywordGroups?.length ?? 0) > 0;
+  if (!hasAdverseCorroboration && c > 40)
     weaknesses.push("Adverse media absence weakens corroboration chain");
   if (!result.jurisdictionRich)
     weaknesses.push("Jurisdiction data not enriched — FATF tier cannot be cited");
-  if ((result.typologies?.hits ?? []).length === 0)
+  if (
+    (result.typologies?.hits ?? []).length === 0 &&
+    (result.adverseKeywordGroups?.length ?? 0) === 0
+  )
     weaknesses.push("No typology match reduces narrative specificity");
 
   return (
