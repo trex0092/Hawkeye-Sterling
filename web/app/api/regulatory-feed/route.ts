@@ -72,6 +72,10 @@ const GNEWS_QUERIES: GNewsQuery[] = [
   { q: 'PDPL UAE data protection law regulation 2025 2026', source: "UAE PDPL", category: "PDPL", tone: "amber" },
   { q: 'UAE Ministry Economy DPMS gold precious metals 2025 2026', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
   { q: 'UAE AI artificial intelligence regulation governance 2025 2026', source: "UAE Digital", category: "AI Governance", tone: "green" },
+  { q: 'LBMA "responsible gold guidance" OR "LBMA good delivery" gold refinery audit 2025 2026', source: "LBMA", category: "DPMS", tone: "green" },
+  { q: 'OECD "due diligence guidance" minerals conflict-affected responsible supply chain 2025 2026', source: "OECD", category: "DPMS", tone: "green" },
+  { q: 'RMI "Responsible Minerals Initiative" conflict minerals smelter refiner audit 2025 2026', source: "RMI", category: "DPMS", tone: "amber" },
+  { q: 'EOCN UAE "Executive Office for Control" non-proliferation targeted financial sanctions 2025 2026', source: "EOCN UAE", category: "Sanctions", tone: "red" },
 ];
 
 function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
@@ -371,6 +375,26 @@ const STATIC_ITEMS: RegulatoryItem[] = [
     category: "AML/CFT",
     tone: "amber",
     snippet: "goAML 2.0 mandatory for all reporting entities. Enhanced XML schema, new STR/SAR/FFR/PNMR filing requirements.",
+  },
+  {
+    id: "static-rmi-crb",
+    title: "RMI — Responsible Minerals Initiative: Refiner Audit & RMAP Programme",
+    url: "https://www.responsibleminerals.org/rmap",
+    pubDate: "2024-01-01",
+    source: "RMI",
+    category: "DPMS",
+    tone: "amber",
+    snippet: "RMAP audit standard for 3TG and cobalt smelters/refiners. UAE-based entities sourcing from CAHRAs must align with RMI/OECD DDG requirements.",
+  },
+  {
+    id: "static-eocn-tfs",
+    title: "EOCN UAE — Executive Office for Control & Non-Proliferation: Targeted Financial Sanctions List",
+    url: "https://www.eocn.gov.ae",
+    pubDate: "2025-01-01",
+    source: "EOCN UAE",
+    category: "Sanctions",
+    tone: "red",
+    snippet: "UAE consolidated TFS list. All regulated entities must screen against EOCN list within 24h of update. Asset freeze and goAML filing mandatory on match.",
   },
 ];
 
