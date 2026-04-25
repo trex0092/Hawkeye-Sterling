@@ -487,13 +487,15 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
 
   const subjectNorm = normaliseForMatch(subject);
   const candidateNorm = normaliseForMatch(candidate);
-  // Only run the normalised pass when normalisation actually changed
-  // something — otherwise it's duplicated work for a pure-Latin pair.
+  // Only run the normalised pass when normaliseForMatch produced something
+  // different from what the raw matchers already see via normalise().
+  // Comparing against normalise() (not toLowerCase().trim()) avoids a false
+  // positive for names whose only difference is apostrophes, hyphens, or
+  // diacritics — those are already handled identically in the raw pass.
   const normApplies =
     subjectNorm !== '' &&
     candidateNorm !== '' &&
-    (subjectNorm !== subject.toLowerCase().trim() ||
-      candidateNorm !== candidate.toLowerCase().trim());
+    (subjectNorm !== normalise(subject) || candidateNorm !== normalise(candidate));
 
   const normScores: MatchScore[] = normApplies
     ? [

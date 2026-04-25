@@ -52,6 +52,7 @@ export interface GoAmlPerson {
 export interface GoAmlEntity {
   legalName: string;
   commercialName?: string;
+  incorporationLegalForm?: string;  // e.g. 'LLC', 'PSC', 'FOUNDATION' — regulator schema code
   incorporationCountryIso2: string;
   incorporationDate?: string;
   registrationNumber?: string;

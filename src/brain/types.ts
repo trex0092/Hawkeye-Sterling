@@ -57,6 +57,7 @@ export interface Subject {
   aliases?: string[];
   type: 'individual' | 'entity' | 'vessel' | 'wallet' | 'aircraft';
   jurisdiction?: string;
+  nationality?: string;       // ISO 3166-1 alpha-2 citizenship/domicile (distinct from jurisdiction)
   dateOfBirth?: string;
   dateOfIncorporation?: string;
   identifiers?: Record<string, string>; // passport, trade licence, LEI, wallet addr, IMO, etc.

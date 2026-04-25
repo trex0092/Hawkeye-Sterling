@@ -116,7 +116,7 @@ function subjectKey(s: RegisteredSubject): { name: string; aliases?: string[]; d
   const out: { name: string; aliases?: string[]; dob?: string; nationality?: string; identifiers?: Record<string, string> } = { name: s.subject.name };
   if (s.subject.aliases) out.aliases = s.subject.aliases;
   if (s.subject.dateOfBirth) out.dob = s.subject.dateOfBirth;
-  if (s.subject.jurisdiction) out.nationality = s.subject.jurisdiction;
+  if (s.subject.nationality) out.nationality = s.subject.nationality;
   if (s.subject.identifiers) out.identifiers = s.subject.identifiers;
   return out;
 }
