@@ -1324,21 +1324,11 @@ function SuperBrainPanel({
       <BrainDataCoverage />
       <BrainChainOfCustody result={r} />
       <BrainModuleWeights />
-      <div className="bg-ink-0 text-bg-0 rounded-lg px-3 py-1.5 mb-3 flex items-center gap-3">
-        <span className="text-10 uppercase tracking-wide-4 text-white/50 shrink-0">
-          Composite
+      <div className="bg-ink-0 text-bg-0 rounded px-3 py-1 mb-3 flex items-center gap-2">
+        <span className="text-10 uppercase tracking-wide-4 text-white/40 shrink-0">Composite</span>
+        <span className="font-mono font-bold text-12 text-brand shrink-0">
+          {r.composite.score}<span className="text-white/30 text-10 font-normal"> /100</span>
         </span>
-        <span className="font-mono font-semibold text-13 text-brand shrink-0">
-          {r.composite.score}
-          <span className="text-white/50 text-11"> /100</span>
-        </span>
-        <div className="flex flex-wrap gap-x-2 gap-y-0 text-10 font-mono text-white/50 min-w-0">
-          {Object.entries(r.composite.breakdown).map(([k, v]) => (
-            <span key={k} className="whitespace-nowrap">
-              {k}:<span className="text-white/70">{v}</span>
-            </span>
-          ))}
-        </div>
       </div>
 
       {r.jurisdiction && (

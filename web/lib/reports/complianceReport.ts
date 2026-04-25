@@ -53,7 +53,7 @@ export interface ReportSuperBrain {
   adverseKeywordGroups?: Array<{ group: string; label: string; count: number }>;
   esg?: Array<{ categoryId: string; domain: string; label: string }>;
   redlines?: { fired: Array<{ label?: string; id?: string }>; action: string | null };
-  composite?: { score: number };
+  composite?: { score: number; breakdown?: Record<string, number | undefined> };
 }
 
 export interface ReportInput {
@@ -84,7 +84,11 @@ function pad(s: string, n: number): string {
 }
 
 function inferReportType(r: ReportScreeningResult, sb?: ReportSuperBrain | null): ReportType {
-  if (r.severity === "critical" && r.hits.length > 0) return "SANCTIONS";
+  // Require the Brain to also confirm a sanctions contribution (breakdown.quickScreen > 0).
+  // QuickScreen name-matches alone can be false positives; if the Brain assigned zero
+  // weight to the hit, the report must NOT be classified as a confirmed sanctions case.
+  const brainSanctionsScore = sb?.composite?.breakdown?.["quickScreen"] ?? 0;
+  if (r.severity === "critical" && r.hits.length > 0 && brainSanctionsScore > 0) return "SANCTIONS";
   if (sb?.pep && sb.pep.salience > 0) return "PEP";
   if (sb?.adverseKeywordGroups && sb.adverseKeywordGroups.length > 0) return "AM";
   if (sb?.adverseMedia && sb.adverseMedia.length > 0) return "AM";
@@ -156,10 +160,17 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
   lines.push(`${SUB.slice(0, 3)} SCREENING RESULT MATRIX ${"─".repeat(51)}`);
   lines.push(`Vector              Engine              Score    Result`);
   lines.push(`${"─".repeat(19)}   ${"─".repeat(17)}   ─────    ${"─".repeat(22)}`);
+  const brainSanctionsScore = sb?.composite?.breakdown?.["quickScreen"] ?? 0;
   for (const v of SCREEN_VECTORS) {
     const hits = r.hits.filter((h) => v.listIdMatch.test(h.listId));
     const score = hits.length > 0 ? String(Math.round(hits[0]!.score * 100)) : "—";
-    const result = hits.length > 0 ? "POSITIVE — CONFIRMED" : "NEGATIVE";
+    // Only mark as confirmed if the Brain also weighted the hit as a genuine signal.
+    // Automated name-matches with zero Brain weight are potential false positives.
+    const result = hits.length === 0
+      ? "NEGATIVE"
+      : brainSanctionsScore > 0
+        ? "MATCH DETECTED — VERIFY"
+        : "POTENTIAL MATCH — INVESTIGATE";
     lines.push(`${v.vector}   ${v.engine}  ${pad(score, 5)}    ${result}`);
   }
   // PEP
@@ -170,7 +181,7 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
     `PEP                 World-Check       ${pad(
       pepScore != null ? String(pepScore) : "—",
       5,
-    )}    ${pepScore != null ? "POSITIVE — CONFIRMED" : "NEGATIVE"}`,
+    )}    ${pepScore != null ? "MATCH DETECTED — VERIFY" : "NEGATIVE"}`,
   );
   // Adverse media
   const amCount =
@@ -456,10 +467,10 @@ export function buildComplianceReport(input: ReportInput): string {
   if (type === "SANCTIONS") {
     out.push("╔" + "═".repeat(77) + "╗");
     out.push(
-      "║   ⚠  CRITICAL ALERT — CONFIRMED PRIMARY SANCTIONS DESIGNATION  ⚠          ║",
+      "║   ⚠  HIGH-RISK ALERT — SANCTIONS MATCH CONFIRMED BY RISK ENGINE  ⚠        ║",
     );
     out.push(
-      "║   IMMEDIATE FREEZE · TIPPING-OFF ABSOLUTE · FFR + SAR REQUIRED            ║",
+      "║   FREEZE PENDING MLRO REVIEW · FFR + SAR REQUIRED · VERIFY IDENTITY       ║",
     );
     out.push("╚" + "═".repeat(77) + "╝");
   }
