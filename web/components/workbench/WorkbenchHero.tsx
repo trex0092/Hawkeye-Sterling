@@ -10,7 +10,7 @@ export function WorkbenchHero() {
       <p className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
         <strong>1080 modes · 15 faculties · charter-gated.</strong> Multi-perspective pipeline
         (Sonnet executor → Opus advisor) with full reasoning chain persistence. Every verdict
-        traced to the modes that produced it. Amplifier v3.5.0 — 35 directives across 5 waves covering DNFBP · UBO · PF · Hawala · SoW/SoF · PEP network · sanctions evasion · DeFi · deepfake KYC · TM patterns · wire stripping · exchange house · STR quality gate.
+        traced to the modes that produced it. Amplifier v3.6.0 — 64 directives · kleptocracy · TF vs ML · state-sponsored crime · OCG network mapping · CBI/golden passport · pig-butchering · FinCEN-Files-grade intel · UHNW private banking · geopolitical recalibration · FATF IO effectiveness scoring.
       </p>
     </div>
   );
