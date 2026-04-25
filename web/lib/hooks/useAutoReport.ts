@@ -51,6 +51,7 @@ const DISABLED_MARKERS = [
   "server 403",
   "server 422",
   "server 400",
+  "server 503",
   "unauthorized",
   "forbidden",
   "asana rejected",
