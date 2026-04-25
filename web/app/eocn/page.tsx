@@ -212,12 +212,16 @@ type Tab = "list-updates" | "matches" | "declarations";
 
 export default function EocnPage() {
   const [tab, setTab] = useState<Tab>("list-updates");
+  const [expandedNote, setExpandedNote] = useState<string | null>(null);
+  const [updates, setUpdates] = useState(LIST_UPDATES);
+  const [matches, setMatches] = useState(MATCHES);
+  const [declarations, setDeclarations] = useState(DECLARATIONS);
 
-  const pendingScreening = LIST_UPDATES.filter((u) => u.screeningStatus === "pending").length;
-  const openMatches = MATCHES.filter((m) => m.disposition === "under-review" || m.disposition === "escalated").length;
-  const confirmedMatches = MATCHES.filter((m) => m.disposition === "confirmed").length;
-  const overdue = DECLARATIONS.filter((d) => d.status === "overdue").length;
-  const lastUpdate = LIST_UPDATES[0];
+  const pendingScreening = updates.filter((u) => u.screeningStatus === "pending").length;
+  const openMatches = matches.filter((m) => m.disposition === "under-review" || m.disposition === "escalated").length;
+  const confirmedMatches = matches.filter((m) => m.disposition === "confirmed").length;
+  const overdue = declarations.filter((d) => d.status === "overdue").length;
+  const lastUpdate = updates[0];
 
   return (
     <ModuleLayout engineLabel="EOCN sanctions engine">
@@ -280,14 +284,14 @@ export default function EocnPage() {
             <table className="w-full text-12">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>
-                  {["Version", "Date / Time", "Added", "Removed", "Screening status", "Completed at", "Notes"].map((h) => (
+                  {["Version", "Date / Time", "Added", "Removed", "Screening status", "Completed at", "Notes", ""].map((h) => (
                     <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {LIST_UPDATES.map((u, i) => (
-                  <tr key={u.id} className={i < LIST_UPDATES.length - 1 ? "border-b border-hair" : ""}>
+                {updates.map((u, i) => (
+                  <tr key={u.id} className={i < updates.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2.5 font-mono text-10 text-ink-0">{u.version}</td>
                     <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{u.date} {u.time}</td>
                     <td className="px-3 py-2.5 text-center font-mono text-11">
@@ -302,7 +306,30 @@ export default function EocnPage() {
                       </span>
                     </td>
                     <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{u.screeningCompletedAt ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[220px] truncate" title={u.notes}>{u.notes}</td>
+                    <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[260px]">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedNote(expandedNote === u.id ? null : u.id)}
+                        className="text-left w-full hover:text-ink-0 transition-colors"
+                        title={expandedNote === u.id ? undefined : u.notes}
+                      >
+                        {expandedNote === u.id ? (
+                          <span className="whitespace-normal">{u.notes} <span className="text-ink-3 text-10">▲</span></span>
+                        ) : (
+                          <span className="truncate block">{u.notes} <span className="text-ink-3 text-10">▼</span></span>
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setUpdates((prev) => prev.filter((x) => x.id !== u.id))}
+                        className="text-ink-3 hover:text-red transition-colors text-13 font-mono leading-none"
+                        title="Delete this entry"
+                      >
+                        ×
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -323,7 +350,7 @@ export default function EocnPage() {
             </div>
           )}
 
-          {MATCHES.map((m) => (
+          {matches.map((m) => (
             <div key={m.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
@@ -372,16 +399,25 @@ export default function EocnPage() {
                 {m.notes}
               </div>
 
-              {(m.disposition === "under-review") && (
-                <div className="mt-3 flex gap-2">
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded bg-red text-white hover:bg-red/90">
-                    Confirm match — freeze & file goAML
-                  </button>
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">
-                    Confirm false positive
-                  </button>
-                </div>
-              )}
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {m.disposition === "under-review" && (
+                  <>
+                    <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded bg-red text-white hover:bg-red/90">
+                      Confirm match — freeze & file goAML
+                    </button>
+                    <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">
+                      Confirm false positive
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMatches((prev) => prev.filter((x) => x.id !== m.id))}
+                  className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -396,7 +432,7 @@ export default function EocnPage() {
             Chain-of-Custody certificates. Failure to file is a reportable compliance breach.
           </div>
 
-          {DECLARATIONS.sort((a, b) => b.year - a.year).map((d) => (
+          {[...declarations].sort((a, b) => b.year - a.year).map((d) => (
             <div key={d.year} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -405,9 +441,19 @@ export default function EocnPage() {
                   </div>
                   <div className="text-11 text-ink-2 mt-0.5">Period: {d.period}</div>
                 </div>
-                <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${DECL_TONE[d.status]}`}>
-                  {d.status === "in-progress" ? "In progress" : d.status}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${DECL_TONE[d.status]}`}>
+                    {d.status === "in-progress" ? "In progress" : d.status}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setDeclarations((prev) => prev.filter((x) => x.year !== d.year))}
+                    className="text-ink-3 hover:text-red transition-colors text-16 font-mono leading-none"
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               {(d.filedDate || d.refNumber) && (

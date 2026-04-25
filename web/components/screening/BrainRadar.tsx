@@ -105,7 +105,7 @@ export function BrainRadar({ result, size = 220 }: BrainRadarProps) {
         {/* grid rings */}
         {rings.map((pts, i) => (
           <polygon
-            key={i}
+            key={`ring-${i}`}
             points={pts}
             fill="none"
             stroke="#e5e7eb"
@@ -117,7 +117,7 @@ export function BrainRadar({ result, size = 220 }: BrainRadarProps) {
           const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
           return (
             <line
-              key={i}
+              key={`axis-${i}`}
               x1={cx}
               y1={cy}
               x2={cx + Math.cos(angle) * maxR}
@@ -131,7 +131,7 @@ export function BrainRadar({ result, size = 220 }: BrainRadarProps) {
         <polygon points={polygon} fill={toneAlpha} stroke={tone} strokeWidth={1.5} />
         {/* value dots */}
         {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={2.5} fill={tone} />
+          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r={2.5} fill={tone} />
         ))}
         {/* axis labels */}
         {points.map((p, i) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // Responsible Minerals Initiative — RMAP audit tracker.
@@ -218,13 +218,16 @@ const MINERAL_TABS: { key: FilterMineral; label: string }[] = [
 export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
   const [showAuditLog, setShowAuditLog] = useState(false);
+  const [smelters, setSmelters] = useState(SMELTERS);
+  const [auditLog, setAuditLog] = useState(AUDIT_LOG);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
-  const visible = mineralFilter === "all" ? SMELTERS : SMELTERS.filter((s) => s.mineral === mineralFilter);
+  const visible = mineralFilter === "all" ? smelters : smelters.filter((s) => s.mineral === mineralFilter);
 
-  const conformant = SMELTERS.filter((s) => s.rmapStatus === "conformant" && s.activeSupplier).length;
-  const nonConformant = SMELTERS.filter((s) => s.rmapStatus === "not-enrolled" || s.rmapStatus === "expired" || s.rmapStatus === "suspended").length;
-  const cahraHigh = SMELTERS.filter((s) => s.cahraRisk === "high").length;
-  const activeSuppliers = SMELTERS.filter((s) => s.activeSupplier).length;
+  const conformant = smelters.filter((s) => s.rmapStatus === "conformant" && s.activeSupplier).length;
+  const nonConformant = smelters.filter((s) => s.rmapStatus === "not-enrolled" || s.rmapStatus === "expired" || s.rmapStatus === "suspended").length;
+  const cahraHigh = smelters.filter((s) => s.cahraRisk === "high").length;
+  const activeSuppliers = smelters.filter((s) => s.activeSupplier).length;
 
   return (
     <ModuleLayout engineLabel="Supply-chain compliance engine">
@@ -245,7 +248,7 @@ export default function RmiPage() {
           { value: String(conformant), label: "RMAP conformant" },
           { value: String(nonConformant), label: "non-conformant", tone: nonConformant > 0 ? "red" : undefined },
           { value: String(cahraHigh), label: "CAHRA high-risk", tone: cahraHigh > 0 ? "red" : undefined },
-          { value: String(SMELTERS.length), label: "smelters tracked" },
+          { value: String(smelters.length), label: "smelters tracked" },
         ]}
       />
 
@@ -274,7 +277,7 @@ export default function RmiPage() {
       <div className="flex gap-1 mb-4 border-b border-hair-2">
         {MINERAL_TABS.map((t) => {
           const active = mineralFilter === t.key;
-          const count = t.key === "all" ? SMELTERS.length : SMELTERS.filter((s) => s.mineral === t.key).length;
+          const count = t.key === "all" ? smelters.length : smelters.filter((s) => s.mineral === t.key).length;
           return (
             <button
               key={t.key}
@@ -298,49 +301,82 @@ export default function RmiPage() {
         <table className="w-full text-12">
           <thead className="bg-bg-1 border-b border-hair-2">
             <tr>
-              {["Smelter / Refiner", "Country", "Mineral", "RMAP ID", "RMAP Status", "CAHRA Risk", "Last Audit", "Next Due", "Active", "Flags"].map((h) => (
+              {["Smelter / Refiner", "Country", "Mineral", "RMAP ID", "RMAP Status", "CAHRA Risk", "Last Audit", "Next Due", "Active", "Flags", ""].map((h) => (
                 <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {visible.map((s, i) => (
-              <tr key={s.id} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
-                <td className="px-3 py-2.5 font-medium text-ink-0">{s.name}</td>
-                <td className="px-3 py-2.5 text-ink-2 whitespace-nowrap">{s.country}</td>
-                <td className="px-3 py-2.5">
-                  <span className="font-mono text-10 bg-bg-2 text-ink-1 px-1.5 py-px rounded">{MINERAL_LABEL[s.mineral]}</span>
-                </td>
-                <td className="px-3 py-2.5 font-mono text-10 text-ink-3">{s.rmapId}</td>
-                <td className="px-3 py-2.5">
-                  <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${RMAP_TONE[s.rmapStatus]}`}>
-                    {RMAP_LABEL[s.rmapStatus]}
-                  </span>
-                </td>
-                <td className="px-3 py-2.5">
-                  <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${CAHRA_TONE[s.cahraRisk]}`}>
-                    {s.cahraRisk}
-                  </span>
-                </td>
-                <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.lastAuditDate}</td>
-                <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.nextAuditDue}</td>
-                <td className="px-3 py-2.5 text-center">
-                  {s.activeSupplier
-                    ? <span className="text-green font-mono text-11">●</span>
-                    : <span className="text-ink-3 font-mono text-11">○</span>}
-                </td>
-                <td className="px-3 py-2.5">
-                  {s.flags.length > 0 && (
-                    <div className="flex flex-col gap-0.5">
-                      {s.flags.map((f) => (
-                        <span key={f} className="text-10 font-mono bg-red-dim text-red px-1.5 py-px rounded-sm font-semibold whitespace-nowrap">
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </td>
-              </tr>
+              <Fragment key={s.id}>
+                <tr
+                  className={`cursor-pointer hover:bg-bg-1 transition-colors ${i < visible.length - 1 || expandedRow === s.id ? "border-b border-hair" : ""}`}
+                  onClick={() => setExpandedRow(expandedRow === s.id ? null : s.id)}
+                >
+                  <td className="px-3 py-2.5 font-medium text-ink-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-ink-3 text-10 font-mono">{expandedRow === s.id ? "▼" : "▶"}</span>
+                      {s.name}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-ink-2 whitespace-nowrap">{s.country}</td>
+                  <td className="px-3 py-2.5">
+                    <span className="font-mono text-10 bg-bg-2 text-ink-1 px-1.5 py-px rounded">{MINERAL_LABEL[s.mineral]}</span>
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3">{s.rmapId}</td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${RMAP_TONE[s.rmapStatus]}`}>
+                      {RMAP_LABEL[s.rmapStatus]}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${CAHRA_TONE[s.cahraRisk]}`}>
+                      {s.cahraRisk}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.lastAuditDate}</td>
+                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.nextAuditDue}</td>
+                  <td className="px-3 py-2.5 text-center">
+                    {s.activeSupplier
+                      ? <span className="text-green font-mono text-11">●</span>
+                      : <span className="text-ink-3 font-mono text-11">○</span>}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {s.flags.length > 0 && (
+                      <div className="flex flex-col gap-0.5">
+                        {s.flags.map((f) => (
+                          <span key={f} className="text-10 font-mono bg-red-dim text-red px-1.5 py-px rounded-sm font-semibold whitespace-nowrap">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setSmelters((prev) => prev.filter((x) => x.id !== s.id))}
+                      className="text-ink-3 hover:text-red transition-colors text-14 font-mono leading-none"
+                      title="Delete"
+                    >
+                      ×
+                    </button>
+                  </td>
+                </tr>
+                {expandedRow === s.id && (
+                  <tr className={i < visible.length - 1 ? "border-b border-hair" : ""}>
+                    <td colSpan={11} className="px-4 py-3 bg-bg-1">
+                      <div className="flex flex-col gap-2">
+                        <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Notes</div>
+                        <div className="text-12 text-ink-1 leading-relaxed">{s.notes}</div>
+                        {s.annualVolumeKg !== undefined && (
+                          <div className="text-11 text-ink-2 font-mono">Annual volume: <span className="text-ink-0">{s.annualVolumeKg} kg</span></div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -354,7 +390,7 @@ export default function RmiPage() {
           className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
         >
           <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
-            RMAP audit log ({AUDIT_LOG.length} entries)
+            RMAP audit log ({auditLog.length} entries)
           </span>
           <span className="text-ink-3 text-12">{showAuditLog ? "▲" : "▾"}</span>
         </button>
@@ -363,19 +399,29 @@ export default function RmiPage() {
             <table className="w-full text-12">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>
-                  {["Date", "Smelter", "Action", "Auditor", "Outcome"].map((h) => (
+                  {["Date", "Smelter", "Action", "Auditor", "Outcome", ""].map((h) => (
                     <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {AUDIT_LOG.map((e, i) => (
-                  <tr key={i} className={i < AUDIT_LOG.length - 1 ? "border-b border-hair" : ""}>
+                {auditLog.map((e, i) => (
+                  <tr key={`${e.date}-${e.smelterName}`} className={i < auditLog.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2 font-mono text-10 text-ink-3 whitespace-nowrap">{e.date}</td>
                     <td className="px-3 py-2 font-medium text-ink-0">{e.smelterName}</td>
                     <td className="px-3 py-2 text-ink-1">{e.action}</td>
                     <td className="px-3 py-2 text-ink-2">{e.auditor}</td>
                     <td className="px-3 py-2 text-ink-1">{e.outcome}</td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => setAuditLog((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-ink-3 hover:text-red transition-colors text-14 font-mono leading-none"
+                        title="Delete"
+                      >
+                        ×
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

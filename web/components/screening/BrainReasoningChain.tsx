@@ -134,7 +134,7 @@ export function BrainReasoningChain({ result }: { result: SuperBrainResult }) {
           const terminal = i === steps.length - 1;
           return (
             <li
-              key={i}
+              key={step.label}
               className={`relative pl-7 ${terminal ? "pt-2 mt-2 border-t border-hair" : ""}`}
             >
               <span

@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
             <Section label={`DPMS KPI catalogue · ${data.kpis.defined} indicators`}>
               <ul className="text-11 text-ink-1 grid grid-cols-2 gap-x-6 gap-y-0.5 list-none p-0 m-0 font-mono">
                 {data.kpis.sample.map((k, i) => (
-                  <li key={i} className="truncate">
+                  <li key={String((k as { name?: unknown; id?: unknown }).name ?? (k as { id?: unknown }).id ?? i)} className="truncate">
                     {String(
                       (k as { name?: unknown; id?: unknown }).name ??
                         (k as { id?: unknown }).id ??
@@ -430,7 +430,7 @@ function SparklineBlock({ values }: { values: number[] }) {
           const isHot = hovered === i;
           return (
             <div
-              key={i}
+              key={`col-${i}`}
               className="flex-1 relative flex flex-col justify-end cursor-crosshair group"
               style={{ height: "100%" }}
               onMouseEnter={() => setHovered(i)}

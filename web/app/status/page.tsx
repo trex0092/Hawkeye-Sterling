@@ -623,7 +623,7 @@ function ThreatSurfacePanel({ surface }: { surface: ThreatSurface }) {
           {surface.impaired.map((e, i) => {
             const tone = THREAT_SEV_TONE[e.severity];
             return (
-              <div key={i} className="flex items-center gap-3 flex-wrap">
+              <div key={`${e.complianceFunction}-${e.affectedService}`} className="flex items-center gap-3 flex-wrap">
                 <span className={`font-mono text-10 font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${tone.bg} ${tone.text}`}>
                   {tone.label}
                 </span>
@@ -797,7 +797,7 @@ function UptimeTimeline({
       <div className="flex gap-[2px] h-5">
         {samples.map((s, i) => (
           <div
-            key={i}
+            key={`bar-${i}`}
             className={`flex-1 rounded-sm ${BAR_TONE[s]}`}
             title={`Day -${samples.length - 1 - i}: ${s}`}
           />
