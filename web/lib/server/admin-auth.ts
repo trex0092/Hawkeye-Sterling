@@ -21,9 +21,10 @@ export function adminAuth(req: Request): NextResponse | null {
   }
   const auth = req.headers.get("authorization");
   const token = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
-  const expBuf = Buffer.from(expected, "utf8");
-  const tokBuf = Buffer.from(token, "utf8");
-  const match = token.length > 0 && expBuf.length === tokBuf.length && timingSafeEqual(expBuf, tokBuf);
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(expected);
+  const tokBuf = enc.encode(token);
+  const match = token.length > 0 && expBuf.byteLength === tokBuf.byteLength && timingSafeEqual(expBuf, tokBuf);
   if (!match) {
     return NextResponse.json(
       { ok: false, error: "Admin authorization required." },

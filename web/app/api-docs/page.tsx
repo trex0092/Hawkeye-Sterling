@@ -463,6 +463,7 @@ const COLOR_MAP: Record<string, { badge: string; bg: string; border: string }> =
   blue:   { badge: "bg-blue/10 text-blue border-blue/20",      bg: "bg-blue/5",   border: "border-blue/15" },
   pink:   { badge: "bg-brand-dim text-brand border-brand-line",bg: "bg-brand-dim",border: "border-brand-line" },
 };
+const COLOR_DEFAULT: { badge: string; bg: string; border: string } = COLOR_MAP["blue"] ?? { badge: "bg-blue/10 text-blue border-blue/20", bg: "bg-blue/5", border: "border-blue/15" };
 
 export default function ApiDocsPage() {
   const [loaded, setLoaded] = useState(false);
@@ -555,7 +556,7 @@ export default function ApiDocsPage() {
           {/* ── Endpoint group cards ──────────────────────────────────── */}
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {ENDPOINT_GROUPS.map((g) => {
-              const c = COLOR_MAP[g.color] ?? COLOR_MAP.blue;
+              const c = COLOR_MAP[g.color] ?? COLOR_DEFAULT;
               return (
                 <div
                   key={g.tag}
