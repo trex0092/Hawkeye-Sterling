@@ -121,10 +121,17 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
-  const superBrain = useSuperBrain(qsSubject, {
-    adverseMediaText: subject.adverseMedia?.name ?? subject.meta,
-  });
   const news = useNewsSearch(subject.name);
+  const adverseMediaText = useMemo(() => {
+    if (news.status === "success" && news.result.articles.length > 0) {
+      return news.result.articles
+        .slice(0, 15)
+        .map((a) => a.title)
+        .join(". ");
+    }
+    return subject.adverseMedia?.name ?? subject.meta ?? "";
+  }, [news, subject.adverseMedia, subject.meta]);
+  const superBrain = useSuperBrain(qsSubject, { adverseMediaText });
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,
@@ -249,7 +256,13 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     if (!window.confirm(`Raise STR for ${subject.name}? A draft will be filed to the STR/SAR board.`)) {
       return;
     }
-    setStrRaised(true);
+    const approver = window.prompt(
+      "Four-eyes required — enter the name of the second approving officer:",
+    );
+    if (!approver?.trim()) {
+      showFlash("STR cancelled — second approver is required");
+      return;
+    }
     showFlash("Filing STR to Asana…");
     const payload: Record<string, unknown> = {
       subject: {
@@ -260,6 +273,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         ...(subject.aliases ? { aliases: subject.aliases } : {}),
       },
       filingType: "STR",
+      approver: approver.trim(),
     };
     if (screening.status === "success") {
       payload.result = {
@@ -296,11 +310,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       },
     );
     if (res.ok && res.data?.ok) {
-      // Seal the STR decision into the HMAC-signed audit chain so the
-      // regulator can prove the filing was authorised by an MLRO (not
-      // a replay / modified client). Best-effort: if AUDIT_CHAIN_SECRET
-      // isn't set server-side the call 503s and we continue — the
-      // case-record path still provides the local audit-trail timeline.
+      setStrRaised(true);
       void fetchJson("/api/audit/sign", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -346,6 +356,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       showFlash(res.error ?? "STR filing failed");
     }
   };
+
 
   // Open the print-optimised HTML report in a new tab; the browser
   // triggers its own print dialog on load, which lets the operator
@@ -1315,20 +1326,18 @@ function SuperBrainPanel({
       <BrainDataCoverage />
       <BrainChainOfCustody result={r} />
       <BrainModuleWeights />
-      <div className="bg-ink-0 text-bg-0 rounded-lg p-3 mb-3">
-        <div className="flex justify-between items-baseline mb-1">
-          <span className="text-10.5 uppercase tracking-wide-4 text-white/50">
-            Composite score
-          </span>
-          <span className="font-mono font-semibold text-18 text-brand">
-            {r.composite.score}
-            <span className="text-white/50 text-12"> /100</span>
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-10.5 font-mono text-white/60">
+      <div className="bg-ink-0 text-bg-0 rounded-lg px-3 py-1.5 mb-3 flex items-center gap-3">
+        <span className="text-10 uppercase tracking-wide-4 text-white/50 shrink-0">
+          Composite
+        </span>
+        <span className="font-mono font-semibold text-13 text-brand shrink-0">
+          {r.composite.score}
+          <span className="text-white/50 text-11"> /100</span>
+        </span>
+        <div className="flex flex-wrap gap-x-2 gap-y-0 text-10 font-mono text-white/50 min-w-0">
           {Object.entries(r.composite.breakdown).map(([k, v]) => (
-            <span key={k}>
-              {k}: <span className="text-white">{v}</span>
+            <span key={k} className="whitespace-nowrap">
+              {k}:<span className="text-white/70">{v}</span>
             </span>
           ))}
         </div>
