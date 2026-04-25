@@ -89,7 +89,7 @@ function entityToXml(e: GoAmlEntity): string {
   return [
     el('name', e.legalName),
     el('commercial_name', e.commercialName),
-    el('incorporation_legal_form', ''),
+    el('incorporation_legal_form', e.incorporationLegalForm ?? ''),
     el('incorporation_number', e.registrationNumber),
     el('business', e.businessActivity),
     el('incorporation_country_code', e.incorporationCountryIso2),

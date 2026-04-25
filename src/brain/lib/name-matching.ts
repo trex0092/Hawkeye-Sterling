@@ -318,7 +318,7 @@ export function matchScore(rawA: string, rawB: string): MatchScore {
   else { a = normalizeLatin(rawA); b = normalizeLatin(rawB); }
 
   const jw = jaroWinkler(a, b);
-  const ts = tokenSetSimilarity(rawA, rawB);
+  const ts = tokenSetSimilarity(a, b);
   const jc = jaccardNgrams(a, b, 3);
   const lev = levenshtein(a, b);
   const maxLen = Math.max(a.length, b.length, 1);
