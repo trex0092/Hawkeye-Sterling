@@ -96,11 +96,6 @@ interface DeployEntry {
   state: "success" | "error" | "building";
 }
 
-interface DependencyGraph {
-  nodes: Array<{ id: string; label: string }>;
-  edges: Array<{ from: string; to: string }>;
-}
-
 interface StatusPayload {
   ok: true;
   status: "operational" | "degraded" | "down";
@@ -114,7 +109,6 @@ interface StatusPayload {
   maintenance: MaintenanceWindow[];
   feedVersions: FeedVersions;
   deploys: DeployEntry[];
-  dependencyGraph: DependencyGraph;
   brainSoul?: BrainSoul;
   cognitiveGrade?: CognitiveGrade;
   brainNarrative?: string;
@@ -513,20 +507,6 @@ export default function StatusPage() {
               </div>
             </Section>
 
-            <Section title="Dependency graph">
-              <div className="bg-bg-panel border border-hair-2 rounded p-4">
-                <DependencyGraphSvg
-                  graph={data.dependencyGraph}
-                  checks={[...data.checks, ...data.externalChecks]}
-                  sanctionsStatus={data.sanctions.status}
-                />
-                <p className="text-10.5 text-ink-3 mt-2">
-                  Service dependency chain. An outage upstream propagates to
-                  everything linked from it; any red / amber node in the graph
-                  surfaces the blast radius of the failure.
-                </p>
-              </div>
-            </Section>
 
             <div className="mt-8 text-11 text-ink-3 flex flex-wrap gap-4">
               <span>
@@ -643,7 +623,7 @@ function ThreatSurfacePanel({ surface }: { surface: ThreatSurface }) {
           {surface.impaired.map((e, i) => {
             const tone = THREAT_SEV_TONE[e.severity];
             return (
-              <div key={i} className="flex items-center gap-3 flex-wrap">
+              <div key={`${e.complianceFunction}-${e.affectedService}`} className="flex items-center gap-3 flex-wrap">
                 <span className={`font-mono text-10 font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${tone.bg} ${tone.text}`}>
                   {tone.label}
                 </span>
@@ -799,199 +779,6 @@ function ServiceRow({ check }: { check: Check }) {
   );
 }
 
-// Animated SVG dependency-graph renderer. Edges draw in sequentially
-// on mount; nodes fade in with staggered delays; node fill reflects
-// the live check status (green / amber / red).
-function DependencyGraphSvg({
-  graph,
-  checks,
-  sanctionsStatus,
-}: {
-  graph: {
-    nodes: Array<{ id: string; label: string }>;
-    edges: Array<{ from: string; to: string }>;
-  };
-  checks: Check[];
-  sanctionsStatus: Check["status"];
-}) {
-  const [ready, setReady] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 60);
-    return () => clearTimeout(t);
-  }, []);
-
-  const width = 640;
-  const height = 230;
-  const nw = 108;
-  const nh = 32;
-
-  const LAYOUT: Record<string, { x: number; y: number }> = {
-    screening: { x: 100, y: 100 },
-    "super-brain": { x: 260, y: 100 },
-    "adverse-media": { x: 430, y: 40 },
-    "weaponized-brain": { x: 430, y: 100 },
-    storage: { x: 430, y: 160 },
-    asana: { x: 560, y: 40 },
-    "news-feed": { x: 560, y: 100 },
-    "sanctions-freshness": { x: 260, y: 185 },
-  };
-
-  // Map node id → check status for fill colour.
-  const ID_TO_CHECK: Record<string, string> = {
-    screening: "Screening API",
-    "super-brain": "Super-brain",
-    "adverse-media": "Adverse-media",
-    "weaponized-brain": "Weaponized brain",
-    storage: "Netlify Blobs",
-    asana: "Asana",
-    "news-feed": "Google News RSS",
-  };
-  const statusMap: Record<string, Check["status"]> = {};
-  for (const [nodeId, checkName] of Object.entries(ID_TO_CHECK)) {
-    const found = checks.find(
-      (c) => c.name.toLowerCase() === checkName.toLowerCase(),
-    );
-    statusMap[nodeId] = found?.status ?? "operational";
-  }
-  statusMap["sanctions-freshness"] = sanctionsStatus;
-
-  const NODE_FILL: Record<Check["status"], { bg: string; border: string; text: string }> = {
-    operational: { bg: "#f0fdf4", border: "#86efac", text: "#15803d" },
-    degraded:    { bg: "#fffbeb", border: "#fcd34d", text: "#92400e" },
-    down:        { bg: "#fef2f2", border: "#fca5a5", text: "#991b1b" },
-  };
-
-  const nodesById: Record<string, { x: number; y: number; label: string; status: Check["status"] }> = {};
-  for (const n of graph.nodes) {
-    const pos = LAYOUT[n.id] ?? { x: 100, y: 100 };
-    nodesById[n.id] = { ...pos, label: n.label, status: statusMap[n.id] ?? "operational" };
-  }
-
-  return (
-    <svg
-      width="100%"
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="xMidYMid meet"
-      style={{ maxHeight: 270 }}
-    >
-      <defs>
-        <marker
-          id="dg-arrow"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="5"
-          markerHeight="5"
-          orient="auto-start-reverse"
-        >
-          <path d="M0,0 L10,5 L0,10 z" fill="#d1d5db" />
-        </marker>
-        <style>{`
-          @keyframes dg-draw {
-            from { stroke-dashoffset: var(--len); opacity: 0; }
-            10%  { opacity: 1; }
-            to   { stroke-dashoffset: 0; opacity: 1; }
-          }
-          @keyframes dg-fadein {
-            from { opacity: 0; transform: scale(0.85); }
-            to   { opacity: 1; transform: scale(1); }
-          }
-          @keyframes dg-pulse {
-            0%, 100% { filter: drop-shadow(0 0 0px transparent); }
-            50%       { filter: drop-shadow(0 0 5px rgba(99,102,241,0.5)); }
-          }
-          .dg-node-g { transform-origin: center; transform-box: fill-box; }
-          .dg-node-g:hover { animation: dg-pulse 1.4s ease-in-out infinite; cursor: pointer; }
-        `}</style>
-      </defs>
-
-      {/* Edges */}
-      {graph.edges.map((e, i) => {
-        const from = nodesById[e.from];
-        const to = nodesById[e.to];
-        if (!from || !to) return null;
-        const x1 = from.x + nw / 2;
-        const y1 = from.y + nh / 2;
-        const x2 = to.x;
-        const y2 = to.y + nh / 2;
-        const len = Math.round(Math.hypot(x2 - x1, y2 - y1));
-        const delay = `${i * 120}ms`;
-        return (
-          <line
-            key={i}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke="#d1d5db"
-            strokeWidth={1.5}
-            markerEnd="url(#dg-arrow)"
-            style={
-              ready
-                ? {
-                    strokeDasharray: len,
-                    strokeDashoffset: 0,
-                    opacity: 1,
-                    animation: `dg-draw 500ms ease-out ${delay} both`,
-                    // @ts-expect-error CSS custom property
-                    "--len": len,
-                  }
-                : { opacity: 0 }
-            }
-          />
-        );
-      })}
-
-      {/* Nodes */}
-      {Object.entries(nodesById).map(([id, n], i) => {
-        const fill = NODE_FILL[n.status];
-        const isHovered = hoveredId === id;
-        const delay = `${graph.edges.length * 120 + i * 80}ms`;
-        return (
-          <g
-            key={id}
-            className="dg-node-g"
-            onMouseEnter={() => setHoveredId(id)}
-            onMouseLeave={() => setHoveredId(null)}
-            style={
-              ready
-                ? {
-                    animation: `dg-fadein 320ms ease-out ${delay} both`,
-                    filter: isHovered
-                      ? "drop-shadow(0 0 6px rgba(99,102,241,0.45))"
-                      : undefined,
-                  }
-                : { opacity: 0 }
-            }
-          >
-            <rect
-              x={n.x}
-              y={n.y}
-              width={nw}
-              height={nh}
-              rx={5}
-              fill={fill.bg}
-              stroke={fill.border}
-              strokeWidth={1.5}
-            />
-            <text
-              x={n.x + nw / 2}
-              y={n.y + nh / 2}
-              textAnchor="middle"
-              dominantBaseline="central"
-              style={{ fontSize: 10.5, fill: fill.text, fontWeight: 600, fontFamily: "monospace" }}
-            >
-              {n.label}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
 function UptimeTimeline({
   name,
   samples,
@@ -1010,7 +797,7 @@ function UptimeTimeline({
       <div className="flex gap-[2px] h-5">
         {samples.map((s, i) => (
           <div
-            key={i}
+            key={`bar-${i}`}
             className={`flex-1 rounded-sm ${BAR_TONE[s]}`}
             title={`Day -${samples.length - 1 - i}: ${s}`}
           />

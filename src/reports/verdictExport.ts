@@ -247,7 +247,7 @@ function markdownToHtml(md: string): string {
 function inline(s: string): string {
   return s
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 function wrapHtml(title: string, body: string): string {

@@ -284,10 +284,24 @@ function save(policies: Policy[]) {
   }
 }
 
+const SECTIONS = [
+  "Charter", "Redlines", "Risk Appetite", "Onboarding", "Screening",
+  "Reporting", "Governance", "Data", "Sector: DPMS", "Sector: VASP", "PEP Policy",
+];
+
+const BLANK_NEW: Omit<Policy, "id"> = {
+  section: "Governance",
+  title: "",
+  body: "",
+  lastReviewed: new Date().toISOString().slice(0, 10),
+};
+
 export default function PoliciesPage() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [newForm, setNewForm] = useState<Omit<Policy, "id">>(BLANK_NEW);
 
   useEffect(() => {
     setPolicies(load());
@@ -306,6 +320,23 @@ export default function PoliciesPage() {
     save(next);
     setPolicies(next);
     setEditing(null);
+  };
+
+  const deletePolicy = (id: string) => {
+    const next = policies.filter((p) => p.id !== id);
+    save(next);
+    setPolicies(next);
+  };
+
+  const saveNew = () => {
+    if (!newForm.title.trim() || !newForm.body.trim()) return;
+    const id = `custom-${Date.now()}`;
+    const today = new Date().toISOString().slice(0, 10);
+    const next = [...policies, { ...newForm, id, lastReviewed: today }];
+    save(next);
+    setPolicies(next);
+    setAdding(false);
+    setNewForm(BLANK_NEW);
   };
 
   const sections = Array.from(new Set(policies.map((p) => p.section)));
@@ -344,9 +375,19 @@ export default function PoliciesPage() {
                         <h3 className="text-13 font-semibold text-ink-0 m-0">
                           {p.title}
                         </h3>
-                        <span className="font-mono text-10 text-ink-3">
-                          reviewed {fmtDate(p.lastReviewed)}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-10 text-ink-3">
+                            reviewed {fmtDate(p.lastReviewed)}
+                          </span>
+                          <button
+                            type="button"
+                            title="Delete policy"
+                            onClick={() => deletePolicy(p.id)}
+                            className="text-ink-3 hover:text-red transition-colors leading-none text-12 font-mono"
+                          >
+                            ×
+                          </button>
+                        </div>
                       </div>
                       {editing === p.id ? (
                         <>
@@ -392,6 +433,72 @@ export default function PoliciesPage() {
               </div>
             </section>
           ))}
+
+          {/* Add new policy */}
+          {adding ? (
+            <div className="bg-bg-panel border border-brand/40 rounded-lg p-4">
+              <h3 className="text-12 font-semibold text-ink-0 mb-3">New policy</h3>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="text-10 uppercase tracking-wide-4 text-ink-3 block mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={newForm.title}
+                    onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
+                    placeholder="Policy title"
+                    className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-4 text-ink-3 block mb-1">Section</label>
+                  <select
+                    value={newForm.section}
+                    onChange={(e) => setNewForm({ ...newForm, section: e.target.value })}
+                    className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                  >
+                    {SECTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mb-3">
+                <label className="text-10 uppercase tracking-wide-4 text-ink-3 block mb-1">Body</label>
+                <textarea
+                  value={newForm.body}
+                  onChange={(e) => setNewForm({ ...newForm, body: e.target.value })}
+                  rows={4}
+                  placeholder="Policy text…"
+                  className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={saveNew}
+                  disabled={!newForm.title.trim() || !newForm.body.trim()}
+                  className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 disabled:opacity-40"
+                >
+                  Add policy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAdding(false); setNewForm(BLANK_NEW); }}
+                  className="text-11 font-medium px-3 py-1 rounded text-ink-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="flex items-center gap-1.5 text-11 font-mono text-ink-2 hover:text-brand transition-colors"
+            >
+              <span className="text-14 leading-none">+</span> add policy
+            </button>
+          )}
         </div>
     </ModuleLayout>
   );

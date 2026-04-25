@@ -460,6 +460,7 @@ export type ChatCall = (input: {
 }) => Promise<{ ok: boolean; text?: string; error?: string }>;
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
+  if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
   const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
     'https://api.anthropic.com/v1/messages',
     {
@@ -490,12 +491,19 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   if (signal?.aborted) return { ok: false, error: 'aborted' };
   if (!result.ok || !result.json) {
     const prefix = result.partial ? 'partial_response:' : '';
+    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
+    if (result.body && !result.partial) {
+      try {
+        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
+        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
+      } catch { /* keep default error detail */ }
+    }
     return {
       ok: false,
-      error: `${prefix}${result.error ?? `HTTP ${result.status ?? 'unknown'}`} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
+      error: `${prefix}${errorDetail} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
+  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
   return { ok: true, text };
 };
 
@@ -511,15 +519,19 @@ function withBudget<T>(
     }, ms);
     fn(controller.signal).then(
       (result) => { clearTimeout(timer); resolve({ result, timedOut: false }); },
-      () => { clearTimeout(timer); resolve({ timedOut: true }); },
+      (err: unknown) => {
+        clearTimeout(timer);
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        resolve({ timedOut: isAbort });
+      },
     );
   });
 }
 
 function parseSemanticVerdict(body: string): Verdict {
-  if (/\bBLOCKED\b/.test(body)) return 'blocked';
-  if (/\bRETURNED_FOR_REVISION\b/.test(body)) return 'returned_for_revision';
-  if (/\bAPPROVED\b/.test(body)) return 'approved';
+  if (/\bBLOCKED\b/i.test(body)) return 'blocked';
+  if (/\bRETURNED_FOR_REVISION\b/i.test(body)) return 'returned_for_revision';
+  if (/\bAPPROVED\b/i.test(body)) return 'approved';
   return 'incomplete';
 }
 
@@ -642,7 +654,7 @@ export async function invokeComplianceAgent(
       charterIntegrityHash,
       agentTrail: trail,
       guidance: BUDGET_GUIDANCE,
-      error: timedOut ? undefined : advRes?.error,
+      error: timedOut ? 'Advisor budget exceeded' : advRes?.error,
     };
   }
 

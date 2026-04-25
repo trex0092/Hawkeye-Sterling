@@ -123,17 +123,17 @@ export function serialiseGoamlXml(env: GoAmlEnvelope): string {
     el('currency_code_local', env.currencyCodeLocal),
     el('reason', env.reason),
     el('action', env.action),
-    el('reporting_person', [
-      el('first_name', env.reportingPerson.fullName.split(' ').slice(0, -1).join(' ') || env.reportingPerson.fullName),
-      el('last_name', env.reportingPerson.fullName.split(' ').slice(-1).join(' ')),
-      el('occupation', env.reportingPerson.occupation),
-      el('email', env.reportingPerson.email),
-    ].join('') ? wrap('reporting_person', [
-      el('first_name', env.reportingPerson.fullName.split(' ').slice(0, -1).join(' ') || env.reportingPerson.fullName),
-      el('last_name', env.reportingPerson.fullName.split(' ').slice(-1).join(' ')),
-      el('occupation', env.reportingPerson.occupation),
-      el('email', env.reportingPerson.email),
-    ].join('')) : ''),
+    ((): string => {
+      const parts = env.reportingPerson.fullName.trim().split(/\s+/);
+      const rpFirst = parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
+      const rpLast = parts[parts.length - 1] ?? env.reportingPerson.fullName;
+      return wrap('reporting_person', [
+        el('first_name', rpFirst),
+        el('last_name', rpLast),
+        el('occupation', env.reportingPerson.occupation),
+        el('email', env.reportingPerson.email),
+      ].join(''));
+    })(),
     el('internal_reference', env.internalReference),
   ].join('');
   const txs = (env.transactions ?? []).map(transactionToXml).join('');

@@ -43,17 +43,23 @@ const RETRYABLE_ERROR_MARKERS = ["server 5", "timed out", "network", "fetch fail
 // all of these are deploy-time misconfigs an operator can't fix from
 // the UI; surfacing a red banner on every subject open is noise.
 // Real 5xx outages still show the banner after 3 retries.
+//
+// "server 503" is intentionally included: our route maps Asana 401/403
+// → HTTP 503 (auth/config error), which fetchJson labels "server 503".
+// A genuine Asana outage comes back as HTTP 502, so 503 is always a
+// misconfig signal — never a transient outage worth retrying.
 const DISABLED_MARKERS = [
   "asana_not_configured",
   "asana not configured",
   "asana_token",
+  "server 400",
   "server 401",
   "server 403",
   "server 422",
-  "server 400",
   "server 503",
   "unauthorized",
   "forbidden",
+  "no authorization",
   "asana rejected",
   "asana request failed",
   "asana delivery unavailable",

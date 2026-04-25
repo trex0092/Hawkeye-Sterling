@@ -295,7 +295,7 @@ export default function InvestigationPage() {
               const mx = (a.x + b.x) / 2;
               const my = (a.y + b.y) / 2;
               return (
-                <g key={i} style={{ opacity: faded ? 0.15 : 1 }}>
+                <g key={`${e.from}-${e.to}`} style={{ opacity: faded ? 0.15 : 1 }}>
                   <path
                     d={`M ${a.x} ${a.y} Q ${mx} ${my + 30} ${b.x} ${b.y}`}
                     fill="none"

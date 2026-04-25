@@ -362,7 +362,7 @@ export default function BatchPage() {
             </div>
             <div className="max-h-[180px] overflow-y-auto text-11 text-ink-2 font-mono">
               {rows.slice(0, 25).map((r, i) => (
-                <div key={i}>
+                <div key={r.name ?? i}>
                   {r.name}
                   {r.entityType ? ` · ${r.entityType}` : ""}
                   {r.jurisdiction ? ` · ${r.jurisdiction}` : ""}

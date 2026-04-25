@@ -114,6 +114,34 @@ describe('goaml-xml — serialiseGoamlXml', () => {
   });
 });
 
+describe('goaml-xml — reporting_person serialisation', () => {
+  it('splits a multi-word name into first_name and last_name', () => {
+    const xml = serialiseGoamlXml(baseEnv({ reportingPerson: { fullName: 'Alice Compliance Officer', occupation: 'MLRO', email: 'a@b.ae', phoneNumber: '+971' } }));
+    expect(xml).toContain('<reporting_person>');
+    expect(xml).toContain('<first_name>Alice Compliance</first_name>');
+    expect(xml).toContain('<last_name>Officer</last_name>');
+    expect(xml).not.toContain('&lt;reporting_person&gt;');
+  });
+
+  it('puts a single-word name only in last_name (mononym)', () => {
+    const xml = serialiseGoamlXml(baseEnv({ reportingPerson: { fullName: 'Mohammed', occupation: 'MLRO', email: 'a@b.ae', phoneNumber: '+971' } }));
+    expect(xml).toContain('<last_name>Mohammed</last_name>');
+    expect(xml).not.toContain('<first_name>Mohammed</first_name>');
+  });
+
+  it('does not double-wrap or XML-escape the reporting_person tag', () => {
+    const xml = serialiseGoamlXml(baseEnv());
+    expect(xml).not.toContain('&lt;reporting_person&gt;');
+    expect(xml).not.toContain('&lt;/reporting_person&gt;');
+  });
+
+  it('splits a two-word name correctly', () => {
+    const xml = serialiseGoamlXml(baseEnv({ reportingPerson: { fullName: 'John Doe', occupation: 'MLRO', email: 'j@d.ae', phoneNumber: '+971' } }));
+    expect(xml).toContain('<first_name>John</first_name>');
+    expect(xml).toContain('<last_name>Doe</last_name>');
+  });
+});
+
 describe('goaml-xml — serialiseBatch', () => {
   it('orders by internalReference deterministically', () => {
     const a = baseEnv({ internalReference: 'HWK-01F-0002' });

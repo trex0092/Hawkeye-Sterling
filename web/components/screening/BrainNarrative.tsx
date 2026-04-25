@@ -205,7 +205,7 @@ export function BrainNarrative({
       {expanded && (
         <div className="space-y-2 text-12 leading-relaxed text-bg-0/95">
           {paragraphs.map((p, i) => (
-            <p key={i} className="m-0">
+            <p key={`para-${i}`} className="m-0">
               {p}
             </p>
           ))}
