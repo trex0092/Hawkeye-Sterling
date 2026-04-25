@@ -14,8 +14,6 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
-import { BrainRadar } from "@/components/screening/BrainRadar";
-import { BrainConfidence } from "@/components/screening/BrainConfidence";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
 import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
 import { BrainWhatIf } from "@/components/screening/BrainWhatIf";
@@ -1242,8 +1240,6 @@ function SuperBrainPanel({
         subjectId={subjectId}
         newsDossier={news.status === "success" ? news.result : null}
       />
-      <BrainRadar result={r} />
-      <BrainConfidence result={r} />
       <BrainReasoningChain result={r} />
       <BrainCausalChain result={r} />
       <BrainOutcomeForecast result={r} />

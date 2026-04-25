@@ -511,8 +511,8 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
   const scores = [...rawScores, ...normScores];
   const best = scores.reduce((a, b) => (b.score > a.score ? b : a));
   const phoneticAgreement =
-    rawScores.find((s) => s.method === 'soundex')!.pass ||
-    rawScores.find((s) => s.method === 'double_metaphone')!.pass ||
+    (rawScores.find((s) => s.method === 'soundex')?.pass ?? false) ||
+    (rawScores.find((s) => s.method === 'double_metaphone')?.pass ?? false) ||
     (normScores.find((s) => s.method === 'soundex')?.pass ?? false) ||
     (normScores.find((s) => s.method === 'double_metaphone')?.pass ?? false);
   return { subject, candidate, scores, best, phoneticAgreement };

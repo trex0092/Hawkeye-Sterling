@@ -1,7 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+
+interface LiveItem {
+  id: string;
+  title: string;
+  url: string;
+  pubDate: string;
+  source: string;
+  category: string;
+  tone: "green" | "amber" | "red";
+  snippet?: string;
+}
+
+const TONE_CLASSES: Record<LiveItem["tone"], string> = {
+  red:   "border-l-red bg-red-dim/30",
+  amber: "border-l-amber bg-amber-dim/20",
+  green: "border-l-green bg-green-dim/20",
+};
+const TONE_BADGE: Record<LiveItem["tone"], string> = {
+  red:   "bg-red-dim text-red",
+  amber: "bg-amber-dim text-amber",
+  green: "bg-green-dim text-green",
+};
 
 // Regulatory Library — searchable reference for FDL 10/2025, CR 134/2025,
 // MoE circulars, FATF Recs, LBMA guidance, Cabinet Resolutions, and goAML
@@ -453,6 +475,21 @@ const ALL_TAGS = Array.from(new Set(LIBRARY.flatMap((e) => e.tags)));
 export default function RegulatoryPage() {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [liveItems, setLiveItems] = useState<LiveItem[]>([]);
+  const [liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLiveStatus("loading");
+    fetch("/api/regulatory-feed")
+      .then((r) => r.json())
+      .then((data) => {
+        setLiveItems(data.items ?? []);
+        setFetchedAt(data.fetchedAt ?? null);
+        setLiveStatus("ok");
+      })
+      .catch(() => setLiveStatus("error"));
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -478,6 +515,74 @@ export default function RegulatoryPage() {
             </>
           }
         />
+
+        {/* ── Live regulatory feed ── */}
+        <section className="mt-6 mb-8">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-10 uppercase tracking-wide-4 font-semibold text-ink-2 m-0">
+              Live regulatory updates
+            </h2>
+            {liveStatus === "loading" && (
+              <span className="font-mono text-10 text-ink-3 animate-pulse">fetching…</span>
+            )}
+            {liveStatus === "ok" && fetchedAt && (
+              <span className="font-mono text-10 text-ink-3">
+                updated {new Date(fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            {liveStatus === "error" && (
+              <span className="font-mono text-10 text-red">feed unavailable</span>
+            )}
+          </div>
+
+          {liveStatus === "loading" && (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-14 rounded-lg bg-bg-panel border border-hair-2 animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {liveStatus === "ok" && liveItems.length > 0 && (
+            <div className="space-y-1.5">
+              {liveItems.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.url || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block border border-hair-2 border-l-2 rounded-lg px-4 py-3 hover:opacity-80 transition-opacity no-underline ${TONE_CLASSES[item.tone]}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-12 font-medium text-ink-0 leading-snug">
+                      {item.title}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 ${TONE_BADGE[item.tone]}`}>
+                        {item.category}
+                      </span>
+                      <span className="font-mono text-10 text-ink-3">{item.source}</span>
+                    </div>
+                  </div>
+                  {item.snippet && (
+                    <p className="text-11 text-ink-2 m-0 mt-1 leading-relaxed line-clamp-2">
+                      {item.snippet}
+                    </p>
+                  )}
+                  {item.pubDate && (
+                    <div className="font-mono text-10 text-ink-3 mt-1">{item.pubDate}</div>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {liveStatus === "ok" && liveItems.length === 0 && (
+            <div className="text-12 text-ink-2 py-4 text-center border border-hair-2 rounded-lg">
+              No live items available right now.
+            </div>
+          )}
+        </section>
 
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mt-6 mb-4">
           <input

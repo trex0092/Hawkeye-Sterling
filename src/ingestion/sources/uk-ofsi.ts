@@ -77,7 +77,7 @@ function parseCsv(text: string): string[][] {
   for (let i = 0; i < text.length; i++) {
     const c = text[i]!;
     if (inQuotes) {
-      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      if (c === '"' && i + 1 < text.length && text[i + 1] === '"') { field += '"'; i++; }
       else if (c === '"') { inQuotes = false; }
       else { field += c; }
     } else {

@@ -1296,6 +1296,390 @@ const PLAYBOOKS: Playbook[] = [
       },
     ],
   },
+  {
+    id: "sanctions-match-triage",
+    title: "Sanctions Match Triage (Potential Hit)",
+    typology: "sanctions_match",
+    family: "Sanctions",
+    steps: [
+      {
+        title: "1. Immediate containment",
+        required: true,
+        checks: [
+          "Freeze all pending and queued transactions involving the subject pending MLRO review",
+          "Do not notify the customer or any third party — tipping-off prohibition applies from the moment of the hit",
+          "Log the match with timestamp, list name, match score, and analyst ID in the case file",
+          "Escalate to MLRO within 2 hours of the potential hit being identified",
+        ],
+      },
+      {
+        title: "2. Match disambiguation",
+        required: true,
+        checks: [
+          "Compare full name, date of birth, nationality, and any identifiers against the listed entry",
+          "Run alternative name spellings and transliterations through all active sanctions lists",
+          "Check passport, national ID, or LEI numbers against identifiers on the listed entry",
+          "Obtain a second-analyst review — no single-person determination on a potential sanctions match",
+        ],
+      },
+      {
+        title: "3. MLRO determination",
+        required: true,
+        checks: [
+          "MLRO documents the determination: confirmed match, false positive, or inconclusive requiring further inquiry",
+          "For confirmed match: maintain freeze, file FFR via goAML, notify EOCN/FIU within 24 hours",
+          "For false positive: document full reasoning, release freeze, update screening whitelist",
+          "For inconclusive: extend freeze, escalate to external legal counsel within 48 hours",
+        ],
+      },
+      {
+        title: "4. Regulatory filing & record",
+        required: true,
+        checks: [
+          "File Funds Freeze Report (FFR) via goAML for any confirmed TFS match — mandatory within 24 hours",
+          "Report to CBUAE / MoE within the mandated timeframe per Cabinet Res 74/2020 Art.7",
+          "Retain the full disambiguation file, determination memo, and MLRO sign-off for 10 years",
+          "Review and update the sanctions screening configuration if the false-positive rate exceeds 1.0%",
+        ],
+      },
+    ],
+  },
+  {
+    id: "periodic-review",
+    title: "Customer Periodic Review & CDD Refresh",
+    typology: "periodic_review",
+    family: "CDD",
+    steps: [
+      {
+        title: "1. Review trigger verification",
+        required: true,
+        checks: [
+          "Confirm the trigger: scheduled cycle (annual / 3-year / 5-year by risk tier) or event-driven (ownership change, adverse media, STR)",
+          "Pull the current customer risk rating and verify it still matches the assigned tier",
+          "Check if any open alerts, case flags, or adverse-media hits remain unresolved from the previous review",
+          "Confirm the customer's business relationship is still active and revenue-generating",
+        ],
+      },
+      {
+        title: "2. CDD document refresh",
+        required: true,
+        checks: [
+          "Re-obtain government-issued ID if the previous copy is older than 5 years or shows expiry",
+          "Update corporate registry extract and shareholder register — verify UBO has not changed",
+          "Obtain updated source-of-funds narrative and cross-check against transaction history",
+          "Re-screen all principals and UBOs against current sanctions, PEP, and adverse-media databases",
+        ],
+      },
+      {
+        title: "3. Transaction profile review",
+        required: true,
+        checks: [
+          "Compare actual transaction volumes and types against the expected profile documented at onboarding",
+          "Flag any product or service usage not anticipated in the original risk assessment",
+          "Review the 12-month transaction history for structuring, round amounts, or unusual counterparties",
+          "Update the transaction monitoring rule-set thresholds if the customer's risk profile has changed",
+        ],
+      },
+      {
+        title: "4. Risk re-rating & approval",
+        required: false,
+        checks: [
+          "Re-score the customer using the current risk-scoring matrix — document any tier change and reason",
+          "Upgrades to High risk require MLRO approval and trigger EDD within 14 days",
+          "Downgrades from High risk require dual approval (MLRO + CO) and are logged in the audit chain",
+          "If re-KYC cannot be completed within 30 days, escalate to MLRO for relationship exit assessment",
+        ],
+      },
+    ],
+  },
+  {
+    id: "cash-intensive",
+    title: "Cash-Intensive Business (Non-DPMS)",
+    typology: "cash_intensive",
+    family: "ML",
+    steps: [
+      {
+        title: "1. Business profile verification",
+        required: true,
+        checks: [
+          "Confirm the business type and expected cash-intensity ratio (F&B, retail, car wash, parking, laundry)",
+          "Obtain trade licence, municipal permit, and any sector-specific operating licence",
+          "Verify physical premises — site visit report or independent verification for high-risk cases",
+          "Document the expected monthly cash receipts and compare against declared revenue",
+        ],
+      },
+      {
+        title: "2. Cash flow plausibility",
+        required: true,
+        checks: [
+          "Benchmark declared cash revenue against the sector average for comparable businesses in the UAE",
+          "Flag any gap > 25% between declared turnover and transactional deposits without commercial rationale",
+          "Check for cash deposits immediately followed by outbound wires — classic placement indicator",
+          "Review whether cash deposits are made at consistent intervals or show irregular spikes",
+        ],
+      },
+      {
+        title: "3. Structuring detection",
+        required: true,
+        checks: [
+          "Identify deposits < AED 55,000 that, when aggregated over 48 hours, exceed the threshold",
+          "Flag use of multiple branches or ATMs for cash deposits on the same day",
+          "Review whether the frequency and size of deposits match the business's stated operating pattern",
+          "Check for third-party cash depositors — cash deposited by a person other than the account holder is a red flag",
+        ],
+      },
+      {
+        title: "4. Enhanced scrutiny triggers",
+        required: false,
+        checks: [
+          "Escalate to MLRO if cash deposits exceed 80% of total inflows without documented business reason",
+          "Request point-of-sale or till-roll data to corroborate cash revenue for high-risk cases",
+          "Consider an unannounced site visit if the business cannot produce supporting commercial records",
+          "File STR if there is no plausible explanation for the cash volume observed",
+        ],
+      },
+    ],
+  },
+  {
+    id: "mortgage-finance",
+    title: "Mortgage & Property Finance ML Check",
+    typology: "mortgage_finance",
+    family: "REML",
+    steps: [
+      {
+        title: "1. Borrower CDD",
+        required: true,
+        checks: [
+          "Full CDD on the borrower: ID, address, employment or income verification, and UBO if corporate borrower",
+          "Obtain proof of deposit funds — bank statements for the last 6 months showing accumulation",
+          "Flag any large lump-sum deposits into the borrower's account in the 90 days before application",
+          "Screen borrower and all guarantors against sanctions, PEP, and adverse-media lists",
+        ],
+      },
+      {
+        title: "2. Property & valuation integrity",
+        required: true,
+        checks: [
+          "Obtain independent RICS-certified valuation — reject any application where price exceeds valuation by > 15%",
+          "Check prior ownership history — rapid resale (< 12 months) at inflated price is a red flag",
+          "Verify the property is not listed on any court seizure, restraint, or enforcement register",
+          "Confirm the seller is the registered owner and there are no undisclosed encumbrances",
+        ],
+      },
+      {
+        title: "3. Payment route & third parties",
+        required: true,
+        checks: [
+          "All mortgage disbursements must flow directly to the seller's solicitor or escrow account",
+          "Third-party contributions to the deposit (beyond a gift from close family) require MLRO approval",
+          "Confirm the solicitor / conveyancer is licensed and subject to AML obligations in their jurisdiction",
+          "Flag any instruction to divert loan proceeds to a party not identified in the sale agreement",
+        ],
+      },
+      {
+        title: "4. Rental income validation",
+        required: false,
+        checks: [
+          "For buy-to-let: obtain tenancy agreements and verify rental income matches declared projection",
+          "Flag where rental yield significantly exceeds the local market rate — may indicate inflated purchase price",
+          "Cross-check declared rental income against the borrower's tax or income declarations where available",
+          "Escalate to MLRO if rental income cannot be independently verified for high-value properties",
+        ],
+      },
+    ],
+  },
+  {
+    id: "crypto-otc",
+    title: "Crypto OTC / Peer-to-Peer Exchange",
+    typology: "crypto_otc",
+    family: "VASP",
+    steps: [
+      {
+        title: "1. OTC desk / P2P platform assessment",
+        required: true,
+        checks: [
+          "Confirm the OTC desk or P2P platform is licensed under VARA or an equivalent FATF-member regulator",
+          "Obtain the platform's AML/CFT policy, Travel Rule compliance attestation, and most recent audit",
+          "Verify the platform applies KYC for all transactions — anonymous or pseudonymous trades are a hard stop",
+          "Screen the OTC operator, its UBOs, and key personnel against OFAC, UN, and EU sanctions lists",
+        ],
+      },
+      {
+        title: "2. Blockchain analytics — OTC-specific",
+        required: true,
+        checks: [
+          "Run on-chain analytics on all wallet addresses involved in the OTC transaction",
+          "Flag any address with > 5% exposure to darknet markets, sanctioned entities, mixers, or ransomware clusters",
+          "Identify whether the counterparty wallet has transacted with a mixer or privacy protocol in the last 12 months",
+          "Obtain blockchain analytics report (Chainalysis / Elliptic) and retain in the case file",
+        ],
+      },
+      {
+        title: "3. Trade structure & pricing",
+        required: true,
+        checks: [
+          "Verify the OTC price is within 3% of the spot price on a major regulated exchange — large discounts are a red flag",
+          "Confirm the counterparty's source-of-crypto-funds: mining, exchange purchase, staking, or inherited",
+          "Flag trades where the counterparty cannot explain the origin of a large holding",
+          "Ensure the OTC trade is documented with a signed term sheet or trade confirmation",
+        ],
+      },
+      {
+        title: "4. Travel Rule compliance",
+        required: false,
+        checks: [
+          "Collect originator and beneficiary VASP data for any transfer ≥ USD 1,000 equivalent",
+          "Verify Travel Rule message is transmitted via TRISA, OpenVASP, or equivalent protocol",
+          "Hard-stop any OTC settlement to an unhosted wallet > AED 3,500 without enhanced verification and MLRO approval",
+          "Retain all Travel Rule messages and on-chain transaction hashes for 10 years",
+        ],
+      },
+    ],
+  },
+  {
+    id: "customer-exit",
+    title: "Customer Exit & Relationship Termination",
+    typology: "customer_exit",
+    family: "Risk",
+    steps: [
+      {
+        title: "1. Exit trigger classification",
+        required: true,
+        checks: [
+          "Document the trigger: (a) confirmed sanctions match; (b) CDD failure after 30 days; (c) UBO refusal; (d) post-STR MLRO decision; (e) risk appetite breach",
+          "Obtain MLRO sign-off on the exit decision — no relationship can be terminated by commercial staff alone",
+          "Log the exit decision in the audit chain with trigger date, rationale, and approving officer",
+          "Assess whether the exit itself constitutes a tipping-off risk — if STR is filed, coordinate with FIU before acting",
+        ],
+      },
+      {
+        title: "2. Pre-exit obligations",
+        required: true,
+        checks: [
+          "Confirm no regulatory hold (court order, FIU instruction, or TFS freeze) prevents the return of funds",
+          "Identify all accounts, products, and exposures held by the customer — include related-party accounts",
+          "Obtain legal sign-off if the customer has ongoing disputes, litigation, or regulatory proceedings",
+          "Notify internal stakeholders (relationship manager, legal, finance) under strict confidentiality",
+        ],
+      },
+      {
+        title: "3. Fund return & account closure",
+        required: true,
+        checks: [
+          "Return funds only to a verified account in the customer's own name at a regulated institution",
+          "No cash exits — all return payments must be by wire transfer with full originator data",
+          "Cancel all standing orders, direct debits, and third-party mandates before closing the account",
+          "Issue a formal exit notice to the customer — do not disclose the AML reason; cite 'policy review' only",
+        ],
+      },
+      {
+        title: "4. Post-exit monitoring",
+        required: false,
+        checks: [
+          "Maintain a 12-month post-exit monitoring flag on the customer's identifiers in the screening system",
+          "Preserve all CDD records, STR artefacts, and case documentation for the full 10-year retention period",
+          "If the exit was driven by regulatory direction, notify the Board and relevant regulator within 5 business days",
+          "Review whether related or introduced customers share the same risk profile and may require accelerated review",
+        ],
+      },
+    ],
+  },
+  {
+    id: "ransomware-proceeds",
+    title: "Ransomware & Cybercrime Proceeds",
+    typology: "ransomware",
+    family: "VASP/Fraud",
+    steps: [
+      {
+        title: "1. Incident identification",
+        required: true,
+        checks: [
+          "Confirm whether any customer account has received funds from a wallet flagged by Chainalysis / Elliptic as ransomware-linked",
+          "Flag accounts showing sudden large inflows from multiple wallet addresses within a short window (ransomware payment aggregation pattern)",
+          "Check whether the customer has reported a ransomware incident or been named in public breach disclosures",
+          "Freeze the suspected proceeds account immediately and escalate to MLRO within 2 hours",
+        ],
+      },
+      {
+        title: "2. Blockchain forensics",
+        required: true,
+        checks: [
+          "Run a full on-chain trace of inbound funds using Chainalysis Reactor or Elliptic Investigator",
+          "Identify the ransomware strain or criminal cluster associated with the sending wallet",
+          "Map the layering route: ransomware wallet → mixer → exchange → customer account",
+          "Retain the full blockchain analytics report and on-chain transaction hashes in the case file",
+        ],
+      },
+      {
+        title: "3. Regulatory & law enforcement notification",
+        required: true,
+        checks: [
+          "File STR via goAML without delay — cybercrime proceeds are a predicate ML offence under FDL 10/2025",
+          "Notify UAE eCrime (Dubai Police Cybercrime Unit or Abu Dhabi cybercrime authority) if funds are within the UAE",
+          "If OFAC-designated ransomware actor is involved (e.g. Lazarus Group), report to OFAC under mandatory reporting obligation",
+          "Cooperate fully with any FIU or law enforcement production order — do not destroy or alter any records",
+        ],
+      },
+      {
+        title: "4. Customer assessment",
+        required: false,
+        checks: [
+          "Determine whether the customer is a victim (ransomware payer) or a proceeds holder (potential co-conspirator)",
+          "For ransomware victims: provide appropriate support while complying with OFAC ransom-payment guidance",
+          "For proceeds holders: maintain account freeze, do not tip-off, and await FIU direction before releasing any funds",
+          "Review whether the customer's cybersecurity posture requires enhanced due diligence going forward",
+        ],
+      },
+    ],
+  },
+  {
+    id: "bor-filing",
+    title: "Beneficial Owner Register (BOR) Annual Filing",
+    typology: "bor_filing",
+    family: "UBO",
+    steps: [
+      {
+        title: "1. Entity scoping",
+        required: true,
+        checks: [
+          "Identify all UAE-registered legal entities within scope of Cabinet Decision 58/2020 (BOR obligations)",
+          "Confirm exemptions: entities regulated by CBUAE, SCA, or VARA are exempt from MoE BOR but must maintain internal UBO registers",
+          "Verify the most recent BOR filing date — annual renewal is due within 60 days of the anniversary of registration",
+          "Assign a responsible officer for each entity's BOR filing and record in the compliance calendar",
+        ],
+      },
+      {
+        title: "2. UBO data collection",
+        required: true,
+        checks: [
+          "Identify all natural persons holding ≥ 25% direct or indirect ownership or exercising equivalent control",
+          "Obtain: full legal name, nationality, date of birth, place of birth, residential address, and ID document details for each UBO",
+          "Where no natural person holds ≥ 25%, identify the senior managing official as the notional UBO for filing purposes",
+          "Cross-check UBO data against certified registry extracts and the most recent shareholder register",
+        ],
+      },
+      {
+        title: "3. Submission to MoE BOR",
+        required: true,
+        checks: [
+          "Log into the UAE Ministry of Economy BOR portal and update or confirm UBO records",
+          "Attach certified supporting documents (passport copies, registry extracts) as required by the portal",
+          "Obtain and retain the BOR submission confirmation number and timestamp",
+          "Notify the MLRO of the completed filing and update the compliance calendar for the next annual cycle",
+        ],
+      },
+      {
+        title: "4. Change-event triggers",
+        required: false,
+        checks: [
+          "Any change in UBO (new shareholder acquiring ≥ 25%, change in control, death of UBO) must be filed within 15 days",
+          "Corporate restructuring that alters the beneficial ownership chain triggers an immediate BOR update",
+          "Monitor for share transfers, capital increases, or trust amendments that may affect the UBO position",
+          "Failure to file or update the BOR is a criminal offence under UAE law — escalate any delay to legal counsel immediately",
+        ],
+      },
+    ],
+  },
 ];
 
 export default function PlaybookPage() {

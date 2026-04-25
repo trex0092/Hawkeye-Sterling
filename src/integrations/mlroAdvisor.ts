@@ -189,6 +189,7 @@ export type ChatCall = (input: {
 }) => Promise<{ ok: boolean; text?: string; error?: string }>;
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
+  if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
   const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
     'https://api.anthropic.com/v1/messages',
     {
@@ -221,12 +222,19 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   if (signal?.aborted) return { ok: false, error: 'aborted' };
   if (!result.ok || !result.json) {
     const prefix = result.partial ? 'partial_response:' : '';
+    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
+    if (result.body && !result.partial) {
+      try {
+        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
+        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
+      } catch { /* keep default error detail */ }
+    }
     return {
       ok: false,
-      error: `${prefix}${result.error ?? `HTTP ${result.status ?? 'unknown'}`} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
+      error: `${prefix}${errorDetail} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
+  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
   return { ok: true, text };
 };
 
@@ -239,7 +247,11 @@ function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Pro
     }, ms);
     fn(controller.signal).then(
       (result) => { clearTimeout(timer); resolve({ result, timedOut: false }); },
-      () => { clearTimeout(timer); resolve({ timedOut: true }); },
+      (err: unknown) => {
+        clearTimeout(timer);
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        resolve({ timedOut: isAbort });
+      },
     );
   });
 }
@@ -249,6 +261,7 @@ export async function invokeMlroAdvisor(
   cfg: MlroAdvisorConfig,
   chat: ChatCall = defaultChat,
 ): Promise<MlroAdvisorResult> {
+  if (!req.question.trim()) throw new Error('MlroAdvisorRequest.question must be non-empty');
   const mode: ReasoningMode = req.mode ?? 'multi_perspective';
   const budget = MODE_BUDGETS[mode];
   const hardCeiling = Math.min(cfg.budgetMs ?? 25_000, 25_000);
@@ -329,7 +342,8 @@ export async function invokeMlroAdvisor(
 // non-empty halves on any reasonable question.
 export function splitQuestion(question: string): [string, string] {
   const q = question.trim();
-  if (!q) return ['', ''];
+  if (!q) throw new Error('splitQuestion: question must be non-empty');
+  if (q.length < 2) throw new Error('splitQuestion: question too short to split');
   const conjMatch = q.match(/\s+(and|&|plus|also|as well as)\s+/i);
   if (conjMatch && typeof conjMatch.index === 'number' && conjMatch.index > 8) {
     const i = conjMatch.index;
@@ -341,7 +355,8 @@ export function splitQuestion(question: string): [string, string] {
     return [q.slice(0, i).trim(), q.slice(i).trim()];
   }
   const mid = Math.floor(q.length / 2);
-  const pivot = q.lastIndexOf(' ', mid) > 0 ? q.lastIndexOf(' ', mid) : mid;
+  const spaceIdx = q.lastIndexOf(' ', mid);
+  const pivot = spaceIdx > 0 ? spaceIdx : Math.max(1, mid);
   return [q.slice(0, pivot).trim(), q.slice(pivot).trim()];
 }
 

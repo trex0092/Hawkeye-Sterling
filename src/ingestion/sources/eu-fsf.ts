@@ -29,7 +29,7 @@ export const euFsfAdapter: SourceAdapter = {
       const nameAliases = findAll(entry, 'nameAlias');
       if (nameAliases.length === 0) continue;
       const primary = nameAliases[0];
-      const name = (primary?.attrs['wholeName'] ?? primary?.attrs['wholeName'.toLowerCase()]
+      const name = (primary?.attrs['wholeName']
         ?? [primary?.attrs['firstName'], primary?.attrs['lastName']].filter(Boolean).join(' ')).trim();
       if (!name) continue;
       const aliases = nameAliases.slice(1).map((a) => a.attrs['wholeName'] ?? '').filter(Boolean);
