@@ -7,11 +7,29 @@ export const dynamic = "force-dynamic";
 
 // Per-subject rescreening cadence. The scheduled Netlify Function reads
 // this table on every tick and only re-runs subjects whose nextRunAt
-// has elapsed. Cadences supported: hourly, daily, weekly, monthly.
+// has elapsed. Cadences supported: thrice_daily (default), hourly, daily, weekly, monthly.
 
-type Cadence = "hourly" | "daily" | "weekly" | "monthly";
+type Cadence = "thrice_daily" | "hourly" | "daily" | "weekly" | "monthly";
 
-const CADENCE_MS: Record<Cadence, number> = {
+// 08:30 / 15:00 / 17:30 Dubai (UTC+4, no DST) → 04:30 / 11:00 / 13:30 UTC.
+const THRICE_DAILY_SLOTS_UTC: Array<[number, number]> = [
+  [4, 30],
+  [11, 0],
+  [13, 30],
+];
+
+function nextThriceDailyRun(from: Date): Date {
+  const candidates = THRICE_DAILY_SLOTS_UTC.map(([h, m]) => {
+    const d = new Date(from);
+    d.setUTCHours(h, m, 0, 0);
+    if (d.getTime() <= from.getTime()) d.setUTCDate(d.getUTCDate() + 1);
+    return d;
+  });
+  candidates.sort((a, b) => a.getTime() - b.getTime());
+  return candidates[0]!;
+}
+
+const CADENCE_MS: Record<Exclude<Cadence, "thrice_daily">, number> = {
   hourly: 60 * 60 * 1_000,
   daily: 24 * 60 * 60 * 1_000,
   weekly: 7 * 24 * 60 * 60 * 1_000,
@@ -44,11 +62,11 @@ export async function GET(req: Request): Promise<NextResponse> {
 
 interface UpsertBody {
   subjectId?: string;
-  cadence?: Cadence;
+  cadence?: Cadence; // thrice_daily is the default for compliance monitoring
   scoreThreshold?: number;
 }
 
-const VALID_CADENCES: readonly Cadence[] = ["hourly", "daily", "weekly", "monthly"];
+const VALID_CADENCES: readonly Cadence[] = ["thrice_daily", "hourly", "daily", "weekly", "monthly"];
 
 function isCadence(v: unknown): v is Cadence {
   return typeof v === "string" && (VALID_CADENCES as readonly string[]).includes(v);
@@ -84,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       {
         ok: false,
         error:
-          "subjectId required; cadence must be hourly | daily | weekly | monthly",
+          "subjectId required; cadence must be thrice_daily | hourly | daily | weekly | monthly",
       },
       { status: 400 },
     );
@@ -100,12 +118,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
   const now = new Date();
+  const nextRunAt =
+    cadence === "thrice_daily"
+      ? nextThriceDailyRun(now).toISOString()
+      : new Date(now.getTime() + CADENCE_MS[cadence]).toISOString();
   const record: Schedule = {
     subjectId,
     cadence,
     ...(scoreThreshold !== undefined ? { scoreThreshold } : {}),
     createdAt: now.toISOString(),
-    nextRunAt: new Date(now.getTime() + CADENCE_MS[cadence]).toISOString(),
+    nextRunAt,
   };
   await setJson(`${PREFIX}${subjectId}`, record);
   return NextResponse.json({ ok: true, schedule: record });

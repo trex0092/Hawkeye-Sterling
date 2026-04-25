@@ -348,7 +348,7 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
   lines.push("");
 
   lines.push(`Hawkeye           : https://hawkeye-sterling.netlify.app/screening?open=${b.subject.id}`);
-  lines.push(`Download PDF      : https://hawkeye-sterling.netlify.app/api/compliance-report?id=${b.subject.id}&format=html`);
+  lines.push(`Download PDF      : https://hawkeye-sterling.netlify.app/screening?open=${b.subject.id}&report=pdf`);
   lines.push(`Legal basis       : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
   return lines.join("\n");
 }

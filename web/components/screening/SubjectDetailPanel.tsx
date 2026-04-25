@@ -366,6 +366,10 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       showFlash("Screening not complete yet");
       return;
     }
+    if (superBrain.status === "loading") {
+      showFlash("Adverse-media analysis still loading — please wait a moment");
+      return;
+    }
     const payload = buildReportPayload();
     const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
     try {
@@ -520,6 +524,10 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   const handleDownloadReport = async () => {
     if (screening.status !== "success") {
       showFlash("Screening not complete yet");
+      return;
+    }
+    if (superBrain.status === "loading") {
+      showFlash("Adverse-media analysis still loading — please wait a moment");
       return;
     }
     const payload = {

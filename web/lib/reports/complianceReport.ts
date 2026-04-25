@@ -84,7 +84,11 @@ function pad(s: string, n: number): string {
 }
 
 function inferReportType(r: ReportScreeningResult, sb?: ReportSuperBrain | null): ReportType {
-  if (r.severity === "critical" && r.hits.length > 0) return "SANCTIONS";
+  // Only classify as SANCTIONS when there are actual sanctions list hits.
+  // Severity alone (which can be driven by adverse-media composite score) is
+  // not sufficient — a subject with no sanctions hits must never receive the
+  // SANCTIONS banner regardless of how high their overall risk score is.
+  if (r.hits.length > 0) return "SANCTIONS";
   if (sb?.pep && sb.pep.salience > 0) return "PEP";
   if (sb?.adverseKeywordGroups && sb.adverseKeywordGroups.length > 0) return "AM";
   if (sb?.adverseMedia && sb.adverseMedia.length > 0) return "AM";
@@ -142,13 +146,13 @@ function formatSubject(s: ReportSubject): string[] {
 }
 
 const SCREEN_VECTORS: Array<{ vector: string; engine: string; listIdMatch: RegExp }> = [
-  { vector: "Sanctions (UN)     ", engine: "Hawkeye native    ", listIdMatch: /^UN/i },
-  { vector: "Sanctions (UAE LTL)", engine: "Hawkeye native    ", listIdMatch: /^AE|EOCN/i },
-  { vector: "Sanctions (OFAC)   ", engine: "Hawkeye + WC      ", listIdMatch: /OFAC/i },
-  { vector: "Sanctions (EU)     ", engine: "Hawkeye native    ", listIdMatch: /EU/i },
-  { vector: "Sanctions (UK OFSI)", engine: "Hawkeye native    ", listIdMatch: /UK|OFSI|HMT/i },
-  { vector: "Sanctions (Canada) ", engine: "Hawkeye native    ", listIdMatch: /CA|OSFI|SEMA/i },
-  { vector: "Sanctions (AUS)    ", engine: "Hawkeye native    ", listIdMatch: /AU|DFAT/i },
+  { vector: "Sanctions (UN)     ", engine: "Hawkeye native    ", listIdMatch: /^UN[-_]/i },
+  { vector: "Sanctions (UAE LTL)", engine: "Hawkeye native    ", listIdMatch: /^(?:UAE|AE)[-_]|EOCN|LTL/i },
+  { vector: "Sanctions (OFAC)   ", engine: "Hawkeye + WC      ", listIdMatch: /\bOFAC\b/i },
+  { vector: "Sanctions (EU)     ", engine: "Hawkeye native    ", listIdMatch: /^EU[-_]|[-_]EU\b|\bEU-CFSP\b/i },
+  { vector: "Sanctions (UK OFSI)", engine: "Hawkeye native    ", listIdMatch: /\bOFSI\b|\bHMT\b|^UK[-_]/i },
+  { vector: "Sanctions (Canada) ", engine: "Hawkeye native    ", listIdMatch: /\bOSFI\b|\bSEMA\b|^CA[-_]/i },
+  { vector: "Sanctions (AUS)    ", engine: "Hawkeye native    ", listIdMatch: /\bDFAT\b|^AU[-_]/i },
 ];
 
 function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): string[] {
@@ -158,8 +162,12 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
   lines.push(`${"─".repeat(19)}   ${"─".repeat(17)}   ─────    ${"─".repeat(22)}`);
   for (const v of SCREEN_VECTORS) {
     const hits = r.hits.filter((h) => v.listIdMatch.test(h.listId));
-    const score = hits.length > 0 ? String(Math.round(hits[0]!.score * 100)) : "—";
-    const result = hits.length > 0 ? "POSITIVE — CONFIRMED" : "NEGATIVE";
+    const maxScore = hits.length > 0 ? Math.max(...hits.map((h) => h.score)) : 0;
+    const score = hits.length > 0 ? String(Math.round(maxScore * 100)) : "—";
+    // Automated screening never "confirms" a match — only MLRO review can do
+    // that. Exact string matches and fuzzy matches are both unverified until
+    // a human investigates. Use "POSSIBLE MATCH" to reflect this accurately.
+    const result = hits.length > 0 ? "POSSIBLE MATCH — VERIFY" : "NEGATIVE";
     lines.push(`${v.vector}   ${v.engine}  ${pad(score, 5)}    ${result}`);
   }
   // PEP
@@ -170,7 +178,7 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
     `PEP                 World-Check       ${pad(
       pepScore != null ? String(pepScore) : "—",
       5,
-    )}    ${pepScore != null ? "POSITIVE — CONFIRMED" : "NEGATIVE"}`,
+    )}    ${pepScore != null ? "POSSIBLE PEP — VERIFY" : "NEGATIVE"}`,
   );
   // Adverse media
   const amCount =
@@ -298,9 +306,9 @@ function formatAnalysis(type: ReportType, input: ReportInput): string[] {
   lines.push(
     `The composite score sits in the **${band}** band. ${
       r.hits.length > 0
-        ? `Sanctions hits concentrate on ${Array.from(
+        ? `Possible sanctions matches found on: ${Array.from(
             new Set(r.hits.map((h) => h.listId)),
-          ).join(", ")}.`
+          ).join(", ")} — match identity must be verified by MLRO before any action.`
         : "The subject does not appear on any monitored sanctions regime."
     }`,
   );
@@ -340,16 +348,22 @@ function pep(tier: string): string {
 function formatRecommendation(type: ReportType, r: ReportScreeningResult): string[] {
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} RECOMMENDATION (SYSTEM) ${"─".repeat(51)}`);
-  if (type === "SANCTIONS" && r.severity === "critical") {
-    lines.push("▶ FREEZE IMMEDIATELY — ALL IN-FLIGHT FUNDS AND PENDING TRANSACTIONS");
-    lines.push("▶ FILE FFR VIA goAML WITHIN 5 BUSINESS DAYS");
-    lines.push("▶ NOTIFY UAE EXECUTIVE OFFICE FOR CONTROL & NON-PROLIFERATION (EOCN)");
-    lines.push("▶ NOTIFY MoE");
-    lines.push("▶ FILE PARALLEL SAR FOR SANCTIONS EVASION IF INTERMEDIARY INVOLVED");
-    lines.push("▶ ESCALATE TO CEO + BOARD CHAIR — personal criminal liability attaches");
-    lines.push("▶ ENGAGE LEGAL COUNSEL — multi-jurisdictional exposure");
-    lines.push("▶ REFUSE RELATIONSHIP — no onboarding, no further processing");
-    lines.push("▶ TIPPING-OFF PROHIBITION ABSOLUTE");
+  if (type === "SANCTIONS") {
+    lines.push("▶ ESCALATE TO MLRO IMMEDIATELY — possible sanctions match detected");
+    lines.push("▶ SUSPEND ONBOARDING / HALT IN-FLIGHT TRANSACTIONS pending MLRO decision");
+    lines.push("▶ VERIFY MATCH IDENTITY — compare registration numbers, directors,");
+    lines.push("  addresses, DOB and other identifiers against the sanctioned entry");
+    lines.push("  before taking any freezing or filing action");
+    lines.push("▶ IF MATCH CONFIRMED BY MLRO:");
+    lines.push("    – FREEZE all in-flight funds and pending transactions");
+    lines.push("    – FILE FFR via goAML within 5 business days");
+    lines.push("    – NOTIFY EOCN and MoE");
+    lines.push("    – FILE parallel SAR if sanctions evasion suspected");
+    lines.push("    – ESCALATE to CEO + Board Chair");
+    lines.push("    – ENGAGE legal counsel — multi-jurisdictional exposure");
+    lines.push("▶ IF MATCH REJECTED (false positive) — document rationale for file,");
+    lines.push("  update screening record with false-positive determination, proceed");
+    lines.push("▶ TIPPING-OFF PROHIBITION ABSOLUTE — do not alert the subject");
   } else if (type === "PEP") {
     lines.push("▶ ENHANCED DUE DILIGENCE (EDD)");
     lines.push("▶ ESCALATE TO CEO AND BOARD CHAIR FOR APPROVAL DECISION");
@@ -382,17 +396,19 @@ function formatGoaml(type: ReportType, input: ReportInput, now: Date): string[] 
   const lines: string[] = [];
   const isSan = type === "SANCTIONS";
   lines.push(
-    `${SUB.slice(0, 3)} goAML FILING DATA PACKAGE ${"─".repeat(50)}`,
+    `${SUB.slice(0, 3)} goAML PRE-FILL DATA (pending MLRO verification) ${"─".repeat(28)}`,
   );
-  lines.push(`report_code           : ${isSan ? "FFR" : "SAR"}`);
+  // For SANCTIONS the report_code is FFR only after MLRO confirms the match.
+  // Pre-filling the data here saves time but does NOT mean filing is authorised.
+  lines.push(`report_code           : ${isSan ? "FFR (if match confirmed)" : "SAR"}`);
   lines.push(
     `entity_reference      : ${buildId(type, now)}${isSan ? "-FFR" : "-SAR"}`,
   );
   lines.push(
-    `reason                : [Auto-drafted from brain verdict — MLRO to review]`,
+    `reason                : [MLRO to complete after match verification]`,
   );
   lines.push(
-    `action                : ${isSan ? "Freeze executed; relationship refused" : "Sourcing suspended; retrospective review opened"}`,
+    `action                : ${isSan ? "[MLRO to complete — freeze only after confirmation]" : "Sourcing suspended; retrospective review opened"}`,
   );
   if (input.subject.entityType === "individual") {
     lines.push(`t_person.name         : ${input.subject.name}`);
@@ -411,8 +427,14 @@ function formatDecision(type: ReportType): string[] {
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} MLRO DECISION (TO BE COMPLETED) ${"─".repeat(44)}`);
   if (type === "SANCTIONS") {
-    lines.push("[ ] Accept system recommendation — freeze + FFR + parallel SAR + notify");
-    lines.push("[ ] Modify narrative — record reason (system will flag variation)");
+    lines.push("STEP 1 — MATCH VERIFICATION");
+    lines.push("[ ] Match CONFIRMED — subject is the sanctioned entity (proceed to Step 2)");
+    lines.push("[ ] Match REJECTED  — false positive; document rationale below");
+    lines.push("    Rationale: ____________________________________________");
+    lines.push("");
+    lines.push("STEP 2 — IF MATCH CONFIRMED");
+    lines.push("[ ] Freeze in-flight funds + FFR + parallel SAR + notify EOCN / MoE");
+    lines.push("[ ] Modify recommended action — record reason");
     lines.push("");
     lines.push("MLRO signature: _____________________     Date: _____________");
     lines.push("CEO signature : _____________________     Date: _____________");
@@ -457,10 +479,10 @@ export function buildComplianceReport(input: ReportInput): string {
   if (type === "SANCTIONS") {
     out.push("╔" + "═".repeat(77) + "╗");
     out.push(
-      "║   ⚠  CRITICAL ALERT — CONFIRMED PRIMARY SANCTIONS DESIGNATION  ⚠          ║",
+      "║   ⚠  POSSIBLE SANCTIONS MATCH — MLRO REVIEW REQUIRED BEFORE ANY ACTION  ⚠ ║",
     );
     out.push(
-      "║   IMMEDIATE FREEZE · TIPPING-OFF ABSOLUTE · FFR + SAR REQUIRED            ║",
+      "║   DO NOT FREEZE OR FILE until MLRO has verified match identity            ║",
     );
     out.push("╚" + "═".repeat(77) + "╝");
   }

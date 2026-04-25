@@ -98,6 +98,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       budgetMs: 25_000,
     });
 
+    if (!result.ok) {
+      return NextResponse.json(
+        { ...result, ok: false },
+        { status: 502, headers: gate.headers },
+      );
+    }
     return NextResponse.json(
       { ...result, ok: true },
       { headers: gate.headers },

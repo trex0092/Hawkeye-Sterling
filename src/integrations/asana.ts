@@ -83,30 +83,52 @@ export async function deliverToAsana(
 ): Promise<AsanaDeliveryResult> {
   const envelope = buildAsanaEnvelope(report, config);
   try {
+    const taskBody: Record<string, unknown> = {
+      name: envelope.name,
+      notes: envelope.notes,
+      projects: [config.projectGid],
+      memberships: [{ project: config.projectGid, section: envelope.section }],
+    };
+    if (envelope.customFields && Object.keys(envelope.customFields).length > 0) {
+      taskBody['custom_fields'] = envelope.customFields;
+    }
+    if (envelope.dueOn) taskBody['due_on'] = envelope.dueOn;
+
     const res = await fetchImpl('https://app.asana.com/api/1.0/tasks', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.personalAccessToken}`,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-      body: JSON.stringify({
-        data: {
-          name: envelope.name,
-          notes: envelope.notes,
-          projects: [config.projectGid],
-          memberships: [{ project: config.projectGid, section: envelope.section }],
-        },
-      }),
+      body: JSON.stringify({ data: taskBody }),
     });
     if (!res.ok) {
-      return { ok: false, error: `Asana HTTP ${res.status}` };
+      const detail = await res.text().catch(() => '');
+      return { ok: false, error: `Asana HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}` };
     }
     const json = (await res.json()) as { data?: { gid?: string; permalink_url?: string } };
-    return {
-      ok: true,
-      taskGid: json.data?.gid,
-      url: json.data?.permalink_url,
-    };
+    const taskGid = json.data?.gid;
+    const url = json.data?.permalink_url;
+
+    // Upload attachments via the Asana attachments endpoint if present.
+    if (taskGid && envelope.attachments?.length) {
+      for (const att of envelope.attachments) {
+        try {
+          const form = new FormData();
+          form.append('file', new Blob([att.content], { type: att.mimeType }), att.filename);
+          await fetchImpl(`https://app.asana.com/api/1.0/tasks/${taskGid}/attachments`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${config.personalAccessToken}`, Accept: 'application/json' },
+            body: form,
+          });
+        } catch {
+          // Attachment failure is non-fatal — task already created.
+        }
+      }
+    }
+
+    return { ok: true, taskGid, url };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }

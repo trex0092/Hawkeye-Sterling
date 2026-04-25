@@ -247,8 +247,12 @@ function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Pro
       (err: unknown) => {
         clearTimeout(timer);
         const isAbort = err instanceof DOMException && err.name === 'AbortError';
-        const thrownError = isAbort ? undefined : (err instanceof Error ? err.message : String(err));
-        resolve({ timedOut: isAbort, thrownError });
+        if (isAbort) {
+          resolve({ timedOut: true });
+        } else {
+          const thrownError = err instanceof Error ? err.message : String(err);
+          resolve({ timedOut: false, thrownError });
+        }
       },
     );
   });

@@ -361,6 +361,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                   method: "POST",
                   headers: {
                     "content-type": "application/json",
+                    accept: "application/json",
                     authorization: `Bearer ${asanaToken}`,
                   },
                   body: JSON.stringify(body),
@@ -396,11 +397,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       // shows a continuous heartbeat the regulator can audit.
       try {
         const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+        // Pass the admin token so the screening-report route (which uses
+        // withGuard → requireAuth: true) accepts the internal server-side call.
+        // Without this the request gets 401 and the Asana task is silently lost.
+        const adminToken = process.env["ADMIN_TOKEN"] ?? "";
         const asanaRes = await fetch(
           new URL("/api/screening-report", appBase).toString(),
           {
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers: {
+              "content-type": "application/json",
+              ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+            },
             body: JSON.stringify({
               subject: {
                 id: s.id,
@@ -421,9 +429,12 @@ export async function POST(req: Request): Promise<NextResponse> {
           },
         );
         const payload = (await asanaRes.json().catch(() => null)) as
-          | { taskUrl?: string }
+          | { ok?: boolean; taskUrl?: string }
           | null;
         if (payload?.taskUrl) asanaTaskUrl = payload.taskUrl;
+        else if (asanaRes.status === 401) {
+          console.warn("[ongoing/run] /api/screening-report returned 401 — ADMIN_TOKEN may not be set");
+        }
       } catch {
         /* continue without Asana — non-fatal */
       }
@@ -481,6 +492,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               method: "POST",
               headers: {
                 "content-type": "application/json",
+                accept: "application/json",
                 authorization: `Bearer ${asanaToken}`,
               },
               body: JSON.stringify(body),

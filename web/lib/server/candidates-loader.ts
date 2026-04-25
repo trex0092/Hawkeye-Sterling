@@ -152,7 +152,9 @@ export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
     const live = await loadFromBlobs();
 
     if (!live || live.length === 0) {
-      return STATIC_CANDIDATES;
+      _cached = STATIC_CANDIDATES;
+      _cachedAt = now;
+      return _cached;
     }
 
     // Append static seed entries not already covered by the live data.

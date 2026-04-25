@@ -59,6 +59,10 @@ export function writeAuditEvent(
 
 export function verifyChain(entries: AuditEntry[]): { ok: boolean; brokenAt?: number } {
   if (entries.length === 0) return { ok: true };
+  // Validate entry[0] against the hardcoded genesis sentinel.
+  const first = entries[0]!;
+  const { hash: _h0, ...firstPartial } = first;
+  if (chainHash(firstPartial, GENESIS) !== first.hash) return { ok: false, brokenAt: 0 };
   for (let i = 1; i < entries.length; i++) {
     const prev = entries[i - 1]!;
     const curr = entries[i]!;
