@@ -31,22 +31,22 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
       <div className="grid grid-cols-4 gap-3 mt-5">
         <PillarCard
           label="Global sanctions"
-          detail="OFAC · UN · EU · UK · EOCN + AU · CA · CH · JP · FATF · INTERPOL · WB · ADB"
+          detail="OFAC · UN · EU · UK · EOCN + AU · CA · CH · JP · FATF · INTERPOL · WB · ADB · MDB debarment · 50+ official lists"
           tone="violet"
         />
         <PillarCard
           label="PEP databases"
-          detail="Tier 1–4 · Heads of state · Ministers · SOE directors · Judiciary"
+          detail="Tier 1–4 · Heads of state · Ministers · SOE directors · Judiciary · 15+ PEP registries"
           tone="blue"
         />
         <PillarCard
           label="Adverse media"
-          detail="20,000+ sources · 50+ languages · Real-time RSS · Google News"
+          detail="38 global outlets · 50+ languages · Real-time RSS · Pandora / Panama / FinCEN files · Investigative leaks"
           tone="orange"
         />
         <PillarCard
-          label="RCA"
-          detail="Relatives &amp; close associates · Spouse · Siblings · Known intermediaries"
+          label="257 verified sources"
+          detail="Commercial AML · Crypto analytics · Trade &amp; maritime · Regulatory enforcement · Open-source civil society"
           tone="green"
         />
       </div>
