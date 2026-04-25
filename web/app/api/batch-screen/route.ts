@@ -225,7 +225,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const payload = (await res.json().catch(() => null)) as
         | { data?: { permalink_url?: string } }
         | null;
-      if (payload?.data?.permalink_url) asanaTaskUrl = payload.data.permalink_url;
+      if (res.ok && payload?.data?.permalink_url) asanaTaskUrl = payload.data.permalink_url;
     } catch {
       /* non-fatal — batch results still returned to caller */
     }
