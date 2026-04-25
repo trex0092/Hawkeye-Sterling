@@ -305,9 +305,9 @@ function formatAnalysis(type: ReportType, input: ReportInput): string[] {
   lines.push(
     `The composite score sits in the **${band}** band. ${
       r.hits.length > 0
-        ? `Sanctions hits concentrate on ${Array.from(
+        ? `Possible sanctions matches found on: ${Array.from(
             new Set(r.hits.map((h) => h.listId)),
-          ).join(", ")}.`
+          ).join(", ")} — match identity must be verified by MLRO before any action.`
         : "The subject does not appear on any monitored sanctions regime."
     }`,
   );
