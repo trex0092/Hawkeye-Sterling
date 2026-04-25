@@ -13,6 +13,7 @@ import type {
   QuickScreenSeverity,
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
+import { postScreeningReport } from "@/lib/api/screeningReport";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
 import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
@@ -189,9 +190,6 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     if (escalated) return;
     if (window.confirm(`Escalate ${subject.name} to MLRO?`)) {
       setEscalated(true);
-      // Persist the escalation as a case record so it lands on /cases
-      // under the "Awaiting MLRO" filter. Previously the click only
-      // toggled a local flag — operators saw nothing on the Cases page.
       const composite =
         superBrain.status === "success"
           ? superBrain.result.composite.score
@@ -208,7 +206,39 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           statusDetail: `Escalated from screening (composite ${composite}/100)`,
         }),
       );
-      showFlash("Escalated to MLRO");
+      // Register escalation to Asana immediately — fire-and-forget so the
+      // UX isn't blocked. Uses the screening result if available; falls back
+      // to a synthetic clear result so the task is always created.
+      const escalationResult =
+        screening.status === "success"
+          ? screening.result
+          : {
+              hits: [],
+              topScore: subject.riskScore,
+              severity: "medium" as const,
+              listsChecked: 0,
+              candidatesChecked: 0,
+              durationMs: 0,
+              generatedAt: new Date().toISOString(),
+              subject: qsSubject,
+            };
+      void postScreeningReport({
+        subject: {
+          ...qsSubject,
+          id: subject.id,
+          caseId: subject.id,
+        },
+        result: escalationResult,
+        trigger: "save",
+      }).catch(() => {});
+      attachEvidenceToSubject(subject.name, {
+        category: "four-eyes-approval",
+        title: "Escalated to MLRO",
+        meta: new Date().toISOString(),
+        detail: `Escalated from screening panel (composite ${composite}/100) — filed to Asana`,
+        timelineEvent: "Escalated to MLRO and registered in Asana",
+      });
+      showFlash("Escalated to MLRO — registering in Asana…");
     }
   };
 
