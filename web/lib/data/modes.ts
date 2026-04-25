@@ -1,10 +1,10 @@
 import type { FacultyFilter, ReasoningMode, ReasoningPreset } from "@/lib/types";
 import { slugifyTaxonomyName } from "@/lib/data/taxonomy";
 
-export const TOTAL_MODES = 2132;
+export const TOTAL_MODES = 2254;
 
 export const FACULTY_FILTERS: FacultyFilter[] = [
-  { key: "all", label: "All modes", count: "2132" },
+  { key: "all", label: "All modes", count: "2254" },
   { key: "reasoning", label: "Reasoning", count: "78" },
   { key: "data-analysis", label: "Data Analysis", count: "64" },
   { key: "deep-thinking", label: "Deep Thinking", count: "52" },
@@ -36,7 +36,7 @@ export const FACULTY_FILTERS: FacultyFilter[] = [
   { key: "contractual", label: "Contractual", count: "56" },
   { key: "predictive", label: "Predictive", count: "68" },
   { key: "computational", label: "Computational", count: "60" },
-  { key: "ai-governance", label: "AI Governance", count: "65" },
+  { key: "ai-governance", label: "AI Governance", count: "187" },
 ];
 
 // ── Taxonomy-ID helpers ─────────────────────────────────────────────────────
@@ -1031,6 +1031,78 @@ export const MODES: ReasoningMode[] = [
     taxonomyIds: [...r("Chain of Custody Reasoning"), ...a("Evidence Preservation Analysis")] },
   { id: "RM-937", name: "AI Decision Audit Trail", faculty: "ai-governance",
     taxonomyIds: [...s("Compliance Documentation"), ...r("Audit Trail Integrity Assessment"), ...a("Audit Trail Forensics", "Audit Trail Analysis")] },
+
+  // — Regulatory Layer ——————————————————————————————————————————————————————
+  { id: "RM-940", name: "Prohibited-AI Practice Screen (EU AI Act Art.5)", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation", "Regulatory Inference"), ...a("Gap Analysis")] },
+  { id: "RM-941", name: "High-Risk AI System Checklist (EU AI Act Annex III)", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation"), ...a("Gap Analysis", "Policy Gap Analysis")] },
+  { id: "RM-942", name: "Conformity Assessment Gate", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment"), ...a("Audit Trail Analysis")] },
+  { id: "RM-943", name: "Post-Market AI Monitoring Trigger", faculty: "ai-governance",
+    taxonomyIds: [...r("Gap Assessment Reasoning", "Regulatory Inference"), ...a("Gap Analysis")] },
+  { id: "RM-944", name: "FATF AI/ML Effectiveness Test", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation", "Regulatory Inference")] },
+  { id: "RM-945", name: "MAS FEAT Principles Audit", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment", "Proportionality Assessment"), ...a("Audit Trail Analysis")] },
+  { id: "RM-946", name: "SR 11-7 Model Validation Protocol", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment"), ...a("False Positive Root Cause Analysis", "Gap Analysis")] },
+  { id: "RM-947", name: "NIST AI RMF Mapping", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation"), ...a("Gap Analysis", "Policy Gap Analysis")] },
+  { id: "RM-948", name: "UAE National AI Ethics Compliance", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation", "Cabinet Resolution Reasoning"), ...a("Gap Analysis")] },
+  { id: "RM-949", name: "ISO/IEC 42001 AI Management System Audit", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment"), ...a("Audit Trail Analysis", "Gap Analysis")] },
+
+  // — AI-as-Threat-Vector Layer ——————————————————————————————————————————————
+  { id: "RM-950", name: "Voice-Clone / Vishing Detection", faculty: "ai-governance",
+    taxonomyIds: [...r("Mens Rea Inference"), ...a("Behavioural Pattern Analysis", "Evidence Preservation Analysis")] },
+  { id: "RM-951", name: "LLM-Generated Phishing Probe", faculty: "ai-governance",
+    taxonomyIds: [...r("Red Flag Correlation"), ...a("Behavioural Pattern Analysis")] },
+  { id: "RM-952", name: "Synthetic Identity Document Forensic", faculty: "ai-governance",
+    taxonomyIds: [...r("Chain of Custody Reasoning"), ...a("Evidence Preservation Analysis")] },
+  { id: "RM-953", name: "Deepfake Video KYC Bypass Detector", faculty: "ai-governance",
+    taxonomyIds: [...a("Evidence Preservation Analysis"), ...r("Chain of Custody Reasoning")] },
+  { id: "RM-954", name: "AI-Powered Social Engineering Map", faculty: "ai-governance",
+    taxonomyIds: [...a("Behavioural Pattern Analysis"), ...r("Mens Rea Inference")] },
+  { id: "RM-955", name: "Generative-AI TBML Document Scan", faculty: "ai-governance",
+    taxonomyIds: [...a("Trade-Finance Analysis", "Invoice Pricing Analysis"), ...r("TBML Pattern Reasoning")] },
+  { id: "RM-956", name: "Automated Money-Mule Recruitment Signal", faculty: "ai-governance",
+    taxonomyIds: [...a("Behavioural Pattern Analysis"), ...r("Red Flag Correlation")] },
+  { id: "RM-957", name: "AI Evasion-of-Controls Pattern", faculty: "ai-governance",
+    taxonomyIds: [...r("Gap Assessment Reasoning"), ...a("Suspicious Pattern Investigation")] },
+
+  // — Governance & Accountability Layer ————————————————————————————————————
+  { id: "RM-958", name: "Model Inventory Completeness Audit", faculty: "ai-governance",
+    taxonomyIds: [...s("Compliance Documentation"), ...r("Control Effectiveness Judgment"), ...a("Audit Trail Analysis")] },
+  { id: "RM-959", name: "Third-Party AI Vendor Risk", faculty: "ai-governance",
+    taxonomyIds: [...a("Third-Party Risk Assessment", "Counterparty Risk Analysis")] },
+  { id: "RM-960", name: "AI Concentration Risk Gauge", faculty: "ai-governance",
+    taxonomyIds: [...r("Inherent Risk Logic", "Risk Scoring Logic"), ...a("Customer Risk Scoring")] },
+  { id: "RM-961", name: "Model Validation Independence Check", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment", "Authority Assessment")] },
+  { id: "RM-962", name: "AI Incident Response Drill", faculty: "ai-governance",
+    taxonomyIds: [...s("Escalation Management"), ...r("Escalation Logic"), ...a("Examination Preparation Analysis")] },
+  { id: "RM-963", name: "Right-to-Explanation Compliance (GDPR Art.22)", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation", "Proportionality Assessment"), ...a("Audit Trail Analysis")] },
+  { id: "RM-964", name: "AI Watermark & Provenance Trace", faculty: "ai-governance",
+    taxonomyIds: [...r("Chain of Custody Reasoning"), ...a("Evidence Preservation Analysis", "Audit Trail Analysis")] },
+  { id: "RM-965", name: "Shadow Model Detection", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment"), ...a("Audit Trail Forensics")] },
+
+  // — Technical AI Risk Layer ———————————————————————————————————————————————
+  { id: "RM-966", name: "Adversarial Input Attack Probe", faculty: "ai-governance",
+    taxonomyIds: [...r("Gap Assessment Reasoning"), ...a("Suspicious Pattern Investigation")] },
+  { id: "RM-967", name: "Data-Poisoning Detection Sweep", faculty: "ai-governance",
+    taxonomyIds: [...r("Chain of Custody Reasoning"), ...a("Evidence Preservation Analysis")] },
+  { id: "RM-968", name: "Prompt Injection Guard", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment", "MLRO Judgment")] },
+  { id: "RM-969", name: "Model Inversion Risk Assessment", faculty: "ai-governance",
+    taxonomyIds: [...r("Gap Assessment Reasoning"), ...a("False Positive Root Cause Analysis")] },
+  { id: "RM-970", name: "Membership Inference Exposure Test", faculty: "ai-governance",
+    taxonomyIds: [...a("Evidence Preservation Analysis"), ...r("Regulatory Inference")] },
+  { id: "RM-971", name: "Federated Learning Integrity Check", faculty: "ai-governance",
+    taxonomyIds: [...r("Chain of Custody Reasoning", "Control Effectiveness Judgment")] },
 ];
 
 export const PRESETS: ReasoningPreset[] = [
