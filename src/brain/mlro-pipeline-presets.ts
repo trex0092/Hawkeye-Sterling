@@ -2,7 +2,7 @@
 // Hand-picked mode chains for the 15 case archetypes MLROs meet most often.
 // Each preset is a short ordered sequence of catalogue mode ids chosen so
 // the pipeline output converges on a charter-compliant 7-section narrative
-// within the 25s budget.
+// within the 60s budget.
 
 import type { MlroModeId } from './mlro-reasoning-modes.js';
 

@@ -89,8 +89,8 @@ describe('mlro-budget-planner', () => {
     expect(out[1]!.budgetMs).toBeLessThanOrEqual(7000);
   });
 
-  it('caps at the 25s hard ceiling', () => {
-    const out = equalSplit(3, 60_000);
+  it('caps at the 60s hard ceiling', () => {
+    const out = equalSplit(3, 90_000);
     const sum = out.reduce((a, b) => a + b.budgetMs, 0);
     expect(sum).toBeLessThanOrEqual(HARD_CEILING_MS);
   });
