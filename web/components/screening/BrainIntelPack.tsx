@@ -1412,7 +1412,7 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
       active: result.redlines.fired.length > 0,
       corroborators: result.redlines.fired
         .slice(0, 2)
-        .map((r) => r.id.replace(/_/g, " ")),
+        .map((r) => (r.id ?? "").replace(/_/g, " ")),
     },
     {
       label: "Trade, maritime & corporate data",
