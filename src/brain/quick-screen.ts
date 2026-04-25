@@ -60,6 +60,16 @@ export interface QuickScreenResult {
 const DEFAULT_THRESHOLD = 0.82;
 const DEFAULT_MAX_HITS = 25;
 
+// Shorter / simpler names are more common so require a higher threshold to
+// suppress false positives. Length is measured on the normalised primary name
+// (letters only, particles dropped).
+function dynamicThreshold(primaryName: string): number {
+  const clean = primaryName.toLowerCase().replace(/[^a-z]/g, '');
+  if (clean.length <= 4) return 0.95;
+  if (clean.length <= 7) return 0.88;
+  return DEFAULT_THRESHOLD;
+}
+
 export function severityFromScore(topScore: number, hitCount: number): QuickScreenSeverity {
   if (hitCount === 0) return 'clear';
   if (topScore >= 95) return 'critical';
@@ -73,7 +83,7 @@ export function quickScreen(
   candidates: QuickScreenCandidate[],
   opts: QuickScreenOptions = {},
 ): QuickScreenResult {
-  const threshold = opts.scoreThreshold ?? DEFAULT_THRESHOLD;
+  const threshold = opts.scoreThreshold ?? dynamicThreshold(subject.name);
   const maxHits = opts.maxHits ?? DEFAULT_MAX_HITS;
   const clock = opts.clock ?? (() => Date.now());
   const now = opts.now ?? (() => new Date().toISOString());
@@ -107,12 +117,28 @@ export function quickScreen(
       }
     }
 
-    if (bestScore >= threshold) {
+    // Context-signal boosts: apply small bonuses when corroborating signals
+    // agree, capped at 1.0. Only applied when the base score already cleared
+    // at least 75% so noise candidates aren't lifted above the threshold.
+    let boostedScore = bestScore;
+    if (boostedScore >= 0.75) {
+      if (phonetic) boostedScore = Math.min(1, boostedScore + 0.015);
+      if (subject.jurisdiction && cand.jurisdiction &&
+          subject.jurisdiction.toUpperCase() === cand.jurisdiction.toUpperCase()) {
+        boostedScore = Math.min(1, boostedScore + 0.015);
+      }
+      if (subject.entityType && cand.entityType &&
+          subject.entityType === cand.entityType) {
+        boostedScore = Math.min(1, boostedScore + 0.01);
+      }
+    }
+
+    if (boostedScore >= threshold) {
       const hit: QuickScreenHit = {
         listId: cand.listId,
         listRef: cand.listRef,
         candidateName: cand.name,
-        score: bestScore,
+        score: boostedScore,
         method: bestMethod,
         phoneticAgreement: phonetic,
         reason: reasonFor(bestMethod, phonetic, subject, cand),

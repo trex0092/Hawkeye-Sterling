@@ -288,6 +288,7 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         methods: [
           'exact', 'levenshtein', 'jaro', 'jaro_winkler',
           'soundex', 'double_metaphone', 'token_set',
+          'trigram', 'partial_token_set', 'abbreviated',
         ],
       },
       sanctionRegimes: {
