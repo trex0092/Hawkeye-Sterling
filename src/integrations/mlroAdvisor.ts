@@ -339,6 +339,7 @@ export async function invokeMlroAdvisor(
 export function splitQuestion(question: string): [string, string] {
   const q = question.trim();
   if (!q) throw new Error('splitQuestion: question must be non-empty');
+  if (q.length < 2) throw new Error('splitQuestion: question too short to split');
   const conjMatch = q.match(/\s+(and|&|plus|also|as well as)\s+/i);
   if (conjMatch && typeof conjMatch.index === 'number' && conjMatch.index > 8) {
     const i = conjMatch.index;
@@ -350,7 +351,8 @@ export function splitQuestion(question: string): [string, string] {
     return [q.slice(0, i).trim(), q.slice(i).trim()];
   }
   const mid = Math.floor(q.length / 2);
-  const pivot = q.lastIndexOf(' ', mid) > 0 ? q.lastIndexOf(' ', mid) : mid;
+  const spaceIdx = q.lastIndexOf(' ', mid);
+  const pivot = spaceIdx > 0 ? spaceIdx : Math.max(1, mid);
   return [q.slice(0, pivot).trim(), q.slice(pivot).trim()];
 }
 
