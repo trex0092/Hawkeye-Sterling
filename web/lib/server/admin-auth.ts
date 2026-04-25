@@ -6,6 +6,7 @@
 // -hex 32`) in Netlify → Site settings → Environment variables.
 
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 export function adminAuth(req: Request): NextResponse | null {
   const expected = process.env["ADMIN_TOKEN"];
@@ -20,7 +21,10 @@ export function adminAuth(req: Request): NextResponse | null {
   }
   const auth = req.headers.get("authorization");
   const token = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
-  if (!token || token !== expected) {
+  const expBuf = Buffer.from(expected, "utf8");
+  const tokBuf = Buffer.from(token, "utf8");
+  const match = token.length > 0 && expBuf.length === tokBuf.length && timingSafeEqual(expBuf, tokBuf);
+  if (!match) {
     return NextResponse.json(
       { ok: false, error: "Admin authorization required." },
       { status: 401 },

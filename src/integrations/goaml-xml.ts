@@ -131,6 +131,7 @@ export function serialiseGoamlXml(env: GoAmlEnvelope): string {
         el('first_name', rpFirst),
         el('last_name', rpLast),
         el('occupation', env.reportingPerson.occupation),
+        el('phone', env.reportingPerson.phoneNumber),
         el('email', env.reportingPerson.email),
       ].join(''));
     })(),

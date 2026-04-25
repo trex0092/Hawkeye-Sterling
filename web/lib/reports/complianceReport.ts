@@ -146,13 +146,13 @@ function formatSubject(s: ReportSubject): string[] {
 }
 
 const SCREEN_VECTORS: Array<{ vector: string; engine: string; listIdMatch: RegExp }> = [
-  { vector: "Sanctions (UN)     ", engine: "Hawkeye native    ", listIdMatch: /^UN/i },
-  { vector: "Sanctions (UAE LTL)", engine: "Hawkeye native    ", listIdMatch: /^AE|EOCN/i },
-  { vector: "Sanctions (OFAC)   ", engine: "Hawkeye + WC      ", listIdMatch: /OFAC/i },
-  { vector: "Sanctions (EU)     ", engine: "Hawkeye native    ", listIdMatch: /EU/i },
-  { vector: "Sanctions (UK OFSI)", engine: "Hawkeye native    ", listIdMatch: /UK|OFSI|HMT/i },
-  { vector: "Sanctions (Canada) ", engine: "Hawkeye native    ", listIdMatch: /CA|OSFI|SEMA/i },
-  { vector: "Sanctions (AUS)    ", engine: "Hawkeye native    ", listIdMatch: /AU|DFAT/i },
+  { vector: "Sanctions (UN)     ", engine: "Hawkeye native    ", listIdMatch: /^UN[-_]/i },
+  { vector: "Sanctions (UAE LTL)", engine: "Hawkeye native    ", listIdMatch: /^(?:UAE|AE)[-_]|EOCN|LTL/i },
+  { vector: "Sanctions (OFAC)   ", engine: "Hawkeye + WC      ", listIdMatch: /\bOFAC\b/i },
+  { vector: "Sanctions (EU)     ", engine: "Hawkeye native    ", listIdMatch: /^EU[-_]|[-_]EU\b|\bEU-CFSP\b/i },
+  { vector: "Sanctions (UK OFSI)", engine: "Hawkeye native    ", listIdMatch: /\bOFSI\b|\bHMT\b|^UK[-_]/i },
+  { vector: "Sanctions (Canada) ", engine: "Hawkeye native    ", listIdMatch: /\bOSFI\b|\bSEMA\b|^CA[-_]/i },
+  { vector: "Sanctions (AUS)    ", engine: "Hawkeye native    ", listIdMatch: /\bDFAT\b|^AU[-_]/i },
 ];
 
 function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): string[] {
@@ -162,7 +162,8 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
   lines.push(`${"─".repeat(19)}   ${"─".repeat(17)}   ─────    ${"─".repeat(22)}`);
   for (const v of SCREEN_VECTORS) {
     const hits = r.hits.filter((h) => v.listIdMatch.test(h.listId));
-    const score = hits.length > 0 ? String(Math.round(hits[0]!.score * 100)) : "—";
+    const maxScore = hits.length > 0 ? Math.max(...hits.map((h) => h.score)) : 0;
+    const score = hits.length > 0 ? String(Math.round(maxScore * 100)) : "—";
     // Automated screening never "confirms" a match — only MLRO review can do
     // that. Exact string matches and fuzzy matches are both unverified until
     // a human investigates. Use "POSSIBLE MATCH" to reflect this accurately.
