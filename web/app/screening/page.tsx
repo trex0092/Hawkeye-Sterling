@@ -16,6 +16,7 @@ import { lookupKnownPEP } from "@/lib/data/known-entities";
 import type { CDDPosture, FilterKey, QueueFilter, SortKey, Subject } from "@/lib/types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
+import { writeAuditEvent } from "@/lib/audit";
 
 const CRITICAL_THRESHOLD = 85;
 const SLA_BREACH_THRESHOLD_H = 24;
@@ -445,10 +446,48 @@ export default function ScreeningPage() {
     const subject = buildSubject(data, subjects);
     setSubjects((prev) => [subject, ...prev]);
     if (screen) {
-      // Screen: auto-select to immediately trigger brain panels
       setSelectedId(subject.id);
     }
     setFormOpen(false);
+
+    // Write audit event for every new subject added
+    writeAuditEvent(
+      data.caseId ? `analyst (${data.caseId})` : "analyst",
+      "subject.added",
+      `${subject.name} (${subject.id})`,
+    );
+
+    // Auto-screen: call quick-screen and update risk score in background
+    if (screen) {
+      void (async () => {
+        try {
+          const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string }>(
+            "/api/quick-screen",
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ subject: { name: subject.name, aliases: data.alternateNames } }),
+              label: "Auto-screen failed",
+            },
+          );
+          if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
+            setSubjects((prev) =>
+              prev.map((s) =>
+                s.id === subject.id
+                  ? { ...s, riskScore: res.data!.topScore ?? 0, mostSerious: res.data!.severity ?? s.mostSerious }
+                  : s,
+              ),
+            );
+            writeAuditEvent(
+              "system",
+              "screening.completed",
+              `${subject.name} — score ${res.data.topScore} · ${res.data.severity}`,
+            );
+          }
+        } catch { /* non-fatal */ }
+      })();
+    }
+
     if (data.ongoingScreening) {
       void fetchJson("/api/ongoing", {
         method: "POST",
@@ -464,6 +503,11 @@ export default function ScreeningPage() {
         }),
         label: "Ongoing enrolment failed",
       });
+      writeAuditEvent(
+        data.caseId ? `analyst (${data.caseId})` : "analyst",
+        "ongoing.enrolled",
+        `${subject.name} (${subject.id}) — ${data.ongoingScreening ? "ongoing" : "once"}`,
+      );
     }
   };
 

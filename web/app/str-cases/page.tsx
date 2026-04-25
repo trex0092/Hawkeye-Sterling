@@ -39,6 +39,7 @@ import {
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { SignOffPanel } from "@/components/ui/SignOffPanel";
+import { writeAuditEvent } from "@/lib/audit";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -234,6 +235,7 @@ export default function StrCasesPage() {
             filingType: reportKind,
             narrative: narrative.trim() || undefined,
             mlro,
+            approver: approver.trim() || undefined,
       }),
       label: "Filing failed",
         },
@@ -267,6 +269,13 @@ export default function StrCasesPage() {
       ...(goamlRef.trim() ? { goAMLReference: goamlRef.trim() } : {}),
         });
         appendCase(record);
+
+        // Immutable audit event — four-eyes sign-off recorded in chain
+        writeAuditEvent(
+          mlro || "MLRO",
+          "str.filed",
+          `${reportKind} · ${subject.trim()} · approver: ${approver.trim() || "none"} · case ${record.id}`,
+        );
 
         flashFor("success", "Filed to STR/SAR Asana board");
         setCases((prev) => [

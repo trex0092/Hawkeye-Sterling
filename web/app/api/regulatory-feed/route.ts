@@ -62,16 +62,20 @@ interface GNewsQuery {
 }
 
 const GNEWS_QUERIES: GNewsQuery[] = [
-  { q: '"Ministry of Economy" UAE AML CFT circular regulation 2025 2026', source: "MoET", category: "AML/CFT", tone: "amber" },
-  { q: '"Central Bank UAE" OR "CBUAE" AML CFT directive circular guidance 2025 2026', source: "CBUAE", category: "AML/CFT", tone: "amber" },
-  { q: '"UAE FIU" OR "goAML" UAE financial intelligence unit 2025 2026', source: "UAEFIU", category: "AML/CFT", tone: "amber" },
-  { q: 'UAE import export compliance regulation circular 2025 2026', source: "UAE IEC", category: "Trade", tone: "green" },
-  { q: 'FATF UAE mutual evaluation AML money laundering 2025 2026', source: "FATF", category: "AML/CFT", tone: "red" },
-  { q: 'UAE VARA virtual assets crypto regulation 2025 2026', source: "VARA", category: "VASPs", tone: "amber" },
-  { q: 'UAE Cabinet decision AML sanctions 2025 2026', source: "UAE Cabinet", category: "Sanctions", tone: "red" },
-  { q: 'PDPL UAE data protection law regulation 2025 2026', source: "UAE PDPL", category: "PDPL", tone: "amber" },
-  { q: 'UAE Ministry Economy DPMS gold precious metals 2025 2026', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
-  { q: 'UAE AI artificial intelligence regulation governance 2025 2026', source: "UAE Digital", category: "AI Governance", tone: "green" },
+  { q: '"Ministry of Economy" UAE AML CFT circular regulation', source: "MoET", category: "AML/CFT", tone: "amber" },
+  { q: '"Central Bank UAE" OR "CBUAE" AML CFT directive circular guidance', source: "CBUAE", category: "AML/CFT", tone: "amber" },
+  { q: '"UAE FIU" OR "goAML" UAE financial intelligence unit', source: "UAEFIU", category: "AML/CFT", tone: "amber" },
+  { q: 'UAE import export compliance regulation circular', source: "UAE IEC", category: "Trade", tone: "green" },
+  { q: 'FATF UAE mutual evaluation AML money laundering', source: "FATF", category: "AML/CFT", tone: "red" },
+  { q: 'UAE VARA virtual assets crypto regulation', source: "VARA", category: "VASPs", tone: "amber" },
+  { q: 'UAE Cabinet decision AML sanctions', source: "UAE Cabinet", category: "Sanctions", tone: "red" },
+  { q: 'PDPL UAE data protection law regulation', source: "UAE PDPL", category: "PDPL", tone: "amber" },
+  { q: 'UAE Ministry Economy DPMS gold precious metals', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
+  { q: 'UAE AI artificial intelligence regulation governance', source: "UAE Digital", category: "AI Governance", tone: "green" },
+  { q: 'LBMA "responsible gold guidance" OR "LBMA good delivery" gold refinery audit', source: "LBMA", category: "DPMS", tone: "green" },
+  { q: 'OECD "due diligence guidance" minerals conflict-affected responsible supply chain', source: "OECD", category: "DPMS", tone: "green" },
+  { q: 'RMI "Responsible Minerals Initiative" conflict minerals smelter refiner audit', source: "RMI", category: "DPMS", tone: "amber" },
+  { q: 'EOCN UAE "Executive Office for Control" non-proliferation targeted financial sanctions', source: "EOCN UAE", category: "Sanctions", tone: "red" },
 ];
 
 function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
@@ -105,7 +109,8 @@ function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
 }
 
 async function fetchGNews(query: GNewsQuery): Promise<RegulatoryItem[]> {
-  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query.q)}&hl=en&gl=AE&ceid=AE:en`;
+  // tbs=qdr:m — rolling past-month window, always returns the latest results
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query.q)}&hl=en&gl=AE&ceid=AE:en&tbs=qdr:m`;
   const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
@@ -371,6 +376,26 @@ const STATIC_ITEMS: RegulatoryItem[] = [
     category: "AML/CFT",
     tone: "amber",
     snippet: "goAML 2.0 mandatory for all reporting entities. Enhanced XML schema, new STR/SAR/FFR/PNMR filing requirements.",
+  },
+  {
+    id: "static-rmi-crb",
+    title: "RMI — Responsible Minerals Initiative: Refiner Audit & RMAP Programme",
+    url: "https://www.responsibleminerals.org/rmap",
+    pubDate: "2024-01-01",
+    source: "RMI",
+    category: "DPMS",
+    tone: "amber",
+    snippet: "RMAP audit standard for 3TG and cobalt smelters/refiners. UAE-based entities sourcing from CAHRAs must align with RMI/OECD DDG requirements.",
+  },
+  {
+    id: "static-eocn-tfs",
+    title: "EOCN UAE — Executive Office for Control & Non-Proliferation: Targeted Financial Sanctions List",
+    url: "https://www.eocn.gov.ae",
+    pubDate: "2025-01-01",
+    source: "EOCN UAE",
+    category: "Sanctions",
+    tone: "red",
+    snippet: "UAE consolidated TFS list. All regulated entities must screen against EOCN list within 24h of update. Asset freeze and goAML filing mandatory on match.",
   },
 ];
 

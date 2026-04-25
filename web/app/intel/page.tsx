@@ -51,6 +51,8 @@ const SOURCE_BADGE: Record<string, string> = {
   VARA:       "bg-amber-dim text-amber",
   OECD:       "bg-bg-2 text-ink-2",
   LBMA:       "bg-bg-2 text-ink-2",
+  RMI:        "bg-green-dim text-green",
+  "EOCN UAE": "bg-red-dim text-red",
   "UAE Cabinet": "bg-red-dim text-red",
   "UAE PDPL": "bg-violet-dim text-violet",
   "UAE Digital": "bg-blue-dim text-blue",
@@ -340,7 +342,7 @@ export default function IntelPage() {
         }
         kpis={[
           { value: "4", label: "live government sources" },
-          { value: "10", label: "Google News queries" },
+          { value: "14", label: "Google News queries" },
           { value: "7", label: "adverse-media languages" },
           { value: "30m", label: "regulatory refresh cadence" },
         ]}
