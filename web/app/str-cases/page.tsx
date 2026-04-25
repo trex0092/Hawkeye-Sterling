@@ -38,7 +38,6 @@ import {
   ALL_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
-import { SignOffPanel } from "@/components/ui/SignOffPanel";
 import { writeAuditEvent } from "@/lib/audit";
 
 type FlashTone = "success" | "error";
@@ -532,7 +531,6 @@ export default function StrCasesPage() {
                   </div>
                 }
               />
-              <SignOffPanel />
             </form>
       </Card>
 
