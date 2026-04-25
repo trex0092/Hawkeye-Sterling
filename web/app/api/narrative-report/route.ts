@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import {
   generateNarrativeReport,
+  type NarrativeReportRequest,
 } from "../../../../dist/src/integrations/claudeAgent.js";
 
 export const runtime = "nodejs";
@@ -81,12 +82,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
+    // body.caseReport is arbitrary client JSON; we pass it through to the
+    // Claude agent which handles its own validation against the full schema.
+    const req = {
+      style: body.style ?? "regulator",
+      caseReport: body.caseReport,
+      sourceData: body.sourceData,
+    } as unknown as NarrativeReportRequest;
+
     const result = await generateNarrativeReport(
-      {
-        style: body.style ?? "regulator",
-        caseReport: body.caseReport,
-        sourceData: body.sourceData,
-      },
+      req,
       {
         apiKey,
         model: "claude-opus-4-7",

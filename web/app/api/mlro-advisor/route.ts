@@ -99,7 +99,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     return NextResponse.json(
-      { ok: true, ...result },
+      { ...result, ok: true },
       { headers: gate.headers },
     );
   } catch (err) {

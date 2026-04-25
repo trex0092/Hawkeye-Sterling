@@ -452,7 +452,7 @@ export default function ScreeningPage() {
 
     // Write audit event for every new subject added
     writeAuditEvent(
-      data.responsible || "analyst",
+      data.caseId ? `analyst (${data.caseId})` : "analyst",
       "subject.added",
       `${subject.name} (${subject.id})`,
     );
@@ -504,7 +504,7 @@ export default function ScreeningPage() {
         label: "Ongoing enrolment failed",
       });
       writeAuditEvent(
-        data.responsible || "analyst",
+        data.caseId ? `analyst (${data.caseId})` : "analyst",
         "ongoing.enrolled",
         `${subject.name} (${subject.id}) — ${data.ongoingScreening ? "ongoing" : "once"}`,
       );
