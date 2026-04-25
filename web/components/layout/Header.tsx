@@ -33,6 +33,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
+      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
   },
   {
@@ -45,7 +46,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
       { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
-      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
       { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },

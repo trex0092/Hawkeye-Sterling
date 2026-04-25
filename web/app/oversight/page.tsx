@@ -67,8 +67,8 @@ const APPROVALS: Approval[] = [
     slaHours: 24,
     elapsedHours: 6,
     status: "pending",
-    firstReviewer: "S. Okafor (Compliance Manager)",
-    secondReviewer: "H. Al-Mansoori (MLRO)",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
+    secondReviewer: "Managing Director",
     category: "STR Filing",
     notes: "Structuring pattern detected across 3 transactions. Threshold: AED 155,000. First reviewer signature pending.",
   },
@@ -80,9 +80,9 @@ const APPROVALS: Approval[] = [
     slaHours: 48,
     elapsedHours: 19,
     status: "pending",
-    firstReviewer: "S. Okafor (Compliance Manager)",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
     firstSignedAt: "2025-04-23 16:45",
-    secondReviewer: "H. Al-Mansoori (MLRO)",
+    secondReviewer: "Managing Director",
     category: "Risk Reclassification",
     notes: "Customer inactive 24 months, no adverse media. First reviewer approved.",
   },
@@ -94,9 +94,9 @@ const APPROVALS: Approval[] = [
     slaHours: 72,
     elapsedHours: 72,
     status: "approved",
-    firstReviewer: "S. Okafor (Compliance Manager)",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
     firstSignedAt: "2025-04-22 09:00",
-    secondReviewer: "H. Al-Mansoori (MLRO)",
+    secondReviewer: "Managing Director",
     secondSignedAt: "2025-04-22 15:30",
     category: "Supplier DD",
     notes: "LBMA Good Delivery certified. Full CDD completed. Both reviewers approved.",
@@ -109,9 +109,9 @@ const APPROVALS: Approval[] = [
     slaHours: 24,
     elapsedHours: 36,
     status: "escalated",
-    firstReviewer: "S. Okafor (Compliance Manager)",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
     firstSignedAt: "2025-04-18 14:00",
-    secondReviewer: "H. Al-Mansoori (MLRO)",
+    secondReviewer: "Managing Director",
     category: "Policy Exemption",
     amount: "AED 850,000",
     notes: "Escalated to Board Risk Committee — amount exceeds MLRO delegated authority.",
@@ -124,9 +124,9 @@ const APPROVALS: Approval[] = [
     slaHours: 48,
     elapsedHours: 48,
     status: "rejected",
-    firstReviewer: "S. Okafor (Compliance Manager)",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
     firstSignedAt: "2025-04-15 12:00",
-    secondReviewer: "H. Al-Mansoori (MLRO)",
+    secondReviewer: "Managing Director",
     secondSignedAt: "2025-04-16 09:00",
     category: "Screening Override",
     notes: "MLRO disagreed — media article deemed relevant. Customer placed on enhanced monitoring.",
@@ -140,7 +140,7 @@ const MINUTES: Minute[] = [
     title: "Q2 AML/CFT Governance Committee",
     minuteRef: "GC-MIN-2025-0004",
     approved: true,
-    attendees: ["H. Al-Mansoori (MLRO)", "S. Okafor (Compliance Manager)", "K. Tan (CFO)", "R. Mathur (Board Risk)", "A. Hassan (Legal)"],
+    attendees: ["Managing Director", "Luisa Fernanda (Compliance Officer)", "K. Tan (CFO)", "R. Mathur (Board Risk)", "A. Hassan (Legal)"],
     topics: [
       "Q1 STR/SAR filing statistics and FIU feedback",
       "LBMA RGG Step-4 audit readiness — target Sep 2025",
@@ -162,7 +162,7 @@ const MINUTES: Minute[] = [
     title: "Q1 AML/CFT Governance Committee",
     minuteRef: "GC-MIN-2025-0001",
     approved: true,
-    attendees: ["H. Al-Mansoori (MLRO)", "S. Okafor (Compliance Manager)", "K. Tan (CFO)", "R. Mathur (Board Risk)"],
+    attendees: ["Managing Director", "Luisa Fernanda (Compliance Officer)", "K. Tan (CFO)", "R. Mathur (Board Risk)"],
     topics: [
       "2024 annual STR summary — 14 STRs filed, 2 SARs",
       "EWRA / BWRA annual refresh — scores updated",
@@ -278,11 +278,33 @@ function SlaBar({ elapsed, sla }: { elapsed: number; sla: number }) {
   );
 }
 
-function SignBox({ label, signer, signedAt }: { label: string; signer: string; signedAt?: string }) {
+function SignBox({
+  label,
+  signer,
+  signedAt,
+  editable,
+  onNameChange,
+}: {
+  label: string;
+  signer: string;
+  signedAt?: string;
+  editable?: boolean;
+  onNameChange?: (v: string) => void;
+}) {
   return (
     <div className={`rounded p-2 border text-12 ${signedAt ? "border-green/30 bg-green-dim" : "border-hair-2 bg-bg-1"}`}>
       <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-0.5">{label}</div>
-      <div className="font-medium text-ink-0 text-11">{signer}</div>
+      {editable && !signedAt ? (
+        <input
+          type="text"
+          value={signer}
+          onChange={(e) => onNameChange?.(e.target.value)}
+          placeholder="— fill in manually —"
+          className="w-full font-medium text-ink-0 text-11 bg-transparent border-0 border-b border-hair-2 focus:border-brand focus:outline-none pb-0.5 placeholder:text-ink-3 placeholder:font-normal placeholder:text-10"
+        />
+      ) : (
+        <div className="font-medium text-ink-0 text-11">{signer || "— fill in manually —"}</div>
+      )}
       {signedAt
         ? <div className="text-10 text-green font-mono mt-0.5">✓ Signed {signedAt}</div>
         : <div className="text-10 text-amber font-mono mt-0.5">Awaiting signature</div>}
@@ -293,6 +315,7 @@ function SignBox({ label, signer, signedAt }: { label: string; signer: string; s
 export default function OversightPage() {
   const [tab, setTab] = useState<Tab>("approvals");
   const [expandedMinute, setExpandedMinute] = useState<string | null>(MINUTES[0]?.id ?? null);
+  const [mdName, setMdName] = useState("");
 
   const pendingApprovals = APPROVALS.filter((a) => a.status === "pending").length;
   const slaBreached = APPROVALS.filter((a) => a.status === "pending" && a.elapsedHours > a.slaHours).length;
@@ -366,7 +389,13 @@ export default function OversightPage() {
 
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <SignBox label="First reviewer" signer={a.firstReviewer} signedAt={a.firstSignedAt} />
-                <SignBox label="Second reviewer" signer={a.secondReviewer} signedAt={a.secondSignedAt} />
+                <SignBox
+                  label="Second reviewer"
+                  signer={a.secondSignedAt ? a.secondReviewer : mdName}
+                  signedAt={a.secondSignedAt}
+                  editable={!a.secondSignedAt}
+                  onNameChange={setMdName}
+                />
               </div>
 
               <div className="text-12 text-ink-2 border-l-2 border-hair-2 pl-3">
