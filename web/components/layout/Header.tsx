@@ -48,6 +48,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
       { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
+      { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
+      { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
     ],
   },
   {
