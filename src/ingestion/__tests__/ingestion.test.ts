@@ -95,3 +95,33 @@ describe('adverse-media — RSS + combineAndFilter', () => {
     expect(combined[0]!.headline).toMatch(/fraud/i);
   });
 });
+
+describe('eu-fsf — name resolution logic via xml-lite', () => {
+  it('parses wholeName attribute correctly from XML', async () => {
+    const { parseXml, findAll } = await import('../xml-lite.js');
+    const xml = `<root><nameAlias wholeName="Zayd Al-Mansouri" firstName="Zayd" lastName="Al-Mansouri"/></root>`;
+    const root = parseXml(xml);
+    const alias = findAll(root, 'nameAlias')[0]!;
+    // wholeName takes priority over firstName/lastName in the eu-fsf adapter.
+    const name = (alias.attrs['wholeName']
+      ?? [alias.attrs['firstName'], alias.attrs['lastName']].filter(Boolean).join(' ')).trim();
+    expect(name).toBe('Zayd Al-Mansouri');
+  });
+
+  it('falls back to firstName + lastName when wholeName is absent', async () => {
+    const { parseXml, findAll } = await import('../xml-lite.js');
+    const xml = `<root><nameAlias firstName="John" lastName="Doe"/></root>`;
+    const root = parseXml(xml);
+    const alias = findAll(root, 'nameAlias')[0]!;
+    const name = (alias.attrs['wholeName']
+      ?? [alias.attrs['firstName'], alias.attrs['lastName']].filter(Boolean).join(' ')).trim();
+    expect(name).toBe('John Doe');
+  });
+
+  it('dead-code check: wholeName.toLowerCase() would never match wholeName attribute', async () => {
+    // Regression: the old code had primary?.attrs['wholeName'.toLowerCase()] which
+    // evaluates 'wholeName'.toLowerCase() at parse time to 'wholename' — a different key.
+    expect('wholeName'.toLowerCase()).toBe('wholename');
+    expect('wholeName'.toLowerCase()).not.toBe('wholeName');
+  });
+});

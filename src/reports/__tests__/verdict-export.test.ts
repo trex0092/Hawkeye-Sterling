@@ -91,4 +91,9 @@ describe('verdict exporter', () => {
     expect(d.firepower).toBeCloseTo(0.42);
     expect(d.modesFired).toBe(1);
   });
+
+  it('converts **bold** markers to <strong> tags — no raw ** in output', () => {
+    const html = verdictToHtml(V);
+    expect(html).not.toContain('**');
+  });
 });

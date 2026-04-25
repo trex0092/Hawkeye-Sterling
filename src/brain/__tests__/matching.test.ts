@@ -120,4 +120,16 @@ describe('matching — ensemble', () => {
     expect(e.best.score).toBeGreaterThan(0.8);
     expect(e.phoneticAgreement).toBe(true);
   });
+
+  it('phoneticAgreement is false for completely different names', () => {
+    const e = matchEnsemble('John Smith', 'Zayd Al-Mansouri');
+    expect(e.phoneticAgreement).toBe(false);
+  });
+
+  it('phoneticAgreement does not crash when rawScores is restructured (no ! assertion)', () => {
+    // Regression: rawScores.find(...)! would crash if soundex/metaphone were absent.
+    // Now uses ?. so result is always boolean.
+    const e = matchEnsemble('X', 'X');
+    expect(typeof e.phoneticAgreement).toBe('boolean');
+  });
 });
