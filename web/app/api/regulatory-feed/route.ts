@@ -34,6 +34,9 @@ interface FeedResult {
 
 const FETCH_TIMEOUT_MS = 5_000;
 
+const _y = new Date().getFullYear();
+const YEAR_FILTER = `${_y - 1} ${_y}`;
+
 function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
@@ -62,20 +65,20 @@ interface GNewsQuery {
 }
 
 const GNEWS_QUERIES: GNewsQuery[] = [
-  { q: '"Ministry of Economy" UAE AML CFT circular regulation 2025 2026', source: "MoET", category: "AML/CFT", tone: "amber" },
-  { q: '"Central Bank UAE" OR "CBUAE" AML CFT directive circular guidance 2025 2026', source: "CBUAE", category: "AML/CFT", tone: "amber" },
-  { q: '"UAE FIU" OR "goAML" UAE financial intelligence unit 2025 2026', source: "UAEFIU", category: "AML/CFT", tone: "amber" },
-  { q: 'UAE import export compliance regulation circular 2025 2026', source: "UAE IEC", category: "Trade", tone: "green" },
-  { q: 'FATF UAE mutual evaluation AML money laundering 2025 2026', source: "FATF", category: "AML/CFT", tone: "red" },
-  { q: 'UAE VARA virtual assets crypto regulation 2025 2026', source: "VARA", category: "VASPs", tone: "amber" },
-  { q: 'UAE Cabinet decision AML sanctions 2025 2026', source: "UAE Cabinet", category: "Sanctions", tone: "red" },
-  { q: 'PDPL UAE data protection law regulation 2025 2026', source: "UAE PDPL", category: "PDPL", tone: "amber" },
-  { q: 'UAE Ministry Economy DPMS gold precious metals 2025 2026', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
-  { q: 'UAE AI artificial intelligence regulation governance 2025 2026', source: "UAE Digital", category: "AI Governance", tone: "green" },
-  { q: 'LBMA "responsible gold guidance" OR "LBMA good delivery" gold refinery audit 2025 2026', source: "LBMA", category: "DPMS", tone: "green" },
-  { q: 'OECD "due diligence guidance" minerals conflict-affected responsible supply chain 2025 2026', source: "OECD", category: "DPMS", tone: "green" },
-  { q: 'RMI "Responsible Minerals Initiative" conflict minerals smelter refiner audit 2025 2026', source: "RMI", category: "DPMS", tone: "amber" },
-  { q: 'EOCN UAE "Executive Office for Control" non-proliferation targeted financial sanctions 2025 2026', source: "EOCN UAE", category: "Sanctions", tone: "red" },
+  { q: `"Ministry of Economy" UAE AML CFT circular regulation ${YEAR_FILTER}`, source: "MoET", category: "AML/CFT", tone: "amber" },
+  { q: `"Central Bank UAE" OR "CBUAE" AML CFT directive circular guidance ${YEAR_FILTER}`, source: "CBUAE", category: "AML/CFT", tone: "amber" },
+  { q: `"UAE FIU" OR "goAML" UAE financial intelligence unit ${YEAR_FILTER}`, source: "UAEFIU", category: "AML/CFT", tone: "amber" },
+  { q: `UAE import export compliance regulation circular ${YEAR_FILTER}`, source: "UAE IEC", category: "Trade", tone: "green" },
+  { q: `FATF UAE mutual evaluation AML money laundering ${YEAR_FILTER}`, source: "FATF", category: "AML/CFT", tone: "red" },
+  { q: `UAE VARA virtual assets crypto regulation ${YEAR_FILTER}`, source: "VARA", category: "VASPs", tone: "amber" },
+  { q: `UAE Cabinet decision AML sanctions ${YEAR_FILTER}`, source: "UAE Cabinet", category: "Sanctions", tone: "red" },
+  { q: `PDPL UAE data protection law regulation ${YEAR_FILTER}`, source: "UAE PDPL", category: "PDPL", tone: "amber" },
+  { q: `UAE Ministry Economy DPMS gold precious metals ${YEAR_FILTER}`, source: "MoET / DPMS", category: "DPMS", tone: "amber" },
+  { q: `UAE AI artificial intelligence regulation governance ${YEAR_FILTER}`, source: "UAE Digital", category: "AI Governance", tone: "green" },
+  { q: `LBMA "responsible gold guidance" OR "LBMA good delivery" gold refinery audit ${YEAR_FILTER}`, source: "LBMA", category: "DPMS", tone: "green" },
+  { q: `OECD "due diligence guidance" minerals conflict-affected responsible supply chain ${YEAR_FILTER}`, source: "OECD", category: "DPMS", tone: "green" },
+  { q: `RMI "Responsible Minerals Initiative" conflict minerals smelter refiner audit ${YEAR_FILTER}`, source: "RMI", category: "DPMS", tone: "amber" },
+  { q: `EOCN UAE "Executive Office for Control" non-proliferation targeted financial sanctions ${YEAR_FILTER}`, source: "EOCN UAE", category: "Sanctions", tone: "red" },
 ];
 
 function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
