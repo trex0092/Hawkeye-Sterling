@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // Responsible Minerals Initiative — RMAP audit tracker.
@@ -248,7 +248,7 @@ export default function RmiPage() {
           { value: String(conformant), label: "RMAP conformant" },
           { value: String(nonConformant), label: "non-conformant", tone: nonConformant > 0 ? "red" : undefined },
           { value: String(cahraHigh), label: "CAHRA high-risk", tone: cahraHigh > 0 ? "red" : undefined },
-          { value: String(SMELTERS.length), label: "smelters tracked" },
+          { value: String(smelters.length), label: "smelters tracked" },
         ]}
       />
 
@@ -308,9 +308,8 @@ export default function RmiPage() {
           </thead>
           <tbody>
             {visible.map((s, i) => (
-              <>
+              <Fragment key={s.id}>
                 <tr
-                  key={s.id}
                   className={`cursor-pointer hover:bg-bg-1 transition-colors ${i < visible.length - 1 || expandedRow === s.id ? "border-b border-hair" : ""}`}
                   onClick={() => setExpandedRow(expandedRow === s.id ? null : s.id)}
                 >
@@ -365,7 +364,7 @@ export default function RmiPage() {
                   </td>
                 </tr>
                 {expandedRow === s.id && (
-                  <tr key={`${s.id}-notes`} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
+                  <tr className={i < visible.length - 1 ? "border-b border-hair" : ""}>
                     <td colSpan={11} className="px-4 py-3 bg-bg-1">
                       <div className="flex flex-col gap-2">
                         <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Notes</div>
@@ -377,7 +376,7 @@ export default function RmiPage() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
