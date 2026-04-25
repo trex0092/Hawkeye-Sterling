@@ -549,7 +549,7 @@ export default function ShipmentsPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="font-mono text-10 text-ink-3">{e.ts}</div>
-                      <div className="font-mono text-9 text-ink-3 mt-0.5">#{e.hash}</div>
+                      <div className="font-mono text-10 text-ink-3 mt-0.5">#{e.hash}</div>
                     </div>
                   </div>
                 ))}
