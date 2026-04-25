@@ -306,6 +306,7 @@ async function postDailyTMReport(args: {
           notes: lines.join("\n"),
           projects: [projectGid],
           workspace: workspaceGid,
+          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
         },
       }),
     });

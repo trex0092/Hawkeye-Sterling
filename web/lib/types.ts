@@ -182,7 +182,24 @@ export type Faculty =
   | "psychological"
   | "temporal"
   | "geospatial"
-  | "cryptographic";
+  | "cryptographic"
+  | "ethical"
+  | "quantitative"
+  | "adversarial"
+  | "regulatory"
+  | "behavioral"
+  | "systemic"
+  | "narrative"
+  | "geopolitical"
+  | "reputational"
+  | "operational"
+  | "sociological"
+  | "semantic"
+  | "epidemiological"
+  | "contractual"
+  | "predictive"
+  | "computational"
+  | "ai-governance";
 
 export interface ReasoningMode {
   id: string;
