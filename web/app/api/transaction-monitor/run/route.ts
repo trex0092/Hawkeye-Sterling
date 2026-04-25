@@ -70,16 +70,23 @@ function detectStructuring(txs: Transaction[]): number {
     .filter((t) => t.amount >= DPMS_CASH_THRESHOLD_AED * 0.8 && t.amount < DPMS_CASH_THRESHOLD_AED)
     .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
   let hits = 0;
-  for (let i = 0; i < sorted.length; i++) {
+  let i = 0;
+  while (i < sorted.length) {
     let cluster = 1;
-    for (let j = i + 1; j < sorted.length; j++) {
+    let j = i + 1;
+    for (; j < sorted.length; j++) {
       const deltaH =
         (Date.parse(sorted[j]!.occurredAt) - Date.parse(sorted[i]!.occurredAt)) /
         (1000 * 60 * 60);
       if (deltaH > STRUCTURING_WINDOW_HOURS) break;
       cluster++;
     }
-    if (cluster >= 3) hits++;
+    if (cluster >= 3) {
+      hits++;
+      i = j; // advance past the cluster so overlapping windows aren't recounted
+    } else {
+      i++;
+    }
   }
   return hits;
 }

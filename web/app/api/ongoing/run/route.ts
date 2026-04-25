@@ -387,7 +387,6 @@ export async function POST(req: Request): Promise<NextResponse> {
           err,
         );
       }
-      void newsAlertTaskUrl;
 
       let asanaTaskUrl: string | undefined;
       // File an Asana task on EVERY tick — ongoing-monitoring subjects must
@@ -577,6 +576,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         })),
         webhook,
         ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
+        ...(newsAlertTaskUrl ? { newsAlertTaskUrl } : {}),
         ...(escalationTaskUrl ? { escalationTaskUrl } : {}),
         ...(escalationSkipReason ? { escalationSkipReason } : {}),
       });
