@@ -234,7 +234,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       error: `${prefix}${errorDetail} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
+  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
   return { ok: true, text };
 };
 

@@ -153,6 +153,6 @@ export async function generateNarrativeReport(
       error: `${prefix}${errorDetail} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
     };
   }
-  const html = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
+  const html = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
   return { ok: true, html };
 }
