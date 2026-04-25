@@ -15,25 +15,30 @@ export default function ApiDocsPage() {
 
     const style = document.createElement("style");
     style.textContent = `
-      /* Compact the Servers + Authorize bar */
+      /* Hide redundant server selector — only one server exists */
       .swagger-ui .scheme-container {
-        padding: 6px 20px !important;
+        background: transparent !important;
         box-shadow: none !important;
+        padding: 8px 0 !important;
         margin: 0 !important;
+        position: static !important;
+      }
+      .swagger-ui .servers-title,
+      .swagger-ui .servers > label,
+      .swagger-ui .servers select {
+        display: none !important;
       }
       .swagger-ui .servers { margin: 0 !important; }
-      .swagger-ui .servers > label {
-        font-size: 11px !important;
-        margin: 0 0 2px !important;
+      /* Authorize button — keep visible and tidy */
+      .swagger-ui .auth-wrapper {
+        padding: 0 !important;
+        justify-content: flex-end !important;
       }
-      .swagger-ui .servers select,
-      .swagger-ui .servers .servers-title { font-size: 12px !important; }
-      .swagger-ui .auth-wrapper { padding: 0 !important; }
       .swagger-ui .auth-btn-wrapper { margin: 0 !important; }
       .swagger-ui .btn.authorize {
-        padding: 3px 10px !important;
-        font-size: 12px !important;
-        height: 28px !important;
+        padding: 4px 14px !important;
+        font-size: 13px !important;
+        height: 30px !important;
       }
     `;
     document.head.appendChild(style);

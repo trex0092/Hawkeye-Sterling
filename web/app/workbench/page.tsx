@@ -214,7 +214,7 @@ export default function WorkbenchPage() {
 
   const handleAsk = async () => {
     const q = drQuestion.trim();
-    if (!q || !subjectName.trim() || !brainResult) return;
+    if (!q || !subjectName.trim()) return;
     setDrRunning(true);
     setDrError(null);
     setDrResult(null);
@@ -227,9 +227,11 @@ export default function WorkbenchPage() {
           subjectName: subjectName.trim(),
           mode: drMode,
           audience: "regulator",
-          jurisdiction: brainResult.jurisdiction?.iso2,
-          typologyIds: brainResult.typologies.hits.map((t) => t.id),
-          adverseGroups: brainResult.adverseKeywordGroups.map((g) => g.group),
+          ...(brainResult && {
+            jurisdiction: brainResult.jurisdiction?.iso2,
+            typologyIds: brainResult.typologies.hits.map((t) => t.id),
+            adverseGroups: brainResult.adverseKeywordGroups.map((g) => g.group),
+          }),
         }),
       });
       const data = (await res.json()) as AdvisorResult & { error?: string };
@@ -536,8 +538,8 @@ export default function WorkbenchPage() {
                   </div>
                   <div className="text-12 text-ink-2">
                     Sonnet executor → Opus advisor · 86 directives · charter P1–P10
-                    {!brainResult && (
-                      <span className="ml-2 text-amber-600">— run Super-brain first to unlock</span>
+                    {brainResult && (
+                      <span className="ml-2 text-emerald-600">— enriched with Super-brain context</span>
                     )}
                   </div>
                 </div>
@@ -557,12 +559,12 @@ export default function WorkbenchPage() {
                 <textarea
                   value={drQuestion}
                   onChange={(e) => setDrQuestion(e.target.value)}
-                  disabled={!brainResult || drRunning}
+                  disabled={drRunning}
                   rows={3}
                   placeholder={
-                    brainResult
+                    subjectName.trim()
                       ? `Ask the MLRO Advisor about ${subjectName} — e.g. "What is the risk level and should we file an STR?"`
-                      : "Run Super-brain screening above first, then ask questions here"
+                      : "Enter a subject name above, then ask questions here"
                   }
                   className="w-full px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
@@ -589,7 +591,7 @@ export default function WorkbenchPage() {
                   <button
                     type="button"
                     onClick={() => { void handleAsk(); }}
-                    disabled={!brainResult || !drQuestion.trim() || drRunning}
+                    disabled={!subjectName.trim() || !drQuestion.trim() || drRunning}
                     className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                   >
                     {drRunning ? "Analysing…" : "Ask Advisor"}
