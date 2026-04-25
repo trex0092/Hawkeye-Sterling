@@ -1276,7 +1276,7 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
   const hasAdverseCategory = (pattern: RegExp) =>
     adverseCategories.some((c) => pattern.test(c));
   const cryptoTypology = (result.typologies?.hits ?? []).some((h) =>
-    /crypto|virtual|blockchain|digital.asset/i.test(h.id ?? h.name),
+    /crypto|virtual|blockchain|digital.asset/i.test(h.id),
   );
 
   const sources: Array<{
@@ -1433,7 +1433,7 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
       corroborators: cryptoTypology
         ? (result.typologies?.hits ?? [])
             .filter((h) =>
-              /crypto|virtual|blockchain|digital.asset/i.test(h.id ?? h.name),
+              /crypto|virtual|blockchain|digital.asset/i.test(h.id),
             )
             .slice(0, 2)
             .map((h) => h.name)
@@ -2324,72 +2324,231 @@ const KNOWN_LIST_IDS = new Set([
   "uk_ofsi", "uae_eocn", "uae_local_terrorist",
 ]);
 
-const JURISDICTION_MANDATORY: Record<
-  string,
-  Array<{ source: string; listId?: string; note?: string }>
-> = {
+type MandatoryEntry = { source: string; listId?: string; note?: string };
+
+// Shared bundles reused across jurisdiction groups
+const EU_MANDATORY: MandatoryEntry[] = [
+  { source: "EU Consolidated CFSP",         listId: "eu_consolidated" },
+  { source: "OFAC SDN",                     listId: "ofac_sdn" },
+  { source: "UN Security Council",          listId: "un_1267" },
+  { source: "UK OFSI",                      listId: "uk_ofsi" },
+  { source: "National competent authority", note: "manual query" },
+];
+
+const GCC_MANDATORY: MandatoryEntry[] = [
+  { source: "OFAC SDN",              listId: "ofac_sdn" },
+  { source: "UN Security Council",   listId: "un_1267" },
+  { source: "EU Consolidated",       listId: "eu_consolidated" },
+  { source: "UK OFSI",               listId: "uk_ofsi" },
+  { source: "GCC Customs / Mowafaq", note: "manual query" },
+];
+
+const FATF_GREY: MandatoryEntry[] = [
+  { source: "OFAC SDN",             listId: "ofac_sdn" },
+  { source: "UN Security Council",  listId: "un_1267" },
+  { source: "EU Consolidated",      listId: "eu_consolidated" },
+  { source: "UK OFSI",              listId: "uk_ofsi" },
+  { source: "FATF grey-list notice", note: "manual query" },
+  { source: "Egmont FIU channel",   note: "manual query" },
+];
+
+const SANCTION_TIER: MandatoryEntry[] = [
+  { source: "OFAC SDN",            listId: "ofac_sdn" },
+  { source: "OFAC Consolidated",   listId: "ofac_cons" },
+  { source: "UN Security Council", listId: "un_1267" },
+  { source: "EU Consolidated",     listId: "eu_consolidated" },
+  { source: "UK OFSI",             listId: "uk_ofsi" },
+];
+
+const JURISDICTION_MANDATORY: Record<string, MandatoryEntry[]> = {
+  // ── UAE ──────────────────────────────────────────────────────────────
   AE: [
-    { source: "UAE EOCN Local TFS",           listId: "uae_eocn" },
-    { source: "UAE Cabinet Res. 74/2020",      listId: "uae_local_terrorist" },
-    { source: "OFAC SDN",                      listId: "ofac_sdn" },
-    { source: "UN Security Council",           listId: "un_1267" },
-    { source: "EU Consolidated",               listId: "eu_consolidated" },
-    { source: "DFSA / FSRA Public Register",   note: "manual query" },
-    { source: "CBUAE Financial Sanctions",     note: "manual query" },
+    { source: "UAE EOCN Local TFS",          listId: "uae_eocn" },
+    { source: "UAE Cabinet Res. 74/2020",    listId: "uae_local_terrorist" },
+    { source: "OFAC SDN",                    listId: "ofac_sdn" },
+    { source: "UN Security Council",         listId: "un_1267" },
+    { source: "EU Consolidated",             listId: "eu_consolidated" },
+    { source: "DFSA / FSRA Public Register", note: "manual query" },
+    { source: "CBUAE Financial Sanctions",   note: "manual query" },
   ],
+  // ── UK ───────────────────────────────────────────────────────────────
   GB: [
-    { source: "UK OFSI Consolidated",         listId: "uk_ofsi" },
-    { source: "OFAC SDN",                     listId: "ofac_sdn" },
-    { source: "EU Consolidated",              listId: "eu_consolidated" },
-    { source: "UN Security Council",          listId: "un_1267" },
-    { source: "UK FCA Register",              note: "manual query" },
-    { source: "UK Companies House PSC",       note: "manual query" },
+    { source: "UK OFSI Consolidated",       listId: "uk_ofsi" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UN Security Council",        listId: "un_1267" },
+    { source: "UK FCA Register",            note: "manual query" },
+    { source: "UK Companies House PSC",     note: "manual query" },
   ],
+  // ── US ───────────────────────────────────────────────────────────────
   US: [
-    { source: "OFAC SDN",                     listId: "ofac_sdn" },
-    { source: "OFAC Consolidated",            listId: "ofac_cons" },
-    { source: "UN Security Council",          listId: "un_1267" },
-    { source: "BIS Entity List",              note: "manual query" },
-    { source: "FinCEN Designated Persons",    note: "manual query" },
-    { source: "State Dept Debarred (AECA)",   note: "manual query" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "OFAC Consolidated",          listId: "ofac_cons" },
+    { source: "UN Security Council",        listId: "un_1267" },
+    { source: "BIS Entity List",            note: "manual query" },
+    { source: "FinCEN Designated Persons",  note: "manual query" },
+    { source: "State Dept Debarred (AECA)", note: "manual query" },
   ],
+  // ── Russia ───────────────────────────────────────────────────────────
   RU: [
-    { source: "EU CFSP 2014/145 (Russia)",    listId: "eu_consolidated" },
-    { source: "OFAC SDN",                     listId: "ofac_sdn" },
-    { source: "UK OFSI",                      listId: "uk_ofsi" },
-    { source: "UN Security Council",          listId: "un_1267" },
-    { source: "Switzerland SECO",             note: "manual query" },
+    { source: "EU CFSP 2014/145 (Russia)",  listId: "eu_consolidated" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+    { source: "UN Security Council",        listId: "un_1267" },
+    { source: "Switzerland SECO",           note: "manual query" },
   ],
+  // ── Iran ─────────────────────────────────────────────────────────────
   IR: [
-    { source: "UNSC Res. 2231 (Iran)",        listId: "un_1267" },
-    { source: "OFAC SDN",                     listId: "ofac_sdn" },
-    { source: "EU Consolidated",              listId: "eu_consolidated" },
-    { source: "UK OFSI",                      listId: "uk_ofsi" },
+    { source: "UNSC Res. 2231 (Iran)",      listId: "un_1267" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
   ],
+  // ── North Korea ───────────────────────────────────────────────────────
   KP: [
-    { source: "UNSC DPRK Committee (1718)",   listId: "un_1267" },
-    { source: "OFAC SDN",                     listId: "ofac_sdn" },
-    { source: "EU Consolidated",              listId: "eu_consolidated" },
+    { source: "UNSC DPRK Committee (1718)", listId: "un_1267" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
   ],
+  // ── Belarus ──────────────────────────────────────────────────────────
   BY: [
-    { source: "EU Consolidated",             listId: "eu_consolidated" },
-    { source: "OFAC SDN",                    listId: "ofac_sdn" },
-    { source: "UK OFSI",                     listId: "uk_ofsi" },
-    { source: "UN Security Council",         listId: "un_1267" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+    { source: "UN Security Council",        listId: "un_1267" },
   ],
+  // ── Syria ────────────────────────────────────────────────────────────
   SY: [
-    { source: "OFAC SDN",                    listId: "ofac_sdn" },
-    { source: "EU Consolidated",             listId: "eu_consolidated" },
-    { source: "UK OFSI",                     listId: "uk_ofsi" },
-    { source: "UN Security Council",         listId: "un_1267" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+    { source: "UN Security Council",        listId: "un_1267" },
   ],
+  // ── Cuba ─────────────────────────────────────────────────────────────
+  CU: SANCTION_TIER,
+  // ── Venezuela ────────────────────────────────────────────────────────
+  VE: SANCTION_TIER,
+  // ── Zimbabwe ─────────────────────────────────────────────────────────
+  ZW: SANCTION_TIER,
+  // ── China ────────────────────────────────────────────────────────────
+  CN: [
+    { source: "OFAC SDN",           listId: "ofac_sdn" },
+    { source: "UN Security Council", listId: "un_1267" },
+    { source: "EU Consolidated",    listId: "eu_consolidated" },
+    { source: "UK OFSI",            listId: "uk_ofsi" },
+    { source: "BIS Entity List",    note: "manual query" },
+  ],
+  // ── Turkey ───────────────────────────────────────────────────────────
+  TR: [
+    { source: "OFAC SDN",           listId: "ofac_sdn" },
+    { source: "UN Security Council", listId: "un_1267" },
+    { source: "EU Consolidated",    listId: "eu_consolidated" },
+    { source: "UK OFSI",            listId: "uk_ofsi" },
+    { source: "MASAK (Turkey FIU)", note: "manual query" },
+  ],
+  // ── Afghanistan ───────────────────────────────────────────────────────
+  AF: [
+    { source: "UNSC Res. 1988 (Taliban)", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Libya ────────────────────────────────────────────────────────────
+  LY: [
+    { source: "UNSC Libya Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Sudan ────────────────────────────────────────────────────────────
+  SD: [
+    { source: "UNSC Sudan Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Somalia ──────────────────────────────────────────────────────────
+  SO: [
+    { source: "UNSC Somalia Committee", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── DRC ──────────────────────────────────────────────────────────────
+  CD: [
+    { source: "UNSC DRC Committee",     listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── CAR ──────────────────────────────────────────────────────────────
+  CF: [
+    { source: "UNSC CAR Committee",     listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── South Sudan ───────────────────────────────────────────────────────
+  SS: [
+    { source: "UNSC S.Sudan Committee", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── Yemen ────────────────────────────────────────────────────────────
+  YE: [
+    { source: "UNSC Yemen Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Mali ─────────────────────────────────────────────────────────────
+  ML: [
+    { source: "UNSC Mali Committee",    listId: "un_1267" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+  ],
+  // ── Haiti ────────────────────────────────────────────────────────────
+  HT: [
+    { source: "UNSC Haiti Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── Lebanon ───────────────────────────────────────────────────────────
+  LB: [
+    { source: "UNSC Lebanon Committee", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Iraq ─────────────────────────────────────────────────────────────
+  IQ: [
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "UN Security Council",    listId: "un_1267" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── EU member states (27) — all require EU Consolidated ───────────────
+  AT: EU_MANDATORY, BE: EU_MANDATORY, BG: EU_MANDATORY,
+  CY: EU_MANDATORY, CZ: EU_MANDATORY, DK: EU_MANDATORY, EE: EU_MANDATORY,
+  FI: EU_MANDATORY, FR: EU_MANDATORY, DE: EU_MANDATORY, GR: EU_MANDATORY,
+  HR: EU_MANDATORY, HU: EU_MANDATORY, IE: EU_MANDATORY, IT: EU_MANDATORY,
+  LV: EU_MANDATORY, LT: EU_MANDATORY, LU: EU_MANDATORY, MT: EU_MANDATORY,
+  NL: EU_MANDATORY, PL: EU_MANDATORY, PT: EU_MANDATORY, RO: EU_MANDATORY,
+  SK: EU_MANDATORY, SI: EU_MANDATORY, ES: EU_MANDATORY, SE: EU_MANDATORY,
+  // ── GCC states ────────────────────────────────────────────────────────
+  SA: GCC_MANDATORY, QA: GCC_MANDATORY, KW: GCC_MANDATORY,
+  BH: GCC_MANDATORY, OM: GCC_MANDATORY,
+  // ── FATF grey-listed (2024/2025) — not already covered above ──────────
+  MM: FATF_GREY, PK: FATF_GREY, NG: FATF_GREY, CM: FATF_GREY,
+  VU: FATF_GREY, MN: FATF_GREY, LA: FATF_GREY, KG: FATF_GREY,
+  SN: FATF_GREY, BF: FATF_GREY, MZ: FATF_GREY, PH: FATF_GREY,
+  TZ: FATF_GREY, UG: FATF_GREY, VN: FATF_GREY, PA: FATF_GREY,
+  ZA: FATF_GREY, JO: FATF_GREY, JM: FATF_GREY,
 };
 
-const GLOBAL_MANDATORY: Array<{ source: string; listId?: string }> = [
-  { source: "OFAC SDN",          listId: "ofac_sdn" },
+const GLOBAL_MANDATORY: MandatoryEntry[] = [
+  { source: "OFAC SDN",            listId: "ofac_sdn" },
   { source: "UN Security Council", listId: "un_1267" },
-  { source: "EU Consolidated",   listId: "eu_consolidated" },
-  { source: "UK OFSI",           listId: "uk_ofsi" },
+  { source: "EU Consolidated",     listId: "eu_consolidated" },
+  { source: "UK OFSI",             listId: "uk_ofsi" },
 ];
 
 export function BrainCoverageGap({ result }: { result: SuperBrainResult }) {
