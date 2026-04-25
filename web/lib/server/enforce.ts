@@ -42,9 +42,10 @@ export async function enforce(
   // management, while ADMIN_TOKEN itself never leaves the server env var.
   const adminToken = process.env["ADMIN_TOKEN"];
   const adminMatch = adminToken && plaintext !== null && (() => {
-    const a = Buffer.from(adminToken, "utf8");
-    const b = Buffer.from(plaintext, "utf8");
-    return a.length === b.length && timingSafeEqual(a, b);
+    const enc = new TextEncoder();
+    const a = enc.encode(adminToken);
+    const b = enc.encode(plaintext);
+    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
   })();
   if (adminMatch) {
     const rl = await consumeRateLimit("portal_admin", "enterprise");
