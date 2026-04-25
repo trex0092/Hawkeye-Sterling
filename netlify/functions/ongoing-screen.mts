@@ -1,10 +1,12 @@
-// Netlify Scheduled Function — twice-daily ongoing screening.
+// Netlify Scheduled Function — hourly ongoing-screening heartbeat.
 //
-// Schedule: 00:00 and 12:00 UTC every day (cron "0 0,12 * * *").
-// Action: POSTs to the deployed site's /api/ongoing/run route, which iterates
-//         all enrolled subjects, reruns the brain quickScreen, diffs new hits
-//         against the last-stored snapshot and posts Asana delta tasks +
-//         webhook events for anything new.
+// Schedule: top of every hour (cron "0 * * * *"). The /api/ongoing/run
+//           route checks each subject's `nextRunAt` and only rescreens
+//           those whose cadence is due, so a single hourly tick handles
+//           hourly, daily, weekly and monthly cadences.
+// Action:   POSTs to /api/ongoing/run, which reruns the brain quickScreen,
+//           diffs new hits against the last-stored snapshot and posts
+//           Asana delta tasks + webhook events for anything new.
 //
 // The self-fetch pattern keeps all brain state and integrations in the main
 // Next.js function bundle; this scheduled function is just the heartbeat.
@@ -22,10 +24,13 @@ export default async (_req: Request) => {
   };
   if (token) headers.authorization = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 24_000);
   try {
     const res = await fetch(`${base}/api/ongoing/run`, {
       method: "POST",
       headers,
+      signal: controller.signal,
     });
     const text = await res.text();
     return new Response(
@@ -51,6 +56,8 @@ export default async (_req: Request) => {
         headers: { "content-type": "application/json" },
       },
     );
+  } finally {
+    clearTimeout(deadline);
   }
 };
 

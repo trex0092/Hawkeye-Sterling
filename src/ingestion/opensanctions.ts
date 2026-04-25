@@ -15,6 +15,8 @@ export interface OpenSanctionsSearchOptions {
   apiKey?: string;
   endpoint?: string;
   fetchImpl?: typeof fetch;
+  /** Upstream call deadline in ms; defaults to 10_000. */
+  timeoutMs?: number;
 }
 
 interface OpenSanctionsEntity {
@@ -37,7 +39,21 @@ export async function searchOpenSanctions(opts: OpenSanctionsSearchOptions): Pro
   const headers: Record<string, string> = { accept: 'application/json' };
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
-  const res = await fetchImpl(url.toString(), { method: 'GET', headers });
+  // Bound the upstream call so a hung api.opensanctions.org doesn't stall
+  // the whole screening pipeline. 10 s is well under the typical Netlify
+  // function deadline and gives the caller a clear failure to retry.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), opts.timeoutMs ?? 10_000);
+  let res: Response;
+  try {
+    res = await fetchImpl(url.toString(), {
+      method: 'GET',
+      headers,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) throw new Error(`OpenSanctions HTTP ${res.status}`);
   const json = (await res.json()) as { results?: OpenSanctionsEntity[] };
   return (json.results ?? []).map(normalise);

@@ -75,9 +75,11 @@ const DEFAULTS: Required<DetectOptions> = {
   minRingCount: 3,
 };
 
+// Returns NaN for unparseable timestamps so downstream filters can drop the
+// transaction rather than silently treating it as t=0 (which previously
+// collapsed into a false "0-day cluster" of bad-data rows).
 function parseMs(at: string): number {
-  const t = Date.parse(at);
-  return Number.isNaN(t) ? 0 : t;
+  return Date.parse(at);
 }
 
 function withinWindow(ms: number[], windowMs: number): boolean {
@@ -95,7 +97,11 @@ export function detectSmurfing(
   const bandLow = cfg.thresholdAed * cfg.bandLow;
   const bandHigh = cfg.thresholdAed * cfg.bandHigh;
 
-  const cashy = txs.filter((t) => t.channel === 'cash' || t.channel === 'courier');
+  const cashy = txs.filter(
+    (t) =>
+      (t.channel === 'cash' || t.channel === 'courier') &&
+      Number.isFinite(parseMs(t.at)),
+  );
 
   const clusters: Cluster[] = [];
 
