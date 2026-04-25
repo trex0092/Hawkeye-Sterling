@@ -1,10 +1,10 @@
 import type { FacultyFilter, ReasoningMode, ReasoningPreset } from "@/lib/types";
 import { slugifyTaxonomyName } from "@/lib/data/taxonomy";
 
-export const TOTAL_MODES = 1080;
+export const TOTAL_MODES = 1458;
 
 export const FACULTY_FILTERS: FacultyFilter[] = [
-  { key: "all", label: "All modes", count: "1080" },
+  { key: "all", label: "All modes", count: "1458" },
   { key: "reasoning", label: "Reasoning", count: "78" },
   { key: "data-analysis", label: "Data Analysis", count: "64" },
   { key: "deep-thinking", label: "Deep Thinking", count: "52" },
@@ -20,6 +20,12 @@ export const FACULTY_FILTERS: FacultyFilter[] = [
   { key: "temporal", label: "Temporal", count: "71" },
   { key: "geospatial", label: "Geospatial", count: "68" },
   { key: "cryptographic", label: "Cryptographic", count: "52" },
+  { key: "ethical", label: "Ethical", count: "60" },
+  { key: "quantitative", label: "Quantitative", count: "57" },
+  { key: "adversarial", label: "Adversarial", count: "63" },
+  { key: "regulatory", label: "Regulatory", count: "74" },
+  { key: "behavioral", label: "Behavioral", count: "69" },
+  { key: "systemic", label: "Systemic", count: "55" },
 ];
 
 // ── Taxonomy-ID helpers ─────────────────────────────────────────────────────
@@ -705,6 +711,114 @@ export const MODES: ReasoningMode[] = [
     taxonomyIds: [...a("On-Chain Analytics")] },
   { id: "RM-607", name: "Darknet Market Proximity", faculty: "cryptographic",
     taxonomyIds: [...a("On-Chain Analytics")] },
+
+  // ═══ ETHICAL ════════════════════════════════════════════════════════════
+  { id: "RM-620", name: "Ethical Matrix Assessment", faculty: "ethical",
+    taxonomyIds: [...s("Judgment and Discretion"), ...r("Proportionality Assessment")] },
+  { id: "RM-621", name: "Conflict of Interest Scan", faculty: "ethical",
+    taxonomyIds: [...r("Control Effectiveness Judgment"), ...a("Audit Trail Forensics")] },
+  { id: "RM-622", name: "Fiduciary Duty Check", faculty: "ethical",
+    taxonomyIds: [...r("MLRO Judgment", "Regulatory Interpretation")] },
+  { id: "RM-623", name: "Whistleblower Protection Review", faculty: "ethical",
+    taxonomyIds: [...s("Escalation Management"), ...r("Escalation Logic")] },
+  { id: "RM-624", name: "Proportionality Ethics Test", faculty: "ethical",
+    taxonomyIds: [...r("Proportionality Assessment", "Materiality Assessment")] },
+  { id: "RM-625", name: "Moral Hazard Detection", faculty: "ethical",
+    taxonomyIds: [...r("MLRO Judgment"), ...a("Behavioural Pattern Analysis")] },
+  { id: "RM-626", name: "Duty of Care Evaluation", faculty: "ethical",
+    taxonomyIds: [...s("Judgment and Discretion"), ...r("Proportionate Response Determination")] },
+  { id: "RM-627", name: "Anti-Corruption Pledge Verification", faculty: "ethical",
+    taxonomyIds: [...r("Regulatory Interpretation"), ...a("PEP & Corruption Investigation")] },
+
+  // ═══ QUANTITATIVE ═══════════════════════════════════════════════════════
+  { id: "RM-640", name: "Monte Carlo Risk Simulation", faculty: "quantitative",
+    taxonomyIds: [...r("Risk Scoring Logic"), ...a("Customer Risk Scoring")] },
+  { id: "RM-641", name: "Regression Tree Analysis", faculty: "quantitative",
+    taxonomyIds: [...a("Pattern Detection"), ...r("Transaction Pattern Reasoning")] },
+  { id: "RM-642", name: "Entropy Maximisation", faculty: "quantitative",
+    taxonomyIds: [...r("Indicator Weighting"), ...a("Suspicious Pattern Investigation")] },
+  { id: "RM-643", name: "Fourier Decomposition", faculty: "quantitative",
+    taxonomyIds: [...a("Time-Series Pattern Analysis")] },
+  { id: "RM-644", name: "Principal Component Scan", faculty: "quantitative",
+    taxonomyIds: [...a("Pattern Detection"), ...r("Red Flag Correlation")] },
+  { id: "RM-645", name: "Hidden Markov Estimation", faculty: "quantitative",
+    taxonomyIds: [...r("Transaction Pattern Reasoning"), ...a("Velocity Analysis")] },
+  { id: "RM-646", name: "Gradient Descent Calibration", faculty: "quantitative",
+    taxonomyIds: [...r("Risk Scoring Logic")] },
+  { id: "RM-647", name: "Variance Inflation Factor", faculty: "quantitative",
+    taxonomyIds: [...a("False Positive Root Cause Analysis"), ...r("Indicator Weighting")] },
+
+  // ═══ ADVERSARIAL ════════════════════════════════════════════════════════
+  { id: "RM-660", name: "Red-Team Scenario Build", faculty: "adversarial",
+    taxonomyIds: [...r("Examination Preparation Logic"), ...a("Examination Preparation Analysis")] },
+  { id: "RM-661", name: "Attack Path Enumeration", faculty: "adversarial",
+    taxonomyIds: [...a("Suspicious Pattern Investigation")] },
+  { id: "RM-662", name: "Countermeasure Bypass Probe", faculty: "adversarial",
+    taxonomyIds: [...r("Gap Assessment Reasoning"), ...a("Gap Analysis")] },
+  { id: "RM-663", name: "Insider Collusion Hypothesis", faculty: "adversarial",
+    taxonomyIds: [...a("Behavioural Pattern Analysis"), ...r("Mens Rea Inference")] },
+  { id: "RM-664", name: "Social Engineering Vector Map", faculty: "adversarial",
+    taxonomyIds: [...a("Behavioural Pattern Analysis")] },
+  { id: "RM-665", name: "Regulatory Arbitrage Exploit", faculty: "adversarial",
+    taxonomyIds: [...r("Jurisdiction Risk Reasoning"), ...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-666", name: "Cover-Story Plausibility Test", faculty: "adversarial",
+    taxonomyIds: [...r("Mens Rea Inference", "MLRO Judgment")] },
+  { id: "RM-667", name: "Reverse-Engineer Layering Path", faculty: "adversarial",
+    taxonomyIds: [...a("Placement/Layering/Integration Staging"), ...r("TBML Pattern Reasoning")] },
+
+  // ═══ REGULATORY ═════════════════════════════════════════════════════════
+  { id: "RM-680", name: "FATF Recommendation Walk", faculty: "regulatory",
+    taxonomyIds: [...r("Regulatory Interpretation"), ...a("Cabinet Resolution Interpretation Analysis")] },
+  { id: "RM-681", name: "CBUAE Circular Compliance", faculty: "regulatory",
+    taxonomyIds: [...r("Cabinet Resolution Reasoning", "Regulatory Interpretation")] },
+  { id: "RM-682", name: "FDL 20/2018 Article Trace", faculty: "regulatory",
+    taxonomyIds: [...r("Cabinet Resolution Reasoning"), ...a("TFS Compliance Deep Analysis")] },
+  { id: "RM-683", name: "VARA Regulation Map", faculty: "regulatory",
+    taxonomyIds: [...r("Digital Asset Reasoning", "VARA Reasoning"), ...a("Digital Asset Deep Analysis")] },
+  { id: "RM-684", name: "Basel AML Index Benchmark", faculty: "regulatory",
+    taxonomyIds: [...r("Regulatory Inference"), ...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-685", name: "DNFBP Registration Check", faculty: "regulatory",
+    taxonomyIds: [...r("Regulatory Interpretation"), ...s("Compliance Documentation")] },
+  { id: "RM-686", name: "Exam Finding Tracker", faculty: "regulatory",
+    taxonomyIds: [...s("Examination Preparation"), ...r("Examination Preparation Logic")] },
+  { id: "RM-687", name: "Regulatory Breach Severity Rating", faculty: "regulatory",
+    taxonomyIds: [...r("Proportionality Assessment", "Materiality Assessment"), ...a("Gap Analysis")] },
+
+  // ═══ BEHAVIORAL ═════════════════════════════════════════════════════════
+  { id: "RM-700", name: "Prospect Theory Framing", faculty: "behavioral",
+    taxonomyIds: [...r("MLRO Judgment"), ...a("Behavioural Pattern Analysis")] },
+  { id: "RM-701", name: "Loss Aversion Calibration", faculty: "behavioral",
+    taxonomyIds: [...r("Control Effectiveness Judgment")] },
+  { id: "RM-702", name: "Anchoring Bias Correction", faculty: "behavioral",
+    taxonomyIds: [...r("MLRO Judgment", "False Positive Determination")] },
+  { id: "RM-703", name: "Herd Behaviour Detector", faculty: "behavioral",
+    taxonomyIds: [...a("Behavioural Pattern Analysis", "Pattern Detection")] },
+  { id: "RM-704", name: "Status Quo Bias Override", faculty: "behavioral",
+    taxonomyIds: [...r("MLRO Judgment", "Policy Application Reasoning")] },
+  { id: "RM-705", name: "Hyperbolic Discounting Check", faculty: "behavioral",
+    taxonomyIds: [...r("Proportionality Assessment")] },
+  { id: "RM-706", name: "Overconfidence Dampener", faculty: "behavioral",
+    taxonomyIds: [...r("Control Effectiveness Judgment", "MLRO Judgment")] },
+  { id: "RM-707", name: "Sunk Cost Fallacy Guard", faculty: "behavioral",
+    taxonomyIds: [...r("MLRO Judgment"), ...s("Judgment and Discretion")] },
+
+  // ═══ SYSTEMIC ═══════════════════════════════════════════════════════════
+  { id: "RM-720", name: "Macro Risk Cascade", faculty: "systemic",
+    taxonomyIds: [...r("Inherent Risk Logic", "Risk Scoring Logic"), ...a("Customer Risk Scoring")] },
+  { id: "RM-721", name: "Contagion Path Mapping", faculty: "systemic",
+    taxonomyIds: [...a("Counterparty Risk Analysis", "Third-Party Risk Assessment")] },
+  { id: "RM-722", name: "Second-Order Effect Scan", faculty: "systemic",
+    taxonomyIds: [...r("Supply Chain Risk Logic"), ...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-723", name: "Critical Infrastructure Link", faculty: "systemic",
+    taxonomyIds: [...r("Regulatory Inference"), ...a("Jurisdiction Risk Analysis")] },
+  { id: "RM-724", name: "Systemic Stress Simulation", faculty: "systemic",
+    taxonomyIds: [...r("Risk Scoring Logic"), ...a("Customer Risk Scoring")] },
+  { id: "RM-725", name: "Feedback Loop Identification", faculty: "systemic",
+    taxonomyIds: [...a("Circular Transaction Analysis"), ...r("Transaction Pattern Reasoning")] },
+  { id: "RM-726", name: "Resilience Threshold Probe", faculty: "systemic",
+    taxonomyIds: [...r("Gap Assessment Reasoning"), ...a("Gap Analysis")] },
+  { id: "RM-727", name: "Interconnectedness Score", faculty: "systemic",
+    taxonomyIds: [...a("UBO Beneficial Ownership Mapping", "Corporate Structure Analysis")] },
 ];
 
 export const PRESETS: ReasoningPreset[] = [
