@@ -638,6 +638,16 @@ export default function WorkbenchPage() {
                     )}
                   </div>
 
+                  {/* API error — shown when executor/advisor fails */}
+                  {drResult.error && (
+                    <div className="bg-red-dim border border-red/30 rounded-lg p-3">
+                      <div className="text-11 font-semibold uppercase tracking-wide-3 text-red mb-1">
+                        Pipeline error
+                      </div>
+                      <p className="text-12 text-red font-mono m-0 whitespace-pre-wrap">{drResult.error}</p>
+                    </div>
+                  )}
+
                   {/* Charter compliance issues */}
                   {drResult.complianceReview.issues.length > 0 && (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">

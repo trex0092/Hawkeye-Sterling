@@ -204,10 +204,6 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
         max_tokens: maxTokens,
         system,
         messages: [{ role: 'user', content: user }],
-        metadata: {
-          product: 'hawkeye-sterling-v2',
-          pipeline: 'mlro-advisor',
-        },
       }),
     },
     {
