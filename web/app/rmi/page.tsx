@@ -219,6 +219,7 @@ export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [smelters, setSmelters] = useState(SMELTERS);
+  const [auditLog, setAuditLog] = useState(AUDIT_LOG);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const visible = mineralFilter === "all" ? smelters : smelters.filter((s) => s.mineral === mineralFilter);
@@ -390,7 +391,7 @@ export default function RmiPage() {
           className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
         >
           <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
-            RMAP audit log ({AUDIT_LOG.length} entries)
+            RMAP audit log ({auditLog.length} entries)
           </span>
           <span className="text-ink-3 text-12">{showAuditLog ? "▲" : "▾"}</span>
         </button>
@@ -399,19 +400,29 @@ export default function RmiPage() {
             <table className="w-full text-12">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>
-                  {["Date", "Smelter", "Action", "Auditor", "Outcome"].map((h) => (
+                  {["Date", "Smelter", "Action", "Auditor", "Outcome", ""].map((h) => (
                     <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {AUDIT_LOG.map((e, i) => (
-                  <tr key={i} className={i < AUDIT_LOG.length - 1 ? "border-b border-hair" : ""}>
+                {auditLog.map((e, i) => (
+                  <tr key={i} className={i < auditLog.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2 font-mono text-10 text-ink-3 whitespace-nowrap">{e.date}</td>
                     <td className="px-3 py-2 font-medium text-ink-0">{e.smelterName}</td>
                     <td className="px-3 py-2 text-ink-1">{e.action}</td>
                     <td className="px-3 py-2 text-ink-2">{e.auditor}</td>
                     <td className="px-3 py-2 text-ink-1">{e.outcome}</td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => setAuditLog((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-ink-3 hover:text-red transition-colors text-14 font-mono leading-none"
+                        title="Delete"
+                      >
+                        ×
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
