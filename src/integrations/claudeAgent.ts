@@ -41,8 +41,9 @@ const DEFAULT_MODEL = 'claude-opus-4-7';
 
 function systemPromptFor(style: NarrativeReportRequest['style'] = 'regulator'): string {
   const role =
-    'You are the Hawkeye Sterling V2 data analyst agent. You have access to a sandboxed Python environment with pandas, matplotlib/plotly and file mounting. ' +
-    'You receive one CaseReport JSON and zero or more CSV/JSON data files. Produce a single self-contained HTML report with interactive charts embedded as SVG or inline Plotly. ' +
+    'You are the Hawkeye Sterling V2 data analyst agent. ' +
+    'You receive one CaseReport JSON and zero or more CSV/JSON data files embedded in the user message. ' +
+    'Produce a single self-contained HTML report with interactive charts embedded as SVG or inline Plotly. ' +
     'Cite every claim to a source in the CaseReport. Preserve the World-Check-style section ordering (Case/Comparison, Key Data, Keywords, SIC, PEP Sub-Category, Biography, PEP Roles, Connections, Sources, Audit, Notes).';
   const styles: Record<NonNullable<NarrativeReportRequest['style']>, string> = {
     regulator: 'Write for a UAE FIU / MoE regulator: formal, citation-dense, no hedging without evidence.',
@@ -53,30 +54,47 @@ function systemPromptFor(style: NarrativeReportRequest['style'] = 'regulator'): 
   return `${SYSTEM_PROMPT}\n\n================================================================================\nTASK ROLE\n================================================================================\n\n${role}\n\nAudience: ${styles[style]}`;
 }
 
+// Build the complete file block that goes into the user message.
+// The Anthropic Messages API has no file-attachment mechanism — data must be
+// embedded in the message body. Every file is delimited so the model can
+// parse boundaries unambiguously.
+function buildFileBlock(req: NarrativeReportRequest): string {
+  const caseId = req.caseReport.identity.caseId;
+  const files: Array<{ filename: string; mimeType: string; content: string }> = [
+    {
+      filename: `${caseId}.json`,
+      mimeType: 'application/json',
+      content: JSON.stringify(req.caseReport, null, 2),
+    },
+    ...(req.sourceData ?? []),
+  ];
+
+  return files
+    .map((f) => `== ${f.filename} (${f.mimeType}) ==\n${f.content}`)
+    .join('\n\n');
+}
+
 export function buildNarrativeRequest(req: NarrativeReportRequest): {
   system: string;
   messages: Array<{ role: 'user'; content: string }>;
   files: NarrativeReportRequest['sourceData'];
 } {
+  const fileBlock = buildFileBlock(req);
+  const instruction =
+    'Produce the narrative HTML report now. Use the CaseReport JSON above as ground truth. ' +
+    'Render at least one chart per applicable section (match verdict breakdown, PEP role timeline, adverse-media category distribution, sources over time). ' +
+    'Return only the final HTML.';
+
   return {
     system: systemPromptFor(req.style),
     messages: [
       {
         role: 'user',
-        content:
-          'Produce the narrative HTML report now. Use the attached CaseReport JSON as ground truth. ' +
-          'Render at least one chart per applicable section (match verdict breakdown, PEP role timeline, adverse-media category distribution, sources over time). ' +
-          'Return only the final HTML.',
+        content: `DATA FILES:\n\n${fileBlock}\n\n---\n\n${instruction}`,
       },
     ],
-    files: [
-      {
-        filename: `${req.caseReport.identity.caseId}.json`,
-        mimeType: 'application/json',
-        content: JSON.stringify(req.caseReport, null, 2),
-      },
-      ...(req.sourceData ?? []),
-    ],
+    // Retained for API back-compat; the content is now embedded in messages above.
+    files: req.sourceData,
   };
 }
 
@@ -87,6 +105,12 @@ export async function generateNarrativeReport(
 ): Promise<NarrativeReportResult> {
   void _fetchImpl; // retained for API back-compat; resilient helper uses global fetch
   const payload = buildNarrativeRequest(req);
+
+  const messages = payload.messages.filter((m) => m.content.trim());
+  if (messages.length === 0) {
+    return { ok: false, error: 'message content must be non-empty' };
+  }
+
   const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
     'https://api.anthropic.com/v1/messages',
     {
@@ -100,7 +124,7 @@ export async function generateNarrativeReport(
         model: config.model || DEFAULT_MODEL,
         max_tokens: 16000,
         system: payload.system,
-        messages: payload.messages,
+        messages,
         metadata: {
           product: 'hawkeye-sterling-v2',
           module: '01-subject-screening',
@@ -117,9 +141,16 @@ export async function generateNarrativeReport(
 
   if (!result.ok || !result.json) {
     const prefix = result.partial ? 'partial response (stream idle) ' : '';
+    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
+    if (result.body && !result.partial) {
+      try {
+        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
+        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
+      } catch { /* keep default error detail */ }
+    }
     return {
       ok: false,
-      error: `${prefix}${result.error ?? `HTTP ${result.status ?? 'unknown'}`} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
+      error: `${prefix}${errorDetail} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
     };
   }
   const html = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text).join('\n') ?? '';
