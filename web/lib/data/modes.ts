@@ -1,10 +1,10 @@
 import type { FacultyFilter, ReasoningMode, ReasoningPreset } from "@/lib/types";
 import { slugifyTaxonomyName } from "@/lib/data/taxonomy";
 
-export const TOTAL_MODES = 2067;
+export const TOTAL_MODES = 2132;
 
 export const FACULTY_FILTERS: FacultyFilter[] = [
-  { key: "all", label: "All modes", count: "2067" },
+  { key: "all", label: "All modes", count: "2132" },
   { key: "reasoning", label: "Reasoning", count: "78" },
   { key: "data-analysis", label: "Data Analysis", count: "64" },
   { key: "deep-thinking", label: "Deep Thinking", count: "52" },
@@ -36,6 +36,7 @@ export const FACULTY_FILTERS: FacultyFilter[] = [
   { key: "contractual", label: "Contractual", count: "56" },
   { key: "predictive", label: "Predictive", count: "68" },
   { key: "computational", label: "Computational", count: "60" },
+  { key: "ai-governance", label: "AI Governance", count: "65" },
 ];
 
 // ── Taxonomy-ID helpers ─────────────────────────────────────────────────────
@@ -1009,6 +1010,27 @@ export const MODES: ReasoningMode[] = [
     taxonomyIds: [...r("Gap Assessment Reasoning"), ...a("False Positive Root Cause Analysis")] },
   { id: "RM-917", name: "Cryptographic-Proof Validation", faculty: "computational",
     taxonomyIds: [...a("On-Chain Analytics"), ...r("Chain of Custody Reasoning")] },
+
+  // ═══ AI GOVERNANCE ══════════════════════════════════════════════════════
+  // Framed around the regulatory stack: EU AI Act, FATF AI/ML guidance,
+  // CBUAE model risk, SR 11-7. Covers both AI-as-regulator-obligation
+  // and AI-as-threat-vector. Every mode requires a human-verifiable output.
+  { id: "RM-930", name: "EU AI Act Risk Classification", faculty: "ai-governance",
+    taxonomyIds: [...r("Regulatory Interpretation", "Regulatory Inference"), ...a("Gap Analysis")] },
+  { id: "RM-931", name: "Explainability Audit (XAI)", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment", "MLRO Judgment"), ...a("Audit Trail Analysis")] },
+  { id: "RM-932", name: "Human-in-the-Loop Gate", faculty: "ai-governance",
+    taxonomyIds: [...s("MLRO Decision-Making"), ...r("Authority Assessment", "Proportionality Assessment")] },
+  { id: "RM-933", name: "Model Bias & Fairness Probe", faculty: "ai-governance",
+    taxonomyIds: [...r("Control Effectiveness Judgment"), ...a("False Positive Root Cause Analysis")] },
+  { id: "RM-934", name: "Deepfake / Synthetic-Document Detector", faculty: "ai-governance",
+    taxonomyIds: [...a("Evidence Preservation Analysis"), ...r("Chain of Custody Reasoning")] },
+  { id: "RM-935", name: "AI Hallucination Guard", faculty: "ai-governance",
+    taxonomyIds: [...r("MLRO Judgment", "Control Effectiveness Judgment"), ...a("Audit Trail Forensics")] },
+  { id: "RM-936", name: "Training-Data Provenance Check", faculty: "ai-governance",
+    taxonomyIds: [...r("Chain of Custody Reasoning"), ...a("Evidence Preservation Analysis")] },
+  { id: "RM-937", name: "AI Decision Audit Trail", faculty: "ai-governance",
+    taxonomyIds: [...s("Compliance Documentation"), ...r("Audit Trail Integrity Assessment"), ...a("Audit Trail Forensics", "Audit Trail Analysis")] },
 ];
 
 export const PRESETS: ReasoningPreset[] = [

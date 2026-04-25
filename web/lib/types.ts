@@ -198,7 +198,8 @@ export type Faculty =
   | "epidemiological"
   | "contractual"
   | "predictive"
-  | "computational";
+  | "computational"
+  | "ai-governance";
 
 export interface ReasoningMode {
   id: string;
