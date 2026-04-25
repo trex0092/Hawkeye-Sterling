@@ -108,6 +108,7 @@ async function readBodyWithIdleTimeout(
     const settle = (value: { body: string; partial: boolean } | Error): void => {
       if (settled) return;
       settled = true;
+      outerSignal.removeEventListener('abort', onOuterAbort);
       if (idleTimer) clearTimeout(idleTimer);
       try { void reader.cancel(); } catch { /* ignore */ }
       if (value instanceof Error) reject(value);
@@ -192,8 +193,17 @@ export async function fetchJsonWithRetry<T = unknown>(
         lastError = partial
           ? `partial response (attempt ${attempts}/${maxAttempts})`
           : `HTTP ${res.status}`;
-        if (attempts < maxAttempts && retryOn(res.status, null)) {
-          await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal);
+        // Partial bodies (our idle timeout fired) are always worth retrying regardless
+        // of HTTP status — a 200 with a truncated body is just as transient as a 5xx.
+        if (attempts < maxAttempts && (partial || retryOn(res.status, null))) {
+          try {
+            await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal);
+          } catch {
+            return {
+              ok: false, status: res.status, body, json: null,
+              error: lastError, attempts, elapsedMs: Date.now() - started, partial,
+            };
+          }
           continue;
         }
         return {
@@ -212,7 +222,14 @@ export async function fetchJsonWithRetry<T = unknown>(
         lastError = 'json_parse_error (body may be truncated)';
         lastPartial = true;
         if (attempts < maxAttempts) {
-          await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal);
+          try {
+            await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal);
+          } catch {
+            return {
+              ok: false, status: res.status, body, json: null,
+              error: lastError, attempts, elapsedMs: Date.now() - started, partial: true,
+            };
+          }
           continue;
         }
         return {
