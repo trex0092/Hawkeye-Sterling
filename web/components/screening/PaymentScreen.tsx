@@ -264,7 +264,7 @@ function PartyCard({
           </div>
           {screen.hits.slice(0, 3).map((h, i) => (
             <div
-              key={i}
+              key={h.candidateName ?? i}
               className="font-mono text-10 text-ink-0 flex justify-between"
             >
               <span>

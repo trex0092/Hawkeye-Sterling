@@ -109,7 +109,7 @@ export function BrainKeywordExplorer({ result }: { result: SuperBrainResult }) {
       <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
         {kws.slice(0, 80).map((k, i) => (
           <span
-            key={i}
+            key={`${k.group ?? ""}-${k.offset}-${i}`}
             className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red"
             title={`group: ${k.groupLabel ?? k.group} · offset ${k.offset}`}
           >
@@ -338,8 +338,8 @@ export function BrainScenarioMatcher({ result }: { result: SuperBrainResult }) {
         </div>
       ) : (
         <div className="space-y-1.5">
-          {scenarios.map((s, i) => (
-            <div key={i} className="border-l-2 border-red pl-2">
+          {scenarios.map((s) => (
+            <div key={s.name} className="border-l-2 border-red pl-2">
               <div className="flex items-baseline justify-between">
                 <span className="text-11 font-semibold text-ink-0">{s.name}</span>
                 <span className="font-mono text-10 text-ink-3">
@@ -392,9 +392,9 @@ export function BrainBiasCheck({ result }: { result: SuperBrainResult }) {
   return (
     <Card title="Bias sanity-check">
       <div className="space-y-1">
-        {flags.map((f, i) => (
+        {flags.map((f) => (
           <div
-            key={i}
+            key={f.text}
             className={`text-11 ${f.level === "warn" ? "text-amber" : "text-ink-2"}`}
           >
             {f.level === "warn" ? "⚠ " : "ℹ "}
@@ -526,9 +526,9 @@ export function BrainInputValidator({
   return (
     <Card title={`Input quality (${issues.length} gaps)`}>
       <ul className="list-none p-0 m-0 space-y-1">
-        {issues.map((i, idx) => (
-          <li key={idx} className="text-11 text-amber">
-            ⚠ {i}
+        {issues.map((issue) => (
+          <li key={issue} className="text-11 text-amber">
+            ⚠ {issue}
           </li>
         ))}
       </ul>
@@ -661,8 +661,8 @@ export function BrainCrossReference({ result }: { result: SuperBrainResult }) {
         </div>
       ) : (
         <ul className="list-none p-0 m-0 space-y-0.5">
-          {cohortHints.map((h, i) => (
-            <li key={i} className="text-11 text-ink-1">
+          {cohortHints.map((h) => (
+            <li key={h} className="text-11 text-ink-1">
               · {h}
             </li>
           ))}
@@ -780,8 +780,8 @@ export function BrainCoherenceCheck({
   return (
     <Card title={`Coherence check (${signals.length})`}>
       <ul className="list-none p-0 m-0 space-y-1">
-        {signals.map((s, i) => (
-          <li key={i} className="text-11 text-amber">
+        {signals.map((s) => (
+          <li key={s} className="text-11 text-amber">
             ⚠ {s}
           </li>
         ))}
@@ -847,8 +847,8 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
   return (
     <Card title={`Red-flag combinator (${patterns.length})`}>
       <div className="space-y-2">
-        {patterns.map((p, i) => (
-          <div key={i} className="border-l-2 border-red pl-2">
+        {patterns.map((p) => (
+          <div key={p.name} className="border-l-2 border-red pl-2">
             <div className="flex items-baseline justify-between">
               <span className="text-11 font-semibold text-ink-0">{p.name}</span>
               <span className="font-mono text-10 text-red">
@@ -912,8 +912,8 @@ export function BrainCausalChain({ result }: { result: SuperBrainResult }) {
             module.
           </li>
         ) : (
-          chain.map((c, i) => (
-            <li key={i} className="text-11 text-ink-1 leading-snug">
+          chain.map((c) => (
+            <li key={c} className="text-11 text-ink-1 leading-snug">
               {c}
             </li>
           ))
@@ -967,8 +967,8 @@ export function BrainPolicyCitation({ result }: { result: SuperBrainResult }) {
   return (
     <Card title={`Policy citations (${cites.length})`}>
       <div className="space-y-0.5">
-        {cites.map((c, i) => (
-          <div key={i} className="flex justify-between gap-3 text-11">
+        {cites.map((c) => (
+          <div key={c.finding} className="flex justify-between gap-3 text-11">
             <span className="text-ink-1 flex-1">{c.finding}</span>
             <span className="font-mono text-10 text-ink-3 shrink-0">
               {c.citation}
@@ -1109,9 +1109,9 @@ export function BrainSoWPlausibility({ result }: { result: SuperBrainResult }) {
   return (
     <Card title="Source-of-wealth plausibility">
       <ul className="list-none p-0 m-0 space-y-1">
-        {checks.map((c, i) => (
+        {checks.map((c) => (
           <li
-            key={i}
+            key={c.text}
             className={`text-11 flex items-start gap-1.5 ${c.ok ? "text-ink-1" : "text-amber"}`}
           >
             <span>{c.ok ? "✓" : "⚠"}</span>
@@ -1156,8 +1156,8 @@ export function BrainAnomalyDetector({ result }: { result: SuperBrainResult }) {
         </div>
       ) : (
         <ul className="list-none p-0 m-0 space-y-1">
-          {anomalies.map((a, i) => (
-            <li key={i} className="text-11 text-amber">
+          {anomalies.map((a) => (
+            <li key={a} className="text-11 text-amber">
               ⚠ {a}
             </li>
           ))}
@@ -1661,8 +1661,8 @@ export function BrainJurisdictionClusters({ result }: { result: SuperBrainResult
                   </span>
                 )}
               </div>
-              {b.notes.map((n, i) => (
-                <div key={i} className="text-10.5 text-ink-2 ml-1">
+              {b.notes.map((n) => (
+                <div key={n} className="text-10.5 text-ink-2 ml-1">
                   · {n}
                 </div>
               ))}
@@ -1837,8 +1837,8 @@ export function BrainContextualEnrichment({ result }: { result: SuperBrainResult
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          {enrichments.map((e, i) => (
-            <div key={i} className="flex items-start gap-1.5 text-11">
+          {enrichments.map((e) => (
+            <div key={`${e.category}-${e.value}`} className="flex items-start gap-1.5 text-11">
               <span className="text-10 text-ink-3 shrink-0 pt-px w-24 truncate">
                 {e.category}
               </span>
@@ -1957,8 +1957,8 @@ export function BrainDefensibility({
       </p>
       {weaknesses.length > 0 && (
         <ul className="list-none p-0 m-0 space-y-0.5">
-          {weaknesses.map((w, i) => (
-            <li key={i} className="text-10.5 text-amber">
+          {weaknesses.map((w) => (
+            <li key={w} className="text-10.5 text-amber">
               ⚠ {w}
             </li>
           ))}
@@ -2032,8 +2032,8 @@ export function BrainAlternativeHypotheses({ result }: { result: SuperBrainResul
         Counter-hypotheses to stress-test the paranoid verdict.
       </div>
       <div className="space-y-1.5">
-        {hypotheses.map((h, i) => (
-          <div key={i} className="space-y-0.5">
+        {hypotheses.map((h) => (
+          <div key={h.label} className="space-y-0.5">
             <div className="flex items-center gap-2 text-11">
               <span className="flex-1 text-ink-1">{h.label}</span>
               <span className="font-mono text-10 text-ink-2 shrink-0">
@@ -2201,8 +2201,8 @@ export function BrainSignalInterference({ result }: { result: SuperBrainResult }
         </div>
       ) : (
         <div className="space-y-2">
-          {pairs.map((p, i) => (
-            <div key={i} className="space-y-0.5">
+          {pairs.map((p) => (
+            <div key={`${p.a}-${p.b}`} className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-11 flex-wrap">
                 <Chip tone={toneMap[p.severity]}>{p.severity}</Chip>
                 <span className="text-ink-1">{p.a}</span>
@@ -2296,8 +2296,8 @@ export function BrainEscalationLadder({ result }: { result: SuperBrainResult }) 
         Current position on the escalation path and remaining steps.
       </div>
       <div className="space-y-1.5">
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-start gap-2 text-11">
+        {steps.map((step) => (
+          <div key={step.label} className="flex items-start gap-2 text-11">
             <span
               className={`font-mono text-10 mt-px w-4 shrink-0 ${statusStyle[step.status]}`}
             >
