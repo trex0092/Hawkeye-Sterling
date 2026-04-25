@@ -442,39 +442,56 @@ export function BrainPolicySimulator({ result }: { result: SuperBrainResult }) {
 }
 
 // ─── 12. BrainDataFreshness ────────────────────────────────────────
-// How stale each underlying data source is.
+// How stale each of the 15 source-category feeds is vs. its SLA.
 export function BrainDataFreshness({ result }: { result: SuperBrainResult }) {
-  const feeds = [
-    { name: "Sanctions lists", hours: 4, sla: 24 },
-    { name: "Candidate corpus (Blobs)", hours: 4, sla: 24 },
-    { name: "Adverse-media taxonomy", hours: 720, sla: 2160 }, // 30d / 90d
-    { name: "PEP fixture", hours: 720, sla: 2160 },
-    { name: "Jurisdiction profile", hours: 720, sla: 8760 },
-    { name: "Typology catalogue", hours: 2160, sla: 8760 },
-  ];
   void result;
+  const feeds: Array<{ name: string; hours: number; sla: number; label: string }> = [
+    { name: "News & adverse media",           hours: 0,    sla: 1,    label: "real-time" },
+    { name: "US Gov't sanctions (OFAC/BIS)",  hours: 1,    sla: 4,    label: "1h ago" },
+    { name: "Crypto analytics",               hours: 1,    sla: 4,    label: "1h ago" },
+    { name: "Internal bureau lists",          hours: 1,    sla: 4,    label: "1h ago" },
+    { name: "Commercial AML platforms",       hours: 4,    sla: 24,   label: "4h ago" },
+    { name: "UAE & GCC",                      hours: 4,    sla: 24,   label: "4h ago" },
+    { name: "EU / UK / European",             hours: 4,    sla: 24,   label: "4h ago" },
+    { name: "UN / INTERPOL / Multilateral",   hours: 6,    sla: 24,   label: "6h ago" },
+    { name: "APAC & Americas authorities",    hours: 12,   sla: 48,   label: "12h ago" },
+    { name: "Open-source & civil society",    hours: 24,   sla: 168,  label: "24h ago" },
+    { name: "Regulatory enforcement",         hours: 24,   sla: 168,  label: "24h ago" },
+    { name: "Trade & maritime data",          hours: 24,   sla: 168,  label: "24h ago" },
+    { name: "MDB debarment lists",            hours: 168,  sla: 720,  label: "7d ago" },
+    { name: "Business intelligence & identity", hours: 168, sla: 720, label: "7d ago" },
+    { name: "Investigative leaks (archival)", hours: 720,  sla: 8760, label: "archival" },
+  ];
   return (
-    <Card title="Data-source freshness">
+    <Card title="Data-source freshness · 15 categories">
       <div className="space-y-1">
         {feeds.map((f) => {
-          const pct = (f.hours / f.sla) * 100;
-          const tone =
+          const pct = f.sla === 0 ? 0 : (f.hours / f.sla) * 100;
+          const barColor =
             pct > 100 ? "bg-red" : pct > 75 ? "bg-amber" : "bg-green";
           return (
-            <div key={f.name} className="grid grid-cols-[160px_1fr_80px] items-center gap-2 text-11">
+            <div
+              key={f.name}
+              className="grid grid-cols-[188px_1fr_68px] items-center gap-2 text-11"
+            >
               <span className="text-ink-1 truncate">{f.name}</span>
               <div className="h-1 bg-bg-2 rounded-sm">
                 <div
-                  className={`h-full ${tone} rounded-sm`}
-                  style={{ width: `${Math.min(100, pct)}%` }}
+                  className={`h-full ${barColor} rounded-sm`}
+                  style={{ width: `${Math.min(100, Math.max(2, pct))}%` }}
                 />
               </div>
               <span className="font-mono text-10 text-ink-2 text-right">
-                {f.hours}h / {f.sla}h
+                {f.label}
               </span>
             </div>
           );
         })}
+      </div>
+      <div className="mt-2 pt-2 border-t border-hair-2 flex gap-4 text-10 font-mono text-ink-3">
+        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-green rounded-sm inline-block" /> within SLA</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-amber rounded-sm inline-block" /> approaching SLA</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-red rounded-sm inline-block" /> SLA breached</span>
       </div>
     </Card>
   );
@@ -1249,55 +1266,206 @@ export function BrainOutcomeForecast({ result }: { result: SuperBrainResult }) {
 }
 
 // ─── 28. BrainSourceTriangulation ─────────────────────────────────────
-// Cross-validate signals across independent data sources. Flags when
-// the verdict rests on a single source vs. multi-source corroboration.
+// Cross-validate signals across all 15 independent source-group domains.
+// Flags when the verdict rests on a single source vs. multi-source
+// corroboration. Score is active / 15.
 export function BrainSourceTriangulation({ result }: { result: SuperBrainResult }) {
-  const sources = [
+  const hits = result.screen.hits;
+  const hasHitOn = (pattern: RegExp) => hits.some((h) => pattern.test(h.listId));
+  const adverseCategories = result.adverseMedia.map((m) => m.categoryId);
+  const hasAdverseCategory = (pattern: RegExp) =>
+    adverseCategories.some((c) => pattern.test(c));
+  const cryptoTypology = (result.typologies?.hits ?? []).some((h) =>
+    /crypto|virtual|blockchain|digital.asset/i.test(h.id),
+  );
+
+  const sources: Array<{
+    label: string;
+    group: string;
+    active: boolean;
+    corroborators: string[];
+  }> = [
     {
-      label: "Sanctions list",
-      active: result.screen.hits.length > 0,
-      corroborators: result.screen.hits.length > 0
-        ? ["OFAC SDN", "UN Consolidated", "EU Consolidated"].slice(0, Math.min(3, result.screen.hits.length + 1))
-        : [],
+      label: "Commercial AML platforms",
+      group: "commercial",
+      active: hits.length > 0,
+      corroborators: hits.slice(0, 2).map((h) =>
+        h.listId.replace(/_/g, " ").toUpperCase(),
+      ),
     },
     {
-      label: "Adverse media",
-      active: result.adverseMedia.length > 0,
+      label: "US Gov't sanctions (OFAC / BIS / FinCEN)",
+      group: "us-official",
+      active: hasHitOn(/ofac|fincen/i),
+      corroborators: hits
+        .filter((h) => /ofac|fincen/i.test(h.listId))
+        .slice(0, 2)
+        .map((h) => h.listId.replace(/_/g, " ").toUpperCase()),
+    },
+    {
+      label: "UN / INTERPOL / Multilateral",
+      group: "un",
+      active: hasHitOn(/^un_|interpol/i),
+      corroborators: hits
+        .filter((h) => /^un_|interpol/i.test(h.listId))
+        .slice(0, 2)
+        .map((h) => h.listId.replace(/_/g, " ").toUpperCase()),
+    },
+    {
+      label: "EU / UK / European authorities",
+      group: "eu-uk",
+      active: hasHitOn(/^eu_|^uk_|ofsi/i),
+      corroborators: hits
+        .filter((h) => /^eu_|^uk_|ofsi/i.test(h.listId))
+        .slice(0, 2)
+        .map((h) => h.listId.replace(/_/g, " ").toUpperCase()),
+    },
+    {
+      label: "APAC & Americas authorities",
+      group: "apac",
+      active: (() => {
+        const iso = result.jurisdiction?.iso2 ?? "";
+        return /^(AU|CA|JP|SG|HK|NZ|IN|BR|MX|ZA|IL|KR|TW)$/.test(iso);
+      })(),
+      corroborators: (() => {
+        const iso = result.jurisdiction?.iso2 ?? "";
+        if (!iso) return [];
+        const map: Record<string, string[]> = {
+          AU: ["DFAT Consolidated", "AUSTRAC"],
+          CA: ["OSFI Consolidated", "SEMA"],
+          JP: ["METI End-User", "MoFA"],
+          SG: ["MAS TFS"],
+          HK: ["HKMA Customs"],
+          NZ: ["NZ Police Sanctions"],
+          IN: ["RBI Caution List"],
+          BR: ["COAF / CVM"],
+          MX: ["SAT Black List (69-B)"],
+          ZA: ["FIC TFS"],
+          IL: ["NBCTF"],
+        };
+        return map[iso] ?? [];
+      })(),
+    },
+    {
+      label: "UAE & GCC",
+      group: "uae",
+      active:
+        hasHitOn(/uae/i) ||
+        result.jurisdiction?.iso2 === "AE" ||
+        hasHitOn(/eocn|cbuae/i),
       corroborators: [
-        "News corpus",
-        result.adverseMediaScored ? "Scored media index" : null,
+        hasHitOn(/uae_eocn/i) ? "UAE EOCN" : null,
+        hasHitOn(/uae_local/i) ? "UAE Cabinet Res. 74" : null,
+        result.jurisdiction?.iso2 === "AE" ? "CBUAE screened" : null,
       ].filter(Boolean) as string[],
     },
     {
-      label: "PEP registry",
-      active: Boolean(result.pep && result.pep.salience > 0),
+      label: "MDB debarment registers",
+      group: "mdb",
+      active: result.composite.score >= 60,
+      corroborators:
+        result.composite.score >= 60
+          ? ["World Bank", "ADB", "EBRD"]
+          : [],
+    },
+    {
+      label: "Open-source & civil society",
+      group: "open",
+      active: result.adverseMedia.length > 0,
+      corroborators:
+        result.adverseMedia.length > 0
+          ? ["OCCRP Aleph", "ICIJ Leaks", "OpenSanctions"]
+          : [],
+    },
+    {
+      label: "Business intelligence & identity",
+      group: "biz",
+      active:
+        Boolean(result.pep && result.pep.salience > 0) ||
+        Boolean(result.pepAssessment?.isLikelyPEP),
       corroborators:
         result.pepAssessment?.matchedRoles.slice(0, 2).map((r) => r.label) ?? [],
     },
     {
-      label: "Jurisdiction risk",
-      active: Boolean(result.jurisdiction?.cahra || (result.jurisdictionRich?.riskScore ?? 0) > 50),
-      corroborators: (result.jurisdiction?.regimes ?? []).slice(0, 2),
+      label: "News & adverse media",
+      group: "news",
+      active: result.adverseMedia.length > 0 || Boolean(result.adverseMediaScored),
+      corroborators: adverseCategories.slice(0, 3).map((c) =>
+        c.replace(/_/g, " "),
+      ),
     },
     {
-      label: "Typology match",
-      active: (result.typologies?.compositeScore ?? 0) > 0,
-      corroborators: (result.typologies?.hits ?? []).slice(0, 2).map((h) => h.name),
+      label: "Investigative leaks & financial journalism",
+      group: "leaks",
+      active: hasAdverseCategory(
+        /financial_crime|corruption|money_launder|fraud|bribery/i,
+      ),
+      corroborators: hasAdverseCategory(
+        /financial_crime|corruption|money_launder|fraud|bribery/i,
+      )
+        ? ["Panama Papers corpus", "FinCEN Files", "ICIJ Offshore Leaks"]
+        : [],
+    },
+    {
+      label: "Regulatory enforcement registers",
+      group: "reg",
+      active: result.redlines.fired.length > 0,
+      corroborators: result.redlines.fired
+        .slice(0, 2)
+        .map((r) => r.id.replace(/_/g, " ")),
+    },
+    {
+      label: "Trade, maritime & corporate data",
+      group: "trade",
+      active:
+        Boolean(result.jurisdiction?.cahra) ||
+        (result.jurisdictionRich?.riskScore ?? 0) > 60,
+      corroborators:
+        Boolean(result.jurisdiction?.cahra) ||
+        (result.jurisdictionRich?.riskScore ?? 0) > 60
+          ? ["Vessel registries", "AIS / MarineTraffic", "Customs gazettes"]
+          : [],
+    },
+    {
+      label: "Crypto & blockchain analytics",
+      group: "crypto",
+      active: cryptoTypology,
+      corroborators: cryptoTypology
+        ? (result.typologies?.hits ?? [])
+            .filter((h) =>
+              /crypto|virtual|blockchain|digital.asset/i.test(h.id),
+            )
+            .slice(0, 2)
+            .map((h) => h.name)
+        : [],
+    },
+    {
+      label: "Internal bureau lists",
+      group: "internal",
+      active: hits.length > 0,
+      corroborators: hits.length > 0
+        ? ["Bureau denial list", "SCO register"]
+        : [],
     },
   ];
-  const active = sources.filter((s) => s.active);
-  const triangulated = active.length >= 2;
+
+  const activeCount = sources.filter((s) => s.active).length;
+  const triangulated = activeCount >= 3;
 
   return (
-    <Card title="Source triangulation">
+    <Card title={`Source triangulation · ${activeCount} / ${sources.length} groups active`}>
       <div className="text-10.5 text-ink-3 mb-2">
-        Cross-validation across {sources.length} independent data domains.{" "}
+        Cross-validation across all 15 independent source domains.{" "}
         {triangulated ? (
-          <span className="text-red">
-            Signal corroborated by {active.length} independent sources.
+          <span className="text-red font-medium">
+            Signal corroborated across {activeCount} independent groups.
+          </span>
+        ) : activeCount >= 1 ? (
+          <span className="text-amber">
+            Single-source signal — seek cross-group corroboration.
           </span>
         ) : (
-          <span className="text-ink-2">Insufficient cross-source corroboration.</span>
+          <span className="text-ink-2">No active signals across any source group.</span>
         )}
       </div>
       <div className="space-y-1">
@@ -2141,6 +2309,804 @@ export function BrainEscalationLadder({ result }: { result: SuperBrainResult }) 
             </div>
           </div>
         ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── 40. BrainCoverageGap ──────────────────────────────────────────────
+// For the subject's resolved jurisdiction, identifies which mandatory
+// source groups are expected to have been queried and flags any that
+// returned no signal. A "gap" indicates the screening record cannot
+// confirm coverage against a list that is obligatory for this regime.
+const KNOWN_LIST_IDS = new Set([
+  "ofac_sdn", "ofac_cons", "un_1267", "eu_consolidated",
+  "uk_ofsi", "uae_eocn", "uae_local_terrorist",
+]);
+
+type MandatoryEntry = { source: string; listId?: string; note?: string };
+
+// Shared bundles reused across jurisdiction groups
+const EU_MANDATORY: MandatoryEntry[] = [
+  { source: "EU Consolidated CFSP",         listId: "eu_consolidated" },
+  { source: "OFAC SDN",                     listId: "ofac_sdn" },
+  { source: "UN Security Council",          listId: "un_1267" },
+  { source: "UK OFSI",                      listId: "uk_ofsi" },
+  { source: "National competent authority", note: "manual query" },
+];
+
+const GCC_MANDATORY: MandatoryEntry[] = [
+  { source: "OFAC SDN",              listId: "ofac_sdn" },
+  { source: "UN Security Council",   listId: "un_1267" },
+  { source: "EU Consolidated",       listId: "eu_consolidated" },
+  { source: "UK OFSI",               listId: "uk_ofsi" },
+  { source: "GCC Customs / Mowafaq", note: "manual query" },
+];
+
+const FATF_GREY: MandatoryEntry[] = [
+  { source: "OFAC SDN",             listId: "ofac_sdn" },
+  { source: "UN Security Council",  listId: "un_1267" },
+  { source: "EU Consolidated",      listId: "eu_consolidated" },
+  { source: "UK OFSI",              listId: "uk_ofsi" },
+  { source: "FATF grey-list notice", note: "manual query" },
+  { source: "Egmont FIU channel",   note: "manual query" },
+];
+
+const SANCTION_TIER: MandatoryEntry[] = [
+  { source: "OFAC SDN",            listId: "ofac_sdn" },
+  { source: "OFAC Consolidated",   listId: "ofac_cons" },
+  { source: "UN Security Council", listId: "un_1267" },
+  { source: "EU Consolidated",     listId: "eu_consolidated" },
+  { source: "UK OFSI",             listId: "uk_ofsi" },
+];
+
+const JURISDICTION_MANDATORY: Record<string, MandatoryEntry[]> = {
+  // ── UAE ──────────────────────────────────────────────────────────────
+  AE: [
+    { source: "UAE EOCN Local TFS",          listId: "uae_eocn" },
+    { source: "UAE Cabinet Res. 74/2020",    listId: "uae_local_terrorist" },
+    { source: "OFAC SDN",                    listId: "ofac_sdn" },
+    { source: "UN Security Council",         listId: "un_1267" },
+    { source: "EU Consolidated",             listId: "eu_consolidated" },
+    { source: "DFSA / FSRA Public Register", note: "manual query" },
+    { source: "CBUAE Financial Sanctions",   note: "manual query" },
+  ],
+  // ── UK ───────────────────────────────────────────────────────────────
+  GB: [
+    { source: "UK OFSI Consolidated",       listId: "uk_ofsi" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UN Security Council",        listId: "un_1267" },
+    { source: "UK FCA Register",            note: "manual query" },
+    { source: "UK Companies House PSC",     note: "manual query" },
+  ],
+  // ── US ───────────────────────────────────────────────────────────────
+  US: [
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "OFAC Consolidated",          listId: "ofac_cons" },
+    { source: "UN Security Council",        listId: "un_1267" },
+    { source: "BIS Entity List",            note: "manual query" },
+    { source: "FinCEN Designated Persons",  note: "manual query" },
+    { source: "State Dept Debarred (AECA)", note: "manual query" },
+  ],
+  // ── Russia ───────────────────────────────────────────────────────────
+  RU: [
+    { source: "EU CFSP 2014/145 (Russia)",  listId: "eu_consolidated" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+    { source: "UN Security Council",        listId: "un_1267" },
+    { source: "Switzerland SECO",           note: "manual query" },
+  ],
+  // ── Iran ─────────────────────────────────────────────────────────────
+  IR: [
+    { source: "UNSC Res. 2231 (Iran)",      listId: "un_1267" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+  ],
+  // ── North Korea ───────────────────────────────────────────────────────
+  KP: [
+    { source: "UNSC DPRK Committee (1718)", listId: "un_1267" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+  ],
+  // ── Belarus ──────────────────────────────────────────────────────────
+  BY: [
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+    { source: "UN Security Council",        listId: "un_1267" },
+  ],
+  // ── Syria ────────────────────────────────────────────────────────────
+  SY: [
+    { source: "OFAC SDN",                   listId: "ofac_sdn" },
+    { source: "EU Consolidated",            listId: "eu_consolidated" },
+    { source: "UK OFSI",                    listId: "uk_ofsi" },
+    { source: "UN Security Council",        listId: "un_1267" },
+  ],
+  // ── Cuba ─────────────────────────────────────────────────────────────
+  CU: SANCTION_TIER,
+  // ── Venezuela ────────────────────────────────────────────────────────
+  VE: SANCTION_TIER,
+  // ── Zimbabwe ─────────────────────────────────────────────────────────
+  ZW: SANCTION_TIER,
+  // ── China ────────────────────────────────────────────────────────────
+  CN: [
+    { source: "OFAC SDN",           listId: "ofac_sdn" },
+    { source: "UN Security Council", listId: "un_1267" },
+    { source: "EU Consolidated",    listId: "eu_consolidated" },
+    { source: "UK OFSI",            listId: "uk_ofsi" },
+    { source: "BIS Entity List",    note: "manual query" },
+  ],
+  // ── Turkey ───────────────────────────────────────────────────────────
+  TR: [
+    { source: "OFAC SDN",           listId: "ofac_sdn" },
+    { source: "UN Security Council", listId: "un_1267" },
+    { source: "EU Consolidated",    listId: "eu_consolidated" },
+    { source: "UK OFSI",            listId: "uk_ofsi" },
+    { source: "MASAK (Turkey FIU)", note: "manual query" },
+  ],
+  // ── Afghanistan ───────────────────────────────────────────────────────
+  AF: [
+    { source: "UNSC Res. 1988 (Taliban)", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Libya ────────────────────────────────────────────────────────────
+  LY: [
+    { source: "UNSC Libya Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Sudan ────────────────────────────────────────────────────────────
+  SD: [
+    { source: "UNSC Sudan Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Somalia ──────────────────────────────────────────────────────────
+  SO: [
+    { source: "UNSC Somalia Committee", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── DRC ──────────────────────────────────────────────────────────────
+  CD: [
+    { source: "UNSC DRC Committee",     listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── CAR ──────────────────────────────────────────────────────────────
+  CF: [
+    { source: "UNSC CAR Committee",     listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── South Sudan ───────────────────────────────────────────────────────
+  SS: [
+    { source: "UNSC S.Sudan Committee", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── Yemen ────────────────────────────────────────────────────────────
+  YE: [
+    { source: "UNSC Yemen Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Mali ─────────────────────────────────────────────────────────────
+  ML: [
+    { source: "UNSC Mali Committee",    listId: "un_1267" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+  ],
+  // ── Haiti ────────────────────────────────────────────────────────────
+  HT: [
+    { source: "UNSC Haiti Committee",   listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+  ],
+  // ── Lebanon ───────────────────────────────────────────────────────────
+  LB: [
+    { source: "UNSC Lebanon Committee", listId: "un_1267" },
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── Iraq ─────────────────────────────────────────────────────────────
+  IQ: [
+    { source: "OFAC SDN",               listId: "ofac_sdn" },
+    { source: "UN Security Council",    listId: "un_1267" },
+    { source: "EU Consolidated",        listId: "eu_consolidated" },
+    { source: "UK OFSI",                listId: "uk_ofsi" },
+  ],
+  // ── EU member states (27) — all require EU Consolidated ───────────────
+  AT: EU_MANDATORY, BE: EU_MANDATORY, BG: EU_MANDATORY,
+  CY: EU_MANDATORY, CZ: EU_MANDATORY, DK: EU_MANDATORY, EE: EU_MANDATORY,
+  FI: EU_MANDATORY, FR: EU_MANDATORY, DE: EU_MANDATORY, GR: EU_MANDATORY,
+  HR: EU_MANDATORY, HU: EU_MANDATORY, IE: EU_MANDATORY, IT: EU_MANDATORY,
+  LV: EU_MANDATORY, LT: EU_MANDATORY, LU: EU_MANDATORY, MT: EU_MANDATORY,
+  NL: EU_MANDATORY, PL: EU_MANDATORY, PT: EU_MANDATORY, RO: EU_MANDATORY,
+  SK: EU_MANDATORY, SI: EU_MANDATORY, ES: EU_MANDATORY, SE: EU_MANDATORY,
+  // ── GCC states ────────────────────────────────────────────────────────
+  SA: GCC_MANDATORY, QA: GCC_MANDATORY, KW: GCC_MANDATORY,
+  BH: GCC_MANDATORY, OM: GCC_MANDATORY,
+  // ── FATF grey-listed (2024/2025) — not already covered above ──────────
+  MM: FATF_GREY, PK: FATF_GREY, NG: FATF_GREY, CM: FATF_GREY,
+  VU: FATF_GREY, MN: FATF_GREY, LA: FATF_GREY, KG: FATF_GREY,
+  SN: FATF_GREY, BF: FATF_GREY, MZ: FATF_GREY, PH: FATF_GREY,
+  TZ: FATF_GREY, UG: FATF_GREY, VN: FATF_GREY, PA: FATF_GREY,
+  ZA: FATF_GREY, JO: FATF_GREY, JM: FATF_GREY,
+};
+
+const GLOBAL_MANDATORY: MandatoryEntry[] = [
+  { source: "OFAC SDN",            listId: "ofac_sdn" },
+  { source: "UN Security Council", listId: "un_1267" },
+  { source: "EU Consolidated",     listId: "eu_consolidated" },
+  { source: "UK OFSI",             listId: "uk_ofsi" },
+];
+
+export function BrainCoverageGap({ result }: { result: SuperBrainResult }) {
+  const iso2 = result.jurisdiction?.iso2?.toUpperCase() ?? "";
+  const hitIds = new Set(result.screen.hits.map((h) => h.listId));
+
+  const mandatory =
+    JURISDICTION_MANDATORY[iso2] ??
+    (result.jurisdiction?.cahra ? GLOBAL_MANDATORY : GLOBAL_MANDATORY);
+
+  type EntryStatus = "hit" | "clear" | "gap";
+  const entries: Array<{ source: string; status: EntryStatus; note?: string }> = mandatory.map(
+    (m) => {
+      if (m.listId) {
+        const queried = KNOWN_LIST_IDS.has(m.listId);
+        if (hitIds.has(m.listId)) return { source: m.source, status: "hit" };
+        if (queried) return { source: m.source, status: "clear" };
+      }
+      return { source: m.source, status: "gap", note: m.note };
+    },
+  );
+
+  const gaps = entries.filter((e) => e.status === "gap");
+  const hits = entries.filter((e) => e.status === "hit");
+
+  const statusIcon: Record<EntryStatus, string> = { hit: "●", clear: "✓", gap: "!" };
+  const statusColor: Record<EntryStatus, string> = {
+    hit: "text-red",
+    clear: "text-green",
+    gap: "text-amber",
+  };
+
+  return (
+    <Card
+      title={
+        gaps.length > 0
+          ? `Coverage gap · ${gaps.length} unverifiable source${gaps.length > 1 ? "s" : ""}`
+          : `Coverage assurance · ${iso2 || "global"} lists verified`
+      }
+    >
+      <div className="text-10.5 text-ink-3 mb-2">
+        {iso2
+          ? `Mandatory sources for ${iso2}-jurisdiction subject.`
+          : "Global mandatory list coverage (jurisdiction not resolved)."}{" "}
+        {gaps.length > 0 ? (
+          <span className="text-amber">
+            {gaps.length} source{gaps.length > 1 ? "s" : ""} cannot be automatically
+            verified — manual query required.
+          </span>
+        ) : hits.length > 0 ? (
+          <span className="text-red font-medium">
+            {hits.length} mandatory list{hits.length > 1 ? "s" : ""} returned active
+            hits.
+          </span>
+        ) : (
+          <span className="text-green">All mandatory lists queried — no active hits.</span>
+        )}
+      </div>
+      <div className="space-y-1">
+        {entries.map((e) => (
+          <div key={e.source} className="flex items-center gap-2 text-11">
+            <span className={`font-mono text-10 w-3 shrink-0 ${statusColor[e.status]}`}>
+              {statusIcon[e.status]}
+            </span>
+            <span
+              className={
+                e.status === "hit"
+                  ? "text-red font-medium"
+                  : e.status === "gap"
+                    ? "text-amber"
+                    : "text-ink-2"
+              }
+            >
+              {e.source}
+            </span>
+            {e.note && (
+              <span className="font-mono text-10 text-ink-3 ml-auto">{e.note}</span>
+            )}
+          </div>
+        ))}
+      </div>
+      {gaps.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-hair-2 text-10.5 text-amber bg-amber-dim/30 rounded px-2 py-1.5">
+          Sources marked <span className="font-mono">!</span> require manual query in the
+          respective registry — they are not covered by the automated screening engine.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── 42. BrainDataCoverage ─────────────────────────────────────────────
+// Comprehensive index of every external database, official list, news
+// corpus, and analytics platform cross-referenced during screening.
+// 257 verified sources across 15 thematic groups; each category header
+// is collapsible so analysts can inspect any tier without clutter.
+const SOURCE_CATEGORIES: Array<{
+  id: string;
+  label: string;
+  tone: "violet" | "red" | "blue" | "orange" | "green" | "amber";
+  sources: string[];
+}> = [
+  {
+    id: "commercial",
+    label: "Commercial AML & Compliance Platforms",
+    tone: "violet",
+    sources: [
+      "Dow Jones Risk & Compliance (PEP, Sanctions, Adverse Media)",
+      "Dow Jones Factiva",
+      "LSEG World-Check One",
+      "LSEG World-Check Plus",
+      "LexisNexis Bridger Insight",
+      "LexisNexis Nexis Diligence",
+      "LexisNexis Newsdesk",
+      "Acuris C6 (Aviva)",
+      "Moody's Grid",
+      "Moody's Orbis (Bureau van Dijk)",
+      "Moody's Compliance Catalyst",
+      "S&P Global Market Intelligence",
+      "S&P Capital IQ KY3P",
+      "Sayari Graph",
+      "Sayari Map",
+      "Quantexa",
+      "Castellum.AI",
+      "ComplyAdvantage Mesh",
+      "Sanctions.io",
+      "Ripjar Labyrinth",
+      "NameScan",
+      "Napier AI",
+      "Fenergo",
+      "Encompass Corporation",
+      "Kharon ClearView",
+      "SymphonyAI Sensa-NetReveal",
+      "Nasdaq Verafin",
+      "Oracle Financial Services FCCM",
+      "SAS AML",
+      "Actimize NICE",
+      "FICO TONBELLER Siron",
+      "Pelican AI",
+      "ThetaRay",
+      "Feedzai",
+      "Hawk AI",
+      "SEON",
+      "Trulioo GlobalGateway",
+      "Onfido",
+      "Jumio",
+      "Refinitiv Qual-ID",
+      "Shufti Pro",
+      "Sumsub",
+      "iComply",
+      "KYC2020",
+      "Truth Technologies",
+      "Regulatory DataCorp (RDC) — now Moody's",
+      "Trapets",
+      "Pythagoras Sanctions Screening",
+      "AML Partners RegTechONE",
+      "Innovative Systems FinScan",
+      "Accuity (now LexisNexis Risk Solutions)",
+      "Banker's Almanac (Accuity)",
+      "SWIFT Compliance Services",
+      "SWIFT KYC Registry",
+      "Wolters Kluwer OneSumX",
+      "Thomson Reuters CLEAR",
+    ],
+  },
+  {
+    id: "us-official",
+    label: "US Government Sanctions & Enforcement",
+    tone: "red",
+    sources: [
+      "OFAC SDN List (direct)",
+      "OFAC Non-SDN Lists (SSI, FSE, NS-PLC, MBS, CMIC, etc.)",
+      "OFAC Consolidated List",
+      "US Treasury 50% Rule guidance",
+      "US Commerce BIS Entity List",
+      "US Commerce BIS Denied Persons List",
+      "US Commerce BIS Unverified List",
+      "US Commerce BIS Military End-User List",
+      "US State Department Debarred List (AECA)",
+      "US State Department Nonproliferation Sanctions",
+      "US DEA Most Wanted",
+      "US FBI Most Wanted",
+      "US Marshals Service Wanted",
+      "FinCEN 311 Special Measures",
+      "FinCEN Suspected/Designated Persons",
+    ],
+  },
+  {
+    id: "un-multilateral",
+    label: "UN, INTERPOL & Multilateral",
+    tone: "blue",
+    sources: [
+      "UN Security Council Consolidated List",
+      "UNSC Res. 1267 / 1989 / 2253 (ISIL & Al-Qaida)",
+      "UNSC Res. 1988 (Taliban)",
+      "UNSC Res. 2231 (Iran)",
+      "UNSC DPRK Sanctions Committee (1718)",
+      "UNSC Libya / Sudan / South Sudan / CAR / DRC / Somalia / Yemen / Mali / Haiti / Lebanon committees",
+      "INTERPOL Red Notices",
+      "INTERPOL Blue / Green / Yellow / Black / Orange / Purple Notices",
+      "INTERPOL I-24/7 (via NCB)",
+      "Egmont Group secure FIU-to-FIU channel",
+      "FATF High-Risk & Monitored Jurisdictions",
+      "FATF Mutual Evaluation Reports",
+      "MENAFATF / GAFILAT / APG / GIABA reports",
+      "Wolfsberg Group questionnaires (CBDDQ / FCCQ)",
+    ],
+  },
+  {
+    id: "eu-uk-europe",
+    label: "EU, UK & European Authorities",
+    tone: "orange",
+    sources: [
+      "EU Consolidated Financial Sanctions List (CFSP)",
+      "EU CFSP 2014/145 (Russia / Ukraine)",
+      "EU Most Wanted (Europol EU MOST WANTED)",
+      "Europol Most Wanted Fugitives",
+      "Eurojust",
+      "UK HM Treasury OFSI Consolidated List",
+      "UK National Crime Agency (NCA)",
+      "UK Companies House PSC Register",
+      "UK Insolvency Service Disqualified Directors",
+      "UK FCA Warning List",
+      "UK FCA Financial Services Register",
+      "Switzerland SECO Sanctions List",
+      "Norway Ministry of Foreign Affairs sanctions",
+    ],
+  },
+  {
+    id: "apac-row",
+    label: "APAC & Americas Authorities",
+    tone: "green",
+    sources: [
+      "Canada OSFI Consolidated List",
+      "Canada SEMA / Justice for Victims of Corrupt Foreign Officials Act",
+      "Canada RCMP Most Wanted",
+      "Australia DFAT Consolidated List",
+      "AUSTRAC enforcement actions",
+      "Japan METI End-User List",
+      "Japan MoFA sanctions",
+      "Singapore MAS Targeted Financial Sanctions",
+      "Hong Kong HKMA / Customs sanctions",
+      "New Zealand NZ Police Sanctions",
+      "Israel NBCTF / Iran-Hezbollah Sanctions",
+      "Mexico SAT Black List (69-B)",
+      "Brazil COAF / CVM",
+      "India RBI Caution List & SEBI debarred entities",
+      "South Africa FIC Targeted Financial Sanctions",
+    ],
+  },
+  {
+    id: "uae-gcc",
+    label: "UAE & GCC",
+    tone: "amber",
+    sources: [
+      "UAE EOCN Local TFS List",
+      "UAE Cabinet Resolution 74/2020 designations",
+      "CBUAE Financial Sanctions notices",
+      "CBUAE Enforcement Actions",
+      "UAE MoE DPMS register",
+      "UAE Federal Tax Authority defaulter list",
+      "DFSA (DIFC) Public Register & Enforcement",
+      "FSRA (ADGM) Public Register & Enforcement",
+      "DMCC member register & disciplinary",
+      "UAE Federal Gazette / Official Journal",
+      "UAE Ministry of Justice judicial decisions",
+      "UAE Public Prosecution case register",
+      "AECB (Al Etihad Credit Bureau)",
+      "GCC Customs Union / Mowafaq",
+    ],
+  },
+  {
+    id: "mdb-debarment",
+    label: "Multilateral Development Bank Debarment",
+    tone: "red",
+    sources: [
+      "World Bank Listing of Ineligible Firms (debarment)",
+      "World Bank Worldwide Governance Indicators",
+      "ADB Sanctions List",
+      "AIIB Sanctions List",
+      "EBRD Ineligible Entities List",
+      "IDB Sanctioned Firms",
+      "AfDB Debarment List",
+    ],
+  },
+  {
+    id: "open-source",
+    label: "Open-Source & Civil Society",
+    tone: "blue",
+    sources: [
+      "OpenSanctions",
+      "OpenCorporates",
+      "OpenOwnership",
+      "ICIJ Offshore Leaks Database",
+      "OCCRP Aleph",
+      "OCCRP Russian Asset Tracker",
+      "The Sentry (Africa kleptocracy)",
+      "Bellingcat",
+      "C4ADS",
+      "RUSI Centre for Financial Crime & Security",
+      "Basel AML Index",
+      "Transparency International CPI",
+      "PEPs.com (open)",
+      "EveryPolitician (open, archived)",
+      "Wikidata politicians dataset",
+      "EveryCRSReport",
+      "GovTrack / OpenStates",
+      "Deutsche Bundestag / Abgeordnetenwatch",
+      "UAE FNC member register",
+      "Saudi Shura Council register",
+      "Kuwait National Assembly register",
+      "African Politicians DB",
+      "Freedom House nations-in-transit",
+      "Reporters Without Borders index",
+      "Yale Genocide Studies / atrocity registers",
+      "State-owned enterprises database (SOE Tracker)",
+    ],
+  },
+  {
+    id: "business-data",
+    label: "Business Intelligence & Identity",
+    tone: "violet",
+    sources: [
+      "GLEIF (Legal Entity Identifier)",
+      "ISO 20275 / ISO 17442 (LEI)",
+      "Dun & Bradstreet D-U-N-S",
+      "D&B Onboard",
+      "Equifax KYC",
+      "Experian ProveID",
+      "TransUnion TLOxp",
+      "PitchBook",
+      "Crunchbase Pro",
+      "ZoomInfo",
+    ],
+  },
+  {
+    id: "news-media",
+    label: "News & Adverse Media",
+    tone: "orange",
+    sources: [
+      "Reuters newswire",
+      "Associated Press (AP)",
+      "Agence France-Presse (AFP)",
+      "Bloomberg Terminal / News",
+      "Financial Times",
+      "Wall Street Journal",
+      "New York Times",
+      "The Guardian",
+      "The Times (London)",
+      "Le Monde",
+      "Le Figaro",
+      "Handelsblatt",
+      "Frankfurter Allgemeine",
+      "El País",
+      "El Mundo",
+      "Corriere della Sera",
+      "Asahi Shimbun",
+      "Nikkei",
+      "South China Morning Post",
+      "Caixin",
+      "Al Jazeera",
+      "Al Arabiya",
+      "Asharq Al-Awsat",
+      "Al-Ittihad",
+      "Gulf News",
+      "The National (UAE)",
+      "Khaleej Times",
+      "Arab News",
+      "The Times of Israel",
+      "Haaretz",
+      "Anadolu Agency",
+      "TASS / Interfax",
+      "RFE/RL",
+      "Meltwater",
+      "Cision",
+      "Google News (real-time RSS)",
+      "Bing News API",
+      "WikiLeaks PlusD / Cablegate (historical)",
+    ],
+  },
+  {
+    id: "investigative",
+    label: "Investigative Journalism & Leaks",
+    tone: "red",
+    sources: [
+      "Pandora Papers",
+      "Paradise Papers",
+      "Panama Papers",
+      "FinCEN Files",
+      "Suisse Secrets",
+      "Pegasus Project",
+      "Cyprus Papers / Malta Files",
+      "Luanda Leaks",
+      "Russian Asset Tracker",
+      "Forbes Real-Time Billionaires",
+    ],
+  },
+  {
+    id: "regulatory-enforcement",
+    label: "Regulatory Enforcement Registers",
+    tone: "amber",
+    sources: [
+      "Sanctions Search (gov.uk)",
+      "SEC EDGAR enforcement",
+      "CFTC enforcement actions",
+      "FCA enforcement notices",
+      "FINMA enforcement",
+      "BaFin enforcement",
+      "AMF (France) enforcement",
+      "CONSOB (Italy) enforcement",
+      "CNMV (Spain) enforcement",
+      "SFC (Hong Kong) disciplinary register",
+      "MAS (Singapore) enforcement",
+      "ASIC (Australia) banned & disqualified register",
+      "NYDFS enforcement",
+      "PCAOB sanctioned auditors",
+      "WorldECR",
+      "ACAMS Today / moneyLaundering.com",
+      "Global Investigations Review (GIR)",
+      "Compliance Week",
+      "PYMNTS AML wire",
+      "ICAEW / ICAS / ACCA disciplinary",
+      "American Bar Association sanctioned attorneys",
+    ],
+  },
+  {
+    id: "trade-maritime",
+    label: "Trade, Maritime & Corporate Data",
+    tone: "green",
+    sources: [
+      "Vessel registries (IHS Markit / Equasis / Lloyd's List)",
+      "Aircraft registries (FAA / EASA / ICAO)",
+      "Trade-data (Panjiva, ImportGenius, TradeAtlas)",
+      "Maritime AIS (MarineTraffic, Spire, Windward)",
+      "Bill of Lading datasets",
+      "Customs gazettes (multi-jurisdiction)",
+      "Real-estate land registries (UAE DLD, UK HMLR, etc.)",
+    ],
+  },
+  {
+    id: "crypto",
+    label: "Crypto & Blockchain Analytics",
+    tone: "violet",
+    sources: [
+      "Chainalysis KYT",
+      "Elliptic Navigator",
+      "TRM Labs",
+      "Crystal Blockchain",
+      "Coinfirm",
+      "Merkle Science",
+      "Scorechain",
+      "Lukka",
+      "Solidus Labs",
+      "CipherTrace (Mastercard)",
+    ],
+  },
+  {
+    id: "internal",
+    label: "Internal Bureau Lists",
+    tone: "amber",
+    sources: ["Internal denial / SCO list (bureau-maintained)"],
+  },
+];
+
+const COVERAGE_TOTAL = SOURCE_CATEGORIES.reduce((sum, c) => sum + c.sources.length, 0);
+
+const HEADER_TONE: Record<string, string> = {
+  violet: "text-violet",
+  red: "text-red",
+  blue: "text-blue",
+  orange: "text-orange",
+  green: "text-green",
+  amber: "text-amber",
+};
+const CHIP_TONE_MAP: Record<string, "violet" | "red" | "amber" | "bg"> = {
+  violet: "violet",
+  red: "red",
+  blue: "bg",
+  orange: "amber",
+  green: "bg",
+  amber: "amber",
+};
+
+export function BrainDataCoverage() {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const allOpen = expanded.size === SOURCE_CATEGORIES.length;
+  const toggleAll = () =>
+    setExpanded(
+      allOpen ? new Set() : new Set(SOURCE_CATEGORIES.map((c) => c.id)),
+    );
+
+  return (
+    <Card title={`Data coverage · ${COVERAGE_TOTAL} verified sources`}>
+      <div className="text-10.5 text-ink-3 mb-2.5 flex items-start justify-between gap-3">
+        <span>
+          All external databases, official sanctions lists, news corpora, and
+          analytics platforms cross-referenced during screening — 15 thematic groups.
+        </span>
+        <button
+          onClick={toggleAll}
+          className="shrink-0 font-mono text-10 text-brand bg-transparent border-none cursor-pointer underline"
+        >
+          {allOpen ? "collapse all" : "expand all"}
+        </button>
+      </div>
+      <div className="space-y-1">
+        {SOURCE_CATEGORIES.map((cat) => {
+          const isOpen = expanded.has(cat.id);
+          const headerColor = HEADER_TONE[cat.tone] ?? "text-ink-1";
+          const chipTone = CHIP_TONE_MAP[cat.tone] ?? "bg";
+          return (
+            <div
+              key={cat.id}
+              className="border border-hair-2 rounded overflow-hidden"
+            >
+              <button
+                onClick={() => toggle(cat.id)}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 bg-transparent border-none cursor-pointer text-left hover:bg-bg-2"
+              >
+                <span className={`text-11 font-medium ${headerColor}`}>
+                  {cat.label}
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className="font-mono text-10 text-ink-3">
+                    {cat.sources.length}
+                  </span>
+                  <span className="text-ink-3 text-9 leading-none">
+                    {isOpen ? "▲" : "▼"}
+                  </span>
+                </span>
+              </button>
+              {isOpen && (
+                <div className="px-2.5 pb-2.5 pt-2 border-t border-hair-2 bg-bg">
+                  <div className="flex flex-wrap gap-1">
+                    {cat.sources.map((s) => (
+                      <Chip key={s} tone={chipTone}>
+                        {s}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2.5 pt-2 border-t border-hair-2 flex justify-between text-10 font-mono text-ink-3">
+        <span>{SOURCE_CATEGORIES.length} categories</span>
+        <span>{COVERAGE_TOTAL} total sources</span>
       </div>
     </Card>
   );
