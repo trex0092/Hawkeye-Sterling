@@ -395,9 +395,9 @@ export function BrainBiasCheck({ result }: { result: SuperBrainResult }) {
         {flags.map((f, i) => (
           <div
             key={i}
-            className={`text-11 ${f.level === "warn" ? "text-amber" : "text-ink-2"}`}
+            className={`text-11 ${f.level === "warn" ? "text-amber" : "text-green"}`}
           >
-            {f.level === "warn" ? "⚠ " : "ℹ "}
+            {f.level === "warn" ? "⚠ " : "✓ "}
             {f.text}
           </div>
         ))}
@@ -1696,6 +1696,7 @@ export function BrainChainAttribution({ result }: { result: SuperBrainResult }) 
       value: v,
       pct: total > 0 ? Math.round((v / total) * 100) : 0,
     }))
+    .filter((item) => item.value > 0)
     .sort((a, b) => b.value - a.value);
 
   return (
