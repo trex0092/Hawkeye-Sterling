@@ -27,8 +27,8 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
         />
       </div>
 
-      {/* 4-pillar coverage strip */}
-      <div className="grid grid-cols-4 gap-3 mt-5">
+      {/* 5-pillar coverage strip */}
+      <div className="grid grid-cols-5 gap-3 mt-5">
         <PillarCard
           label="Global sanctions"
           detail="OFAC · UN · EU · UK · EOCN + AU · CA · CH · JP · FATF · INTERPOL · WB · ADB · MDB debarment · 50+ official lists"
@@ -45,9 +45,14 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
           tone="orange"
         />
         <PillarCard
+          label="RCA"
+          detail="Relatives &amp; close associates · Spouse · Siblings · Nominees · Known intermediaries · Beneficial owners"
+          tone="green"
+        />
+        <PillarCard
           label="257 verified sources"
           detail="Commercial AML · Crypto analytics · Trade &amp; maritime · Regulatory enforcement · Open-source civil society"
-          tone="green"
+          tone="amber"
         />
       </div>
 
@@ -62,13 +67,14 @@ function PillarCard({
 }: {
   label: string;
   detail: string;
-  tone: "violet" | "blue" | "orange" | "green";
+  tone: "violet" | "blue" | "orange" | "green" | "amber";
 }) {
   const tones: Record<typeof tone, { border: string; label: string; dot: string }> = {
     violet: { border: "border-violet/30", label: "text-violet", dot: "bg-violet" },
     blue:   { border: "border-blue/30",   label: "text-blue",   dot: "bg-blue" },
     orange: { border: "border-orange/30", label: "text-orange", dot: "bg-orange" },
     green:  { border: "border-green/30",  label: "text-green",  dot: "bg-green" },
+    amber:  { border: "border-amber/30",  label: "text-amber",  dot: "bg-amber" },
   };
   const t = tones[tone];
   return (

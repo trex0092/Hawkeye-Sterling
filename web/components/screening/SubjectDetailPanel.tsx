@@ -58,6 +58,7 @@ import {
   BrainSignalInterference,
   BrainEscalationLadder,
   BrainDataCoverage,
+  BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import {
@@ -1310,6 +1311,7 @@ function SuperBrainPanel({
       <BrainCapabilityAudit result={r} />
       <BrainLatencyBreakdown result={r} />
       <BrainDataFreshness result={r} />
+      <BrainCoverageGap result={r} />
       <BrainDataCoverage />
       <BrainChainOfCustody result={r} />
       <BrainModuleWeights />
