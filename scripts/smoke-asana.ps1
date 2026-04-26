@@ -72,55 +72,48 @@ try {
     Write-Fail "App /api/status failed: $($_.Exception.Message)"
 }
 
-# CHECK 3: Trigger ongoing/run
-Write-Header "Check 3 - POST /api/ongoing/run - create Asana task"
+# CHECK 3: POST /api/screening-report - create Asana task
+Write-Header "Check 3 - POST /api/screening-report - create Asana task"
 
 $bodyObj = @{
-    subjects = @(
-        @{
-            name    = $smokeSubject
-            id      = $smokeCaseId
-            tier    = "high"
-            cadence = "daily"
-        }
-    )
+    subject = @{
+        id   = $smokeCaseId
+        name = $smokeSubject
+    }
+    result = @{
+        topScore  = 0
+        severity  = "low"
+        composite = @{ score = 0; label = "low" }
+        hits      = @()
+        screen    = @{ hits = @(); topScore = 0; severity = "low" }
+    }
+    trigger = "screen"
 }
-$body = $bodyObj | ConvertTo-Json -Depth 5
+$body = $bodyObj | ConvertTo-Json -Depth 8
 
-$runResponse = $null
+$reportResponse = $null
 try {
-    $r = Invoke-WebRequest -Uri "$BASE_URL/api/ongoing/run" -Method POST -Headers $appHeaders -Body $body -UseBasicParsing
-    $runResponse = $r.Content | ConvertFrom-Json
+    $r = Invoke-WebRequest -Uri "$BASE_URL/api/screening-report" -Method POST -Headers $appHeaders -Body $body -UseBasicParsing
+    $reportResponse = $r.Content | ConvertFrom-Json
     $preview = $r.Content.Substring(0, [Math]::Min(400, $r.Content.Length))
     Write-Host "  Response (first 400 chars): $preview"
 } catch {
-    Write-Fail "POST /api/ongoing/run failed: $($_.Exception.Message)"
+    Write-Fail "POST /api/screening-report failed: $($_.Exception.Message)"
 }
 
 $taskUrl = $null
-$skipReason = $null
 
-if ($runResponse) {
-    $subject = $null
-    if ($runResponse -is [array]) {
-        $subject = $runResponse[0]
-    } else {
-        $subject = $runResponse
-    }
-
-    $taskUrl = $subject.asanaTaskUrl
-    $skipReason = $subject.asanaSkipReason
-    $taskGid = $subject.asanaTaskGid
+if ($reportResponse) {
+    $taskUrl = $reportResponse.taskUrl
+    $taskGid = $null
 
     if ($taskUrl) {
-        Write-Pass "asanaTaskUrl returned: $taskUrl"
-        if (-not $taskGid) {
-            $taskGid = ($taskUrl -split '/')[-1]
-        }
-    } elseif ($skipReason) {
-        Write-Fail "asanaSkipReason set: '$skipReason' - task NOT created"
+        Write-Pass "taskUrl returned: $taskUrl"
+        $taskGid = ($taskUrl -split '/')[-1]
+    } elseif ($reportResponse.ok -eq $false) {
+        Write-Fail "screening-report returned ok=false: $($reportResponse.error)"
     } else {
-        Write-Fail "asanaTaskUrl missing from response - check Netlify function logs"
+        Write-Fail "taskUrl missing from response - check Netlify function logs"
     }
 }
 
