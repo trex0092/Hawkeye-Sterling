@@ -116,7 +116,24 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
   const screening = useQuickScreen(qsSubject);
-  const news = useNewsSearch(subject.name);
+  // When a sanctions hit lands at high confidence the user-typed name may
+  // be a misspelling that the sanctions matcher rescued via phonetic /
+  // fuzzy matching (e.g. "Manuro" → "Maduro"). Use the canonical hit name
+  // for downstream Google News and PEP/typology lookups so adverse-media
+  // doesn't 0-result on the typo while sanctions screams CRITICAL.
+  const canonicalName = useMemo(() => {
+    if (screening.status === "success" && screening.result.hits.length > 0) {
+      const topHit = screening.result.hits.reduce((a, b) =>
+        a.score > b.score ? a : b,
+      );
+      if (topHit.score >= 0.85 && topHit.candidateName) {
+        return topHit.candidateName;
+      }
+    }
+    return null;
+  }, [screening]);
+  const newsSearchName = canonicalName ?? subject.name;
+  const news = useNewsSearch(newsSearchName);
   const adverseMediaText = useMemo(() => {
     if (news.status === "success" && news.result.articles.length > 0) {
       return news.result.articles
@@ -126,7 +143,14 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     }
     return subject.adverseMedia?.name ?? subject.meta ?? "";
   }, [news, subject.adverseMedia, subject.meta]);
-  const superBrain = useSuperBrain(qsSubject, { adverseMediaText });
+  // Pass the canonical name to super-brain too so lookupKnownPEP /
+  // lookupKnownAdverse hit the fixture (e.g. "nicolas maduro" → state_leader,
+  // tier=national, salience=1) instead of the typo dropping into "not_pep".
+  const qsSubjectForBrain = useMemo(
+    () => (canonicalName ? { ...qsSubject, name: canonicalName } : qsSubject),
+    [qsSubject, canonicalName],
+  );
+  const superBrain = useSuperBrain(qsSubjectForBrain, { adverseMediaText });
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,
