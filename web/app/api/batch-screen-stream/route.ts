@@ -26,6 +26,12 @@ import { checkJube } from "@/lib/server/jube-client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const CORS_HEADERS: Record<string, string> = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization, x-api-key",
+};
+
 type QuickScreenFn = (
   subject: QuickScreenSubject,
   candidates: QuickScreenCandidate[],
@@ -109,21 +115,21 @@ export async function POST(req: Request): Promise<Response> {
   } catch {
     return new Response(
       `data: ${JSON.stringify({ type: "error", error: "invalid JSON" })}\n\n`,
-      { status: 400, headers: { "content-type": "text/event-stream" } },
+      { status: 400, headers: { "content-type": "text/event-stream", ...CORS_HEADERS, ...gateHeaders } },
     );
   }
 
   if (!Array.isArray(body?.rows) || body.rows.length === 0) {
     return new Response(
       `data: ${JSON.stringify({ type: "error", error: "rows must be a non-empty array" })}\n\n`,
-      { status: 400, headers: { "content-type": "text/event-stream" } },
+      { status: 400, headers: { "content-type": "text/event-stream", ...CORS_HEADERS, ...gateHeaders } },
     );
   }
 
   if (body.rows.length > 500) {
     return new Response(
       `data: ${JSON.stringify({ type: "error", error: "batch size exceeds 500-row limit" })}\n\n`,
-      { status: 400, headers: { "content-type": "text/event-stream" } },
+      { status: 400, headers: { "content-type": "text/event-stream", ...CORS_HEADERS, ...gateHeaders } },
     );
   }
 
@@ -265,7 +271,12 @@ export async function POST(req: Request): Promise<Response> {
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
       "x-accel-buffering": "no",
+      ...CORS_HEADERS,
       ...gateHeaders,
     },
   });
+}
+
+export async function OPTIONS(): Promise<Response> {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
 }

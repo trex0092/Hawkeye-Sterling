@@ -35,11 +35,10 @@ export async function enforce(
   const plaintext = extractKey(req);
   const anonymous = plaintext === null;
 
-  // Portal bypass: if the caller presents ADMIN_TOKEN (set as
-  // NEXT_PUBLIC_ADMIN_TOKEN in the browser bundle) skip API-key lookup
-  // and grant enterprise-tier rate limits without consuming monthly quota.
-  // This lets the portal UI call every gated route without per-page token
-  // management, while ADMIN_TOKEN itself never leaves the server env var.
+  // Portal bypass: if the caller presents ADMIN_TOKEN (injected server-side
+  // by web/middleware.ts for same-origin portal requests — never exposed in
+  // the browser bundle) skip API-key lookup and grant enterprise-tier rate
+  // limits without consuming monthly quota.
   const adminToken = process.env["ADMIN_TOKEN"];
   const adminMatch = adminToken && plaintext !== null && (() => {
     const enc = new TextEncoder();

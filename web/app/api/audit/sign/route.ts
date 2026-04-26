@@ -39,16 +39,26 @@ const ALLOWED_ACTIONS = new Set([
   "freeze",
   "dispose",
   "goaml_submit",
+  // Portal-generated lifecycle events (analyst tier). These are fired
+  // automatically from the screening UI so every subject-add and screening
+  // result lands in the tamper-evident HMAC chain in Netlify Blobs —
+  // not just the client-side localStorage copy.
+  "subject_added",
+  "screening_completed",
+  "ongoing_enrolled",
 ]);
 
 const ACTION_MIN_ROLE: Record<string, string> = {
-  clear: "analyst",
-  escalate: "analyst",
-  str_read: "co",
-  str: "mlro",
-  freeze: "mlro",
-  dispose: "mlro",
-  goaml_submit: "mlro",
+  clear:               "analyst",
+  escalate:            "analyst",
+  str_read:            "co",
+  str:                 "mlro",
+  freeze:              "mlro",
+  dispose:             "mlro",
+  goaml_submit:        "mlro",
+  subject_added:       "analyst",
+  screening_completed: "analyst",
+  ongoing_enrolled:    "analyst",
 };
 
 // Must mirror operator-role.ts ROLE_POWER. All 5 roles must be present —

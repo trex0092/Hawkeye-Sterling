@@ -74,6 +74,16 @@ export async function PATCH(
     );
   }
 
+  // Disallow sending both a status override and an appeal in the same
+  // request — the appeal handler always sets status="escalated", which
+  // would silently overwrite the explicit status the caller just set.
+  if (body["status"] !== undefined && body["appeal"] !== undefined) {
+    return NextResponse.json(
+      { ok: false, error: "supply either status or appeal, not both" },
+      { status: 400 },
+    );
+  }
+
   const record = await getJson<CorrectionRequest>(`${PREFIX}${params.id}`);
   if (!record) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });

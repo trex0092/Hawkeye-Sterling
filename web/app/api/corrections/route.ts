@@ -62,7 +62,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     items.push(r);
   }
   items.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
-  return NextResponse.json({ ok: true, count: items.length, requests: items });
+  return NextResponse.json({ ok: true, count: items.length, requests: items }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -107,5 +107,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     slaDays: REVIEW_SLA_DAYS,
     message:
       "Request received. You will receive an updated status within 30 days. Appeals can be filed via /api/corrections/{id}.",
-  });
+  }, { headers: gate.headers });
 }

@@ -129,6 +129,9 @@ async function handleDelete(req: Request): Promise<NextResponse> {
   }
   await del(`ongoing/subject/${id}`);
   await del(`ongoing/last/${id}`);
+  // Remove the schedule entry so the cron job no longer attempts to
+  // re-screen this subject after it has been un-enrolled.
+  await del(`schedule/${id}`);
   return NextResponse.json({ ok: true });
 }
 

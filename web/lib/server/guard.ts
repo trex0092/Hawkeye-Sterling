@@ -56,8 +56,20 @@ export function withGuard(handler: Handler): (req: Request) => Promise<Response>
       return new Response(nr.body, { status: nr.status, headers: merged });
     }
 
-    // enforce with requireAuth: true guarantees record is non-null.
-    const apiKey = gate.record!;
+    // The admin-bypass path in enforce() sets record: null (no stored key
+    // record exists for the portal admin token). Construct a synthetic context
+    // so withGuard handlers never dereference a null record.
+    const apiKey: ApiKeyRecord = gate.record ?? {
+      id: "portal_admin",
+      hash: "",
+      name: "Portal Admin",
+      tier: "enterprise" as ApiKeyRecord["tier"],
+      email: "admin@portal.internal",
+      createdAt: new Date().toISOString(),
+      usageMonthly: 0,
+      usageResetAt: new Date().toISOString(),
+      _version: 0,
+    };
 
     const ctx: RequestContext = {
       apiKey,

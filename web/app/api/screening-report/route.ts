@@ -10,9 +10,28 @@ export const dynamic = "force-dynamic";
 // first; MLRO routes them to downstream Projects 01–19.
 // Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID / ASANA_ASSIGNEE_GID
 // env vars in Netlify → Site settings → Environment variables.
-const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
+const DEFAULT_PROJECT_GID   = "1214148630166524"; // Project 00 — Master Inbox
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
 const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda — primary MLRO
+
+// Asana custom field GIDs. The Asana API requires numeric GID keys, not
+// human-readable names. Without GIDs the fields are silently ignored on
+// task create. Obtain GIDs via GET https://app.asana.com/api/1.0/custom_fields
+// and set them as env vars. When absent, custom fields are skipped entirely
+// so the task still creates — structured metadata just won't be populated.
+function buildCustomFields(): Record<string, string | number> | undefined {
+  const subjectGid   = process.env["ASANA_CF_SUBJECT_GID"];
+  const entityGid    = process.env["ASANA_CF_ENTITY_TYPE_GID"];
+  const modeGid      = process.env["ASANA_CF_MODE_GID"];
+  const matchesGid   = process.env["ASANA_CF_TOTAL_MATCHES_GID"];
+  if (!subjectGid && !entityGid && !modeGid && !matchesGid) return undefined;
+  return {
+    ...(subjectGid  ? { [subjectGid]:  "" } : {}),
+    ...(entityGid   ? { [entityGid]:   "" } : {}),
+    ...(modeGid     ? { [modeGid]:     "" } : {}),
+    ...(matchesGid  ? { [matchesGid]:  0  } : {}),
+  };
+}
 
 interface ReportHit {
   listId: string;
@@ -383,24 +402,51 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
   const name = buildTaskName(body);
   const notes = buildTaskNotes(body);
 
+  // Bound the Asana call so a hung api.asana.com doesn't exhaust the
+  // serverless function budget (Netlify hard-limits at 26s for background
+  // functions, 10s for synchronous ones). Mirror the timeout from
+  // src/integrations/asana.ts.
+  const ASANA_TIMEOUT_MS = 10_000;
+
   try {
-    const asanaRes = await fetch("https://app.asana.com/api/1.0/tasks", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-        accept: "application/json",
-      },
-      body: JSON.stringify({
-        data: {
-          name,
-          notes,
-          projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
-          workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+    const taskCtl = new AbortController();
+    const taskTimer = setTimeout(() => taskCtl.abort(), ASANA_TIMEOUT_MS);
+    let asanaRes: Response;
+    try {
+      // Populate custom fields with subject-specific values if GIDs are configured.
+      const cfTemplate = buildCustomFields();
+      const customFields: Record<string, string | number> | undefined = cfTemplate
+        ? {
+            ...cfTemplate,
+            ...(process.env["ASANA_CF_SUBJECT_GID"]      ? { [process.env["ASANA_CF_SUBJECT_GID"]]:      body.subject.name } : {}),
+            ...(process.env["ASANA_CF_ENTITY_TYPE_GID"]  ? { [process.env["ASANA_CF_ENTITY_TYPE_GID"]]:  body.subject.entityType ?? "" } : {}),
+            ...(process.env["ASANA_CF_MODE_GID"]         ? { [process.env["ASANA_CF_MODE_GID"]]:         body.trigger ?? "screen" } : {}),
+            ...(process.env["ASANA_CF_TOTAL_MATCHES_GID"] ? { [process.env["ASANA_CF_TOTAL_MATCHES_GID"]]: body.result.hits.length } : {}),
+          }
+        : undefined;
+
+      asanaRes = await fetch("https://app.asana.com/api/1.0/tasks", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          accept: "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          data: {
+            name,
+            notes,
+            projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
+            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
+            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+            ...(customFields ? { custom_fields: customFields } : {}),
+          },
+        }),
+        signal: taskCtl.signal,
+      });
+    } finally {
+      clearTimeout(taskTimer);
+    }
     const payload = (await asanaRes.json().catch(() => null)) as
       | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
       | null;
