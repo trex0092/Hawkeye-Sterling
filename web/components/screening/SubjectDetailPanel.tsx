@@ -506,7 +506,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   const buildReportPayload = () => ({
     subject: {
       id: subject.id,
-      name: subject.name,
+      name: canonicalName ?? subject.name,
       entityType: subject.entityType,
       jurisdiction: subject.jurisdiction,
       ...(subject.aliases ? { aliases: subject.aliases } : {}),
@@ -552,7 +552,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     const payload = {
       subject: {
         id: subject.id,
-        name: subject.name,
+        name: canonicalName ?? subject.name,
         entityType: subject.entityType,
         jurisdiction: subject.jurisdiction,
         ...(subject.aliases ? { aliases: subject.aliases } : {}),
