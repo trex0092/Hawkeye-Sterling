@@ -31,7 +31,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Workbench", href: "/workbench", hint: "MLRO advisor & deep reasoning" },
       { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
-      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
       { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
@@ -42,6 +41,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Governance",
     items: [
       { label: "Audit", href: "/audit-trail", hint: "Immutable audit chain" },
+      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
       { label: "Regulatory", href: "/regulatory", hint: "Searchable library" },
       { label: "Policies", href: "/policies", hint: "Charter / SOPs" },
       { label: "Playbook", href: "/playbook", hint: "Typology guides" },

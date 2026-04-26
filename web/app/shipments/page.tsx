@@ -7,6 +7,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 // survives reload. The seed CONSIGNMENTS array stays the system-of-record;
 // user dismissals are overlaid and never mutate the seed.
 const SHIPMENTS_DELETED_KEY = "hawkeye.shipments.deleted.v1";
+const SHIPMENTS_CUSTOM_KEY = "hawkeye.shipments.custom.v1";
 
 function loadDeletedIds(): string[] {
   if (typeof window === "undefined") return [];
@@ -24,6 +25,27 @@ function saveDeletedIds(ids: string[]): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(SHIPMENTS_DELETED_KEY, JSON.stringify(ids));
+  } catch {
+    /* quota / disabled — silent */
+  }
+}
+
+function loadCustom(): Consignment[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SHIPMENTS_CUSTOM_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as Consignment[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustom(rows: Consignment[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SHIPMENTS_CUSTOM_KEY, JSON.stringify(rows));
   } catch {
     /* quota / disabled — silent */
   }
@@ -373,6 +395,146 @@ function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
+function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void; onCancel: () => void }) {
+  const [reference, setReference] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [originCountry, setOriginCountry] = useState("AE");
+  const [refinery, setRefinery] = useState("");
+  const [grossWeightKg, setGrossWeightKg] = useState("");
+  const [bars, setBars] = useState("");
+  const [usdValue, setUsdValue] = useState("");
+  const [direction, setDirection] = useState<"Import" | "Export">("Import");
+  const [status, setStatus] = useState<ShipmentStatus>("in-flight");
+  const [carrier, setCarrier] = useState("");
+  const [vaultLocation, setVaultLocation] = useState("Brink's Dubai DMCC");
+  const [counterparty, setCounterparty] = useState("");
+  const [err, setErr] = useState("");
+
+  const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+
+  const submit = () => {
+    if (!reference.trim() || !refinery.trim()) { setErr("Reference and Refinery are required."); return; }
+    const today = new Date().toLocaleDateString("en-GB");
+    const kg = parseFloat(grossWeightKg) || 0;
+    const c: Consignment = {
+      id: reference.trim(),
+      reference: reference.trim(),
+      status,
+      origin: origin.trim() || refinery.trim(),
+      originCountry: originCountry.trim().toUpperCase() || "AE",
+      refinery: refinery.trim(),
+      refineryLbmaId: "—",
+      grossWeightKg: kg,
+      weightGms: Math.round(kg * 1000),
+      fineness: 999.9,
+      bars: parseInt(bars, 10) || 0,
+      usdValue: parseFloat(usdValue) || 0,
+      description: "User-added consignment",
+      dispatchDate: today,
+      eta: today,
+      direction,
+      carrier: carrier.trim() || "—",
+      transportationAgent: carrier.trim() || "—",
+      awb: "—",
+      invoiceNumber: "—",
+      clearanceDate: "—",
+      transitProgress: status === "settled" ? 100 : status === "at-vault" ? 95 : 50,
+      vaultLocation: vaultLocation.trim(),
+      consignee: counterparty.trim() || "—",
+      assayPending: status === "awaiting-assay",
+      rggStep: 1,
+      flags: [],
+      chain: [],
+      mineOfOrigin: "—",
+      miningCountry: originCountry.trim().toUpperCase() || "AE",
+      exportLicence: "—",
+      refineryAuditDate: "—",
+      lbmaGoodDelivery: false,
+      counterparty: counterparty.trim() || "—",
+      counterpartyJurisdiction: originCountry.trim().toUpperCase() || "AE",
+      counterpartyCddRef: "—",
+      custodian: carrier.trim() || "—",
+      insuranceRef: "—",
+      vaultCertRef: "—",
+    };
+    onAdd(c);
+  };
+
+  return (
+    <div className="mb-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
+      <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New shipment</div>
+      {err && <p className="text-11 text-red mb-2">{err}</p>}
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reference *</label>
+          <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="SHP-2025-0042" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Refinery *</label>
+          <input value={refinery} onChange={(e) => setRefinery(e.target.value)} placeholder="e.g. Argor-Heraeus" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin</label>
+          <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="City, Country" className={iCls} />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin country</label>
+          <input value={originCountry} onChange={(e) => setOriginCountry(e.target.value)} placeholder="AE" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Direction</label>
+          <select value={direction} onChange={(e) => setDirection(e.target.value as "Import" | "Export")} className={iCls}>
+            <option value="Import">Import</option>
+            <option value="Export">Export</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Status</label>
+          <select value={status} onChange={(e) => setStatus(e.target.value as ShipmentStatus)} className={iCls}>
+            <option value="in-flight">In flight</option>
+            <option value="awaiting-assay">Awaiting assay</option>
+            <option value="at-vault">At vault</option>
+            <option value="held">Held</option>
+            <option value="settled">Settled</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Carrier</label>
+          <input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="Malca-Amit" className={iCls} />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gross weight (kg)</label>
+          <input value={grossWeightKg} onChange={(e) => setGrossWeightKg(e.target.value)} placeholder="124.8" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bars</label>
+          <input value={bars} onChange={(e) => setBars(e.target.value)} placeholder="10" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">USD value</label>
+          <input value={usdValue} onChange={(e) => setUsdValue(e.target.value)} placeholder="11240000" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label>
+          <input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Buyer / consignee" className={iCls} />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vault location</label>
+        <input value={vaultLocation} onChange={(e) => setVaultLocation(e.target.value)} className={iCls} />
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 function RggBadge({ step }: { step: number }) {
   return (
     <div className="flex gap-1">
@@ -397,16 +559,31 @@ export default function ShipmentsPage() {
   const [tab, setTab] = useState<ShipmentStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(CONSIGNMENTS[0]?.id ?? null);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [customRows, setCustomRows] = useState<Consignment[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
 
-  // Hydrate deletions from localStorage on mount only — avoids SSR mismatch.
+  // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
     setDeletedIds(loadDeletedIds());
+    setCustomRows(loadCustom());
   }, []);
 
   const live = useMemo(
-    () => CONSIGNMENTS.filter((c) => !deletedIds.includes(c.id)),
-    [deletedIds],
+    () => [
+      ...CONSIGNMENTS.filter((c) => !deletedIds.includes(c.id)),
+      ...customRows.filter((c) => !deletedIds.includes(c.id)),
+    ],
+    [deletedIds, customRows],
   );
+
+  const onAddRow = (row: Consignment) => {
+    setCustomRows((prev) => {
+      const next = [...prev, row];
+      saveCustom(next);
+      return next;
+    });
+    setShowAdd(false);
+  };
 
   // Auto-deselect a consignment that was just removed.
   useEffect(() => {
@@ -474,6 +651,18 @@ export default function ShipmentsPage() {
             Restore all
           </button>
         </div>
+      )}
+
+      {showAdd ? (
+        <AddShipmentForm onAdd={onAddRow} onCancel={() => setShowAdd(false)} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowAdd(true)}
+          className="self-start mb-4 text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
+        >
+          + Add
+        </button>
       )}
 
       {/* Filter tabs */}

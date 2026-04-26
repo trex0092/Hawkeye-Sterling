@@ -53,15 +53,7 @@ export function BrainAdversarial({
 // by severity. Empty-state if no typology hit.
 export function BrainTypologyMap({ result }: { result: SuperBrainResult }) {
   const hits = result.typologies?.hits ?? [];
-  if (hits.length === 0) {
-    return (
-      <Card title="Typology matches">
-        <div className="text-11 text-ink-2">
-          No typology signatures matched this subject.
-        </div>
-      </Card>
-    );
-  }
+  if (hits.length === 0) return null;
   const sorted = [...hits].sort((a, b) => b.weight - a.weight).slice(0, 12);
   const max = Math.max(...sorted.map((h) => h.weight), 1);
   return (
@@ -329,28 +321,22 @@ export function BrainScenarioMatcher({ result }: { result: SuperBrainResult }) {
     weight: h.weight,
     rationale: h.snippet ?? `Subject matched ${h.family} typology at ${Math.round(h.weight * 100)}% weight`,
   }));
+  if (scenarios.length === 0) return null;
   return (
     <Card title={`Scenario fingerprints (${scenarios.length})`}>
-      {scenarios.length === 0 ? (
-        <div className="text-11 text-ink-2">
-          No known AML scenarios matched. Subject's pattern is not in the
-          41-fingerprint corpus.
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          {scenarios.map((s) => (
-            <div key={s.name} className="border-l-2 border-red pl-2">
-              <div className="flex items-baseline justify-between">
-                <span className="text-11 font-semibold text-ink-0">{s.name}</span>
-                <span className="font-mono text-10 text-ink-3">
-                  {s.family} · {(s.weight * 100).toFixed(0)}%
-                </span>
-              </div>
-              <div className="text-10.5 text-ink-2 leading-snug">{s.rationale}</div>
+      <div className="space-y-1.5">
+        {scenarios.map((s) => (
+          <div key={s.name} className="border-l-2 border-red pl-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-11 font-semibold text-ink-0">{s.name}</span>
+              <span className="font-mono text-10 text-ink-3">
+                {s.family} · {(s.weight * 100).toFixed(0)}%
+              </span>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="text-10.5 text-ink-2 leading-snug">{s.rationale}</div>
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }

@@ -624,7 +624,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   };
 
   return (
-    <aside className="bg-bg-panel border-l border-hair-2 p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-[#ec4899] p-6 overflow-y-auto">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
@@ -1290,7 +1290,6 @@ function SuperBrainPanel({
       <BrainCausalChain result={r} />
       <BrainOutcomeForecast result={r} />
       <BrainSourceTriangulation result={r} />
-      <BrainTemporalPattern result={r} />
       <BrainTypologyConfidence result={r} />
       <BrainJurisdictionClusters result={r} />
       <BrainRegulatoryPredictor result={r} />
@@ -1324,18 +1323,16 @@ function SuperBrainPanel({
       <BrainDataCoverage />
       <BrainChainOfCustody result={r} />
       <BrainModuleWeights />
-      <div className="bg-ink-0 text-bg-0 rounded-lg px-3 py-1.5 mb-3 flex items-center gap-3">
-        <span className="text-10 uppercase tracking-wide-4 text-white/50 shrink-0">
-          Composite
-        </span>
-        <span className="font-mono font-semibold text-13 text-brand shrink-0">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="text-10 uppercase tracking-wide-4 text-ink-3 shrink-0">Composite</span>
+        <span className="inline-flex items-baseline gap-0.5 font-mono font-semibold text-12 text-brand shrink-0">
           {r.composite.score}
-          <span className="text-white/50 text-11"> /100</span>
+          <span className="text-ink-3 text-10 font-normal">/100</span>
         </span>
-        <div className="flex flex-wrap gap-x-2 gap-y-0 text-10 font-mono text-white/50 min-w-0">
+        <div className="flex flex-wrap gap-x-2 gap-y-0 text-10 font-mono text-ink-3">
           {Object.entries(r.composite.breakdown).map(([k, v]) => (
             <span key={k} className="whitespace-nowrap">
-              {k}:<span className="text-white/70">{v}</span>
+              {k}:<span className="text-ink-1">{v}</span>
             </span>
           ))}
         </div>
@@ -1677,7 +1674,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       )}
 
       <ul className="list-none p-0 m-0 space-y-2">
-        {r.articles.slice(0, 10).map((a, i) => (
+        {r.articles.map((a, i) => (
           <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
               <a

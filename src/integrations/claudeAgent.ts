@@ -126,7 +126,7 @@ export async function generateNarrativeReport(
         system: payload.system,
         messages,
         metadata: {
-          product: 'hawkeye-sterling-v2',
+          product: 'hawkeye-sterling',
           module: '01-subject-screening',
           kind: 'narrative-report',
         },
