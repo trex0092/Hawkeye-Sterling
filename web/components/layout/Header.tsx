@@ -20,6 +20,7 @@ const NAV_TABS = [
   { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
   { key: "nav.monitor", label: "Monitoring", href: "/ongoing-monitor" },
+  { key: "nav.mlro", label: "MLRO Advisor", href: "/mlro-advisor" },
 ] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
@@ -28,7 +29,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
   {
     title: "Intelligence",
     items: [
-      { label: "Workbench", href: "/workbench", hint: "MLRO advisor & deep reasoning" },
       { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
