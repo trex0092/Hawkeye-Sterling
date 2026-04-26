@@ -32,7 +32,20 @@ export interface ReportScreeningResult {
     score: number;
     programs?: string[];
     method: string;
+    matchedAlias?: string;
+    reason?: string;
   }>;
+}
+
+export interface ReportNewsArticle {
+  title: string;
+  source: string;
+  pubDate: string;
+  link: string;
+  lang?: string;
+  severity?: string;
+  matchedVariant?: string;
+  keywordGroups?: string[];
 }
 
 export interface ReportSuperBrain {
@@ -41,6 +54,7 @@ export interface ReportSuperBrain {
     type: string;
     salience: number;
     rationale?: string;
+    matchedRoles?: Array<{ label: string; tier?: string }>;
   } | null;
   jurisdiction?: {
     iso2: string;
@@ -54,6 +68,7 @@ export interface ReportSuperBrain {
   esg?: Array<{ categoryId: string; domain: string; label: string }>;
   redlines?: { fired: Array<{ label?: string; id?: string }>; action: string | null };
   composite?: { score: number };
+  newsArticles?: ReportNewsArticle[];
 }
 
 export interface ReportInput {
@@ -200,13 +215,47 @@ function formatPepBlock(sb: ReportSuperBrain): string[] {
   lines.push(`PEP tier          : ${pep.tier}`);
   lines.push(`Salience          : ${Math.round(pep.salience * 100)}%`);
   if (pep.rationale) lines.push(`Rationale         : ${pep.rationale}`);
+  if (pep.matchedRoles && pep.matchedRoles.length > 0) {
+    lines.push(`Matched roles     :`);
+    for (const role of pep.matchedRoles) {
+      lines.push(`  • ${role.label}${role.tier ? ` (${role.tier})` : ""}`);
+    }
+  }
+  return lines;
+}
+
+// Sanctions evidence — full per-hit detail when sanctions hits exist.
+// Without this section, the matrix only shows "POSSIBLE MATCH — VERIFY"
+// per regime; the MLRO needs to see WHICH list, WHICH listRef, WHICH
+// candidate name, the score, the matching method, the programs (e.g.
+// SDGT, RUSSIA-EO14024) and any matched alias used by the engine.
+function formatSanctionsEvidence(r: ReportScreeningResult): string[] {
+  if (r.hits.length === 0) return [];
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} SANCTIONS EVIDENCE — POSSIBLE HITS ${"─".repeat(40)}`);
+  // Sort by score descending so the strongest evidence leads.
+  const sorted = [...r.hits].sort((a, b) => b.score - a.score);
+  for (let i = 0; i < sorted.length; i++) {
+    const h = sorted[i]!;
+    const pct = Math.round(h.score * 100);
+    lines.push(`Hit #${i + 1}            : ${h.listId} · ${pct}% · ${h.method.replace(/_/g, " ")}`);
+    lines.push(`  Candidate name    : ${h.candidateName}`);
+    lines.push(`  List reference    : ${h.listRef}`);
+    if (h.matchedAlias) lines.push(`  Matched via alias : "${h.matchedAlias}"`);
+    if (h.programs && h.programs.length > 0) {
+      lines.push(`  Programs          : ${h.programs.join(", ")}`);
+    }
+    if (h.reason) lines.push(`  Reason            : ${h.reason}`);
+    if (i < sorted.length - 1) lines.push("");
+  }
   return lines;
 }
 
 function formatAdverseMedia(sb: ReportSuperBrain): string[] {
   const kw = sb.adverseKeywordGroups ?? [];
   const am = sb.adverseMedia ?? [];
-  if (kw.length === 0 && am.length === 0) return [];
+  const articles = sb.newsArticles ?? [];
+  if (kw.length === 0 && am.length === 0 && articles.length === 0) return [];
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} ADVERSE MEDIA OVERLAY ${"─".repeat(53)}`);
   if (kw.length > 0) {
@@ -216,6 +265,33 @@ function formatAdverseMedia(sb: ReportSuperBrain): string[] {
   if (am.length > 0) {
     lines.push("Classifier categories:");
     for (const a of am) lines.push(`  • ${a.categoryId}  —  keyword "${a.keyword}"`);
+  }
+  // Article-level evidence — actual news sources the operator can audit.
+  // Without this, "POSITIVE — extensive" is unsupported at MLRO level.
+  if (articles.length > 0) {
+    lines.push("");
+    lines.push(`Source articles (${articles.length}):`);
+    const top = articles.slice(0, 15);
+    for (let i = 0; i < top.length; i++) {
+      const a = top[i]!;
+      const sev = a.severity ? ` [${a.severity.toUpperCase()}]` : "";
+      const lang = a.lang ? ` ${a.lang.toUpperCase()}` : "";
+      const date = a.pubDate ? ` ${a.pubDate.slice(0, 10)}` : "";
+      lines.push(`  ${i + 1}. ${a.title}${sev}`);
+      lines.push(`     ${a.source}${date}${lang}`);
+      if (a.link && /^https?:\/\//i.test(a.link)) {
+        lines.push(`     ${a.link}`);
+      }
+      if (a.matchedVariant) {
+        lines.push(`     Matched via: "${a.matchedVariant}"`);
+      }
+      if (a.keywordGroups && a.keywordGroups.length > 0) {
+        lines.push(`     Tags: ${a.keywordGroups.join(", ")}`);
+      }
+    }
+    if (articles.length > top.length) {
+      lines.push(`  …and ${articles.length - top.length} more (full list in case file)`);
+    }
   }
   return lines;
 }
@@ -489,6 +565,7 @@ export function buildComplianceReport(input: ReportInput): string {
 
   out.push(...formatSubject(input.subject));
   out.push(...formatMatrix(input.result, input.superBrain));
+  out.push(...formatSanctionsEvidence(input.result));
   if (input.superBrain) {
     out.push(...formatPepBlock(input.superBrain));
     out.push(...formatJurisdiction(input.superBrain));

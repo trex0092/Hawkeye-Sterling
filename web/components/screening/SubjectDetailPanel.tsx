@@ -523,6 +523,8 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
               score: h.score,
               method: h.method,
               ...(h.programs ? { programs: h.programs } : {}),
+              ...(h.matchedAlias ? { matchedAlias: h.matchedAlias } : {}),
+              ...(h.reason ? { reason: h.reason } : {}),
             })),
           }
         : { topScore: 0, severity: "clear", hits: [] },
@@ -536,6 +538,20 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             esg: superBrain.result.esg,
             redlines: superBrain.result.redlines,
             composite: superBrain.result.composite,
+            ...(news.status === "success" && news.result.articles.length > 0
+              ? {
+                  newsArticles: news.result.articles.map((a) => ({
+                    title: a.title,
+                    source: a.source,
+                    pubDate: a.pubDate,
+                    link: a.link,
+                    lang: a.lang,
+                    severity: a.severity,
+                    ...(a.matchedVariant ? { matchedVariant: a.matchedVariant } : {}),
+                    keywordGroups: a.keywordGroups,
+                  })),
+                }
+              : {}),
           }
         : null,
   });
@@ -572,13 +588,34 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       superBrain:
         superBrain.status === "success"
           ? {
-              pep: superBrain.result.pep,
+              pep: superBrain.result.pep
+                ? {
+                    ...superBrain.result.pep,
+                    ...(superBrain.result.pepAssessment?.matchedRoles
+                      ? { matchedRoles: superBrain.result.pepAssessment.matchedRoles }
+                      : {}),
+                  }
+                : null,
               jurisdiction: superBrain.result.jurisdiction,
               adverseMedia: superBrain.result.adverseMedia,
               adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
               esg: superBrain.result.esg,
               redlines: superBrain.result.redlines,
               composite: superBrain.result.composite,
+              ...(news.status === "success" && news.result.articles.length > 0
+                ? {
+                    newsArticles: news.result.articles.map((a) => ({
+                      title: a.title,
+                      source: a.source,
+                      pubDate: a.pubDate,
+                      link: a.link,
+                      lang: a.lang,
+                      severity: a.severity,
+                      ...(a.matchedVariant ? { matchedVariant: a.matchedVariant } : {}),
+                      keywordGroups: a.keywordGroups,
+                    })),
+                  }
+                : {}),
             }
           : null,
     };
