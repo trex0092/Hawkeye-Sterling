@@ -33,8 +33,10 @@ export function middleware(req: NextRequest): NextResponse {
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
 
+  // Only inject for requests that carry a same-origin marker. Requests with
+  // neither Origin nor Referer (e.g. plain curl) are treated as external and
+  // must supply their own API key — do NOT give them admin access for free.
   const isSameOrigin =
-    (!origin && !referer) || // SSR / server-action with no browser origin
     (origin != null && origin.includes(host)) ||
     (referer != null && referer.includes(host));
 
