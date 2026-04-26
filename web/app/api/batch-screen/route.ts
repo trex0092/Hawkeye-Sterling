@@ -102,7 +102,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Batch is the single highest-cost endpoint (500 rows × brain
   // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   // Load live watchlist corpus once per batch request (cached in-process).
   const CANDIDATES = await loadCandidates();
@@ -113,25 +114,25 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (!Array.isArray(body?.rows)) {
     return NextResponse.json(
       { ok: false, error: "rows must be an array" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (body.rows.length === 0) {
     return NextResponse.json(
       { ok: false, error: "rows is empty" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (body.rows.length > 500) {
     return NextResponse.json(
       { ok: false, error: "batch size exceeds 500-row limit" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
@@ -308,6 +309,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   return NextResponse.json(
     { ok: true, summary, results, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) },
-    { headers: gate.headers },
+    { headers: gateHeaders },
   );
 }

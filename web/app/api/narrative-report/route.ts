@@ -48,13 +48,14 @@ interface Body {
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
       { ok: false, error: "ANTHROPIC_API_KEY not configured on this server." },
-      { status: 503, headers: gate.headers },
+      { status: 503, headers: gateHeaders },
     );
   }
 
@@ -64,20 +65,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
   if (!body?.caseReport?.identity?.subjectName) {
     return NextResponse.json(
       { ok: false, error: "caseReport.identity.subjectName is required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (!body?.caseReport?.identity?.caseId) {
     return NextResponse.json(
       { ok: false, error: "caseReport.identity.caseId is required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
@@ -102,19 +103,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!result.ok) {
       return NextResponse.json(
         { ok: false, error: result.error ?? "narrative generation failed" },
-        { status: 503, headers: gate.headers },
+        { status: 503, headers: gateHeaders },
       );
     }
 
     return NextResponse.json(
       { ok: true, html: result.html, style: body.style ?? "regulator" },
-      { headers: gate.headers },
+      { headers: gateHeaders },
     );
   } catch (err) {
     console.error("[narrative-report] failed", err);
     return NextResponse.json(
       { ok: false, error: "narrative-report unavailable — check server logs" },
-      { status: 503, headers: gate.headers },
+      { status: 503, headers: gateHeaders },
     );
   }
 }

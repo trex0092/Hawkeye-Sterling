@@ -85,11 +85,12 @@ interface Body {
 
 export async function POST(req: Request): Promise<NextResponse> {
   // Gate + rate-limit BEFORE parsing the JSON body so an attacker can't
-  // blast megabytes of junk into a free-tier endpoint. gate.headers is
+  // blast megabytes of junk into a free-tier endpoint. gateHeaders is
   // threaded through every exit path so clients always see their
   // remaining quota and rate-limit window.
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;
   try {
@@ -97,13 +98,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (!body?.subject?.name || body.subject.name.length > 500) {
     return NextResponse.json(
       { ok: false, error: "subject.name required (max 500 chars)" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
@@ -309,7 +310,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           pepPenalty,
         },
       },
-    }, { headers: gate.headers });
+    }, { headers: gateHeaders });
   } catch (err) {
     // Log the detail server-side where auditors can see it; return a
     // generic message to the client so brain-internal stack frames
@@ -320,7 +321,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         error: "super-brain unavailable",
       },
-      { status: 503, headers: gate.headers },
+      { status: 503, headers: gateHeaders },
     );
   }
 }

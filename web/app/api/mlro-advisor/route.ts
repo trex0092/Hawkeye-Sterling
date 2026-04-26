@@ -25,13 +25,14 @@ interface Body {
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
       { ok: false, error: "ANTHROPIC_API_KEY not configured on this server." },
-      { status: 503, headers: gate.headers },
+      { status: 503, headers: gateHeaders },
     );
   }
 
@@ -41,20 +42,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
   if (!body?.question?.trim()) {
     return NextResponse.json(
       { ok: false, error: "question is required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (!body?.subjectName?.trim()) {
     return NextResponse.json(
       { ok: false, error: "subjectName is required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
@@ -106,18 +107,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!result.ok) {
       return NextResponse.json(
         { ...result, ok: false },
-        { status: 502, headers: gate.headers },
+        { status: 502, headers: gateHeaders },
       );
     }
     return NextResponse.json(
       { ...result, ok: true },
-      { headers: gate.headers },
+      { headers: gateHeaders },
     );
   } catch (err) {
     console.error("[mlro-advisor] failed", err);
     return NextResponse.json(
       { ok: false, error: "mlro-advisor unavailable — check server logs" },
-      { status: 503, headers: gate.headers },
+      { status: 503, headers: gateHeaders },
     );
   }
 }
