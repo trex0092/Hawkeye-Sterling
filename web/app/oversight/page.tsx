@@ -263,6 +263,8 @@ interface OversightOverlay {
   deletedApprovalIds: string[];
   deletedMinuteIds: string[];
   deletedCircularIds: string[];
+  customApprovals: Approval[];
+  customMinutes: Minute[];
   customCirculars: Circular[];
 }
 
@@ -270,6 +272,8 @@ const EMPTY_OVERLAY: OversightOverlay = {
   deletedApprovalIds: [],
   deletedMinuteIds: [],
   deletedCircularIds: [],
+  customApprovals: [],
+  customMinutes: [],
   customCirculars: [],
 };
 
@@ -336,6 +340,167 @@ function SignBox({
       {signedAt
         ? <div className="text-10 text-green font-mono mt-0.5">✓ Signed {signedAt}</div>
         : <div className="text-10 text-amber font-mono mt-0.5">Awaiting signature</div>}
+    </div>
+  );
+}
+
+function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; onCancel: () => void }) {
+  const [title, setTitle] = useState("");
+  const [requestedBy, setRequestedBy] = useState("");
+  const [category, setCategory] = useState("");
+  const [amount, setAmount] = useState("");
+  const [slaHours, setSlaHours] = useState("24");
+  const [firstReviewer, setFirstReviewer] = useState("");
+  const [secondReviewer, setSecondReviewer] = useState("Managing Director");
+  const [notes, setNotes] = useState("");
+  const [err, setErr] = useState("");
+
+  const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+
+  const submit = () => {
+    if (!title.trim() || !requestedBy.trim()) { setErr("Title and Requested by are required."); return; }
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    onAdd({
+      id: `APV-CUSTOM-${Date.now()}`,
+      title: title.trim(),
+      requestedBy: requestedBy.trim(),
+      requestedAt: ts,
+      slaHours: parseInt(slaHours, 10) || 24,
+      elapsedHours: 0,
+      status: "pending",
+      firstReviewer: firstReviewer.trim() || "Luisa Fernanda (Compliance Officer)",
+      secondReviewer: secondReviewer.trim() || "Managing Director",
+      category: category.trim() || "General",
+      ...(amount.trim() ? { amount: amount.trim() } : {}),
+      notes: notes.trim(),
+    });
+  };
+
+  return (
+    <div className="mt-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
+      <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New approval request</div>
+      {err && <p className="text-11 text-red mb-2">{err}</p>}
+      <div className="mb-3">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Title *</label>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Approval request title" className={iCls} />
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requested by *</label>
+          <input value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} placeholder="Name (Role)" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Category</label>
+          <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="STR, EDD, Supplier DD…" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">SLA hours</label>
+          <input value={slaHours} onChange={(e) => setSlaHours(e.target.value)} placeholder="24" className={iCls} />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">First reviewer</label>
+          <input value={firstReviewer} onChange={(e) => setFirstReviewer(e.target.value)} placeholder="Compliance Officer" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Second reviewer</label>
+          <input value={secondReviewer} onChange={(e) => setSecondReviewer(e.target.value)} placeholder="Managing Director" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount (optional)</label>
+          <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="AED 850,000" className={iCls} />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+          className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function AddMinuteForm({ onAdd, onCancel }: { onAdd: (m: Minute) => void; onCancel: () => void }) {
+  const [date, setDate] = useState("");
+  const [title, setTitle] = useState("");
+  const [minuteRef, setMinuteRef] = useState("");
+  const [attendees, setAttendees] = useState("");
+  const [topics, setTopics] = useState("");
+  const [actions, setActions] = useState("");
+  const [err, setErr] = useState("");
+
+  const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+
+  const submit = () => {
+    if (!title.trim() || !date.trim()) { setErr("Date and Title are required."); return; }
+    const attendeesList = attendees.split(",").map((s) => s.trim()).filter(Boolean);
+    const topicsList = topics.split("\n").map((s) => s.trim()).filter(Boolean);
+    const actionsList: ActionItem[] = actions
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, i) => {
+        const [action, owner, due] = line.split("|").map((s) => s?.trim() ?? "");
+        return {
+          id: `AI-CUSTOM-${Date.now()}-${i}`,
+          action: action || line,
+          owner: owner || "—",
+          due: due || "—",
+          closed: false,
+        };
+      });
+    onAdd({
+      id: `MIN-CUSTOM-${Date.now()}`,
+      date: date.trim(),
+      title: title.trim(),
+      minuteRef: minuteRef.trim() || `MIN-${Date.now()}`,
+      attendees: attendeesList,
+      topics: topicsList,
+      actionItems: actionsList,
+      approved: false,
+    });
+  };
+
+  return (
+    <div className="mt-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
+      <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New meeting minutes</div>
+      {err && <p className="text-11 text-red mb-2">{err}</p>}
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Date *</label>
+          <input value={date} onChange={(e) => setDate(e.target.value)} placeholder="2025-04-26" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Title *</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Board Risk Committee" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reference</label>
+          <input value={minuteRef} onChange={(e) => setMinuteRef(e.target.value)} placeholder="MIN-2025-014" className={iCls} />
+        </div>
+      </div>
+      <div className="mb-3">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Attendees (comma-separated)</label>
+        <input value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="L. Fernanda, MD, A. Rahman" className={iCls} />
+      </div>
+      <div className="mb-3">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Topics (one per line)</label>
+        <textarea value={topics} onChange={(e) => setTopics(e.target.value)} rows={3} placeholder={"Topic one\nTopic two"} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
+      </div>
+      <div className="mb-4">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Action items (one per line: action | owner | due)</label>
+        <textarea value={actions} onChange={(e) => setActions(e.target.value)} rows={3} placeholder={"Update KYC policy | L. Fernanda | 2025-05-15"} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+      </div>
     </div>
   );
 }
@@ -428,6 +593,8 @@ export default function OversightPage() {
   const [mdName, setMdName] = useState("");
   const [overlay, setOverlay] = useState<OversightOverlay>(EMPTY_OVERLAY);
   const [showAddCircular, setShowAddCircular] = useState(false);
+  const [showAddApproval, setShowAddApproval] = useState(false);
+  const [showAddMinute, setShowAddMinute] = useState(false);
 
   useEffect(() => { setOverlay(loadOversightOverlay()); }, []);
 
@@ -436,11 +603,13 @@ export default function OversightPage() {
   const deleteApproval = (id: string) => updateOverlay({ ...overlay, deletedApprovalIds: [...overlay.deletedApprovalIds, id] });
   const deleteMinute = (id: string) => updateOverlay({ ...overlay, deletedMinuteIds: [...overlay.deletedMinuteIds, id] });
   const deleteCircular = (id: string) => updateOverlay({ ...overlay, deletedCircularIds: [...overlay.deletedCircularIds, id] });
+  const addApproval = (a: Approval) => { updateOverlay({ ...overlay, customApprovals: [...overlay.customApprovals, a] }); setShowAddApproval(false); };
+  const addMinute = (m: Minute) => { updateOverlay({ ...overlay, customMinutes: [...overlay.customMinutes, m] }); setShowAddMinute(false); };
   const addCircular = (c: Circular) => { updateOverlay({ ...overlay, customCirculars: [...overlay.customCirculars, c] }); setShowAddCircular(false); };
   const restoreAll = () => { updateOverlay(EMPTY_OVERLAY); };
 
-  const liveApprovals = useMemo(() => APPROVALS.filter((a) => !overlay.deletedApprovalIds.includes(a.id)), [overlay]);
-  const liveMinutes = useMemo(() => MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), [overlay]);
+  const liveApprovals = useMemo(() => [...APPROVALS.filter((a) => !overlay.deletedApprovalIds.includes(a.id)), ...overlay.customApprovals], [overlay]);
+  const liveMinutes = useMemo(() => [...MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), ...overlay.customMinutes], [overlay]);
   const liveCirculars = useMemo(() => [...CIRCULARS.filter((c) => !overlay.deletedCircularIds.includes(c.id)), ...overlay.customCirculars], [overlay]);
 
   const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
@@ -500,6 +669,17 @@ export default function OversightPage() {
       {/* APPROVALS TAB */}
       {tab === "approvals" && (
         <div className="flex flex-col gap-4">
+          {showAddApproval ? (
+            <AddApprovalForm onAdd={addApproval} onCancel={() => setShowAddApproval(false)} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAddApproval(true)}
+              className="self-start text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
+            >
+              + Add
+            </button>
+          )}
           {liveApprovals.map((a) => (
             <div key={a.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
               <button
@@ -571,6 +751,17 @@ export default function OversightPage() {
       {/* MINUTES TAB */}
       {tab === "minutes" && (
         <div className="flex flex-col gap-4">
+          {showAddMinute ? (
+            <AddMinuteForm onAdd={addMinute} onCancel={() => setShowAddMinute(false)} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAddMinute(true)}
+              className="self-start text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
+            >
+              + Add
+            </button>
+          )}
           {liveMinutes.map((m) => {
             const expanded = expandedMinute === m.id;
             const openAI = m.actionItems.filter((ai) => !ai.closed).length;
@@ -719,7 +910,7 @@ export default function OversightPage() {
               onClick={() => setShowAddCircular(true)}
               className="text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
             >
-              + Add circular / report
+              + Add
             </button>
           )}
         </>

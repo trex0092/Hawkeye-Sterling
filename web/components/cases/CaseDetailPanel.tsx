@@ -27,7 +27,7 @@ export function CaseDetailPanel({
   ].filter(Boolean);
 
   return (
-    <aside className="bg-bg-panel border-l border-brand/40 p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-[#ec4899] p-6 overflow-y-auto">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">Case {record.id}</p>

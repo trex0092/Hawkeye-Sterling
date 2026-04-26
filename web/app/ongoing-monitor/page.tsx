@@ -137,13 +137,54 @@ export default function OngoingMonitorPage() {
   const [screening, setScreening] = useState<Record<string, boolean>>({});
   const [lastResults, setLastResults] = useState<Record<string, ScreenResult>>({});
 
-  useEffect(() => { setSubjects(load()); }, []);
+  useEffect(() => {
+    // Hydrate from localStorage immediately for instant render, then merge
+    // in server-persisted subjects so the list is identical on every
+    // computer. Server is source of truth — local entries that no longer
+    // exist server-side are dropped to avoid ghost rows.
+    setSubjects(load());
+    (async () => {
+      try {
+        const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+        const res = await fetch("/api/ongoing", {
+          headers: { ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          ok: boolean;
+          subjects?: Array<{ id: string; name: string; caseId?: string; jurisdiction?: string; enrolledAt: string }>;
+        };
+        if (!data.ok || !Array.isArray(data.subjects)) return;
+        const local = load();
+        const localById = new Map(local.map((s) => [s.id, s]));
+        const merged: MonitoredSubject[] = data.subjects.map((srv) => {
+          const existing = localById.get(srv.id);
+          if (existing) return existing;
+          return {
+            id: srv.id,
+            name: srv.name,
+            caseId: srv.caseId ?? "",
+            tier: "high",
+            cadence: "daily",
+            status: "active",
+            lastRun: "",
+            nextDue: fmtDateTime(srv.enrolledAt),
+            enrolledBy: "",
+            enrolledAt: fmtDate(srv.enrolledAt),
+            notes: "",
+          };
+        });
+        setSubjects(merged);
+        save(merged);
+      } catch { /* offline — keep local cache */ }
+    })();
+  }, []);
 
   const set = (k: keyof typeof BLANK) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setDraft((d) => ({ ...d, [k]: e.target.value }));
 
-  const add = () => {
+  const add = async () => {
     if (!draft.name) return;
     const now = new Date().toISOString();
     const subject: MonitoredSubject = {
@@ -163,6 +204,26 @@ export default function OngoingMonitorPage() {
       "ongoing.enrolled",
       `${subject.name} — ${subject.cadence} cadence`,
     );
+
+    // Persist to the server blob store so /api/ongoing/run picks it up
+    // on the next cron tick. localStorage alone is browser-only — the
+    // server-side scheduler reads from Netlify Blobs via /api/ongoing.
+    try {
+      const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+      await fetch("/api/ongoing", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+        },
+        body: JSON.stringify({
+          id: subject.id,
+          name: subject.name,
+          ...(subject.caseId ? { caseId: subject.caseId } : {}),
+          cadence: subject.cadence,
+        }),
+      });
+    } catch { /* non-fatal — UI already updated */ }
   };
 
   const togglePause = (id: string) => {
@@ -173,10 +234,19 @@ export default function OngoingMonitorPage() {
     setSubjects(next);
   };
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
     const next = subjects.filter((s) => s.id !== id);
     save(next);
     setSubjects(next);
+    try {
+      const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+      await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: {
+          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+        },
+      });
+    } catch { /* non-fatal */ }
   };
 
   const screenNow = async (s: MonitoredSubject) => {

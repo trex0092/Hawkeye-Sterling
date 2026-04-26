@@ -587,7 +587,7 @@ export default function ScreeningPage() {
             onUpdate={handleUpdateSubject}
           />
         ) : (
-          <aside className="border-l border-brand/40 overflow-y-auto px-5 py-6">
+          <aside className="border-l border-[#ec4899] overflow-y-auto px-5 py-6">
             <ActivityFeed />
           </aside>
         )}
