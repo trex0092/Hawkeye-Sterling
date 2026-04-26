@@ -1,7 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+
+// Operator-saved deletes persist to localStorage so the working register
+// survives reload. The seed CONSIGNMENTS array stays the system-of-record;
+// user dismissals are overlaid and never mutate the seed.
+const SHIPMENTS_DELETED_KEY = "hawkeye.shipments.deleted.v1";
+
+function loadDeletedIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SHIPMENTS_DELETED_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDeletedIds(ids: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SHIPMENTS_DELETED_KEY, JSON.stringify(ids));
+  } catch {
+    /* quota / disabled — silent */
+  }
+}
 
 // Bullion chain-of-custody register — LBMA RGG v9 / OECD 5-step DD framework.
 // Each consignment is tracked from origin refinery through transit to final vault.
@@ -370,15 +396,47 @@ function RggBadge({ step }: { step: number }) {
 export default function ShipmentsPage() {
   const [tab, setTab] = useState<ShipmentStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(CONSIGNMENTS[0]?.id ?? null);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
-  const visible = tab === "all" ? CONSIGNMENTS : CONSIGNMENTS.filter((c) => c.status === tab);
-  const detail = CONSIGNMENTS.find((c) => c.id === selected) ?? null;
+  // Hydrate deletions from localStorage on mount only — avoids SSR mismatch.
+  useEffect(() => {
+    setDeletedIds(loadDeletedIds());
+  }, []);
 
-  const inFlight = CONSIGNMENTS.filter((c) => c.status === "in-flight").length;
-  const held = CONSIGNMENTS.filter((c) => c.status === "held").length;
-  const awaitingAssay = CONSIGNMENTS.filter((c) => c.status === "awaiting-assay").length;
-  const totalUsd = CONSIGNMENTS.filter((c) => c.status !== "settled").reduce((s, c) => s + c.usdValue, 0);
-  const totalKg = CONSIGNMENTS.filter((c) => c.status !== "settled").reduce((s, c) => s + c.grossWeightKg, 0);
+  const live = useMemo(
+    () => CONSIGNMENTS.filter((c) => !deletedIds.includes(c.id)),
+    [deletedIds],
+  );
+
+  // Auto-deselect a consignment that was just removed.
+  useEffect(() => {
+    if (selected && !live.some((c) => c.id === selected)) {
+      setSelected(live[0]?.id ?? null);
+    }
+  }, [live, selected]);
+
+  const onDelete = (id: string) => {
+    setDeletedIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      saveDeletedIds(next);
+      return next;
+    });
+  };
+
+  const onRestoreAll = () => {
+    setDeletedIds([]);
+    saveDeletedIds([]);
+  };
+
+  const visible = tab === "all" ? live : live.filter((c) => c.status === tab);
+  const detail = live.find((c) => c.id === selected) ?? null;
+
+  const inFlight = live.filter((c) => c.status === "in-flight").length;
+  const held = live.filter((c) => c.status === "held").length;
+  const awaitingAssay = live.filter((c) => c.status === "awaiting-assay").length;
+  const totalUsd = live.filter((c) => c.status !== "settled").reduce((s, c) => s + c.usdValue, 0);
+  const totalKg = live.filter((c) => c.status !== "settled").reduce((s, c) => s + c.grossWeightKg, 0);
 
   return (
     <ModuleLayout engineLabel="Bullion compliance engine">
@@ -402,13 +460,29 @@ export default function ShipmentsPage() {
         ]}
       />
 
+      {deletedIds.length > 0 && (
+        <div className="mb-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">
+          <div className="font-mono text-10 text-amber">
+            {deletedIds.length} consignment
+            {deletedIds.length === 1 ? "" : "s"} hidden from the seeded register
+          </div>
+          <button
+            type="button"
+            onClick={onRestoreAll}
+            className="font-mono text-10 uppercase tracking-wide-3 px-2 py-1 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors"
+          >
+            Restore all
+          </button>
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="flex gap-1 mb-4 border-b border-hair-2 pb-0">
         {STATUS_TABS.map((t) => {
           const active = tab === t.key;
           const count = t.key === "all"
-            ? CONSIGNMENTS.length
-            : CONSIGNMENTS.filter((c) => c.status === t.key).length;
+            ? live.length
+            : live.filter((c) => c.status === t.key).length;
           return (
             <button
               key={t.key}
@@ -438,15 +512,34 @@ export default function ShipmentsPage() {
             </div>
           )}
           {visible.map((c) => (
-            <button
+            <div
               key={c.id}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() => setSelected(c.id === selected ? null : c.id)}
-              className={`text-left bg-bg-panel border rounded-lg p-4 transition-all hover:border-brand ${
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelected(c.id === selected ? null : c.id);
+                }
+              }}
+              className={`relative text-left bg-bg-panel border rounded-lg p-4 transition-all hover:border-brand cursor-pointer focus:outline-none focus:border-brand ${
                 selected === c.id ? "border-brand shadow-sm" : "border-hair-2"
               }`}
             >
-              <div className="flex items-start justify-between gap-3 mb-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(c.id);
+                }}
+                aria-label={`Remove consignment ${c.id}`}
+                title="Remove from my register"
+                className="absolute top-2 right-2 w-6 h-6 inline-flex items-center justify-center rounded text-ink-3 hover:bg-red-dim hover:text-red transition-colors text-12 leading-none z-10"
+              >
+                ×
+              </button>
+              <div className="flex items-start justify-between gap-3 mb-2 pr-7">
                 <div>
                   <span className="font-mono text-11 text-ink-3">{c.id}</span>
                   <div className="font-semibold text-14 text-ink-0 mt-0.5">
@@ -490,7 +583,7 @@ export default function ShipmentsPage() {
                   <span className="text-10 text-ink-3 font-mono">ETA {c.eta}</span>
                 )}
               </div>
-            </button>
+            </div>
           ))}
         </div>
 

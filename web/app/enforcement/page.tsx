@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface Deadline {
@@ -631,11 +631,87 @@ function daysUntil(iso: string): number {
   );
 }
 
+// User-saved overlays (deletes + custom additions) persist to localStorage so
+// the operator's working calendar survives reload. The seeded DEADLINES
+// constant stays the regulator-published baseline; user changes are layered
+// on top and never mutate the seed.
+const STORAGE_KEY = "hawkeye.enforcement.overlay.v1";
+
+interface Overlay {
+  deletedIds: string[];
+  custom: Deadline[];
+}
+
+const EMPTY_OVERLAY: Overlay = { deletedIds: [], custom: [] };
+
+function loadOverlay(): Overlay {
+  if (typeof window === "undefined") return EMPTY_OVERLAY;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return EMPTY_OVERLAY;
+    const parsed = JSON.parse(raw) as Partial<Overlay>;
+    return {
+      deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
+      custom: Array.isArray(parsed.custom) ? parsed.custom : [],
+    };
+  } catch {
+    return EMPTY_OVERLAY;
+  }
+}
+
+function saveOverlay(o: Overlay): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(o));
+  } catch {
+    /* quota / disabled — silent */
+  }
+}
+
 export default function EnforcementPage() {
-  const sorted = useMemo(
-    () => [...DEADLINES].sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
-    [],
-  );
+  const [overlay, setOverlay] = useState<Overlay>(EMPTY_OVERLAY);
+  // Hydrate from localStorage on mount only — avoids SSR mismatch.
+  useEffect(() => {
+    setOverlay(loadOverlay());
+  }, []);
+
+  const sorted = useMemo(() => {
+    const live = [...DEADLINES, ...overlay.custom].filter(
+      (d) => !overlay.deletedIds.includes(d.id),
+    );
+    return live.sort((a, b) => Date.parse(a.due) - Date.parse(b.due));
+  }, [overlay]);
+
+  const onDelete = (id: string) => {
+    setOverlay((prev) => {
+      // If it's a custom entry, drop it from `custom`. Otherwise add to
+      // `deletedIds` so the seed is hidden without mutating the constant.
+      const isCustom = prev.custom.some((d) => d.id === id);
+      const next: Overlay = isCustom
+        ? { ...prev, custom: prev.custom.filter((d) => d.id !== id) }
+        : prev.deletedIds.includes(id)
+          ? prev
+          : { ...prev, deletedIds: [...prev.deletedIds, id] };
+      saveOverlay(next);
+      return next;
+    });
+  };
+
+  const onAdd = (entry: Deadline) => {
+    setOverlay((prev) => {
+      const next: Overlay = { ...prev, custom: [...prev.custom, entry] };
+      saveOverlay(next);
+      return next;
+    });
+  };
+
+  const onResetDeletes = () => {
+    setOverlay((prev) => {
+      const next: Overlay = { ...prev, deletedIds: [] };
+      saveOverlay(next);
+      return next;
+    });
+  };
 
   return (
     <ModuleLayout>
@@ -652,6 +728,23 @@ export default function EnforcementPage() {
             </>
           }
         />
+
+        {overlay.deletedIds.length > 0 && (
+          <div className="mt-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">
+            <div className="font-mono text-10 text-amber">
+              {overlay.deletedIds.length} deadline
+              {overlay.deletedIds.length === 1 ? "" : "s"} hidden from the
+              regulator-seeded list
+            </div>
+            <button
+              type="button"
+              onClick={onResetDeletes}
+              className="font-mono text-10 uppercase tracking-wide-3 px-2 py-1 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors"
+            >
+              Restore all
+            </button>
+          </div>
+        )}
 
         <div className="mt-6 space-y-2">
           {sorted.map((d) => {
@@ -670,14 +763,20 @@ export default function EnforcementPage() {
                 : days === 0
                   ? "today"
                   : `in ${days}d`;
+            const isCustom = overlay.custom.some((c) => c.id === d.id);
             return (
               <div
                 key={d.id}
-                className="bg-bg-panel border border-hair-2 rounded-lg p-4"
+                className="bg-bg-panel border border-hair-2 rounded-lg p-4 relative"
               >
-                <div className="flex items-baseline justify-between gap-3 mb-1">
+                <div className="flex items-baseline justify-between gap-3 mb-1 pr-7">
                   <h3 className="text-13 font-semibold text-ink-0 m-0">
                     {d.title}
+                    {isCustom && (
+                      <span className="ml-2 align-middle font-mono text-10 px-1.5 py-0.5 rounded bg-brand-dim text-brand border border-brand-line">
+                        custom
+                      </span>
+                    )}
                   </h3>
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 font-semibold uppercase whitespace-nowrap ${tone}`}
@@ -693,10 +792,180 @@ export default function EnforcementPage() {
                     {d.notes}
                   </p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => onDelete(d.id)}
+                  aria-label={`Remove ${d.title}`}
+                  title="Remove from my calendar"
+                  className="absolute top-2 right-2 w-6 h-6 inline-flex items-center justify-center rounded text-ink-3 hover:bg-red-dim hover:text-red transition-colors text-12 leading-none"
+                >
+                  ×
+                </button>
               </div>
             );
           })}
         </div>
+
+        <AddDeadlineForm onAdd={onAdd} />
     </ModuleLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Add-deadline form. Renders at the very bottom of the page so operators
+// can drop in ad-hoc supervisor circulars, board commitments, or one-off
+// audit items that aren't on the regulator-seeded baseline.
+// ─────────────────────────────────────────────────────────────────────
+function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [authority, setAuthority] = useState("");
+  const [due, setDue] = useState("");
+  const [cadence, setCadence] = useState<Deadline["cadence"]>("ad-hoc");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const reset = () => {
+    setTitle("");
+    setAuthority("");
+    setDue("");
+    setCadence("ad-hoc");
+    setNotes("");
+    setError(null);
+  };
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!title.trim()) return setError("Title is required");
+    if (!authority.trim()) return setError("Authority is required");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return setError("Due date must be YYYY-MM-DD");
+    if (Number.isNaN(Date.parse(due))) return setError("Due date is not a valid calendar date");
+    const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const entry: Deadline = {
+      id,
+      title: title.trim(),
+      due,
+      authority: authority.trim(),
+      cadence,
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
+    };
+    onAdd(entry);
+    reset();
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <div className="mt-8 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="font-mono text-11 uppercase tracking-wide-3 px-4 py-2 rounded-lg border border-brand-line bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
+        >
+          + Add a deadline
+        </button>
+      </div>
+    );
+  }
+
+  const inputCls =
+    "w-full bg-bg-1 border border-hair-2 rounded px-2 py-1.5 text-12 text-ink-0 focus:border-brand focus:outline-none";
+  const labelCls = "block font-mono text-10 uppercase tracking-wide-3 text-ink-3 mb-1";
+
+  return (
+    <form
+      onSubmit={submit}
+      className="mt-8 bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3"
+    >
+      <div className="flex items-baseline justify-between mb-1">
+        <h4 className="text-12 font-semibold text-ink-0 m-0">
+          Add a deadline
+        </h4>
+        <button
+          type="button"
+          onClick={() => {
+            reset();
+            setOpen(false);
+          }}
+          className="font-mono text-10 text-ink-3 hover:text-ink-0"
+        >
+          cancel
+        </button>
+      </div>
+
+      <div>
+        <label className={labelCls}>Title</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Internal CDD sample audit — Q3"
+          className={inputCls}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls}>Authority</label>
+          <input
+            value={authority}
+            onChange={(e) => setAuthority(e.target.value)}
+            placeholder="e.g. Internal / MoE / FIU / EOCN / LBMA"
+            className={inputCls}
+            required
+          />
+        </div>
+        <div>
+          <label className={labelCls}>Due date</label>
+          <input
+            type="date"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+            className={inputCls}
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className={labelCls}>Cadence</label>
+        <select
+          value={cadence}
+          onChange={(e) => setCadence(e.target.value as Deadline["cadence"])}
+          className={inputCls}
+        >
+          <option value="ad-hoc">ad-hoc</option>
+          <option value="monthly">monthly</option>
+          <option value="quarterly">quarterly</option>
+          <option value="annual">annual</option>
+        </select>
+      </div>
+
+      <div>
+        <label className={labelCls}>Notes (optional)</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Citation, scope, owner, anything that helps the next reviewer."
+          className={`${inputCls} min-h-[72px] leading-relaxed`}
+        />
+      </div>
+
+      {error && (
+        <div className="font-mono text-10 text-red bg-red-dim border border-red/30 rounded px-2 py-1">
+          {error}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="submit"
+          className="font-mono text-11 uppercase tracking-wide-3 px-4 py-1.5 rounded border border-brand bg-brand text-white hover:bg-brand-dark transition-colors"
+        >
+          Add deadline
+        </button>
+      </div>
+    </form>
   );
 }

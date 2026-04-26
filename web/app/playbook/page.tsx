@@ -1680,6 +1680,239 @@ const PLAYBOOKS: Playbook[] = [
       },
     ],
   },
+  {
+    id: "moe-dpms-supervisor",
+    title: "MoE DPMS Supervisor Compliance (Cabinet Decision 109/2023)",
+    typology: "moe_dpms",
+    family: "MoE",
+    steps: [
+      {
+        title: "1. Registration & supervisor onboarding",
+        required: true,
+        checks: [
+          "Register the DNFBP with the Ministry of Economy AML/CFT Department per Cabinet Decision 109/2023 Art.4",
+          "Activate goAML access via UAE FIU and link the entity's MoE Trade Licence number",
+          "Appoint and notify the MLRO and Deputy MLRO to MoE within 30 days of activity commencement (FDL 20/2018 Art.21)",
+          "Subscribe the MLRO to MoE Circulars + EOCN list-update mailing lists; confirm receipt of the latest circular pack",
+        ],
+      },
+      {
+        title: "2. Risk-based AML/CFT programme",
+        required: true,
+        checks: [
+          "Document an enterprise-level Business Risk Assessment (BRA) covering customer, geography, product, channel, transaction risks per FDL 10/2025 Art.4 and MoE BRA template",
+          "Approve the AML/CFT policy, CDD/EDD procedures, and Sanctions/TFS procedures at Board / senior-management level",
+          "Define and approve a Sectoral Risk Assessment for the DPMS sub-sector (gold, diamonds, gemstones, watches, luxury) — annual refresh",
+          "Map every line of business to MoE Circular reference (08/AML/2021 for DPMS cash threshold; 03/AML/2022 for free-zone DPMS; 05/AML/2023 for online platforms)",
+        ],
+      },
+      {
+        title: "3. DPMS-specific cash-threshold reporting",
+        required: true,
+        checks: [
+          "Identify any single or aggregated cash transaction ≥ AED 55,000 with a single customer (MoE Circular 08/AML/2021 — FATF Rec. 22 implementation)",
+          "File a DPMS Threshold Report (DPMSR) via goAML within 14 days of the transaction date — file even if the transaction is non-suspicious",
+          "Aggregate connected/linked transactions (same beneficial owner, same 24h window) before applying the threshold",
+          "Retain DPMSR submission acknowledgement + supporting invoice/CoC for 5 years (FDL 20/2018 Art.24)",
+        ],
+      },
+      {
+        title: "4. KPI / supervisor return",
+        required: true,
+        checks: [
+          "Submit the MoE AML/CFT Compliance KPI return on the supervisor-published cadence (currently semi-annual)",
+          "Report fields include: customer count by risk tier, EDD count, STR/DPMSR count, screening false-positive rate, training completion %, audit findings",
+          "MLRO and Senior Management must sign-off the KPI return prior to submission",
+          "Retain the signed return + acknowledgement for the regulatory audit pack",
+        ],
+      },
+      {
+        title: "5. Inspection readiness",
+        required: false,
+        checks: [
+          "Maintain an evergreen 'inspection pack': BRA + SRA + AML/CFT policy + CDD procedures + last 12 months STR/DPMSR + training register + independent audit report",
+          "Pre-stage anonymised CDD samples covering each risk tier for sampling-based MoE inspections",
+          "Track all open MoE supervisor findings with target close date and responsible owner",
+          "Ensure the goAML user list reflects current staff — remove leavers within 24 hours of departure",
+        ],
+      },
+    ],
+  },
+  {
+    id: "fiu-goaml-filing",
+    title: "FIU UAE — goAML Filing Workflow (FDL 20/2018 Art.15)",
+    typology: "fiu_goaml",
+    family: "FIU",
+    steps: [
+      {
+        title: "1. Pre-filing triage",
+        required: true,
+        checks: [
+          "Confirm the trigger: STR (suspicion of ML/TF), SAR (broader suspicious activity), DPMSR (cash threshold ≥ AED 55k), HRTR (high-risk-country counterparty), PNMR (partial-name sanctions match), FFR (TFS asset freeze) — each maps to a distinct goAML report-type code",
+          "Decide WITHOUT DELAY — FDL 10/2025 Art.26 prohibits any post-suspicion delay; the file-or-not decision must be documented even if 'do not file'",
+          "Tipping-off prohibition is absolute: no notification to the customer, counterparty, or any external party that a report is being or has been filed (FDL 10/2025 Art.29 — criminal offence)",
+          "MLRO is the named filer; deputy may file only if MLRO is unavailable and the case file records the deputy's authority",
+        ],
+      },
+      {
+        title: "2. Drafting the report (goAML XML envelope)",
+        required: true,
+        checks: [
+          "Use the live UAE FIU goAML schema — verify schema version against the FIU portal before generating XML; reject any cached schema older than 90 days",
+          "Populate report header: rentity_id, rentity_branch (if any), reporting_person (MLRO full name + occupation + email + phone), submission_code (E for new, R for revision)",
+          "Include all involved persons with full legal name, DOB, ID type/number, nationality, address; include all involved entities with legal name, registration number, country of incorporation",
+          "Currency MUST be local (AED) per UAE FIU guidance; convert foreign-currency legs at value-date Central Bank reference rate and document the rate",
+          "Narrative: who / what / when / where / why is suspicious; cite specific red flags + brain reasoning chain; minimum 200 words",
+        ],
+      },
+      {
+        title: "3. Submission",
+        required: true,
+        checks: [
+          "Submit via goAML web portal under MLRO credentials; do NOT use shared accounts",
+          "Capture the goAML reference number + acknowledgement timestamp in the case timeline",
+          "Reports rejected by goAML schema validation must be corrected and re-submitted within 24h — log the rejection reason",
+          "If the report is filed in error / withdrawn, file a Revision (submission_code R) referencing the original goAML reference; never delete a report",
+        ],
+      },
+      {
+        title: "4. Post-filing case management",
+        required: true,
+        checks: [
+          "Apply transaction holds where lawful and where the file-without-delay obligation does not require advance customer notice (FDL 10/2025 Art.27)",
+          "Respond to FIU follow-up requests within the deadline stated in the request (typically 48h–7 days); maintain an FIU correspondence log",
+          "Re-screen the subject + their network after every FIU acknowledgement — late-arriving sanctions designations are common in active investigations",
+          "Document the four-eyes review: MLRO + a second officer (CCO, Board chair or designated alternate) sign off the closure of every filed case",
+        ],
+      },
+      {
+        title: "5. Retention & audit",
+        required: true,
+        checks: [
+          "Retain the full case file (XML, narrative draft, supporting documents, screening logs, MLRO decision memo) for ≥ 5 years from filing date — 10 years for sanctions-related FFRs (FDL 10/2025 Art.24)",
+          "Quarterly MLRO assurance review of every filed and not-filed decision; sample 10% for second-line review",
+          "Annual independent audit must test STR effectiveness: filing volumes, average decision time, outcome tracking, FIU feedback closure",
+          "Tipping-off training certification must be current (≤12 months) for every customer-facing employee",
+        ],
+      },
+    ],
+  },
+  {
+    id: "eocn-tfs",
+    title: "EOCN — Targeted Financial Sanctions (Cabinet Decision 74/2020)",
+    typology: "eocn_tfs",
+    family: "EOCN",
+    steps: [
+      {
+        title: "1. List-update intake",
+        required: true,
+        checks: [
+          "Subscribe to EOCN, UNSC 1267/1988/1989, and UNSC 1718/2231 list-update channels; configure automated alerts to MLRO + Deputy MLRO + Board observer",
+          "On every UNSC list update, the EOCN UAE local list is updated automatically — re-screening obligation is triggered immediately upon UNSC publication, not when EOCN re-publishes",
+          "Log the inbound list-update timestamp + source URL + checksum on the EOCN intake register",
+          "Confirm receipt to EOCN within the supervisor-prescribed deadline (currently 24h) where confirmation is required",
+        ],
+      },
+      {
+        title: "2. 24-hour customer-base re-screening (immediate freeze)",
+        required: true,
+        checks: [
+          "Re-screen the ENTIRE active customer + counterparty + UBO base against the new list within 24 hours of UNSC publication (Cabinet Decision 74/2020 Art.10)",
+          "On any positive match: implement an immediate, no-prior-notice, no-delay freeze on all funds, accounts, and economic resources of the listed person/entity",
+          "The freeze is automatic and self-executing — no court order or supervisor approval is required to freeze (Cabinet Decision 74/2020 Art.13)",
+          "File a Funds-Freezing Report (FFR) via goAML within 5 days; file a Partial-Name Match Report (PNMR) within 2 days for partial matches under triage",
+        ],
+      },
+      {
+        title: "3. Match disposition & MLRO sign-off",
+        required: true,
+        checks: [
+          "Each match enters a four-eyes triage: confirm / false-positive / pending; only the MLRO can confirm a true match",
+          "False-positive disposition requires positive identifiers (DOB, ID number, registration number, alias miss) — never close on name alone",
+          "Confirmed match: keep the freeze in place, file FFR, escalate to CEO + Board, prepare delisting application only on customer petition (no unilateral unfreeze)",
+          "Disposition record must include: list-version date, match score, attenuators / amplifiers, MLRO decision memo, second-officer counter-sign",
+        ],
+      },
+      {
+        title: "4. Communications & tipping-off avoidance",
+        required: true,
+        checks: [
+          "Notify EOCN of every freeze action within the prescribed deadline using the EOCN-published template (typically same business day)",
+          "Tipping-off the listed person, the counterparty, or any third party that a freeze is in place is a criminal offence (FDL 10/2025 Art.29)",
+          "Internal communications must be on a strict need-to-know basis: MLRO, CEO, Board, legal counsel, payments-system operator only",
+          "Customer-facing comms must use generic 'compliance hold' language approved by legal counsel; never reference EOCN, UNSC, or sanctions",
+        ],
+      },
+      {
+        title: "5. Annual EOCN declaration",
+        required: true,
+        checks: [
+          "File the EOCN Annual Compliance Declaration by 31 March each year (or supervisor-published date)",
+          "Declaration content: number of list updates received, re-screening completion times (median + max), match counts (positive / partial / false), freeze actions, FFRs filed, training completion",
+          "Board sign-off is mandatory; the declaration is a formal regulatory submission and false statements carry administrative + criminal liability",
+          "Retain the signed declaration + supporting evidence for 5 years",
+        ],
+      },
+    ],
+  },
+  {
+    id: "oecd-ddg-gold",
+    title: "OECD Due Diligence Guidance — Upstream Gold (Annex II)",
+    typology: "oecd_ddg",
+    family: "OECD",
+    steps: [
+      {
+        title: "1. Step 1 — Strong management systems",
+        required: true,
+        checks: [
+          "Adopt and Board-approve a Responsible Sourcing Policy aligned with OECD DDG Annex II (gold-specific) and LBMA Responsible Gold Guidance v9",
+          "Designate a senior officer accountable for DDG implementation; document the reporting line to the Board",
+          "Implement a confidential, non-retaliatory grievance mechanism accessible to upstream workers, communities, and civil society",
+          "Maintain a chain-of-custody / traceability system that records every transformation step from mine / recycler to refined gold output",
+        ],
+      },
+      {
+        title: "2. Step 2 — Identify and assess risk in the supply chain",
+        required: true,
+        checks: [
+          "Map the full upstream supply chain: mine of origin (or recycler of origin for recycled gold), transit countries, intermediaries, refiners",
+          "Apply Annex II red flags: CAHRA origin, unknown origin, mixed lots, suspiciously low / high price, unusual transport routes, opaque intermediary, cash settlement",
+          "Cross-reference suppliers against UN GoE reports (DRC, CAR, Sudan), Global Witness, IPIS, OFAC SDN, and the EOCN local list",
+          "Document the Annex-II red-flag determination for every supplier on every shipment; retain for 5 years",
+        ],
+      },
+      {
+        title: "3. Step 3 — Design and implement a strategy to respond to risks",
+        required: true,
+        checks: [
+          "Report identified risks to senior management with a measurable mitigation plan and timeline",
+          "Risk mitigation hierarchy: continue trade with measurable improvement → suspend trade pending improvement → disengage where serious abuses or non-cooperation persist",
+          "For 'serious abuses' (worst-forms-of-child-labour, forced labour, war crimes, torture, financing of NSAGs) — immediate disengagement per Annex II",
+          "Document the supplier's written commitment to OECD DDG and the agreed improvement milestones",
+        ],
+      },
+      {
+        title: "4. Step 4 — Independent third-party audit",
+        required: true,
+        checks: [
+          "Commission an annual Step-4 audit by an LBMA-approved audit firm (KPMG, BDO, EY, PwC, or equivalent)",
+          "Audit scope: management systems (Step 1), risk identification (Step 2), risk mitigation (Step 3), grievance mechanism, public reporting (Step 5)",
+          "Resolve all major non-conformances within 90 days; minor findings within 180 days; retain audit reports for 5 years and submit summary to LBMA",
+          "Failure to close major findings within 12 months triggers LBMA Good Delivery suspension — escalate to Board and group MLRO immediately",
+        ],
+      },
+      {
+        title: "5. Step 5 — Annual public reporting",
+        required: true,
+        checks: [
+          "Publish an Annual Responsible Sourcing Report covering Steps 1-4, in line with OECD DDG Annex II reporting expectations",
+          "Report contents: policy statement, supply-chain map (anonymised where commercially sensitive), risk-identification summary, mitigation actions, audit-finding closure, KPIs",
+          "Co-file with EOCN Annual Declaration (UAE) and submit summary to LBMA + RJC where applicable; retain Board-signed copy",
+          "Make the report freely accessible on the corporate website for ≥ 3 years from publication",
+        ],
+      },
+    ],
+  },
 ];
 
 export default function PlaybookPage() {
