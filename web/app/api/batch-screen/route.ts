@@ -13,6 +13,10 @@ import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
+// Optional cross-validation services (all fail-soft — no env var = no-op).
+import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watchman
+import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
+import { checkJube } from "@/lib/server/jube-client";           // jube AML
 
 const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
@@ -41,6 +45,12 @@ interface Body {
   rows: BatchRow[];
 }
 
+interface CrossRef {
+  watchmanHits?: number;
+  marbleStatus?: string;
+  jubeRisk?: number;
+}
+
 interface RowResult {
   name: string;
   entityType?: string;
@@ -57,6 +67,35 @@ interface RowResult {
   esgCategories: string[];
   durationMs: number;
   error?: string;
+  // KYC-analyst style checkpoint flags (github.com/vyayasan/kyc-analyst)
+  checkpoints?: string[];
+  // Optional cross-validation from external services
+  crossRef?: CrossRef;
+}
+
+// Lightweight rule-based checkpoints inspired by kyc-analyst's 17-checkpoint
+// pattern (github.com/vyayasan/kyc-analyst). Applied per-row, zero latency.
+function computeCheckpoints(
+  row: BatchRow,
+  screen: QuickScreenResult,
+  kwGroups: string[],
+  esgCats: string[],
+): string[] {
+  const flags: string[] = [];
+  const lists = Array.from(new Set(screen.hits.map((h) => h.listId)));
+
+  if (screen.hits.length > 0) flags.push("sanctions-hit");
+  if (lists.some((l) => l.toLowerCase().includes("pep"))) flags.push("pep-flag");
+  if (kwGroups.length > 0) flags.push("adverse-media");
+  if (esgCats.length > 0) flags.push("esg-concern");
+  if (screen.topScore >= 70 && screen.topScore < 95) flags.push("needs-disambiguation");
+  if (row.entityType === "individual" && !row.dob) flags.push("missing-dob");
+  if (row.name.trim().split(/\s+/).length === 1) flags.push("single-name-flag");
+  if (!row.jurisdiction) flags.push("no-jurisdiction");
+  if (lists.length >= 2) flags.push("multi-list-hit");
+  if (/\d/.test(row.name)) flags.push("numeric-in-name");
+
+  return flags;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -129,15 +168,33 @@ export async function POST(req: Request): Promise<NextResponse> {
       const haystack = `${row.name} ${(row.aliases ?? []).join(" ")}`;
       const kw = classifyAdverseKeywords(haystack);
       const esg = classifyEsg(haystack);
+      const kwGroups = Array.from(new Set(kw.map((k) => k.group)));
+      const esgCats = Array.from(new Set(esg.map((e) => e.categoryId)));
+      const checkpoints = computeCheckpoints(row, screen, kwGroups, esgCats);
+
+      // Call optional cross-validation services in parallel (all fail-soft).
+      const [watchmanRes, marbleRes, jubeRes] = await Promise.all([
+        checkWatchman(row.name),
+        checkMarble(row.name, row.entityType),
+        checkJube(row.name, row.entityType, row.jurisdiction),
+      ]);
+
+      const crossRef: CrossRef = {};
+      if (watchmanRes !== null) crossRef.watchmanHits = watchmanRes.hitCount;
+      if (marbleRes !== null) crossRef.marbleStatus = marbleRes.status;
+      if (jubeRes !== null) crossRef.jubeRisk = jubeRes.riskScore;
+
       const row_result: RowResult = {
         name: row.name,
         topScore: screen.topScore,
         severity: screen.severity,
         hitCount: screen.hits.length,
         listCoverage: Array.from(new Set(screen.hits.map((h) => h.listId))),
-        keywordGroups: Array.from(new Set(kw.map((k) => k.group))),
-        esgCategories: Array.from(new Set(esg.map((e) => e.categoryId))),
+        keywordGroups: kwGroups,
+        esgCategories: esgCats,
         durationMs: Date.now() - t0,
+        checkpoints,
+        ...(Object.keys(crossRef).length > 0 ? { crossRef } : {}),
       };
       if (row.entityType) row_result.entityType = row.entityType;
       if (row.aliases && row.aliases.length) row_result.aliases = row.aliases;

@@ -64,7 +64,9 @@ export type MatchingMethod =
   | 'double_metaphone'
   | 'token_set'
   | 'trigram'
-  | 'partial_token_set';
+  | 'partial_token_set'
+  | 'fuzzball_token_sort'
+  | 'fuzzball_partial';
 
 export interface MatchScore {
   method: MatchingMethod;
@@ -404,6 +406,48 @@ export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore
   return { method: 'token_set', score, threshold, pass: score >= threshold };
 }
 
+// ---------- fuzzball token-sort ratio (github.com/nol13/fuzzball.js)
+// Sorts tokens alphabetically then runs Levenshtein ratio on the joined
+// result. Unlike token-set Jaccard this catches near-miss transpositions
+// with character-level differences, e.g. "HUSSEIN SADDAM" ≈ "SADDAM HUSEIN".
+export function matchTokenSortRatio(a: string, b: string, threshold = 0.85): MatchScore {
+  const sa = normalise(a).split(' ').filter(Boolean).sort().join(' ');
+  const sb = normalise(b).split(' ').filter(Boolean).sort().join(' ');
+  const maxLen = Math.max(sa.length, sb.length);
+  if (maxLen === 0) return { method: 'fuzzball_token_sort', score: 1, threshold, pass: true };
+  const d = levenshteinDistance(sa, sb);
+  const score = 1 - d / maxLen;
+  return { method: 'fuzzball_token_sort', score, threshold, pass: score >= threshold };
+}
+
+// ---------- fuzzball partial ratio (github.com/nol13/fuzzball.js)
+// Slides the shorter string across the longer string and returns the best
+// Levenshtein ratio over all windows. Catches embedded abbreviations and
+// entity names that appear as a substring of a longer description.
+// e.g. "Al Shabaab" inside "Hassan Al Shabaab Mukhtar".
+export function matchPartialRatio(a: string, b: string, threshold = 0.9): MatchScore {
+  const s = normalise(a);
+  const t = normalise(b);
+  if (s.length === 0 || t.length === 0) {
+    return { method: 'fuzzball_partial', score: 0, threshold, pass: false };
+  }
+  const [shorter, longer] = s.length <= t.length ? [s, t] : [t, s];
+  if (shorter.length === longer.length) {
+    const d = levenshteinDistance(shorter, longer);
+    const score = shorter.length === 0 ? 1 : 1 - d / shorter.length;
+    return { method: 'fuzzball_partial', score, threshold, pass: score >= threshold };
+  }
+  let best = 0;
+  for (let i = 0; i <= longer.length - shorter.length; i++) {
+    const window = longer.slice(i, i + shorter.length);
+    const d = levenshteinDistance(shorter, window);
+    const score = 1 - d / shorter.length;
+    if (score > best) best = score;
+    if (best === 1) break;
+  }
+  return { method: 'fuzzball_partial', score: best, threshold, pass: best >= threshold };
+}
+
 // ---------- ensemble
 export interface EnsembleMatch {
   subject: string;
@@ -483,6 +527,8 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     matchDoubleMetaphone(subject, candidate),
     matchTrigram(subject, candidate),
     matchPartialTokenSet(subject, candidate),
+    matchTokenSortRatio(subject, candidate),
+    matchPartialRatio(subject, candidate),
   ];
 
   const subjectNorm = normaliseForMatch(subject);
@@ -507,6 +553,8 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
         matchDoubleMetaphone(subjectNorm, candidateNorm),
         matchTrigram(subjectNorm, candidateNorm),
         matchPartialTokenSet(subjectNorm, candidateNorm),
+        matchTokenSortRatio(subjectNorm, candidateNorm),
+        matchPartialRatio(subjectNorm, candidateNorm),
       ]
     : [];
 

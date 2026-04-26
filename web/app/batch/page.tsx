@@ -1,5 +1,6 @@
 "use client";
 
+import Papa from "papaparse";
 import { useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
@@ -20,6 +21,14 @@ interface RowResult {
   esgCategories: string[];
   durationMs: number;
   error?: string;
+  // KYC-analyst style checkpoint flags (github.com/vyayasan/kyc-analyst)
+  checkpoints?: string[];
+  // Cross-validation signals from optional external services
+  crossRef?: {
+    watchmanHits?: number;   // moov-io/watchman OFAC cross-check
+    marbleStatus?: string;   // checkmarble/marble screening status
+    jubeRisk?: number;       // jube AML ML risk score (0–100)
+  };
 }
 
 interface BatchResponse {
@@ -48,95 +57,66 @@ interface ParsedRow {
   idNumber?: string;
 }
 
-// Parse a single CSV row with RFC-4180-style quoted fields.
-function splitCsvRow(line: string): string[] {
-  const out: string[] = [];
-  let cur = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
-      if (ch === '"' && line[i + 1] === '"') {
-        cur += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        cur += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ",") {
-      out.push(cur);
-      cur = "";
-    } else {
-      cur += ch;
-    }
+// Parse CSV using PapaParse (github.com/mholt/PapaParse — 13k★).
+// Handles RFC 4180, streaming-ready, UTF-8 BOM, Windows CRLF, Excel quirks,
+// and malformed/unquoted fields that trip up hand-rolled parsers.
+type PapaRow = Record<string, string>;
+
+function resolveField(row: PapaRow, ...keys: string[]): string {
+  for (const key of keys) {
+    const val = row[key];
+    if (val) return val.trim();
   }
-  out.push(cur);
-  return out.map((c) => c.trim());
+  return "";
 }
 
 function parseCsv(text: string): ParsedRow[] {
-  // Strip UTF-8 BOM if present so header detection doesn't miss "name".
+  // Strip UTF-8 BOM (PapaParse handles it too, but belt-and-suspenders).
   const clean = text.replace(/^﻿/, "");
-  const lines = clean.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length === 0) return [];
-  const firstLine = lines[0] ?? "";
-  const looksHeader = /name/i.test(firstLine);
-  const rows = looksHeader ? lines.slice(1) : lines;
-  const header = looksHeader
-    ? splitCsvRow(firstLine).map((h) => h.toLowerCase())
-    : null;
-  const idx = (...hs: string[]): number => {
-    if (!header) return -1;
-    for (const h of hs) {
-      const i = header.indexOf(h);
-      if (i >= 0) return i;
-    }
-    return -1;
-  };
-  const iName = Math.max(idx("name", "name/entity", "entity"), 0);
-  const iType = idx("type", "entity type", "entitytype");
-  const iAlias = idx("alias", "aliases", "alternate names");
-  const iDob = idx("dob", "date of birth", "date of registration", "dob/date of registration");
-  const iGender = idx("gender");
-  const iJur = idx(
-    "jurisdiction",
-    "nationality",
-    "nationality/jurisdiction",
-    "country",
-  );
-  const iId = idx("id", "id/register", "register", "identification number");
+  const { data } = Papa.parse<PapaRow>(clean, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (h: string) => h.toLowerCase().trim(),
+  });
 
-  return rows
-    .map((line) => {
-      const cols = splitCsvRow(line);
-      const name = cols[iName] ?? "";
+  return data
+    .map((row) => {
+      const name = resolveField(row, "name", "name/entity", "entity");
+      if (!name) return null;
       const out: ParsedRow = { name };
-      if (iType >= 0 && cols[iType]) {
-        const t = cols[iType].toLowerCase();
+
+      const typeRaw = resolveField(row, "type", "entity type", "entitytype");
+      if (typeRaw) {
+        const t = typeRaw.toLowerCase();
         if (t.startsWith("ind")) out.entityType = "individual";
         else if (t.startsWith("org")) out.entityType = "organisation";
       }
-      if (iAlias >= 0 && cols[iAlias]) {
-        out.aliases = cols[iAlias]
-          .split(/;|\|/)
-          .map((a) => a.trim())
-          .filter(Boolean);
+
+      const aliasRaw = resolveField(row, "alias", "aliases", "alternate names");
+      if (aliasRaw) {
+        out.aliases = aliasRaw.split(/;|\|/).map((a) => a.trim()).filter(Boolean);
       }
-      if (iDob >= 0 && cols[iDob]) out.dob = cols[iDob];
-      if (iGender >= 0 && cols[iGender]) {
-        const g = cols[iGender].toLowerCase();
+
+      const dob = resolveField(row, "dob", "date of birth", "date of registration", "dob/date of registration");
+      if (dob) out.dob = dob;
+
+      const genderRaw = resolveField(row, "gender");
+      if (genderRaw) {
+        const g = genderRaw.toLowerCase();
         if (g.startsWith("m")) out.gender = "male";
         else if (g.startsWith("f")) out.gender = "female";
         else out.gender = "n/a";
       }
-      if (iJur >= 0 && cols[iJur]) out.jurisdiction = cols[iJur];
-      if (iId >= 0 && cols[iId]) out.idNumber = cols[iId];
+
+      const jur = resolveField(row, "jurisdiction", "nationality", "nationality/jurisdiction", "country");
+      if (jur) out.jurisdiction = jur;
+
+      const idNum = resolveField(row, "id", "id/register", "register", "identification number");
+      if (idNum) out.idNumber = idNum;
+
       return out;
     })
-    .filter((r) => r.name);
+    .filter((r): r is ParsedRow => r !== null && !!r.name);
 }
 
 function csvEscape(value: string | number | null | undefined): string {
@@ -160,6 +140,10 @@ function toCsv(results: RowResult[]): string {
     "List coverage",
     "Keyword groups",
     "ESG categories",
+    "KYC checkpoints",
+    "Watchman hits",
+    "Marble status",
+    "Jube risk",
     "Duration ms",
     "Error",
   ].join(",");
@@ -178,6 +162,10 @@ function toCsv(results: RowResult[]): string {
       csvEscape(r.listCoverage.join("|")),
       csvEscape(r.keywordGroups.join("|")),
       csvEscape(r.esgCategories.join("|")),
+      csvEscape((r.checkpoints ?? []).join("|")),
+      csvEscape(r.crossRef?.watchmanHits),
+      csvEscape(r.crossRef?.marbleStatus),
+      csvEscape(r.crossRef?.jubeRisk),
       csvEscape(r.durationMs),
       csvEscape(r.error),
     ].join(","),
@@ -430,6 +418,9 @@ export default function BatchPage() {
                   <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
                     ESG
                   </th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">
+                    Signals
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -468,6 +459,30 @@ export default function BatchPage() {
                             {c.replace(/-/g, " ")}
                           </span>
                         ))}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-0.5">
+                        {(r.checkpoints ?? []).map((cp) => (
+                          <span key={cp} className="px-1 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber" title="KYC checkpoint flag">
+                            {cp.replace(/-/g, " ")}
+                          </span>
+                        ))}
+                        {r.crossRef?.watchmanHits != null && r.crossRef.watchmanHits > 0 && (
+                          <span className="px-1 py-px rounded-sm font-mono text-10 bg-red-dim text-red" title="Watchman OFAC cross-validation hit">
+                            watchman·{r.crossRef.watchmanHits}
+                          </span>
+                        )}
+                        {r.crossRef?.marbleStatus && (
+                          <span className="px-1 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet" title="Marble screening status">
+                            marble·{r.crossRef.marbleStatus}
+                          </span>
+                        )}
+                        {r.crossRef?.jubeRisk != null && (
+                          <span className="px-1 py-px rounded-sm font-mono text-10 bg-orange-dim text-orange" title="Jube ML risk score">
+                            jube·{r.crossRef.jubeRisk}
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>
