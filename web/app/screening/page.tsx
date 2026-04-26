@@ -486,7 +486,7 @@ export default function ScreeningPage() {
         actor: { role: "analyst", name: data.caseId || undefined },
         body: { id: subject.id, name: subject.name, entityType: data.entityType, caseId: data.caseId },
       }),
-    });
+    }).then((r) => { if (!r.ok) console.warn("[audit-sign] subject_added failed", r.status, r.error); });
 
     // Auto-screen: call quick-screen and update risk score in background.
     // Mark the subject as pending so the table shows a "Screening…" badge.
@@ -526,7 +526,7 @@ export default function ScreeningPage() {
                 actor: { role: "analyst" },
                 body: { topScore: res.data.topScore, severity: res.data.severity },
               }),
-            });
+            }).then((r) => { if (!r.ok) console.warn("[audit-sign] screening_completed failed", r.status, r.error); });
           } else if (!res.ok) {
             // Surface API failures: mark the subject with a sentinel flag and
             // add to errorIds so the table can show an error badge.
@@ -580,7 +580,7 @@ export default function ScreeningPage() {
           actor: { role: "analyst" },
           body: { id: subject.id, name: subject.name },
         }),
-      });
+      }).then((r) => { if (!r.ok) console.warn("[audit-sign] ongoing_enrolled failed", r.status, r.error); });
     }
   };
 

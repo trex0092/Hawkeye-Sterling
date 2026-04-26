@@ -17,6 +17,12 @@ import { checkJube } from "@/lib/server/jube-client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const CORS_HEADERS: Record<string, string> = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization, x-api-key",
+};
+
 type QuickScreenFn = (
   subject: QuickScreenSubject,
   candidates: QuickScreenCandidate[],
@@ -94,20 +100,20 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as { rows: BatchRow[] };
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: { ...CORS_HEADERS, ...gate.headers } });
   }
 
   if (!Array.isArray(body?.rows) || body.rows.length === 0) {
     return NextResponse.json(
       { ok: false, error: "rows must be a non-empty array" },
-      { status: 400 },
+      { status: 400, headers: { ...CORS_HEADERS, ...gate.headers } },
     );
   }
 
   if (body.rows.length > 500) {
     return NextResponse.json(
       { ok: false, error: "batch size exceeds 500-row limit" },
-      { status: 400 },
+      { status: 400, headers: { ...CORS_HEADERS, ...gate.headers } },
     );
   }
 
@@ -261,7 +267,12 @@ export async function POST(req: Request): Promise<Response> {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "X-Accel-Buffering": "no",
+      ...CORS_HEADERS,
       ...gate.headers,
     },
   });
+}
+
+export async function OPTIONS(): Promise<NextResponse> {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }

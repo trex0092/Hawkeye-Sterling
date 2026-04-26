@@ -36,9 +36,22 @@ export function middleware(req: NextRequest): NextResponse {
   // Only inject for requests that carry a same-origin marker. Requests with
   // neither Origin nor Referer (e.g. plain curl) are treated as external and
   // must supply their own API key — do NOT give them admin access for free.
+  //
+  // Use URL hostname comparison rather than .includes() to prevent a
+  // host-header injection attack where an attacker sets
+  // Origin: https://attacker.com/<host> and passes the substring check.
+  function hostnameOf(value: string): string | null {
+    try {
+      return new URL(value.startsWith("http") ? value : `https://${value}`).hostname;
+    } catch {
+      return null;
+    }
+  }
+  const hostHostname = hostnameOf(host);
   const isSameOrigin =
-    (origin != null && origin.includes(host)) ||
-    (referer != null && referer.includes(host));
+    hostHostname !== null &&
+    ((origin != null && hostnameOf(origin) === hostHostname) ||
+      (referer != null && hostnameOf(referer) === hostHostname));
 
   if (!isSameOrigin) return NextResponse.next();
 
