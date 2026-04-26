@@ -33,12 +33,18 @@ interface QuickScreenRequestBody {
 
 const MAX_CANDIDATES = 5_000;
 
+const CORS_HEADERS: Record<string, string> = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization, x-api-key",
+};
+
 function respond(
   status: number,
   body: QuickScreenResponse,
   headers: Record<string, string> = {},
 ): NextResponse {
-  return NextResponse.json(body, { status, headers });
+  return NextResponse.json(body, { status, headers: { ...CORS_HEADERS, ...headers } });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

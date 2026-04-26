@@ -81,22 +81,15 @@ export async function fetchJson<T = unknown>(
     }
 
     try {
-      // Auto-attach the portal admin token so every internal route
-      // (/api/ongoing, /api/analytics, /api/sar-report, etc.) receives
-      // auth without each call-site managing headers. The value is inlined
-      // at Next.js build time from NEXT_PUBLIC_ADMIN_TOKEN. Caller-supplied
-      // headers always win and can override this default.
-      const portalToken =
-        typeof process !== "undefined"
-          ? (process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "")
-          : "";
-
+      // Auth is injected server-side by web/middleware.ts (ADMIN_TOKEN env var)
+      // for same-origin portal requests so the credential is never included in
+      // the browser bundle. Caller-supplied headers take precedence over the
+      // middleware-injected value for routes that use a dedicated API key.
       const res = await fetch(input, {
         ...rest,
         headers: {
           accept: "application/json",
           "user-agent": "hawkeye-screening-client/1.0",
-          ...(portalToken ? { authorization: `Bearer ${portalToken}` } : {}),
           ...(callerHeaders ?? {}),
         },
         signal: timeoutCtl.signal,

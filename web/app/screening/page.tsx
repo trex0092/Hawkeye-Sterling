@@ -59,10 +59,14 @@ function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
     case "sla":
       return subjects.filter((s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H);
     case "a24":
-      // Subjects opened within the last 24 hours
+      // Subjects opened within the last 24 hours. Prefer the precise ISO
+      // timestamp (openedAt) set on new subjects; fall back to the
+      // day-precision dd/mm/yyyy value for legacy/seed entries.
       return subjects.filter((s) => {
-        const opened = parseOpenedDate(s.openedAgo);
-        return now - opened.getTime() <= 24 * 60 * 60 * 1000;
+        const ms = s.openedAt
+          ? Date.parse(s.openedAt)
+          : parseOpenedDate(s.openedAgo).getTime();
+        return now - ms <= 24 * 60 * 60 * 1000;
       });
     case "closed":
       return subjects.filter((s) => s.status === "cleared");
@@ -154,6 +158,7 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     slaNotify: "+72h 00m",
     mostSerious: "—",
     openedAgo: formatDDMMYY(new Date()),
+    openedAt: new Date().toISOString(),
     ...(data.notes ? { notes: data.notes } : {}),
     ...(data.riskCategory ? { riskCategory: data.riskCategory } : {}),
   };
@@ -205,7 +210,7 @@ const PARTICLES = new Set(["al", "el", "bin", "ben", "bint", "abu", "ibn"]);
 // the same "muhammad" token.
 function normaliseForSearch(input: string): string {
   if (!input) return "";
-  let s = input.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  let s = input.toLowerCase().normalize("NFD").replace(/[\u0300-\u036F]/g, "");
   // Transliterate Arabic
   s = s.replace(/./gu, (ch) => ARABIC_TO_LATIN[ch] ?? ch);
   // Transliterate Cyrillic
@@ -352,8 +357,10 @@ function computeDynamicFilters(subjects: Subject[]): QueueFilter[] {
         break;
       case "a24":
         count = subjects.filter((s) => {
-          const opened = parseOpenedDate(s.openedAgo);
-          return now - opened.getTime() <= 24 * 60 * 60 * 1000;
+          const ms = s.openedAt
+            ? Date.parse(s.openedAt)
+            : parseOpenedDate(s.openedAgo).getTime();
+          return now - ms <= 24 * 60 * 60 * 1000;
         }).length;
         break;
       case "closed":
@@ -378,6 +385,9 @@ export default function ScreeningPage() {
   const [sortKey, setSortKey] = useState<SortKey>("riskScore");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statusFilter, setStatusFilter] = useState<Subject["status"] | "all">("all");
+  // Subject IDs whose quick-screen API call is in-flight. Drives the
+  // "Screening…" badge and pulsing risk bar in the table.
+  const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     const loaded = loadSubjects();
@@ -394,6 +404,14 @@ export default function ScreeningPage() {
       /* quota / disabled storage — skip */
     }
   }, [subjects, hydrated]);
+
+  // After a deletion leaves selectedId null, fall back to the first visible
+  // subject so the detail panel doesn't go blank unnecessarily.
+  useEffect(() => {
+    if (hydrated && selectedId === null && subjects.length > 0) {
+      setSelectedId(subjects[0]!.id);
+    }
+  }, [hydrated, selectedId, subjects]);
 
   const deferredQuery = useDeferredValue(query);
 
@@ -457,8 +475,10 @@ export default function ScreeningPage() {
       `${subject.name} (${subject.id})`,
     );
 
-    // Auto-screen: call quick-screen and update risk score in background
+    // Auto-screen: call quick-screen and update risk score in background.
+    // Mark the subject as pending so the table shows a "Screening…" badge.
     if (screen) {
+      setPendingIds((prev) => new Set([...prev, subject.id]));
       void (async () => {
         try {
           const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string }>(
@@ -483,8 +503,25 @@ export default function ScreeningPage() {
               "screening.completed",
               `${subject.name} — score ${res.data.topScore} · ${res.data.severity}`,
             );
+          } else if (!res.ok) {
+            // Surface API failures: mark the subject with a sentinel risk
+            // score of -1 so callers can detect "screened but failed".
+            setSubjects((prev) =>
+              prev.map((s) =>
+                s.id === subject.id
+                  ? { ...s, mostSerious: "screening-error" }
+                  : s,
+              ),
+            );
           }
-        } catch { /* non-fatal */ }
+        } finally {
+          // Always clear the pending indicator regardless of success/failure.
+          setPendingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(subject.id);
+            return next;
+          });
+        }
       })();
     }
 
@@ -512,11 +549,15 @@ export default function ScreeningPage() {
   };
 
   const handleDelete = (id: string) => {
-    setSubjects((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      if (selectedId === id) {
-        setSelectedId(next[0]?.id ?? null);
-      }
+    setSubjects((prev) => prev.filter((s) => s.id !== id));
+    // Update selection outside the setSubjects callback so it reads the
+    // freshest selectedId state rather than a potentially-stale closure value.
+    setSelectedId((prev) => (prev === id ? null : prev));
+    // Also clear a pending-screen indicator if the subject is deleted mid-flight.
+    setPendingIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
       return next;
     });
   };
@@ -578,6 +619,7 @@ export default function ScreeningPage() {
             sortKey={sortKey}
             sortDir={sortDir}
             onSortChange={handleSortChange}
+            pendingIds={pendingIds}
           />
         </main>
 

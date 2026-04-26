@@ -32,6 +32,8 @@ export type SubjectType =
   | "Individual · Customer"
   | "Individual · Correspondent"
   | "Individual · Counterparty"
+  | "Individual · Director"
+  | "Individual · Authorised Signatory"
   | "Corporate · Supplier"
   | "Corporate · Refiner"
   | "Corporate · Customer"
@@ -76,6 +78,10 @@ export interface Subject {
   slaNotify: string;
   mostSerious: string;
   openedAgo: string;
+  // ISO 8601 timestamp set at creation time. Used for precise a24 filter
+  // comparisons. Absent on seed/legacy subjects; those fall back to parsing
+  // openedAgo as dd/mm/yyyy (day-precision, which is acceptable for seeds).
+  openedAt?: string;
   notes?: string;
   riskCategory?: string;
 }

@@ -10,6 +10,8 @@ interface ScreeningTableProps {
   sortKey: SortKey;
   sortDir: "asc" | "desc";
   onSortChange: (key: SortKey) => void;
+  /** Subject IDs currently being screened against the watchlist API. */
+  pendingIds?: ReadonlySet<string>;
 }
 
 function parseSlaHours(sla: string): number {
@@ -26,6 +28,7 @@ export function ScreeningTable({
   sortKey,
   sortDir,
   onSortChange,
+  pendingIds,
 }: ScreeningTableProps) {
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
@@ -85,6 +88,7 @@ export function ScreeningTable({
             const isLast = idx === subjects.length - 1;
             const isSelected = subject.id === selectedId;
             const slh = parseSlaHours(subject.slaNotify);
+            const isScreening = pendingIds?.has(subject.id) ?? false;
             return (
               <tr
                 key={subject.id}
@@ -105,6 +109,11 @@ export function ScreeningTable({
                         PEP
                       </span>
                     )}
+                    {isScreening && (
+                      <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-amber-dim text-amber uppercase animate-pulse">
+                        Screening…
+                      </span>
+                    )}
                   </div>
                   <div className="text-11 text-ink-2 mt-0.5 leading-snug">
                     {subject.country}
@@ -114,7 +123,7 @@ export function ScreeningTable({
                   </div>
                 </td>
                 <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <RiskCell score={subject.riskScore} />
+                  <RiskCell score={subject.riskScore} pending={isScreening} />
                 </td>
                 <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
                   <StatusBadge status={subject.status} />
@@ -194,7 +203,19 @@ function SortableTh({
   );
 }
 
-function RiskCell({ score }: { score: number }) {
+function RiskCell({ score, pending }: { score: number; pending?: boolean }) {
+  if (pending) {
+    return (
+      <div>
+        <div className="flex items-baseline gap-1 mb-0.5">
+          <span className="font-mono text-12 font-semibold text-ink-3">—</span>
+        </div>
+        <div className="h-1 w-14 bg-bg-2 rounded-sm overflow-hidden">
+          <div className="h-full bg-amber rounded-sm animate-pulse" style={{ width: "40%" }} />
+        </div>
+      </div>
+    );
+  }
   const color =
     score >= 85
       ? "bg-red"
