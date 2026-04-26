@@ -43,7 +43,7 @@ export const REDACTION_RULES: RedactionRule[] = [
   { kind: 'credit_card', pattern: /\b(?:\d[ -]?){12,18}\d\b/g, mask: keep(0, 4) },
   { kind: 'bic_swift', pattern: /\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b/g, mask: keep(4, 0) },
   { kind: 'passport', pattern: /\b[A-Z]{1,2}\d{6,9}\b/g, mask: keep(2, 0) },
-  { kind: 'phone_e164', pattern: /\+?\d[\d\s\-()]{6,}\d/g, mask: keep(3, 2) },
+  { kind: 'phone_e164', pattern: /(?:^|(?<=\s))\+?\d[\d\s\-()]{6,}\d(?=\s|[.,;:!?]|$)/g, mask: keep(3, 2) },
   { kind: 'national_id', pattern: /\b\d{9,15}\b/g, mask: keep(2, 2) },
   { kind: 'ipv4', pattern: /\b(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}\b/g, mask: keep(0, 0, '·') },
   { kind: 'date', pattern: /\b\d{4}-\d{2}-\d{2}\b|\b\d{2}[\/\-.]\d{2}[\/\-.]\d{2,4}\b/g, mask: () => 'YYYY-MM-DD' },

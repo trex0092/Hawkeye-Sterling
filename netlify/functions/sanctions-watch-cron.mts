@@ -33,10 +33,16 @@ export default async (_req: Request) => {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (token) headers.authorization = `Bearer ${token}`;
 
+  // Bound the self-fetch so a hung route doesn't burn the entire function
+  // budget — Netlify scheduled functions cap at 26s; 24s leaves headroom
+  // for the response body read + JSON wrap below.
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 24_000);
   try {
     const res = await fetch(`${base}/api/sanctions/watch`, {
       method: "POST",
       headers,
+      signal: controller.signal,
     });
     const text = await res.text();
     return new Response(
@@ -64,6 +70,8 @@ export default async (_req: Request) => {
         headers: { "content-type": "application/json" },
       },
     );
+  } finally {
+    clearTimeout(deadline);
   }
 };
 

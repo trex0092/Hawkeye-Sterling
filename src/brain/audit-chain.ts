@@ -60,8 +60,26 @@ export function fnv1a(input: string): string {
   return (h >>> 0).toString(16).padStart(8, '0');
 }
 
+// Recursively sort object keys so structurally-equal payloads produce the
+// same JSON string regardless of property declaration order. Critical for
+// audit-chain integrity: passing only the top-level keys to JSON.stringify's
+// replacer parameter would silently drop ALL nested properties — different
+// nested payloads could then hash identically.
 function canonicalise(obj: unknown): string {
-  return JSON.stringify(obj, Object.keys(obj as Record<string, unknown> ?? {}).sort());
+  return JSON.stringify(sortKeysDeep(obj));
+}
+
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  if (value !== null && typeof value === 'object') {
+    const src = value as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(src).sort()) {
+      out[k] = sortKeysDeep(src[k]);
+    }
+    return out;
+  }
+  return value;
 }
 
 export class AuditChain {

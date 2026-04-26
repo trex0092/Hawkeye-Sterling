@@ -85,32 +85,35 @@ export async function GET(req: Request): Promise<NextResponse> {
   );
   const [defined, sample] = await Promise.all([kpisDefined, kpisSample]);
 
-  return NextResponse.json({
-    ok: true,
-    generatedAt: new Date().toISOString(),
-    commercial: {
-      totalApiKeys: keys.length,
-      tierBreakdown: tierCounts,
-      totalScreeningsThisMonth,
+  return NextResponse.json(
+    {
+      ok: true,
+      generatedAt: new Date().toISOString(),
+      commercial: {
+        totalApiKeys: keys.length,
+        tierBreakdown: tierCounts,
+        totalScreeningsThisMonth,
+      },
+      monitoring: {
+        enrolledSubjects: ongoingKeys.length,
+        scheduledSubjects: schedules.length,
+        cadenceBreakdown: schedules.reduce<Record<string, number>>((acc, s) => {
+          acc[s.cadence] = (acc[s.cadence] ?? 0) + 1;
+          return acc;
+        }, {}),
+      },
+      quality: {
+        falsePositiveCount: fp,
+        trueMatchCount: tm,
+        falsePositiveRate: total > 0 ? fp / total : 0,
+        verdictsLast24h: last24h,
+        totalVerdicts: feedback.totalVerdicts,
+      },
+      kpis: {
+        defined,
+        sample,
+      },
     },
-    monitoring: {
-      enrolledSubjects: ongoingKeys.length,
-      scheduledSubjects: schedules.length,
-      cadenceBreakdown: schedules.reduce<Record<string, number>>((acc, s) => {
-        acc[s.cadence] = (acc[s.cadence] ?? 0) + 1;
-        return acc;
-      }, {}),
-    },
-    quality: {
-      falsePositiveCount: fp,
-      trueMatchCount: tm,
-      falsePositiveRate: total > 0 ? fp / total : 0,
-      verdictsLast24h: last24h,
-      totalVerdicts: feedback.totalVerdicts,
-    },
-    kpis: {
-      defined,
-      sample,
-    },
-  });
+    { headers: gate.headers },
+  );
 }

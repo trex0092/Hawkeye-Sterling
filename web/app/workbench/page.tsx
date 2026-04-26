@@ -678,10 +678,9 @@ export default function WorkbenchPage() {
                       <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">
                         Regulator-facing narrative
                       </div>
-                      <div
-                        className="text-13 text-ink-0 leading-relaxed prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: drResult.narrative.replace(/\n/g, "<br/>") }}
-                      />
+                      <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">
+                        {drResult.narrative}
+                      </div>
                     </div>
                   )}
 

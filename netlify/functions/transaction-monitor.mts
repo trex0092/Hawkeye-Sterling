@@ -20,10 +20,13 @@ export default async (_req: Request) => {
   };
   if (token) headers.authorization = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 24_000);
   try {
     const res = await fetch(`${base}/api/transaction-monitor/run`, {
       method: "POST",
       headers,
+      signal: controller.signal,
     });
     const text = await res.text();
     return new Response(
@@ -49,6 +52,8 @@ export default async (_req: Request) => {
         headers: { "content-type": "application/json" },
       },
     );
+  } finally {
+    clearTimeout(deadline);
   }
 };
 
