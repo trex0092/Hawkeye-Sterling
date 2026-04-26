@@ -16,7 +16,12 @@ export type FacultyId =
   | 'inference'
   | 'argumentation'
   | 'introspection'
-  | 'ratiocination';
+  | 'ratiocination'
+  | 'synthesis'
+  | 'anticipation'
+  | 'quantum_intelligence'
+  | 'forensic_accounting'
+  | 'geopolitical_awareness';
 
 export type ReasoningCategory =
   | 'logic'
@@ -43,7 +48,21 @@ export type ReasoningCategory =
   | 'hawala_ivt'
   | 'ftz_risk'
   | 'professional_ml'
-  | 'regulatory_aml';
+  | 'regulatory_aml'
+  | 'technology_risk'
+  | 'climate_risk'
+  | 'forensic_accounting'
+  | 'geopolitical_risk'
+  | 'market_integrity'
+  | 'conduct_risk'
+  | 'systemic_risk'
+  | 'identity_fraud'
+  | 'digital_economy'
+  | 'human_rights'
+  | 'asset_recovery'
+  | 'intelligence_fusion'
+  | 'quantum_computing'
+  | 'behavioral_economics';
 
 export type Verdict =
   | 'clear'
