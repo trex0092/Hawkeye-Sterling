@@ -9,9 +9,16 @@
 // Soft-limit caveat: Netlify Blobs has no atomic compare-and-swap. Two
 // concurrent requests arriving within the same blob round-trip (~50 ms)
 // can both read count=N, both pass the check, and both write count=N+1,
-// effectively allowing count=N+2. This is acceptable for short-window
-// burst limits. Strict enforcement requires a database with atomic
-// increment (e.g. Redis INCR).
+// effectively allowing count=N+2. In the worst case a burst of P parallel
+// requests in the same second window can slip through up to P×rps calls
+// before any counter is written back.
+//
+// This is acceptable for short-window burst limits at low concurrency.
+// For strict enforcement, replace this module with @upstash/ratelimit
+// backed by a Redis instance — it uses MULTI/EXEC pipelines that provide
+// the atomic increment Blobs lacks. Required env vars:
+//   UPSTASH_REDIS_REST_URL   – e.g. https://<id>.upstash.io
+//   UPSTASH_REDIS_REST_TOKEN – service account token
 
 import { getJson, setJson } from "./store";
 import { tierFor, type TierDefinition } from "@/lib/data/tiers";

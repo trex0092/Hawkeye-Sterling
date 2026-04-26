@@ -388,6 +388,8 @@ export default function ScreeningPage() {
   // Subject IDs whose quick-screen API call is in-flight. Drives the
   // "Screening…" badge and pulsing risk bar in the table.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
+  // Subject IDs whose quick-screen call returned an error. Cleared on re-screen or delete.
+  const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     const loaded = loadSubjects();
@@ -474,6 +476,17 @@ export default function ScreeningPage() {
       "subject.added",
       `${subject.name} (${subject.id})`,
     );
+    // Mirror into server-side HMAC chain (fire-and-forget).
+    void fetchJson("/api/audit/sign", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "subject_added",
+        target: `${subject.name} (${subject.id})`,
+        actor: { role: "analyst", name: data.caseId || undefined },
+        body: { id: subject.id, name: subject.name, entityType: data.entityType, caseId: data.caseId },
+      }),
+    });
 
     // Auto-screen: call quick-screen and update risk score in background.
     // Mark the subject as pending so the table shows a "Screening…" badge.
@@ -503,9 +516,20 @@ export default function ScreeningPage() {
               "screening.completed",
               `${subject.name} — score ${res.data.topScore} · ${res.data.severity}`,
             );
+            // Mirror into server-side HMAC chain (fire-and-forget).
+            void fetchJson("/api/audit/sign", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                action: "screening_completed",
+                target: `${subject.name} (${subject.id})`,
+                actor: { role: "analyst" },
+                body: { topScore: res.data.topScore, severity: res.data.severity },
+              }),
+            });
           } else if (!res.ok) {
-            // Surface API failures: mark the subject with a sentinel risk
-            // score of -1 so callers can detect "screened but failed".
+            // Surface API failures: mark the subject with a sentinel flag and
+            // add to errorIds so the table can show an error badge.
             setSubjects((prev) =>
               prev.map((s) =>
                 s.id === subject.id
@@ -513,6 +537,7 @@ export default function ScreeningPage() {
                   : s,
               ),
             );
+            setErrorIds((prev) => new Set([...prev, subject.id]));
           }
         } finally {
           // Always clear the pending indicator regardless of success/failure.
@@ -545,6 +570,17 @@ export default function ScreeningPage() {
         "ongoing.enrolled",
         `${subject.name} (${subject.id}) — ${data.ongoingScreening ? "ongoing" : "once"}`,
       );
+      // Mirror into server-side HMAC chain (fire-and-forget).
+      void fetchJson("/api/audit/sign", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "ongoing_enrolled",
+          target: `${subject.name} (${subject.id})`,
+          actor: { role: "analyst" },
+          body: { id: subject.id, name: subject.name },
+        }),
+      });
     }
   };
 
@@ -553,8 +589,14 @@ export default function ScreeningPage() {
     // Update selection outside the setSubjects callback so it reads the
     // freshest selectedId state rather than a potentially-stale closure value.
     setSelectedId((prev) => (prev === id ? null : prev));
-    // Also clear a pending-screen indicator if the subject is deleted mid-flight.
+    // Also clear pending/error indicators if the subject is deleted mid-flight.
     setPendingIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setErrorIds((prev) => {
       if (!prev.has(id)) return prev;
       const next = new Set(prev);
       next.delete(id);
@@ -620,6 +662,7 @@ export default function ScreeningPage() {
             sortDir={sortDir}
             onSortChange={handleSortChange}
             pendingIds={pendingIds}
+            errorIds={errorIds}
           />
         </main>
 
