@@ -1677,7 +1677,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       )}
 
       <ul className="list-none p-0 m-0 space-y-2">
-        {r.articles.slice(0, 10).map((a, i) => (
+        {r.articles.map((a, i) => (
           <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
               <a
