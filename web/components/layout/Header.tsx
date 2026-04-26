@@ -29,6 +29,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
   {
     title: "Intelligence",
     items: [
+      { label: "Workbench", href: "/workbench", hint: "MLRO advisor & deep reasoning" },
       { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
