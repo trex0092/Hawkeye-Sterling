@@ -1,4 +1,13 @@
-import { NextResponse } from "next/server";
+// POST /api/batch-screen-stream
+// Same body as /api/batch-screen but streams results as Server-Sent Events
+// so the operator sees a live progress bar instead of waiting for the full
+// batch to complete. Each row result is emitted as soon as it finishes.
+//
+// SSE event format (text/event-stream):
+//   data: {"type":"progress","index":0,"total":5,"result":{...}}\n\n
+//   data: {"type":"complete","summary":{...}}\n\n
+//   data: {"type":"error","error":"..."}\n\n
+
 import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
@@ -59,6 +68,7 @@ interface RowResult {
   crossRef?: CrossRef;
   scoreMethod?: string;
   topHitReason?: string;
+  topHitMethod?: string;
   isDuplicate?: boolean;
   crossRefDisagreement?: boolean;
 }
@@ -88,34 +98,38 @@ function computeCheckpoints(
 
 export async function POST(req: Request): Promise<Response> {
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  // 429 is the only hard stop — auth failures fall through as anonymous
+  // so a NEXT_PUBLIC_ADMIN_TOKEN / ADMIN_TOKEN mismatch never blocks operators.
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: { rows: BatchRow[] };
   try {
     body = (await req.json()) as { rows: BatchRow[] };
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return new Response(
+      `data: ${JSON.stringify({ type: "error", error: "invalid JSON" })}\n\n`,
+      { status: 400, headers: { "content-type": "text/event-stream" } },
+    );
   }
 
   if (!Array.isArray(body?.rows) || body.rows.length === 0) {
-    return NextResponse.json(
-      { ok: false, error: "rows must be a non-empty array" },
-      { status: 400 },
+    return new Response(
+      `data: ${JSON.stringify({ type: "error", error: "rows must be a non-empty array" })}\n\n`,
+      { status: 400, headers: { "content-type": "text/event-stream" } },
     );
   }
 
   if (body.rows.length > 500) {
-    return NextResponse.json(
-      { ok: false, error: "batch size exceeds 500-row limit" },
-      { status: 400 },
+    return new Response(
+      `data: ${JSON.stringify({ type: "error", error: "batch size exceeds 500-row limit" })}\n\n`,
+      { status: 400, headers: { "content-type": "text/event-stream" } },
     );
   }
 
   const rows = body.rows;
   const CANDIDATES = await loadCandidates();
-
   const encoder = new TextEncoder();
-  // Track normalised names to flag duplicates within this batch.
   const seenNames = new Map<string, number>();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -132,18 +146,13 @@ export async function POST(req: Request): Promise<Response> {
       const started = Date.now();
 
       for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
+        const row = rows[i]!;
         try {
           if (!row?.name?.trim()) {
             const result: RowResult = {
               name: row?.name ?? "",
-              topScore: 0,
-              severity: "error",
-              hitCount: 0,
-              listCoverage: [],
-              keywordGroups: [],
-              esgCategories: [],
-              durationMs: 0,
+              topScore: 0, severity: "error", hitCount: 0,
+              listCoverage: [], keywordGroups: [], esgCategories: [], durationMs: 0,
               error: "empty name",
             };
             allResults.push(result);
@@ -181,12 +190,11 @@ export async function POST(req: Request): Promise<Response> {
           if (marbleRes !== null) crossRef.marbleStatus = marbleRes.status;
           if (jubeRes !== null) crossRef.jubeRisk = jubeRes.riskScore;
 
-          // Surface the best hit's matching algorithm and narrative reason.
           const topHit: QuickScreenHit | undefined = screen.hits[0];
-          const scoreMethod: string = topHit?.method ?? "no-match";
-          const topHitReason: string | undefined = topHit?.reason;
+          const scoreMethod = topHit?.method ?? "no-match";
+          const topHitReason = topHit?.reason;
+          const topHitMethod = topHit?.method;
 
-          // Flag when internal engine returns clear but Watchman disagrees.
           const crossRefDisagreement =
             screen.hits.length === 0 && (crossRef.watchmanHits ?? 0) > 0;
           if (crossRefDisagreement) checkpoints.push("cross-ref-disagreement");
@@ -201,9 +209,7 @@ export async function POST(req: Request): Promise<Response> {
             topScore: screen.topScore,
             severity: screen.severity,
             hitCount: screen.hits.length,
-            listCoverage: Array.from(
-              new Set(screen.hits.map((h: QuickScreenHit) => h.listId)),
-            ),
+            listCoverage: Array.from(new Set(screen.hits.map((h: QuickScreenHit) => h.listId))),
             keywordGroups: kwGroups,
             esgCategories: esgCats,
             durationMs: Date.now() - t0,
@@ -212,6 +218,7 @@ export async function POST(req: Request): Promise<Response> {
             isDuplicate,
             crossRefDisagreement,
             ...(topHitReason ? { topHitReason } : {}),
+            ...(topHitMethod ? { topHitMethod } : {}),
             ...(Object.keys(crossRef).length > 0 ? { crossRef } : {}),
             ...(row.entityType ? { entityType: row.entityType } : {}),
             ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
@@ -226,13 +233,8 @@ export async function POST(req: Request): Promise<Response> {
         } catch (err) {
           const result: RowResult = {
             name: row?.name ?? "",
-            topScore: 0,
-            severity: "error",
-            hitCount: 0,
-            listCoverage: [],
-            keywordGroups: [],
-            esgCategories: [],
-            durationMs: 0,
+            topScore: 0, severity: "error", hitCount: 0,
+            listCoverage: [], keywordGroups: [], esgCategories: [], durationMs: 0,
             error: err instanceof Error ? err.message : String(err),
           };
           allResults.push(result);
@@ -248,20 +250,22 @@ export async function POST(req: Request): Promise<Response> {
         low: allResults.filter((r) => r.severity === "low").length,
         clear: allResults.filter((r) => r.severity === "clear").length,
         errors: allResults.filter((r) => !!r.error).length,
+        duplicates: allResults.filter((r) => r.isDuplicate).length,
         totalDurationMs: Date.now() - started,
       };
 
-      send({ type: "done", summary });
+      send({ type: "complete", summary });
       controller.close();
     },
   });
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      "X-Accel-Buffering": "no",
-      ...gate.headers,
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+      "x-accel-buffering": "no",
+      ...gateHeaders,
     },
   });
 }

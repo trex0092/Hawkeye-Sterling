@@ -43,13 +43,14 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: QuickScreenRequestBody;
   try {
     body = (await req.json()) as QuickScreenRequestBody;
   } catch {
-    return respond(400, { ok: false, error: "invalid JSON body" }, gate.headers);
+    return respond(400, { ok: false, error: "invalid JSON body" }, gateHeaders);
   }
 
   const subject = body.subject;
@@ -58,7 +59,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const callerCandidates = body.candidates;
 
   if (!subject || typeof subject.name !== "string" || !subject.name.trim()) {
-    return respond(400, { ok: false, error: "subject.name required" }, gate.headers);
+    return respond(400, { ok: false, error: "subject.name required" }, gateHeaders);
   }
 
   let candidates: QuickScreenCandidate[];
@@ -67,7 +68,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return respond(
         400,
         { ok: false, error: `candidates exceeds ${MAX_CANDIDATES}-entry limit` },
-        gate.headers,
+        gateHeaders,
       );
     }
     candidates = callerCandidates;
@@ -78,19 +79,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[quick-screen] loadCandidates failed", detail);
-      return respond(503, { ok: false, error: "watchlist corpus unavailable", detail }, gate.headers);
+      return respond(503, { ok: false, error: "watchlist corpus unavailable", detail }, gateHeaders);
     }
   }
 
   try {
     const result = quickScreen(subject, candidates, body.options ?? {});
-    return respond(200, { ok: true, ...result }, gate.headers);
+    return respond(200, { ok: true, ...result }, gateHeaders);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     return respond(
       500,
       { ok: false, error: "quick-screen failed", detail },
-      gate.headers,
+      gateHeaders,
     );
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 
 const SWAGGER_CSS_URL =
   "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css";
@@ -510,100 +510,87 @@ export default function ApiDocsPage() {
   }, []);
 
   return (
-    <>
-      <Header />
-
-      {/* ── Hero banner ──────────────────────────────────────────────── */}
-      <div className="border-b border-hair-2 bg-bg-panel">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-start justify-between gap-6 flex-wrap">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-display text-[11px] tracking-widest uppercase text-ink-3">
-                  REST · JSON · OpenAPI 3.1
-                </span>
-              </div>
-              <h1 className="text-[22px] font-semibold tracking-tight text-ink-0 leading-snug mb-1">
-                Hawkeye Sterling API
-              </h1>
-              <p className="text-[13px] text-ink-2 max-w-lg leading-relaxed">
-                Regulator-grade AML/CFT screening engine for UAE-licensed precious-metals
-                businesses. Direct-source sanctions ingestion, full reasoning-chain
-                transparency, and a content-frozen compliance charter (P1–P10).
-              </p>
-            </div>
-
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-10 font-semibold font-mono bg-green/10 text-green border border-green/20">
-                  v2.0 · stable
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-10 font-semibold font-mono bg-blue/10 text-blue border border-blue/20">
-                  OAS 3.1
-                </span>
-              </div>
-              <a
-                href="/openapi.json"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-10 font-mono text-ink-3 hover:text-brand transition-colors underline-offset-2 hover:underline"
-              >
-                openapi.json ↗
-              </a>
-            </div>
+    <ModuleLayout engineLabel="API reference">
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-6 flex-wrap mb-6">
+        <div>
+          <div className="font-mono text-[11px] tracking-widest uppercase text-ink-3 mb-2">
+            REST · JSON · OpenAPI 3.1
           </div>
-
-          {/* ── Endpoint group cards ──────────────────────────────────── */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            {ENDPOINT_GROUPS.map((g) => {
-              const c = COLOR_MAP[g.color] ?? COLOR_DEFAULT;
-              return (
-                <div
-                  key={g.tag}
-                  className={`rounded-lg border px-3 py-2.5 ${c.bg} ${c.border} transition-colors`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-10 font-semibold font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border ${c.badge}`}>
-                      {g.tag}
-                    </span>
-                    <span className="text-10 font-mono text-ink-3">{g.count}</span>
-                  </div>
-                  <p className="text-10 text-ink-2 leading-snug">{g.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* ── Quick reference bar ───────────────────────────────────── */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-10 font-mono text-ink-3">
-            <span>
-              Base URL:{" "}
-              <code className="text-ink-1 bg-bg-2 px-1 rounded">
-                https://hawkeye-sterling.netlify.app
-              </code>
+          <h1 className="text-[22px] font-semibold tracking-tight text-ink-0 leading-snug mb-1">
+            Hawkeye Sterling API
+          </h1>
+          <p className="text-[13px] text-ink-2 max-w-lg leading-relaxed">
+            Regulator-grade AML/CFT screening engine for UAE-licensed precious-metals
+            businesses. Direct-source sanctions ingestion, full reasoning-chain
+            transparency, and a content-frozen compliance charter (P1–P10).
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-10 font-semibold font-mono bg-green/10 text-green border border-green/20">
+              v2.0 · stable
             </span>
-            <span>Auth: Bearer JWT</span>
-            <span>Rate limit: 120 req / min</span>
-            <span>Timeout: 60 s</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-10 font-semibold font-mono bg-blue/10 text-blue border border-blue/20">
+              OAS 3.1
+            </span>
           </div>
+          <a
+            href="/openapi.json"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-10 font-mono text-ink-3 hover:text-brand transition-colors underline-offset-2 hover:underline"
+          >
+            openapi.json ↗
+          </a>
         </div>
       </div>
 
-      {/* ── Swagger UI mount ─────────────────────────────────────────── */}
-      <main className="min-h-screen bg-bg-0">
-        <div className="max-w-5xl mx-auto px-4 py-4">
-          {!loaded && (
-            <div className="flex items-center justify-center py-20 gap-3 text-ink-3 text-12 font-mono">
-              <span
-                className="w-2 h-2 rounded-full bg-brand"
-                style={{ animation: "live-pulse 1.4s ease-in-out infinite" }}
-              />
-              Loading API reference…
+      {/* ── Endpoint group cards ──────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
+        {ENDPOINT_GROUPS.map((g) => {
+          const c = COLOR_MAP[g.color] ?? COLOR_DEFAULT;
+          return (
+            <div
+              key={g.tag}
+              className={`rounded-lg border px-3 py-2.5 ${c.bg} ${c.border} transition-colors`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-10 font-semibold font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border ${c.badge}`}>
+                  {g.tag}
+                </span>
+                <span className="text-10 font-mono text-ink-3">{g.count}</span>
+              </div>
+              <p className="text-10 text-ink-2 leading-snug">{g.desc}</p>
             </div>
-          )}
-          <div id="swagger-root" />
+          );
+        })}
+      </div>
+
+      {/* ── Quick reference bar ───────────────────────────────────────── */}
+      <div className="mb-6 pb-6 border-b border-hair flex flex-wrap items-center gap-x-6 gap-y-1 text-10 font-mono text-ink-3">
+        <span>
+          Base URL:{" "}
+          <code className="text-ink-1 bg-bg-2 px-1 rounded">
+            https://hawkeye-sterling.netlify.app
+          </code>
+        </span>
+        <span>Auth: Bearer JWT</span>
+        <span>Rate limit: 120 req / min</span>
+        <span>Timeout: 60 s</span>
+      </div>
+
+      {/* ── Swagger UI mount ──────────────────────────────────────────── */}
+      {!loaded && (
+        <div className="flex items-center justify-center py-20 gap-3 text-ink-3 text-12 font-mono">
+          <span
+            className="w-2 h-2 rounded-full bg-brand"
+            style={{ animation: "live-pulse 1.4s ease-in-out infinite" }}
+          />
+          Loading API reference…
         </div>
-      </main>
-    </>
+      )}
+      <div id="swagger-root" />
+    </ModuleLayout>
   );
 }

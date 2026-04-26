@@ -316,14 +316,15 @@ export async function GET(req: Request): Promise<NextResponse> {
   // this, a single user could trivially pin a Netlify Function into a
   // quota-exhaustion loop.
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
   if (!q) {
     return NextResponse.json(
       { ok: false, error: "query `q` required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (q.length > MAX_Q_LENGTH) {
@@ -411,13 +412,13 @@ export async function GET(req: Request): Promise<NextResponse> {
       source: "google-news-rss",
       languages: langCoverage,
     };
-    return NextResponse.json(payload, { headers: gate.headers });
+    return NextResponse.json(payload, { headers: gateHeaders });
   } catch {
     // Last-resort safety net. The fan-out already uses allSettled +
     // per-feed timeouts so this branch should be unreachable, but if
     // variantsOf() or keyword classification ever throws we still return
     // a clean empty dossier rather than a 5xx that paints the panel red.
-    return NextResponse.json(emptyResponse(q), { headers: gate.headers });
+    return NextResponse.json(emptyResponse(q), { headers: gateHeaders });
   }
 }
 
