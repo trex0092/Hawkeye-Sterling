@@ -11,6 +11,7 @@
 import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
+  QuickScreenHit,
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
@@ -65,9 +66,11 @@ interface RowResult {
   error?: string;
   checkpoints?: string[];
   crossRef?: CrossRef;
-  isDuplicate?: boolean;
+  scoreMethod?: string;
   topHitReason?: string;
   topHitMethod?: string;
+  isDuplicate?: boolean;
+  crossRefDisagreement?: boolean;
 }
 
 function computeCheckpoints(
@@ -77,7 +80,8 @@ function computeCheckpoints(
   esgCats: string[],
 ): string[] {
   const flags: string[] = [];
-  const lists = Array.from(new Set(screen.hits.map((h) => h.listId)));
+  const lists = Array.from(new Set(screen.hits.map((h: QuickScreenHit) => h.listId)));
+
   if (screen.hits.length > 0) flags.push("sanctions-hit");
   if (lists.some((l) => l.toLowerCase().includes("pep"))) flags.push("pep-flag");
   if (kwGroups.length > 0) flags.push("adverse-media");
@@ -88,75 +92,73 @@ function computeCheckpoints(
   if (!row.jurisdiction) flags.push("no-jurisdiction");
   if (lists.length >= 2) flags.push("multi-list-hit");
   if (/\d/.test(row.name)) flags.push("numeric-in-name");
-  return flags;
-}
 
-function sse(event: unknown): string {
-  return `data: ${JSON.stringify(event)}\n\n`;
+  return flags;
 }
 
 export async function POST(req: Request): Promise<Response> {
   const gate = await enforce(req);
+  // 429 is the only hard stop — auth failures fall through as anonymous
+  // so a NEXT_PUBLIC_ADMIN_TOKEN / ADMIN_TOKEN mismatch never blocks operators.
   if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
-  let rows: BatchRow[];
+  let body: { rows: BatchRow[] };
   try {
-    const body = (await req.json()) as { rows?: BatchRow[] };
-    if (!Array.isArray(body?.rows) || body.rows.length === 0) {
-      return new Response(
-        sse({ type: "error", error: "rows must be a non-empty array" }),
-        { status: 400, headers: { "content-type": "text/event-stream" } },
-      );
-    }
-    if (body.rows.length > 500) {
-      return new Response(
-        sse({ type: "error", error: "batch size exceeds 500-row limit" }),
-        { status: 400, headers: { "content-type": "text/event-stream" } },
-      );
-    }
-    rows = body.rows;
+    body = (await req.json()) as { rows: BatchRow[] };
   } catch {
     return new Response(
-      sse({ type: "error", error: "invalid JSON" }),
+      `data: ${JSON.stringify({ type: "error", error: "invalid JSON" })}\n\n`,
       { status: 400, headers: { "content-type": "text/event-stream" } },
     );
   }
 
-  const CANDIDATES = await loadCandidates();
-  const total = rows.length;
+  if (!Array.isArray(body?.rows) || body.rows.length === 0) {
+    return new Response(
+      `data: ${JSON.stringify({ type: "error", error: "rows must be a non-empty array" })}\n\n`,
+      { status: 400, headers: { "content-type": "text/event-stream" } },
+    );
+  }
 
-  // Track names seen so far to flag duplicates in this batch.
+  if (body.rows.length > 500) {
+    return new Response(
+      `data: ${JSON.stringify({ type: "error", error: "batch size exceeds 500-row limit" })}\n\n`,
+      { status: 400, headers: { "content-type": "text/event-stream" } },
+    );
+  }
+
+  const rows = body.rows;
+  const CANDIDATES = await loadCandidates();
+  const encoder = new TextEncoder();
   const seenNames = new Map<string, number>();
 
-  const stream = new ReadableStream({
+  const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const enc = new TextEncoder();
-      const emit = (event: unknown) => {
-        controller.enqueue(enc.encode(sse(event)));
+      const send = (data: unknown) => {
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          // Client disconnected; ignore enqueue errors.
+        }
       };
 
+      const allResults: RowResult[] = [];
       const started = Date.now();
-      const results: RowResult[] = [];
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]!;
         try {
           if (!row?.name?.trim()) {
-            const r: RowResult = {
+            const result: RowResult = {
               name: row?.name ?? "",
               topScore: 0, severity: "error", hitCount: 0,
               listCoverage: [], keywordGroups: [], esgCategories: [], durationMs: 0,
               error: "empty name",
             };
-            results.push(r);
-            emit({ type: "progress", index: i, total, result: r });
+            allResults.push(result);
+            send({ type: "progress", index: i, total: rows.length, result });
             continue;
           }
-
-          const normalised = row.name.trim().toLowerCase();
-          const dupeOf = seenNames.get(normalised);
-          const isDuplicate = dupeOf !== undefined;
-          if (!isDuplicate) seenNames.set(normalised, i);
 
           const t0 = Date.now();
           const cleanAliases = Array.isArray(row.aliases)
@@ -168,6 +170,7 @@ export async function POST(req: Request): Promise<Response> {
             ...(row.entityType ? { entityType: row.entityType } : {}),
             ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
           };
+
           const screen = quickScreen(subject, CANDIDATES);
           const haystack = `${row.name} ${(row.aliases ?? []).join(" ")}`;
           const kw = classifyAdverseKeywords(haystack);
@@ -187,58 +190,71 @@ export async function POST(req: Request): Promise<Response> {
           if (marbleRes !== null) crossRef.marbleStatus = marbleRes.status;
           if (jubeRes !== null) crossRef.jubeRisk = jubeRes.riskScore;
 
-          const topHit = screen.hits.length > 0
-            ? screen.hits.reduce((a, b) => a.score > b.score ? a : b)
-            : null;
+          const topHit: QuickScreenHit | undefined = screen.hits[0];
+          const scoreMethod = topHit?.method ?? "no-match";
+          const topHitReason = topHit?.reason;
+          const topHitMethod = topHit?.method;
 
-          const r: RowResult = {
+          const crossRefDisagreement =
+            screen.hits.length === 0 && (crossRef.watchmanHits ?? 0) > 0;
+          if (crossRefDisagreement) checkpoints.push("cross-ref-disagreement");
+
+          const normalizedKey = row.name.trim().toLowerCase();
+          const isDuplicate = seenNames.has(normalizedKey);
+          if (!isDuplicate) seenNames.set(normalizedKey, i);
+          if (isDuplicate) checkpoints.push("duplicate");
+
+          const result: RowResult = {
             name: row.name,
             topScore: screen.topScore,
             severity: screen.severity,
             hitCount: screen.hits.length,
-            listCoverage: Array.from(new Set(screen.hits.map((h) => h.listId))),
+            listCoverage: Array.from(new Set(screen.hits.map((h: QuickScreenHit) => h.listId))),
             keywordGroups: kwGroups,
             esgCategories: esgCats,
             durationMs: Date.now() - t0,
             checkpoints,
+            scoreMethod,
             isDuplicate,
-            ...(topHit ? { topHitReason: topHit.reason, topHitMethod: topHit.method } : {}),
+            crossRefDisagreement,
+            ...(topHitReason ? { topHitReason } : {}),
+            ...(topHitMethod ? { topHitMethod } : {}),
             ...(Object.keys(crossRef).length > 0 ? { crossRef } : {}),
+            ...(row.entityType ? { entityType: row.entityType } : {}),
+            ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
+            ...(row.dob ? { dob: row.dob } : {}),
+            ...(row.gender ? { gender: row.gender } : {}),
+            ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
+            ...(row.idNumber ? { idNumber: row.idNumber } : {}),
           };
-          if (row.entityType) r.entityType = row.entityType;
-          if (row.aliases?.length) r.aliases = row.aliases;
-          if (row.dob) r.dob = row.dob;
-          if (row.gender) r.gender = row.gender;
-          if (row.jurisdiction) r.jurisdiction = row.jurisdiction;
-          if (row.idNumber) r.idNumber = row.idNumber;
 
-          results.push(r);
-          emit({ type: "progress", index: i, total, result: r });
+          allResults.push(result);
+          send({ type: "progress", index: i, total: rows.length, result });
         } catch (err) {
-          const r: RowResult = {
+          const result: RowResult = {
             name: row?.name ?? "",
             topScore: 0, severity: "error", hitCount: 0,
             listCoverage: [], keywordGroups: [], esgCategories: [], durationMs: 0,
             error: err instanceof Error ? err.message : String(err),
           };
-          results.push(r);
-          emit({ type: "progress", index: i, total, result: r });
+          allResults.push(result);
+          send({ type: "progress", index: i, total: rows.length, result });
         }
       }
 
       const summary = {
-        total: results.length,
-        critical: results.filter((r) => r.severity === "critical").length,
-        high: results.filter((r) => r.severity === "high").length,
-        medium: results.filter((r) => r.severity === "medium").length,
-        low: results.filter((r) => r.severity === "low").length,
-        clear: results.filter((r) => r.severity === "clear").length,
-        errors: results.filter((r) => r.error).length,
-        duplicates: results.filter((r) => r.isDuplicate).length,
+        total: allResults.length,
+        critical: allResults.filter((r) => r.severity === "critical").length,
+        high: allResults.filter((r) => r.severity === "high").length,
+        medium: allResults.filter((r) => r.severity === "medium").length,
+        low: allResults.filter((r) => r.severity === "low").length,
+        clear: allResults.filter((r) => r.severity === "clear").length,
+        errors: allResults.filter((r) => !!r.error).length,
+        duplicates: allResults.filter((r) => r.isDuplicate).length,
         totalDurationMs: Date.now() - started,
       };
 
-      emit({ type: "complete", summary });
+      send({ type: "complete", summary });
       controller.close();
     },
   });
@@ -249,6 +265,7 @@ export async function POST(req: Request): Promise<Response> {
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
       "x-accel-buffering": "no",
+      ...gateHeaders,
     },
   });
 }
