@@ -28,7 +28,8 @@ const VALID_VERDICTS = new Set<Verdict>([
 
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const [records, s] = await Promise.all([listFeedback(), stats()]);
   return NextResponse.json({
@@ -44,7 +45,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   // actors can't flood the feedback table and skew the FP signal
   // we feed back into the match-score calibrator.
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: FeedbackBody;
   try {
@@ -52,7 +54,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   const {
@@ -78,13 +80,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         error:
           "subjectId, listId, listRef, candidateName, verdict and analyst required",
       },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (!VALID_VERDICTS.has(verdict)) {
     return NextResponse.json(
       { ok: false, error: "invalid verdict" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   const record = await submitFeedback({
@@ -96,5 +98,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(reason ? { reason } : {}),
     analyst,
   });
-  return NextResponse.json({ ok: true, record }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, record }, { headers: gateHeaders });
 }
