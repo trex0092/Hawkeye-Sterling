@@ -86,7 +86,7 @@ export function PaymentScreen() {
   const screen = async () => {
     setLoading(true);
     try {
-      const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       const res = await fetch("/api/payment-screen", {
         method: "POST",
         headers: {

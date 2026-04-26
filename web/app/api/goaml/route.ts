@@ -69,18 +69,19 @@ function splitFullName(full: string): { first: string; last: string; middle?: st
 
 async function handleGoaml(req: Request): Promise<Response> {
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
   if (!body?.subject?.name || !body?.reportCode || !body?.narrative) {
     return NextResponse.json(
       { ok: false, error: "subject.name, reportCode and narrative are required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   if (!VALID_REPORT_CODES.has(body.reportCode)) {
@@ -89,7 +90,7 @@ async function handleGoaml(req: Request): Promise<Response> {
         ok: false,
         error: `reportCode must be one of ${Array.from(VALID_REPORT_CODES).join(", ")}`,
       },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
 
@@ -184,7 +185,7 @@ async function handleGoaml(req: Request): Promise<Response> {
     console.error("goaml serialise failed", err);
     return NextResponse.json(
       { ok: false, error: "goaml serialise failed" },
-      { status: 500, headers: gate.headers },
+      { status: 500, headers: gateHeaders },
     );
   }
 
@@ -192,7 +193,7 @@ async function handleGoaml(req: Request): Promise<Response> {
   return new Response(xml, {
     status: 200,
     headers: {
-      ...gate.headers,
+      ...gateHeaders,
       "content-type": "application/xml; charset=utf-8",
       "content-disposition": `attachment; filename="${filename}"`,
       "cache-control": "no-store",

@@ -145,7 +145,7 @@ export default function OngoingMonitorPage() {
     setSubjects(load());
     (async () => {
       try {
-        const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+        const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
         const res = await fetch("/api/ongoing", {
           headers: { ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
         });
@@ -209,7 +209,7 @@ export default function OngoingMonitorPage() {
     // on the next cron tick. localStorage alone is browser-only — the
     // server-side scheduler reads from Netlify Blobs via /api/ongoing.
     try {
-      const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       await fetch("/api/ongoing", {
         method: "POST",
         headers: {
@@ -239,7 +239,7 @@ export default function OngoingMonitorPage() {
     save(next);
     setSubjects(next);
     try {
-      const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
         headers: {

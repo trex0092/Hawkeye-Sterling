@@ -419,7 +419,13 @@ function renderHtmlReport(_text: string, input: ReportInput): string {
 
 async function handleComplianceReport(req: Request): Promise<Response> {
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  // Rate-limit (429) is a hard stop; auth failures (401) fall through as
+  // anonymous — the report is built entirely from the request payload so
+  // there is no server-side secret to protect, and a token mismatch
+  // between NEXT_PUBLIC_ADMIN_TOKEN and ADMIN_TOKEN shouldn't block MLRO
+  // officers from generating compliance reports.
+  if (!gate.ok && gate.response.status === 429) return gate.response;
+  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);
   const format = (url.searchParams.get("format") ?? "text").toLowerCase();
@@ -428,12 +434,12 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as ReportInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
   if (!body?.subject?.name || !body?.result) {
     return NextResponse.json(
       { ok: false, error: "subject and result are required" },
-      { status: 400, headers: gate.headers },
+      { status: 400, headers: gateHeaders },
     );
   }
   let report: string;

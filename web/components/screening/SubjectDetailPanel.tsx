@@ -390,7 +390,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       return;
     }
     const payload = buildReportPayload();
-    const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     try {
       const res = await fetch("/api/compliance-report?format=html", {
         method: "POST",
@@ -453,7 +453,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       `${composite}/100. Jurisdiction: ${subject.country || "—"}. ` +
       `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
       `MLRO to review before goAML submission.`;
-    const adminToken = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     try {
       const res = await fetch("/api/goaml", {
         method: "POST",
@@ -590,7 +590,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 15_000);
       try {
-        const adminTokenTxt = process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+        const adminTokenTxt = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
         const res = await fetch("/api/compliance-report", {
           method: "POST",
           headers: {
