@@ -61,8 +61,8 @@ export const ROLE_LABEL: Record<OperatorRole, string> = {
   analyst:              "Analyst",
   compliance_assistant: "CO Assistant",
   co:                   "CO",
-  mlro:                 "MLRO / CO",
-  managing_director:    "MD",
+  mlro:                 "CO / MLRO",
+  managing_director:    "Managing Director",
 };
 
 // Roles available in the user-profile card (MLRO/CO, CO Assistant, MD).

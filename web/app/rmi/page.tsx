@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // Responsible Minerals Initiative — RMAP audit tracker.
@@ -215,16 +215,38 @@ const MINERAL_TABS: { key: FilterMineral; label: string }[] = [
   { key: "cobalt", label: "Cobalt" },
 ];
 
+const RMI_DELETED_KEY = "hawkeye.rmi.deleted.v1";
+
 export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
   const [showAuditLog, setShowAuditLog] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
-  const visible = mineralFilter === "all" ? SMELTERS : SMELTERS.filter((s) => s.mineral === mineralFilter);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RMI_DELETED_KEY);
+      if (raw) setDeletedIds(JSON.parse(raw) as string[]);
+    } catch { /* ignore */ }
+  }, []);
 
-  const conformant = SMELTERS.filter((s) => s.rmapStatus === "conformant" && s.activeSupplier).length;
-  const nonConformant = SMELTERS.filter((s) => s.rmapStatus === "not-enrolled" || s.rmapStatus === "expired" || s.rmapStatus === "suspended").length;
-  const cahraHigh = SMELTERS.filter((s) => s.cahraRisk === "high").length;
-  const activeSuppliers = SMELTERS.filter((s) => s.activeSupplier).length;
+  const deleteEntry = (id: string) => {
+    const next = [...deletedIds, id];
+    setDeletedIds(next);
+    try { localStorage.setItem(RMI_DELETED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+
+  const restoreAll = () => {
+    setDeletedIds([]);
+    try { localStorage.removeItem(RMI_DELETED_KEY); } catch { /* ignore */ }
+  };
+
+  const liveSmelters = useMemo(() => SMELTERS.filter((s) => !deletedIds.includes(s.id)), [deletedIds]);
+  const visible = mineralFilter === "all" ? liveSmelters : liveSmelters.filter((s) => s.mineral === mineralFilter);
+
+  const conformant = liveSmelters.filter((s) => s.rmapStatus === "conformant" && s.activeSupplier).length;
+  const nonConformant = liveSmelters.filter((s) => s.rmapStatus === "not-enrolled" || s.rmapStatus === "expired" || s.rmapStatus === "suspended").length;
+  const cahraHigh = liveSmelters.filter((s) => s.cahraRisk === "high").length;
+  const activeSuppliers = liveSmelters.filter((s) => s.activeSupplier).length;
 
   return (
     <ModuleLayout engineLabel="Supply-chain compliance engine">
@@ -270,6 +292,13 @@ export default function RmiPage() {
         </div>
       </div>
 
+      {deletedIds.length > 0 && (
+        <div className="mb-4 px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">
+          <span className="text-amber font-semibold">{deletedIds.length} entr{deletedIds.length === 1 ? "y" : "ies"} hidden</span>
+          <button type="button" onClick={restoreAll} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
+        </div>
+      )}
+
       {/* Mineral filter tabs */}
       <div className="flex gap-1 mb-4 border-b border-hair-2">
         {MINERAL_TABS.map((t) => {
@@ -298,7 +327,7 @@ export default function RmiPage() {
         <table className="w-full text-12">
           <thead className="bg-bg-1 border-b border-hair-2">
             <tr>
-              {["Smelter / Refiner", "Country", "Mineral", "RMAP ID", "RMAP Status", "CAHRA Risk", "Last Audit", "Next Due", "Active", "Flags"].map((h) => (
+              {["Smelter / Refiner", "Country", "Mineral", "RMAP ID", "RMAP Status", "CAHRA Risk", "Last Audit", "Next Due", "Active", "Flags", ""].map((h) => (
                 <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -339,6 +368,16 @@ export default function RmiPage() {
                       ))}
                     </div>
                   )}
+                </td>
+                <td className="px-2 py-2.5">
+                  <button
+                    type="button"
+                    onClick={() => deleteEntry(s.id)}
+                    className="w-5 h-5 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
                 </td>
               </tr>
             ))}

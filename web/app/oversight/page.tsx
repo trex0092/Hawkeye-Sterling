@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
@@ -257,6 +257,34 @@ const DISPOSITION_LABEL: Record<CircularDisposition, string> = {
   noted: "Noted",
 };
 
+const OVERSIGHT_KEY = "hawkeye.oversight.overlay.v1";
+
+interface OversightOverlay {
+  deletedApprovalIds: string[];
+  deletedMinuteIds: string[];
+  deletedCircularIds: string[];
+  customCirculars: Circular[];
+}
+
+const EMPTY_OVERLAY: OversightOverlay = {
+  deletedApprovalIds: [],
+  deletedMinuteIds: [],
+  deletedCircularIds: [],
+  customCirculars: [],
+};
+
+function loadOversightOverlay(): OversightOverlay {
+  try {
+    const raw = localStorage.getItem(OVERSIGHT_KEY);
+    if (raw) return { ...EMPTY_OVERLAY, ...(JSON.parse(raw) as Partial<OversightOverlay>) };
+  } catch { /* ignore */ }
+  return { ...EMPTY_OVERLAY };
+}
+
+function saveOversightOverlay(o: OversightOverlay): void {
+  try { localStorage.setItem(OVERSIGHT_KEY, JSON.stringify(o)); } catch { /* ignore */ }
+}
+
 type Tab = "approvals" | "minutes" | "circulars";
 
 function SlaBar({ elapsed, sla }: { elapsed: number; sla: number }) {
@@ -312,15 +340,115 @@ function SignBox({
   );
 }
 
+function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; onCancel: () => void }) {
+  const [ref, setRef] = useState("");
+  const [date, setDate] = useState("");
+  const [issuer, setIssuer] = useState("");
+  const [title, setTitle] = useState("");
+  const [disposition, setDisposition] = useState<CircularDisposition>("in-progress");
+  const [owner, setOwner] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [err, setErr] = useState("");
+
+  const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+
+  const submit = () => {
+    if (!ref.trim() || !title.trim()) { setErr("Ref and Title are required."); return; }
+    onAdd({
+      id: `CIR-CUSTOM-${Date.now()}`,
+      ref: ref.trim(),
+      date: date || new Date().toLocaleDateString("en-GB"),
+      issuer: issuer.trim() || "—",
+      title: title.trim(),
+      disposition,
+      owner: owner.trim() || "—",
+      dueDate: dueDate.trim() || "—",
+      notes: notes.trim(),
+    });
+  };
+
+  return (
+    <div className="mt-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
+      <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New circular / report</div>
+      {err && <p className="text-11 text-red mb-2">{err}</p>}
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ref *</label>
+          <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. CBUAE 3/2025" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Date</label>
+          <input value={date} onChange={(e) => setDate(e.target.value)} placeholder="dd/mm/yyyy" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Issuer</label>
+          <input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="e.g. CBUAE" className={iCls} />
+        </div>
+      </div>
+      <div className="mb-3">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Title *</label>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Circular or report title" className={iCls} />
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disposition</label>
+          <select value={disposition} onChange={(e) => setDisposition(e.target.value as CircularDisposition)} className={iCls}>
+            <option value="in-progress">In progress</option>
+            <option value="implemented">Implemented</option>
+            <option value="gap-identified">Gap identified</option>
+            <option value="noted">Noted</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner</label>
+          <input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Name" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Due date</label>
+          <input value={dueDate} onChange={(e) => setDueDate(e.target.value)} placeholder="dd/mm/yyyy or —" className={iCls} />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+          className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 export default function OversightPage() {
   const [tab, setTab] = useState<Tab>("approvals");
   const [expandedMinute, setExpandedMinute] = useState<string | null>(MINUTES[0]?.id ?? null);
   const [mdName, setMdName] = useState("");
+  const [overlay, setOverlay] = useState<OversightOverlay>(EMPTY_OVERLAY);
+  const [showAddCircular, setShowAddCircular] = useState(false);
 
-  const pendingApprovals = APPROVALS.filter((a) => a.status === "pending").length;
-  const slaBreached = APPROVALS.filter((a) => a.status === "pending" && a.elapsedHours > a.slaHours).length;
-  const openActions = MINUTES.flatMap((m) => m.actionItems).filter((ai) => !ai.closed).length;
-  const gaps = CIRCULARS.filter((c) => c.disposition === "gap-identified").length;
+  useEffect(() => { setOverlay(loadOversightOverlay()); }, []);
+
+  const updateOverlay = (next: OversightOverlay) => { setOverlay(next); saveOversightOverlay(next); };
+
+  const deleteApproval = (id: string) => updateOverlay({ ...overlay, deletedApprovalIds: [...overlay.deletedApprovalIds, id] });
+  const deleteMinute = (id: string) => updateOverlay({ ...overlay, deletedMinuteIds: [...overlay.deletedMinuteIds, id] });
+  const deleteCircular = (id: string) => updateOverlay({ ...overlay, deletedCircularIds: [...overlay.deletedCircularIds, id] });
+  const addCircular = (c: Circular) => { updateOverlay({ ...overlay, customCirculars: [...overlay.customCirculars, c] }); setShowAddCircular(false); };
+  const restoreAll = () => { updateOverlay(EMPTY_OVERLAY); };
+
+  const liveApprovals = useMemo(() => APPROVALS.filter((a) => !overlay.deletedApprovalIds.includes(a.id)), [overlay]);
+  const liveMinutes = useMemo(() => MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), [overlay]);
+  const liveCirculars = useMemo(() => [...CIRCULARS.filter((c) => !overlay.deletedCircularIds.includes(c.id)), ...overlay.customCirculars], [overlay]);
+
+  const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
+
+  const pendingApprovals = liveApprovals.filter((a) => a.status === "pending").length;
+  const slaBreached = liveApprovals.filter((a) => a.status === "pending" && a.elapsedHours > a.slaHours).length;
+  const openActions = liveMinutes.flatMap((m) => m.actionItems).filter((ai) => !ai.closed).length;
+  const gaps = liveCirculars.filter((c) => c.disposition === "gap-identified").length;
 
   return (
     <ModuleLayout engineLabel="Governance engine">
@@ -340,7 +468,7 @@ export default function OversightPage() {
           { value: String(slaBreached), label: "SLA breached", tone: slaBreached > 0 ? "red" : undefined },
           { value: String(openActions), label: "open action items", tone: openActions > 0 ? "amber" : undefined },
           { value: String(gaps), label: "regulatory gaps", tone: gaps > 0 ? "red" : undefined },
-          { value: String(CIRCULARS.filter((c) => c.disposition === "implemented").length), label: "circulars closed" },
+          { value: String(liveCirculars.filter((c) => c.disposition === "implemented").length), label: "circulars closed" },
         ]}
       />
 
@@ -362,12 +490,25 @@ export default function OversightPage() {
         ))}
       </div>
 
+      {anyDeleted && (
+        <div className="mb-4 px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">
+          <span className="text-amber font-semibold">Some entries are hidden</span>
+          <button type="button" onClick={restoreAll} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
+        </div>
+      )}
+
       {/* APPROVALS TAB */}
       {tab === "approvals" && (
         <div className="flex flex-col gap-4">
-          {APPROVALS.map((a) => (
-            <div key={a.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3 mb-3">
+          {liveApprovals.map((a) => (
+            <div key={a.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
+              <button
+                type="button"
+                onClick={() => deleteApproval(a.id)}
+                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
+                title="Dismiss"
+              >×</button>
+              <div className="flex items-start justify-between gap-3 mb-3 pr-6">
                 <div>
                   <div className="font-mono text-10 text-ink-3">{a.id}</div>
                   <div className="text-14 font-semibold text-ink-0 mt-0.5">{a.title}</div>
@@ -430,15 +571,21 @@ export default function OversightPage() {
       {/* MINUTES TAB */}
       {tab === "minutes" && (
         <div className="flex flex-col gap-4">
-          {MINUTES.map((m) => {
+          {liveMinutes.map((m) => {
             const expanded = expandedMinute === m.id;
             const openAI = m.actionItems.filter((ai) => !ai.closed).length;
             return (
-              <div key={m.id} className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+              <div key={m.id} className="relative bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => deleteMinute(m.id)}
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
+                  title="Dismiss"
+                >×</button>
                 <button
                   type="button"
                   onClick={() => setExpandedMinute(expanded ? null : m.id)}
-                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors pr-10"
                 >
                   <div>
                     <div className="font-mono text-10 text-ink-3">{m.minuteRef}</div>
@@ -521,39 +668,61 @@ export default function OversightPage() {
 
       {/* CIRCULARS TAB */}
       {tab === "circulars" && (
-        <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
-          <table className="w-full text-12">
-            <thead className="bg-bg-1 border-b border-hair-2">
-              <tr>
-                {["Ref", "Date", "Issuer", "Title", "Owner", "Due", "Disposition", "Notes"].map((h) => (
-                  <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {CIRCULARS.map((c, i) => (
-                <tr key={c.id} className={i < CIRCULARS.length - 1 ? "border-b border-hair" : ""}>
-                  <td className="px-3 py-2.5 font-mono text-11 text-ink-0 whitespace-nowrap">{c.ref}</td>
-                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{c.date}</td>
-                  <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.issuer}</td>
-                  <td className="px-3 py-2.5 text-ink-0 font-medium max-w-[220px]">{c.title}</td>
-                  <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.owner}</td>
-                  <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{c.dueDate}</td>
-                  <td className="px-3 py-2.5">
-                    <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${DISPOSITION_TONE[c.disposition]}`}>
-                      {DISPOSITION_LABEL[c.disposition]}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[200px] truncate" title={c.notes}>
-                    {c.notes}
-                  </td>
+        <>
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden mb-4">
+            <table className="w-full text-12">
+              <thead className="bg-bg-1 border-b border-hair-2">
+                <tr>
+                  {["Ref", "Date", "Issuer", "Title", "Owner", "Due", "Disposition", "Notes", ""].map((h) => (
+                    <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {liveCirculars.map((c, i) => (
+                  <tr key={c.id} className={i < liveCirculars.length - 1 ? "border-b border-hair" : ""}>
+                    <td className="px-3 py-2.5 font-mono text-11 text-ink-0 whitespace-nowrap">{c.ref}</td>
+                    <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{c.date}</td>
+                    <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.issuer}</td>
+                    <td className="px-3 py-2.5 text-ink-0 font-medium max-w-[220px]">{c.title}</td>
+                    <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.owner}</td>
+                    <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{c.dueDate}</td>
+                    <td className="px-3 py-2.5">
+                      <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${DISPOSITION_TONE[c.disposition]}`}>
+                        {DISPOSITION_LABEL[c.disposition]}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[200px] truncate" title={c.notes}>
+                      {c.notes}
+                    </td>
+                    <td className="px-2 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => deleteCircular(c.id)}
+                        className="w-5 h-5 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
+                        title="Remove"
+                      >×</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {showAddCircular ? (
+            <AddCircularForm onAdd={addCircular} onCancel={() => setShowAddCircular(false)} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAddCircular(true)}
+              className="text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
+            >
+              + Add circular / report
+            </button>
+          )}
+        </>
       )}
     </ModuleLayout>
   );

@@ -93,9 +93,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   try {
+    // 60 s matches the integration's hard ceiling (mlro-budget-planner.ts).
+    // Multi-perspective mode chains Sonnet executor + Opus advisor and
+    // routinely needs ≥30 s on a real 8 k-token compliance analysis; the
+    // previous 25 s clamp short-circuited the executor and surfaced as
+    // a generic HTTP 502 to the operator.
     const result = await invokeMlroAdvisor(advisorReq, {
       apiKey,
-      budgetMs: 25_000,
+      budgetMs: 60_000,
     });
 
     if (!result.ok) {

@@ -13,7 +13,6 @@ import {
 } from "@/lib/data/operator-role";
 
 const NAV_TABS = [
-  { key: "nav.workbench", label: "Workbench", href: "/workbench" },
   { key: "nav.screening", label: "Screening", href: "/screening" },
   { key: "nav.batch", label: "Batch", href: "/batch" },
   { key: "nav.intel", label: "Intel", href: "/intel" },
@@ -29,11 +28,14 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
   {
     title: "Intelligence",
     items: [
+      { label: "Workbench", href: "/workbench", hint: "MLRO advisor & deep reasoning" },
       { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
+      { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
+      { label: "Status", href: "/status", hint: "Live endpoint health" },
     ],
   },
   {
@@ -46,7 +48,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
       { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
-      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
       { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
@@ -60,10 +61,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Supplier DD", href: "/vendor-dd", hint: "Supplier onboarding" },
       { label: "Employees", href: "/employees", hint: "HR registry & doc expiry" },
       { label: "Training", href: "/training", hint: "Staff certification" },
-      { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
       { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
-      { label: "Status", href: "/status", hint: "Live endpoint health" },
+      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
     ],
   },
 ];
@@ -305,8 +305,6 @@ function HeaderUserCard() {
     setRole(r);
   };
 
-  const initial = name ? name.charAt(0).toUpperCase() : "·";
-
   return (
     <div className="relative shrink-0" ref={ref}>
       <button
@@ -316,19 +314,17 @@ function HeaderUserCard() {
           setOpen((v) => !v);
         }}
         className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-hair-2 hover:border-hair text-ink-1 hover:text-ink-0 transition-colors"
-        title="User profile"
+        title="Edit profile"
       >
-        <span className="w-[18px] h-[18px] border border-ink-2 flex items-center justify-center font-display text-[10px] font-semibold text-ink-1 leading-none shrink-0">
-          {initial}
-        </span>
         <span className="hidden lg:flex flex-col leading-none gap-[1px] text-left">
-          <span className="text-[11px] font-semibold text-ink-0 truncate max-w-[90px]">
-            {name || "Set name"}
+          <span className="text-[11px] font-semibold text-ink-0">
+            {ROLE_LABEL[role]}
           </span>
           <span className="text-[8.5px] font-mono uppercase tracking-[0.1em] text-ink-3">
-            {ROLE_LABEL[role]} · 09:00–18:00
+            ✎ Edit profile
           </span>
         </span>
+        <span className="lg:hidden text-10 font-mono">✎</span>
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1.5 z-50 w-52 bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3">

@@ -41,7 +41,7 @@ const DEMO_NODES: GraphNode[] = [
   { id: "ubo1",  label: "UBO 1 · 60%",         kind: "ubo",          x: 150, y:  90 },
   { id: "ubo2",  label: "UBO 2 · 25%",         kind: "ubo",          x: 160, y: 360 },
   { id: "cp1",   label: "IGR FZCO",             kind: "counterparty", x: 670, y: 100 },
-  { id: "cp2",   label: "Istanbul Altin Raf.",  kind: "counterparty", x: 670, y: 340 },
+  { id: "cp2",   label: "Counterparty B",       kind: "counterparty", x: 670, y: 340 },
   { id: "case1", label: "CASE-2026-598596",     kind: "case",         x: 420, y: 420 },
   { id: "art1",  label: "Adverse-media article",kind: "article",      x:  90, y: 220 },
 ];

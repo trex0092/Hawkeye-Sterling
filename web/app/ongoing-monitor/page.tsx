@@ -86,11 +86,11 @@ function computeNextDue(lastRun: string, cadence: Cadence): string {
 
 const DEFAULT_SUBJECTS: MonitoredSubject[] = [
   {
-    id: "om-1", name: "Istanbul Gold Refinery", caseId: "CASE-2026-598596",
+    id: "om-1", name: "Demo Subject Alpha", caseId: "CASE-2026-598596",
     tier: "high", cadence: "twice-daily", status: "active",
     lastRun: fmtDateTime(new Date(Date.now() - 6 * 3_600_000).toISOString()),
     nextDue: fmtDateTime(new Date(Date.now() + 6 * 3_600_000).toISOString()),
-    enrolledBy: "MLRO", enrolledAt: fmtDate(new Date().toISOString()), notes: "UN-1267 sanctions hit — ongoing EDD",
+    enrolledBy: "MLRO", enrolledAt: fmtDate(new Date().toISOString()), notes: "demo seed — replace with real subject",
   },
   {
     id: "om-2", name: "IGR FZCO", caseId: "CASE-2026-441120",
