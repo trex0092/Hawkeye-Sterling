@@ -129,9 +129,10 @@ export function useAutoReport({
         if (cancelled) return;
       }
       if (cancelled) return;
-      // Log the detail for ops; give the operator a clean banner.
+      // Log for ops; silently disable in the UI — Asana is a background
+      // integration and a red banner on every subject open is noise.
       console.warn("auto-report delivery failed", lastError);
-      setState({ status: "error", error: "Asana delivery unavailable" });
+      setState({ status: "disabled" });
     })();
 
     return () => {
