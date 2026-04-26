@@ -137,6 +137,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     newHits: Array<{ listId: string; listRef: string; candidateName: string }>;
     webhook: Awaited<ReturnType<typeof postWebhook>>;
     asanaTaskUrl?: string;
+    asanaSkipReason?: string;
+    newsAlertTaskUrl?: string;
     escalationTaskUrl?: string;
     escalationSkipReason?: string;
   }> = [];
@@ -366,11 +368,22 @@ export async function POST(req: Request): Promise<NextResponse> {
                   },
                   body: JSON.stringify(body),
                 });
-                const data = (await r.json().catch(() => null)) as
-                  | { data?: { permalink_url?: string } }
-                  | null;
-                if (data?.data?.permalink_url) {
-                  newsAlertTaskUrl = data.data.permalink_url;
+                if (!r.ok) {
+                  const detail = await r.text().catch(() => "");
+                  console.warn(
+                    `[ongoing/run] adverse-media alert POST rejected for ${s.id}: HTTP ${r.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
+                  );
+                } else {
+                  const data = (await r.json().catch(() => null)) as
+                    | { data?: { permalink_url?: string } }
+                    | null;
+                  if (data?.data?.permalink_url) {
+                    newsAlertTaskUrl = data.data.permalink_url;
+                  } else {
+                    console.warn(
+                      `[ongoing/run] adverse-media alert POST returned 2xx with no permalink_url for ${s.id}`,
+                    );
+                  }
                 }
               } catch (err) {
                 console.warn(
@@ -389,53 +402,77 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
 
       let asanaTaskUrl: string | undefined;
+      let asanaSkipReason: string | undefined;
       // File an Asana task on EVERY tick — ongoing-monitoring subjects must
       // produce one report per run (three per day at thrice_daily cadence)
       // per MLRO requirement. When there are new hits we ship just those;
       // otherwise we ship the full current-state snapshot so the board
       // shows a continuous heartbeat the regulator can audit.
-      try {
-        const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
-        // Pass the admin token so the screening-report route (which uses
-        // withGuard → requireAuth: true) accepts the internal server-side call.
-        // Without this the request gets 401 and the Asana task is silently lost.
-        const adminToken = process.env["ADMIN_TOKEN"] ?? "";
-        const asanaRes = await fetch(
-          new URL("/api/screening-report", appBase).toString(),
-          {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
-            },
-            body: JSON.stringify({
-              subject: {
-                id: s.id,
-                name: s.name,
-                aliases: s.aliases,
-                entityType: s.entityType,
-                jurisdiction: s.jurisdiction,
-                group: s.group,
-                caseId: s.caseId,
-                ongoingScreening: true,
-              },
-              result: {
-                ...screen,
-                hits: newHits.length > 0 ? newHits : screen.hits,
-              },
-              trigger: "ongoing",
-            }),
-          },
+      const adminToken = process.env["ADMIN_TOKEN"] ?? "";
+      if (!adminToken) {
+        // Fail loud upfront rather than emitting a silent 401 mid-flight —
+        // operators need a visible signal in both logs and the per-subject
+        // result that the cron is filing nothing.
+        asanaSkipReason = "ADMIN_TOKEN not set";
+        console.error(
+          `[ongoing/run] ADMIN_TOKEN not configured — /api/screening-report will 401 and no Asana task will be filed for ${s.id}`,
         );
-        const payload = (await asanaRes.json().catch(() => null)) as
-          | { ok?: boolean; taskUrl?: string }
-          | null;
-        if (payload?.taskUrl) asanaTaskUrl = payload.taskUrl;
-        else if (asanaRes.status === 401) {
-          console.warn("[ongoing/run] /api/screening-report returned 401 — ADMIN_TOKEN may not be set");
+      } else {
+        try {
+          const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+          const asanaRes = await fetch(
+            new URL("/api/screening-report", appBase).toString(),
+            {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                authorization: `Bearer ${adminToken}`,
+              },
+              body: JSON.stringify({
+                subject: {
+                  id: s.id,
+                  name: s.name,
+                  aliases: s.aliases,
+                  entityType: s.entityType,
+                  jurisdiction: s.jurisdiction,
+                  group: s.group,
+                  caseId: s.caseId,
+                  ongoingScreening: true,
+                },
+                result: {
+                  ...screen,
+                  hits: newHits.length > 0 ? newHits : screen.hits,
+                },
+                trigger: "ongoing",
+              }),
+            },
+          );
+          if (!asanaRes.ok) {
+            const detail = await asanaRes.text().catch(() => "");
+            asanaSkipReason = `screening-report HTTP ${asanaRes.status}`;
+            console.error(
+              `[ongoing/run] /api/screening-report rejected for ${s.id}: HTTP ${asanaRes.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
+            );
+          } else {
+            const payload = (await asanaRes.json().catch(() => null)) as
+              | { ok?: boolean; taskUrl?: string }
+              | null;
+            if (payload?.taskUrl) {
+              asanaTaskUrl = payload.taskUrl;
+            } else {
+              asanaSkipReason = "screening-report returned 2xx with no taskUrl";
+              console.warn(
+                `[ongoing/run] /api/screening-report 2xx but no taskUrl for ${s.id}`,
+              );
+            }
+          }
+        } catch (err) {
+          asanaSkipReason = err instanceof Error ? err.message : String(err);
+          console.error(
+            `[ongoing/run] /api/screening-report POST threw for ${s.id}:`,
+            err,
+          );
         }
-      } catch {
-        /* continue without Asana — non-fatal */
       }
 
       // Auto-escalation: also drop a task on the escalations board so the
@@ -496,20 +533,35 @@ export async function POST(req: Request): Promise<NextResponse> {
               },
               body: JSON.stringify(body),
             });
-            const data = (await r.json().catch(() => null)) as
-              | {
-                  data?: { gid?: string; permalink_url?: string };
-                  errors?: Array<{ message?: string }>;
-                }
-              | null;
-            if (data?.data?.permalink_url) {
-              escalationTaskUrl = data.data.permalink_url;
-            } else {
-              const detail = data?.errors?.[0]?.message ?? `HTTP ${r.status}`;
+            if (!r.ok) {
+              // Asana sometimes returns HTML error pages on auth failure;
+              // try-parse the body so we surface the real status code even
+              // when the JSON path can't be read.
+              const raw = await r.text().catch(() => "");
+              let detail = `HTTP ${r.status}`;
+              try {
+                const j = raw ? (JSON.parse(raw) as { errors?: Array<{ message?: string }> }) : null;
+                if (j?.errors?.[0]?.message) detail = `${detail}: ${j.errors[0].message}`;
+                else if (raw) detail = `${detail}: ${raw.slice(0, 200)}`;
+              } catch {
+                if (raw) detail = `${detail}: ${raw.slice(0, 200)}`;
+              }
               escalationSkipReason = `asana rejected: ${detail}`;
               console.error(
                 `[ongoing/run] asana rejected escalation task for ${s.id}: ${detail}`,
               );
+            } else {
+              const data = (await r.json().catch(() => null)) as
+                | { data?: { gid?: string; permalink_url?: string } }
+                | null;
+              if (data?.data?.permalink_url) {
+                escalationTaskUrl = data.data.permalink_url;
+              } else {
+                escalationSkipReason = "asana 2xx with no permalink_url";
+                console.error(
+                  `[ongoing/run] asana 2xx but missing permalink_url for ${s.id}`,
+                );
+              }
             }
           } catch (err) {
             escalationSkipReason = err instanceof Error ? err.message : String(err);
@@ -576,6 +628,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         })),
         webhook,
         ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
+        ...(asanaSkipReason ? { asanaSkipReason } : {}),
         ...(newsAlertTaskUrl ? { newsAlertTaskUrl } : {}),
         ...(escalationTaskUrl ? { escalationTaskUrl } : {}),
         ...(escalationSkipReason ? { escalationSkipReason } : {}),
