@@ -38,8 +38,10 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
   // Sanctions verdict.
   if (r.screen.hits.length > 0) {
     const topHit = r.screen.hits[0]!;
+    const isExact = topHit.method === "exact" && topHit.score >= 0.95;
+    const matchLabel = isExact ? "confirmed match" : "possible match requiring manual verification";
     paragraphs.push(
-      `The subject matched ${r.screen.hits.length} sanction hit${r.screen.hits.length === 1 ? "" : "s"} across ${listsHit.length} list${listsHit.length === 1 ? "" : "s"} (${listsHit.join(", ")}); the strongest match is "${topHit.candidateName}" at ${Math.round(topHit.score * 100)}% confidence via ${topHit.method}. Immediate MLRO review is required.`,
+      `Sanctions screening returned ${r.screen.hits.length} candidate ${r.screen.hits.length === 1 ? "result" : "results"} across ${listsHit.length} list${listsHit.length === 1 ? "" : "s"} (${listsHit.join(", ")}). The closest result is "${topHit.candidateName}" at ${Math.round(topHit.score * 100)}% name-similarity via ${topHit.method} — this is a ${matchLabel}. A name-similarity match does not constitute a confirmed designation; MLRO must independently verify before any adverse action.`,
     );
   } else {
     paragraphs.push(
