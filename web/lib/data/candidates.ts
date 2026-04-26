@@ -1,8 +1,17 @@
 import type { QuickScreenCandidate } from "@/lib/api/quickScreen.types";
 
-// Seeded corpus — a tiny reproducible cross-section of the six sanctions/watchlists
-// Hawkeye Sterling screens against. Replace with live DB/ingest once the watchlist
-// adapters in src/brain/watchlist-adapters.ts are wired to real feeds.
+// Seeded corpus — a fallback used ONLY when the live ingestion blob store
+// is empty. Every entry below MUST correspond to a real, verifiable
+// designation on its declared list (OFAC SDN/Cons, UN-1267, EU-CFSP,
+// UK-OFSI/HMT, UAE EOCN/LTL, etc.).
+//
+// DO NOT add fabricated names, "demo" placeholders, or names of real
+// companies who are NOT actually sanctioned. The candidates loader
+// (web/lib/server/candidates-loader.ts) merges this list with live data,
+// so any fake entry here generates production false-positive sanctions
+// hits against real customers — a regulator-grade integrity violation.
+//
+// When in doubt, leave the entry out.
 export const CANDIDATES: QuickScreenCandidate[] = [
   {
     listId: "OFAC-SDN",
@@ -12,23 +21,6 @@ export const CANDIDATES: QuickScreenCandidate[] = [
     entityType: "individual",
     jurisdiction: "RU",
     programs: ["RUSSIA-EO14024", "UKRAINE-EO13662"],
-  },
-  {
-    listId: "OFAC-SDN",
-    listRef: "OFAC-SDN-44102",
-    name: "Crescent Refineries Jordan JSC",
-    aliases: ["Crescent Refineries", "CRJ Holdings"],
-    entityType: "organisation",
-    jurisdiction: "JO",
-    programs: ["NARCOTICS"],
-  },
-  {
-    listId: "UN-1267",
-    listRef: "UN-QDi.012",
-    name: "Istanbul Altin Rafinesi A.S.",
-    entityType: "organisation",
-    jurisdiction: "TR",
-    programs: ["ISIL-AQ"],
   },
   {
     listId: "EU-CFSP",
@@ -46,40 +38,6 @@ export const CANDIDATES: QuickScreenCandidate[] = [
     entityType: "individual",
     jurisdiction: "RU",
     programs: ["RUSSIA"],
-  },
-  {
-    listId: "AE-EOCN",
-    listRef: "EOCN-2024-041",
-    name: "Kwame Asante-Boateng",
-    aliases: ["K. Asante"],
-    entityType: "individual",
-    jurisdiction: "GH",
-    programs: ["EOCN-DOMESTIC"],
-  },
-  {
-    listId: "OFAC-SDN",
-    listRef: "OFAC-SDN-55891",
-    name: "Gramaltin A.S.",
-    aliases: ["Gramaltin Refinery"],
-    entityType: "organisation",
-    jurisdiction: "TR",
-    programs: ["SECONDARY-SANCTIONS"],
-  },
-  {
-    listId: "UN-1267",
-    listRef: "UN-QDe.145",
-    name: "Demo Bullion FZE",
-    entityType: "organisation",
-    jurisdiction: "AE",
-    programs: ["GOLD-TRADE"],
-  },
-  {
-    listId: "UK-OFSI",
-    listRef: "UK-OFSI-OIL-1022",
-    name: "Fortescue LLP",
-    entityType: "organisation",
-    jurisdiction: "IM",
-    programs: ["UBO-OPAQUE"],
   },
   // ── Russia / Belarus nexus ───────────────────────────────────
   { listId: "OFAC-SDN", listRef: "OFAC-SDN-12118", name: "Yevgeny Prigozhin",
@@ -146,13 +104,6 @@ export const CANDIDATES: QuickScreenCandidate[] = [
   { listId: "OFAC-SDN", listRef: "OFAC-SDN-91018", name: "Blender.io",
     aliases: ["Blender"], entityType: "organisation",
     jurisdiction: "—", programs: ["DPRK2", "CYBER2"] },
-  // ── DPMS / gold trade high risk ──────────────────────────────
-  { listId: "AE-EOCN", listRef: "EOCN-2024-077", name: "Dubai Gold Souk Trader FZE",
-    aliases: ["DGS Trader"], entityType: "organisation",
-    jurisdiction: "AE", programs: ["EOCN-DOMESTIC", "DPMS"] },
-  { listId: "OFAC-SDN", listRef: "OFAC-SDN-65512", name: "Kaloti Precious Metals",
-    aliases: ["Kaloti Jewellery"], entityType: "organisation",
-    jurisdiction: "AE", programs: ["GOLD-TRADE"] },
   // ── Adverse media / PEP edge cases ───────────────────────────
   { listId: "EU-CFSP", listRef: "EU-CFSP-LBY-0070", name: "Saif al-Islam Gaddafi",
     aliases: ["Gaddafi S."], entityType: "individual",
@@ -169,9 +120,6 @@ export const CANDIDATES: QuickScreenCandidate[] = [
   { listId: "OFAC-SDN", listRef: "OFAC-SDN-34125", name: "Sberbank",
     aliases: ["Sberbank of Russia"], entityType: "organisation",
     jurisdiction: "RU", programs: ["RUSSIA-EO14024"] },
-  { listId: "EU-CFSP", listRef: "EU-CFSP-MLI-0055", name: "Mali Gold Refinery",
-    aliases: ["MGR"], entityType: "organisation",
-    jurisdiction: "ML", programs: ["CAHRA", "MALI"] },
 
   // ── US Consolidated Sanctions (non-SDN) ─────────────────────
   { listId: "US-CONSOLIDATED", listRef: "SSI-BOND-2232", name: "Gazprom Neft",
@@ -180,8 +128,6 @@ export const CANDIDATES: QuickScreenCandidate[] = [
   { listId: "US-CONSOLIDATED", listRef: "NS-PLC-00118", name: "Huawei Technologies Co. Ltd.",
     aliases: ["Huawei", "华为"], entityType: "organisation",
     jurisdiction: "CN", programs: ["EAR", "NS-PLC"] },
-  { listId: "US-CONSOLIDATED", listRef: "SDNT-CU-0044", name: "CubaNet S.A.",
-    entityType: "organisation", jurisdiction: "CU", programs: ["CUBA"] },
 
   // ── OSFI Canada (DFAT / listed persons / entities) ──────────
   { listId: "CA-OSFI", listRef: "CA-SEMA-RU-0123", name: "Vladimir Solovyov",
@@ -276,36 +222,7 @@ export const CANDIDATES: QuickScreenCandidate[] = [
     aliases: ["Abu Muhammad al-Masri"], entityType: "individual",
     jurisdiction: "IR", programs: ["QA-TERROR", "UN-AQ"] },
 
-  // ── DPMS / Gold / Diamond / Precious Metals ──────────────────
-  { listId: "AE-EOCN", listRef: "EOCN-2023-112", name: "Emirates Gold DMCC",
-    aliases: ["Emirates Gold"], entityType: "organisation",
-    jurisdiction: "AE", programs: ["DPMS", "GOLD-TRADE"] },
-  { listId: "OFAC-SDN", listRef: "OFAC-SDN-65800", name: "Malaika Resources Limited",
-    aliases: ["Malaika Gold"], entityType: "organisation",
-    jurisdiction: "TZ", programs: ["GOLD-TRADE", "CAR"] },
-  { listId: "EU-CFSP", listRef: "EU-CFSP-CAR-0044", name: "Minspecs Sarl",
-    aliases: ["Minspecs"], entityType: "organisation",
-    jurisdiction: "CF", programs: ["CAR-DIAMONDS", "CAHRA"] },
-  { listId: "AE-LTL", listRef: "LTL-2024-DPMS-007", name: "Rahimtula Gold Trading LLC",
-    aliases: ["Rahimtula Gold", "RGT LLC"], entityType: "organisation",
-    jurisdiction: "AE", programs: ["DPMS", "EOCN-DOMESTIC"] },
-  { listId: "AE-LTL", listRef: "LTL-2024-DPMS-014", name: "Dubai Bullion Exchange FZE",
-    aliases: ["DBE", "Dubai Bullion"], entityType: "organisation",
-    jurisdiction: "AE", programs: ["DPMS", "AML-RISK"] },
-  { listId: "OFAC-SDN", listRef: "OFAC-SDN-66200", name: "Sundaram Jewellers Trading Co.",
-    aliases: ["Sundaram Jewellers"], entityType: "organisation",
-    jurisdiction: "AE", programs: ["GOLD-TRADE", "IRAN-EVASION"] },
-  { listId: "UN-GoE", listRef: "UN-GoE-DRC-2023-55", name: "Nkunda Minerals Ltd",
-    aliases: ["Nkunda Min", "3TG-Nkunda"], entityType: "organisation",
-    jurisdiction: "CD", programs: ["CAHRA", "3TG-CONFLICT"] },
-  { listId: "UN-GoE", listRef: "UN-GoE-SD-2022-18", name: "Aswar Gold Trading",
-    aliases: ["Aswar Gold"], entityType: "organisation",
-    jurisdiction: "SD", programs: ["CAHRA", "GOLD-TRADE"] },
-
   // ── Proliferation / WMD front companies ──────────────────────
-  { listId: "OFAC-SDN", listRef: "OFAC-SDN-WMD-2022-001", name: "Sharif University Technology Transfer",
-    aliases: ["SUTT"], entityType: "organisation",
-    jurisdiction: "IR", programs: ["NPWMD", "IRAN-WMD"] },
   { listId: "EU-CFSP", listRef: "EU-CFSP-KP-2022-007", name: "Green Pine Associated Corporation",
     aliases: ["Green Pine", "Saengpil Associated Corp."], entityType: "organisation",
     jurisdiction: "KP", programs: ["DPRK-WMD", "UN-DPRK"] },
@@ -328,20 +245,11 @@ export const CANDIDATES: QuickScreenCandidate[] = [
   { listId: "OFAC-SDN", listRef: "OFAC-SDN-HT-2021-004", name: "Rachid Kassim",
     aliases: ["Abou Maryam al-Firansi"], entityType: "individual",
     jurisdiction: "FR", programs: ["SDGT", "HT"] },
-  { listId: "EU-CFSP", listRef: "EU-CFSP-SM-2021-038", name: "Al-Nasr Smuggling Network",
-    aliases: ["Al Nasr Network"], entityType: "organisation",
-    jurisdiction: "LY", programs: ["MIGRANT-SMUGGLING", "LIBYA"] },
 
   // ── Corrupt officials / grand corruption ─────────────────────
   { listId: "OFAC-SDN", listRef: "OFAC-SDN-GC-2023-012", name: "Teodoro Nguema Obiang Mangue",
     aliases: ["Teodorin Obiang", "Obiang Jr."], entityType: "individual",
     jurisdiction: "GQ", programs: ["GLOBAL-MAGNITSKY"] },
-  { listId: "OFAC-SDN", listRef: "OFAC-SDN-GC-2022-088", name: "Patrick Nkunda Bahati",
-    aliases: ["Nkunda Bahati"], entityType: "individual",
-    jurisdiction: "CD", programs: ["GLOBAL-MAGNITSKY", "DRC"] },
-  { listId: "UK-OFSI", listRef: "UK-OFSI-MAGNITSKY-045", name: "Sergei Magnitsky",
-    aliases: ["Магнитский Сергей"], entityType: "individual",
-    jurisdiction: "RU", programs: ["UK-MAGNITSKY"] },
 
   // ── Maritime / vessel sanctions ───────────────────────────────
   { listId: "OFAC-SDN", listRef: "OFAC-SDN-VESSEL-1041", name: "Vessel PEGAS (IMO 9256858)",

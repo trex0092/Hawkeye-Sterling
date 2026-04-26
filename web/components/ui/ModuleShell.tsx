@@ -101,14 +101,14 @@ const KPI_TONE: Record<NonNullable<KpiProps["tone"]>, string> = {
 
 export function Kpi({ value, label, tone = "brand" }: KpiProps) {
   return (
-    <div className="relative bg-bg-panel border border-hair-2 rounded-xl p-5 pl-6 overflow-hidden hover:border-hair-3 transition-colors">
+    <div className="relative bg-bg-panel border border-hair-2 rounded-lg px-3 py-2 pl-4 overflow-hidden hover:border-hair-3 transition-colors">
       <span
-        className={`absolute top-0 left-0 bottom-0 w-[3px] ${KPI_TONE[tone]} opacity-80`}
+        className={`absolute top-0 left-0 bottom-0 w-[2px] ${KPI_TONE[tone]} opacity-80`}
       />
-      <div className="font-display text-36 leading-none tracking-tightest text-ink-0">
+      <div className="font-display text-20 leading-none tracking-tightest text-ink-0">
         {value}
       </div>
-      <div className="font-mono text-10 uppercase tracking-wide-3 text-ink-2 mt-2">
+      <div className="font-mono text-10 uppercase tracking-wide-3 text-ink-2 mt-1">
         {label}
       </div>
     </div>
@@ -124,7 +124,7 @@ export function KpiGrid({
 }) {
   return (
     <div
-      className={`grid gap-3 mb-8 ${
+      className={`grid gap-2 mb-5 ${
         cols === 3
           ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
           : "grid-cols-1 sm:grid-cols-2 md:grid-cols-4"

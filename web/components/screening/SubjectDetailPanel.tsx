@@ -17,19 +17,15 @@ import { postScreeningReport } from "@/lib/api/screeningReport";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
 import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
-import { BrainWhatIf } from "@/components/screening/BrainWhatIf";
 import {
   BrainAdversarial,
   BrainTypologyMap,
   BrainKeywordExplorer,
-  BrainLatencyBreakdown,
   BrainCapabilityAudit,
   BrainChainOfCustody,
-  BrainConfidenceInterval,
   BrainRegimeExposure,
   BrainScenarioMatcher,
   BrainBiasCheck,
-  BrainPolicySimulator,
   BrainDataFreshness,
   BrainInputValidator,
   BrainModuleWeights,
@@ -43,7 +39,6 @@ import {
   BrainSanctionsPathway,
   BrainSoWPlausibility,
   BrainAnomalyDetector,
-  BrainCounterfactual,
   BrainOutcomeForecast,
   BrainSourceTriangulation,
   BrainTemporalPattern,
@@ -1307,7 +1302,6 @@ function SuperBrainPanel({
       <BrainSignalInterference result={r} />
       <BrainEscalationLadder result={r} />
       <BrainDecomposition result={r} />
-      <BrainConfidenceInterval result={r} />
       <BrainVerdictConsistency result={r} />
       <BrainCoherenceCheck result={r} subjectName={subjectName} />
       <BrainBiasCheck result={r} />
@@ -1315,9 +1309,6 @@ function SuperBrainPanel({
       <BrainRedFlagCombinator result={r} />
       <BrainSanctionsPathway result={r} />
       <BrainSoWPlausibility result={r} />
-      <BrainCounterfactual result={r} />
-      <BrainWhatIf result={r} />
-      <BrainPolicySimulator result={r} />
       <BrainTypologyMap result={r} />
       <BrainScenarioMatcher result={r} />
       <BrainRegimeExposure result={r} />
@@ -1328,7 +1319,6 @@ function SuperBrainPanel({
       <BrainPolicyCitation result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
-      <BrainLatencyBreakdown result={r} />
       <BrainDataFreshness result={r} />
       <BrainCoverageGap result={r} />
       <BrainDataCoverage />
