@@ -12,6 +12,7 @@ interface UboEntry {
   name: string;
   dob: string;
   nationality: string;
+  gender: string;
   ownershipPct: string;
   role: string;
 }
@@ -20,6 +21,7 @@ const EMPTY_UBO: UboEntry = {
   name: "",
   dob: "",
   nationality: "",
+  gender: "",
   ownershipPct: "",
   role: "",
 };
@@ -153,12 +155,12 @@ export default function UboDeclarationPage() {
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <input
                   value={u.name}
                   onChange={(e) => update(idx, "name", e.target.value)}
                   placeholder="Full legal name"
-                  className={inputCls}
+                  className={`${inputCls} col-span-2`}
                 />
                 <input
                   value={u.nationality}
@@ -171,6 +173,17 @@ export default function UboDeclarationPage() {
                   onChange={(v) => update(idx, "dob", v)}
                   className={inputCls}
                 />
+                <select
+                  value={u.gender}
+                  onChange={(e) => update(idx, "gender", e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not">Prefer not to say</option>
+                </select>
                 <div className="flex gap-2">
                   <input
                     value={u.ownershipPct}
@@ -182,7 +195,7 @@ export default function UboDeclarationPage() {
                     value={u.role}
                     onChange={(e) => update(idx, "role", e.target.value)}
                     placeholder="Role (director / signatory / etc.)"
-                    className={inputCls}
+                    className={`${inputCls} flex-1`}
                   />
                 </div>
               </div>

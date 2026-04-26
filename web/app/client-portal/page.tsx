@@ -109,11 +109,11 @@ function ShareholderCard({
       {/* Card header */}
       <div className="flex items-center justify-between">
         <span className="font-mono text-10 font-semibold text-ink-2 uppercase tracking-wide-3">
-          Shareholder {idx + 1}
+          Individual {idx + 1}
           {sh.name && <span className="text-ink-0 ml-2 normal-case font-sans text-11">— {sh.name}</span>}
         </span>
         <button type="button" onClick={onRemove}
-          className="text-ink-3 hover:text-red transition-colors p-1" aria-label="Remove shareholder">
+          className="text-ink-3 hover:text-red transition-colors p-1" aria-label="Remove individual">
           <XIcon />
         </button>
       </div>
@@ -353,12 +353,12 @@ export default function ClientPortalPage() {
             </div>
           </div>
 
-          {/* ── Shareholders section ────────────────────────────────── */}
+          {/* ── Individuals section ─────────────────────────────────── */}
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
-                  Shareholders
+                  Individuals
                 </div>
                 {shareholders.length > 0 && (
                   <div className={`text-10 font-mono mt-0.5 ${sharesValid ? "text-green" : "text-amber"}`}>
@@ -369,16 +369,16 @@ export default function ClientPortalPage() {
               </div>
               <button type="button" onClick={addShareholder}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand-dim transition-colors">
-                + Add shareholder
+                + Add Individual
               </button>
             </div>
 
             {shareholders.length === 0 ? (
               <p className="text-11 text-ink-3 py-3 text-center border border-dashed border-hair-2 rounded">
-                No shareholders added yet — click "+ Add shareholder" above.
+                No individuals added yet — click "+ Add Individual" above.
                 <br />
                 <span className="text-10">
-                  Add all UBOs ≥ 25%, directors, and nominee shareholders per FDL 10/2025 Art.10 / Cabinet Decision 58/2020.
+                  Add all UBOs ≥ 25%, directors, and nominee individuals per FDL 10/2025 Art.10 / Cabinet Decision 58/2020.
                 </span>
               </p>
             ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // EOCN — Executive Office for Control & Non-Proliferation (UAE).
@@ -210,12 +210,35 @@ const DECL_TONE: Record<DeclarationStatus, string> = {
 
 type Tab = "list-updates" | "matches" | "declarations";
 
+const EOCN_DELETED_KEY = "hawkeye.eocn.matches.deleted.v1";
+
 export default function EocnPage() {
   const [tab, setTab] = useState<Tab>("list-updates");
+  const [deletedMatchIds, setDeletedMatchIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(EOCN_DELETED_KEY);
+      if (raw) setDeletedMatchIds(JSON.parse(raw) as string[]);
+    } catch { /* ignore */ }
+  }, []);
+
+  const deleteMatch = (id: string) => {
+    const next = [...deletedMatchIds, id];
+    setDeletedMatchIds(next);
+    try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+
+  const restoreMatches = () => {
+    setDeletedMatchIds([]);
+    try { localStorage.removeItem(EOCN_DELETED_KEY); } catch { /* ignore */ }
+  };
+
+  const liveMatches = useMemo(() => MATCHES.filter((m) => !deletedMatchIds.includes(m.id)), [deletedMatchIds]);
 
   const pendingScreening = LIST_UPDATES.filter((u) => u.screeningStatus === "pending").length;
-  const openMatches = MATCHES.filter((m) => m.disposition === "under-review" || m.disposition === "escalated").length;
-  const confirmedMatches = MATCHES.filter((m) => m.disposition === "confirmed").length;
+  const openMatches = liveMatches.filter((m) => m.disposition === "under-review" || m.disposition === "escalated").length;
+  const confirmedMatches = liveMatches.filter((m) => m.disposition === "confirmed").length;
   const overdue = DECLARATIONS.filter((d) => d.status === "overdue").length;
   const lastUpdate = LIST_UPDATES[0];
 
@@ -323,9 +346,24 @@ export default function EocnPage() {
             </div>
           )}
 
-          {MATCHES.map((m) => (
-            <div key={m.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3 mb-3">
+          {deletedMatchIds.length > 0 && (
+            <div className="px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">
+              <span className="text-amber font-semibold">{deletedMatchIds.length} match{deletedMatchIds.length === 1 ? "" : "es"} hidden</span>
+              <button type="button" onClick={restoreMatches} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
+            </div>
+          )}
+
+          {liveMatches.map((m) => (
+            <div key={m.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
+              <button
+                type="button"
+                onClick={() => deleteMatch(m.id)}
+                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
+                title="Dismiss"
+              >
+                ×
+              </button>
+              <div className="flex items-start justify-between gap-3 mb-3 pr-6">
                 <div>
                   <div className="font-mono text-10 text-ink-3">{m.id}</div>
                   <div className="text-14 font-semibold text-ink-0 mt-0.5">{m.subject}</div>
