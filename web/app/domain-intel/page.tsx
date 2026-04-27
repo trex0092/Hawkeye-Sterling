@@ -62,7 +62,7 @@ export default function DomainIntelPage() {
   }
 
   return (
-    <ModuleLayout engineLabel="Domain Intel">
+    <ModuleLayout asanaModule="domain-intel" asanaLabel="Domain Intel" engineLabel="Domain Intel">
       <ModuleHero
         eyebrow="Module · Counterparty Intelligence"
         title="Domain"

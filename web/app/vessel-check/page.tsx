@@ -102,7 +102,7 @@ export default function VesselCheckPage() {
   const canSubmit = mode === "single" ? imoNumber.trim().length > 0 : batchImos.trim().length > 0;
 
   return (
-    <ModuleLayout engineLabel="Vessel Check">
+    <ModuleLayout asanaModule="vessel-check" asanaLabel="Vessel Check" engineLabel="Vessel Check">
       <ModuleHero
         eyebrow="Module · Maritime Intelligence"
         title="Vessel sanctions"

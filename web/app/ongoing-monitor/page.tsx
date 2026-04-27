@@ -311,7 +311,7 @@ export default function OngoingMonitorPage() {
   const overdue = subjects.filter((s) => s.status === "overdue").length;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="ongoing-monitor" asanaLabel="Ongoing Monitor">
       <ModuleHero
         eyebrow="Module 24 · Continuous Monitoring"
         title="Ongoing"

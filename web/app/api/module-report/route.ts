@@ -128,6 +128,8 @@ const MODULE_LABELS: Record<string, string> = {
   policies:               "Policies",
   regulatory:             "Regulatory",
   cases:                  "Cases",
+  "api-docs":             "API Documentation",
+  "compliance-qa":        "Compliance Q&A",
 };
 
 // Project label map — shown in the task notes so the MLRO knows the destination.

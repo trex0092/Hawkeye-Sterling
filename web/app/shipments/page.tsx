@@ -661,7 +661,7 @@ export default function ShipmentsPage() {
   const totalKg = live.filter((c) => c.status !== "delivered").reduce((s, c) => s + c.grossWeightKg, 0);
 
   return (
-    <ModuleLayout engineLabel="Bullion compliance engine">
+    <ModuleLayout asanaModule="shipments" asanaLabel="Shipments" engineLabel="Bullion compliance engine">
       <ModuleHero
         eyebrow="Module 24 · Bullion Logistics"
         title="Bullion chain-of-custody"

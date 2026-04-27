@@ -104,7 +104,7 @@ export default function BenfordPage() {
   const maxPct = result ? Math.max(...result.digits.map((d) => Math.max(d.observedPct, d.expectedPct))) : 35;
 
   return (
-    <ModuleLayout engineLabel="Benford Analysis">
+    <ModuleLayout asanaModule="benford" asanaLabel="Benford Analysis" engineLabel="Benford Analysis">
       <ModuleHero
         eyebrow="Module · Forensic Accounting"
         title="Benford's Law"
