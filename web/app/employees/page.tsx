@@ -409,7 +409,7 @@ export default function EmployeesPage() {
                         </td>
                         <td className="px-2 py-2 text-right">
                           <RowActions
-                            label={`employee ${emp.fullName ?? emp.id}`}
+                            label={`employee ${emp.name ?? emp.id}`}
                             onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                             onDelete={() => remove(emp.id)}
                             confirmDelete={false}
