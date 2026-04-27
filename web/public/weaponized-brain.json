@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-27T05:15:16.661Z",
+  "generatedAt": "2026-04-27T16:36:54.179Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-27T05:15:16.655Z",
+    "generatedAt": "2026-04-27T16:36:54.175Z",
     "charter": {
       "prohibitions": [
         {
@@ -359,7 +359,21 @@
           }
         ],
         "totalKeywords": 1066,
-        "queryLength": 1353
+        "queryLength": 1353,
+        "weaponized": {
+          "severityTiers": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "clear"
+          ],
+          "fatfMapping": true,
+          "sarTrigger": true,
+          "counterfactual": true,
+          "investigationNarrative": true,
+          "modesCited": true
+        }
       },
       "doctrines": {
         "total": 25,
@@ -740,7 +754,7 @@
         }
       },
       "amplifier": {
-        "version": "v3.9.0",
+        "version": "v5.0.0",
         "percent": 1000000000000000,
         "factor": 10000000000000,
         "directives": [
@@ -899,14 +913,14 @@
       }
     },
     "integrity": {
-      "charterHash": "ed3b0986",
-      "catalogueHash": "7e152464"
+      "charterHash": "65a67258",
+      "catalogueHash": "985e64c9"
     }
   },
   "integrity": {
-    "charterHash": "ed3b0986",
-    "catalogueHash": "7e152464",
-    "compositeHash": "c738b2c3"
+    "charterHash": "65a67258",
+    "catalogueHash": "985e64c9",
+    "compositeHash": "3070f19d"
   },
   "enhanced": {
     "extended": {
