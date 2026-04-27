@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { loadCases } from "@/lib/data/case-store";
+import { deleteCase, loadCases } from "@/lib/data/case-store";
+import { RowActions } from "@/components/shared/RowActions";
 import { loadOperatorRole, ROLE_LABEL, type OperatorRole } from "@/lib/data/operator-role";
 import type { CaseRecord } from "@/lib/types";
 
@@ -109,7 +110,18 @@ export default function SarQaPage() {
                     <h3 className="text-13 font-semibold text-ink-0 m-0">
                       {c.subject}
                     </h3>
-                    <span className="font-mono text-10 text-ink-3">{c.id}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-10 text-ink-3">{c.id}</span>
+                      <RowActions
+                        label={`SAR review ${c.id}`}
+                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        onDelete={() => {
+                          deleteCase(c.id);
+                          setCases((prev) => prev.filter((x) => x.id !== c.id));
+                        }}
+                        deleteConfirmMessage={`Dismiss SAR review ${c.id}? The case stays in the case-store; only this QA queue card is removed.`}
+                      />
+                    </div>
                   </div>
                   <div className="text-11 text-ink-2 mb-3">{c.meta}</div>
                   {review ? (
