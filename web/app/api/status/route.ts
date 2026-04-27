@@ -780,8 +780,8 @@ export async function GET(): Promise<NextResponse> {
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
     commitSha: (process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
-    adverseMediaCategories: 8,
-    adverseMediaKeywords: 737,
+    adverseMediaCategories: 13,
+    adverseMediaKeywords: 1066,
     knownPepEntries: 6,
     reviewedAt: process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01",
   };

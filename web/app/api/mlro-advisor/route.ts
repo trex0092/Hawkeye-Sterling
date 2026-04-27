@@ -5,6 +5,7 @@ import {
   type MlroAdvisorRequest,
   type ReasoningMode,
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
+import { askComplianceQuestion } from "../../../../dist/src/integrations/complianceRag.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,16 +95,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     },
   };
 
+  // Fetch regulatory RAG context in parallel with the main advisor call.
+  // The RAG answer (if available and above quality gate) enriches the
+  // evidence package presented to the MLRO — providing direct regulatory
+  // citations alongside the AI reasoning chain.
+  const ragPromise = askComplianceQuestion({
+    query: body.question.trim().slice(0, 500),
+    mode: "multi-agent",
+  }).catch(() => null);
+
   try {
     // 60 s matches the integration's hard ceiling (mlro-budget-planner.ts).
     // Multi-perspective mode chains Sonnet executor + Opus advisor and
     // routinely needs ≥30 s on a real 8 k-token compliance analysis; the
     // previous 25 s clamp short-circuited the executor and surfaced as
     // a generic HTTP 502 to the operator.
-    const result = await invokeMlroAdvisor(advisorReq, {
-      apiKey,
-      budgetMs: 60_000,
-    });
+    const [result, ragResult] = await Promise.all([
+      invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 60_000 }),
+      ragPromise,
+    ]);
 
     if (!result.ok) {
       const clientError =
@@ -116,8 +126,18 @@ export async function POST(req: Request): Promise<NextResponse> {
         { status: result.partial ? 504 : 502, headers: gateHeaders },
       );
     }
+
+    // Attach RAG regulatory context when available and quality-gated
+    const regulatoryContext = ragResult?.ok && ragResult.passedQualityGate ? {
+      answer: ragResult.answer,
+      citations: ragResult.citations,
+      confidenceScore: ragResult.confidenceScore,
+      consistencyScore: ragResult.consistencyScore,
+      jurisdiction: ragResult.jurisdiction,
+    } : null;
+
     return NextResponse.json(
-      { ...result, ok: true },
+      { ...result, ok: true, regulatoryContext },
       { headers: gateHeaders },
     );
   } catch (err) {

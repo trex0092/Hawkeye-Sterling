@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
 import { quickScreen as _quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { searchAdverseMedia } from "../../../../../dist/src/integrations/taranisAi.js";
+import { analyseAdverseMediaItems } from "../../../../../dist/src/brain/adverse-media-analyser.js";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -142,6 +144,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     newsAlertTaskUrl?: string;
     escalationTaskUrl?: string;
     escalationSkipReason?: string;
+    adverseMediaRiskTier?: string;
+    sarRecommended?: boolean;
   }> = [];
 
   const nowMs = Date.now();
@@ -402,6 +406,22 @@ export async function POST(req: Request): Promise<NextResponse> {
         );
       }
 
+      // Weaponized adverse-media analysis via Taranis AI (fail-soft).
+      // Runs the full MLRO pipeline: FATF predicate mapping, severity scoring,
+      // SAR trigger (R.20), counterfactual, investigation narrative.
+      let adverseMediaRiskTier: string | undefined;
+      let sarRecommended: boolean | undefined;
+      try {
+        const taranisResult = await searchAdverseMedia(s.name, { limit: 30, minRelevance: 0 });
+        if (taranisResult.ok && taranisResult.items.length > 0) {
+          const verdict = analyseAdverseMediaItems(s.name, taranisResult.items);
+          adverseMediaRiskTier = verdict.riskTier;
+          sarRecommended = verdict.sarRecommended;
+        }
+      } catch {
+        /* non-fatal — Taranis not configured or unreachable */
+      }
+
       let asanaTaskUrl: string | undefined;
       let asanaSkipReason: string | undefined;
       // File an Asana task on EVERY tick — ongoing-monitoring subjects must
@@ -633,6 +653,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(newsAlertTaskUrl ? { newsAlertTaskUrl } : {}),
         ...(escalationTaskUrl ? { escalationTaskUrl } : {}),
         ...(escalationSkipReason ? { escalationSkipReason } : {}),
+        ...(adverseMediaRiskTier !== undefined ? { adverseMediaRiskTier } : {}),
+        ...(sarRecommended !== undefined ? { sarRecommended } : {}),
       });
     } catch (err) {
       results.push({

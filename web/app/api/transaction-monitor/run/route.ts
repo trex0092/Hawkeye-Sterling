@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import * as brain from "../../../../../dist/src/brain/index.js";
 import { getJson, listKeys } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";
+import {
+  StreamingAnomalyGate,
+  extractFeatures,
+} from "../../../../../dist/src/brain/streaming-anomaly.js";
+import { analyseBenford, type BenfordRisk } from "../../../../../dist/src/brain/benford.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +41,11 @@ interface SubjectAlertRoll {
   structuringAlerts: number;
   smurfingAlerts: number;
   anomalies: number;
+  streamingAnomalies: number;  // PySAD-style HalfSpaceTrees + z-score gate
+  heldTransactions: number;    // score >= 0.90 — immediate review
+  flaggedTransactions: number; // score 0.75-0.90 — same-day review
   thresholdBreaches: number;
+  benfordRisk?: BenfordRisk;
   top?: { rule: string; detail: string } | null;
 }
 
@@ -181,23 +190,57 @@ export async function POST(req: Request): Promise<NextResponse> {
     const smurfingAlerts = detectSmurfing(txs, s);
     const anomalies = detectAnomalies(txs);
     const thresholdBreaches = countThresholdBreaches(txs);
-    const subjectAlerts = structuringAlerts + smurfingAlerts + anomalies + thresholdBreaches;
+
+    // Benford's Law forensic check — flags non-conforming amount distributions
+    const benfordResult = analyseBenford({ amounts: txs.map((t) => t.amount), label: s.name });
+    const benfordRisk = benfordResult.risk;
+
+    // Streaming anomaly gate (PySAD-style HalfSpaceTrees + EMA z-score).
+    // Scores each transaction in chronological order, building a per-subject
+    // behavioural baseline as it goes. Produces hold/flag/pass tiers.
+    let streamingAnomalies = 0;
+    let heldTransactions = 0;
+    let flaggedTransactions = 0;
+    if (txs.length > 0) {
+      const gate = new StreamingAnomalyGate({ windowSize: Math.min(500, txs.length) });
+      const amounts = txs.map((t) => t.amount);
+      const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+      const std = Math.max(1, Math.sqrt(amounts.map((a) => (a - mean) ** 2).reduce((a, b) => a + b, 0) / amounts.length));
+      const sorted = [...txs].sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
+      for (const tx of sorted) {
+        const features = extractFeatures({
+          amountUsd: tx.amount / 3.67, // AED → USD approx
+          customerBaseline: { meanAmount: mean / 3.67, stdAmount: std / 3.67, txnPer7d: txs.length / 30 },
+          countryRiskScore: 0,
+          timestampUtc: tx.occurredAt,
+        });
+        const result = gate.scoreAndUpdate(features);
+        if (result.tier === "hold") { heldTransactions++; streamingAnomalies++; }
+        else if (result.tier === "flag") { flaggedTransactions++; streamingAnomalies++; }
+      }
+    }
+
+    const subjectAlerts = structuringAlerts + smurfingAlerts + anomalies + thresholdBreaches + heldTransactions;
     totalTx += txs.length;
-    totalAlerts += subjectAlerts;
+    totalAlerts += subjectAlerts + (benfordRisk === 'suspicious' ? 1 : 0);
 
     const top =
-      structuringAlerts > 0
-        ? { rule: "structuring", detail: `${structuringAlerts} cluster(s) under AED 55k` }
-        : smurfingAlerts > 0
-          ? { rule: "smurfing", detail: `${smurfingAlerts} high-fan-out day(s)` }
-          : thresholdBreaches > 0
-            ? {
-                rule: "dpms-threshold",
-                detail: `${thresholdBreaches} cash transaction(s) ≥ AED 55,000`,
-              }
-            : anomalies > 0
-              ? { rule: "anomaly", detail: `${anomalies} z-score > 3 outlier(s)` }
-              : null;
+      heldTransactions > 0
+        ? { rule: "streaming-hold", detail: `${heldTransactions} transaction(s) scored ≥ 0.90 anomaly — immediate review` }
+        : structuringAlerts > 0
+          ? { rule: "structuring", detail: `${structuringAlerts} cluster(s) under AED 55k` }
+          : smurfingAlerts > 0
+            ? { rule: "smurfing", detail: `${smurfingAlerts} high-fan-out day(s)` }
+            : thresholdBreaches > 0
+              ? {
+                  rule: "dpms-threshold",
+                  detail: `${thresholdBreaches} cash transaction(s) ≥ AED 55,000`,
+                }
+              : flaggedTransactions > 0
+                ? { rule: "streaming-flag", detail: `${flaggedTransactions} transaction(s) scored 0.75–0.90 anomaly` }
+                : anomalies > 0
+                  ? { rule: "anomaly", detail: `${anomalies} z-score > 3 outlier(s)` }
+                  : null;
     rolls.push({
       subjectId: s.id,
       subjectName: s.name,
@@ -205,7 +248,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       structuringAlerts,
       smurfingAlerts,
       anomalies,
+      streamingAnomalies,
+      heldTransactions,
+      flaggedTransactions,
       thresholdBreaches,
+      ...(benfordRisk !== 'insufficient-data' ? { benfordRisk } : {}),
       ...(top !== null ? { top } : {}),
     });
   }

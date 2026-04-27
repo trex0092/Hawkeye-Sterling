@@ -112,6 +112,7 @@ interface Consignment {
   // Additional fields
   netWeightKg: number;
   lotNumber: string;
+  riskLevels?: string[];
 }
 
 const CONSIGNMENTS: Consignment[] = [
@@ -418,6 +419,13 @@ function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
+const RISK_LEVEL_OPTIONS = ["Low-Risk", "Medium-Risk", "High-Risk"] as const;
+const RISK_LEVEL_TONE: Record<string, string> = {
+  "Low-Risk":    "bg-green-dim text-green border-green/30",
+  "Medium-Risk": "bg-amber-dim text-amber border-amber/30",
+  "High-Risk":   "bg-red-dim text-red border-red/30",
+};
+
 function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void; onCancel: () => void }) {
   const [reference, setReference] = useState("");
   const [origin, setOrigin] = useState("");
@@ -429,7 +437,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
   const [usdValue, setUsdValue] = useState("");
   const [direction, setDirection] = useState<"Import" | "Export">("Import");
   const [status, setStatus] = useState<ShipmentStatus>("in-flight");
-  const [carrier, setCarrier] = useState("");
+  const [riskLevels, setRiskLevels] = useState<string[]>([]);
   const [awb, setAwb] = useState("");
   const [lotNumber, setLotNumber] = useState("");
   const [vaultLocation, setVaultLocation] = useState("Brink's Dubai DMCC");
@@ -437,6 +445,12 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
   const [err, setErr] = useState("");
 
   const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+
+  const toggleRisk = (level: string) => {
+    setRiskLevels((prev) =>
+      prev.includes(level) ? prev.filter((r) => r !== level) : [...prev, level],
+    );
+  };
 
   const submit = () => {
     if (!reference.trim() || !refinery.trim()) { setErr("Reference and Supplier are required."); return; }
@@ -461,8 +475,8 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       dispatchDate: today,
       eta: today,
       direction,
-      carrier: carrier.trim() || "—",
-      transportationAgent: carrier.trim() || "—",
+      carrier: "—",
+      transportationAgent: "—",
       awb: awb.trim() || "—",
       lotNumber: lotNumber.trim() || "—",
       invoiceNumber: "—",
@@ -483,9 +497,10 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       counterparty: counterparty.trim() || "—",
       counterpartyJurisdiction: originCountry.trim().toUpperCase() || "AE",
       counterpartyCddRef: "—",
-      custodian: carrier.trim() || "—",
+      custodian: "—",
       insuranceRef: "—",
       vaultCertRef: "—",
+      riskLevels,
     };
     onAdd(c);
   };
@@ -494,6 +509,8 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
     <div className="mb-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New shipment</div>
       {err && <p className="text-11 text-red mb-2">{err}</p>}
+
+      {/* Row 1 — 3 equal cols */}
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reference *</label>
@@ -508,7 +525,9 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="City, Country" className={iCls} />
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-3 mb-3">
+
+      {/* Row 2 — 3 equal cols */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin country</label>
           <input value={originCountry} onChange={(e) => setOriginCountry(e.target.value)} placeholder="AE" className={iCls} />
@@ -531,12 +550,10 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
             <option value="delivered">Delivered</option>
           </select>
         </div>
-        <div>
-          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Carrier</label>
-          <input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="Malca-Amit" className={iCls} />
-        </div>
       </div>
-      <div className="grid grid-cols-4 gap-3 mb-3">
+
+      {/* Row 3 — 3 equal cols */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gross weight (kg)</label>
           <input value={grossWeightKg} onChange={(e) => setGrossWeightKg(e.target.value)} placeholder="124.8" className={iCls} />
@@ -549,12 +566,14 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bars</label>
           <input value={bars} onChange={(e) => setBars(e.target.value)} placeholder="10" className={iCls} />
         </div>
+      </div>
+
+      {/* Row 4 — 3 equal cols */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">USD value</label>
           <input value={usdValue} onChange={(e) => setUsdValue(e.target.value)} placeholder="11240000" className={iCls} />
         </div>
-      </div>
-      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AWB</label>
           <input value={awb} onChange={(e) => setAwb(e.target.value)} placeholder="MA-20250421-0099" className={iCls} />
@@ -563,15 +582,44 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Lot number</label>
           <input value={lotNumber} onChange={(e) => setLotNumber(e.target.value)} placeholder="LOT-2025-0042" className={iCls} />
         </div>
+      </div>
+
+      {/* Row 5 — 3 equal cols */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label>
           <input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Buyer / consignee" className={iCls} />
         </div>
+        <div className="col-span-2">
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk level</label>
+          <div className="flex gap-2">
+            {RISK_LEVEL_OPTIONS.map((lvl) => {
+              const active = riskLevels.includes(lvl);
+              return (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() => toggleRisk(lvl)}
+                  className={`flex-1 py-1.5 rounded border text-11 font-semibold transition-colors ${
+                    active
+                      ? RISK_LEVEL_TONE[lvl]
+                      : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
+                  }`}
+                >
+                  {lvl}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      {/* Full-width vault location */}
       <div className="mb-4">
         <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vault / delivery location</label>
         <input value={vaultLocation} onChange={(e) => setVaultLocation(e.target.value)} className={iCls} />
       </div>
+
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
         <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
@@ -807,20 +855,23 @@ export default function ShipmentsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-1">
                 <RggBadge step={c.rggStep} />
-                {c.flags.length > 0 && (
-                  <div className="flex gap-1 flex-wrap justify-end">
-                    {c.flags.map((f) => (
-                      <span key={f} className="bg-red-dim text-red text-10 font-mono px-1.5 py-px rounded-sm font-semibold">
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {c.flags.length === 0 && (
-                  <span className="text-10 text-ink-3 font-mono">ETA {c.eta}</span>
-                )}
+                <div className="flex gap-1 flex-wrap justify-end">
+                  {(c.riskLevels ?? []).map((rl) => (
+                    <span key={rl} className={`text-10 font-semibold px-1.5 py-px rounded-sm border ${RISK_LEVEL_TONE[rl] ?? "bg-bg-2 text-ink-3 border-hair-2"}`}>
+                      {rl}
+                    </span>
+                  ))}
+                  {c.flags.map((f) => (
+                    <span key={f} className="bg-red-dim text-red text-10 font-mono px-1.5 py-px rounded-sm font-semibold">
+                      {f}
+                    </span>
+                  ))}
+                  {c.flags.length === 0 && (c.riskLevels ?? []).length === 0 && (
+                    <span className="text-10 text-ink-3 font-mono">ETA {c.eta}</span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -892,32 +943,6 @@ export default function ShipmentsPage() {
               </div>
             </div>
 
-            {/* OECD 5-step RGG alignment */}
-            <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
-                OECD 5-step responsible gold DD
-              </div>
-              <div className="flex flex-col gap-2">
-                {RGG_STEPS.map((s) => {
-                  const done = s.n <= detail.rggStep;
-                  return (
-                    <div key={s.n} className={`flex items-center gap-3 p-2 rounded ${done ? "bg-green-dim" : "bg-bg-1"}`}>
-                      <div className={`w-6 h-6 rounded flex items-center justify-center font-mono text-11 font-bold shrink-0 ${done ? "bg-green text-white" : "bg-bg-2 text-ink-3"}`}>
-                        {done ? "✓" : s.n}
-                      </div>
-                      <div>
-                        <div className={`text-12 font-medium ${done ? "text-green-deep" : "text-ink-3"}`}>
-                          Step {s.n}: {s.label}
-                        </div>
-                      </div>
-                      {done && <span className="ml-auto text-10 font-mono text-green">COMPLETE</span>}
-                      {!done && <span className="ml-auto text-10 font-mono text-ink-3">PENDING</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* WORM chain-of-custody ledger */}
             <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
@@ -937,33 +962,6 @@ export default function ShipmentsPage() {
                     <div className="text-right shrink-0">
                       <div className="font-mono text-10 text-ink-3">{e.ts}</div>
                       <div className="font-mono text-10 text-ink-3 mt-0.5">#{e.hash}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bound evidence panel */}
-            <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
-                Bound evidence
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {[
-                  { doc: "Certificate of Analysis", ref: `CoA-${detail.id}`, status: detail.rggStep >= 1 ? "attached" : "missing" },
-                  { doc: "LBMA Good Delivery certificate", ref: detail.refineryLbmaId, status: detail.lbmaGoodDelivery ? "attached" : "missing" },
-                  { doc: "Export licence", ref: detail.exportLicence, status: detail.exportLicence !== "—" ? "attached" : "missing" },
-                  { doc: "Vault receipt", ref: detail.vaultCertRef, status: detail.vaultCertRef !== "—" ? "attached" : "missing" },
-                  { doc: "CDD file", ref: detail.counterpartyCddRef, status: detail.counterpartyCddRef !== "—" ? "attached" : "missing" },
-                  { doc: "Insurance certificate", ref: detail.insuranceRef, status: detail.insuranceRef !== "—" ? "attached" : "missing" },
-                ].map((ev) => (
-                  <div key={ev.doc} className="flex items-center justify-between text-12">
-                    <span className="text-ink-1">{ev.doc}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-10 text-ink-3">{ev.ref}</span>
-                      <span className={`font-mono text-10 px-1.5 py-px rounded-sm font-semibold uppercase ${ev.status === "attached" ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>
-                        {ev.status}
-                      </span>
                     </div>
                   </div>
                 ))}
@@ -990,7 +988,7 @@ export default function ShipmentsPage() {
                   <div className="text-11 text-ink-2 mt-0.5">
                     {detail.flags.length > 0
                       ? detail.flags.join(" · ")
-                      : `OECD steps ${detail.rggStep}/5 complete · Carrier: ${detail.carrier} · ETA ${detail.eta}`}
+                      : `OECD steps ${detail.rggStep}/5 complete · Agent: ${detail.transportationAgent} · ETA ${detail.eta}`}
                   </div>
                 </div>
                 {detail.flags.length === 0 && detail.rggStep >= 4 && (

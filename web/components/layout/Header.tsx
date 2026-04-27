@@ -198,7 +198,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[560px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-3 gap-4"
+                  className="fixed z-50 w-[740px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-4 gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (

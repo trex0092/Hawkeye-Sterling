@@ -1,6 +1,7 @@
 // Hawkeye Sterling — ingestion barrel.
 export * from './opensanctions.js';
 export * from './adverse-media.js';
+export * from './ftm-mapper.js';   // FollowTheMoney entity mapper (alephdata/ftm)
 
 import type { SourceAdapter } from './types.js';
 import { euFsfAdapter } from './sources/eu-fsf.js';

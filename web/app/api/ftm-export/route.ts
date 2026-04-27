@@ -1,93 +1,65 @@
-// GET /api/ftm-export — export case entities in FollowTheMoney (FTM) JSON format.
-// FTM is the open data model used by OCCRP Aleph and similar investigative tools.
-// https://followthemoney.tech/explorer/
+// POST /api/ftm-export
+// Converts a batch of subject records into FollowTheMoney (FtM) NDJSON format.
+// Output is compatible with:
+//   ftm aggregate  — cross-source deduplication
+//   ftm cypher     — Neo4j import
+//   ftm gexf       — Gephi / NetworkX graph export
+//   ftm rdf        — RDF knowledge graph export
+//
+// Body: { entries: NormalisedListEntry[], includeSanctions?: boolean }
+// Returns: text/plain NDJSON stream (one entity per line)
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
-import { loadCases } from "@/lib/data/case-store";
-import type { CaseRecord } from "@/lib/types";
+import { enforce } from "@/lib/server/enforce";
+import { entriesToFtmStream } from "../../../../dist/src/ingestion/ftm-mapper.js";
+import type { NormalisedListEntry } from "../../../../dist/src/brain/watchlist-adapters.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-interface FtmEntity {
-  id: string;
-  schema: string;
-  properties: Record<string, string[]>;
-  datasets: string[];
-  referents: string[];
+const CORS: Record<string, string> = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization, x-api-key",
+};
+
+export async function OPTIONS(): Promise<NextResponse> {
+  return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-function caseToFtm(c: CaseRecord): FtmEntity[] {
-  const entities: FtmEntity[] = [];
-  const entityId = `hs-case-${c.id}`;
+interface FtmExportBody {
+  entries: NormalisedListEntry[];
+  includeSanctions?: boolean;
+}
 
-  // Main entity — Legal investigation case
-  const entity: FtmEntity = {
-    id: entityId,
-    schema: "LegalEntity",
-    properties: {
-      name: [c.subject],
-      notes: [`${c.badge} · ${c.statusLabel} — ${c.statusDetail}`],
-      createdAt: [c.opened],
-      modifiedAt: [c.lastActivity],
-    },
-    datasets: ["hawkeye-sterling"],
-    referents: [],
-  };
-  if (c.meta) entity.properties["description"] = [c.meta];
-  if (c.mlroDisposition) entity.properties["mlroDisposition"] = [c.mlroDisposition];
-  if (c.goAMLReference) entity.properties["externalRef"] = [c.goAMLReference];
+export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok && gate.response.status === 429) return gate.response;
 
-  entities.push(entity);
-
-  // Evidence links
-  for (const ev of c.evidence ?? []) {
-    const docId = `hs-ev-${c.id}-${Math.random().toString(36).slice(2)}`;
-    entities.push({
-      id: docId,
-      schema: "Document",
-      properties: {
-        name: [ev.title ?? "Evidence"],
-        description: [ev.detail ?? ev.meta ?? ""],
-        category: [ev.category ?? ""],
-        parent: [entityId],
-      },
-      datasets: ["hawkeye-sterling"],
-      referents: [entityId],
-    });
+  let body: FtmExportBody;
+  try {
+    body = (await req.json()) as FtmExportBody;
+  } catch {
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  return entities;
-}
+  if (!Array.isArray(body.entries) || body.entries.length === 0) {
+    return NextResponse.json({ ok: false, error: "entries must be a non-empty array" }, { status: 400, headers: CORS });
+  }
 
-async function handleFtmExport(req: Request): Promise<NextResponse> {
-  const url = new URL(req.url);
-  const statusFilter = url.searchParams.get("status");
-  const limitParam = url.searchParams.get("limit");
-  const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10)), 1_000) : 500;
+  if (body.entries.length > 10_000) {
+    return NextResponse.json({ ok: false, error: "max 10,000 entries per export" }, { status: 400, headers: CORS });
+  }
 
-  const cases = loadCases();
-  const filtered = statusFilter
-    ? cases.filter((c) => c.status === statusFilter)
-    : cases;
-  const slice = filtered.slice(0, limit);
-
-  const entities = slice.flatMap(caseToFtm);
-
-  // FTM bulk format: one JSON object per line (NDJSON)
-  const ndjson = entities.map((e) => JSON.stringify(e)).join("\n");
+  const ndjson = entriesToFtmStream(body.entries, body.includeSanctions ?? true);
 
   return new NextResponse(ndjson, {
     status: 200,
     headers: {
+      ...CORS,
       "content-type": "application/x-ndjson",
-      "content-disposition": `attachment; filename="hawkeye-sterling-ftm-${new Date().toISOString().slice(0, 10)}.ndjson"`,
-      "x-entity-count": String(entities.length),
-      "x-case-count": String(slice.length),
+      "content-disposition": `attachment; filename="hawkeye-sterling-${Date.now()}.ftm.json"`,
     },
   });
 }
-
-export const GET = withGuard(handleFtmExport);

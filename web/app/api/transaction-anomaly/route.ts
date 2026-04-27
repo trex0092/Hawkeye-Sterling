@@ -1,6 +1,20 @@
+// POST /api/transaction-anomaly
+// Real-time streaming transaction anomaly scoring.
+// Implements a TypeScript port of PySAD's HalfSpaceTrees + z-score ensemble.
+// Scores transactions one at a time; model updates itself with each observation.
+// Routes output to three tiers: pass / flag (same-day review) / hold (immediate).
+//
+// Body: { transaction: TransactionPayload, sessionId?: string }
+// The sessionId groups transactions from the same customer session so the
+// streaming model accumulates state across calls.
+
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { detectAnomalies } from "../../../../dist/src/integrations/osintBridge.js";
+import {
+  StreamingAnomalyGate,
+  extractFeatures,
+} from "../../../../dist/src/brain/streaming-anomaly.js";
+import type { AnomalyFeatureVector } from "../../../../dist/src/brain/streaming-anomaly.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,17 +30,39 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-interface TransactionFeature {
-  amount: number;
-  hour?: number;
-  dayOfWeek?: number;
-  counterpartyCount?: number;
-  [key: string]: number | undefined;
+// In-memory gate store keyed by sessionId.
+const gateStore = new Map<string, StreamingAnomalyGate>();
+
+function getOrCreateGate(sessionId: string): StreamingAnomalyGate {
+  if (!gateStore.has(sessionId)) {
+    gateStore.set(sessionId, new StreamingAnomalyGate({
+      nFeatures: 8,
+      nEstimators: 25,
+      depth: 15,
+      windowSize: 500,
+      holdThreshold: 0.90,
+      flagThreshold: 0.75,
+    }));
+  }
+  return gateStore.get(sessionId)!;
 }
 
-interface Body {
-  transactions: TransactionFeature[];
-  algorithm?: "isolation_forest" | "lof" | "zscore";
+interface TransactionPayload {
+  amountUsd: number;
+  timestampUtc?: string;
+  counterpartyFirstSeen?: boolean;
+  countryRiskScore?: number;
+  customerBaseline?: {
+    meanAmount?: number;
+    stdAmount?: number;
+    txnPer7d?: number;
+  };
+  features?: AnomalyFeatureVector;
+}
+
+interface AnomalyRequestBody {
+  transaction: TransactionPayload;
+  sessionId?: string;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -34,49 +70,48 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!gate.ok && gate.response.status === 429) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
 
-  let body: Body;
+  let body: AnomalyRequestBody;
   try {
-    body = (await req.json()) as Body;
+    body = (await req.json()) as AnomalyRequestBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  if (!Array.isArray(body?.transactions) || body.transactions.length === 0) {
-    return NextResponse.json({ ok: false, error: "transactions must be a non-empty array" }, { status: 400, headers: CORS });
+  const tx = body.transaction;
+  if (!tx || typeof tx.amountUsd !== "number" || tx.amountUsd < 0) {
+    return NextResponse.json(
+      { ok: false, error: "transaction.amountUsd must be a non-negative number" },
+      { status: 400, headers: CORS },
+    );
   }
-  if (body.transactions.length > 5_000) {
-    return NextResponse.json({ ok: false, error: "max 5,000 transactions per request" }, { status: 400, headers: CORS });
-  }
 
-  const algorithm = body.algorithm ?? "isolation_forest";
-  // Extract numeric feature vectors from transactions
-  const features = body.transactions.map((t) =>
-    Object.values(t).filter((v): v is number => typeof v === "number"),
-  );
+  const sessionId = body.sessionId?.trim() ?? "global";
+  const streamingGate = getOrCreateGate(sessionId);
 
-  try {
-    const result = await detectAnomalies(features, algorithm, {});
-    const anomalyCount = result.outliers?.length ?? 0;
-    const flagged = result.outliers?.map((idx: number) => body.transactions[idx]).filter(Boolean) ?? [];
+  const features = tx.features ?? extractFeatures({
+    amountUsd: tx.amountUsd,
+    customerBaseline: tx.customerBaseline,
+    counterpartyFirstSeen: tx.counterpartyFirstSeen,
+    countryRiskScore: tx.countryRiskScore,
+    timestampUtc: tx.timestampUtc,
+  });
 
-    return NextResponse.json({
+  const result = streamingGate.scoreAndUpdate(features);
+
+  return NextResponse.json(
+    {
       ok: true,
-      algorithm,
-      total: body.transactions.length,
-      anomalyCount,
-      anomalyRate: body.transactions.length > 0 ? anomalyCount / body.transactions.length : 0,
-      flagged,
-      scores: result.scores ?? [],
-      analysedAt: new Date().toISOString(),
-    }, { headers: { ...CORS, ...gateHeaders } });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.toLowerCase().includes("not configured") || msg.toLowerCase().includes("econnrefused")) {
-      return NextResponse.json(
-        { ok: false, error: "Anomaly detection service not configured" },
-        { status: 503, headers: CORS },
-      );
-    }
-    return NextResponse.json({ ok: false, error: "anomaly detection failed", detail: msg }, { status: 502, headers: CORS });
-  }
+      sessionId,
+      observations: streamingGate.observations,
+      score: result.score,
+      tier: result.tier,
+      drivers: result.drivers,
+      detail: {
+        hstScore: result.hstScore,
+        zScore: result.zScore,
+        features,
+      },
+    },
+    { status: 200, headers: { ...CORS, ...gateHeaders } },
+  );
 }

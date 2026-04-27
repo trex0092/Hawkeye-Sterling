@@ -1,0 +1,27 @@
+# Hawkeye Sterling — OSINT Bridge Python dependencies
+# Pin minor versions for reproducibility; patch versions float.
+
+# Web framework
+fastapi>=0.111.0,<1.0.0
+uvicorn[standard]>=0.29.0,<1.0.0
+pydantic>=2.7.0,<3.0.0
+
+# OSINT CLI tools (installed as Python packages)
+sherlock-project>=0.14.3
+maigret>=0.4.4
+theHarvester>=4.4.3
+social-analyzer>=0.76
+
+# Anomaly detection
+pyod>=1.1.3
+numpy>=1.26.0
+scipy>=1.13.0
+scikit-learn>=1.4.0
+
+# AMLSim (IBM AMLSim synthetic transaction generator)
+# Note: AMLSim is typically cloned from GitHub rather than installed via pip.
+# If using the pip-installable fork, uncomment below:
+# amlsim>=0.1.0
+
+# HTTP client (for health checks)
+httpx>=0.27.0
