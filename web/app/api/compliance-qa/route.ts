@@ -1,8 +1,10 @@
 // POST /api/compliance-qa
 // Regulatory Q&A — tries the AML-MultiAgent-RAG service first; when
 // COMPLIANCE_RAG_URL is not configured it falls back to the MLRO Advisor
-// pipeline (Sonnet balanced mode) so the tab is never a dead end.
-// Body: { query: string; mode?: "multi-agent" | "single" }
+// pipeline (multi_perspective, 55 s budget) so the tab is never a dead end.
+// Accepts conversation context so follow-up questions are answered with
+// awareness of what was already discussed in the session.
+// Body: { query: string; mode?: "multi-agent" | "single"; context?: {q,a}[] }
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -26,9 +28,37 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
+interface ContextPair { q: string; a: string }
+
 interface ComplianceQaBody {
   query?: string;
   mode?: "multi-agent" | "single";
+  context?: ContextPair[];
+}
+
+function buildContextPreamble(pairs: ContextPair[]): string {
+  if (pairs.length === 0) return "";
+  const lines = pairs
+    .slice(-3)
+    .map((p, i) => `[Prior Q${i + 1}] ${p.q.slice(0, 160)}\n[Prior A${i + 1}] ${p.a.slice(0, 320)}`)
+    .join("\n---\n");
+  return `REGULATORY SESSION CONTEXT (prior Q&A in this session — use for continuity):\n${lines}\n\nCURRENT QUESTION:\n`;
+}
+
+const JURISDICTION_SIGNALS: Array<{ tag: string; keywords: string[] }> = [
+  { tag: "UAE", keywords: ["uae", "fdl", "cbuae", "dpms", "moe circular", "goaml", "dfsa"] },
+  { tag: "US",  keywords: ["bank secrecy act", "bsa", "ofac", "fincen", "fatca", "patriot act"] },
+  { tag: "EU",  keywords: ["5amld", "6amld", "amld", "eu directive", "european union", "eba"] },
+  { tag: "UK",  keywords: ["mlr 2017", "proceeds of crime", "poca", "fca", "hmrc"] },
+  { tag: "FATF/Global", keywords: ["fatf", "unscr", "wolfsberg", "egmont"] },
+];
+
+function detectJurisdiction(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  for (const { tag, keywords } of JURISDICTION_SIGNALS) {
+    if (keywords.some((kw) => lower.includes(kw))) return tag;
+  }
+  return undefined;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -49,15 +79,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const result = await askComplianceQuestion({
     query: body.query.trim(),
-    mode: body.mode ?? "single",
+    mode: body.mode ?? "multi-agent",
   });
 
-  // RAG service available — return its result directly.
   if (result.ok) {
     return NextResponse.json(result, { status: 200, headers: { ...CORS, ...gateHeaders } });
   }
 
-  // RAG not configured — fall back to MLRO Advisor (Sonnet balanced) if possible.
+  // RAG not configured — fall back to MLRO Advisor with conversation context.
   if (result.error?.includes("not configured")) {
     const apiKey = process.env["ANTHROPIC_API_KEY"];
     if (!apiKey) {
@@ -72,8 +101,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
+    const preamble = buildContextPreamble(body.context ?? []);
+    const enrichedQuestion = `${preamble}${body.query.trim()}`.slice(0, 3500);
+    const detectedJurisdiction = detectJurisdiction(body.query);
+
     const advisorReq: MlroAdvisorRequest = {
-      question: body.query.trim().slice(0, 2000),
+      question: enrichedQuestion,
       mode: "multi_perspective",
       audience: "regulator",
       caseContext: {
@@ -86,10 +119,10 @@ export async function POST(req: Request): Promise<NextResponse> {
             "EU-Consolidated", "UK-OFSI", "UAE-EOCN", "UAE-LTL",
           ],
           listVersionDates: {},
-          jurisdictions: [],
+          jurisdictions: detectedJurisdiction ? [detectedJurisdiction] : [],
           matchingMethods: ["exact", "levenshtein", "jaro_winkler"],
         },
-        evidenceIds: [],
+        evidenceIds: detectedJurisdiction ? [`jurisdiction:${detectedJurisdiction}`] : [],
       },
     };
 
@@ -116,6 +149,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           passedQualityGate: approved,
           confidenceScore: approved ? 80 : 55,
           consistencyScore: 0.85,
+          jurisdiction: detectedJurisdiction ?? undefined,
           source: "mlro-advisor-fallback",
         },
         { headers: { ...CORS, ...gateHeaders } },
@@ -128,6 +162,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
-  // Other RAG errors (network, 5xx from the RAG service, etc.)
   return NextResponse.json(result, { status: 502, headers: { ...CORS, ...gateHeaders } });
 }
