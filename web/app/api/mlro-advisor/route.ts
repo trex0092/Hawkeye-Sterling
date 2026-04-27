@@ -25,7 +25,23 @@ interface Body {
   adverseGroups?: string[];
   mode?: ReasoningMode;
   audience?: "regulator" | "mlro" | "board";
-  context?: ContextPair[];  // prior Q&A pairs from the session
+  context?: ContextPair[];
+  // Extended case context
+  riskClassification?: "low" | "medium" | "high" | "very_high";
+  customerStatus?: "new_onboarding" | "existing" | "exit";
+  subjectDateOfBirth?: string;
+  subjectNationality?: string;
+  subjectIdNumber?: string;
+  matchConfidence?: "EXACT" | "STRONG" | "POSSIBLE" | "WEAK" | "NO_MATCH";
+  predicateCategory?: string;
+  transactionAmount?: number;
+  transactionCurrency?: string;
+  transactionDate?: string;
+  priorEddPerformed?: boolean;
+  priorStrFiled?: boolean;
+  observedRedFlags?: string[];
+  commodityType?: string;
+  originCountry?: string;
 }
 
 // Lightweight jurisdiction signal extraction — no LLM needed.
@@ -133,6 +149,22 @@ export async function POST(req: Request): Promise<NextResponse> {
         ],
       },
       evidenceIds,
+      ...(body.riskClassification && { riskClassification: body.riskClassification }),
+      ...(body.customerStatus && { customerStatus: body.customerStatus }),
+      ...(body.subjectDateOfBirth && { subjectDateOfBirth: body.subjectDateOfBirth }),
+      ...(body.subjectNationality && { subjectNationality: body.subjectNationality }),
+      ...(body.subjectIdNumber && { subjectIdNumber: body.subjectIdNumber }),
+      ...(body.matchConfidence && { matchConfidence: body.matchConfidence }),
+      ...(body.typologyIds?.length && { typologyIds: body.typologyIds }),
+      ...(body.predicateCategory && { predicateCategory: body.predicateCategory }),
+      ...(body.transactionAmount != null && { transactionAmount: body.transactionAmount }),
+      ...(body.transactionCurrency && { transactionCurrency: body.transactionCurrency }),
+      ...(body.transactionDate && { transactionDate: body.transactionDate }),
+      ...(body.priorEddPerformed != null && { priorEddPerformed: body.priorEddPerformed }),
+      ...(body.priorStrFiled != null && { priorStrFiled: body.priorStrFiled }),
+      ...(body.observedRedFlags?.length && { observedRedFlags: body.observedRedFlags }),
+      ...(body.commodityType && { commodityType: body.commodityType }),
+      ...(body.originCountry && { originCountry: body.originCountry }),
     },
   };
 

@@ -50,6 +50,23 @@ export interface MlroAdvisorRequest {
       matchingMethods: string[];
     };
     evidenceIds: string[];
+    // Extended context — all optional; included verbatim in model context JSON
+    riskClassification?: 'low' | 'medium' | 'high' | 'very_high';
+    customerStatus?: 'new_onboarding' | 'existing' | 'exit';
+    subjectDateOfBirth?: string;
+    subjectNationality?: string;
+    subjectIdNumber?: string;
+    matchConfidence?: 'EXACT' | 'STRONG' | 'POSSIBLE' | 'WEAK' | 'NO_MATCH';
+    typologyIds?: string[];
+    predicateCategory?: string;
+    transactionAmount?: number;
+    transactionCurrency?: string;
+    transactionDate?: string;
+    priorEddPerformed?: boolean;
+    priorStrFiled?: boolean;
+    observedRedFlags?: string[];
+    commodityType?: string;
+    originCountry?: string;
   };
   /** Narrow the context the model sees. Strips unchecked rows. */
   contextMask?: {

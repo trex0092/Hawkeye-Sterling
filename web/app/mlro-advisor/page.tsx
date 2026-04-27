@@ -65,6 +65,82 @@ interface AdvisorHistoryEntry {
   expanded: boolean;
 }
 
+// ── Case context state ────────────────────────────────────────────────────────
+
+interface CaseCtx {
+  subjectName: string;
+  entityType: "individual" | "organisation" | "vessel" | "aircraft" | "other";
+  riskClassification: "" | "low" | "medium" | "high" | "very_high";
+  customerStatus: "" | "new_onboarding" | "existing" | "exit";
+  audience: "regulator" | "mlro" | "board";
+  dob: string;
+  nationality: string;
+  idNumber: string;
+  jurisdiction: string;
+  txAmount: string;
+  txCurrency: string;
+  txDate: string;
+  typologyIds: string[];
+  matchConfidence: "" | "EXACT" | "STRONG" | "POSSIBLE" | "WEAK" | "NO_MATCH";
+  predicateCategory: string;
+  observedRedFlags: string[];
+  priorEdd: boolean;
+  priorStr: boolean;
+  commodityType: string;
+  originCountry: string;
+}
+
+const DEFAULT_CTX: CaseCtx = {
+  subjectName: "",
+  entityType: "individual",
+  riskClassification: "",
+  customerStatus: "",
+  audience: "regulator",
+  dob: "",
+  nationality: "",
+  idNumber: "",
+  jurisdiction: "",
+  txAmount: "",
+  txCurrency: "AED",
+  txDate: "",
+  typologyIds: [],
+  matchConfidence: "",
+  predicateCategory: "",
+  observedRedFlags: [],
+  priorEdd: false,
+  priorStr: false,
+  commodityType: "",
+  originCountry: "",
+};
+
+const TYPOLOGY_CHIPS: Array<{ id: string; label: string }> = [
+  { id: "structuring", label: "Structuring" },
+  { id: "tbml_over_invoice", label: "TBML" },
+  { id: "pep_rca_network", label: "PEP / RCA" },
+  { id: "sanctions_evasion_shell", label: "Sanctions evasion" },
+  { id: "ubo_opacity", label: "UBO opacity" },
+  { id: "vasp_mixer", label: "Crypto / Mixer" },
+  { id: "real_estate_layering", label: "Real estate" },
+  { id: "shell_company", label: "Shell co." },
+  { id: "correspondent_nested", label: "Correspondent" },
+  { id: "proliferation_dual_use", label: "Proliferation / PF" },
+  { id: "environmental_crime", label: "Env. crime" },
+  { id: "human_trafficking", label: "Human trafficking" },
+  { id: "tax_evasion_offshore", label: "Tax evasion" },
+  { id: "insider_threat", label: "Insider threat" },
+  { id: "carbon_market_fraud", label: "Carbon market" },
+  { id: "ai_synthetic_media_fraud", label: "Deepfake / AI fraud" },
+];
+
+const JURISDICTION_OPTIONS = [
+  { value: "", label: "Auto-detect" },
+  { value: "UAE", label: "UAE" },
+  { value: "US", label: "US" },
+  { value: "EU", label: "EU" },
+  { value: "UK", label: "UK" },
+  { value: "FATF/Global", label: "FATF / Global" },
+];
+
 // ── Suggested questions ───────────────────────────────────────────────────────
 
 const SUGGESTED_GROUPS = [
@@ -196,6 +272,26 @@ export default function MlroAdvisorPage() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>([]);
+  // Case context state
+  const [ctxOpen, setCtxOpen] = useState(false);
+  const [ctx, setCtx] = useState<CaseCtx>(DEFAULT_CTX);
+  const [redFlagInput, setRedFlagInput] = useState("");
+  const setCtxField = <K extends keyof CaseCtx>(k: K, v: CaseCtx[K]) =>
+    setCtx((p) => ({ ...p, [k]: v }));
+  const toggleTypology = (id: string) =>
+    setCtxField("typologyIds", ctx.typologyIds.includes(id)
+      ? ctx.typologyIds.filter((t) => t !== id)
+      : [...ctx.typologyIds, id]);
+  const addRedFlag = () => {
+    const f = redFlagInput.trim();
+    if (f && !ctx.observedRedFlags.includes(f)) {
+      setCtxField("observedRedFlags", [...ctx.observedRedFlags, f]);
+    }
+    setRedFlagInput("");
+  };
+  const ctxIsPopulated = ctx.subjectName || ctx.riskClassification || ctx.jurisdiction ||
+    ctx.typologyIds.length > 0 || ctx.matchConfidence || ctx.txAmount ||
+    ctx.priorEdd || ctx.priorStr || ctx.predicateCategory || ctx.commodityType;
 
   const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
     speed: 9_000,
@@ -214,7 +310,30 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/mlro-advisor", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: q, subjectName: "Regulatory Query", mode, audience: "regulator" }),
+        body: JSON.stringify({
+          question: q,
+          subjectName: ctx.subjectName || "Regulatory Query",
+          entityType: ctx.entityType,
+          mode,
+          audience: ctx.audience,
+          ...(ctx.jurisdiction && { jurisdiction: ctx.jurisdiction }),
+          ...(ctx.riskClassification && { riskClassification: ctx.riskClassification }),
+          ...(ctx.customerStatus && { customerStatus: ctx.customerStatus }),
+          ...(ctx.dob && { subjectDateOfBirth: ctx.dob }),
+          ...(ctx.nationality && { subjectNationality: ctx.nationality }),
+          ...(ctx.idNumber && { subjectIdNumber: ctx.idNumber }),
+          ...(ctx.matchConfidence && { matchConfidence: ctx.matchConfidence }),
+          ...(ctx.typologyIds.length > 0 && { typologyIds: ctx.typologyIds }),
+          ...(ctx.predicateCategory && { predicateCategory: ctx.predicateCategory }),
+          ...(ctx.txAmount && { transactionAmount: parseFloat(ctx.txAmount) }),
+          ...(ctx.txCurrency && ctx.txAmount && { transactionCurrency: ctx.txCurrency }),
+          ...(ctx.txDate && { transactionDate: ctx.txDate }),
+          ...(ctx.priorEdd && { priorEddPerformed: true }),
+          ...(ctx.priorStr && { priorStrFiled: true }),
+          ...(ctx.observedRedFlags.length > 0 && { observedRedFlags: ctx.observedRedFlags }),
+          ...(ctx.commodityType && { commodityType: ctx.commodityType }),
+          ...(ctx.originCountry && { originCountry: ctx.originCountry }),
+        }),
         signal: ctl.signal,
       });
       const rawText = await res.text();
@@ -380,6 +499,358 @@ export default function MlroAdvisorPage() {
                 placeholder='Ask the MLRO Advisor a compliance question — e.g. "What CDD is required for a UAE gold trader?"'
                 className="w-full px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
+
+              {/* ── Case Context panel ─────────────────────────────────────── */}
+              <button
+                type="button"
+                onClick={() => setCtxOpen((o) => !o)}
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded border text-12 transition-colors ${
+                  ctxIsPopulated
+                    ? "border-brand/50 bg-brand-dim/10 text-brand"
+                    : "border-hair-2 bg-bg-1 text-ink-3 hover:border-brand hover:text-ink-1"
+                }`}
+              >
+                <span className="flex items-center gap-2 font-semibold">
+                  Case Context
+                  {ctxIsPopulated && (
+                    <span className="text-10 px-1.5 py-0.5 rounded-full bg-brand text-white font-mono">
+                      {[
+                        ctx.subjectName && "subject",
+                        ctx.riskClassification && ctx.riskClassification.toUpperCase(),
+                        ctx.jurisdiction,
+                        ctx.typologyIds.length > 0 && `${ctx.typologyIds.length} typolog.`,
+                        ctx.matchConfidence,
+                        ctx.txAmount && `${ctx.txCurrency} ${ctx.txAmount}`,
+                        ctx.priorEdd && "EDD",
+                        ctx.priorStr && "STR",
+                      ].filter(Boolean).slice(0, 3).join(" · ")}
+                    </span>
+                  )}
+                </span>
+                <span className="text-10 text-ink-3">{ctxOpen ? "▲ collapse" : "▼ expand"}</span>
+              </button>
+
+              {ctxOpen && (
+                <div className="border border-brand/20 rounded-xl bg-bg-1 p-4 space-y-4">
+
+                  {/* ── Entity ─────────────────────────────────────────────── */}
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-2">Entity</div>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Subject name</label>
+                        <input
+                          type="text"
+                          value={ctx.subjectName}
+                          onChange={(e) => setCtxField("subjectName", e.target.value)}
+                          placeholder="e.g. Acme Trading LLC"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Entity type</label>
+                        <select
+                          value={ctx.entityType}
+                          onChange={(e) => setCtxField("entityType", e.target.value as CaseCtx["entityType"])}
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        >
+                          <option value="individual">Individual</option>
+                          <option value="organisation">Organisation</option>
+                          <option value="vessel">Vessel</option>
+                          <option value="aircraft">Aircraft</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Date of birth / incorporation</label>
+                        <input
+                          type="date"
+                          value={ctx.dob}
+                          onChange={(e) => setCtxField("dob", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Nationality / reg. country</label>
+                        <input
+                          type="text"
+                          value={ctx.nationality}
+                          onChange={(e) => setCtxField("nationality", e.target.value)}
+                          placeholder="e.g. AE, US, CN"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">ID / passport / CRN</label>
+                        <input
+                          type="text"
+                          value={ctx.idNumber}
+                          onChange={(e) => setCtxField("idNumber", e.target.value)}
+                          placeholder="Identifier"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Risk classification</label>
+                        <div className="flex gap-1">
+                          {(["low", "medium", "high", "very_high"] as const).map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => setCtxField("riskClassification", ctx.riskClassification === r ? "" : r)}
+                              className={`px-2 py-0.5 rounded text-10 font-semibold border transition-colors ${
+                                ctx.riskClassification === r
+                                  ? r === "very_high" || r === "high"
+                                    ? "bg-red-100 text-red-700 border-red-300"
+                                    : r === "medium"
+                                    ? "bg-amber-100 text-amber-700 border-amber-300"
+                                    : "bg-green-100 text-green-700 border-green-300"
+                                  : "bg-bg-1 text-ink-3 border-hair-2 hover:border-brand"
+                              }`}
+                            >
+                              {r === "very_high" ? "Very high" : r.charAt(0).toUpperCase() + r.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Customer status</label>
+                        <div className="flex gap-1">
+                          {(["new_onboarding", "existing", "exit"] as const).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setCtxField("customerStatus", ctx.customerStatus === s ? "" : s)}
+                              className={`px-2 py-0.5 rounded text-10 font-semibold border transition-colors ${
+                                ctx.customerStatus === s
+                                  ? "bg-brand text-white border-brand"
+                                  : "bg-bg-1 text-ink-3 border-hair-2 hover:border-brand"
+                              }`}
+                            >
+                              {s === "new_onboarding" ? "New onboarding" : s === "exit" ? "Exit" : "Existing"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-hair" />
+
+                  {/* ── Jurisdiction & Audience ─────────────────────────────── */}
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-2">Jurisdiction & Audience</div>
+                    <div className="flex flex-wrap gap-3">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Primary jurisdiction</label>
+                        <select
+                          value={ctx.jurisdiction}
+                          onChange={(e) => setCtxField("jurisdiction", e.target.value)}
+                          className="px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        >
+                          {JURISDICTION_OPTIONS.map((j) => (
+                            <option key={j.value} value={j.value}>{j.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Report audience</label>
+                        <div className="flex gap-1">
+                          {(["regulator", "mlro", "board"] as const).map((a) => (
+                            <button
+                              key={a}
+                              type="button"
+                              onClick={() => setCtxField("audience", a)}
+                              className={`px-2 py-0.5 rounded text-10 font-semibold border transition-colors ${
+                                ctx.audience === a
+                                  ? "bg-brand text-white border-brand"
+                                  : "bg-bg-1 text-ink-3 border-hair-2 hover:border-brand"
+                              }`}
+                            >
+                              {a.charAt(0).toUpperCase() + a.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-hair" />
+
+                  {/* ── Transaction ─────────────────────────────────────────── */}
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-2">Transaction</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Amount</label>
+                        <input
+                          type="number"
+                          value={ctx.txAmount}
+                          onChange={(e) => setCtxField("txAmount", e.target.value)}
+                          placeholder="0.00"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Currency</label>
+                        <input
+                          type="text"
+                          value={ctx.txCurrency}
+                          onChange={(e) => setCtxField("txCurrency", e.target.value.toUpperCase())}
+                          placeholder="AED"
+                          maxLength={3}
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Date</label>
+                        <input
+                          type="date"
+                          value={ctx.txDate}
+                          onChange={(e) => setCtxField("txDate", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Commodity / product type</label>
+                        <input
+                          type="text"
+                          value={ctx.commodityType}
+                          onChange={(e) => setCtxField("commodityType", e.target.value)}
+                          placeholder="e.g. gold bullion, cash, crypto"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Origin country (CAHRA check)</label>
+                        <input
+                          type="text"
+                          value={ctx.originCountry}
+                          onChange={(e) => setCtxField("originCountry", e.target.value)}
+                          placeholder="ISO-2, e.g. CD, AF"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-hair" />
+
+                  {/* ── Typologies & Findings ───────────────────────────────── */}
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-2">Typologies & Findings</div>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {TYPOLOGY_CHIPS.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => toggleTypology(t.id)}
+                          className={`px-2 py-0.5 rounded text-10 font-semibold border transition-colors ${
+                            ctx.typologyIds.includes(t.id)
+                              ? "bg-brand text-white border-brand"
+                              : "bg-bg-1 text-ink-3 border-hair-2 hover:border-brand hover:text-ink-1"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Match confidence</label>
+                        <select
+                          value={ctx.matchConfidence}
+                          onChange={(e) => setCtxField("matchConfidence", e.target.value as CaseCtx["matchConfidence"])}
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        >
+                          <option value="">Not assessed</option>
+                          <option value="EXACT">EXACT</option>
+                          <option value="STRONG">STRONG</option>
+                          <option value="POSSIBLE">POSSIBLE</option>
+                          <option value="WEAK">WEAK</option>
+                          <option value="NO_MATCH">NO_MATCH</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-10 text-ink-3 block mb-1">Predicate offence category</label>
+                        <input
+                          type="text"
+                          value={ctx.predicateCategory}
+                          onChange={(e) => setCtxField("predicateCategory", e.target.value)}
+                          placeholder="e.g. drug trafficking, fraud, TBML"
+                          className="w-full px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <label className="text-10 text-ink-3 block mb-1">Observed red flags</label>
+                      <div className="flex gap-1.5 mb-1.5 flex-wrap">
+                        {ctx.observedRedFlags.map((f) => (
+                          <span key={f} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-10 border border-amber-200">
+                            {f}
+                            <button type="button" onClick={() => setCtxField("observedRedFlags", ctx.observedRedFlags.filter((x) => x !== f))} className="text-amber-500 hover:text-red-600 ml-0.5">×</button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          value={redFlagInput}
+                          onChange={(e) => setRedFlagInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRedFlag(); } }}
+                          placeholder="Type a red flag and press Enter"
+                          className="flex-1 px-2.5 py-1.5 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand"
+                        />
+                        <button type="button" onClick={addRedFlag} className="px-3 py-1.5 rounded border border-hair-2 text-12 text-ink-2 hover:border-brand hover:text-brand transition-colors">+ Add</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-hair" />
+
+                  {/* ── Compliance status ───────────────────────────────────── */}
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-2">Compliance Status</div>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={ctx.priorEdd}
+                          onChange={(e) => setCtxField("priorEdd", e.target.checked)}
+                          className="rounded border-hair-2 text-brand"
+                        />
+                        <span className="text-12 text-ink-1">Prior EDD performed</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={ctx.priorStr}
+                          onChange={(e) => setCtxField("priorStr", e.target.checked)}
+                          className="rounded border-hair-2 text-brand"
+                        />
+                        <span className="text-12 text-ink-1">Prior STR / SAR filed</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setCtx(DEFAULT_CTX); setRedFlagInput(""); }}
+                      className="text-11 text-ink-3 hover:text-red border border-hair-2 px-2.5 py-1 rounded hover:border-red transition-colors"
+                    >
+                      Clear context
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-11 font-semibold text-ink-2 uppercase tracking-wide-3">Mode</span>
