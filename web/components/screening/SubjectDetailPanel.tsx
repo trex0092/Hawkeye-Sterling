@@ -33,7 +33,6 @@ import {
   BrainCrossReference,
   BrainCoherenceCheck,
   BrainRedFlagCombinator,
-  BrainCausalChain,
   BrainPolicyCitation,
   BrainFATFAlignment,
   BrainSanctionsPathway,

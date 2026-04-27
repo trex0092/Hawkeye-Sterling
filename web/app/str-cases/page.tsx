@@ -328,119 +328,36 @@ export default function StrCasesPage() {
 
       <Card>
             <form onSubmit={openCase}>
-              <CardSection title="Case identity">
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-                  <Field label="Case title">
-                    <input
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Short case descriptor"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Report kind">
-                    <SingleSelect
-                      options={STR_REPORT_KINDS}
-                      value={reportKind}
-                      onChange={setReportKind}
-                    />
-                  </Field>
-                </div>
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-                  <Field label="Subject / entity">
-                    <input
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Customer, counterparty, or entity"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Subject country">
-                    <input
-                      value={subjectCountry}
-                      onChange={(e) => setSubjectCountry(e.target.value)}
-                      placeholder="e.g. UAE, IN, RU"
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-              </CardSection>
-
-              <CardSection title="Timing & transaction value">
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
-                  <Field label="Transaction amount" hint="(AED)">
-                    <input
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Detected on">
-                    <DateParts
-                      value={detectedOn}
-                      onChange={setDetectedOn}
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Filing deadline" hint="without delay — FDL Art. 26–27">
-                    <DateParts
-                      value={deadline}
-                      onChange={setDeadline}
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-              </CardSection>
-
-              <CardSection title="Red-flag category">
-                <MultiSelect
-                  groups={STR_RED_FLAGS}
-                  placeholder="Select red-flag category…"
-                  value={redFlags}
-                  onChange={setRedFlags}
-                />
-              </CardSection>
-
-              <CardSection title="Suspicion narrative">
-                <Field label="Narrative">
-                  <textarea
-                    value={narrative}
-                    onChange={(e) => setNarrative(e.target.value)}
-                    placeholder="Who, what, when, where, why it is suspicious. Do NOT include tip-off-risking phrasing (FDL Art. 29)."
-                    className={textareaCls}
-                  />
-                </Field>
-              </CardSection>
-
-              <CardSection title="Approval chain">
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
-                  <Field label="goAML reference">
-                    <input
-                      value={goamlRef}
-                      onChange={(e) => setGoamlRef(e.target.value)}
-                      placeholder="e.g. RPT-2026-0001"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="MLRO (preparer)">
-                    <input
-                      value={mlro}
-                      onChange={(e) => setMlro(e.target.value)}
-                      placeholder="MLRO name"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Four-eyes approver">
-                    <input
-                      value={approver}
-                      onChange={(e) => setApprover(e.target.value)}
-                      placeholder="Second approver"
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-              </CardSection>
+              {(() => {
+                const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+                const taCls = `${iCls} min-h-[56px] leading-relaxed resize-y`;
+                const lCls = "block text-10 uppercase tracking-wide-3 text-ink-3 mb-1";
+                const row = "grid gap-3 mb-2";
+                return (
+                  <>
+                    <div className={`${row} grid-cols-2`}>
+                      <div><label className={lCls}>Case title</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short case descriptor" className={iCls} /></div>
+                      <div><label className={lCls}>Report kind</label><SingleSelect options={STR_REPORT_KINDS} value={reportKind} onChange={setReportKind} /></div>
+                    </div>
+                    <div className={`${row} grid-cols-2`}>
+                      <div><label className={lCls}>Subject / entity</label><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Customer, counterparty, or entity" className={iCls} /></div>
+                      <div><label className={lCls}>Subject country</label><input value={subjectCountry} onChange={(e) => setSubjectCountry(e.target.value)} placeholder="e.g. UAE, IN, RU" className={iCls} /></div>
+                    </div>
+                    <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
+                      <div><label className={lCls}>Detected on</label><DateParts value={detectedOn} onChange={setDetectedOn} className={iCls} /></div>
+                      <div><label className={lCls}>Filing deadline <span className="normal-case font-normal">FDL Art. 26–27</span></label><DateParts value={deadline} onChange={setDeadline} className={iCls} /></div>
+                    </div>
+                    <div className="mb-2"><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
+                    <div className="mb-2"><label className={lCls}>Suspicion narrative</label><textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} placeholder="Who, what, when, where, why it is suspicious. Do NOT tip off the subject (FDL Art. 29)." className={taCls} /></div>
+                    <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>goAML reference</label><input value={goamlRef} onChange={(e) => setGoamlRef(e.target.value)} placeholder="e.g. RPT-2026-0001" className={iCls} /></div>
+                      <div><label className={lCls}>MLRO (preparer)</label><input value={mlro} onChange={(e) => setMlro(e.target.value)} placeholder="MLRO name" className={iCls} /></div>
+                      <div><label className={lCls}>Four-eyes approver</label><input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Second approver" className={iCls} /></div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Tipping-off acknowledgment — must be checked before filing */}
               <div
