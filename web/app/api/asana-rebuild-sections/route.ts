@@ -29,13 +29,13 @@ const PROJECTS = [
   },
   {
     // Governance: Audit (immutable audit chain)
-    gid: process.env["ASANA_AUDIT_LOG_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_AUDIT_LOG_PROJECT_GID"] ?? "1214148643197211",
     name: "03 · Audit Log 10-Year Trail",
     sections: ["📥 New Events", "🔐 Sealed Chain", "📦 Archived (Year-end)"],
   },
   {
     // Governance: SAR QA (literal four-eyes review)
-    gid: process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? "1214148660376942",
     name: "04 · Four-Eyes Approvals",
     sections: ["📥 Awaiting Reviewer", "🔍 Under Review", "✅ Approved", "↩️  Returned for Revision"],
   },
@@ -66,7 +66,7 @@ const PROJECTS = [
   },
   {
     // Governance + Operations: Regulatory, Policies, Playbook, Data quality, Corrections
-    gid: process.env["ASANA_COMPLIANCE_OPS_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_COMPLIANCE_OPS_PROJECT_GID"] ?? "1214148898610839",
     name: "09 · Compliance Ops — Daily & Weekly Tasks",
     sections: ["📥 New Tasks", "🔍 In Progress", "⏳ Awaiting Approval", "✅ Completed"],
   },
@@ -78,25 +78,25 @@ const PROJECTS = [
   },
   {
     // Operations: Employees (HR registry, doc expiry)
-    gid: process.env["ASANA_EMPLOYEES_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_EMPLOYEES_PROJECT_GID"] ?? "1214148854421310",
     name: "11 · Employees",
     sections: ["📥 New Joiners", "📄 Documents Pending", "⏰ Expiring Soon", "✅ Compliant", "🚪 Offboarded"],
   },
   {
     // Operations: Training (staff certification)
-    gid: process.env["ASANA_TRAINING_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_TRAINING_PROJECT_GID"] ?? "1214148854927671",
     name: "12 · Training",
     sections: ["📥 Assigned", "📚 In Progress", "✅ Completed", "⏰ Recertification Due"],
   },
   {
     // Governance: EWRA, Oversight, Enforcement
-    gid: process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? "1214148855187093",
     name: "13 · Compliance Governance",
     sections: ["📥 New Items", "🔍 Under Review", "📋 Awaiting Board Sign-off", "✅ Approved", "🗄️  Archived"],
   },
   {
     // Primary nav: Monitoring (ongoing-monitor scheduled runs)
-    gid: process.env["ASANA_ROUTINES_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_ROUTINES_PROJECT_GID"] ?? "1214148910147230",
     name: "14 · Routines — Scheduled",
     sections: ["⏰ Scheduled", "🔄 Running", "✅ Completed", "❌ Failed — Retry"],
   },
@@ -115,7 +115,7 @@ const PROJECTS = [
   },
   {
     // Governance: EOCN (UAE TFS list & dual-use declarations)
-    gid: process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? "",
+    gid: process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? "1214148895117190",
     name: "17 · Export Control & Dual-Use",
     sections: ["📥 New Declarations", "🔍 Under Review", "⚠️  Dual-Use Flagged", "✅ Cleared"],
   },
