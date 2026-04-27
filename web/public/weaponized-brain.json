@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-26T08:46:50.960Z",
+  "generatedAt": "2026-04-27T04:40:08.565Z",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-26T08:46:50.956Z",
+    "generatedAt": "2026-04-27T04:40:08.562Z",
     "charter": {
       "prohibitions": [
         {
@@ -706,28 +706,37 @@
         ]
       },
       "skills": {
-        "total": 468,
+        "total": 893,
         "byLayer": {
-          "competency": 141,
-          "reasoning": 126,
-          "analysis": 201
+          "competency": 285,
+          "reasoning": 232,
+          "analysis": 376
         },
         "byDomain": {
-          "AML_CORE": 124,
-          "REGULATORY": 35,
-          "RISK_ASSESSMENT": 35,
-          "KYC_CDD": 28,
-          "SANCTIONS_TFS": 19,
-          "INVESTIGATIONS": 41,
-          "GOVERNANCE": 29,
-          "SUPPLY_CHAIN": 50,
+          "AML_CORE": 201,
+          "INTELLIGENCE": 6,
+          "RISK_ASSESSMENT": 53,
+          "KYC_CDD": 46,
+          "SANCTIONS_TFS": 32,
+          "INVESTIGATIONS": 71,
+          "GOVERNANCE": 34,
+          "SUPPLY_CHAIN": 63,
+          "REGULATORY": 37,
           "SOFT_SKILLS": 17,
-          "DOCUMENTATION": 23,
-          "REPORTING": 12,
+          "DOCUMENTATION": 24,
+          "REPORTING": 14,
           "TRAINING": 16,
           "COMPLIANCE_SYS": 21,
-          "DIGITAL_ASSETS": 14,
-          "DATA_PRIVACY": 4
+          "DIGITAL_ASSETS": 46,
+          "DATA_PRIVACY": 10,
+          "ESG_CLIMATE": 27,
+          "FINANCIAL_CRIME": 1,
+          "TECHNOLOGY": 28,
+          "GEOPOLITICAL": 41,
+          "FORENSIC_ACCOUNTING": 40,
+          "ASSET_RECOVERY": 14,
+          "MARKETS": 29,
+          "HUMAN_RIGHTS": 22
         }
       },
       "amplifier": {
@@ -891,13 +900,13 @@
     },
     "integrity": {
       "charterHash": "ed3b0986",
-      "catalogueHash": "803f4cc2"
+      "catalogueHash": "7e152464"
     }
   },
   "integrity": {
     "charterHash": "ed3b0986",
-    "catalogueHash": "803f4cc2",
-    "compositeHash": "5745a6ac"
+    "catalogueHash": "7e152464",
+    "compositeHash": "c738b2c3"
   },
   "enhanced": {
     "extended": {
@@ -924,7 +933,7 @@
         "policies": 40
       },
       "expertise": {
-        "skills": 468,
+        "skills": 893,
         "cognitiveAmplifier": 100
       }
     },
@@ -1094,8 +1103,8 @@
       "enhancedCatalogues": 20,
       "regulatoryRecords": 544,
       "taxonomyRecords": 400,
-      "skillsRecords": 468,
-      "totalRecords": 1412
+      "skillsRecords": 893,
+      "totalRecords": 1837
     }
   }
 }
