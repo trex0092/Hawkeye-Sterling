@@ -20,7 +20,7 @@ import { evaluateRedlines, type RedlineAction } from '../brain/redlines.js';
 import { tippingOffScan, type TippingOffMatch } from '../brain/tipping-off-guard.js';
 import type { DispositionCode } from '../brain/dispositions.js';
 import type { CaseReport } from '../reports/caseReport.js';
-import { fetchJsonWithRetry } from './httpRetry.js';
+import { fetchAnthropicStreamText } from './httpRetry.js';
 
 export type Verdict = 'approved' | 'returned_for_revision' | 'blocked' | 'incomplete';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
@@ -461,7 +461,7 @@ export type ChatCall = (input: {
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
   if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
-  const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
+  const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {
       method: 'POST',
@@ -473,6 +473,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
+        stream: true,
         system,
         messages: [{ role: 'user', content: user }],
         metadata: {
@@ -483,28 +484,20 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
     },
     {
       ...(signal ? { signal } : {}),
-      perAttemptMs: Math.min(55_000, maxTokens * 40 + 8_000),
-      idleReadMs: 25_000,
+      perAttemptMs: Math.min(120_000, maxTokens * 15 + 10_000),
+      idleReadMs: 30_000,
       maxAttempts: 2,
     },
   );
   if (signal?.aborted) return { ok: false, error: 'aborted' };
-  if (!result.ok || !result.json) {
+  if (!result.ok) {
     const prefix = result.partial ? 'partial_response:' : '';
-    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
-    if (result.body && !result.partial) {
-      try {
-        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
-        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
-      } catch { /* keep default error detail */ }
-    }
     return {
       ok: false,
-      error: `${prefix}${errorDetail} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
+      error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
-  return { ok: true, text };
+  return { ok: true, text: result.text };
 };
 
 function withBudget<T>(
