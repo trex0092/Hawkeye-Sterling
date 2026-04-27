@@ -248,118 +248,36 @@ export default function TransactionMonitorPage() {
 
       <Card>
             <form ref={formRef} onSubmit={log}>
-              <CardSection title="Transaction identity">
-                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-2">
-                  <Field label="Transaction reference">
-                    <input
-                      value={ref}
-                      onChange={(e) => setRef(e.target.value)}
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Counterparty">
-                    <input
-                      ref={counterpartyRef}
-                      value={counterparty}
-                      onChange={(e) => setCounterparty(e.target.value)}
-                      placeholder="Customer / entity name"
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-              </CardSection>
-
-              <CardSection title="Amount & timing">
-                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-3">
-                  <Field label="Amount" hint="(AED)">
-                    <input
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Currency" hint="(original)">
-                    <input
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Occurred on">
-                    <DateParts
-                      value={occurredOn}
-                      onChange={setOccurredOn}
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-              </CardSection>
-
-              <CardSection title="Channel & routing">
-                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-3">
-                  <Field label="Channel">
-                    <SingleSelect
-                      options={TM_CHANNELS}
-                      value={channel}
-                      onChange={setChannel}
-                    />
-                  </Field>
-                  <Field label="Direction">
-                    <SingleSelect
-                      options={TM_DIRECTIONS}
-                      value={direction}
-                      onChange={setDirection}
-                    />
-                  </Field>
-                  <Field label="Counterparty country">
-                    <input
-                      value={counterpartyCountry}
-                      onChange={(e) => setCounterpartyCountry(e.target.value)}
-                      placeholder="e.g. UAE, IN, CH"
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-2">
-                  <Field label="Payment method / rails">
-                    <input
-                      value={paymentRails}
-                      onChange={(e) => setPaymentRails(e.target.value)}
-                      placeholder="e.g. Emirates NBD, Al Etihad, cash drop"
-                      className={textInputCls}
-                    />
-                  </Field>
-                  <Field label="Source of funds declared">
-                    <input
-                      value={sourceOfFunds}
-                      onChange={(e) => setSourceOfFunds(e.target.value)}
-                      placeholder="e.g. salary, business revenue, inheritance"
-                      className={textInputCls}
-                    />
-                  </Field>
-                </div>
-              </CardSection>
-
-              <CardSection title="Behavioural flags">
-                <MultiSelect
-                  groups={TM_BEHAVIOURAL_FLAGS}
-                  placeholder="Select behavioural flag…"
-                  value={behaviouralFlags}
-                  onChange={setBehaviouralFlags}
-                />
-              </CardSection>
-
-              <CardSection title="Analyst notes">
-                <Field label="Notes">
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Behavioural context, observed pattern, linked STR reference…"
-                    className={textareaCls}
-                  />
-                </Field>
-              </CardSection>
+              {(() => {
+                const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+                const taCls = `${iCls} min-h-[56px] leading-relaxed resize-y`;
+                const lCls = "block text-10 uppercase tracking-wide-3 text-ink-3 mb-1";
+                const row = "grid gap-3 mb-2";
+                return (
+                  <>
+                    <div className={`${row} grid-cols-2`}>
+                      <div><label className={lCls}>Transaction reference</label><input value={ref} onChange={(e) => setRef(e.target.value)} className={iCls} /></div>
+                      <div><label className={lCls}>Counterparty</label><input ref={counterpartyRef} value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Customer / entity name" className={iCls} /></div>
+                    </div>
+                    <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>Amount <span className="normal-case font-normal">(AED)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
+                      <div><label className={lCls}>Currency <span className="normal-case font-normal">(original)</span></label><input value={currency} onChange={(e) => setCurrency(e.target.value)} className={iCls} /></div>
+                      <div><label className={lCls}>Occurred on</label><DateParts value={occurredOn} onChange={setOccurredOn} className={iCls} /></div>
+                    </div>
+                    <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>Channel</label><SingleSelect options={TM_CHANNELS} value={channel} onChange={setChannel} /></div>
+                      <div><label className={lCls}>Direction</label><SingleSelect options={TM_DIRECTIONS} value={direction} onChange={setDirection} /></div>
+                      <div><label className={lCls}>Counterparty country</label><input value={counterpartyCountry} onChange={(e) => setCounterpartyCountry(e.target.value)} placeholder="e.g. UAE, IN, CH" className={iCls} /></div>
+                    </div>
+                    <div className={`${row} grid-cols-2`}>
+                      <div><label className={lCls}>Payment method / rails</label><input value={paymentRails} onChange={(e) => setPaymentRails(e.target.value)} placeholder="e.g. Emirates NBD, Al Etihad, cash drop" className={iCls} /></div>
+                      <div><label className={lCls}>Source of funds declared</label><input value={sourceOfFunds} onChange={(e) => setSourceOfFunds(e.target.value)} placeholder="e.g. salary, business revenue, inheritance" className={iCls} /></div>
+                    </div>
+                    <div className="mb-2"><label className={lCls}>Behavioural flags</label><MultiSelect groups={TM_BEHAVIOURAL_FLAGS} placeholder="Select behavioural flag…" value={behaviouralFlags} onChange={setBehaviouralFlags} /></div>
+                    <div className="mb-2"><label className={lCls}>Analyst notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Behavioural context, observed pattern, linked STR reference…" className={taCls} /></div>
+                  </>
+                );
+              })()}
 
               {flash && (
                 <div className="text-11 text-green font-medium mb-3" role="status">
