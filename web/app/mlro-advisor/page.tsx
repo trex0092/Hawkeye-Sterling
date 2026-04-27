@@ -268,6 +268,8 @@ export default function MlroAdvisorPage() {
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
   const [qaHistory, setQaHistory] = useState<QaHistoryEntry[]>([]);
+  const [qaDepth, setQaDepth] = useState<"balanced" | "deep">("balanced");
+  const [qaUseTools, setQaUseTools] = useState<boolean>(true);
   const [openGroupIdx, setOpenGroupIdx] = useState<number | null>(0);
   const historyEndRef = useRef<HTMLDivElement>(null);
 
@@ -287,7 +289,7 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/compliance-qa", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query, mode: "multi-agent" }),
+        body: JSON.stringify({ query, mode: "multi-agent", depth: qaDepth, useTools: qaUseTools }),
       });
       const rawText = await res.text();
       let data: (ComplianceAnswer & { partialAnswer?: string }) | null = null;
@@ -338,7 +340,7 @@ export default function MlroAdvisorPage() {
     } finally {
       setQaLoading(false);
     }
-  }, [qaQuery]);
+  }, [qaQuery, qaDepth, qaUseTools]);
 
   return (
     <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
@@ -595,8 +597,37 @@ export default function MlroAdvisorPage() {
                 onChange={(e) => setQaQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) void handleQaAsk(); }}
               />
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-11 text-ink-3">⌘+Enter to submit</span>
+              <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 text-ink-3">⌘+Enter to submit</span>
+                  <div className="flex items-center gap-1.5 border border-hair-2 rounded p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setQaDepth("balanced")}
+                      title="Advisor only · ~45 s · safe on every Netlify tier"
+                      className={`text-11 px-2 py-1 rounded ${qaDepth === "balanced" ? "bg-brand text-white" : "text-ink-2 hover:text-ink-0"}`}
+                    >
+                      Balanced
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQaDepth("deep")}
+                      title="Executor → Advisor (multi-perspective) · ~90 s · requires extended function timeout"
+                      className={`text-11 px-2 py-1 rounded ${qaDepth === "deep" ? "bg-brand text-white" : "text-ink-2 hover:text-ink-0"}`}
+                    >
+                      Deep
+                    </button>
+                  </div>
+                  <label className="flex items-center gap-1.5 text-11 text-ink-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={qaUseTools}
+                      onChange={(e) => setQaUseTools(e.target.checked)}
+                      className="accent-brand"
+                    />
+                    Live lookups
+                  </label>
+                </div>
                 <button
                   type="button"
                   onClick={() => { void handleQaAsk(); }}
