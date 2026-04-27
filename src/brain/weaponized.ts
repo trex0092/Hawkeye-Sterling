@@ -84,6 +84,14 @@ export interface WeaponizedBrainManifest {
       categories: Array<{ id: string; displayName: string; keywordCount: number }>;
       totalKeywords: number;
       queryLength: number;
+      weaponized: {
+        severityTiers: string[];
+        fatfMapping: boolean;
+        sarTrigger: boolean;
+        counterfactual: boolean;
+        investigationNarrative: boolean;
+        modesCited: boolean;
+      };
     };
     doctrines: {
       total: number;
@@ -269,6 +277,14 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         categories: adverseCategories,
         totalKeywords,
         queryLength: ADVERSE_MEDIA_QUERY.length,
+        weaponized: {
+          severityTiers: ['critical', 'high', 'medium', 'low', 'clear'],
+          fatfMapping: true,
+          sarTrigger: true,
+          counterfactual: true,
+          investigationNarrative: true,
+          modesCited: true,
+        },
       },
       doctrines: {
         total: DOCTRINES.length,
@@ -392,7 +408,7 @@ export function weaponizedSystemPrompt(
         '',
         `Faculties: ${manifest.cognitiveCatalogue.faculties.length} (${manifest.cognitiveCatalogue.faculties.map((f) => f.id).join(', ')}).`,
         `Reasoning modes: ${manifest.cognitiveCatalogue.reasoningModes.total} registered (wave 1: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave1}, wave 2: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave2}, wave 3: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave3}, wave 4: ${manifest.cognitiveCatalogue.reasoningModes.byWave.wave4}).`,
-        `Adverse-media categories: ${manifest.cognitiveCatalogue.adverseMedia.categories.length} (${manifest.cognitiveCatalogue.adverseMedia.totalKeywords} keywords).`,
+        `Adverse-media categories: ${manifest.cognitiveCatalogue.adverseMedia.categories.length} (${manifest.cognitiveCatalogue.adverseMedia.totalKeywords} keywords). Weaponized analyser: FATF-predicate mapping, ${manifest.cognitiveCatalogue.adverseMedia.weaponized.severityTiers.join('/')} severity tiers, SAR trigger (R.20), counterfactual, investigation narrative, mode citations — active.`,
         `Doctrines: ${manifest.cognitiveCatalogue.doctrines.total} (${manifest.cognitiveCatalogue.doctrines.mandatoryInUAE} mandatory in UAE).`,
         `Red flags: ${manifest.cognitiveCatalogue.redFlags.total} (high=${manifest.cognitiveCatalogue.redFlags.bySeverity.high}, medium=${manifest.cognitiveCatalogue.redFlags.bySeverity.medium}, low=${manifest.cognitiveCatalogue.redFlags.bySeverity.low}).`,
         `Typologies: ${manifest.cognitiveCatalogue.typologies.total}.`,

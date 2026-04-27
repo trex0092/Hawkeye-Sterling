@@ -148,3 +148,11 @@ export {
   type BenfordResult,
   type BenfordRisk,
 } from './benford.js';
+export {
+  analyseAdverseMediaItems,
+  analyseAdverseMediaResult,
+  type AdverseMediaFinding,
+  type AdverseMediaSeverity,
+  type AdverseMediaRiskTier,
+  type AdverseMediaSubjectVerdict,
+} from './adverse-media-analyser.js';

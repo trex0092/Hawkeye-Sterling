@@ -19,6 +19,7 @@ import { spiderFootScan } from "../../../../dist/src/integrations/spiderfoot.js"
 import { yenteMatch } from "../../../../dist/src/integrations/yente.js";
 import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
 import { harvesterScan } from "../../../../dist/src/integrations/osintBridge.js";
+import { analyseAdverseMediaResult } from "../../../../dist/src/brain/adverse-media-analyser.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,6 +104,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         adverseCount: adverseMediaResult.adverseCount,
         highRelevanceCount: adverseMediaResult.highRelevanceCount,
         items: adverseMediaResult.items.slice(0, 10),
+        verdict: analyseAdverseMediaResult(name, adverseMediaResult),
       } : null,
       harvesterResult: harvesterResult?.ok ? {
         emails: harvesterResult.emails,
