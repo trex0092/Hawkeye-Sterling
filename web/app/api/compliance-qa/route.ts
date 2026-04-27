@@ -14,7 +14,7 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -74,24 +74,27 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const advisorReq: MlroAdvisorRequest = {
       question: body.query.trim().slice(0, 2000),
-      mode: "balanced",
-      audience: "mlro",
+      mode: "multi_perspective",
+      audience: "regulator",
       caseContext: {
         caseId: `cqa-${Date.now()}`,
         subjectName: "Regulatory Query",
         entityType: "individual",
         scope: {
-          listsChecked: ["OFAC-SDN", "UN-Consolidated", "EU-Consolidated", "UAE-EOCN"],
+          listsChecked: [
+            "OFAC-SDN", "OFAC-Non-SDN", "UN-Consolidated",
+            "EU-Consolidated", "UK-OFSI", "UAE-EOCN", "UAE-LTL",
+          ],
           listVersionDates: {},
           jurisdictions: [],
-          matchingMethods: ["exact"],
+          matchingMethods: ["exact", "levenshtein", "jaro_winkler"],
         },
         evidenceIds: [],
       },
     };
 
     try {
-      const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 40_000 });
+      const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 55_000 });
 
       if (!advisorResult.ok) {
         return NextResponse.json(
