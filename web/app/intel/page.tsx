@@ -326,7 +326,7 @@ function AdverseMediaPanel() {
 
 export default function IntelPage() {
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence">
       <ModuleHero
         eyebrow="Module 10 · Intelligence & Regulatory Feed"
         title="Intel"

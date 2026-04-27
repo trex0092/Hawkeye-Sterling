@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Header } from "./Header";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
   SidebarFilterList,
   SidebarMLROCard,
@@ -25,6 +26,10 @@ interface ModuleLayoutProps<K extends string = string> {
   detailPanel?: ReactNode | undefined;
   // Label shown on the live engine feed. Defaults to "Compliance engine".
   engineLabel?: string | undefined;
+  // Pass a module key to show a "Report to Asana" button in the sidebar.
+  // Key must match the switch in /api/module-report for correct project routing.
+  asanaModule?: string | undefined;
+  asanaLabel?: string | undefined;
 }
 
 export function ModuleLayout<K extends string = string>({
@@ -36,6 +41,8 @@ export function ModuleLayout<K extends string = string>({
   sidebarExtra,
   detailPanel,
   engineLabel = "Compliance engine",
+  asanaModule,
+  asanaLabel,
 }: ModuleLayoutProps<K>) {
   return (
     <>
@@ -60,6 +67,18 @@ export function ModuleLayout<K extends string = string>({
           )}
 
           {sidebarExtra}
+
+          {asanaModule && (
+            <SidebarSection title="Report">
+              <AsanaReportButton
+                payload={{
+                  module: asanaModule,
+                  label: asanaLabel ?? asanaModule,
+                  summary: `Module report submitted from Hawkeye Sterling dashboard — ${asanaLabel ?? asanaModule}.`,
+                }}
+              />
+            </SidebarSection>
+          )}
         </SidebarShell>
 
         <main className="px-10 py-8 overflow-y-auto">

@@ -76,7 +76,7 @@ export default function AuditTrailPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
       <div>
         <div className="mb-8">
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">

@@ -267,7 +267,7 @@ export default function ClientPortalPage() {
 
   if (submitted) {
     return (
-      <ModuleLayout>
+      <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="max-w-md w-full bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
@@ -294,7 +294,7 @@ export default function ClientPortalPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal">
       <div>
         <ModuleHero
           eyebrow="Module 13 · Self-service KYC"

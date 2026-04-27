@@ -181,7 +181,7 @@ export default function StatusPage() {
   }, []);
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="audit-trail" asanaLabel="Status">
         <ModuleHero
           eyebrow="MODULE 07 · LIVE ENDPOINT HEALTH"
           title="System"

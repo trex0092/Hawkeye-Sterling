@@ -249,7 +249,7 @@ export default function RmiPage() {
   const activeSuppliers = liveSmelters.filter((s) => s.activeSupplier).length;
 
   return (
-    <ModuleLayout engineLabel="Supply-chain compliance engine">
+    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine">
       <ModuleHero
         eyebrow="Module 26 · Supply Chain"
         title="Responsible Minerals Initiative"

@@ -1932,7 +1932,7 @@ export default function PlaybookPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="playbook" asanaLabel="Playbook">
         <ModuleHero
           eyebrow="Module 16 · Guided due-diligence"
           title="Playbook"

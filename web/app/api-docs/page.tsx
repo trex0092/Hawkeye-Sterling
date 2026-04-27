@@ -467,7 +467,7 @@ const COLOR_DEFAULT: { badge: string; bg: string; border: string } = COLOR_MAP["
 export default function ApiDocsPage() {
 
   return (
-    <ModuleLayout engineLabel="API reference">
+    <ModuleLayout asanaModule="api-docs" asanaLabel="API Documentation" engineLabel="API reference">
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 flex-wrap mb-6">
         <div>

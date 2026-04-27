@@ -223,7 +223,7 @@ export default function TransactionMonitorPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
       <ModuleHeader
             title="Transaction Monitor"
             subtitle="Module 08 · MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"

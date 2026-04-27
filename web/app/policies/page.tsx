@@ -342,7 +342,7 @@ export default function PoliciesPage() {
   const sections = Array.from(new Set(policies.map((p) => p.section)));
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="policies" asanaLabel="Policies">
         <ModuleHero
           eyebrow="Module 17 · SOP vault"
           title="Policies"

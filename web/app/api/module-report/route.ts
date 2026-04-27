@@ -25,7 +25,22 @@ function projectGidForModule(module: string): string {
     // 01 · Screening — Sanctions & Watchlists
     case "screening":
     case "ongoing-monitor":
+    case "batch":
+    case "adverse-media-lookback":
+    case "adverse-media":
       return process.env["ASANA_SCREENING_PROJECT_GID"] ?? inbox;
+
+    // 02 · Central MLRO Daily Dashboard
+    case "analytics":
+    case "oversight":
+    case "ewra":
+    case "rmi":
+      return process.env["ASANA_MLRO_DAILY_PROJECT_GID"] ?? inbox;
+
+    // 05 · STR/SAR/CTR/PMR
+    case "str-cases":
+    case "sar-qa":
+      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
 
     // 06 · FFR Incidents & Asset Freeze — forensic digit analysis
     case "benford":
@@ -35,55 +50,113 @@ function projectGidForModule(module: string): string {
     case "gleif":
     case "domain-intel":
     case "crypto-risk":
+    case "cdd-review":
+    case "ubo-declaration":
+    case "vendor-dd":
       return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
+
+    // 08 · Transaction Monitoring
+    case "transaction-monitor":
+      return process.env["ASANA_TM_PROJECT_GID"] ?? inbox;
 
     // 10 · Shipments — Tracking
     case "shipments":
       return process.env["ASANA_SHIPMENTS_PROJECT_GID"] ?? inbox;
 
-    // 15 · MLRO Workbench — advisor, investigation
+    // 15 · MLRO Workbench — advisor, investigation, AI tools
     case "mlro-advisor":
     case "investigation":
+    case "weaponized-brain":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
-    // 16 · Supply Chain, ESG & Trade — vessel compliance
+    // 16 · Supply Chain, ESG & Trade — vessel / trade compliance
     case "vessel-check":
+    case "eocn":
       return process.env["ASANA_SUPPLYCHAIN_PROJECT_GID"] ?? inbox;
 
-    // All other modules → Master Inbox
+    // All other modules (audit-trail, enforcement, intel, training, etc.) → Master Inbox
     default:
       return inbox;
   }
 }
 
 const MODULE_LABELS: Record<string, string> = {
-  benford:           "Benford Analysis",
-  gleif:             "GLEIF / LEI",
-  "domain-intel":    "Domain Intel",
-  "crypto-risk":     "Crypto Risk",
-  "vessel-check":    "Vessel Check",
-  shipments:         "Shipments",
-  "mlro-advisor":    "MLRO Advisor",
-  investigation:     "Investigation",
-  analytics:         "Analytics",
-  "ongoing-monitor": "Ongoing Monitor",
-  screening:         "Screening",
-  osint:             "OSINT",
-  workbench:         "Workbench",
+  // 01 · Screening
+  screening:              "Screening",
+  "ongoing-monitor":      "Ongoing Monitor",
+  batch:                  "Batch Screen",
+  "adverse-media-lookback": "Adverse Media Lookback",
+  "adverse-media":        "Adverse Media",
+  // 02 · MLRO Daily
+  analytics:              "Analytics",
+  oversight:              "Oversight",
+  ewra:                   "Enterprise-Wide Risk Assessment",
+  rmi:                    "Risk & Management Information",
+  // 05 · STR/SAR
+  "str-cases":            "STR / SAR Cases",
+  "sar-qa":               "SAR Quality Assurance",
+  // 06 · FFR
+  benford:                "Benford Analysis",
+  // 07 · CDD/KYC
+  gleif:                  "GLEIF / LEI",
+  "domain-intel":         "Domain Intel",
+  "crypto-risk":          "Crypto Risk",
+  "cdd-review":           "CDD Review",
+  "ubo-declaration":      "UBO Declaration",
+  "vendor-dd":            "Vendor Due Diligence",
+  // 08 · TM
+  "transaction-monitor":  "Transaction Monitor",
+  // 10 · Shipments
+  shipments:              "Shipments",
+  // 15 · MLRO Workbench
+  "mlro-advisor":         "MLRO Advisor",
+  investigation:          "Investigation",
+  "weaponized-brain":     "Weaponized Brain",
+  // 16 · Supply Chain
+  "vessel-check":         "Vessel Check",
+  eocn:                   "EOCN Trade Compliance",
+  // General
+  "audit-trail":          "Audit Trail",
+  enforcement:            "Enforcement",
+  intel:                  "OSINT Intelligence",
+  training:               "Training",
+  employees:              "Employees",
+  "client-portal":        "Client Portal",
+  corrections:            "Corrections",
+  "data-quality":         "Data Quality",
+  playbook:               "Playbook",
+  policies:               "Policies",
+  regulatory:             "Regulatory",
+  cases:                  "Cases",
 };
 
 // Project label map — shown in the task notes so the MLRO knows the destination.
 const PROJECT_BOARD: Record<string, string> = {
-  screening:         "01 · Screening — Sanctions & Watchlists",
-  "ongoing-monitor": "01 · Screening — Sanctions & Watchlists",
-  benford:           "06 · FFR Incidents & Asset Freeze",
-  gleif:             "07 · CDD/SDD/EDD/KYC",
-  "domain-intel":    "07 · CDD/SDD/EDD/KYC",
-  "crypto-risk":     "07 · CDD/SDD/EDD/KYC",
-  shipments:         "10 · Shipments — Tracking",
-  "mlro-advisor":    "15 · MLRO Workbench",
-  investigation:     "15 · MLRO Workbench",
-  "vessel-check":    "16 · Supply Chain, ESG & Trade",
+  screening:              "01 · Screening — Sanctions & Watchlists",
+  "ongoing-monitor":      "01 · Screening — Sanctions & Watchlists",
+  batch:                  "01 · Screening — Sanctions & Watchlists",
+  "adverse-media-lookback": "01 · Screening — Sanctions & Watchlists",
+  "adverse-media":        "01 · Screening — Sanctions & Watchlists",
+  analytics:              "02 · Central MLRO Daily Dashboard",
+  oversight:              "02 · Central MLRO Daily Dashboard",
+  ewra:                   "02 · Central MLRO Daily Dashboard",
+  rmi:                    "02 · Central MLRO Daily Dashboard",
+  "str-cases":            "05 · STR/SAR/CTR/PMR",
+  "sar-qa":               "05 · STR/SAR/CTR/PMR",
+  benford:                "06 · FFR Incidents & Asset Freeze",
+  gleif:                  "07 · CDD/SDD/EDD/KYC",
+  "domain-intel":         "07 · CDD/SDD/EDD/KYC",
+  "crypto-risk":          "07 · CDD/SDD/EDD/KYC",
+  "cdd-review":           "07 · CDD/SDD/EDD/KYC",
+  "ubo-declaration":      "07 · CDD/SDD/EDD/KYC",
+  "vendor-dd":            "07 · CDD/SDD/EDD/KYC",
+  "transaction-monitor":  "08 · Transaction Monitoring",
+  shipments:              "10 · Shipments — Tracking",
+  "mlro-advisor":         "15 · MLRO Workbench",
+  investigation:          "15 · MLRO Workbench",
+  "weaponized-brain":     "15 · MLRO Workbench",
+  "vessel-check":         "16 · Supply Chain, ESG & Trade",
+  eocn:                   "16 · Supply Chain, ESG & Trade",
 };
 
 interface Body {

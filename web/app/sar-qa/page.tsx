@@ -69,7 +69,7 @@ export default function SarQaPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="sar-qa" asanaLabel="SAR Quality Assurance">
         <ModuleHero
           eyebrow="Module 14 · Four-eyes peer review"
           title="SAR"

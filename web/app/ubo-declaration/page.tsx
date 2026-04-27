@@ -57,7 +57,7 @@ export default function UboDeclarationPage() {
 
   if (submitted) {
     return (
-      <ModuleLayout>
+      <ModuleLayout asanaModule="ubo-declaration" asanaLabel="UBO Declaration">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="max-w-md w-full bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
@@ -80,7 +80,7 @@ export default function UboDeclarationPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="ubo-declaration" asanaLabel="UBO Declaration">
       <div>
         <ModuleHero
           eyebrow="Module 21 · Public-facing form"
