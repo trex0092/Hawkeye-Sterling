@@ -11,6 +11,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
+interface ContextPair { q: string; a: string }
+
 interface Body {
   question: string;
   subjectName: string;
@@ -23,6 +25,37 @@ interface Body {
   adverseGroups?: string[];
   mode?: ReasoningMode;
   audience?: "regulator" | "mlro" | "board";
+  context?: ContextPair[];  // prior Q&A pairs from the session
+}
+
+// Lightweight jurisdiction signal extraction — no LLM needed.
+const JURISDICTION_SIGNALS: Array<{ tag: string; keywords: string[] }> = [
+  { tag: "UAE", keywords: ["uae", "united arab emirates", "fdl", "cbuae", "dpms", "moe circular", "goaml", "namlcftc", "dfsa", "adgm"] },
+  { tag: "US",  keywords: ["bank secrecy act", "bsa", "ofac", "fincen", "fatca", "patriot act", "finra", "us treasury"] },
+  { tag: "EU",  keywords: ["5amld", "6amld", "amld", "eu directive", "european union", "eba", "ecb", "esma"] },
+  { tag: "UK",  keywords: ["mlr 2017", "proceeds of crime", "poca", "fca", "hmrc", "sanctions regulations", "uk government"] },
+  { tag: "FATF/Global", keywords: ["fatf", "un security council", "unscr", "wolfsberg", "egmont", "basel committee"] },
+];
+
+function detectJurisdiction(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  for (const { tag, keywords } of JURISDICTION_SIGNALS) {
+    if (keywords.some((kw) => lower.includes(kw))) return tag;
+  }
+  return undefined;
+}
+
+// Build a session-context preamble so the advisor can give continuity-aware
+// answers across a long Q&A session. We cap prior pairs at 3 and truncate
+// each question/answer to keep the enriched question well under the 4000-char
+// model context limit reserved for reasoning.
+function buildContextPreamble(pairs: ContextPair[]): string {
+  if (pairs.length === 0) return "";
+  const lines = pairs
+    .slice(-3)
+    .map((p, i) => `[Prior Q${i + 1}] ${p.q.slice(0, 160)}\n[Prior A${i + 1}] ${p.a.slice(0, 320)}`)
+    .join("\n---\n");
+  return `REGULATORY SESSION CONTEXT (prior Q&A in this session — use for continuity):\n${lines}\n\nCURRENT QUESTION:\n`;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -61,18 +94,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Enrich the question with conversation context + detected jurisdiction
+  const preamble = buildContextPreamble(body.context ?? []);
+  const enrichedQuestion = `${preamble}${body.question.trim()}`.slice(0, 3500);
+
+  const detectedJurisdiction = body.jurisdiction ?? detectJurisdiction(body.question);
+
   // Build a rich evidence ID list from everything the super-brain found
   const evidenceIds = Array.from(
     new Set([
       ...(body.evidenceIds ?? []),
       ...(body.typologyIds ?? []),
       ...(body.adverseGroups ?? []).map((g) => `adverse:${g}`),
-      ...(body.jurisdiction ? [`jurisdiction:${body.jurisdiction}`] : []),
+      ...(detectedJurisdiction ? [`jurisdiction:${detectedJurisdiction}`] : []),
     ]),
   );
 
   const advisorReq: MlroAdvisorRequest = {
-    question: body.question.trim().slice(0, 2000),
+    question: enrichedQuestion,
     mode: body.mode ?? "multi_perspective",
     audience: body.audience ?? "regulator",
     caseContext: {
@@ -85,7 +124,9 @@ export async function POST(req: Request): Promise<NextResponse> {
           "EU-Consolidated", "UK-OFSI", "UAE-EOCN", "UAE-LTL",
         ],
         listVersionDates: {},
-        jurisdictions: body.jurisdiction ? [body.jurisdiction] : [],
+        jurisdictions: detectedJurisdiction
+          ? [detectedJurisdiction, ...(body.jurisdiction && body.jurisdiction !== detectedJurisdiction ? [body.jurisdiction] : [])]
+          : (body.jurisdiction ? [body.jurisdiction] : []),
         matchingMethods: body.matchingMethods ?? [
           "exact", "levenshtein", "jaro_winkler",
           "double_metaphone", "soundex", "token_set",
@@ -95,10 +136,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     },
   };
 
-  // Mode-aware budgets:
-  //   speed       → 20 s  (fast, single model)
-  //   balanced    → 40 s  (Sonnet only, no chaining)
-  //   multi_perspective → 100 s (Sonnet executor → Opus advisor — needs headroom)
   const modeBudgets: Record<string, number> = {
     speed: 8_000,
     balanced: 40_000,
@@ -106,9 +143,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
   const budgetMs = modeBudgets[body.mode ?? "multi_perspective"] ?? 100_000;
 
-  // For multi_perspective, skip RAG — the full budget goes to the
-  // Sonnet→Opus chain. RAG runs only for speed/balanced where there is
-  // spare capacity.
   const isMulti = (body.mode ?? "multi_perspective") === "multi_perspective";
   const ragPromise = isMulti
     ? Promise.resolve(null)
@@ -135,7 +169,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    // Attach RAG regulatory context when available and quality-gated
     const regulatoryContext = ragResult?.ok && ragResult.passedQualityGate ? {
       answer: ragResult.answer,
       citations: ragResult.citations,
@@ -145,7 +178,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     } : null;
 
     return NextResponse.json(
-      { ...result, ok: true, regulatoryContext },
+      { ...result, ok: true, regulatoryContext, detectedJurisdiction: detectedJurisdiction ?? null },
       { headers: gateHeaders },
     );
   } catch (err) {
