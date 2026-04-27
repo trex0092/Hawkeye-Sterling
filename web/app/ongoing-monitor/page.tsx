@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { RowActions } from "@/components/shared/RowActions";
 
 type Cadence = "daily" | "twice-daily" | "weekly" | "monthly";
 type MonitorStatus = "active" | "paused" | "overdue";
@@ -430,8 +431,12 @@ export default function OngoingMonitorPage() {
                     </td>
                     <td className="px-3 py-2 text-ink-3 text-10">{s.enrolledBy || "—"}</td>
                     <td className="px-2 py-2 text-right">
-                      <button type="button" onClick={() => remove(s.id)}
-                        className="text-ink-3 hover:text-red transition-colors"><XIcon /></button>
+                      <RowActions
+                        label={`subject ${s.id}`}
+                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        onDelete={() => remove(s.id)}
+                        confirmDelete={false}
+                      />
                     </td>
                   </tr>
                 ))}
