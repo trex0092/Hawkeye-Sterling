@@ -84,7 +84,7 @@ describe('mlro-auto-dispositioner', () => {
 describe('mlro-prefix-composer', () => {
   it('includes the charter + chained prefixes for known modes', () => {
     const c = composeSystemPrompt(['bayesian', 'reflective'], { taskRole: 'Review this subject.', audience: 'regulator' });
-    expect(c.system).toMatch(/SYSTEM ROLE: REGULATED COMPLIANCE SCREENING ASSISTANT/);
+    expect(c.system).toMatch(/COMPLIANCE & OPERATIONAL ADVISORY INTELLIGENCE/);
     expect(c.system).toMatch(/CHAINED REASONING MODES/);
     expect(c.modesApplied).toEqual(expect.arrayContaining(['bayesian', 'reflective']));
     expect(c.charterHash).toMatch(/^[0-9a-f]{8}$/);
