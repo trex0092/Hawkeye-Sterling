@@ -17,6 +17,7 @@ import { lookupLei, searchGleif } from "../../../../dist/src/integrations/gleif.
 import { domainIntel } from "../../../../dist/src/integrations/webCheck.js";
 import { spiderFootScan } from "../../../../dist/src/integrations/spiderfoot.js";
 import { yenteMatch } from "../../../../dist/src/integrations/yente.js";
+import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,8 +64,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     resolvedLei = gleifSearch[0]?.lei;
   }
 
-  // Run GLEIF chain, domain intel, yente match, and optionally SpiderFoot in parallel
-  const [gleifResult, domainResult, yenteResult, osintResult] = await Promise.all([
+  // Run all enrichment sources in parallel — all fail-soft
+  const [gleifResult, domainResult, yenteResult, osintResult, adverseMediaResult] = await Promise.all([
     resolvedLei
       ? lookupLei(resolvedLei, { maxDepth: 5 }).catch(() => null)
       : Promise.resolve(null),
@@ -75,6 +76,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     body.enableOsint && body.domain
       ? spiderFootScan(body.domain, { moduleSet: "passive", maxWaitMs: 90_000 }).catch(() => null)
       : Promise.resolve(null),
+    searchAdverseMedia(name, { limit: 20, minRelevance: 0 }).catch(() => null),
   ]);
 
   const yenteTop = Array.isArray(yenteResult) ? yenteResult[0]?.hits[0] : null;
@@ -92,6 +94,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         schema: yenteTop.schema,
       } : null,
       osint: osintResult,
+      adverseMedia: adverseMediaResult?.ok ? {
+        totalCount: adverseMediaResult.totalCount,
+        adverseCount: adverseMediaResult.adverseCount,
+        highRelevanceCount: adverseMediaResult.highRelevanceCount,
+        items: adverseMediaResult.items.slice(0, 10),
+      } : null,
       enrichedAt: new Date().toISOString(),
     },
     { status: 200, headers: { ...CORS, ...gateHeaders } },
