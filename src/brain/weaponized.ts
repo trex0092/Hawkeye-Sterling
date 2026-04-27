@@ -554,7 +554,7 @@ export function assertWeaponized(prompt: string): WeaponizationReport {
   const checks: Array<Omit<WeaponizationAssertion, 'present' | 'evidence'> & {
     match: RegExp | string;
   }> = [
-    { id: 'charter-banner', label: 'Compliance charter banner', match: 'SYSTEM ROLE: REGULATED COMPLIANCE SCREENING ASSISTANT' },
+    { id: 'charter-banner', label: 'Compliance charter banner', match: 'COMPLIANCE & OPERATIONAL ADVISORY INTELLIGENCE' },
     { id: 'prohibitions', label: 'Absolute prohibitions block', match: 'ABSOLUTE PROHIBITIONS' },
     { id: 'output-structure', label: 'Mandatory 7-section output structure', match: 'MANDATORY OUTPUT STRUCTURE' },
     { id: 'match-confidence', label: 'Match-confidence taxonomy', match: 'MATCH CONFIDENCE' },
