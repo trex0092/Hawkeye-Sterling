@@ -68,7 +68,13 @@ export default function MlroAdvisorPage() {
         return;
       }
       if (!res.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${res.status}`);
+        setError(
+          data.error ??
+          data.guidance ??
+          (res.status === 504 || res.status === 524
+            ? "Request timed out — try Speed or Balanced mode."
+            : `HTTP ${res.status}`),
+        );
       } else {
         setResult(data);
         window.requestAnimationFrame(() => {

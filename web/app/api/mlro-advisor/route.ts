@@ -105,9 +105,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!result.ok) {
+      const clientError =
+        result.error ??
+        (result.partial
+          ? "Deep reasoning budget exceeded — try Speed or Balanced mode."
+          : "Advisor pipeline failed.");
       return NextResponse.json(
-        { ...result, ok: false },
-        { status: 502, headers: gateHeaders },
+        { ...result, ok: false, error: clientError },
+        { status: result.partial ? 504 : 502, headers: gateHeaders },
       );
     }
     return NextResponse.json(
