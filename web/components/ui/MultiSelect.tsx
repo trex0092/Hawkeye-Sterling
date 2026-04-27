@@ -213,20 +213,79 @@ export function SingleSelect({
   onChange,
   placeholder = "Select…",
 }: SingleSelectProps) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 focus:outline-none focus:border-brand min-h-[40px]"
-    >
-      {!options.some((o) => o.value === value) && (
-        <option value="">{placeholder}</option>
+    <div className="relative w-full" ref={rootRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+            e.preventDefault();
+            setOpen(true);
+          } else if (e.key === "Escape") {
+            setOpen(false);
+          }
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={`w-full text-left bg-transparent border border-hair-2 rounded px-3 py-2 text-13 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
+          selected ? "text-ink-0" : "text-ink-3"
+        }`}
+      >
+        <span className="flex-1 truncate">{selected?.label ?? placeholder}</span>
+        <span
+          className={`absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 text-10 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        >
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-bg-panel border border-hair-2 rounded-lg shadow-lg max-h-[280px] overflow-y-auto"
+        >
+          {options.map((o) => {
+            const isSelected = o.value === value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-13 transition-colors ${
+                  isSelected
+                    ? "bg-brand-dim text-brand-deep font-medium"
+                    : "text-ink-1 hover:bg-brand-dim"
+                }`}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
       )}
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    </div>
   );
 }
