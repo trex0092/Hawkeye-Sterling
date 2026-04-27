@@ -146,7 +146,7 @@ export default function InvestigationPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="investigation" asanaLabel="Investigation">
         <ModuleHero
           eyebrow="Module 12 · Link Analysis"
           title="Investigation"

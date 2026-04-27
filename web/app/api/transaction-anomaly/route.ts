@@ -18,6 +18,7 @@ import type { AnomalyFeatureVector } from "../../../../dist/src/brain/streaming-
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -29,9 +30,7 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-// In-memory gate store keyed by sessionId. Each customer session maintains its
-// own streaming model state. In a multi-instance deployment, use a shared cache
-// (Redis / Netlify KV) to persist gates across function invocations.
+// In-memory gate store keyed by sessionId.
 const gateStore = new Map<string, StreamingAnomalyGate>();
 
 function getOrCreateGate(sessionId: string): StreamingAnomalyGate {
@@ -58,7 +57,6 @@ interface TransactionPayload {
     stdAmount?: number;
     txnPer7d?: number;
   };
-  // Pre-extracted features (optional — if provided, skips extraction)
   features?: AnomalyFeatureVector;
 }
 
@@ -106,8 +104,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       sessionId,
       observations: streamingGate.observations,
       score: result.score,
-      tier: result.tier,               // 'pass' | 'flag' | 'hold'
-      drivers: result.drivers,         // feature names driving the anomaly
+      tier: result.tier,
+      drivers: result.drivers,
       detail: {
         hstScore: result.hstScore,
         zScore: result.zScore,

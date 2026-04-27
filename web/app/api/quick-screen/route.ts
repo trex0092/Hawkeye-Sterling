@@ -24,6 +24,7 @@ const quickScreen = brainQuickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface QuickScreenRequestBody {
   subject?: QuickScreenSubject;

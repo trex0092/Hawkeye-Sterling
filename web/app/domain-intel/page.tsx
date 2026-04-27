@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 interface DomainIntelResult {
   ok: boolean;
@@ -61,7 +62,7 @@ export default function DomainIntelPage() {
   }
 
   return (
-    <ModuleLayout engineLabel="Domain Intel">
+    <ModuleLayout asanaModule="domain-intel" asanaLabel="Domain Intel" engineLabel="Domain Intel">
       <ModuleHero
         eyebrow="Module · Counterparty Intelligence"
         title="Domain"
@@ -101,9 +102,19 @@ export default function DomainIntelPage() {
         {result && (
           <div className="space-y-4">
             <div className={cardCls}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-14 font-semibold text-ink-0">{result.domain}</p>
-                <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${riskTone(result.riskScore).badge}`}>
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-14 font-semibold text-ink-0">{result.domain}</p>
+                  <div className="mt-2">
+                    <AsanaReportButton payload={{
+                      module: "domain-intel",
+                      label: result.domain,
+                      summary: `Domain: ${result.domain}; Risk: ${result.riskScore}/100 (${riskTone(result.riskScore).label}); Factors: ${result.riskFactors.join("; ") || "none"}`,
+                      metadata: { riskScore: result.riskScore, riskLevel: riskTone(result.riskScore).label, factors: result.riskFactors.length, spoofingRisk: result.emailSecurity?.spoofingRisk ?? "—" },
+                    }} />
+                  </div>
+                </div>
+                <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase flex-shrink-0 ml-3 ${riskTone(result.riskScore).badge}`}>
                   {riskTone(result.riskScore).label} · {result.riskScore}/100
                 </span>
               </div>

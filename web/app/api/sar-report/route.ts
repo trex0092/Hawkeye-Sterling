@@ -7,6 +7,7 @@ import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlReportCode } from ".
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // Luisa's SAR/STR board — "05 · STR/SAR/CTR/PMR GoAML Filings".
 // Overridable via ASANA_SAR_PROJECT_GID / ASANA_ASSIGNEE_GID env vars.

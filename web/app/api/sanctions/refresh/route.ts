@@ -4,6 +4,7 @@ import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // Operator-triggered sanctions-list cache invalidation.
 // Authoritative scheduled refreshes are handled by:

@@ -12,6 +12,7 @@ import type { YenteMatchQuery, YenteMatchOptions } from "../../../../dist/src/in
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -45,7 +46,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "queries must be a non-empty array" }, { status: 400, headers: CORS });
   }
 
-  // yente accepts max 100 entities per request
   if (body.queries.length > 100) {
     return NextResponse.json({ ok: false, error: "max 100 queries per request" }, { status: 400, headers: CORS });
   }

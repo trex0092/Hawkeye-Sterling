@@ -70,7 +70,7 @@ function AccessDeniedScreen({
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="max-w-md text-center p-8 bg-bg-panel border border-hair-2 rounded-xl">
           <div className="text-3xl mb-4">🔒</div>
@@ -303,7 +303,7 @@ export default function StrCasesPage() {
   if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} onRoleChange={setRole} />;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
       <ModuleHeader
             title="STR Case Management"
             subtitle="Module 05 · file without delay · no tipping-off"
@@ -329,7 +329,7 @@ export default function StrCasesPage() {
       <Card>
             <form onSubmit={openCase}>
               <CardSection title="Case identity">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                   <Field label="Case title">
                     <input
                       value={title}
@@ -346,7 +346,7 @@ export default function StrCasesPage() {
                     />
                   </Field>
                 </div>
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                   <Field label="Subject / entity">
                     <input
                       value={subject}
@@ -367,7 +367,7 @@ export default function StrCasesPage() {
               </CardSection>
 
               <CardSection title="Timing & transaction value">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
                   <Field label="Transaction amount" hint="(AED)">
                     <input
                       value={amount}
@@ -414,7 +414,7 @@ export default function StrCasesPage() {
               </CardSection>
 
               <CardSection title="Approval chain">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
                   <Field label="goAML reference">
                     <input
                       value={goamlRef}

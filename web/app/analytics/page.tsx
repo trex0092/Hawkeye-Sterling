@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="analytics" asanaLabel="Analytics">
       <div className="print:bg-white">
         <div className="print:px-6 print:py-6">
           {/* Cover band */}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // ── MLRO Advisor types ────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ export default function MlroAdvisorPage() {
   };
 
   return (
-    <ModuleLayout engineLabel="MLRO Advisor">
+    <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
       <ModuleHero
         eyebrow="Module 09 · Deep Reasoning"
         title="MLRO"
@@ -259,6 +260,12 @@ export default function MlroAdvisorPage() {
                       hash:{result.charterIntegrityHash.slice(0, 12)}
                     </span>
                   )}
+                  <AsanaReportButton payload={{
+                    module: "mlro-advisor",
+                    label: `MLRO Advisory · ${result.complianceReview.advisorVerdict.replace(/_/g, " ")}`,
+                    summary: `Verdict: ${result.complianceReview.advisorVerdict}; Mode: ${result.mode}; Issues: ${result.complianceReview.issues.length}; Elapsed: ${result.elapsedMs}ms`,
+                    metadata: { verdict: result.complianceReview.advisorVerdict, mode: result.mode, issues: result.complianceReview.issues.length },
+                  }} />
                 </div>
 
                 {result.error && (

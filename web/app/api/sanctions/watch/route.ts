@@ -19,6 +19,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 const ADAPTER_TIMEOUT_MS = 90_000;
 

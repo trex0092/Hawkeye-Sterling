@@ -8,6 +8,7 @@ import * as brain from "../../../../dist/src/brain/index.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // Derive "enhanced" metrics from the compiled brain — things the canonical
 // weaponized manifest does not expose: extended catalogues, cross-references,

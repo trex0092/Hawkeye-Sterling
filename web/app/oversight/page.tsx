@@ -620,7 +620,7 @@ export default function OversightPage() {
   const gaps = liveCirculars.filter((c) => c.disposition === "gap-identified").length;
 
   return (
-    <ModuleLayout engineLabel="Governance engine">
+    <ModuleLayout asanaModule="oversight" asanaLabel="Oversight" engineLabel="Governance engine">
       <ModuleHero
         eyebrow="Module 25 · Governance"
         title="Management"

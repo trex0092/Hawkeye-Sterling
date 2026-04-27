@@ -9,6 +9,7 @@ import type { CryptoChain } from "../../../../dist/src/integrations/cryptoRisk.j
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",

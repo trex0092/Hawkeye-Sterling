@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 interface OwnershipNode {
   lei: string;
@@ -96,7 +97,7 @@ export default function GleifPage() {
   };
 
   return (
-    <ModuleLayout engineLabel="GLEIF LEI">
+    <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI">
       <ModuleHero
         eyebrow="Module · Entity Intelligence"
         title="GLEIF"
@@ -176,9 +177,17 @@ export default function GleifPage() {
                 <p className="text-14 font-semibold text-ink-0">{leiResult.record.legalName}</p>
                 <p className="text-11 font-mono text-ink-3 mt-0.5">{leiResult.lei}</p>
               </div>
-              <span className={`text-11 px-2 py-0.5 rounded font-semibold uppercase ${STATUS_TONE[leiResult.record.registrationStatus] ?? "bg-bg-2 text-ink-3"}`}>
-                {leiResult.record.registrationStatus}
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className={`text-11 px-2 py-0.5 rounded font-semibold uppercase ${STATUS_TONE[leiResult.record.registrationStatus] ?? "bg-bg-2 text-ink-3"}`}>
+                  {leiResult.record.registrationStatus}
+                </span>
+                <AsanaReportButton payload={{
+                  module: "gleif",
+                  label: leiResult.record.legalName,
+                  summary: `LEI: ${leiResult.lei}; Status: ${leiResult.record.registrationStatus}; Jurisdiction: ${leiResult.record.jurisdiction || "—"}; Ownership chain: ${leiResult.ownershipChain.length} entities`,
+                  metadata: { lei: leiResult.lei, status: leiResult.record.registrationStatus, jurisdiction: leiResult.record.jurisdiction, chainDepth: leiResult.ownershipChain.length },
+                }} />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3 text-12">
               <div>

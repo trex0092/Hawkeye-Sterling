@@ -7,6 +7,7 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // POST /api/compliance-report
 // Body: { subject, result, superBrain?, reportingEntity?, mlro? }

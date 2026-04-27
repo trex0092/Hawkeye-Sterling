@@ -223,7 +223,7 @@ export default function TransactionMonitorPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
       <ModuleHeader
             title="Transaction Monitor"
             subtitle="Module 08 · MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
@@ -249,7 +249,7 @@ export default function TransactionMonitorPage() {
       <Card>
             <form ref={formRef} onSubmit={log}>
               <CardSection title="Transaction identity">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                   <Field label="Transaction reference">
                     <input
                       value={ref}
@@ -270,7 +270,7 @@ export default function TransactionMonitorPage() {
               </CardSection>
 
               <CardSection title="Amount & timing">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
                   <Field label="Amount" hint="(AED)">
                     <input
                       value={amount}
@@ -297,7 +297,7 @@ export default function TransactionMonitorPage() {
               </CardSection>
 
               <CardSection title="Channel & routing">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
                   <Field label="Channel">
                     <SingleSelect
                       options={TM_CHANNELS}
@@ -321,7 +321,7 @@ export default function TransactionMonitorPage() {
                     />
                   </Field>
                 </div>
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                   <Field label="Payment method / rails">
                     <input
                       value={paymentRails}

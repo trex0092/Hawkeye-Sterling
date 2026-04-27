@@ -13,6 +13,7 @@ import { variantsOf } from "../../../../dist/src/brain/translit.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // Free, no-key news crawl via Google News RSS.
 // Optional upgrade path: set NEWSAPI_KEY for higher-quality coverage.

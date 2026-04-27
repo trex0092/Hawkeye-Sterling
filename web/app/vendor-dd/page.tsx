@@ -108,7 +108,7 @@ export default function SupplierDdPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="vendor-dd" asanaLabel="Vendor Due Diligence">
       <ModuleHero
         eyebrow="Module 20 · Supply-chain DD"
         title="Supplier"

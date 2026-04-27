@@ -161,7 +161,11 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   });
 
   const brainScore =
-    screening.status === "success" ? screening.result.topScore : null;
+    superBrain.status === "success"
+      ? superBrain.result.composite.score
+      : screening.status === "success"
+        ? screening.result.topScore
+        : null;
   const brainSeverity =
     screening.status === "success" ? screening.result.severity : null;
   const effectiveScore = brainScore ?? subject.riskScore;
@@ -1311,7 +1315,6 @@ function SuperBrainPanel({
         newsDossier={news.status === "success" ? news.result : null}
       />
       <BrainReasoningChain result={r} />
-      <BrainCausalChain result={r} />
       <BrainOutcomeForecast result={r} />
       <BrainSourceTriangulation result={r} />
       <BrainTypologyConfidence result={r} />

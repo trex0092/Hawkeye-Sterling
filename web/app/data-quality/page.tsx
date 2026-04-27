@@ -59,7 +59,7 @@ export default function DataQualityPage() {
       : Math.round(rows.reduce((a, r) => a + r.score, 0) / rows.length);
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="data-quality" asanaLabel="Data Quality">
         <ModuleHero
           eyebrow="Module 19 · Per-subject completeness"
           title="Data"

@@ -4,6 +4,7 @@ import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 interface EnrolledSubject {
   id: string;

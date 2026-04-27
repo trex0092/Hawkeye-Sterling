@@ -714,7 +714,7 @@ export default function EnforcementPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="enforcement" asanaLabel="Enforcement">
         <ModuleHero
           eyebrow="Module 18 · Regulatory calendar"
           title="Enforcement"

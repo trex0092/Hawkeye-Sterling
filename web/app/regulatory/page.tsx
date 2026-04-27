@@ -502,7 +502,7 @@ export default function RegulatoryPage() {
   }, [query, activeTag]);
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="regulatory" asanaLabel="Regulatory">
         <ModuleHero
           eyebrow="Module 11 · Regulatory Reference"
           title="Regulatory"

@@ -5,14 +5,25 @@ import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // MLRO triage inbox — "00 · Master Inbox". All form submissions land here
 // first; MLRO routes them to downstream Projects 01–19.
-// Overridable via ASANA_PROJECT_GID / ASANA_WORKSPACE_GID / ASANA_ASSIGNEE_GID
-// env vars in Netlify → Site settings → Environment variables.
-const DEFAULT_PROJECT_GID   = "1214148630166524"; // Project 00 — Master Inbox
+// Route: ASANA_SCREENING_PROJECT_GID → 01 · Screening — Sanctions & Watchlists
+// Fallback: ASANA_PROJECT_GID → Master Inbox (00)
+const DEFAULT_PROJECT_GID   = "1214148630166524"; // 00 · Master Inbox (fallback only)
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
 const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda — primary MLRO
+
+// Resolve the screening project GID: dedicated board first, then legacy
+// ASANA_PROJECT_GID, then hardcoded Master Inbox as last resort.
+function screeningProjectGid(): string {
+  return (
+    process.env["ASANA_SCREENING_PROJECT_GID"] ??
+    process.env["ASANA_PROJECT_GID"] ??
+    DEFAULT_PROJECT_GID
+  );
+}
 
 // Asana custom field GIDs. The Asana API requires numeric GID keys, not
 // human-readable names. Without GIDs the fields are silently ignored on
@@ -436,7 +447,7 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
           data: {
             name,
             notes,
-            projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
+            projects: [screeningProjectGid()],
             workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
             assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
             ...(customFields ? { custom_fields: customFields } : {}),
@@ -459,7 +470,7 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
         asanaStatus: asanaRes.status,
         asanaError: msg,
         asanaFullErrors: payload?.errors,
-        projectGid: process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID,
+        projectGid: screeningProjectGid(),
         workspaceGid: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
         assigneeGid: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
       });

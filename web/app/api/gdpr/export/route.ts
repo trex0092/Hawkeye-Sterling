@@ -4,6 +4,7 @@ import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 // GDPR Article 15 — Right of access. The platform persists three classes
 // of tenant-linked data: enrolled subjects (ongoing/subject/*), ongoing

@@ -393,7 +393,7 @@ export default function BatchPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
       <div>
         <div className="mb-8">
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">

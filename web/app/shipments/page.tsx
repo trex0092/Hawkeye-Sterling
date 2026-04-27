@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // Operator-saved deletes persist to localStorage so the working register
 // survives reload. The seed CONSIGNMENTS array stays the system-of-record;
@@ -653,6 +654,7 @@ export default function ShipmentsPage() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [customRows, setCustomRows] = useState<Consignment[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [releasedIds, setReleasedIds] = useState<string[]>([]);
 
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
@@ -664,8 +666,12 @@ export default function ShipmentsPage() {
     () => [
       ...CONSIGNMENTS.filter((c) => !deletedIds.includes(c.id)),
       ...customRows.filter((c) => !deletedIds.includes(c.id)),
-    ],
-    [deletedIds, customRows],
+    ].map((c) =>
+      releasedIds.includes(c.id)
+        ? { ...c, status: "delivered" as ShipmentStatus, rggStep: 5 as const, transitProgress: 100, assayPending: false }
+        : c
+    ),
+    [deletedIds, customRows, releasedIds],
   );
 
   const onAddRow = (row: Consignment) => {
@@ -708,7 +714,7 @@ export default function ShipmentsPage() {
   const totalKg = live.filter((c) => c.status !== "delivered").reduce((s, c) => s + c.grossWeightKg, 0);
 
   return (
-    <ModuleLayout engineLabel="Bullion compliance engine">
+    <ModuleLayout asanaModule="shipments" asanaLabel="Shipments" engineLabel="Bullion compliance engine">
       <ModuleHero
         eyebrow="Module 24 · Bullion Logistics"
         title="Bullion chain-of-custody"
@@ -880,9 +886,17 @@ export default function ShipmentsPage() {
                 <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
                   Consignment manifest — {detail.id}
                 </span>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${STATUS_TONE[detail.status]}`}>
-                  {STATUS_LABEL[detail.status]}
-                </span>
+                <div className="flex items-center gap-2">
+                  <AsanaReportButton payload={{
+                    module: "shipments",
+                    label: `${detail.id} · ${detail.refinery}`,
+                    summary: `Consignment: ${detail.id}; Refinery: ${detail.refinery}; Origin: ${detail.miningCountry}; Status: ${detail.status}; USD value: $${detail.usdValue.toLocaleString()}; Weight: ${detail.grossWeightKg} kg`,
+                    metadata: { id: detail.id, refinery: detail.refinery, status: detail.status, usdValue: detail.usdValue, direction: detail.direction, originCountry: detail.originCountry },
+                  }} />
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${STATUS_TONE[detail.status]}`}>
+                    {STATUS_LABEL[detail.status]}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-12">
@@ -981,7 +995,7 @@ export default function ShipmentsPage() {
                   <button
                     type="button"
                     className="shrink-0 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
-                    onClick={() => {}}
+                    onClick={() => setReleasedIds((prev) => prev.includes(detail.id) ? prev : [...prev, detail.id])}
                   >
                     Authorise release
                   </button>

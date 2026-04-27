@@ -20,6 +20,7 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -30,10 +31,6 @@ const CORS: Record<string, string> = {
 export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
-
-// ---------------------------------------------------------------------------
-// Body shapes per tool
-// ---------------------------------------------------------------------------
 
 interface SherlockBody { tool: "sherlock"; username: string }
 interface MaigretBody { tool: "maigret"; username: string; sites?: number }
@@ -84,7 +81,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Dispatch to the correct integration function
   let result: unknown;
   const tool = body.tool;
 

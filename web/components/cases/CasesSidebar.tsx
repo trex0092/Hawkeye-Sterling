@@ -5,6 +5,7 @@ import {
   SidebarSection,
   SidebarShell,
 } from "@/components/layout/SidebarParts";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import type { CaseFilter, CaseFilterKey } from "@/lib/types";
 
 interface CasesSidebarProps {
@@ -25,6 +26,16 @@ export function CasesSidebar({
           items={filters}
           activeKey={activeFilter}
           onSelect={onFilterChange}
+        />
+      </SidebarSection>
+
+      <SidebarSection title="Report">
+        <AsanaReportButton
+          payload={{
+            module: "cases",
+            label: "Cases",
+            summary: "Module report submitted from Hawkeye Sterling dashboard — Cases.",
+          }}
         />
       </SidebarSection>
 

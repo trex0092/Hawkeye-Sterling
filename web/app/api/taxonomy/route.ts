@@ -6,6 +6,7 @@ import { PLAYBOOKS } from "@/lib/data/playbooks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 async function handleTaxonomy(): Promise<NextResponse> {
   return NextResponse.json({

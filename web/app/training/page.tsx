@@ -238,7 +238,7 @@ export default function TrainingPage() {
     setDraft((d) => ({ ...d, [k]: e.target.value }));
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="training" asanaLabel="Training">
       <ModuleHero
           eyebrow="Module 15 · Staff certification"
           title="Training"

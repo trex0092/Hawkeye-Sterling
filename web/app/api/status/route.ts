@@ -19,6 +19,7 @@ async function safe<T>(label: string, fn: () => Promise<T> | T, fallback: T): Pr
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 const STARTED_AT = new Date().toISOString();
 

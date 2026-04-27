@@ -8,6 +8,7 @@ import { lookupLei, searchGleif } from "../../../../dist/src/integrations/gleif.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",

@@ -184,7 +184,7 @@ export default function EmployeesPage() {
   const expiring = employees.filter((e) => overallStatus(e) === "expiring").length;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="employees" asanaLabel="Employees">
         <ModuleHero
           eyebrow="Module 16 · HR registry"
           title="Employee"

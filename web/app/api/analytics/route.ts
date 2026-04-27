@@ -7,6 +7,7 @@ import { DPMS_KPIS } from "../../../../dist/src/brain/dpms-kpis.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface SchedulePreview {
   subjectId: string;
@@ -27,6 +28,7 @@ async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promis
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
+  try {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
@@ -116,4 +118,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     },
     { headers: gate.headers },
   );
+  } catch (err) {
+    console.error("[analytics] unhandled error", err);
+    return NextResponse.json({ ok: false, error: "Analytics unavailable" }, { status: 500 });
+  }
 }
