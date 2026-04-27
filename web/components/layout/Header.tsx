@@ -37,6 +37,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Domain Intel", href: "/domain-intel", hint: "WHOIS, malware, SSL risk scoring" },
       { label: "Crypto Risk", href: "/crypto-risk", hint: "AML taint analysis for ETH/BTC/TRX" },
       { label: "Vessel Check", href: "/vessel-check", hint: "IMO sanctions & ownership" },
+      { label: "OSINT", href: "/osint", hint: "Domain harvest, username & social search" },
+      { label: "Compliance Q&A", href: "/compliance-qa", hint: "Regulatory Q&A grounded in UAE AML law" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
       { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "Status", href: "/status", hint: "Live endpoint health" },
