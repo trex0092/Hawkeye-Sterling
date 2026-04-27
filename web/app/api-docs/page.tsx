@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import "swagger-ui-react/swagger-ui.css";
 
-const SWAGGER_CSS_URL =
-  "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css";
-const SWAGGER_BUNDLE_URL =
-  "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js";
+// Load swagger-ui-react without SSR — it references window/document internally.
+const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 
 // Brand-aligned overrides layered on top of swagger-ui.css.
 // The goal: dark surface that matches bg-panel / ink tokens; pink accents
@@ -466,48 +465,6 @@ const COLOR_MAP: Record<string, { badge: string; bg: string; border: string }> =
 const COLOR_DEFAULT: { badge: string; bg: string; border: string } = COLOR_MAP["blue"] ?? { badge: "bg-blue/10 text-blue border-blue/20", bg: "bg-blue/5", border: "border-blue/15" };
 
 export default function ApiDocsPage() {
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = SWAGGER_CSS_URL;
-    document.head.appendChild(link);
-
-    const style = document.createElement("style");
-    style.textContent = CUSTOM_STYLES;
-    document.head.appendChild(style);
-
-    const bundle = document.createElement("script");
-    bundle.src = SWAGGER_BUNDLE_URL;
-    bundle.crossOrigin = "anonymous";
-    bundle.onload = () => {
-      const w = window as unknown as {
-        SwaggerUIBundle?: (opts: Record<string, unknown>) => void;
-      };
-      if (w.SwaggerUIBundle) {
-        w.SwaggerUIBundle({
-          url: "/openapi.json",
-          dom_id: "#swagger-root",
-          docExpansion: "list",
-          defaultModelsExpandDepth: -1,
-          persistAuthorization: true,
-          filter: true,
-          tryItOutEnabled: false,
-          displayRequestDuration: true,
-          syntaxHighlight: { activated: true, theme: "agate" },
-        });
-        setLoaded(true);
-      }
-    };
-    document.body.appendChild(bundle);
-
-    return () => {
-      link.remove();
-      style.remove();
-      bundle.remove();
-    };
-  }, []);
 
   return (
     <ModuleLayout engineLabel="API reference">
@@ -581,16 +538,18 @@ export default function ApiDocsPage() {
       </div>
 
       {/* ── Swagger UI mount ──────────────────────────────────────────── */}
-      {!loaded && (
-        <div className="flex items-center justify-center py-20 gap-3 text-ink-3 text-12 font-mono">
-          <span
-            className="w-2 h-2 rounded-full bg-brand"
-            style={{ animation: "live-pulse 1.4s ease-in-out infinite" }}
-          />
-          Loading API reference…
-        </div>
-      )}
-      <div id="swagger-root" />
+      <style>{CUSTOM_STYLES}</style>
+      <div id="swagger-root">
+        <SwaggerUI
+          url="/openapi.json"
+          docExpansion="list"
+          defaultModelsExpandDepth={-1}
+          persistAuthorization={true}
+          filter={true}
+          tryItOutEnabled={false}
+          displayRequestDuration={true}
+        />
+      </div>
     </ModuleLayout>
   );
 }

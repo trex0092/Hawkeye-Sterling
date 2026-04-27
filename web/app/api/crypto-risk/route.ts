@@ -1,10 +1,6 @@
 // POST /api/crypto-risk
-// Cryptocurrency wallet AML risk scoring.
-// Supports Januus (free, currently paused), Chainalysis KYT, and Elliptic Lens.
-// Auto-detects chain from address format (ETH/BTC/TRX).
-// Returns risk score 0–100, taint exposure breakdown, and entity labels.
-//
-// Body: { address: string, chain?: "ethereum" | "bitcoin" | "tron" }
+// Crypto wallet AML risk scoring — taint analysis for ETH/BTC/TRX.
+// Body: { address: string; chain?: "ethereum" | "bitcoin" | "tron" }
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -24,36 +20,32 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-const VALID_CHAINS: CryptoChain[] = ["ethereum", "bitcoin", "tron", "unknown"];
+interface CryptoRiskBody {
+  address?: string;
+  chain?: CryptoChain;
+}
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok && gate.response.status === 429) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
 
-  let body: { address?: string; chain?: string };
+  let body: CryptoRiskBody;
   try {
-    body = (await req.json()) as { address?: string; chain?: string };
+    body = (await req.json()) as CryptoRiskBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  const address = body.address?.trim();
-  if (!address || address.length < 26 || address.length > 100) {
-    return NextResponse.json(
-      { ok: false, error: "address must be a valid crypto wallet address" },
-      { status: 400, headers: CORS },
-    );
+  if (!body.address?.trim()) {
+    return NextResponse.json({ ok: false, error: "address is required" }, { status: 400, headers: CORS });
   }
 
-  const chain = VALID_CHAINS.includes(body.chain as CryptoChain)
-    ? (body.chain as CryptoChain)
-    : undefined;
+  const result = await scoreWallet(body.address.trim(), { chain: body.chain });
 
-  const result = await scoreWallet(address, { chain });
+  if (!result.ok && result.error?.includes("not configured")) {
+    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+  }
 
-  return NextResponse.json(result, {
-    status: result.ok ? 200 : result.provider === "unavailable" ? 503 : 502,
-    headers: { ...CORS, ...gateHeaders },
-  });
+  return NextResponse.json(result, { status: result.ok ? 200 : 502, headers: { ...CORS, ...gateHeaders } });
 }

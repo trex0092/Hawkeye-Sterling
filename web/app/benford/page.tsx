@@ -67,7 +67,7 @@ export default function BenfordPage() {
 
   function parseAmounts(): number[] {
     return input
-      .split(/[\n,;|\t\s]+/)
+      .split(/[\n;|\t\s]+/)
       .map((s) => parseFloat(s.replace(/[^0-9.-]/g, "")))
       .filter((n) => isFinite(n) && n > 0);
   }

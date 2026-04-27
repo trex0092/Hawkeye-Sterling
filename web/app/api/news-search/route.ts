@@ -330,7 +330,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (q.length > MAX_Q_LENGTH) {
     return NextResponse.json(
       { ok: false, error: "query `q` too long" },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
 

@@ -1,6 +1,6 @@
-// GET  /api/gleif?lei=<LEI>&depth=<1-10>   — LEI record + ownership chain
-// GET  /api/gleif?q=<name>&limit=<n>       — search by legal name
-// Calls the GLEIF public REST API (no auth required).
+// POST /api/gleif
+// GLEIF LEI lookup — returns entity record and ownership chain.
+// Body: { lei: string; maxDepth?: number } | { query: string; limit?: number }
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET, OPTIONS",
+  "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };
 
@@ -19,41 +19,41 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-export async function GET(req: Request): Promise<NextResponse> {
+interface GleifBody {
+  lei?: string;
+  maxDepth?: number;
+  query?: string;
+  limit?: number;
+}
+
+export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok && gate.response.status === 429) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
 
-  const url = new URL(req.url);
-  const lei = url.searchParams.get("lei")?.trim();
-  const query = url.searchParams.get("q")?.trim();
-  const depth = parseInt(url.searchParams.get("depth") ?? "5", 10);
-  const limit = parseInt(url.searchParams.get("limit") ?? "10", 10);
-
-  if (lei) {
-    if (!/^[A-Z0-9]{20}$/.test(lei)) {
-      return NextResponse.json(
-        { ok: false, error: "LEI must be exactly 20 uppercase alphanumeric characters" },
-        { status: 400, headers: CORS },
-      );
-    }
-    const result = await lookupLei(lei, { maxDepth: Math.min(10, Math.max(1, depth)) });
-    return NextResponse.json(result, {
-      status: result.ok ? 200 : 404,
-      headers: { ...CORS, ...gateHeaders },
-    });
+  let body: GleifBody;
+  try {
+    body = (await req.json()) as GleifBody;
+  } catch {
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  if (query) {
-    const results = await searchGleif(query, Math.min(50, Math.max(1, limit)));
-    return NextResponse.json(
-      { ok: true, results, total: results.length },
-      { status: 200, headers: { ...CORS, ...gateHeaders } },
-    );
+  // Name search mode
+  if (body.query?.trim()) {
+    const results = await searchGleif(body.query.trim(), body.limit ?? 20);
+    return NextResponse.json({ ok: true, results }, { status: 200, headers: { ...CORS, ...gateHeaders } });
   }
 
-  return NextResponse.json(
-    { ok: false, error: "Provide ?lei=<LEI> or ?q=<name>" },
-    { status: 400, headers: CORS },
-  );
+  // LEI lookup mode
+  if (!body.lei?.trim()) {
+    return NextResponse.json({ ok: false, error: "lei or query is required" }, { status: 400, headers: CORS });
+  }
+
+  const result = await lookupLei(body.lei.trim(), { maxDepth: body.maxDepth ?? 3 });
+
+  if (!result.ok && result.error?.includes("not configured")) {
+    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+  }
+
+  return NextResponse.json(result, { status: result.ok ? 200 : 502, headers: { ...CORS, ...gateHeaders } });
 }

@@ -1,8 +1,5 @@
 // POST /api/domain-intel
-// Domain intelligence via web-check (Lissy93/web-check).
-// Fetches WHOIS age, malware flags, email security, SSL, and domain rank.
-// Computes a composite AML risk score (0–100) with named risk factors.
-//
+// Domain intelligence — WHOIS, malware, email security, SSL, risk score.
 // Body: { domain: string }
 
 import { NextResponse } from "next/server";
@@ -22,29 +19,31 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-const DOMAIN_RE = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+interface DomainIntelBody {
+  domain?: string;
+}
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok && gate.response.status === 429) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
 
-  let body: { domain?: string };
+  let body: DomainIntelBody;
   try {
-    body = (await req.json()) as { domain?: string };
+    body = (await req.json()) as DomainIntelBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  const domain = body.domain?.trim().toLowerCase();
-  if (!domain || !DOMAIN_RE.test(domain)) {
-    return NextResponse.json({ ok: false, error: "invalid domain name" }, { status: 400, headers: CORS });
+  if (!body.domain?.trim()) {
+    return NextResponse.json({ ok: false, error: "domain is required" }, { status: 400, headers: CORS });
   }
 
-  const result = await domainIntel(domain);
+  const result = await domainIntel(body.domain.trim());
 
-  return NextResponse.json(result, {
-    status: result.ok ? 200 : 503,
-    headers: { ...CORS, ...gateHeaders },
-  });
+  if (!result.ok && result.error?.includes("not configured")) {
+    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+  }
+
+  return NextResponse.json(result, { status: result.ok ? 200 : 502, headers: { ...CORS, ...gateHeaders } });
 }

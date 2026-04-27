@@ -68,12 +68,13 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  const gateHeaders = gate.headers;
 
   let body: Partial<CorrectionRequest>;
   try {
     body = (await req.json()) as Partial<CorrectionRequest>;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
   if (!body.subjectName || !body.requesterEmail || !body.claim) {
     return NextResponse.json(
@@ -81,7 +82,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         error: "subjectName, requesterEmail and claim are required",
       },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
   const submittedAt = new Date().toISOString();

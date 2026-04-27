@@ -41,12 +41,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!Array.isArray(body.amounts) || body.amounts.length === 0) {
     return NextResponse.json({ ok: false, error: "amounts array is required" }, { status: 400, headers: CORS });
   }
+  if (!body.amounts.every((a) => typeof a === "number" && isFinite(a))) {
+    return NextResponse.json({ ok: false, error: "amounts must be finite numbers" }, { status: 400, headers: CORS });
+  }
 
   const result = analyseBenford({
     amounts: body.amounts,
     ...(body.label !== undefined ? { label: body.label } : {}),
   });
 
-  const status = result.ok ? 200 : result.risk === "insufficient-data" ? 422 : 200;
+  const status = result.ok ? 200 : result.risk === "insufficient-data" ? 422 : 400;
   return NextResponse.json(result, { status, headers: { ...CORS, ...gateHeaders } });
 }

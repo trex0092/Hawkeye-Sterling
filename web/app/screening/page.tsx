@@ -18,6 +18,77 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
 
+// ── Adverse Media types ───────────────────────────────────────────────────────
+
+type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical";
+
+interface AdverseMediaFinding {
+  itemId: string;
+  title: string;
+  source: string;
+  published: string;
+  url?: string;
+  severity: "critical" | "high" | "medium" | "low" | "clear";
+  categories: string[];
+  keywords: string[];
+  fatfRecommendations: string[];
+  fatfPredicates: string[];
+  reasoningModes: string[];
+  narrative: string;
+  relevanceScore: number;
+  isSarCandidate: boolean;
+}
+
+interface AdverseMediaVerdict {
+  subject: string;
+  riskTier: AdverseRiskTier;
+  riskDetail: string;
+  totalItems: number;
+  adverseItems: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  sarRecommended: boolean;
+  sarBasis: string;
+  confidenceTier: "high" | "medium" | "low";
+  confidenceBasis: string;
+  counterfactual: string;
+  investigationLines: string[];
+  findings: AdverseMediaFinding[];
+  fatfRecommendations: string[];
+  categoryBreakdown: Array<{ categoryId: string; displayName: string; count: number; severity: string }>;
+  analysedAt: string;
+  modesCited: string[];
+}
+
+interface AdverseMediaApiResponse {
+  ok: boolean;
+  totalCount?: number;
+  adverseCount?: number;
+  highRelevanceCount?: number;
+  verdict?: AdverseMediaVerdict;
+  error?: string;
+}
+
+const ADVERSE_TIER_STYLE: Record<AdverseRiskTier, string> = {
+  critical: "bg-red-dim text-red border border-red/30",
+  high:     "bg-red-dim text-red border border-red/30",
+  medium:   "bg-amber-dim text-amber border border-amber/30",
+  low:      "bg-amber-dim text-amber border border-amber/30",
+  clear:    "bg-green-dim text-green border border-green/30",
+};
+
+const ADVERSE_SEV_STYLE: Record<string, string> = {
+  critical: "bg-red-dim text-red",
+  high:     "bg-red-dim text-red",
+  medium:   "bg-amber-dim text-amber",
+  low:      "bg-amber-dim text-amber",
+  clear:    "bg-green-dim text-green",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CRITICAL_THRESHOLD = 85;
 const SLA_BREACH_THRESHOLD_H = 24;
 
@@ -391,6 +462,17 @@ export default function ScreeningPage() {
   // Subject IDs whose quick-screen call returned an error. Cleared on re-screen or delete.
   const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
+  // Page-level tab: "queue" shows the normal screening queue; "adverse-media" shows the media intel search
+  const [pageTab, setPageTab] = useState<"queue" | "adverse-media">("queue");
+
+  // Adverse Media state
+  const [amSubject, setAmSubject] = useState("");
+  const [amDateFrom, setAmDateFrom] = useState("");
+  const [amLoading, setAmLoading] = useState(false);
+  const [amResult, setAmResult] = useState<AdverseMediaApiResponse | null>(null);
+  const [amError, setAmError] = useState<string | null>(null);
+  const [amExpanded, setAmExpanded] = useState<string | null>(null);
+
   useEffect(() => {
     const loaded = loadSubjects();
     setSubjects(loaded);
@@ -584,6 +666,24 @@ export default function ScreeningPage() {
     }
   };
 
+  const searchAdverseMedia = async () => {
+    if (!amSubject.trim()) return;
+    setAmLoading(true); setAmError(null); setAmResult(null);
+    try {
+      const body: Record<string, unknown> = { subject: amSubject.trim(), limit: 50 };
+      if (amDateFrom) body.dateFrom = amDateFrom;
+      const res = await fetch("/api/adverse-media", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json() as AdverseMediaApiResponse;
+      if (!data.ok) setAmError(data.error ?? "Search failed");
+      else setAmResult(data);
+    } catch { setAmError("Request failed"); }
+    finally { setAmLoading(false); }
+  };
+
   const handleDelete = (id: string) => {
     setSubjects((prev) => prev.filter((s) => s.id !== id));
     // Update selection outside the setSubjects callback so it reads the
@@ -613,10 +713,25 @@ export default function ScreeningPage() {
       ? Math.round(subjects.reduce((sum, s) => sum + s.riskScore, 0) / subjects.length)
       : 0;
 
+  const amVerdict = amResult?.verdict;
+  const amTabCls = (active: boolean) =>
+    `px-3 py-2 text-12 font-medium border-b-2 transition-colors ${
+      active ? "border-brand text-brand" : "border-transparent text-ink-3 hover:text-ink-1"
+    }`;
+
   return (
     <>
       <Header />
-      <div
+      <div className="flex items-center gap-1 px-6 bg-bg-panel border-b border-hair-2">
+        <button type="button" onClick={() => setPageTab("queue")} className={amTabCls(pageTab === "queue")}>
+          Screening Queue
+        </button>
+        <button type="button" onClick={() => setPageTab("adverse-media")} className={amTabCls(pageTab === "adverse-media")}>
+          Adverse Media Intelligence
+        </button>
+      </div>
+
+      {pageTab === "queue" && <div
         className="grid min-h-[calc(100vh-84px)]"
         style={{ gridTemplateColumns: "220px 1fr 480px" }}
       >
@@ -676,7 +791,213 @@ export default function ScreeningPage() {
             <ActivityFeed />
           </aside>
         )}
-      </div>
+      </div>}
+
+      {pageTab === "adverse-media" && (
+        <main className="max-w-5xl mx-auto px-10 py-8">
+          <div className="mb-6">
+            <h2 className="text-32 font-display font-normal text-ink-0 leading-tight">
+              Adverse Media <em className="italic text-brand">intelligence.</em>
+            </h2>
+            <p className="text-13 text-ink-2 mt-1">
+              Weaponized MLRO pipeline — Taranis AI feed → 1 066-keyword taxonomy → FATF predicate mapping → SAR trigger (R.20)
+            </p>
+          </div>
+
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 mb-6">
+            <div className="flex gap-3 flex-wrap">
+              <input
+                className="flex-1 min-w-48 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                placeholder="Subject name — individual, company, or vessel"
+                value={amSubject}
+                onChange={(e) => setAmSubject(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void searchAdverseMedia()}
+              />
+              <input
+                type="date"
+                className="px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 text-ink-2 focus:outline-none focus:border-brand"
+                value={amDateFrom}
+                onChange={(e) => setAmDateFrom(e.target.value)}
+                title="From date (optional)"
+              />
+              <button
+                type="button"
+                onClick={() => { void searchAdverseMedia(); }}
+                disabled={amLoading || !amSubject.trim()}
+                className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+              >
+                {amLoading ? "Searching…" : "Search"}
+              </button>
+            </div>
+          </div>
+
+          {amLoading && (
+            <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center">
+              <span className="animate-pulse font-mono text-brand">●</span>
+              Adverse media pipeline running…
+            </div>
+          )}
+
+          {amError && (
+            <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red mb-4">
+              <span className="font-semibold">Error:</span> {amError}
+            </div>
+          )}
+
+          {amVerdict && (
+            <div className="space-y-4">
+              <div className={`border-2 rounded-xl p-5 ${amVerdict.riskTier === "critical" || amVerdict.riskTier === "high" ? "border-red/40" : amVerdict.riskTier === "medium" ? "border-amber/40" : "border-hair-2"}`}>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="text-16 font-semibold text-ink-0">{amVerdict.subject}</h3>
+                    <p className="text-12 text-ink-2 mt-0.5">{amVerdict.riskDetail}</p>
+                  </div>
+                  <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${ADVERSE_TIER_STYLE[amVerdict.riskTier]}`}>
+                    {amVerdict.riskTier}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-5 gap-3 mb-4">
+                  {[
+                    { label: "Total", value: amVerdict.totalItems },
+                    { label: "Adverse", value: amVerdict.adverseItems },
+                    { label: "Critical", value: amVerdict.criticalCount },
+                    { label: "High", value: amVerdict.highCount },
+                    { label: "Medium", value: amVerdict.mediumCount },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-bg-1 border border-hair-2 rounded p-2 text-center">
+                      <div className="text-18 font-mono font-semibold text-ink-0">{value}</div>
+                      <div className="text-10 text-ink-3 uppercase tracking-wide-3">{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {amVerdict.sarRecommended && (
+                  <div className="bg-red-dim border border-red/30 rounded-lg p-3 mb-3">
+                    <span className="text-12 font-bold text-red uppercase">SAR RECOMMENDED (FATF R.20)</span>
+                    <p className="text-11 text-red/80 mt-1 leading-relaxed">{amVerdict.sarBasis}</p>
+                  </div>
+                )}
+
+                {amVerdict.fatfRecommendations.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {amVerdict.fatfRecommendations.map((r) => (
+                      <span key={r} className="text-11 bg-brand-dim text-brand border border-brand/30 px-2 py-0.5 rounded font-mono">{r}</span>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-11 text-ink-3">
+                  Confidence: <span className="font-semibold text-ink-1">{amVerdict.confidenceTier.toUpperCase()}</span> — {amVerdict.confidenceBasis}
+                </p>
+              </div>
+
+              {amVerdict.investigationLines.length > 0 && (
+                <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
+                  <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Investigation Actions</div>
+                  <ol className="space-y-1.5">
+                    {amVerdict.investigationLines.map((line, i) => (
+                      <li key={i} className="flex gap-2 text-12 text-ink-1">
+                        <span className="text-ink-3 font-mono text-11 flex-shrink-0">{i + 1}.</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {amVerdict.categoryBreakdown.length > 0 && (
+                <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
+                  <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Category Breakdown</div>
+                  <div className="space-y-2">
+                    {amVerdict.categoryBreakdown.map((c) => (
+                      <div key={c.categoryId} className="flex items-center justify-between text-12">
+                        <span className="text-ink-1">{c.displayName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-10 px-1.5 py-0.5 rounded font-semibold ${ADVERSE_SEV_STYLE[c.severity] ?? "bg-bg-2 text-ink-3"}`}>{c.severity}</span>
+                          <span className="text-11 font-bold text-ink-2 w-4 text-right">{c.count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-amber-dim border border-amber/30 rounded-xl p-4">
+                <p className="text-11 font-semibold text-amber mb-1">Counterfactual Assessment</p>
+                <p className="text-11 text-amber/80 leading-relaxed">{amVerdict.counterfactual}</p>
+              </div>
+
+              {amVerdict.findings.length > 0 && (
+                <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+                  <div className="px-5 py-3 border-b border-hair-2">
+                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+                      Adverse Findings ({amVerdict.findings.length})
+                    </div>
+                  </div>
+                  <div className="divide-y divide-hair">
+                    {amVerdict.findings.map((f) => (
+                      <div key={f.itemId} className="p-4">
+                        <button
+                          type="button"
+                          className="w-full text-left flex items-start gap-3"
+                          onClick={() => setAmExpanded(amExpanded === f.itemId ? null : f.itemId)}
+                        >
+                          <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${f.severity === "critical" || f.severity === "high" ? "bg-red" : f.severity === "medium" || f.severity === "low" ? "bg-amber" : "bg-green"}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className={`text-10 font-bold px-1.5 py-px rounded ${ADVERSE_SEV_STYLE[f.severity]}`}>{f.severity.toUpperCase()}</span>
+                              {f.isSarCandidate && <span className="text-10 bg-red-dim text-red border border-red/30 px-1.5 py-px rounded font-bold">SAR</span>}
+                              <span className="text-11 text-ink-3">{f.source} · {f.published.slice(0, 10)}</span>
+                            </div>
+                            <p className="text-12 font-medium text-ink-0 leading-snug">{f.title}</p>
+                            <p className="text-11 text-ink-2 mt-0.5 leading-relaxed">{f.narrative}</p>
+                          </div>
+                          <span className="text-ink-3 text-11 flex-shrink-0">{amExpanded === f.itemId ? "▲" : "▼"}</span>
+                        </button>
+
+                        {amExpanded === f.itemId && (
+                          <div className="mt-3 pl-5 space-y-2 border-l-2 border-hair-2">
+                            {f.fatfPredicates.length > 0 && (
+                              <div>
+                                <p className="text-11 text-ink-3 font-semibold mb-1">FATF Predicates</p>
+                                <ul className="space-y-0.5">
+                                  {f.fatfPredicates.map((p, i) => <li key={i} className="text-11 text-ink-2">{p}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-1">
+                              {f.categories.map((c) => <span key={c} className="text-10 bg-bg-1 text-ink-2 border border-hair-2 px-1.5 py-px rounded">{c}</span>)}
+                              {f.fatfRecommendations.map((r) => <span key={r} className="text-10 bg-brand-dim text-brand border border-brand/30 px-1.5 py-px rounded font-mono">{r}</span>)}
+                            </div>
+                            {f.keywords.length > 0 && (
+                              <p className="text-11 text-ink-3">Keywords: {f.keywords.slice(0, 6).map((k) => `"${k}"`).join(", ")}</p>
+                            )}
+                            {f.url && (
+                              <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-11 text-brand hover:underline break-all">{f.url}</a>
+                            )}
+                            <p className="text-11 text-ink-3">Relevance: {(f.relevanceScore * 100).toFixed(0)}%</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {amVerdict.modesCited.length > 0 && (
+                <p className="text-11 text-ink-3">Modes cited: {amVerdict.modesCited.join(", ")}</p>
+              )}
+            </div>
+          )}
+
+          {amResult?.ok && !amVerdict?.findings.length && !amLoading && (
+            <div className="border border-hair-2 rounded-xl p-8 text-center text-12 text-ink-3">
+              No adverse media found for <span className="font-medium text-ink-1">{amSubject}</span>
+            </div>
+          )}
+        </main>
+      )}
     </>
   );
 }

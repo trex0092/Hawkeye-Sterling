@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 
 interface WalletRisk {
   ok: boolean;
@@ -20,27 +20,31 @@ interface WalletRisk {
   error?: string;
 }
 
-const RISK_COLOUR: Record<string, string> = {
-  critical: "bg-red-100 text-red-800 border-red-300",
-  high:     "bg-orange-100 text-orange-700 border-orange-300",
-  medium:   "bg-yellow-100 text-yellow-700 border-yellow-300",
-  low:      "bg-green-100 text-green-700 border-green-300",
-  unknown:  "bg-gray-100 text-gray-500 border-gray-200",
+const RISK_TONE: Record<string, string> = {
+  critical: "bg-red-dim text-red border border-red/30",
+  high:     "bg-red-dim text-red border border-red/30",
+  medium:   "bg-amber-dim text-amber border border-amber/30",
+  low:      "bg-green-dim text-green border border-green/30",
+  unknown:  "bg-bg-2 text-ink-3 border border-hair-2",
 };
 
 function ExposureBar({ label, value, colour }: { label: string; value: number; colour: string }) {
   return (
     <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span className="text-gray-500">{label}</span>
-        <span className="font-medium">{value.toFixed(1)}%</span>
+      <div className="flex justify-between text-11 mb-1">
+        <span className="text-ink-3">{label}</span>
+        <span className="font-medium text-ink-1">{value.toFixed(1)}%</span>
       </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-bg-1 rounded-full overflow-hidden border border-hair">
         <div className={`h-full rounded-full ${colour}`} style={{ width: `${Math.min(100, value)}%` }} />
       </div>
     </div>
   );
 }
+
+const inputCls = "flex-1 px-3 py-2 border border-hair-2 rounded text-13 font-mono bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
+const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
+const cardCls = "border border-hair-2 rounded-lg p-4";
 
 export default function CryptoRiskPage() {
   const [address, setAddress] = useState("");
@@ -65,78 +69,110 @@ export default function CryptoRiskPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Crypto Wallet Risk</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            AML taint analysis for ETH, BTC, and TRX wallets. Supports Januus, Chainalysis KYT, and Elliptic Lens.
-          </p>
+    <ModuleLayout engineLabel="Crypto Risk">
+      <ModuleHero
+        eyebrow="Module · Crypto AML"
+        title="Crypto wallet"
+        titleEm="risk."
+        intro="AML taint analysis for ETH, BTC, and TRX wallets. Supports Januus, Chainalysis KYT, and Elliptic Lens."
+      />
+
+      <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 space-y-4">
+        <div>
+          <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
+            Crypto AML · Wallet Taint Scoring
+          </div>
+          <div className="text-12 text-ink-2">
+            Direct sanctions exposure · indirect taint · mixer / tumbler · darknet markets
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6 flex gap-3">
+        <div className="flex gap-3">
           <input
-            className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm font-mono"
+            className={inputCls}
             placeholder="0x… or 1… or bc1… or T…"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && score()}
           />
-          <button onClick={score} disabled={loading || !address.trim()} className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium disabled:opacity-50 hover:bg-blue-700">
+          <button type="button" onClick={score} disabled={loading || !address.trim()} className={btnCls}>
             {loading ? "Scoring…" : "Score Wallet"}
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm mb-4">
-            <p className="text-red-700 font-medium">{error}</p>
+          <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red space-y-1">
+            <p className="font-semibold">{error}</p>
             {error.includes("No crypto risk provider") && (
-              <p className="text-red-600 mt-1 text-xs">Set JANUUS_API_KEY, CHAINALYSIS_API_KEY, or ELLIPTIC_API_KEY + ELLIPTIC_SECRET in your environment variables.</p>
+              <p className="text-11 text-red/80">Set JANUUS_API_KEY, CHAINALYSIS_API_KEY, or ELLIPTIC_API_KEY + ELLIPTIC_SECRET in your environment.</p>
             )}
           </div>
         )}
 
         {result && (
           <div className="space-y-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-5">
+            <div className={cardCls}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-mono text-sm text-gray-700 break-all">{result.address}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Chain: {result.chain.toUpperCase()} · Provider: {result.provider}</p>
+                  <p className="font-mono text-12 text-ink-0 break-all">{result.address}</p>
+                  <p className="text-11 text-ink-3 mt-0.5">
+                    Chain: <span className="font-semibold">{result.chain.toUpperCase()}</span>
+                    {" · "}Provider: <span className="font-semibold">{result.provider}</span>
+                  </p>
                 </div>
-                <span className={`border rounded px-2 py-1 text-xs font-bold flex-shrink-0 ml-3 ${RISK_COLOUR[result.riskLevel] ?? RISK_COLOUR.unknown}`}>
-                  {result.riskLevel.toUpperCase()} · {result.riskScore}
+                <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase flex-shrink-0 ml-3 ${RISK_TONE[result.riskLevel] ?? RISK_TONE.unknown}`}>
+                  {result.riskLevel} · {result.riskScore}
                 </span>
               </div>
-              {result.riskCategory && <p className="text-sm text-gray-600">Category: <span className="font-medium">{result.riskCategory}</span></p>}
+              {result.riskCategory && (
+                <p className="text-12 text-ink-2">
+                  Category: <span className="font-medium text-ink-0">{result.riskCategory}</span>
+                </p>
+              )}
               {result.labels.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {result.labels.map((l) => <span key={l} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{l}</span>)}
+                  {result.labels.map((l) => (
+                    <span key={l} className="text-10 bg-bg-1 text-ink-2 border border-hair-2 px-2 py-0.5 rounded">{l}</span>
+                  ))}
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-5">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-4">Exposure Breakdown</h3>
+            <div className={cardCls}>
+              <p className="text-10 font-semibold text-ink-2 uppercase tracking-wide-3 mb-4">Exposure Breakdown</p>
               <div className="space-y-3">
-                <ExposureBar label="Direct Sanctions Exposure" value={result.exposure.directSanctioned} colour="bg-red-500" />
-                <ExposureBar label="Indirect Sanctions Exposure" value={result.exposure.indirectSanctioned} colour="bg-orange-400" />
-                <ExposureBar label="Mixing / Tumbling" value={result.exposure.mixing} colour="bg-yellow-400" />
-                <ExposureBar label="Darknet Markets" value={result.exposure.darknet} colour="bg-purple-500" />
+                <ExposureBar label="Direct Sanctions Exposure" value={result.exposure.directSanctioned} colour="bg-red" />
+                <ExposureBar label="Indirect Sanctions Exposure" value={result.exposure.indirectSanctioned} colour="bg-amber" />
+                <ExposureBar label="Mixing / Tumbling" value={result.exposure.mixing} colour="bg-amber/60" />
+                <ExposureBar label="Darknet Markets" value={result.exposure.darknet} colour="bg-brand" />
               </div>
             </div>
 
             {(result.taintedTransactions != null || result.firstSeen) && (
-              <div className="bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-2 gap-3 text-sm">
-                {result.taintedTransactions != null && <div><span className="text-gray-400">Tainted Tx</span><p className="font-medium">{result.taintedTransactions} / {result.totalTransactions ?? "?"}</p></div>}
-                {result.firstSeen && <div><span className="text-gray-400">First Seen</span><p className="font-medium">{result.firstSeen.slice(0, 10)}</p></div>}
-                {result.lastSeen && <div><span className="text-gray-400">Last Seen</span><p className="font-medium">{result.lastSeen.slice(0, 10)}</p></div>}
+              <div className={`${cardCls} grid grid-cols-2 gap-3 text-12`}>
+                {result.taintedTransactions != null && (
+                  <div>
+                    <div className="text-ink-3 mb-0.5">Tainted Transactions</div>
+                    <div className="font-medium text-ink-0">{result.taintedTransactions} / {result.totalTransactions ?? "?"}</div>
+                  </div>
+                )}
+                {result.firstSeen && (
+                  <div>
+                    <div className="text-ink-3 mb-0.5">First Seen</div>
+                    <div className="font-medium text-ink-0">{result.firstSeen.slice(0, 10)}</div>
+                  </div>
+                )}
+                {result.lastSeen && (
+                  <div>
+                    <div className="text-ink-3 mb-0.5">Last Seen</div>
+                    <div className="font-medium text-ink-0">{result.lastSeen.slice(0, 10)}</div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </ModuleLayout>
   );
 }

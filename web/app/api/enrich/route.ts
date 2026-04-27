@@ -107,9 +107,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         verdict: analyseAdverseMediaResult(name, adverseMediaResult),
       } : null,
       harvesterResult: harvesterResult?.ok ? {
-        emails: harvesterResult.emails,
-        hosts: harvesterResult.hosts,
-        ips: harvesterResult.ips,
+        emails: harvesterResult.emails ?? [],
+        hosts: harvesterResult.hosts ?? [],
+        ips: harvesterResult.ips ?? [],
       } : null,
       enrichedAt: new Date().toISOString(),
     },
