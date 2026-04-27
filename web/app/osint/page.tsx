@@ -37,6 +37,27 @@ interface EnrichResult {
       riskIndicators: string[];
     };
   } | null;
+  adverseMedia?: {
+    totalCount: number;
+    adverseCount: number;
+    highRelevanceCount: number;
+    items: Array<{ id: string; title: string; source: string; published: string; url?: string; tags: string[] }>;
+    verdict?: {
+      riskTier: string;
+      riskDetail: string;
+      sarRecommended: boolean;
+      criticalCount: number;
+      highCount: number;
+      mediumCount: number;
+      investigationLines: string[];
+      fatfRecommendations: string[];
+    };
+  } | null;
+  harvesterResult?: {
+    emails: string[];
+    hosts: string[];
+    ips: string[];
+  } | null;
   enrichedAt: string;
   error?: string;
 }
@@ -78,7 +99,7 @@ export default function OsintPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Subject Enrichment / OSINT</h1>
           <p className="text-sm text-gray-500 mt-1">
-            GLEIF LEI chain · yente sanctions match · Domain intelligence · SpiderFoot OSINT — all in parallel.
+            GLEIF LEI chain · yente sanctions match · Domain intel · Taranis AI adverse media · theHarvester · SpiderFoot — all in parallel.
           </p>
         </div>
 
@@ -165,6 +186,77 @@ export default function OsintPage() {
                     {result.domainIntel.riskFactors.map((f, i) => <li key={i} className="text-xs text-red-600 flex gap-1"><span>⚠</span>{f}</li>)}
                   </ul>
                 )}
+              </div>
+            )}
+
+            {/* Adverse Media */}
+            {result.adverseMedia && (
+              <div className={`bg-white rounded-lg border-2 p-5 ${result.adverseMedia.verdict?.riskTier === "critical" ? "border-red-600" : result.adverseMedia.verdict?.riskTier === "high" ? "border-red-300" : result.adverseMedia.verdict?.riskTier === "medium" ? "border-orange-300" : "border-gray-200"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase">Adverse Media (Taranis AI)</h3>
+                  {result.adverseMedia.verdict && (
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded uppercase ${result.adverseMedia.verdict.riskTier === "critical" ? "bg-red-700 text-white" : result.adverseMedia.verdict.riskTier === "high" ? "bg-red-100 text-red-800 border border-red-300" : result.adverseMedia.verdict.riskTier === "medium" ? "bg-orange-100 text-orange-800 border border-orange-300" : result.adverseMedia.verdict.riskTier === "low" ? "bg-yellow-100 text-yellow-800 border border-yellow-300" : "bg-green-100 text-green-800 border border-green-300"}`}>
+                      {result.adverseMedia.verdict.riskTier}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-4 text-sm mb-3">
+                  <span><span className="text-gray-400">Total: </span><span className="font-medium">{result.adverseMedia.totalCount}</span></span>
+                  <span><span className="text-gray-400">Adverse: </span><span className={`font-medium ${result.adverseMedia.adverseCount > 0 ? "text-red-600" : "text-green-600"}`}>{result.adverseMedia.adverseCount}</span></span>
+                  <span><span className="text-gray-400">High relevance: </span><span className="font-medium">{result.adverseMedia.highRelevanceCount}</span></span>
+                </div>
+                {result.adverseMedia.verdict?.sarRecommended && (
+                  <div className="bg-red-700 text-white text-xs px-3 py-2 rounded mb-3 font-bold">
+                    SAR RECOMMENDED — FATF R.20 reporting threshold met
+                  </div>
+                )}
+                {result.adverseMedia.verdict?.fatfRecommendations && result.adverseMedia.verdict.fatfRecommendations.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {result.adverseMedia.verdict.fatfRecommendations.map((r) => (
+                      <span key={r} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono">{r}</span>
+                    ))}
+                  </div>
+                )}
+                {result.adverseMedia.verdict?.investigationLines && result.adverseMedia.verdict.investigationLines.length > 0 && (
+                  <ul className="space-y-1">
+                    {result.adverseMedia.verdict.investigationLines.slice(0, 3).map((l, i) => (
+                      <li key={i} className="text-xs text-gray-600 flex gap-1.5"><span className="text-gray-300 flex-shrink-0">{i + 1}.</span>{l}</li>
+                    ))}
+                  </ul>
+                )}
+                {result.adverseMedia.verdict?.riskDetail && (
+                  <p className="text-xs text-gray-400 mt-2">{result.adverseMedia.verdict.riskDetail}</p>
+                )}
+              </div>
+            )}
+
+            {/* theHarvester results */}
+            {result.harvesterResult && (result.harvesterResult.emails.length > 0 || result.harvesterResult.hosts.length > 0 || result.harvesterResult.ips.length > 0) && (
+              <div className="bg-white rounded-lg border border-gray-200 p-5">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">theHarvester — Email / Host / IP Enumeration</h3>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1.5">Emails ({result.harvesterResult.emails.length})</p>
+                    {result.harvesterResult.emails.slice(0, 8).map((e) => (
+                      <p key={e} className="font-mono text-xs text-gray-700 truncate">{e}</p>
+                    ))}
+                    {result.harvesterResult.emails.length > 8 && <p className="text-xs text-gray-400">+{result.harvesterResult.emails.length - 8} more</p>}
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1.5">Hosts ({result.harvesterResult.hosts.length})</p>
+                    {result.harvesterResult.hosts.slice(0, 8).map((h) => (
+                      <p key={h} className="font-mono text-xs text-gray-700 truncate">{h}</p>
+                    ))}
+                    {result.harvesterResult.hosts.length > 8 && <p className="text-xs text-gray-400">+{result.harvesterResult.hosts.length - 8} more</p>}
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1.5">IPs ({result.harvesterResult.ips.length})</p>
+                    {result.harvesterResult.ips.slice(0, 8).map((ip) => (
+                      <p key={ip} className="font-mono text-xs text-gray-700">{ip}</p>
+                    ))}
+                    {result.harvesterResult.ips.length > 8 && <p className="text-xs text-gray-400">+{result.harvesterResult.ips.length - 8} more</p>}
+                  </div>
+                </div>
               </div>
             )}
 
