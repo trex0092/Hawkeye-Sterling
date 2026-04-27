@@ -168,6 +168,6 @@ export async function POST(req: Request): Promise<NextResponse> {
         ? { failedAdapters: failedAdapters.map((r) => r.listId) }
         : {}),
     },
-    { status: 200 },
+    { status: failedAdapters.length === 0 ? 200 : 503 },
   );
 }
