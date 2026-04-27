@@ -16,6 +16,7 @@ import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { RowActions } from "@/components/shared/RowActions";
+import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { PaymentScreen } from "@/components/screening/PaymentScreen";
 import {
   TM_CHANNELS,
@@ -36,6 +37,10 @@ interface TxRow {
   behaviouralFlags: string[];
   notes: string;
   loggedAt: string;
+  /** Asana task permalink for the transaction-monitor alert posted to
+   *  board 08. Renders the green "Reported to Asana · view task" pill
+   *  on the transaction row alongside the ref. */
+  asanaTaskUrl?: string;
 }
 
 const THRESHOLD_AED = 55_000;
@@ -339,7 +344,15 @@ export default function TransactionMonitorPage() {
                       onClick={() => openTxReport(t)}
                       className="border-b border-hair last:border-0 hover:bg-bg-1 cursor-pointer"
                     >
-                      <td className="px-3 py-2 font-mono text-ink-2">{t.ref}</td>
+                      <td className="px-3 py-2 font-mono text-ink-2">
+                        {t.ref}
+                        {t.asanaTaskUrl && (
+                          <AsanaStatus
+                            state={{ status: "sent", taskUrl: t.asanaTaskUrl }}
+                            className="ml-2 align-middle"
+                          />
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-ink-0">{t.counterparty}</td>
                       <td className="px-3 py-2 text-right font-mono">
                         {t.currency} {t.amount}
@@ -392,6 +405,15 @@ export default function TransactionMonitorPage() {
               }
             : null
         }
+        onAsanaFiled={(taskUrl) => {
+          // Persist the Asana permalink against the row so the green
+          // "Reported to Asana · view task" pill shows next to the
+          // ref column on subsequent renders + reloads.
+          if (!reportTx) return;
+          setTxs((prev) =>
+            prev.map((x) => (x.id === reportTx.id ? { ...x, asanaTaskUrl: taskUrl } : x)),
+          );
+        }}
       />
     </ModuleLayout>
   );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { RowActions } from "@/components/shared/RowActions";
 
 type Cadence = "daily" | "twice-daily" | "weekly" | "monthly";
@@ -21,6 +22,10 @@ interface MonitoredSubject {
   enrolledBy: string;
   enrolledAt: string;
   notes: string;
+  /** Asana task permalink for the most recent ongoing-monitor delta
+   *  alert posted to the screening board. Renders the green
+   *  "Reported to Asana · view task" pill on the subject row. */
+  asanaTaskUrl?: string;
 }
 
 // ── Enrichment types ──────────────────────────────────────────────────────────
@@ -387,7 +392,15 @@ export default function OngoingMonitorPage() {
                   </td></tr>
                 ) : subjects.map((s, i) => (
                   <tr key={s.id} className={i < subjects.length - 1 ? "border-b border-hair" : ""}>
-                    <td className="px-3 py-2 text-ink-0 font-medium">{s.name}</td>
+                    <td className="px-3 py-2 text-ink-0 font-medium">
+                      {s.name}
+                      {s.asanaTaskUrl && (
+                        <AsanaStatus
+                          state={{ status: "sent", taskUrl: s.asanaTaskUrl }}
+                          className="ml-2 align-middle"
+                        />
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.caseId || "—"}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${TIER_TONE[s.tier]}`}>

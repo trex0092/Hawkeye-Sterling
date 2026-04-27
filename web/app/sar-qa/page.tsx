@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
+import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { loadOperatorRole, ROLE_LABEL, type OperatorRole } from "@/lib/data/operator-role";
 import type { CaseRecord } from "@/lib/types";
 
@@ -124,6 +125,11 @@ export default function SarQaPage() {
                     </div>
                   </div>
                   <div className="text-11 text-ink-2 mb-3">{c.meta}</div>
+                  {c.asanaTaskUrl && (
+                    <AsanaStatus
+                      state={{ status: "sent", taskUrl: c.asanaTaskUrl }}
+                    />
+                  )}
                   {review ? (
                     <div
                       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${

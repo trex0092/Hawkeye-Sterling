@@ -10,11 +10,38 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { execSync } = require("node:child_process");
 
 const root = path.resolve(__dirname, "..");
 const distBrain = path.join(root, "dist", "src", "brain");
 const outDir = path.join(root, "web", "public");
 const outPath = path.join(outDir, "weaponized-brain.json");
+
+// Deterministic timestamp: HEAD commit's author date when running inside
+// a git checkout, else "1970-01-01T00:00:00.000Z" (a fixed sentinel).
+// This stops every local rebuild from producing a diff against the
+// previously-committed JSON — the file only changes when the underlying
+// source actually changes.
+function deterministicTimestamp() {
+  try {
+    const sha = execSync("git rev-parse HEAD", {
+      cwd: root,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    if (!sha) return "1970-01-01T00:00:00.000Z";
+    const iso = execSync(`git show -s --format=%cI ${sha}`, {
+      cwd: root,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    return iso || "1970-01-01T00:00:00.000Z";
+  } catch {
+    return "1970-01-01T00:00:00.000Z";
+  }
+}
 
 function safeRequire(modulePath, fallback = null) {
   try {
@@ -134,10 +161,18 @@ function len(k, obj) {
   })();
 
   fs.mkdirSync(outDir, { recursive: true });
+  const stamp = deterministicTimestamp();
+  // Override the inner manifest.generatedAt too — buildWeaponizedBrainManifest
+  // emits its own `new Date().toISOString()` which would otherwise drift
+  // every time someone rebuilds locally.
+  const stampedManifest =
+    manifest && typeof manifest === "object"
+      ? { ...manifest, generatedAt: stamp }
+      : manifest;
   const payload = {
     ok: true,
-    generatedAt: new Date().toISOString(),
-    manifest,
+    generatedAt: stamp,
+    manifest: stampedManifest,
     integrity,
     enhanced,
   };

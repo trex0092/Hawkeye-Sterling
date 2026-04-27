@@ -16,6 +16,11 @@ interface ReportModalProps {
   // in parallel with fetching the report text and renders a
   // "Filed to Asana" status badge in the toolbar.
   asanaFile?: AsanaFile | null | undefined;
+  // Fired once when the Asana POST completes successfully and the
+  // server returns a permalink. Hosts use this to persist the URL
+  // against the underlying record (e.g. transaction row, case-store
+  // entry) so the green pill survives across reloads.
+  onAsanaFiled?: (taskUrl: string) => void;
 }
 
 type ReportState =
@@ -40,6 +45,7 @@ export function ReportModal({
   payload,
   onClose,
   asanaFile,
+  onAsanaFiled,
 }: ReportModalProps) {
   const [state, setState] = useState<ReportState>({ status: "idle" });
   const [asana, setAsana] = useState<AsanaState>({ status: "idle" });
@@ -129,6 +135,7 @@ export function ReportModal({
           status: "filed",
           ...(json.taskUrl ? { taskUrl: json.taskUrl } : {}),
         });
+        if (json.taskUrl && onAsanaFiled) onAsanaFiled(json.taskUrl);
       } catch (err) {
         if (ctl.signal.aborted) return;
         setAsana({
@@ -138,7 +145,7 @@ export function ReportModal({
       }
     })();
     return () => ctl.abort();
-  }, [open, asanaFile]);
+  }, [open, asanaFile, onAsanaFiled]);
 
   useEffect(() => {
     if (!open) return;
