@@ -134,7 +134,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   try {
-    const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 50_000 });
+    // Netlify's edge layer enforces a ~26 s "inactivity timeout" on
+    // synchronous functions independent of maxDuration. The advisor
+    // budget must finish before that or the platform returns a 504
+    // HTML error page that breaks the JSON contract on the client.
+    // 22 s leaves ~4 s of headroom for serialisation + HTTP overhead.
+    const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 22_000 });
 
     if (!advisorResult.ok) {
       const lastStep = advisorResult.reasoningTrail[advisorResult.reasoningTrail.length - 1];
