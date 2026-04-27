@@ -9,93 +9,119 @@ const MASTER_INBOX_GID    = "1214148630166524"; // 00 · Master Inbox (fallback)
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
 const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda
 
-// Per-module Asana project routing.
-// Each env var should be set to the GID of the corresponding Asana project.
-// Fall back to Master Inbox when not configured so reports still land somewhere.
-//
+// Per-module Asana project routing — mapped to 19 Asana boards.
 // Env vars to set in Netlify → Site settings → Environment variables:
-//   ASANA_SCREENING_PROJECT_GID   → 01 · Screening — Sanctions & Watchlists
-//   ASANA_FFR_PROJECT_GID         → 06 · FFR Incidents & Asset Freeze
-//   ASANA_KYC_PROJECT_GID         → 07 · CDD/SDD/EDD/KYC
-//   ASANA_SHIPMENTS_PROJECT_GID   → 10 · Shipments — Tracking
-//   ASANA_MLRO_PROJECT_GID        → 15 · MLRO Workbench
-//   ASANA_SUPPLYCHAIN_PROJECT_GID → 16 · Supply Chain, ESG & Trade
+//   ASANA_SCREENING_PROJECT_GID      → 01 · Screening — Sanctions & Adverse Media
+//   ASANA_MLRO_DAILY_PROJECT_GID     → 02 · Central MLRO Daily Digest
+//   ASANA_AUDIT_LOG_PROJECT_GID      → 03 · Audit Log 10-Year Trail
+//   ASANA_FOUR_EYES_PROJECT_GID      → 04 · Four-Eyes Approvals
+//   ASANA_SAR_PROJECT_GID            → 05 · STR/SAR/CTR/PMR GoAML Filings
+//   ASANA_FFR_PROJECT_GID            → 06 · FFR Incidents & Asset Freezes
+//   ASANA_KYC_PROJECT_GID            → 07 · CDD/SDD/EDD/KYC — Customer Due Diligence
+//   ASANA_TM_PROJECT_GID             → 08 · Transaction Monitoring
+//   ASANA_COMPLIANCE_OPS_PROJECT_GID → 09 · Compliance Ops — Daily & Weekly Tasks
+//   ASANA_SHIPMENTS_PROJECT_GID      → 10 · Shipments — Tracking
+//   ASANA_EMPLOYEES_PROJECT_GID      → 11 · Employees
+//   ASANA_TRAINING_PROJECT_GID       → 12 · Training
+//   ASANA_GOVERNANCE_PROJECT_GID     → 13 · Compliance Governance
+//   ASANA_ROUTINES_PROJECT_GID       → 14 · Routines — Scheduled
+//   ASANA_MLRO_PROJECT_GID           → 15 · MLRO Workbench
+//   ASANA_SUPPLYCHAIN_PROJECT_GID    → 16 · Supply Chain, ESG & LBMA Gold
+//   ASANA_EXPORT_CTRL_PROJECT_GID    → 17 · Export Control & Dual-Use
+//   ASANA_REGULATOR_PROJECT_GID      → 18 · Regulator Portal Handoff
+//   ASANA_INCIDENTS_PROJECT_GID      → 19 · Incidents & Grievances
 function projectGidForModule(module: string): string {
   const inbox = process.env["ASANA_PROJECT_GID"] ?? MASTER_INBOX_GID;
   switch (module) {
-    // 01 · Screening — Sanctions & Watchlists
+    // 01 · Screening — Sanctions & Adverse Media
     case "screening":
-    case "ongoing-monitor":
     case "batch":
     case "adverse-media-lookback":
     case "adverse-media":
       return process.env["ASANA_SCREENING_PROJECT_GID"] ?? inbox;
 
-    // 02 · Central MLRO Daily Dashboard
+    // 02 · Central MLRO Daily Digest
     case "analytics":
-    case "oversight":
-    case "ewra":
     case "rmi":
+    case "oversight":
       return process.env["ASANA_MLRO_DAILY_PROJECT_GID"] ?? inbox;
 
-    // 05 · STR/SAR/CTR/PMR
+    // 03 · Audit Log 10-Year Trail
+    case "audit-trail":
+      return process.env["ASANA_AUDIT_LOG_PROJECT_GID"] ?? inbox;
+
+    // 04 · Four-Eyes Approvals
+    case "cdd-review":
+    case "ubo-declaration":
+      return process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? inbox;
+
+    // 05 · STR/SAR/CTR/PMR GoAML Filings
     case "str-cases":
     case "sar-qa":
+    case "cases":
+    case "enforcement":
       return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
 
-    // 06 · FFR Incidents & Asset Freeze — forensic digit analysis
+    // 06 · FFR Incidents & Asset Freezes
     case "benford":
       return process.env["ASANA_FFR_PROJECT_GID"] ?? inbox;
 
-    // 07 · CDD/SDD/EDD/KYC — entity enrichment & due-diligence tools
+    // 07 · CDD/SDD/EDD/KYC — Customer Due Diligence
     case "gleif":
     case "domain-intel":
     case "crypto-risk":
-    case "cdd-review":
-    case "ubo-declaration":
     case "vendor-dd":
+    case "client-portal":
+    case "intel":
       return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
 
     // 08 · Transaction Monitoring
     case "transaction-monitor":
       return process.env["ASANA_TM_PROJECT_GID"] ?? inbox;
 
+    // 09 · Compliance Ops — Daily & Weekly Tasks
+    case "policies":
+    case "regulatory":
+    case "playbook":
+    case "data-quality":
+    case "corrections":
+      return process.env["ASANA_COMPLIANCE_OPS_PROJECT_GID"] ?? inbox;
+
     // 10 · Shipments — Tracking
     case "shipments":
       return process.env["ASANA_SHIPMENTS_PROJECT_GID"] ?? inbox;
 
-    // 15 · MLRO Workbench — advisor, investigation, AI tools, playbooks, policies
+    // 11 · Employees
+    case "employees":
+      return process.env["ASANA_EMPLOYEES_PROJECT_GID"] ?? inbox;
+
+    // 12 · Training
+    case "training":
+      return process.env["ASANA_TRAINING_PROJECT_GID"] ?? inbox;
+
+    // 13 · Compliance Governance
+    case "ewra":
+    case "api-docs":
+      return process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? inbox;
+
+    // 14 · Routines — Scheduled
+    case "ongoing-monitor":
+      return process.env["ASANA_ROUTINES_PROJECT_GID"] ?? inbox;
+
+    // 15 · MLRO Workbench
+    case "workbench":
     case "mlro-advisor":
     case "investigation":
     case "weaponized-brain":
-    case "workbench":
-    case "playbook":
-    case "policies":
-    case "regulatory":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
-    // 16 · Supply Chain, ESG & Trade — vessel / trade compliance
+    // 16 · Supply Chain, ESG & LBMA Gold
     case "vessel-check":
-    case "eocn":
       return process.env["ASANA_SUPPLYCHAIN_PROJECT_GID"] ?? inbox;
 
-    // 02 · Central MLRO Daily Dashboard — governance, data, staff
-    case "audit-trail":
-    case "data-quality":
-    case "corrections":
-    case "training":
-      return process.env["ASANA_MLRO_DAILY_PROJECT_GID"] ?? inbox;
-
-    // 05 · STR/SAR/CTR/PMR — enforcement actions and case management
-    case "enforcement":
-    case "cases":
-      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
-
-    // 07 · CDD/SDD/EDD/KYC — OSINT, client and employee due diligence
-    case "intel":
-    case "client-portal":
-    case "employees":
-      return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
+    // 17 · Export Control & Dual-Use
+    case "eocn":
+      return process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? inbox;
 
     default:
       return inbox;
@@ -104,101 +130,104 @@ function projectGidForModule(module: string): string {
 
 const MODULE_LABELS: Record<string, string> = {
   // 01 · Screening
-  screening:              "Screening",
-  "ongoing-monitor":      "Ongoing Monitor",
-  batch:                  "Batch Screen",
+  screening:                "Screening",
+  batch:                    "Batch Screen",
   "adverse-media-lookback": "Adverse Media Lookback",
-  "adverse-media":        "Adverse Media",
-  // 02 · MLRO Daily
-  analytics:              "Analytics",
-  oversight:              "Oversight",
-  ewra:                   "Enterprise-Wide Risk Assessment",
-  rmi:                    "Risk & Management Information",
+  "adverse-media":          "Adverse Media",
+  // 02 · MLRO Daily Digest
+  analytics:                "Analytics",
+  rmi:                      "Risk & Management Information",
+  oversight:                "Oversight",
+  // 03 · Audit Log
+  "audit-trail":            "Audit Trail",
+  // 04 · Four-Eyes Approvals
+  "cdd-review":             "CDD Review",
+  "ubo-declaration":        "UBO Declaration",
   // 05 · STR/SAR
-  "str-cases":            "STR / SAR Cases",
-  "sar-qa":               "SAR Quality Assurance",
+  "str-cases":              "STR / SAR Cases",
+  "sar-qa":                 "SAR Quality Assurance",
+  cases:                    "Cases",
+  enforcement:              "Enforcement",
   // 06 · FFR
-  benford:                "Benford Analysis",
+  benford:                  "Benford Analysis",
   // 07 · CDD/KYC
-  gleif:                  "GLEIF / LEI",
-  "domain-intel":         "Domain Intel",
-  "crypto-risk":          "Crypto Risk",
-  "cdd-review":           "CDD Review",
-  "ubo-declaration":      "UBO Declaration",
-  "vendor-dd":            "Vendor Due Diligence",
-  // 08 · TM
-  "transaction-monitor":  "Transaction Monitor",
+  gleif:                    "GLEIF / LEI",
+  "domain-intel":           "Domain Intel",
+  "crypto-risk":            "Crypto Risk",
+  "vendor-dd":              "Vendor Due Diligence",
+  "client-portal":          "Client Portal",
+  intel:                    "OSINT Intelligence",
+  // 08 · Transaction Monitoring
+  "transaction-monitor":    "Transaction Monitor",
+  // 09 · Compliance Ops
+  policies:                 "Policies",
+  regulatory:               "Regulatory",
+  playbook:                 "Playbook",
+  "data-quality":           "Data Quality",
+  corrections:              "Corrections",
   // 10 · Shipments
-  shipments:              "Shipments",
+  shipments:                "Shipments",
+  // 11 · Employees
+  employees:                "Employees",
+  // 12 · Training
+  training:                 "Training",
+  // 13 · Compliance Governance
+  ewra:                     "Enterprise-Wide Risk Assessment",
+  "api-docs":               "API Documentation",
+  // 14 · Routines
+  "ongoing-monitor":        "Ongoing Monitor",
   // 15 · MLRO Workbench
-  "mlro-advisor":         "MLRO Advisor",
-  investigation:          "Investigation",
-  "weaponized-brain":     "Weaponized Brain",
+  workbench:                "MLRO Workbench",
+  "mlro-advisor":           "MLRO Advisor",
+  investigation:            "Investigation",
+  "weaponized-brain":       "Weaponized Brain",
   // 16 · Supply Chain
-  "vessel-check":         "Vessel Check",
-  eocn:                   "EOCN Trade Compliance",
-  // General
-  "audit-trail":          "Audit Trail",
-  enforcement:            "Enforcement",
-  intel:                  "OSINT Intelligence",
-  training:               "Training",
-  employees:              "Employees",
-  "client-portal":        "Client Portal",
-  corrections:            "Corrections",
-  "data-quality":         "Data Quality",
-  playbook:               "Playbook",
-  policies:               "Policies",
-  regulatory:             "Regulatory",
-  cases:                  "Cases",
-  "api-docs":             "API Documentation",
-  "compliance-qa":        "Compliance Q&A",
-  workbench:              "MLRO Workbench",
+  "vessel-check":           "Vessel Check",
+  // 17 · Export Control
+  eocn:                     "EOCN Trade Compliance",
 };
 
-// Project label map — shown in the task notes so the MLRO knows the destination.
+// Project board label — shown in the Asana task notes.
 const PROJECT_BOARD: Record<string, string> = {
-  screening:              "01 · Screening — Sanctions & Watchlists",
-  "ongoing-monitor":      "01 · Screening — Sanctions & Watchlists",
-  batch:                  "01 · Screening — Sanctions & Watchlists",
-  "adverse-media-lookback": "01 · Screening — Sanctions & Watchlists",
-  "adverse-media":        "01 · Screening — Sanctions & Watchlists",
-  analytics:              "02 · Central MLRO Daily Dashboard",
-  oversight:              "02 · Central MLRO Daily Dashboard",
-  ewra:                   "02 · Central MLRO Daily Dashboard",
-  rmi:                    "02 · Central MLRO Daily Dashboard",
-  "str-cases":            "05 · STR/SAR/CTR/PMR",
-  "sar-qa":               "05 · STR/SAR/CTR/PMR",
-  benford:                "06 · FFR Incidents & Asset Freeze",
-  gleif:                  "07 · CDD/SDD/EDD/KYC",
-  "domain-intel":         "07 · CDD/SDD/EDD/KYC",
-  "crypto-risk":          "07 · CDD/SDD/EDD/KYC",
-  "cdd-review":           "07 · CDD/SDD/EDD/KYC",
-  "ubo-declaration":      "07 · CDD/SDD/EDD/KYC",
-  "vendor-dd":            "07 · CDD/SDD/EDD/KYC",
-  "transaction-monitor":  "08 · Transaction Monitoring",
-  shipments:              "10 · Shipments — Tracking",
-  "mlro-advisor":         "15 · MLRO Workbench",
-  investigation:          "15 · MLRO Workbench",
-  "weaponized-brain":     "15 · MLRO Workbench",
-  "vessel-check":         "16 · Supply Chain, ESG & Trade",
-  eocn:                   "16 · Supply Chain, ESG & Trade",
-  // 02 · MLRO Daily — governance & data
-  "audit-trail":          "02 · Central MLRO Daily Dashboard",
-  "data-quality":         "02 · Central MLRO Daily Dashboard",
-  corrections:            "02 · Central MLRO Daily Dashboard",
-  training:               "02 · Central MLRO Daily Dashboard",
-  // 05 · STR/SAR — enforcement & cases
-  enforcement:            "05 · STR/SAR/CTR/PMR",
-  cases:                  "05 · STR/SAR/CTR/PMR",
-  // 07 · CDD/KYC — OSINT & client/employee DD
-  intel:                  "07 · CDD/SDD/EDD/KYC",
-  "client-portal":        "07 · CDD/SDD/EDD/KYC",
-  employees:              "07 · CDD/SDD/EDD/KYC",
-  // 15 · MLRO Workbench
-  workbench:              "15 · MLRO Workbench",
-  playbook:               "15 · MLRO Workbench",
-  policies:               "15 · MLRO Workbench",
-  regulatory:             "15 · MLRO Workbench",
+  screening:                "01 · Screening — Sanctions & Adverse Media",
+  batch:                    "01 · Screening — Sanctions & Adverse Media",
+  "adverse-media-lookback": "01 · Screening — Sanctions & Adverse Media",
+  "adverse-media":          "01 · Screening — Sanctions & Adverse Media",
+  analytics:                "02 · Central MLRO Daily Digest",
+  rmi:                      "02 · Central MLRO Daily Digest",
+  oversight:                "02 · Central MLRO Daily Digest",
+  "audit-trail":            "03 · Audit Log 10-Year Trail",
+  "cdd-review":             "04 · Four-Eyes Approvals",
+  "ubo-declaration":        "04 · Four-Eyes Approvals",
+  "str-cases":              "05 · STR/SAR/CTR/PMR GoAML Filings",
+  "sar-qa":                 "05 · STR/SAR/CTR/PMR GoAML Filings",
+  cases:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
+  enforcement:              "05 · STR/SAR/CTR/PMR GoAML Filings",
+  benford:                  "06 · FFR Incidents & Asset Freezes",
+  gleif:                    "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "domain-intel":           "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "crypto-risk":            "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "vendor-dd":              "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "client-portal":          "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  intel:                    "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "transaction-monitor":    "08 · Transaction Monitoring",
+  policies:                 "09 · Compliance Ops — Daily & Weekly Tasks",
+  regulatory:               "09 · Compliance Ops — Daily & Weekly Tasks",
+  playbook:                 "09 · Compliance Ops — Daily & Weekly Tasks",
+  "data-quality":           "09 · Compliance Ops — Daily & Weekly Tasks",
+  corrections:              "09 · Compliance Ops — Daily & Weekly Tasks",
+  shipments:                "10 · Shipments — Tracking",
+  employees:                "11 · Employees",
+  training:                 "12 · Training",
+  ewra:                     "13 · Compliance Governance",
+  "api-docs":               "13 · Compliance Governance",
+  "ongoing-monitor":        "14 · Routines — Scheduled",
+  workbench:                "15 · MLRO Workbench",
+  "mlro-advisor":           "15 · MLRO Workbench",
+  investigation:            "15 · MLRO Workbench",
+  "weaponized-brain":       "15 · MLRO Workbench",
+  "vessel-check":           "16 · Supply Chain, ESG & LBMA Gold",
+  eocn:                     "17 · Export Control & Dual-Use",
 };
 
 interface Body {

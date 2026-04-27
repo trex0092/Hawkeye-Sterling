@@ -6,6 +6,9 @@ export const maxDuration = 60;
 
 const API = "https://app.asana.com/api/1.0";
 
+// GIDs for the 9 original boards are hardcoded (already exist in Asana).
+// GIDs for the 10 new boards are read from env vars — set them in Netlify
+// after creating the projects, then hit "Rebuild Sections" to initialise.
 const PROJECTS = [
   {
     gid: "1214148660020527",
@@ -16,6 +19,16 @@ const PROJECTS = [
     gid: "1214148631086118",
     name: "02 · Central MLRO Daily Digest",
     sections: ["📥 Today's Queue", "🔍 In Progress", "📋 Pending Sign-off", "✅ Completed"],
+  },
+  {
+    gid: process.env["ASANA_AUDIT_LOG_PROJECT_GID"] ?? "",
+    name: "03 · Audit Log 10-Year Trail",
+    sections: ["📥 New Entries", "🔍 Under Review", "✅ Signed Off", "🗄️  Archived"],
+  },
+  {
+    gid: process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? "",
+    name: "04 · Four-Eyes Approvals",
+    sections: ["📥 Awaiting First Review", "🔍 Awaiting Second Review", "⚠️  Discrepancy — Escalate", "✅ Dual-Approved", "❌ Rejected"],
   },
   {
     gid: "1214148631336502",
@@ -29,7 +42,7 @@ const PROJECTS = [
   },
   {
     gid: "1214148898062562",
-    name: "07 · CDD/SDD/EDD/KYC",
+    name: "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
     sections: ["📥 New Due Diligence", "📄 Pending Documents", "🔍 Under Review", "✅ Approved", "❌ Rejected", "🗄️  Closed"],
   },
   {
@@ -38,9 +51,34 @@ const PROJECTS = [
     sections: ["📥 New Alerts", "🔍 Under Review", "⚠️  Escalated to MLRO", "📤 SAR Filed", "✅ Cleared"],
   },
   {
+    gid: process.env["ASANA_COMPLIANCE_OPS_PROJECT_GID"] ?? "",
+    name: "09 · Compliance Ops — Daily & Weekly Tasks",
+    sections: ["📥 New Tasks", "📅 Scheduled", "🔍 In Progress", "✅ Completed"],
+  },
+  {
     gid: "1214148898360626",
     name: "10 · Shipments — Tracking",
     sections: ["📥 New Consignments", "🔍 AML Screen Required", "✈️  In Transit", "🏦 At Vault", "🚨 Held — Review Required", "✅ Cleared & Delivered"],
+  },
+  {
+    gid: process.env["ASANA_EMPLOYEES_PROJECT_GID"] ?? "",
+    name: "11 · Employees",
+    sections: ["📥 New Records", "🔍 Under Review", "✅ Cleared", "⚠️  Flagged"],
+  },
+  {
+    gid: process.env["ASANA_TRAINING_PROJECT_GID"] ?? "",
+    name: "12 · Training",
+    sections: ["📥 New Requests", "📅 Scheduled", "✅ Completed", "🔄 Renewal Due"],
+  },
+  {
+    gid: process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? "",
+    name: "13 · Compliance Governance",
+    sections: ["📥 New Items", "🔍 Under Review", "📋 Pending Board Approval", "✅ Approved", "🗄️  Archived"],
+  },
+  {
+    gid: process.env["ASANA_ROUTINES_PROJECT_GID"] ?? "",
+    name: "14 · Routines — Scheduled",
+    sections: ["📅 Scheduled", "🔍 Running", "⚠️  Alert Generated", "✅ Completed"],
   },
   {
     gid: "1214148910059926",
@@ -52,7 +90,22 @@ const PROJECTS = [
     name: "16 · Supply Chain, ESG & LBMA Gold",
     sections: ["📥 New Checks", "🔍 Under Review", "🚨 Sanctions Hit", "✅ Cleared"],
   },
-] as const;
+  {
+    gid: process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? "",
+    name: "17 · Export Control & Dual-Use",
+    sections: ["📥 New Submissions", "🔍 Under Review", "⚠️  Dual-Use Flag", "✅ Cleared", "❌ Refused"],
+  },
+  {
+    gid: process.env["ASANA_REGULATOR_PROJECT_GID"] ?? "",
+    name: "18 · Regulator Portal Handoff",
+    sections: ["📥 New Submissions", "✏️  Draft", "🔍 Under Review", "📤 Submitted", "✅ Acknowledged"],
+  },
+  {
+    gid: process.env["ASANA_INCIDENTS_PROJECT_GID"] ?? "",
+    name: "19 · Incidents & Grievances",
+    sections: ["📥 New Incident", "🔍 Under Investigation", "⚠️  Escalated", "✅ Resolved", "🗄️  Closed"],
+  },
+].filter(p => p.gid !== "") as Array<{ gid: string; name: string; sections: readonly string[] }>;
 
 function headers(token: string) {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" };
