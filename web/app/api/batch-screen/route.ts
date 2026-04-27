@@ -17,6 +17,7 @@ import { postWebhook } from "@/lib/server/webhook";
 import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watchman
 import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
 import { checkJube } from "@/lib/server/jube-client";           // jube AML
+import { yenteMatch } from "../../../../dist/src/integrations/yente.js"; // opensanctions/yente FtM matching
 
 const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
@@ -49,6 +50,8 @@ interface CrossRef {
   watchmanHits?: number;
   marbleStatus?: string;
   jubeRisk?: number;
+  yenteScore?: number;       // opensanctions/yente FtM match score 0-1
+  yenteDatasets?: string[];  // datasets that produced the yente hit
 }
 
 interface RowResult {
@@ -174,16 +177,26 @@ export async function POST(req: Request): Promise<NextResponse> {
       const checkpoints = computeCheckpoints(row, screen, kwGroups, esgCats);
 
       // Call optional cross-validation services in parallel (all fail-soft).
-      const [watchmanRes, marbleRes, jubeRes] = await Promise.all([
+      const [watchmanRes, marbleRes, jubeRes, yenteRes] = await Promise.all([
         checkWatchman(row.name),
         checkMarble(row.name, row.entityType),
         checkJube(row.name, row.entityType, row.jurisdiction),
+        yenteMatch([{
+          name: row.name,
+          schema: row.entityType === "individual" ? "Person" : row.entityType === "organisation" ? "Organization" : "LegalEntity",
+          ...(row.jurisdiction ? { nationality: row.jurisdiction } : {}),
+        }]).catch(() => null),
       ]);
 
       const crossRef: CrossRef = {};
       if (watchmanRes !== null) crossRef.watchmanHits = watchmanRes.hitCount;
       if (marbleRes !== null) crossRef.marbleStatus = marbleRes.status;
       if (jubeRes !== null) crossRef.jubeRisk = jubeRes.riskScore;
+      const yenteTop = Array.isArray(yenteRes) ? yenteRes[0]?.hits[0] : null;
+      if (yenteTop) {
+        crossRef.yenteScore = yenteTop.score;
+        crossRef.yenteDatasets = yenteTop.datasets;
+      }
 
       const row_result: RowResult = {
         name: row.name,
