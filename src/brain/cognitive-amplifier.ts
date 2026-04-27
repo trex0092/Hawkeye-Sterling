@@ -32,7 +32,7 @@ export const BRAIN_AMPLIFICATION_FACTOR = BRAIN_AMPLIFICATION_PERCENT / 100;
  * Version of the amplifier contract. Bump this whenever the directive below
  * changes so the catalogueHash shifts and callers refresh their prompts.
  */
-export const COGNITIVE_AMPLIFIER_VERSION = 'v3.9.0' as const;
+export const COGNITIVE_AMPLIFIER_VERSION = 'v5.0.0' as const;
 
 export interface CognitiveAmplifier {
   readonly version: string;
