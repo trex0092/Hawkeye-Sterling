@@ -93,22 +93,26 @@ async function fetchLeiRecord(lei: string, timeoutMs = 8_000): Promise<LeiRecord
   const reg = attr.registration ?? {};
   const addr = entity.registeredAddress;
 
+  const directParentId = raw.relationships?.['direct-parent']?.data?.id;
+  const ultimateParentId = raw.relationships?.['ultimate-parent']?.data?.id;
+  const legalFormId = entity.legalForm?.id;
+
   return {
     lei: attr.lei ?? lei,
     legalName: entity.legalName?.name ?? '',
     jurisdiction: entity.jurisdiction ?? '',
-    legalForm: entity.legalForm?.id,
+    ...(legalFormId !== undefined ? { legalForm: legalFormId } : {}),
     registrationStatus: reg.status ?? entity.status ?? '',
-    registeredAddress: addr ? {
+    ...(addr ? { registeredAddress: {
       addressLines: addr.addressLines ?? [],
       city: addr.city ?? '',
       country: addr.country ?? '',
-      postalCode: addr.postalCode,
-    } : undefined,
-    directParentLei: raw.relationships?.['direct-parent']?.data?.id,
-    ultimateParentLei: raw.relationships?.['ultimate-parent']?.data?.id,
-    managingLou: reg.managingLou,
-    lastUpdated: reg.lastUpdateDate,
+      ...(addr.postalCode !== undefined ? { postalCode: addr.postalCode } : {}),
+    } } : {}),
+    ...(directParentId !== undefined ? { directParentLei: directParentId } : {}),
+    ...(ultimateParentId !== undefined ? { ultimateParentLei: ultimateParentId } : {}),
+    ...(reg.managingLou !== undefined ? { managingLou: reg.managingLou } : {}),
+    ...(reg.lastUpdateDate !== undefined ? { lastUpdated: reg.lastUpdateDate } : {}),
   };
 }
 

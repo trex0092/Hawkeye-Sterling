@@ -107,17 +107,17 @@ async function januusScore(address: string, chain: CryptoChain, timeoutMs: numbe
     provider: 'januus',
     riskScore: score,
     riskLevel: scoreToLevel(score),
-    riskCategory: d.risk_category,
+    ...(d.risk_category !== undefined ? { riskCategory: d.risk_category } : {}),
     exposure: {
       directSanctioned: sanctions,
       indirectSanctioned: 0,
       mixing,
       darknet,
     },
-    taintedTransactions: d.tainted_txns,
-    totalTransactions: d.total_txns,
-    firstSeen: d.first_seen,
-    lastSeen: d.last_seen,
+    ...(d.tainted_txns !== undefined ? { taintedTransactions: d.tainted_txns } : {}),
+    ...(d.total_txns !== undefined ? { totalTransactions: d.total_txns } : {}),
+    ...(d.first_seen !== undefined ? { firstSeen: d.first_seen } : {}),
+    ...(d.last_seen !== undefined ? { lastSeen: d.last_seen } : {}),
     labels: d.labels ?? [],
   };
 }
@@ -174,7 +174,7 @@ async function chainalysisScore(address: string, chain: CryptoChain, timeoutMs: 
     provider: 'chainalysis',
     riskScore: score,
     riskLevel: scoreToLevel(score),
-    riskCategory: d.cluster?.category,
+    ...(d.cluster?.category !== undefined ? { riskCategory: d.cluster.category } : {}),
     exposure: {
       directSanctioned: getExp('sanction', true),
       indirectSanctioned: getExp('sanction', false),
@@ -247,8 +247,8 @@ async function ellipticScore(address: string, chain: CryptoChain, timeoutMs: num
       mixing: getContrib('mixing') + getContrib('tumbling'),
       darknet: getContrib('darknet') + getContrib('dark market'),
     },
-    firstSeen: d.first_activity,
-    lastSeen: d.last_activity,
+    ...(d.first_activity !== undefined ? { firstSeen: d.first_activity } : {}),
+    ...(d.last_activity !== undefined ? { lastSeen: d.last_activity } : {}),
     labels,
   };
 }

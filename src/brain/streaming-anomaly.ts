@@ -55,17 +55,20 @@ class ExponentialMovingStats {
     this.n++;
     for (let i = 0; i < x.length; i++) {
       // Welford online mean + variance — numerically stable
-      const delta = x[i] - this.mean[i];
-      this.mean[i] += delta / this.n;
-      const delta2 = x[i] - this.mean[i];
-      this.m2[i] = (1 - this.alpha) * (this.m2[i] + delta * delta2);
+      const xi = x[i] ?? 0;
+      const meani = this.mean[i] ?? 0;
+      const delta = xi - meani;
+      const newMean = meani + delta / this.n;
+      this.mean[i] = newMean;
+      const delta2 = xi - newMean;
+      this.m2[i] = (1 - this.alpha) * ((this.m2[i] ?? 0) + delta * delta2);
     }
   }
 
   zScores(x: number[]): number[] {
     return x.map((v, i) => {
-      const std = Math.sqrt(this.m2[i] / Math.max(1, this.n));
-      return std < 1e-9 ? 0 : Math.abs((v - this.mean[i]) / std);
+      const std = Math.sqrt((this.m2[i] ?? 0) / Math.max(1, this.n));
+      return std < 1e-9 ? 0 : Math.abs((v - (this.mean[i] ?? 0)) / std);
     });
   }
 
@@ -267,7 +270,7 @@ export class StreamingAnomalyGate {
 
     // Identify driving features (z-score > 2)
     const drivers = FEATURE_NAMES
-      .filter((_, i) => zScores[i] > 2)
+      .filter((_, i) => (zScores[i] ?? 0) > 2)
       .map((name) => name as string);
 
     let tier: AnomalyTier = 'pass';

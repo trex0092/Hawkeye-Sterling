@@ -101,24 +101,24 @@ export async function askComplianceQuestion(
 
   const citations: ComplianceCitation[] = (data.citations ?? []).map((c) => ({
     document: c.document ?? '',
-    section: c.section,
-    jurisdiction: c.jurisdiction,
-    excerpt: c.excerpt,
+    ...(c.section !== undefined ? { section: c.section } : {}),
+    ...(c.jurisdiction !== undefined ? { jurisdiction: c.jurisdiction } : {}),
+    ...(c.excerpt !== undefined ? { excerpt: c.excerpt } : {}),
   }));
 
   const tier = data.confidence_tier?.toLowerCase();
-  const confidenceTier: ComplianceAnswer['confidenceTier'] =
+  const confidenceTier: 'high' | 'medium' | 'low' =
     tier === 'high' ? 'high' : tier === 'medium' ? 'medium' : 'low';
 
   return {
     ok: true,
     query: question.query,
-    answer: data.answer,
+    ...(data.answer !== undefined ? { answer: data.answer } : {}),
     citations,
-    confidenceScore,
+    ...(confidenceScore !== undefined ? { confidenceScore } : {}),
     confidenceTier,
-    consistencyScore,
-    jurisdiction: data.jurisdiction,
+    ...(consistencyScore !== undefined ? { consistencyScore } : {}),
+    ...(data.jurisdiction !== undefined ? { jurisdiction: data.jurisdiction } : {}),
     passedQualityGate,
   };
 }
@@ -129,7 +129,7 @@ export async function askRegulation(
   query: string,
   endpoint?: string,
 ): Promise<ComplianceAnswer | null> {
-  const answer = await askComplianceQuestion({ query, mode: 'multi-agent' }, { endpoint });
+  const answer = await askComplianceQuestion({ query, mode: 'multi-agent' }, endpoint !== undefined ? { endpoint } : {});
   if (!answer.ok || !answer.passedQualityGate) return null;
   return answer;
 }

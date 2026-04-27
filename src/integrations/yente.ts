@@ -153,8 +153,9 @@ export async function yenteScoreEntry(
     : entry.entityType === 'organisation' ? 'Organization'
     : entry.entityType === 'vessel' ? 'Vessel'
     : 'LegalEntity';
+  const nat = entry.nationalities?.[0];
   const results = await yenteMatch(
-    [{ name: entry.primaryName, schema, nationality: entry.nationalities?.[0] }],
+    [{ name: entry.primaryName, schema, ...(nat !== undefined ? { nationality: nat } : {}) }],
     opts,
   );
   const top = results[0]?.hits[0];

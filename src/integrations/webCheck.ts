@@ -160,13 +160,19 @@ export async function domainIntel(
     fetchCheck<WebCheckResponse['rank']>(baseUrl, domain, 'rank', timeoutMs),
   ]);
 
-  const combined: WebCheckResponse = { whois: whois ?? undefined, malware: malware ?? undefined, mail: mail ?? undefined, ssl: ssl ?? undefined, rank: rank ?? undefined };
+  const combined: WebCheckResponse = {
+    ...(whois != null ? { whois } : {}),
+    ...(malware != null ? { malware } : {}),
+    ...(mail != null ? { mail } : {}),
+    ...(ssl != null ? { ssl } : {}),
+    ...(rank != null ? { rank } : {}),
+  };
   const { score, factors } = scoreRisk(combined, domain);
 
   const hasSPF = !!mail?.spfRecord;
   const hasDKIM = !!mail?.dkimRecord;
   const hasDMARC = !!mail?.dmarcRecord;
-  const spoofingRisk: DomainIntelResult['emailSecurity']['spoofingRisk'] =
+  const spoofingRisk: 'low' | 'medium' | 'high' =
     !hasSPF && !hasDMARC ? 'high' : !hasDMARC ? 'medium' : 'low';
 
   return {
@@ -174,23 +180,23 @@ export async function domainIntel(
     domain,
     riskScore: score,
     riskFactors: factors,
-    whois: whois ? {
-      registrationDate: whois.created,
-      expiryDate: whois.expires,
-      registrar: whois.registrar,
-      ageInDays: whois.created ? daysBetween(whois.created) : undefined,
-    } : undefined,
-    malware: malware ? {
+    ...(whois ? { whois: {
+      ...(whois.created !== undefined ? { registrationDate: whois.created } : {}),
+      ...(whois.expires !== undefined ? { expiryDate: whois.expires } : {}),
+      ...(whois.registrar !== undefined ? { registrar: whois.registrar } : {}),
+      ...(whois.created !== undefined ? { ageInDays: daysBetween(whois.created) } : {}),
+    } } : {}),
+    ...(malware ? { malware: {
       flagged: !!malware.isVulnerable,
       sources: malware.sources ?? [],
-    } : undefined,
-    emailSecurity: mail ? { hasSPF, hasDKIM, hasDMARC, spoofingRisk } : undefined,
-    ssl: ssl ? {
+    } } : {}),
+    ...(mail ? { emailSecurity: { hasSPF, hasDKIM, hasDMARC, spoofingRisk } } : {}),
+    ...(ssl ? { ssl: {
       valid: ssl.valid ?? false,
-      issuer: ssl.issuer,
-      expiresAt: ssl.expires,
+      ...(ssl.issuer !== undefined ? { issuer: ssl.issuer } : {}),
+      ...(ssl.expires !== undefined ? { expiresAt: ssl.expires } : {}),
       selfSigned: ssl.selfSigned ?? false,
-    } : undefined,
-    domainRank: rank?.rank,
+    } } : {}),
+    ...(rank?.rank !== undefined ? { domainRank: rank.rank } : {}),
   };
 }
