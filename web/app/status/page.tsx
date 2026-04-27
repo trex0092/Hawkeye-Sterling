@@ -544,75 +544,138 @@ export default function StatusPage() {
   );
 }
 
-function AsanaRebuildSection() {
-  const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
-  const [results, setResults] = useState<Array<{ name: string; deleted: number; created: number; errors: string[] }>>([]);
-  const [errMsg, setErrMsg] = useState("");
+type ResetResult = {
+  name: string;
+  tasksWiped?: number;
+  tasksFailed?: number;
+  deleted?: number;
+  created?: number;
+  sectionsDeleted?: number;
+  sectionsCreated?: number;
+  errors: string[];
+};
 
-  const run = async () => {
-    setState("running");
-    setResults([]);
-    setErrMsg("");
-    try {
-      const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
-      const data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
-      if (data.ok) {
-        setResults(data.results ?? []);
-        setState("done");
-      } else {
-        setErrMsg(data.error ?? "Rebuild failed");
-        setState("error");
-      }
-    } catch (e) {
-      setErrMsg(e instanceof Error ? e.message : "Network error");
-      setState("error");
-    }
-  };
+function AsanaRebuildSection() {
+  // Rebuild-sections-only state
+  const [rebuildState, setRebuildState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [rebuildResults, setRebuildResults] = useState<ResetResult[]>([]);
+  const [rebuildErr, setRebuildErr] = useState("");
+
+  // Full-reset state
+  const [resetState, setResetState] = useState<"idle" | "confirm" | "running" | "done" | "error">("idle");
+  const [resetResults, setResetResults] = useState<ResetResult[]>([]);
+  const [resetErr, setResetErr] = useState("");
 
   const [showEnvRef, setShowEnvRef] = useState(false);
 
   const NEW_PROJECTS: Array<{ board: string; envVar: string }> = [
-    { board: "03 · Audit Log 10-Year Trail",          envVar: "ASANA_AUDIT_LOG_PROJECT_GID" },
-    { board: "04 · Four-Eyes Approvals",               envVar: "ASANA_FOUR_EYES_PROJECT_GID" },
-    { board: "09 · Compliance Ops — Daily & Weekly",  envVar: "ASANA_COMPLIANCE_OPS_PROJECT_GID" },
-    { board: "11 · Employees",                         envVar: "ASANA_EMPLOYEES_PROJECT_GID" },
-    { board: "12 · Training",                          envVar: "ASANA_TRAINING_PROJECT_GID" },
-    { board: "13 · Compliance Governance",             envVar: "ASANA_GOVERNANCE_PROJECT_GID" },
-    { board: "14 · Routines — Scheduled",              envVar: "ASANA_ROUTINES_PROJECT_GID" },
-    { board: "17 · Export Control & Dual-Use",         envVar: "ASANA_EXPORT_CTRL_PROJECT_GID" },
-    { board: "18 · Regulator Portal Handoff",          envVar: "ASANA_REGULATOR_PROJECT_GID" },
-    { board: "19 · Incidents & Grievances",            envVar: "ASANA_INCIDENTS_PROJECT_GID" },
+    { board: "03 · Audit Log 10-Year Trail",         envVar: "ASANA_AUDIT_LOG_PROJECT_GID" },
+    { board: "04 · Four-Eyes Approvals",              envVar: "ASANA_FOUR_EYES_PROJECT_GID" },
+    { board: "09 · Compliance Ops — Daily & Weekly", envVar: "ASANA_COMPLIANCE_OPS_PROJECT_GID" },
+    { board: "11 · Employees",                        envVar: "ASANA_EMPLOYEES_PROJECT_GID" },
+    { board: "12 · Training",                         envVar: "ASANA_TRAINING_PROJECT_GID" },
+    { board: "13 · Compliance Governance",            envVar: "ASANA_GOVERNANCE_PROJECT_GID" },
+    { board: "14 · Routines — Scheduled",             envVar: "ASANA_ROUTINES_PROJECT_GID" },
+    { board: "17 · Export Control & Dual-Use",        envVar: "ASANA_EXPORT_CTRL_PROJECT_GID" },
+    { board: "18 · Regulator Portal Handoff",         envVar: "ASANA_REGULATOR_PROJECT_GID" },
+    { board: "19 · Incidents & Grievances",           envVar: "ASANA_INCIDENTS_PROJECT_GID" },
   ];
 
+  const runRebuild = async () => {
+    setRebuildState("running");
+    setRebuildResults([]);
+    setRebuildErr("");
+    try {
+      const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
+      const data = await res.json() as { ok: boolean; results?: ResetResult[]; error?: string };
+      if (data.ok) { setRebuildResults(data.results ?? []); setRebuildState("done"); }
+      else { setRebuildErr(data.error ?? "Rebuild failed"); setRebuildState("error"); }
+    } catch (e) { setRebuildErr(e instanceof Error ? e.message : "Network error"); setRebuildState("error"); }
+  };
+
+  const runFullReset = async () => {
+    setResetState("running");
+    setResetResults([]);
+    setResetErr("");
+    try {
+      const res = await fetch("/api/asana-full-reset", { method: "POST" });
+      const data = await res.json() as { ok: boolean; results?: ResetResult[]; error?: string };
+      if (data.ok || data.results?.length) { setResetResults(data.results ?? []); setResetState("done"); }
+      else { setResetErr(data.error ?? "Reset failed"); setResetState("error"); }
+    } catch (e) { setResetErr(e instanceof Error ? e.message : "Network error"); setResetState("error"); }
+  };
+
+  const busy = rebuildState === "running" || resetState === "running";
+
   return (
-    <div className="mt-8 border border-hair-2 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <div className="text-11 font-semibold uppercase tracking-wide-4 text-brand mb-0.5">
-            Asana · Workflow Admin
-          </div>
-          <div className="text-12 text-ink-2">
-            Rebuilds sections on all configured boards (up to 19). Boards missing a GID env var are skipped.
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={run}
-          disabled={state === "running"}
-          className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity shrink-0"
-        >
-          {state === "running" ? "Rebuilding…" : "Rebuild Sections"}
-        </button>
+    <div className="mt-8 border border-hair-2 rounded-xl p-5 space-y-5">
+      <div className="text-11 font-semibold uppercase tracking-wide-4 text-brand">
+        Asana · Workflow Admin
       </div>
 
-      {/* Env-var reference — 10 new boards that need GIDs in Netlify */}
-      <div className="mb-4 border border-hair-1 rounded-lg overflow-hidden">
+      {/* ── Action buttons ─────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-3 items-start">
+        {/* Rebuild sections only */}
+        <div className="flex-1 min-w-[220px] border border-hair-1 rounded-lg p-3">
+          <div className="text-12 font-semibold text-ink-0 mb-1">Rebuild Sections</div>
+          <div className="text-11 text-ink-3 mb-3">
+            Wipes and recreates the workflow columns on all configured boards. Does not touch tasks.
+          </div>
+          <button
+            type="button"
+            onClick={runRebuild}
+            disabled={busy}
+            className="px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          >
+            {rebuildState === "running" ? "Rebuilding…" : "Rebuild Sections"}
+          </button>
+        </div>
+
+        {/* Full reset — wipe tasks + rebuild sections */}
+        <div className="flex-1 min-w-[220px] border border-red/40 rounded-lg p-3 bg-red-dim/10">
+          <div className="text-12 font-semibold text-red mb-1">Full Reset</div>
+          <div className="text-11 text-ink-3 mb-3">
+            Deletes ALL tasks in every project, then rebuilds sections. This cannot be undone.
+          </div>
+          {resetState !== "confirm" ? (
+            <button
+              type="button"
+              onClick={() => setResetState("confirm")}
+              disabled={busy}
+              className="px-3 py-1.5 rounded bg-red/80 text-white text-12 font-semibold hover:bg-red disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {resetState === "running" ? "Resetting…" : "Wipe Tasks + Rebuild"}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-11 text-red font-semibold">Are you sure?</span>
+              <button
+                type="button"
+                onClick={runFullReset}
+                className="px-3 py-1 rounded bg-red text-white text-11 font-semibold hover:opacity-90"
+              >
+                Yes, wipe everything
+              </button>
+              <button
+                type="button"
+                onClick={() => setResetState("idle")}
+                className="px-3 py-1 rounded border border-hair-2 text-11 text-ink-2 hover:text-ink-0"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Env-var reference ───────────────────────────────────────────────── */}
+      <div className="border border-hair-1 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => setShowEnvRef((v) => !v)}
           className="w-full flex items-center justify-between px-3 py-2 bg-bg-1 hover:bg-bg-panel text-12 font-semibold text-ink-1 transition-colors"
         >
-          <span>Netlify env vars — new boards (add as you create each project in Asana)</span>
+          <span>Netlify env vars — add as you create each project in Asana</span>
           <span className="text-ink-3 text-11">{showEnvRef ? "▲ hide" : "▼ show"}</span>
         </button>
         {showEnvRef && (
@@ -620,9 +683,7 @@ function AsanaRebuildSection() {
             {NEW_PROJECTS.map(({ board, envVar }) => (
               <div key={envVar} className="flex items-center justify-between px-3 py-2 bg-bg-panel">
                 <span className="text-12 text-ink-1">{board}</span>
-                <span className="font-mono text-11 text-brand bg-brand-dim/30 px-2 py-0.5 rounded select-all">
-                  {envVar}
-                </span>
+                <span className="font-mono text-11 text-brand bg-brand-dim/30 px-2 py-0.5 rounded select-all">{envVar}</span>
               </div>
             ))}
             <div className="px-3 py-2 bg-bg-1 text-11 text-ink-3">
@@ -632,19 +693,37 @@ function AsanaRebuildSection() {
         )}
       </div>
 
-      {state === "error" && (
-        <div className="bg-red-dim border border-red/30 rounded px-3 py-2 text-12 text-red">
-          {errMsg}
-        </div>
+      {/* ── Results ─────────────────────────────────────────────────────────── */}
+      {rebuildState === "error" && (
+        <div className="bg-red-dim border border-red/30 rounded px-3 py-2 text-12 text-red">{rebuildErr}</div>
       )}
-
-      {state === "done" && results.length > 0 && (
-        <div className="space-y-1.5">
-          {results.map((r) => (
+      {rebuildState === "done" && rebuildResults.length > 0 && (
+        <div className="space-y-1">
+          <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Rebuild result</div>
+          {rebuildResults.map((r) => (
             <div key={r.name} className={`flex items-center justify-between px-3 py-2 rounded text-12 ${r.errors.length > 0 ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
               <span className="font-medium">{r.name}</span>
               <span className="font-mono text-11 opacity-80">
-                {r.errors.length > 0 ? `⚠ ${r.errors.join(", ")}` : `✓ ${r.deleted} deleted · ${r.created} created`}
+                {r.errors.length > 0 ? `⚠ ${r.errors.join(", ")}` : `✓ ${r.deleted ?? 0} deleted · ${r.created ?? 0} created`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {resetState === "error" && (
+        <div className="bg-red-dim border border-red/30 rounded px-3 py-2 text-12 text-red">{resetErr}</div>
+      )}
+      {(resetState === "done" || resetState === "running") && resetResults.length > 0 && (
+        <div className="space-y-1">
+          <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Full reset result</div>
+          {resetResults.map((r) => (
+            <div key={r.name} className={`flex items-center justify-between px-3 py-2 rounded text-12 ${r.errors.length > 0 ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
+              <span className="font-medium truncate mr-4">{r.name}</span>
+              <span className="font-mono text-11 opacity-80 shrink-0">
+                {r.errors.length > 0
+                  ? `⚠ ${r.errors[0]}`
+                  : `✓ ${r.tasksWiped ?? 0} tasks wiped · ${r.sectionsCreated ?? 0} sections`}
               </span>
             </div>
           ))}

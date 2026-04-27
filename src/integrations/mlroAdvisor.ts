@@ -19,12 +19,15 @@ export interface ModeBudget {
   advisorMs?: number;
 }
 
-// Per-mode budgets. The hard ceiling is 60s per request; modes pack into it.
-// Claude Sonnet needs up to 25s and Opus up to 35s for an 8 k-token response.
+// Per-mode budgets.
+// speed:             Sonnet only, no advisor chain — must finish in ~8 s.
+// balanced:          Opus advisor only (no executor), up to 45 s.
+// multi_perspective: Sonnet executor (25 s) → Opus advisor (65 s) = 90 s total.
+//                    Opus 4.7 needs up to 55 s for a full 8 k-token narrative.
 export const MODE_BUDGETS: Record<ReasoningMode, ModeBudget> = {
-  speed:             { totalMs: 20_000, executorMs: 20_000 },
-  balanced:          { totalMs: 45_000, advisorMs: 45_000 },
-  multi_perspective: { totalMs: 60_000, executorMs: 25_000, advisorMs: 35_000 },
+  speed:             { totalMs:  8_000, executorMs:  8_000 },
+  balanced:          { totalMs: 45_000, advisorMs:  45_000 },
+  multi_perspective: { totalMs: 90_000, executorMs: 25_000, advisorMs: 65_000 },
 };
 
 export interface MlroAdvisorConfig {
@@ -266,7 +269,7 @@ export async function invokeMlroAdvisor(
   if (!req.question.trim()) throw new Error('MlroAdvisorRequest.question must be non-empty');
   const mode: ReasoningMode = req.mode ?? 'multi_perspective';
   const budget = MODE_BUDGETS[mode];
-  const hardCeiling = Math.min(cfg.budgetMs ?? 60_000, 60_000);
+  const hardCeiling = cfg.budgetMs ?? budget.totalMs;
   const totalBudget = Math.min(budget.totalMs, hardCeiling);
   const t0 = Date.now();
   const trail: ReasoningTrailStep[] = [];
