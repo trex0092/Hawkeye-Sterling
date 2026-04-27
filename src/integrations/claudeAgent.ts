@@ -1,6 +1,6 @@
 import type { CaseReport } from '../reports/caseReport.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
-import { fetchJsonWithRetry } from './httpRetry.js';
+import { fetchAnthropicStreamText } from './httpRetry.js';
 
 export interface ClaudeAgentConfig {
   apiKey: string;
@@ -111,7 +111,7 @@ export async function generateNarrativeReport(
     return { ok: false, error: 'message content must be non-empty' };
   }
 
-  const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
+  const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {
       method: 'POST',
@@ -123,6 +123,7 @@ export async function generateNarrativeReport(
       body: JSON.stringify({
         model: config.model || DEFAULT_MODEL,
         max_tokens: 16000,
+        stream: true,
         system: payload.system,
         messages,
         metadata: {
@@ -133,26 +134,18 @@ export async function generateNarrativeReport(
       }),
     },
     {
-      perAttemptMs: config.timeoutMs ?? 60_000,
-      idleReadMs: 25_000,
+      perAttemptMs: config.timeoutMs ?? 90_000,
+      idleReadMs: 30_000,
       maxAttempts: 3,
     },
   );
 
-  if (!result.ok || !result.json) {
+  if (!result.ok) {
     const prefix = result.partial ? 'partial response (stream idle) ' : '';
-    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
-    if (result.body && !result.partial) {
-      try {
-        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
-        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
-      } catch { /* keep default error detail */ }
-    }
     return {
       ok: false,
-      error: `${prefix}${errorDetail} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
+      error: `${prefix}${result.error ?? 'unknown error'} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
     };
   }
-  const html = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
-  return { ok: true, html };
+  return { ok: true, html: result.text };
 }

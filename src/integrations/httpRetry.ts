@@ -145,6 +145,200 @@ async function readBodyWithIdleTimeout(
   });
 }
 
+// ── Anthropic streaming (SSE) helpers ────────────────────────────────────────
+
+export interface AnthropicStreamResult {
+  ok: boolean;
+  /** Accumulated text from all content_block_delta / text_delta events. */
+  text: string;
+  error: string | null;
+  attempts: number;
+  elapsedMs: number;
+  partial: boolean;
+}
+
+/**
+ * Reads an Anthropic SSE streaming response body, accumulating text deltas.
+ * Returns partial=true if the stream ends unexpectedly (idle timeout or an
+ * in-stream error event from the API).
+ */
+async function readAnthropicSSEBody(
+  res: Response,
+  idleReadMs: number,
+  outerSignal: AbortSignal,
+): Promise<{ text: string; partial: boolean; streamError?: string }> {
+  if (!res.body) return { text: '', partial: false };
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let lineBuffer = '';
+  let text = '';
+  let streamError: string | undefined;
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+  return new Promise<{ text: string; partial: boolean; streamError?: string }>((resolve, reject) => {
+    let settled = false;
+
+    const settle = (value: { text: string; partial: boolean; streamError?: string } | Error): void => {
+      if (settled) return;
+      settled = true;
+      outerSignal.removeEventListener('abort', onOuterAbort);
+      if (idleTimer) clearTimeout(idleTimer);
+      try { void reader.cancel(); } catch { /* ignore */ }
+      if (value instanceof Error) reject(value);
+      else resolve(value);
+    };
+
+    const onOuterAbort = (): void => {
+      settle(new DOMException('Aborted by outer signal', 'AbortError'));
+    };
+    outerSignal.addEventListener('abort', onOuterAbort, { once: true });
+
+    const armIdle = (): void => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => settle({ text, partial: true }), idleReadMs);
+    };
+
+    armIdle();
+
+    const pump = (): void => {
+      reader.read().then(({ done, value: chunk }) => {
+        if (settled) return;
+        if (done) {
+          if (idleTimer) clearTimeout(idleTimer);
+          outerSignal.removeEventListener('abort', onOuterAbort);
+          settled = true;
+          resolve({ text, partial: false, streamError });
+          return;
+        }
+        if (chunk) {
+          lineBuffer += decoder.decode(chunk, { stream: true });
+          const lines = lineBuffer.split('\n');
+          lineBuffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (!data || data === '[DONE]') continue;
+            try {
+              const evt = JSON.parse(data) as {
+                type?: string;
+                delta?: { type?: string; text?: string };
+                error?: { message?: string };
+              };
+              if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+                text += evt.delta.text ?? '';
+              } else if (evt.type === 'error') {
+                streamError = evt.error?.message ?? 'stream error';
+                settle({ text, partial: true, streamError });
+                return;
+              }
+            } catch { /* ignore malformed SSE line */ }
+          }
+        }
+        armIdle();
+        pump();
+      }).catch((err: unknown) => {
+        settle(err instanceof Error ? err : new Error(String(err)));
+      });
+    };
+    pump();
+  });
+}
+
+/**
+ * Makes an Anthropic streaming API call (the request body must include
+ * `stream: true`). Parses SSE events and accumulates text_delta content.
+ * Retries on transient errors with exponential backoff, same as
+ * fetchJsonWithRetry.
+ */
+export async function fetchAnthropicStreamText(
+  url: string,
+  init: RequestInit = {},
+  opts: HttpRetryOptions = {},
+): Promise<AnthropicStreamResult> {
+  const maxAttempts = opts.maxAttempts ?? DEFAULTS.maxAttempts;
+  const perAttemptMs = opts.perAttemptMs ?? DEFAULTS.perAttemptMs;
+  const idleReadMs = opts.idleReadMs ?? DEFAULTS.idleReadMs;
+  const initialBackoffMs = opts.initialBackoffMs ?? DEFAULTS.initialBackoffMs;
+  const maxBackoffMs = opts.maxBackoffMs ?? DEFAULTS.maxBackoffMs;
+  const retryOn = opts.retryOn ?? defaultRetryOn;
+  const started = Date.now();
+
+  let attempts = 0;
+  let lastError: string | null = null;
+  let lastText = '';
+  let lastPartial = false;
+
+  while (attempts < maxAttempts) {
+    if (opts.signal?.aborted) {
+      return { ok: false, text: lastText, error: 'aborted by caller', attempts, elapsedMs: Date.now() - started, partial: lastPartial };
+    }
+    attempts++;
+
+    const attemptCtl = new AbortController();
+    const totalTimer = setTimeout(() => attemptCtl.abort(), perAttemptMs);
+    const onOuter = (): void => attemptCtl.abort();
+    opts.signal?.addEventListener('abort', onOuter, { once: true });
+
+    try {
+      const res = await fetch(url, { ...init, signal: attemptCtl.signal });
+
+      if (!res.ok) {
+        clearTimeout(totalTimer);
+        opts.signal?.removeEventListener('abort', onOuter);
+        const body = await res.text().catch(() => '');
+        lastError = `HTTP ${res.status}`;
+        try {
+          const parsed = JSON.parse(body) as { error?: { message?: string } };
+          if (parsed?.error?.message) lastError = `API Error: ${res.status} ${parsed.error.message}`;
+        } catch { /* keep default */ }
+        if (attempts < maxAttempts && retryOn(res.status, null)) {
+          try { await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal); } catch { /* aborted */ }
+          continue;
+        }
+        return { ok: false, text: '', error: lastError, attempts, elapsedMs: Date.now() - started, partial: false };
+      }
+
+      const { text, partial, streamError } = await readAnthropicSSEBody(res, idleReadMs, attemptCtl.signal);
+      clearTimeout(totalTimer);
+      opts.signal?.removeEventListener('abort', onOuter);
+
+      lastText = text;
+      lastPartial = partial;
+
+      if (partial || streamError) {
+        lastError = streamError ?? `partial response (attempt ${attempts}/${maxAttempts})`;
+        if (attempts < maxAttempts) {
+          try {
+            await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal);
+          } catch {
+            return { ok: false, text, error: lastError, attempts, elapsedMs: Date.now() - started, partial: true };
+          }
+          continue;
+        }
+        return { ok: false, text, error: lastError, attempts, elapsedMs: Date.now() - started, partial: true };
+      }
+
+      return { ok: true, text, error: null, attempts, elapsedMs: Date.now() - started, partial: false };
+
+    } catch (err) {
+      clearTimeout(totalTimer);
+      opts.signal?.removeEventListener('abort', onOuter);
+      const msg = err instanceof Error ? err.message : String(err);
+      lastError = msg;
+      if (attempts < maxAttempts && retryOn(null, err)) {
+        try { await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal); } catch { /* aborted */ }
+        continue;
+      }
+      return { ok: false, text: lastText, error: msg, attempts, elapsedMs: Date.now() - started, partial: lastPartial };
+    }
+  }
+
+  return { ok: false, text: lastText, error: lastError ?? 'exhausted retries', attempts, elapsedMs: Date.now() - started, partial: lastPartial };
+}
+
+// ── JSON (non-streaming) helper ───────────────────────────────────────────────
+
 export async function fetchJsonWithRetry<T = unknown>(
   url: string,
   init: RequestInit = {},

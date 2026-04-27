@@ -9,7 +9,7 @@
 
 import { weaponizedSystemPrompt } from '../brain/weaponized.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
-import { fetchJsonWithRetry } from './httpRetry.js';
+import { fetchAnthropicStreamText } from './httpRetry.js';
 
 export type ReasoningMode = 'speed' | 'balanced' | 'multi_perspective';
 
@@ -190,7 +190,7 @@ export type ChatCall = (input: {
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
   if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
-  const result = await fetchJsonWithRetry<{ content?: Array<{ type: string; text?: string }> }>(
+  const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {
       method: 'POST',
@@ -202,37 +202,29 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
+        stream: true,
         system,
         messages: [{ role: 'user', content: user }],
       }),
     },
     {
       ...(signal ? { signal } : {}),
-      // The outer withBudget() enforces the per-mode ceiling. Per-attempt and
-      // idle timeouts must be generous enough that the model can finish a full
-      // 8 k-token response (~25-35s) before the HTTP layer fires independently.
-      perAttemptMs: Math.min(55_000, maxTokens * 40 + 8_000),
-      idleReadMs: 25_000,
+      // withBudget() enforces the per-mode ceiling. perAttemptMs just needs to
+      // be generous enough that the HTTP layer doesn't race against the budget.
+      perAttemptMs: Math.min(120_000, maxTokens * 15 + 10_000),
+      idleReadMs: 30_000,
       maxAttempts: 2,
     },
   );
   if (signal?.aborted) return { ok: false, error: 'aborted' };
-  if (!result.ok || !result.json) {
+  if (!result.ok) {
     const prefix = result.partial ? 'partial_response:' : '';
-    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
-    if (result.body && !result.partial) {
-      try {
-        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
-        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
-      } catch { /* keep default error detail */ }
-    }
     return {
       ok: false,
-      error: `${prefix}${errorDetail} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
+      error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  const text = result.json.content?.filter((b) => b.type === 'text').map((b) => b.text ?? '').join('\n') ?? '';
-  return { ok: true, text };
+  return { ok: true, text: result.text };
 };
 
 function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<{ result?: T; timedOut: boolean; thrownError?: string }> {
