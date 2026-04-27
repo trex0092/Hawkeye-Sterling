@@ -26,6 +26,11 @@ interface MaintenanceWindow {
   body?: string;
 }
 
+function safeUTCString(iso: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? new Date().toUTCString() : d.toUTCString();
+}
+
 function escape(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -67,9 +72,9 @@ export async function GET(req: Request): Promise<Response> {
     items.push({
       guid: `incident-${i.id}`,
       title: `[INCIDENT · ${i.severity.toUpperCase()}] ${i.title}`,
-      pubDate: new Date(i.openedAt).toUTCString(),
+      pubDate: safeUTCString(i.openedAt),
       description: `${i.body ?? ""} Affected: ${i.affected.join(", ")}.${
-        i.closedAt ? ` Resolved at ${new Date(i.closedAt).toUTCString()}.` : " Ongoing."
+        i.closedAt ? ` Resolved at ${safeUTCString(i.closedAt)}.` : " Ongoing."
       }`,
       link: `${origin}/status#incident-${i.id}`,
       category: "incident",
@@ -79,7 +84,7 @@ export async function GET(req: Request): Promise<Response> {
     items.push({
       guid: `maintenance-${m.id}`,
       title: `[SCHEDULED MAINTENANCE] ${m.title}`,
-      pubDate: new Date(m.startAt).toUTCString(),
+      pubDate: safeUTCString(m.startAt),
       description: `${m.body ?? ""} Window: ${m.startAt} → ${m.endAt}. Affected: ${m.affected.join(", ")}.`,
       link: `${origin}/status#maintenance-${m.id}`,
       category: "maintenance",

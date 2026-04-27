@@ -109,7 +109,7 @@ export default function VesselCheckPage() {
           {(["single", "batch"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => { setMode(m); setResult(null); setError(null); }}
+              onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); }}
               className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                 mode === m ? "bg-blue-600 text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
               }`}
@@ -193,7 +193,7 @@ export default function VesselCheckPage() {
                 <h3 className="text-sm font-bold text-red-800 mb-3">Sanction Hits ({result.vessel.sanctionHits.length})</h3>
                 <div className="space-y-3">
                   {result.vessel.sanctionHits.map((hit, i) => (
-                    <div key={i} className="bg-white rounded border border-red-200 p-3">
+                    <div key={`${hit.list}-${hit.entryId ?? i}`} className="bg-white rounded border border-red-200 p-3">
                       <p className="text-sm font-bold text-red-700">{hit.list}</p>
                       {hit.entryId && <p className="text-xs text-gray-500">Entry ID: {hit.entryId}</p>}
                       {hit.reason && <p className="text-xs text-gray-600 mt-1">{hit.reason}</p>}
@@ -210,7 +210,7 @@ export default function VesselCheckPage() {
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Ownership</h3>
                 <div className="space-y-2">
                   {result.vessel.owners.map((o, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm py-2 border-b border-gray-50 last:border-0">
+                    <div key={`${o.name}-${o.lei ?? i}`} className="flex items-center justify-between text-sm py-2 border-b border-gray-50 last:border-0">
                       <div>
                         <span className="font-medium text-gray-900">{o.name}</span>
                         {o.lei && <span className="ml-2 text-xs font-mono text-gray-400">{o.lei}</span>}

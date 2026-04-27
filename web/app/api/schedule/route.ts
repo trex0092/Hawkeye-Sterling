@@ -76,16 +76,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
+  const gateHeaders = gate.headers;
+
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return NextResponse.json(
       { ok: false, error: "body must be a JSON object" },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
   const body = raw as Record<string, unknown>;
@@ -104,7 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         error:
           "subjectId required; cadence must be thrice_daily | hourly | daily | weekly | monthly",
       },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
   const cadence: Cadence = cadenceRaw;
@@ -114,7 +116,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   ) {
     return NextResponse.json(
       { ok: false, error: "scoreThreshold must be between 0 and 1" },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
   const now = new Date();
@@ -142,7 +144,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   if (!id) {
     return NextResponse.json(
       { ok: false, error: "subjectId required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   await del(`${PREFIX}${id}`);

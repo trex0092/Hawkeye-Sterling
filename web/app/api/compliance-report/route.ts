@@ -449,7 +449,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     console.error("compliance-report failed to build", err);
     return NextResponse.json(
       { ok: false, error: "report generation failed" },
-      { status: 500 },
+      { status: 500, headers: gateHeaders },
     );
   }
 

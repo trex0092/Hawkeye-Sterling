@@ -17,9 +17,9 @@ export async function GET(
 
   const record = await getJson<CorrectionRequest>(`${PREFIX}${params.id}`);
   if (!record) {
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
-  return NextResponse.json({ ok: true, request: record });
+  return NextResponse.json({ ok: true, request: record }, { headers: gate.headers });
 }
 
 interface PatchBody {
@@ -46,17 +46,18 @@ export async function PATCH(
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  const gateHeaders = gate.headers;
 
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return NextResponse.json(
       { ok: false, error: "body must be a JSON object" },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
   const body = raw as Record<string, unknown>;
@@ -70,7 +71,7 @@ export async function PATCH(
         ok: false,
         error: `invalid status; must be one of: ${VALID_STATUSES.join(", ")}`,
       },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
 
@@ -80,13 +81,13 @@ export async function PATCH(
   if (body["status"] !== undefined && body["appeal"] !== undefined) {
     return NextResponse.json(
       { ok: false, error: "supply either status or appeal, not both" },
-      { status: 400 },
+      { status: 400, headers: gateHeaders },
     );
   }
 
   const record = await getJson<CorrectionRequest>(`${PREFIX}${params.id}`);
   if (!record) {
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gateHeaders });
   }
 
   const nextStatus = body["status"] as CorrectionStatus | undefined;
@@ -115,5 +116,5 @@ export async function PATCH(
   }
 
   await setJson(`${PREFIX}${params.id}`, record);
-  return NextResponse.json({ ok: true, request: record });
+  return NextResponse.json({ ok: true, request: record }, { headers: gateHeaders });
 }

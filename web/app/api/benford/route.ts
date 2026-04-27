@@ -50,6 +50,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(body.label !== undefined ? { label: body.label } : {}),
   });
 
-  const status = result.ok ? 200 : result.risk === "insufficient-data" ? 422 : 200;
+  const status = result.ok ? 200 : result.risk === "insufficient-data" ? 422 : 400;
   return NextResponse.json(result, { status, headers: { ...CORS, ...gateHeaders } });
 }
