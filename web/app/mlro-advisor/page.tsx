@@ -289,9 +289,37 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ query, mode: "multi-agent" }),
       });
-      const data = await res.json() as ComplianceAnswer;
-      if (!data.ok) {
-        setQaError(data.error ?? "Query failed");
+      const rawText = await res.text();
+      let data: (ComplianceAnswer & { partialAnswer?: string }) | null = null;
+      try {
+        data = rawText ? JSON.parse(rawText) as ComplianceAnswer : null;
+      } catch {
+        // Body wasn't JSON — likely a Netlify HTML error page (504 timeout,
+        // 502 bad gateway, etc.). Surface the HTTP status + a snippet so the
+        // user (and we) can actually see what happened.
+        const snippet = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 240);
+        setQaError(
+          `Server returned HTTP ${res.status} ${res.statusText || ""} (non-JSON body). ` +
+          (snippet ? `Detail: ${snippet}` : "Likely a function timeout — try again or use the MLRO Advisor tab."),
+        );
+        return;
+      }
+      if (!data || !data.ok) {
+        const baseError = data?.error ?? `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ""}`;
+        const suffix = data?.partialAnswer ? ` Partial answer captured below.` : "";
+        setQaError(`${baseError}${suffix}`);
+        if (data?.partialAnswer) {
+          setQaHistory((prev) => [
+            ...prev,
+            {
+              id: `qa-${Date.now()}`,
+              question: query,
+              result: { ...data, ok: true, answer: data.partialAnswer, citations: [], passedQualityGate: false, source: "mlro-advisor-fallback" } as ComplianceAnswer,
+              askedAt: new Date().toLocaleTimeString(),
+            },
+          ]);
+          setQaQuery("");
+        }
       } else {
         setQaHistory((prev) => [
           ...prev,
@@ -304,8 +332,9 @@ export default function MlroAdvisorPage() {
         ]);
         setQaQuery("");
       }
-    } catch {
-      setQaError("Request failed — check network connection.");
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setQaError(`Request failed: ${detail}`);
     } finally {
       setQaLoading(false);
     }
