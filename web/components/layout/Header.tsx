@@ -33,7 +33,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
       { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
       { label: "Brain", href: "/weaponized-brain", hint: "Reasoning manifest & cognition" },
-      { label: "Compliance Q&A", href: "/compliance-qa", hint: "Regulatory Q&A grounded in UAE AML law" },
+      { label: "Compliance Q&A", href: "/mlro-advisor", hint: "Regulatory Q&A grounded in UAE AML law" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
       { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "Status", href: "/status", hint: "Live endpoint health" },
