@@ -9,7 +9,7 @@ import { askComplianceQuestion } from "../../../../dist/src/integrations/complia
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 interface Body {
   question: string;
@@ -95,23 +95,31 @@ export async function POST(req: Request): Promise<NextResponse> {
     },
   };
 
-  // Fetch regulatory RAG context in parallel with the main advisor call.
-  // The RAG answer (if available and above quality gate) enriches the
-  // evidence package presented to the MLRO — providing direct regulatory
-  // citations alongside the AI reasoning chain.
-  const ragPromise = askComplianceQuestion({
-    query: body.question.trim().slice(0, 500),
-    mode: "multi-agent",
-  }).catch(() => null);
+  // Mode-aware budgets:
+  //   speed       → 20 s  (fast, single model)
+  //   balanced    → 40 s  (Sonnet only, no chaining)
+  //   multi_perspective → 100 s (Sonnet executor → Opus advisor — needs headroom)
+  const modeBudgets: Record<string, number> = {
+    speed: 8_000,
+    balanced: 40_000,
+    multi_perspective: 100_000,
+  };
+  const budgetMs = modeBudgets[body.mode ?? "multi_perspective"] ?? 100_000;
+
+  // For multi_perspective, skip RAG — the full budget goes to the
+  // Sonnet→Opus chain. RAG runs only for speed/balanced where there is
+  // spare capacity.
+  const isMulti = (body.mode ?? "multi_perspective") === "multi_perspective";
+  const ragPromise = isMulti
+    ? Promise.resolve(null)
+    : askComplianceQuestion({
+        query: body.question.trim().slice(0, 500),
+        mode: "multi-agent",
+      }).catch(() => null);
 
   try {
-    // 60 s matches the integration's hard ceiling (mlro-budget-planner.ts).
-    // Multi-perspective mode chains Sonnet executor + Opus advisor and
-    // routinely needs ≥30 s on a real 8 k-token compliance analysis; the
-    // previous 25 s clamp short-circuited the executor and surfaced as
-    // a generic HTTP 502 to the operator.
     const [result, ragResult] = await Promise.all([
-      invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 60_000 }),
+      invokeMlroAdvisor(advisorReq, { apiKey, budgetMs }),
       ragPromise,
     ]);
 

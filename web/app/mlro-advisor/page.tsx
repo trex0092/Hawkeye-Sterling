@@ -85,15 +85,24 @@ export default function MlroAdvisorPage() {
   const [qaResult, setQaResult] = useState<ComplianceAnswer | null>(null);
   const [qaError, setQaError] = useState<string | null>(null);
 
+  const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
+    speed: 9_000,
+    balanced: 45_000,
+    multi_perspective: 110_000,
+  };
+
   const handleAsk = async () => {
     const q = question.trim();
     if (!q) return;
     setRunning(true); setError(null); setResult(null);
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), CLIENT_TIMEOUTS[mode]);
     try {
       const res = await fetch("/api/mlro-advisor", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ question: q, subjectName: "Unknown subject", mode, audience: "regulator" }),
+        signal: ctl.signal,
       });
       const rawText = await res.text();
       let data: (AdvisorResult & { error?: string }) | null = null;
@@ -120,8 +129,19 @@ export default function MlroAdvisorPage() {
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
-    } finally { setRunning(false); }
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError(
+          mode === "speed"
+            ? "Speed mode timed out (>9 s) — check server logs or try again."
+            : "Request timed out — try Speed or Balanced mode.",
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "Network error");
+      }
+    } finally {
+      clearTimeout(timer);
+      setRunning(false);
+    }
   };
 
   const handleQaAsk = async (q?: string) => {
@@ -225,7 +245,11 @@ export default function MlroAdvisorPage() {
             {running && (
               <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center">
                 <span className="animate-pulse font-mono text-brand">●</span>
-                Dual-model pipeline running — Sonnet executor → Opus advisor…
+                {mode === "speed"
+                  ? "Speed mode — replying in seconds…"
+                  : mode === "balanced"
+                  ? "Balanced mode running — Sonnet only…"
+                  : "Dual-model pipeline running — Sonnet executor → Opus advisor…"}
               </div>
             )}
 

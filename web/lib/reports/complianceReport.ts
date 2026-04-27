@@ -68,6 +68,7 @@ export interface ReportInput {
 const REG_FRAMEWORK = [
   "Federal Decree-Law No. (10) of 2025 — UAE AML/CFT/CPF primary law",
   "Cabinet Resolution No. (134) of 2025 — Executive Regulations",
+  "Cabinet Resolution No. (156) of 2025 — Goods Subject to Non-Proliferation (Controlled Items Schedule)",
   "MoE Circular No. (3) of 2025 — TFS / sanctions screening",
   "MoE Circular No. (2) of 2024 — Responsible sourcing (DPMS)",
   "MoE Circular No. (6) of 2025 — Risk-based CDD / SDD",
