@@ -14,6 +14,7 @@ import {
   invokeMlroAdvisor,
   type MlroAdvisorRequest,
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
+import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +36,17 @@ interface ComplianceQaBody {
   query?: string;
   mode?: "multi-agent" | "single";
   context?: ContextPair[];
+  /** Advisor reasoning depth when the fallback runs.
+   *  - "balanced" (default): advisor only, ~45 s — fits any Netlify timeout.
+   *  - "deep": full executor → advisor pipeline, ~90 s — only safe on
+   *    deployments with maxDuration ≥ 120 s actually honoured by the
+   *    underlying platform (Netlify Pro background functions or similar).
+   */
+  depth?: "balanced" | "deep";
+  /** Enable advisor tool-use (sanctions / regulatory anchor lookups).
+   *  Default true. Set false to bypass tools entirely for a pure
+   *  prompt-only answer. */
+  useTools?: boolean;
 }
 
 function buildContextPreamble(pairs: ContextPair[]): string {
@@ -110,11 +122,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // 'balanced' mode skips the 25 s executor stage and runs the advisor only,
   // so the round-trip fits comfortably inside the Netlify function timeout.
-  // (The previous 'multi_perspective' mode could exceed the platform-level
-  // timeout and return an HTML error page that broke the JSON response.)
+  // 'deep' mode runs the full executor → advisor pipeline (multi_perspective)
+  // for higher answer quality at the cost of latency. Caller opts in via the
+  // `depth` field; we still cap budgetMs below to stay inside maxDuration.
+  const wantsDeep = body.depth === "deep";
+  const advisorMode: "balanced" | "multi_perspective" = wantsDeep ? "multi_perspective" : "balanced";
+  const advisorBudgetMs = wantsDeep ? 95_000 : 50_000;
+
   const advisorReq: MlroAdvisorRequest = {
     question: enrichedQuestion,
-    mode: "balanced",
+    mode: advisorMode,
     audience: "regulator",
     caseContext: {
       caseId: `cqa-${Date.now()}`,
@@ -134,7 +151,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   try {
-    const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: 50_000 });
+    const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: advisorBudgetMs });
 
     if (!advisorResult.ok) {
       const lastStep = advisorResult.reasoningTrail[advisorResult.reasoningTrail.length - 1];
@@ -164,7 +181,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const lastStep = advisorResult.reasoningTrail[advisorResult.reasoningTrail.length - 1];
     const answer = advisorResult.narrative ?? lastStep?.body ?? "";
-    const approved = advisorResult.complianceReview.advisorVerdict === "approved";
+    const score = scoreAdvisorAnswer(answer, advisorResult.complianceReview.advisorVerdict);
 
     return NextResponse.json(
       {
@@ -172,9 +189,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         query: body.query.trim(),
         answer,
         citations: [],
-        passedQualityGate: approved,
-        confidenceScore: approved ? 80 : 55,
-        consistencyScore: 0.85,
+        passedQualityGate: score.passedQualityGate,
+        confidenceScore: score.confidenceScore,
+        consistencyScore: score.consistencyScore,
+        qualityFailures: score.failures,
+        qualityDiagnostics: score.diagnostics,
+        advisorVerdict: advisorResult.complianceReview.advisorVerdict,
         jurisdiction: detectedJurisdiction ?? undefined,
         source: "mlro-advisor-fallback",
       },

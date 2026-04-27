@@ -106,24 +106,36 @@ const DEFAULT_ADVISOR = 'claude-opus-4-7';
 const EXECUTOR_TASK =
   'You are the Deep-Reasoning EXECUTOR. Using the cognitive catalogue AND the ' +
   'skills catalogue, draft a step-by-step reasoning chain that answers the MLRO ' +
-  'question. For every finding cite the reasoning-mode id(s), doctrine id(s), ' +
-  'red-flag id(s), evidence id(s), AND skill id(s) (e.g. `ubo-tracing`, ' +
-  '`transaction-pattern-reasoning`, `tbml-pattern-reasoning`). Any skill / mode / ' +
-  'id not present in the catalogue is a fabrication and invalidates the finding. ' +
-  'Do not issue a final disposition — propose next-steps only. Use the mandatory ' +
-  '7-section output structure. Echo the compositeHash in AUDIT_LINE.';
+  'question. For every finding cite (a) the reasoning-mode id(s), (b) doctrine ' +
+  'id(s), (c) red-flag id(s), (d) evidence id(s), (e) skill id(s) (e.g. ' +
+  '`ubo-tracing`, `transaction-pattern-reasoning`, `tbml-pattern-reasoning`), ' +
+  'AND (f) the PRIMARY-SOURCE regulatory anchor per CITATION ENFORCEMENT rule 1 ' +
+  '(instrument + article/section). Any skill / mode / id not in the catalogue is ' +
+  'a fabrication; any factual claim without a primary-source anchor is a P9 ' +
+  'opaque-scoring violation. Hedges ("may", "typically", "usually", …) are ' +
+  'banned inside factual claims — see CITATION ENFORCEMENT rule 2. Apply ' +
+  'jurisdiction discipline (rule 5): each regime gets its own paragraph. ' +
+  'Do not issue a final disposition — propose next-steps only. Use the ' +
+  'mandatory 7-section output structure. Echo the compositeHash in AUDIT_LINE.';
 
 const ADVISOR_TASK =
   'You are the Deep-Reasoning ADVISOR. Review the EXECUTOR draft against the ' +
-  'compliance charter (P1–P10), the cognitive catalogue, and the skills catalogue. ' +
-  'Flag any violation, any unearned assertion, any tipping-off risk, any merge of ' +
-  'distinct subjects, any opaque scoring, any cited skill / mode / doctrine / ' +
-  'regime / CAHRA / FATF / playbook / disposition id that is NOT in the catalogue. ' +
-  'Where sound, strengthen the rationale and produce the regulator-facing narrative ' +
-  'per FDL 10/2025 Art.20-21. Do NOT replace verbatim quotations from evidence; ' +
-  'never invent citations. Echo the charterHash, catalogueHash, and compositeHash ' +
-  'in the narrative AUDIT_LINE. Return the final narrative + an explicit verdict: ' +
-  'approved / returned_for_revision / blocked, with reason.';
+  'compliance charter (P1–P10), the cognitive catalogue, the skills catalogue, ' +
+  'AND the seven CITATION ENFORCEMENT rules. Flag any violation, any unearned ' +
+  'assertion, any tipping-off risk, any merge of distinct subjects, any opaque ' +
+  'scoring, any cited skill / mode / doctrine / regime / CAHRA / FATF / playbook ' +
+  '/ disposition id that is NOT in the catalogue, any factual claim missing a ' +
+  'primary-source anchor (rule 1), any hedge phrase in a factual claim (rule 2), ' +
+  'any numeric threshold without the instrument that fixed it (rule 4), and any ' +
+  'paragraph in the regulator-facing narrative without ≥1 citation (rule 6). ' +
+  'Strengthen the rationale and produce the regulator-facing narrative per FDL ' +
+  '10/2025 Art.20-21. Do NOT replace verbatim quotations from evidence; never ' +
+  'invent article numbers — when uncertain, mark them "[article reference ' +
+  'unverified]" (rule 7). Echo the charterHash, catalogueHash, and compositeHash ' +
+  'in the narrative AUDIT_LINE. Return the final narrative + an explicit ' +
+  'verdict: approved / returned_for_revision / blocked, with reason. Mass ' +
+  'citation-enforcement violation (≥3 unsourced factual claims) MUST yield ' +
+  'BLOCKED.';
 
 function applyMask(req: MlroAdvisorRequest): Partial<MlroAdvisorRequest['caseContext']> {
   const mask = req.contextMask;
