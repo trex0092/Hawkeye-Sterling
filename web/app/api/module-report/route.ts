@@ -34,6 +34,7 @@ function projectGidForModule(module: string): string {
   const inbox = process.env["ASANA_PROJECT_GID"] ?? MASTER_INBOX_GID;
   switch (module) {
     // 01 · Screening — Sanctions & Adverse Media
+    // Primary nav: Screening, Batch · Governance: AM Lookback
     case "screening":
     case "batch":
     case "adverse-media-lookback":
@@ -41,45 +42,51 @@ function projectGidForModule(module: string): string {
       return process.env["ASANA_SCREENING_PROJECT_GID"] ?? inbox;
 
     // 02 · Central MLRO Daily Digest
+    // Intelligence: Analytics (MLRO performance digest)
     case "analytics":
-    case "rmi":
-    case "oversight":
       return process.env["ASANA_MLRO_DAILY_PROJECT_GID"] ?? inbox;
 
     // 03 · Audit Log 10-Year Trail
+    // Governance: Audit (immutable audit chain)
     case "audit-trail":
       return process.env["ASANA_AUDIT_LOG_PROJECT_GID"] ?? inbox;
 
     // 04 · Four-Eyes Approvals
-    case "cdd-review":
-    case "ubo-declaration":
+    // Governance: SAR QA (literal "four-eyes review" module per nav hint)
+    case "sar-qa":
       return process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? inbox;
 
     // 05 · STR/SAR/CTR/PMR GoAML Filings
+    // Primary nav: STR/SAR, Cases (case-management & filings)
     case "str-cases":
-    case "sar-qa":
     case "cases":
-    case "enforcement":
       return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
 
     // 06 · FFR Incidents & Asset Freezes
+    // Enrichment: Benford (forensic fraud detection)
     case "benford":
       return process.env["ASANA_FFR_PROJECT_GID"] ?? inbox;
 
     // 07 · CDD/SDD/EDD/KYC — Customer Due Diligence
+    // Enrichment: GLEIF, Domain Intel, Crypto Risk
+    // Operations: Client portal, UBO declaration, Supplier DD, CDD Review
     case "gleif":
     case "domain-intel":
     case "crypto-risk":
     case "vendor-dd":
     case "client-portal":
-    case "intel":
+    case "ubo-declaration":
+    case "cdd-review":
       return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
 
     // 08 · Transaction Monitoring
+    // Primary nav: Transaction monitor
     case "transaction-monitor":
       return process.env["ASANA_TM_PROJECT_GID"] ?? inbox;
 
     // 09 · Compliance Ops — Daily & Weekly Tasks
+    // Governance: Regulatory, Policies, Playbook
+    // Intelligence: Data quality · Operations: Corrections
     case "policies":
     case "regulatory":
     case "playbook":
@@ -88,41 +95,55 @@ function projectGidForModule(module: string): string {
       return process.env["ASANA_COMPLIANCE_OPS_PROJECT_GID"] ?? inbox;
 
     // 10 · Shipments — Tracking
+    // Operations: Shipments (bullion chain-of-custody)
     case "shipments":
       return process.env["ASANA_SHIPMENTS_PROJECT_GID"] ?? inbox;
 
     // 11 · Employees
+    // Operations: Employees (HR registry)
     case "employees":
       return process.env["ASANA_EMPLOYEES_PROJECT_GID"] ?? inbox;
 
     // 12 · Training
+    // Operations: Training (staff certification)
     case "training":
       return process.env["ASANA_TRAINING_PROJECT_GID"] ?? inbox;
 
     // 13 · Compliance Governance
+    // Governance: EWRA, Oversight, Enforcement (regulatory deadlines & sign-off)
     case "ewra":
-    case "api-docs":
+    case "oversight":
+    case "enforcement":
       return process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? inbox;
 
     // 14 · Routines — Scheduled
+    // Primary nav: Monitoring (ongoing-monitor scheduled runs)
     case "ongoing-monitor":
       return process.env["ASANA_ROUTINES_PROJECT_GID"] ?? inbox;
 
     // 15 · MLRO Workbench
-    case "workbench":
+    // Primary nav: MLRO Advisor, Intel
+    // Intelligence: Workbench, Investigation, Brain, OSINT
     case "mlro-advisor":
+    case "workbench":
     case "investigation":
     case "weaponized-brain":
+    case "intel":
+    case "osint":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
     // 16 · Supply Chain, ESG & LBMA Gold
+    // Enrichment: Vessel Check · Governance: RMI / RMAP (Responsible Minerals)
     case "vessel-check":
+    case "rmi":
       return process.env["ASANA_SUPPLYCHAIN_PROJECT_GID"] ?? inbox;
 
     // 17 · Export Control & Dual-Use
+    // Governance: EOCN (UAE TFS list & dual-use declarations)
     case "eocn":
       return process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? inbox;
 
+    // Everything else (api-docs, status, …) lands in 00 · Master Inbox.
     default:
       return inbox;
   }
