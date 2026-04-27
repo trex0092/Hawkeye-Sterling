@@ -23,8 +23,10 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import {
   appendCase,
   buildCaseRecord,
+  deleteCase,
   loadCases,
 } from "@/lib/data/case-store";
+import { RowActions } from "@/components/shared/RowActions";
 import {
   loadOperatorRole,
   saveOperatorRole,
@@ -471,6 +473,7 @@ export default function StrCasesPage() {
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Opened
                     </th>
+                    <th className="w-[44px]" aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
@@ -494,6 +497,21 @@ export default function StrCasesPage() {
                       </td>
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
                         {new Date(c.openedAt).toLocaleString()}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        <RowActions
+                          label={`case ${c.id}`}
+                          onEdit={() => {
+                            // Edit re-opens the case in the form above
+                            // by clearing the current draft and scrolling up.
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          onDelete={() => {
+                            deleteCase(c.id);
+                            setCases((prev) => prev.filter((x) => x.id !== c.id));
+                          }}
+                          deleteConfirmMessage={`Delete case ${c.id}? Audit-trail entries remain in the sealed chain; only the register row is removed.`}
+                        />
                       </td>
                     </tr>
                   ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { RowActions } from "@/components/shared/RowActions";
 import type { CDDPosture, SanctionSource, SortKey, Subject, SubjectStatus } from "@/lib/types";
 
 interface ScreeningTableProps {
@@ -83,7 +84,7 @@ export function ScreeningTable({
             <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
               Lists
             </th>
-            <th className="w-[40px]" aria-label="Actions" />
+            <th className="w-[60px]" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
@@ -151,17 +152,12 @@ export function ScreeningTable({
                   </div>
                 </td>
                 <td className={`px-2 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <button
-                    type="button"
-                    aria-label={`Delete ${subject.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(subject.id);
-                    }}
-                    className="w-7 h-7 rounded flex items-center justify-center text-ink-3 hover:bg-red-dim hover:text-red transition-colors"
-                  >
-                    ×
-                  </button>
+                  <RowActions
+                    label={subject.name}
+                    onEdit={() => onSelect(subject.id)}
+                    onDelete={() => onDelete(subject.id)}
+                    confirmDelete={false}
+                  />
                 </td>
               </tr>
             );

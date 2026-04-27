@@ -15,6 +15,7 @@ import { MultiSelect, SingleSelect } from "@/components/ui/MultiSelect";
 import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
+import { RowActions } from "@/components/shared/RowActions";
 import { PaymentScreen } from "@/components/screening/PaymentScreen";
 import {
   TM_CHANNELS,
@@ -359,18 +360,17 @@ export default function TransactionMonitorPage() {
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
                         {new Date(t.loggedAt).toLocaleString()}
                       </td>
-                      <td className="px-2 py-2">
-                        <button
-                          type="button"
-                          aria-label={`Delete ${t.ref}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
+                      <td className="px-2 py-2 text-right">
+                        <RowActions
+                          label={t.ref}
+                          onEdit={() => {
+                            setReportTx(t);
+                          }}
+                          onDelete={() => {
                             setTxs((prev) => prev.filter((x) => x.id !== t.id));
                           }}
-                          className="w-7 h-7 rounded flex items-center justify-center text-ink-3 hover:bg-red-dim hover:text-red transition-colors"
-                        >
-                          ×
-                        </button>
+                          confirmDelete={false}
+                        />
                       </td>
                     </tr>
                   ))}
