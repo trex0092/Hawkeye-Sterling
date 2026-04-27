@@ -390,6 +390,14 @@ export interface WeaponizedSystemPromptOptions {
   includeMetaCognition?: boolean;
   /** Emit the charter/catalogue/composite hashes at the end of the prompt. Default true. */
   includeIntegrityBlock?: boolean;
+  /**
+   * Inject the citation-enforcement block — primary-source-only rule, the
+   * forbidden-hedge list, the stale-warning mandate, and the inline
+   * regulator-anchor format. Default true. Disable only when the caller is
+   * generating non-regulator-facing internal scaffolding (e.g. a draft summary
+   * for an in-house playbook) where regulator citation density is unnecessary.
+   */
+  includeCitationEnforcement?: boolean;
 }
 
 export function weaponizedSystemPrompt(
@@ -464,6 +472,67 @@ export function weaponizedSystemPrompt(
         '================================================================================',
         '',
         cognitiveAmplifierBlock(),
+      ].join('\n'),
+    );
+  }
+
+  if (opts.includeCitationEnforcement ?? true) {
+    parts.push(
+      [
+        '',
+        '================================================================================',
+        'CITATION ENFORCEMENT — PRIMARY-SOURCE-ONLY DOCTRINE',
+        '================================================================================',
+        '',
+        'Every factual assertion in your output MUST satisfy ALL of the following:',
+        '',
+        '1. PRIMARY SOURCE ANCHOR. Cite the originating instrument by its proper',
+        '   short name + article/section, e.g. "FDL 20/2018 Art.16(2)", "Cabinet',
+        '   Decision 10/2019 Art.6", "FATF R.10 INR.10(b)", "EU 5AMLD Art.18a(3)",',
+        '   "OFAC 31 CFR §501.603", "BSA 31 USC §5318(g)", "MLR 2017 Reg.18". A',
+        '   bare jurisdiction tag ("UAE", "EU") is NOT a citation. A regulator',
+        '   name without an instrument ("the FCA says…") is NOT a citation.',
+        '',
+        '2. NO HEDGING ON FACTS. The following phrases are FORBIDDEN inside any',
+        '   factual claim, regulatory threshold, or definition: "may", "might",',
+        '   "could be", "typically", "generally", "usually", "often", "tends',
+        '   to", "I believe", "in my opinion", "it seems", "appears to",',
+        '   "probably", "perhaps". State the rule as the regulation states it,',
+        '   or refuse the claim. Hedges are ONLY permissible when explicitly',
+        '   labelling a forward-looking prediction or a counterfactual',
+        '   ("Forward-looking: …", "Counterfactual: …").',
+        '',
+        '3. STALE-WARNING (P8). If a fact is sourced from training data rather',
+        '   than the supplied evidence pack or a primary instrument, prefix it',
+        '   with "[STALE — verify against current text]" and recommend the',
+        '   primary-source check as a next step.',
+        '',
+        '4. NUMERIC THRESHOLDS REQUIRE THE INSTRUMENT THAT FIXED THEM. Any',
+        '   amount, ratio, percentage, day-count, or look-back period MUST cite',
+        '   the regulation that defined the number, not a secondary',
+        '   commentary. "EDD applies above EUR 15,000" without a 5AMLD/AMLD6',
+        '   article number is a P9 violation (opaque scoring).',
+        '',
+        '5. JURISDICTION DISCIPLINE. If the question implicates more than one',
+        '   regime, treat each regime as a SEPARATE PARAGRAPH with its own',
+        '   citations. Do NOT collapse "UAE/EU/UK all require X" into one',
+        '   sentence — the rules differ in scope, threshold, and exemption.',
+        '',
+        '6. CITATION DENSITY. The final REGULATOR-FACING NARRATIVE section',
+        '   must contain at least ONE primary-source citation per substantive',
+        '   paragraph. A paragraph with zero citations is provisional only and',
+        '   must be marked "[provisional — no primary source on file]".',
+        '',
+        '7. NEVER INVENT INSTRUMENTS. Article numbers, section codes, recital',
+        '   numbers, and regulator-issued circular IDs are NOT to be guessed.',
+        '   When uncertain, cite the parent instrument and flag the article',
+        '   number as "[article reference unverified]" — fabrication is a P2',
+        '   violation and triggers BLOCKED verdict.',
+        '',
+        'A response that violates ANY of points 1–7 in a factual claim is a',
+        'CHARTER VIOLATION and the advisor verdict MUST be at minimum',
+        '"returned_for_revision". Mass violation (≥3 unsourced factual claims)',
+        'triggers BLOCKED.',
       ].join('\n'),
     );
   }

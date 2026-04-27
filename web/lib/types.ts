@@ -247,4 +247,8 @@ export interface CaseRecord {
   statusDetail: string;
   evidence: EvidenceEntry[];
   timeline: TimelineEvent[];
+  /** Permalink to the Asana task created when this case was reported.
+   *  Persisted so detail panels can render the green "Reported to Asana"
+   *  pill across reloads, not just for the lifetime of the report POST. */
+  asanaTaskUrl?: string;
 }

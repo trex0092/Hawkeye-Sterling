@@ -22,6 +22,7 @@ import {
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import {
   appendCase,
+  attachAsanaTaskUrl,
   buildCaseRecord,
   deleteCase,
   loadCases,
@@ -285,6 +286,14 @@ export default function StrCasesPage() {
       ...(goamlRef.trim() ? { goAMLReference: goamlRef.trim() } : {}),
         });
         appendCase(record);
+
+        // Persist the Asana task permalink against the case so the
+        // green "Reported to Asana · view task" pill renders in the
+        // /cases detail panel across reloads, not just for this tab's
+        // lifetime.
+        if (res.data.taskUrl) {
+          attachAsanaTaskUrl(record.id, res.data.taskUrl);
+        }
 
         // Immutable audit event — four-eyes sign-off recorded in chain
         writeAuditEvent(

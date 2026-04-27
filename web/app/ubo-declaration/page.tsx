@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { DateParts } from "@/components/ui/DateParts";
+import { RowActions } from "@/components/shared/RowActions";
 
 // Beneficial Owner Declaration — public-facing form. Your tenants send
 // a link to their customers, who fill in UBO info that auto-populates
@@ -146,13 +147,11 @@ export default function UboDeclarationPage() {
                   UBO #{idx + 1}
                 </span>
                 {ubos.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeUbo(idx)}
-                    className="text-10 font-mono text-red hover:underline"
-                  >
-                    remove
-                  </button>
+                  <RowActions
+                    label={`UBO #${idx + 1}`}
+                    onDelete={() => removeUbo(idx)}
+                    confirmDelete={false}
+                  />
                 )}
               </div>
               <div className="grid grid-cols-3 gap-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import type { CaseRecord, CaseStatus, EvidenceEntry, TimelineEvent } from "@/lib/types";
 
 const STATUS_COLORS: Record<CaseStatus, string> = {
@@ -45,6 +46,11 @@ export function CaseDetailPanel({
           </div>
         </div>
         <p className="text-12 text-ink-2 m-0">{subtitleBits.join(" · ")}</p>
+        {record.asanaTaskUrl && (
+          <AsanaStatus
+            state={{ status: "sent", taskUrl: record.asanaTaskUrl }}
+          />
+        )}
       </div>
 
       <Section title="Case summary">

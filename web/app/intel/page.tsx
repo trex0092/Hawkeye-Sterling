@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 
 // Intel — two panels:
@@ -271,7 +272,7 @@ function AdverseMediaPanel() {
           {watch.map((n) => (
             <span key={n} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-11 bg-brand-dim text-brand-deep">
               {n}
-              <button type="button" onClick={() => remove(n)} className="text-ink-3 hover:text-red" aria-label={`Remove ${n}`}>×</button>
+              <RowActions label={n} onDelete={() => remove(n)} confirmDelete={false} />
             </span>
           ))}
         </div>
