@@ -1,0 +1,39 @@
+name: Rebuild Asana sections
+
+# Manual-only trigger. Wipes every section in all 17 Hawkeye Sterling
+# Asana boards and recreates them in the canonical app-flow order.
+# Tasks become section-less inside each project (they stay in the
+# project — nothing is lost) before the new sections are written.
+#
+# Setup, one-time:
+#   GitHub → Repo Settings → Secrets and variables → Actions →
+#   New repository secret → name = ASANA_TOKEN, value = <your PAT>
+#
+# Run:
+#   GitHub → Actions → "Rebuild Asana sections" → Run workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run rebuild script
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+        run: |
+          if [ -z "$ASANA_TOKEN" ]; then
+            echo "::error::ASANA_TOKEN secret is not set. Add it under Repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          python scripts/rebuild-asana-sections.py

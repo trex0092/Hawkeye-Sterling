@@ -255,7 +255,7 @@ export default function TransactionMonitorPage() {
                       <div><label className={lCls}>Counterparty</label><input ref={counterpartyRef} value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Customer / entity name" className={iCls} /></div>
                     </div>
                     <div className={`${row} grid-cols-3`}>
-                      <div><label className={lCls}>Amount <span className="normal-case font-normal">(AED)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
+                      <div><label className={lCls}>Amount</label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                       <div><label className={lCls}>Currency <span className="normal-case font-normal">(original)</span></label><input value={currency} onChange={(e) => setCurrency(e.target.value)} className={iCls} /></div>
                       <div><label className={lCls}>Occurred on</label><DateParts value={occurredOn} onChange={setOccurredOn} className={iCls} /></div>
                     </div>
