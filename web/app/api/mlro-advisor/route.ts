@@ -100,7 +100,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   //   balanced    → 40 s  (Sonnet only, no chaining)
   //   multi_perspective → 100 s (Sonnet executor → Opus advisor — needs headroom)
   const modeBudgets: Record<string, number> = {
-    speed: 20_000,
+    speed: 8_000,
     balanced: 40_000,
     multi_perspective: 100_000,
   };
