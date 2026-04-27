@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 type RiskTier = "clear" | "low" | "medium" | "high" | "critical";
 
@@ -117,11 +118,20 @@ export default function AdverseMediaPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Adverse Media Intelligence</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Weaponized MLRO pipeline — Taranis AI feed → 1 066-keyword taxonomy → FATF predicate mapping → SAR trigger (R.20) → investigation narrative.
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Adverse Media Intelligence</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Weaponized MLRO pipeline — Taranis AI feed → 1 066-keyword taxonomy → FATF predicate mapping → SAR trigger (R.20) → investigation narrative.
+            </p>
+          </div>
+          <AsanaReportButton
+            payload={{
+              module: "adverse-media",
+              label: "Adverse Media",
+              summary: "Module report submitted from Hawkeye Sterling dashboard — Adverse Media.",
+            }}
+          />
         </div>
 
         {/* Search bar */}

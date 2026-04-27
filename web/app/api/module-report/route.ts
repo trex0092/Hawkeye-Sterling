@@ -130,6 +130,7 @@ const MODULE_LABELS: Record<string, string> = {
   cases:                  "Cases",
   "api-docs":             "API Documentation",
   "compliance-qa":        "Compliance Q&A",
+  workbench:              "MLRO Workbench",
 };
 
 // Project label map — shown in the task notes so the MLRO knows the destination.
