@@ -7,6 +7,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
+  async redirects() {
+    return [
+      { source: "/adverse-media", destination: "/screening", permanent: true },
+      { source: "/compliance-qa", destination: "/mlro-advisor", permanent: true },
+    ];
+  },
+
   // @netlify/blobs is imported dynamically inside ../dist/src/ingestion/blobs-store.js.
   // Webpack resolves modules relative to each source file's location, so when processing
   // a file under ../dist/ it looks for node_modules going up from that directory and
