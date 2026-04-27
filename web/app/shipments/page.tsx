@@ -54,7 +54,7 @@ function saveCustom(rows: Consignment[]): void {
 // Bullion chain-of-custody register — LBMA RGG v9 / OECD 5-step DD framework.
 // Each consignment is tracked from origin refinery through transit to final vault.
 
-type ShipmentStatus = "in-flight" | "at-vault" | "awaiting-assay" | "held" | "settled";
+type ShipmentStatus = "in-flight" | "at-vault" | "awaiting-assay" | "held" | "arrived" | "delivered";
 
 interface ChainEntry {
   ts: string;
@@ -107,6 +107,10 @@ interface Consignment {
   custodian: string;
   insuranceRef: string;
   vaultCertRef: string;
+  deliveryLocation: string;
+  // Additional fields
+  netWeightKg: number;
+  lotNumber: string;
 }
 
 const CONSIGNMENTS: Consignment[] = [
@@ -155,6 +159,9 @@ const CONSIGNMENTS: Consignment[] = [
     custodian: "DMCC Tradeflow",
     insuranceRef: "AON-AU-2025-7711",
     vaultCertRef: "—",
+    deliveryLocation: "DMCC Tradeflow Vault, Dubai",
+    netWeightKg: 124.6,
+    lotNumber: "LOT-RR-2025-0099",
   },
   {
     id: "SHP-2025-0038",
@@ -203,6 +210,9 @@ const CONSIGNMENTS: Consignment[] = [
     custodian: "Emirates Gold Vault",
     insuranceRef: "ZURICH-CG-2025-3301",
     vaultCertRef: "VR-2025-0216",
+    deliveryLocation: "Emirates Gold Vault, Almas Tower",
+    netWeightKg: 249.2,
+    lotNumber: "LOT-AH-2025-0318",
   },
   {
     id: "SHP-2025-0035",
@@ -248,6 +258,9 @@ const CONSIGNMENTS: Consignment[] = [
     custodian: "DMCC Tradeflow",
     insuranceRef: "ZURICH-CG-2025-1801",
     vaultCertRef: "DMCC-VR-2025-0180",
+    deliveryLocation: "DMCC Tradeflow Vault, Dubai",
+    netWeightKg: 62.0,
+    lotNumber: "LOT-VC-2025-0209",
   },
   {
     id: "SHP-2025-0029",
@@ -293,11 +306,14 @@ const CONSIGNMENTS: Consignment[] = [
     custodian: "DXB FTZ Customs",
     insuranceRef: "—",
     vaultCertRef: "—",
+    deliveryLocation: "Dubai Airport FTZ, Holding Bay",
+    netWeightKg: 37.2,
+    lotNumber: "—",
   },
   {
     id: "SHP-2025-0021",
     reference: "SHP-2025-0021",
-    status: "settled",
+    status: "delivered",
     origin: "PAMP SA, Geneva",
     originCountry: "CH",
     refinery: "PAMP SA",
@@ -340,32 +356,38 @@ const CONSIGNMENTS: Consignment[] = [
     custodian: "Emirates Gold Vault",
     insuranceRef: "ZURICH-CG-2025-0101",
     vaultCertRef: "EGV-VR-2025-0091",
+    deliveryLocation: "Emirates Gold Vault, Almas Tower",
+    netWeightKg: 124.1,
+    lotNumber: "LOT-PAMP-2025-0144",
   },
 ];
 
 const STATUS_TABS: { key: ShipmentStatus | "all"; label: string }[] = [
   { key: "all", label: "All" },
   { key: "in-flight", label: "In flight" },
+  { key: "arrived", label: "Arrived" },
   { key: "at-vault", label: "At vault" },
   { key: "awaiting-assay", label: "Awaiting assay" },
   { key: "held", label: "Held" },
-  { key: "settled", label: "Settled" },
+  { key: "delivered", label: "Delivered" },
 ];
 
 const STATUS_TONE: Record<ShipmentStatus, string> = {
   "in-flight": "bg-blue-dim text-blue",
+  "arrived": "bg-brand-dim text-brand",
   "at-vault": "bg-green-dim text-green",
   "awaiting-assay": "bg-amber-dim text-amber",
   "held": "bg-red-dim text-red",
-  "settled": "bg-bg-2 text-ink-2",
+  "delivered": "bg-bg-2 text-ink-2",
 };
 
 const STATUS_LABEL: Record<ShipmentStatus, string> = {
   "in-flight": "In flight",
+  "arrived": "Arrived",
   "at-vault": "At vault",
   "awaiting-assay": "Awaiting assay",
   "held": "Held",
-  "settled": "Settled",
+  "delivered": "Delivered",
 };
 
 const RGG_STEPS = [
@@ -401,11 +423,14 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
   const [originCountry, setOriginCountry] = useState("AE");
   const [refinery, setRefinery] = useState("");
   const [grossWeightKg, setGrossWeightKg] = useState("");
+  const [netWeightKg, setNetWeightKg] = useState("");
   const [bars, setBars] = useState("");
   const [usdValue, setUsdValue] = useState("");
   const [direction, setDirection] = useState<"Import" | "Export">("Import");
   const [status, setStatus] = useState<ShipmentStatus>("in-flight");
   const [carrier, setCarrier] = useState("");
+  const [awb, setAwb] = useState("");
+  const [lotNumber, setLotNumber] = useState("");
   const [vaultLocation, setVaultLocation] = useState("Brink's Dubai DMCC");
   const [counterparty, setCounterparty] = useState("");
   const [err, setErr] = useState("");
@@ -413,9 +438,10 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
   const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
 
   const submit = () => {
-    if (!reference.trim() || !refinery.trim()) { setErr("Reference and Refinery are required."); return; }
+    if (!reference.trim() || !refinery.trim()) { setErr("Reference and Supplier are required."); return; }
     const today = new Date().toLocaleDateString("en-GB");
     const kg = parseFloat(grossWeightKg) || 0;
+    const netKg = parseFloat(netWeightKg) || kg;
     const c: Consignment = {
       id: reference.trim(),
       reference: reference.trim(),
@@ -425,6 +451,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       refinery: refinery.trim(),
       refineryLbmaId: "—",
       grossWeightKg: kg,
+      netWeightKg: netKg,
       weightGms: Math.round(kg * 1000),
       fineness: 999.9,
       bars: parseInt(bars, 10) || 0,
@@ -435,11 +462,13 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       direction,
       carrier: carrier.trim() || "—",
       transportationAgent: carrier.trim() || "—",
-      awb: "—",
+      awb: awb.trim() || "—",
+      lotNumber: lotNumber.trim() || "—",
       invoiceNumber: "—",
       clearanceDate: "—",
-      transitProgress: status === "settled" ? 100 : status === "at-vault" ? 95 : 50,
+      transitProgress: status === "delivered" ? 100 : status === "at-vault" ? 95 : status === "arrived" ? 100 : 50,
       vaultLocation: vaultLocation.trim(),
+      deliveryLocation: vaultLocation.trim(),
       consignee: counterparty.trim() || "—",
       assayPending: status === "awaiting-assay",
       rggStep: 1,
@@ -470,11 +499,11 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="SHP-2025-0042" className={iCls} />
         </div>
         <div>
-          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Refinery *</label>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Supplier *</label>
           <input value={refinery} onChange={(e) => setRefinery(e.target.value)} placeholder="e.g. Argor-Heraeus" className={iCls} />
         </div>
         <div>
-          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin</label>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Material origin</label>
           <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="City, Country" className={iCls} />
         </div>
       </div>
@@ -494,10 +523,11 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Status</label>
           <select value={status} onChange={(e) => setStatus(e.target.value as ShipmentStatus)} className={iCls}>
             <option value="in-flight">In flight</option>
+            <option value="arrived">Arrived</option>
             <option value="awaiting-assay">Awaiting assay</option>
             <option value="at-vault">At vault</option>
             <option value="held">Held</option>
-            <option value="settled">Settled</option>
+            <option value="delivered">Delivered</option>
           </select>
         </div>
         <div>
@@ -511,6 +541,10 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <input value={grossWeightKg} onChange={(e) => setGrossWeightKg(e.target.value)} placeholder="124.8" className={iCls} />
         </div>
         <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Net weight (kg)</label>
+          <input value={netWeightKg} onChange={(e) => setNetWeightKg(e.target.value)} placeholder="124.4" className={iCls} />
+        </div>
+        <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bars</label>
           <input value={bars} onChange={(e) => setBars(e.target.value)} placeholder="10" className={iCls} />
         </div>
@@ -518,13 +552,23 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">USD value</label>
           <input value={usdValue} onChange={(e) => setUsdValue(e.target.value)} placeholder="11240000" className={iCls} />
         </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AWB</label>
+          <input value={awb} onChange={(e) => setAwb(e.target.value)} placeholder="MA-20250421-0099" className={iCls} />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Lot number</label>
+          <input value={lotNumber} onChange={(e) => setLotNumber(e.target.value)} placeholder="LOT-2025-0042" className={iCls} />
+        </div>
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label>
           <input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Buyer / consignee" className={iCls} />
         </div>
       </div>
       <div className="mb-4">
-        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vault location</label>
+        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vault / delivery location</label>
         <input value={vaultLocation} onChange={(e) => setVaultLocation(e.target.value)} className={iCls} />
       </div>
       <div className="flex gap-2">
@@ -612,8 +656,8 @@ export default function ShipmentsPage() {
   const inFlight = live.filter((c) => c.status === "in-flight").length;
   const held = live.filter((c) => c.status === "held").length;
   const awaitingAssay = live.filter((c) => c.status === "awaiting-assay").length;
-  const totalUsd = live.filter((c) => c.status !== "settled").reduce((s, c) => s + c.usdValue, 0);
-  const totalKg = live.filter((c) => c.status !== "settled").reduce((s, c) => s + c.grossWeightKg, 0);
+  const totalUsd = live.filter((c) => c.status !== "delivered").reduce((s, c) => s + c.usdValue, 0);
+  const totalKg = live.filter((c) => c.status !== "delivered").reduce((s, c) => s + c.grossWeightKg, 0);
 
   return (
     <ModuleLayout engineLabel="Bullion compliance engine">
@@ -747,7 +791,7 @@ export default function ShipmentsPage() {
               </div>
 
               {/* Transit progress */}
-              {c.status !== "settled" && (
+              {c.status !== "delivered" && (
                 <div className="mb-2">
                   <div className="flex justify-between text-10 text-ink-3 mb-0.5">
                     <span>{c.origin.split(",")[0]} → {c.vaultLocation.split(",")[0]}</span>
@@ -798,17 +842,15 @@ export default function ShipmentsPage() {
                   <Row label="Mining country" value={`${COUNTRY_FLAG[detail.originCountry] ?? ""} ${detail.miningCountry}`} />
                   <Row label="Description" value={detail.description} />
                   <Row label="Weight (gms)" value={detail.weightGms.toLocaleString("en-US")} mono />
-                  <Row label="Export licence" value={detail.exportLicence} mono />
                   <Row label="Dispatch date" value={detail.dispatchDate} mono />
                 </div>
 
                 {/* §2 Refinery */}
                 <div>
                   <div className="text-10 font-mono uppercase tracking-wide-3 text-brand mb-1.5">§2 Refinery</div>
-                  <Row label="Refinery" value={detail.refinery} />
-                  <Row label="LBMA ID" value={detail.refineryLbmaId} mono />
+                  <Row label="Supplier" value={detail.refinery} />
+                  <Row label="LBMA ID / DGD" value={detail.refineryLbmaId} mono />
                   <Row label="Good Delivery" value={detail.lbmaGoodDelivery ? "Yes" : "No"} tone={detail.lbmaGoodDelivery ? "green" : "red"} />
-                  <Row label="Last audit" value={detail.refineryAuditDate} mono />
                 </div>
 
                 {/* §3 Trading counterparty */}
@@ -829,6 +871,7 @@ export default function ShipmentsPage() {
                   <Row label="AWB" value={detail.awb} mono />
                   <Row label="Clearance date" value={detail.clearanceDate} mono />
                   <Row label="Custodian" value={detail.custodian} />
+                  <Row label="Delivery location" value={detail.deliveryLocation} />
                   <Row label="Vault cert" value={detail.vaultCertRef} mono />
                   <Row label="Insurance" value={detail.insuranceRef} mono />
                 </div>
@@ -914,7 +957,7 @@ export default function ShipmentsPage() {
             </div>
 
             {/* Release authority bar */}
-            {detail.status !== "settled" && (
+            {detail.status !== "delivered" && (
               <div className={`rounded-lg px-4 py-3 border flex items-center justify-between gap-4 ${
                 detail.flags.length > 0
                   ? "bg-red-dim border-red/30"
@@ -947,7 +990,7 @@ export default function ShipmentsPage() {
                 )}
               </div>
             )}
-            {detail.status === "settled" && (
+            {detail.status === "delivered" && (
               <div className="rounded-lg px-4 py-3 border border-hair-2 bg-bg-1 flex items-center gap-3">
                 <span className="font-mono text-10 text-green font-semibold uppercase bg-green-dim px-2 py-0.5 rounded">Settled</span>
                 <span className="text-12 text-ink-2">All 5 OECD RGG steps completed · Proceeds transferred</span>
