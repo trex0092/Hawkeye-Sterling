@@ -98,7 +98,7 @@ export function RegulatoryTicker() {
             {doubled.map((item, i) => (
               <span
                 key={`tick-${i}`}
-                className="inline-flex items-center gap-1.5 px-4 text-9 font-mono text-pink-400 uppercase tracking-wide-2"
+                className="inline-flex items-center gap-1.5 px-4 text-9 font-mono text-ink-2 uppercase tracking-wide-2"
               >
                 <span
                   className={`w-1 h-1 rounded-full shrink-0 ${TONE_DOT[item.tone]}`}
