@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
-// ── MLRO Advisor types ────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type ReasoningMode = "speed" | "balanced" | "multi_perspective";
 
@@ -33,9 +33,8 @@ interface AdvisorResult {
   error?: string;
 }
 
-// ── Regulatory Q&A types ──────────────────────────────────────────────────────
-
 interface Citation { document: string; section?: string; jurisdiction?: string; excerpt?: string }
+
 interface ComplianceAnswer {
   ok: boolean;
   query: string;
@@ -46,15 +45,86 @@ interface ComplianceAnswer {
   consistencyScore?: number;
   jurisdiction?: string;
   passedQualityGate: boolean;
+  source?: string;
   error?: string;
 }
 
-const SUGGESTED_QUESTIONS = [
-  "What is the EDD threshold for PEPs under EU 5AMLD?",
-  "What records must a reporting institution maintain under the UAE AML Law?",
-  "When is a Suspicious Activity Report required under the Bank Secrecy Act?",
-  "What are the FATF criteria for high-risk jurisdictions?",
-  "What constitutes shell company risk under FATF Recommendation 24?",
+interface QaHistoryEntry {
+  id: string;
+  question: string;
+  result: ComplianceAnswer;
+  askedAt: string;
+}
+
+interface AdvisorHistoryEntry {
+  id: string;
+  question: string;
+  mode: ReasoningMode;
+  result: AdvisorResult;
+  askedAt: string;
+  expanded: boolean;
+}
+
+// ── Suggested questions ───────────────────────────────────────────────────────
+
+const SUGGESTED_GROUPS = [
+  {
+    label: "PEP & EDD",
+    questions: [
+      "What is the EDD threshold for PEPs under EU 5AMLD?",
+      "What ongoing monitoring is required for PEPs under FATF Recommendation 12?",
+      "When does a domestic PEP require EDD under UAE AML Law?",
+      "How long must EDD measures continue after a PEP leaves public office?",
+    ],
+  },
+  {
+    label: "UAE / MENA AML",
+    questions: [
+      "What records must a reporting institution maintain under the UAE AML Law?",
+      "What is the filing deadline for STRs under UAE FDL Art. 26–27?",
+      "What are the tipping-off prohibitions under UAE FDL Art. 29?",
+      "What are the DPMS cash transaction reporting thresholds under MoE Circular 08/2021?",
+      "What CDD is required for a UAE gold trader under OECD Due Diligence Guidance?",
+    ],
+  },
+  {
+    label: "FATF Standards",
+    questions: [
+      "What are the FATF criteria for high-risk jurisdictions?",
+      "What constitutes shell company risk under FATF Recommendation 24?",
+      "What does FATF Recommendation 16 require for wire transfers?",
+      "How does FATF define a virtual asset service provider (VASP)?",
+      "What is the risk-based approach under FATF Recommendation 1?",
+    ],
+  },
+  {
+    label: "Sanctions & TFS",
+    questions: [
+      "When is a Suspicious Activity Report required under the Bank Secrecy Act?",
+      "What is the OFAC 50% rule for sanctioned entity ownership?",
+      "How do UN Security Council resolutions apply to targeted financial sanctions?",
+      "What are the record-keeping obligations for OFAC blocked property?",
+      "What is the EU asset freeze obligation under Regulation 2580/2001?",
+    ],
+  },
+  {
+    label: "Virtual Assets",
+    questions: [
+      "What CDD obligations apply to VASPs under FATF Recommendation 15?",
+      "What travel rule requirements apply to crypto transactions above $1,000?",
+      "How should a VASP screen for mixer or privacy-coin exposure?",
+      "What are the UAE VARA licensing categories for virtual assets?",
+    ],
+  },
+  {
+    label: "STR / SAR Filing",
+    questions: [
+      "What is the threshold for mandatory SAR filing under the Bank Secrecy Act?",
+      "What narrative elements must an STR contain to satisfy goAML requirements?",
+      "What is an Additional Information File (AIF) and when is it required?",
+      "Can a reporting institution share the existence of an STR with the subject?",
+    ],
+  },
 ];
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
@@ -66,24 +136,66 @@ const tabCls = (active: boolean) =>
       : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
   }`;
 
+const verdictCls = (v: string) => {
+  if (v === "approved") return "bg-emerald-50 text-emerald-700 border-emerald-300";
+  if (v === "blocked") return "bg-red-100 text-red-700 border-red-300";
+  if (v === "returned_for_revision") return "bg-amber-50 text-amber-700 border-amber-300";
+  return "bg-gray-100 text-gray-600 border-gray-300";
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function exportQaSession(history: QaHistoryEntry[]) {
+  const lines: string[] = [`MLRO Regulatory Q&A Session Export — ${new Date().toISOString()}`, "=".repeat(72), ""];
+  for (const entry of history) {
+    lines.push(`Q [${entry.askedAt}]: ${entry.question}`);
+    lines.push(`A: ${entry.result.answer ?? "(no answer)"}`);
+    if (entry.result.citations.length > 0) {
+      lines.push(`Sources: ${entry.result.citations.map((c) => c.document).join("; ")}`);
+    }
+    if (entry.result.confidenceScore != null) {
+      lines.push(`Confidence: ${entry.result.confidenceScore}%`);
+    }
+    lines.push("");
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mlro-qa-session-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAdvisorSession(history: AdvisorHistoryEntry[]) {
+  const lines: string[] = [`MLRO Advisor Session Export — ${new Date().toISOString()}`, "=".repeat(72), ""];
+  for (const entry of history) {
+    lines.push(`Q [${entry.askedAt}] mode:${entry.mode}: ${entry.question}`);
+    lines.push(`Verdict: ${entry.result.complianceReview.advisorVerdict}`);
+    if (entry.result.narrative) lines.push(`Narrative: ${entry.result.narrative}`);
+    lines.push(`Elapsed: ${entry.result.elapsedMs}ms`);
+    lines.push("");
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mlro-advisor-session-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
   const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa">("advisor");
 
-  // Advisor state
+  // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
   const [mode, setMode] = useState<ReasoningMode>("multi_perspective");
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<AdvisorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
-
-  // Regulatory Q&A state
-  const [qaQuery, setQaQuery] = useState("");
-  const [qaLoading, setQaLoading] = useState(false);
-  const [qaResult, setQaResult] = useState<ComplianceAnswer | null>(null);
-  const [qaError, setQaError] = useState<string | null>(null);
+  const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>([]);
 
   const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
     speed: 9_000,
@@ -91,50 +203,52 @@ export default function MlroAdvisorPage() {
     multi_perspective: 110_000,
   };
 
-  const handleAsk = async () => {
+  const handleAsk = useCallback(async () => {
     const q = question.trim();
     if (!q) return;
-    setRunning(true); setError(null); setResult(null);
+    setRunning(true);
+    setError(null);
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), CLIENT_TIMEOUTS[mode]);
     try {
       const res = await fetch("/api/mlro-advisor", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: q, subjectName: "Unknown subject", mode, audience: "regulator" }),
+        body: JSON.stringify({ question: q, subjectName: "Regulatory Query", mode, audience: "regulator" }),
         signal: ctl.signal,
       });
       const rawText = await res.text();
-      let data: (AdvisorResult & { error?: string }) | null = null;
-      try { data = JSON.parse(rawText) as AdvisorResult & { error?: string }; }
+      let data: AdvisorResult | null = null;
+      try { data = JSON.parse(rawText) as AdvisorResult; }
       catch {
         setError(
           res.status === 504 || res.status === 524
             ? "Request timed out — try Speed or Balanced mode."
-            : `Server error ${res.status} — check that ANTHROPIC_API_KEY is configured.`,
+            : `Server error ${res.status} — check ANTHROPIC_API_KEY is configured.`,
         );
         return;
       }
       if (!res.ok || !data.ok) {
-        setError(
-          data.error ?? data.guidance ??
-          (res.status === 504 || res.status === 524
-            ? "Request timed out — try Speed or Balanced mode."
-            : `HTTP ${res.status}`),
-        );
+        setError(data.error ?? data.guidance ?? `HTTP ${res.status}`);
       } else {
-        setResult(data);
-        window.requestAnimationFrame(() =>
-          document.getElementById("advisor-result")?.scrollIntoView({ behavior: "smooth", block: "start" }),
-        );
+        setAdvisorHistory((prev) => [
+          {
+            id: `adv-${Date.now()}`,
+            question: q,
+            mode,
+            result: data,
+            askedAt: new Date().toLocaleTimeString(),
+            expanded: false,
+          },
+          ...prev,
+        ]);
+        setQuestion("");
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError(
-          mode === "speed"
-            ? "Speed mode timed out (>9 s) — check server logs or try again."
-            : "Request timed out — try Speed or Balanced mode.",
-        );
+        setError(mode === "speed"
+          ? "Speed mode timed out (>9 s) — check server logs or try again."
+          : "Request timed out — try Speed or Balanced mode.");
       } else {
         setError(err instanceof Error ? err.message : "Network error");
       }
@@ -142,25 +256,60 @@ export default function MlroAdvisorPage() {
       clearTimeout(timer);
       setRunning(false);
     }
-  };
+  }, [question, mode, CLIENT_TIMEOUTS]);
 
-  const handleQaAsk = async (q?: string) => {
-    const question = (q ?? qaQuery).trim();
-    if (!question) return;
-    setQaQuery(question);
-    setQaLoading(true); setQaError(null); setQaResult(null);
+  const toggleAdvisorEntry = (id: string) =>
+    setAdvisorHistory((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, expanded: !e.expanded } : e)),
+    );
+
+  // ── Regulatory Q&A state ─────────────────────────────────────────────────────
+  const [qaQuery, setQaQuery] = useState("");
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaError, setQaError] = useState<string | null>(null);
+  const [qaHistory, setQaHistory] = useState<QaHistoryEntry[]>([]);
+  const [openGroupIdx, setOpenGroupIdx] = useState<number | null>(0);
+  const historyEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (qaHistory.length > 0) {
+      historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [qaHistory.length]);
+
+  const handleQaAsk = useCallback(async (q?: string) => {
+    const query = (q ?? qaQuery).trim();
+    if (!query) return;
+    setQaQuery(query);
+    setQaLoading(true);
+    setQaError(null);
     try {
       const res = await fetch("/api/compliance-qa", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: question, mode: "multi-agent" }),
+        body: JSON.stringify({ query, mode: "multi-agent" }),
       });
       const data = await res.json() as ComplianceAnswer;
-      if (!data.ok) setQaError(data.error ?? "Query failed");
-      else setQaResult(data);
-    } catch { setQaError("Request failed"); }
-    finally { setQaLoading(false); }
-  };
+      if (!data.ok) {
+        setQaError(data.error ?? "Query failed");
+      } else {
+        setQaHistory((prev) => [
+          ...prev,
+          {
+            id: `qa-${Date.now()}`,
+            question: query,
+            result: data,
+            askedAt: new Date().toLocaleTimeString(),
+          },
+        ]);
+        setQaQuery("");
+      }
+    } catch {
+      setQaError("Request failed — check network connection.");
+    } finally {
+      setQaLoading(false);
+    }
+  }, [qaQuery]);
 
   return (
     <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
@@ -187,30 +336,45 @@ export default function MlroAdvisorPage() {
           </button>
         </div>
 
-        {/* ── MLRO Advisor tab ─────────────────────────────────────────────── */}
+        {/* ── MLRO Advisor tab ──────────────────────────────────────────────── */}
         {pageTab === "advisor" && (
           <>
-            <div className="flex items-baseline justify-between mb-4">
+            <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
                   Deep Reasoning · MLRO Advisor
                 </div>
                 <div className="text-12 text-ink-2">
                   Sonnet executor → Opus advisor · 86 directives · charter P1–P10
-                  <span className="ml-2 text-ink-3">— standalone mode (no screening context)</span>
+                  <span className="ml-2 text-ink-3">— standalone mode</span>
                 </div>
               </div>
-              {result && (
-                <button type="button" onClick={() => { setResult(null); setError(null); }} className="text-11 text-ink-3 hover:text-ink-0">
-                  Clear
-                </button>
+              {advisorHistory.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => exportAdvisorSession(advisorHistory)}
+                    className="text-11 text-ink-3 hover:text-brand border border-hair-2 hover:border-brand px-2.5 py-1 rounded transition-colors"
+                  >
+                    Export session
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdvisorHistory([])}
+                    className="text-11 text-ink-3 hover:text-red"
+                  >
+                    Clear
+                  </button>
+                </div>
               )}
             </div>
 
+            {/* Input */}
             <div className="space-y-2 mb-4">
               <textarea
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) void handleAsk(); }}
                 disabled={running}
                 rows={3}
                 placeholder='Ask the MLRO Advisor a compliance question — e.g. "What CDD is required for a UAE gold trader?"'
@@ -220,17 +384,13 @@ export default function MlroAdvisorPage() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-11 font-semibold text-ink-2 uppercase tracking-wide-3">Mode</span>
                   {(["speed", "balanced", "multi_perspective"] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMode(m)}
-                      className={tabCls(mode === m)}
-                    >
-                      {m === "multi_perspective" ? "Multi" : m.charAt(0).toUpperCase() + m.slice(1)}
+                    <button key={m} type="button" onClick={() => setMode(m)} className={tabCls(mode === m)}>
+                      {m === "multi_perspective" ? "Multi (Deep)" : m.charAt(0).toUpperCase() + m.slice(1)}
                     </button>
                   ))}
                 </div>
                 <div className="flex-1" />
+                <span className="text-10 text-ink-3 font-mono">⌘+Enter to submit</span>
                 <button
                   type="button"
                   onClick={() => { void handleAsk(); }}
@@ -243,158 +403,160 @@ export default function MlroAdvisorPage() {
             </div>
 
             {running && (
-              <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center">
+              <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center border border-hair-2 rounded-lg bg-bg-1 mb-4">
                 <span className="animate-pulse font-mono text-brand">●</span>
                 {mode === "speed"
                   ? "Speed mode — replying in seconds…"
                   : mode === "balanced"
-                  ? "Balanced mode running — Sonnet only…"
-                  : "Dual-model pipeline running — Sonnet executor → Opus advisor…"}
+                  ? "Balanced mode — Sonnet only, ~40 s…"
+                  : "Dual-model pipeline — Sonnet executor → Opus advisor · up to 110 s…"}
               </div>
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-13 text-red-700">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-13 text-red-700 mb-4">
                 <span className="font-semibold">Advisor error:</span> {error}
               </div>
             )}
 
-            {result && (
-              <div id="advisor-result" className="space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-12 font-semibold uppercase tracking-wide-3 ${
-                      result.complianceReview.advisorVerdict === "approved"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                        : result.complianceReview.advisorVerdict === "blocked"
-                        ? "bg-red-100 text-red-700 border-red-300"
-                        : result.complianceReview.advisorVerdict === "returned_for_revision"
-                        ? "bg-amber-50 text-amber-700 border-amber-300"
-                        : "bg-gray-100 text-gray-600 border-gray-300"
-                    }`}
-                  >
-                    {result.complianceReview.advisorVerdict.replace(/_/g, " ")}
-                  </span>
-                  <span className="text-11 text-ink-3 font-mono">
-                    mode:{result.mode} · {result.elapsedMs}ms
-                    {result.partial && " · partial"}
-                  </span>
-                  {result.charterIntegrityHash && (
-                    <span className="text-10 text-ink-3 font-mono hidden sm:inline">
-                      hash:{result.charterIntegrityHash.slice(0, 12)}
-                    </span>
-                  )}
-                  <AsanaReportButton payload={{
-                    module: "mlro-advisor",
-                    label: `MLRO Advisory · ${result.complianceReview.advisorVerdict.replace(/_/g, " ")}`,
-                    summary: `Verdict: ${result.complianceReview.advisorVerdict}; Mode: ${result.mode}; Issues: ${result.complianceReview.issues.length}; Elapsed: ${result.elapsedMs}ms`,
-                    metadata: { verdict: result.complianceReview.advisorVerdict, mode: result.mode, issues: result.complianceReview.issues.length },
-                  }} />
+            {/* Session log */}
+            {advisorHistory.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+                  Session — {advisorHistory.length} {advisorHistory.length === 1 ? "query" : "queries"}
                 </div>
+                {advisorHistory.map((entry) => (
+                  <div key={entry.id} className="border border-hair-2 rounded-xl bg-bg-1 overflow-hidden">
+                    {/* Entry header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleAdvisorEntry(entry.id)}
+                      className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-bg-panel transition-colors"
+                    >
+                      <span
+                        className={`mt-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded border text-10 font-semibold uppercase tracking-wide-2 flex-shrink-0 ${verdictCls(entry.result.complianceReview.advisorVerdict)}`}
+                      >
+                        {entry.result.complianceReview.advisorVerdict.replace(/_/g, " ")}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-13 text-ink-0 font-medium truncate">{entry.question}</p>
+                        <p className="text-10 text-ink-3 font-mono mt-0.5">
+                          {entry.askedAt} · mode:{entry.mode} · {entry.result.elapsedMs}ms
+                          {entry.result.partial && " · partial"}
+                        </p>
+                      </div>
+                      <span className="text-11 text-ink-3 flex-shrink-0">{entry.expanded ? "▲" : "▼"}</span>
+                    </button>
 
-                {result.error && (
-                  <div className="bg-red-dim border border-red/30 rounded-lg p-3">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-red mb-1">Pipeline error</div>
-                    <p className="text-12 text-red font-mono m-0 whitespace-pre-wrap">{result.error}</p>
-                  </div>
-                )}
-
-                {result.complianceReview.issues.length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-700 mb-1">
-                      Charter compliance issues
-                    </div>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {result.complianceReview.issues.map((issue) => (
-                        <li key={issue} className="text-12 text-amber-800">{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {result.guidance && (
-                  <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 text-13 text-ink-0 leading-relaxed">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Guidance</div>
-                    <p className="m-0 whitespace-pre-wrap">{result.guidance}</p>
-                  </div>
-                )}
-
-                {result.narrative && (
-                  <div className="bg-bg-1 border border-hair-2 rounded-lg p-4">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">
-                      Regulator-facing narrative
-                    </div>
-                    <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{result.narrative}</div>
-                  </div>
-                )}
-
-                {result.reasoningTrail.length > 0 && (
-                  <div>
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">
-                      Reasoning trail ({result.reasoningTrail.length} steps)
-                    </div>
-                    <div className="space-y-2">
-                      {result.reasoningTrail.map((step) => {
-                        const isExpanded = expanded.has(step.stepNo);
-                        return (
-                          <div key={step.stepNo} className="border border-hair-2 rounded-lg bg-bg-1 overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpanded((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(step.stepNo)) next.delete(step.stepNo);
-                                  else next.add(step.stepNo);
-                                  return next;
-                                })
-                              }
-                              className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-bg-panel transition-colors"
-                            >
-                              <span className={`text-10 font-mono font-bold px-1.5 py-0.5 rounded uppercase ${step.actor === "executor" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
-                                {step.actor}
-                              </span>
-                              <span className="text-10 font-mono text-ink-3">{step.modelId}</span>
-                              <span className="text-10 text-ink-3">{step.at}</span>
-                              <span className="flex-1 text-12 text-ink-0 truncate">{step.summary}</span>
-                              <span className="text-11 text-ink-3">{isExpanded ? "▲" : "▼"}</span>
-                            </button>
-                            {isExpanded && (
-                              <div className="px-3 pb-3 pt-1 border-t border-hair-1">
-                                <pre className="text-11 text-ink-1 whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto">
-                                  {step.body}
-                                </pre>
-                              </div>
-                            )}
+                    {/* Entry detail */}
+                    {entry.expanded && (
+                      <div className="border-t border-hair-2 px-4 pb-4 pt-3 space-y-3">
+                        {entry.result.complianceReview.issues.length > 0 && (
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-700 mb-1">Charter issues</div>
+                            <ul className="list-disc list-inside space-y-0.5">
+                              {entry.result.complianceReview.issues.map((issue) => (
+                                <li key={issue} className="text-12 text-amber-800">{issue}</li>
+                              ))}
+                            </ul>
                           </div>
-                        );
-                      })}
-                    </div>
+                        )}
+                        {entry.result.guidance && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Guidance</div>
+                            <p className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.guidance}</p>
+                          </div>
+                        )}
+                        {entry.result.narrative && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Regulator-facing narrative</div>
+                            <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.narrative}</div>
+                          </div>
+                        )}
+                        {entry.result.reasoningTrail.length > 0 && (
+                          <details className="group">
+                            <summary className="text-11 font-semibold uppercase tracking-wide-3 text-ink-3 cursor-pointer hover:text-ink-1 select-none">
+                              Reasoning trail ({entry.result.reasoningTrail.length} steps) ▶
+                            </summary>
+                            <div className="mt-2 space-y-1.5">
+                              {entry.result.reasoningTrail.map((step) => (
+                                <div key={step.stepNo} className="border border-hair rounded-lg bg-bg-1 p-2.5">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-10 font-mono font-bold px-1.5 py-0.5 rounded uppercase ${step.actor === "executor" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                                      {step.actor}
+                                    </span>
+                                    <span className="text-10 font-mono text-ink-3">{step.modelId}</span>
+                                    <span className="text-10 text-ink-3">{step.at}</span>
+                                    <span className="flex-1 text-12 text-ink-1 truncate">{step.summary}</span>
+                                  </div>
+                                  <pre className="text-10 text-ink-2 whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto">{step.body}</pre>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        )}
+                        <div className="flex items-center gap-2 pt-1">
+                          <AsanaReportButton payload={{
+                            module: "mlro-advisor",
+                            label: `MLRO Advisory · ${entry.result.complianceReview.advisorVerdict.replace(/_/g, " ")}`,
+                            summary: `Q: ${entry.question.slice(0, 80)} | Verdict: ${entry.result.complianceReview.advisorVerdict} | Mode: ${entry.mode} | ${entry.result.elapsedMs}ms`,
+                            metadata: { verdict: entry.result.complianceReview.advisorVerdict, mode: entry.mode, issues: entry.result.complianceReview.issues.length },
+                          }} />
+                          {entry.result.charterIntegrityHash && (
+                            <span className="text-10 text-ink-3 font-mono">
+                              hash:{entry.result.charterIntegrityHash.slice(0, 12)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
+              </div>
+            )}
+
+            {advisorHistory.length === 0 && !running && !error && (
+              <div className="text-center py-10 text-ink-3 text-12 border border-dashed border-hair-2 rounded-xl">
+                No queries yet — ask the MLRO Advisor a compliance question above.
               </div>
             )}
           </>
         )}
 
-        {/* ── Regulatory Q&A tab ───────────────────────────────────────────── */}
+        {/* ── Regulatory Q&A tab ────────────────────────────────────────────── */}
         {pageTab === "regulatory-qa" && (
           <>
-            <div className="flex items-baseline justify-between mb-4">
+            <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
                   Regulatory Q&A
                 </div>
                 <div className="text-12 text-ink-2">
-                  Source-cited regulatory answers via AML-MultiAgent-RAG — 4-agent pipeline with confidence and consistency quality gates
+                  Source-cited regulatory answers via AML-MultiAgent-RAG — 4-agent pipeline with confidence and consistency quality gates.
+                  Falls back to MLRO Advisor pipeline when external RAG is unavailable.
                 </div>
               </div>
-              {qaResult && (
-                <button type="button" onClick={() => { setQaResult(null); setQaError(null); setQaQuery(""); }} className="text-11 text-ink-3 hover:text-ink-0">
-                  Clear
-                </button>
+              {qaHistory.length > 0 && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => exportQaSession(qaHistory)}
+                    className="text-11 text-ink-3 hover:text-brand border border-hair-2 hover:border-brand px-2.5 py-1 rounded transition-colors"
+                  >
+                    Export Q&A
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQaHistory([])}
+                    className="text-11 text-ink-3 hover:text-red"
+                  >
+                    Clear
+                  </button>
+                </div>
               )}
             </div>
 
+            {/* Input */}
             <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 mb-4">
               <textarea
                 className="w-full border border-hair-2 rounded px-3 py-2 text-13 bg-bg-panel focus:outline-none focus:border-brand resize-none text-ink-0"
@@ -417,93 +579,109 @@ export default function MlroAdvisorPage() {
               </div>
             </div>
 
-            {!qaResult && !qaLoading && (
-              <div className="mb-5">
-                <p className="text-10 font-semibold text-ink-2 uppercase tracking-wide-3 mb-2">Suggested questions</p>
-                <div className="space-y-1">
-                  {SUGGESTED_QUESTIONS.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => { void handleQaAsk(s); }}
-                      className="w-full text-left text-12 text-brand hover:text-brand-deep hover:bg-brand-dim/20 px-3 py-2 rounded transition-colors"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {qaLoading && (
-              <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center">
+              <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center border border-hair-2 rounded-lg bg-bg-1 mb-4">
                 <span className="animate-pulse font-mono text-brand">●</span>
-                4-agent RAG pipeline running…
+                Pipeline running — RAG or MLRO Advisor fallback…
               </div>
             )}
 
             {qaError && (
               <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red mb-4">
                 <span className="font-semibold">Error:</span> {qaError}
-                {(qaError.includes("COMPLIANCE_RAG_URL") || qaError.includes("503")) && (
-                  <p className="text-11 mt-1 text-red/80">Set COMPLIANCE_RAG_URL to a running AML-MultiAgent-RAG instance.</p>
-                )}
               </div>
             )}
 
-            {qaResult && (
-              <div className="space-y-4">
-                <div className={`rounded-lg border p-3 text-12 flex items-center gap-2 ${qaResult.passedQualityGate ? "bg-green-dim border-green/30 text-green" : "bg-amber-dim border-amber/30 text-amber"}`}>
-                  <span>{qaResult.passedQualityGate ? "✓" : "⚠"}</span>
-                  <span className="font-semibold">{qaResult.passedQualityGate ? "Passed quality gate" : "Below quality threshold — treat with caution"}</span>
-                  {qaResult.consistencyScore != null && (
-                    <span className="ml-auto text-11">Consistency: {(qaResult.consistencyScore * 100).toFixed(0)}%</span>
-                  )}
+            {/* Q&A History */}
+            {qaHistory.length > 0 && (
+              <div className="space-y-3 mb-5">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+                  Session — {qaHistory.length} {qaHistory.length === 1 ? "answer" : "answers"}
                 </div>
+                {qaHistory.map((entry) => (
+                  <div key={entry.id} className="border border-hair-2 rounded-xl overflow-hidden">
+                    {/* Question */}
+                    <div className="bg-bg-1 px-4 py-2.5 border-b border-hair flex items-start gap-2">
+                      <span className="text-11 font-mono text-ink-3 flex-shrink-0 mt-0.5">{entry.askedAt}</span>
+                      <p className="text-13 text-ink-0 font-medium flex-1">{entry.question}</p>
+                      {entry.result.source === "mlro-advisor-fallback" && (
+                        <span className="text-10 bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded flex-shrink-0">
+                          Advisor fallback
+                        </span>
+                      )}
+                    </div>
+                    {/* Answer */}
+                    <div className="px-4 py-3 bg-bg-panel">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-11 px-2 py-0.5 rounded-full border font-semibold ${entry.result.passedQualityGate ? "bg-green-dim border-green/30 text-green" : "bg-amber-dim border-amber/30 text-amber"}`}>
+                          {entry.result.passedQualityGate ? "✓ Quality gate passed" : "⚠ Below threshold"}
+                        </span>
+                        {entry.result.confidenceScore != null && (
+                          <span className="text-11 text-ink-3 font-mono">confidence {entry.result.confidenceScore}%</span>
+                        )}
+                        {entry.result.consistencyScore != null && (
+                          <span className="text-11 text-ink-3 font-mono">consistency {(entry.result.consistencyScore * 100).toFixed(0)}%</span>
+                        )}
+                        {entry.result.jurisdiction && (
+                          <span className="text-11 bg-brand-dim text-brand px-2 py-0.5 rounded">{entry.result.jurisdiction}</span>
+                        )}
+                      </div>
+                      <p className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.answer}</p>
+                      {entry.result.citations.length > 0 && (
+                        <div className="mt-3 space-y-1.5">
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Sources</div>
+                          {entry.result.citations.map((c, i) => (
+                            <div key={i} className="border-l-2 border-brand pl-2.5">
+                              <p className="text-12 font-medium text-ink-0">{c.document}</p>
+                              {c.section && <p className="text-11 text-ink-3">§ {c.section}</p>}
+                              {c.jurisdiction && <span className="text-11 text-brand">{c.jurisdiction}</span>}
+                              {c.excerpt && <p className="text-11 text-ink-2 mt-0.5 italic">"{c.excerpt}"</p>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div ref={historyEndRef} />
+              </div>
+            )}
 
-                <div className="bg-bg-1 border border-hair-2 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Answer</div>
-                    {qaResult.jurisdiction && (
-                      <span className="text-11 bg-brand-dim text-brand px-2 py-0.5 rounded">{qaResult.jurisdiction}</span>
+            {/* Suggested questions — always visible */}
+            <div className="border border-hair-2 rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 bg-bg-1 border-b border-hair-2">
+                <p className="text-11 font-semibold text-ink-2 uppercase tracking-wide-3">Suggested questions</p>
+              </div>
+              <div className="divide-y divide-hair">
+                {SUGGESTED_GROUPS.map((group, idx) => (
+                  <div key={group.label}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenGroupIdx(openGroupIdx === idx ? null : idx)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
+                    >
+                      <span className="text-12 font-semibold text-ink-1">{group.label}</span>
+                      <span className="text-10 text-ink-3">{openGroupIdx === idx ? "▲" : "▼"}</span>
+                    </button>
+                    {openGroupIdx === idx && (
+                      <div className="px-4 pb-3 space-y-0.5">
+                        {group.questions.map((q) => (
+                          <button
+                            key={q}
+                            type="button"
+                            onClick={() => { void handleQaAsk(q); }}
+                            disabled={qaLoading}
+                            className="w-full text-left text-12 text-brand hover:text-brand-deep hover:bg-brand-dim/20 px-2.5 py-1.5 rounded transition-colors disabled:opacity-40"
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <p className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{qaResult.answer}</p>
-                  {qaResult.confidenceScore != null && (
-                    <div className="mt-4 pt-3 border-t border-hair">
-                      <div className="flex justify-between text-11 mb-1">
-                        <span className="text-ink-3">Confidence</span>
-                        <span className="font-semibold text-ink-1">{qaResult.confidenceScore}%</span>
-                      </div>
-                      <div className="h-1.5 bg-bg-panel rounded-full overflow-hidden border border-hair">
-                        <div
-                          className={`h-full rounded-full ${qaResult.confidenceScore >= 70 ? "bg-green" : qaResult.confidenceScore >= 40 ? "bg-amber" : "bg-red"}`}
-                          style={{ width: `${qaResult.confidenceScore}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {qaResult.citations.length > 0 && (
-                  <div className="bg-bg-1 border border-hair-2 rounded-lg p-4">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">
-                      Regulatory Sources ({qaResult.citations.length})
-                    </div>
-                    <div className="space-y-3">
-                      {qaResult.citations.map((c, i) => (
-                        <div key={i} className="border-l-2 border-brand pl-3">
-                          <p className="text-12 font-medium text-ink-0">{c.document}</p>
-                          {c.section && <p className="text-11 text-ink-3 mt-0.5">§ {c.section}</p>}
-                          {c.jurisdiction && <span className="text-11 text-brand">{c.jurisdiction}</span>}
-                          {c.excerpt && <p className="text-11 text-ink-2 mt-1 italic">"{c.excerpt}"</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
