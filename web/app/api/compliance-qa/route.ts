@@ -152,14 +152,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     // Netlify's edge layer enforces a ~26 s "inactivity timeout" on
-    // synchronous functions independent of maxDuration. Balanced mode
-    // is capped at 22 s (4 s headroom) so the platform returns the
-    // advisor's JSON instead of an HTML 504 the client can't parse.
-    // Deep mode keeps its larger budget — only safe on deployments
-    // where maxDuration is actually honoured (e.g. Netlify Pro
-    // background functions); on stock Netlify deep mode will surface
-    // the same 504 the balanced cap was added to prevent.
-    const safeBudgetMs = wantsDeep ? advisorBudgetMs : Math.min(advisorBudgetMs, 22_000);
+    // synchronous functions independent of route-level maxDuration.
+    // We HARD-CAP both balanced and deep modes at 22 s so the platform
+    // always sees JSON before its timeout fires — the alternative is
+    // an HTML 504 page the client cannot parse. Deep mode therefore
+    // returns its best-effort partial reasoning trail when it cannot
+    // finish; the response.partial flag tells the UI to render the
+    // partial answer with a "budget exceeded" notice. To re-enable
+    // longer-budget deep reasoning, port this route to a Netlify
+    // background function (15-minute timeout) and remove the cap.
+    const safeBudgetMs = Math.min(advisorBudgetMs, 22_000);
     const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: safeBudgetMs });
 
     if (!advisorResult.ok) {
