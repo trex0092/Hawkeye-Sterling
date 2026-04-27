@@ -37,6 +37,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "OSINT", href: "/osint", hint: "Subject enrichment & SpiderFoot" },
       { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "Status", href: "/status", hint: "Live endpoint health" },
+      { label: "Benford Analysis", href: "/benford", hint: "Forensic accounting digit test" },
     ],
   },
   {
@@ -62,7 +63,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security" },
       { label: "Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint analysis" },
       { label: "Vessel Check", href: "/vessel-check", hint: "IMO sanctions & ownership" },
-      { label: "Benford Analysis", href: "/benford", hint: "Forensic accounting digit test" },
     ],
   },
   {
