@@ -64,10 +64,14 @@ function projectGidForModule(module: string): string {
     case "shipments":
       return process.env["ASANA_SHIPMENTS_PROJECT_GID"] ?? inbox;
 
-    // 15 · MLRO Workbench — advisor, investigation, AI tools
+    // 15 · MLRO Workbench — advisor, investigation, AI tools, playbooks, policies
     case "mlro-advisor":
     case "investigation":
     case "weaponized-brain":
+    case "workbench":
+    case "playbook":
+    case "policies":
+    case "regulatory":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
     // 16 · Supply Chain, ESG & Trade — vessel / trade compliance
@@ -75,7 +79,24 @@ function projectGidForModule(module: string): string {
     case "eocn":
       return process.env["ASANA_SUPPLYCHAIN_PROJECT_GID"] ?? inbox;
 
-    // All other modules (audit-trail, enforcement, intel, training, etc.) → Master Inbox
+    // 02 · Central MLRO Daily Dashboard — governance, data, staff
+    case "audit-trail":
+    case "data-quality":
+    case "corrections":
+    case "training":
+      return process.env["ASANA_MLRO_DAILY_PROJECT_GID"] ?? inbox;
+
+    // 05 · STR/SAR/CTR/PMR — enforcement actions and case management
+    case "enforcement":
+    case "cases":
+      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
+
+    // 07 · CDD/SDD/EDD/KYC — OSINT, client and employee due diligence
+    case "intel":
+    case "client-portal":
+    case "employees":
+      return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
+
     default:
       return inbox;
   }
@@ -161,6 +182,23 @@ const PROJECT_BOARD: Record<string, string> = {
   "weaponized-brain":     "15 · MLRO Workbench",
   "vessel-check":         "16 · Supply Chain, ESG & Trade",
   eocn:                   "16 · Supply Chain, ESG & Trade",
+  // 02 · MLRO Daily — governance & data
+  "audit-trail":          "02 · Central MLRO Daily Dashboard",
+  "data-quality":         "02 · Central MLRO Daily Dashboard",
+  corrections:            "02 · Central MLRO Daily Dashboard",
+  training:               "02 · Central MLRO Daily Dashboard",
+  // 05 · STR/SAR — enforcement & cases
+  enforcement:            "05 · STR/SAR/CTR/PMR",
+  cases:                  "05 · STR/SAR/CTR/PMR",
+  // 07 · CDD/KYC — OSINT & client/employee DD
+  intel:                  "07 · CDD/SDD/EDD/KYC",
+  "client-portal":        "07 · CDD/SDD/EDD/KYC",
+  employees:              "07 · CDD/SDD/EDD/KYC",
+  // 15 · MLRO Workbench
+  workbench:              "15 · MLRO Workbench",
+  playbook:               "15 · MLRO Workbench",
+  policies:               "15 · MLRO Workbench",
+  regulatory:             "15 · MLRO Workbench",
 };
 
 interface Body {

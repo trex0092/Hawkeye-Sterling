@@ -17,6 +17,7 @@ import type { CDDPosture, FilterKey, QueueFilter, SortKey, Subject } from "@/lib
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // ── Adverse Media types ───────────────────────────────────────────────────────
 
@@ -729,6 +730,9 @@ export default function ScreeningPage() {
         <button type="button" onClick={() => setPageTab("adverse-media")} className={amTabCls(pageTab === "adverse-media")}>
           Adverse Media Intelligence
         </button>
+        <div className="ml-auto py-2">
+          <AsanaReportButton payload={{ module: "screening", label: "Screening Queue", summary: "Screening queue status report from Hawkeye Sterling — sanctions, PEP and adverse media vectors reviewed." }} />
+        </div>
       </div>
 
       {pageTab === "queue" && <div

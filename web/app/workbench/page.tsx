@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
 import { WorkbenchHero } from "@/components/workbench/WorkbenchHero";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
@@ -191,7 +192,12 @@ export default function WorkbenchPage() {
         />
 
         <main className="px-10 py-8 overflow-y-auto">
-          <WorkbenchHero />
+          <div className="flex items-start justify-between mb-0">
+            <WorkbenchHero />
+            <div className="mt-1">
+              <AsanaReportButton payload={{ module: "workbench", label: "MLRO Workbench", summary: "MLRO Workbench session report from Hawkeye Sterling — reasoning modes and Brain analysis reviewed." }} />
+            </div>
+          </div>
 
           {/* Subject name input */}
           <div className="flex items-center gap-3 mb-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">

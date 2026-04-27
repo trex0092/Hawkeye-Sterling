@@ -12,6 +12,7 @@ import { CASE_FILTERS } from "@/lib/data/cases";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import type { CaseFilter, CaseFilterKey, CaseRecord } from "@/lib/types";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // Shape a case record into the compliance-report payload so the modal
 // renders the same MLRO dossier the screening panel produces.
@@ -128,7 +129,12 @@ export default function CasesPage() {
         />
 
         <main className="px-10 py-8 overflow-y-auto">
-          <CasesHero />
+          <div className="flex items-start justify-between mb-0">
+            <CasesHero />
+            <div className="mt-1">
+              <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
+            </div>
+          </div>
           <CasesToolbar query={query} onQueryChange={setQuery} />
           <CasesTable
             cases={filtered}
