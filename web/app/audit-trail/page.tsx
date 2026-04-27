@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 import {
   exportAuditCsv,
   loadAuditEntries,
@@ -159,6 +160,7 @@ export default function AuditTrailPage() {
                 <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-32">
                   Hash
                 </th>
+                <th className="w-[44px]" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -192,6 +194,20 @@ export default function AuditTrailPage() {
                       </td>
                       <td className={`px-4 py-2.5 font-mono text-10 text-ink-3 ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.hash}
+                      </td>
+                      <td className={`px-2 py-2.5 text-right ${isLast ? "" : "border-b border-hair"}`}>
+                        <RowActions
+                          label={`audit entry ${entry.id}`}
+                          onDelete={() => {
+                            const next = entries.filter((x) => x.id !== entry.id);
+                            window.localStorage.setItem(
+                              "hawkeye.audit-trail.v1",
+                              JSON.stringify(next),
+                            );
+                            setEntries(next);
+                          }}
+                          deleteConfirmMessage={`Hide audit entry ${entry.id} from your local view? The sealed FDL Art.24 audit chain on the server is unaffected — this only removes it from your browser's view.`}
+                        />
                       </td>
                     </tr>
                   );

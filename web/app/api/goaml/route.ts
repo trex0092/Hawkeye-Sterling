@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getEntity } from "@/lib/config/entities";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
@@ -47,6 +48,9 @@ interface Body {
   amountAed?: number;
   counterparty?: string;
   reportingEntity?: string;
+  /** Slug of the reporting entity from HAWKEYE_ENTITIES. When omitted,
+   *  resolves to HAWKEYE_DEFAULT_ENTITY_ID, then to the first entity. */
+  entityId?: string;
 }
 
 const VALID_REPORT_CODES = new Set<GoAmlReportCode>([
@@ -139,11 +143,17 @@ async function handleGoaml(req: Request): Promise<Response> {
     involvedEntities.push(entity);
   }
 
+  // Resolve which legal entity is filing this STR. When entityId is set
+  // in the body, we use that; otherwise the default entity from
+  // HAWKEYE_DEFAULT_ENTITY_ID. Falls back to single-entity legacy
+  // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
+  const reportingEntity = getEntity(body.entityId);
+
   const envelope: GoAmlEnvelope = {
     reportCode: body.reportCode,
-    rentityId: process.env["GOAML_RENTITY_ID"] ?? "PENDING_FIU_ASSIGNMENT",
-    ...(process.env["GOAML_RENTITY_BRANCH"]
-      ? { rentityBranch: process.env["GOAML_RENTITY_BRANCH"] }
+    rentityId: reportingEntity.goamlRentityId,
+    ...(reportingEntity.goamlBranch
+      ? { rentityBranch: reportingEntity.goamlBranch }
       : {}),
     reportingPerson: {
       fullName: process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda",

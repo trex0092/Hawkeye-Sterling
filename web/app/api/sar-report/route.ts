@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { postWebhook } from "@/lib/server/webhook";
+import { getEntity } from "@/lib/config/entities";
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope } from "../../../../dist/src/brain/goaml-shapes.js";
 import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
@@ -88,6 +89,9 @@ interface Body {
     adverseKeywordGroups?: Array<{ group: string; label: string; count: number }>;
   } | null;
   mlro?: string;
+  /** Slug of the reporting entity from HAWKEYE_ENTITIES. When omitted,
+   *  resolves to HAWKEYE_DEFAULT_ENTITY_ID, then to the first entity. */
+  entityId?: string;
 }
 
 async function handleSarReport(req: Request): Promise<NextResponse> {
@@ -243,13 +247,18 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     involvedEntities = [entity];
   }
 
-  const rentityId = process.env["GOAML_RENTITY_ID"] ?? "HWK-REPORTING-ENTITY";
+  // Resolve which legal entity is filing this STR. Falls back to the
+  // single-entity legacy GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
+  const reportingEntity = getEntity(body.entityId);
   const mlroEmail = process.env["MLRO_EMAIL"] ?? "mlro@hawkeye-sterling.com";
   const mlroPhone = process.env["MLRO_PHONE"] ?? "+971-4-000-0000";
 
   const envelope: GoAmlEnvelope = {
     reportCode,
-    rentityId,
+    rentityId: reportingEntity.goamlRentityId,
+    ...(reportingEntity.goamlBranch
+      ? { rentityBranch: reportingEntity.goamlBranch }
+      : {}),
     reportingPerson: {
       fullName: mlro,
       occupation: "MLRO",

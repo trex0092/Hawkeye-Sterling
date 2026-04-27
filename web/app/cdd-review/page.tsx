@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
+import { RowActions } from "@/components/shared/RowActions";
 import type { CaseRecord } from "@/lib/types";
 
 // Periodic CDD Review — tracks which customers are due for re-KYC based
@@ -248,10 +249,12 @@ export default function CddReviewPage() {
                   </td>
                   <td className="px-3 py-2 text-ink-3 text-10 max-w-[160px] truncate" title={r.notes}>{r.notes || "—"}</td>
                   <td className="px-2 py-2 text-right">
-                    {r.source === "manual" && (
-                      <button type="button" onClick={() => remove(r.id)}
-                        className="text-ink-3 hover:text-red transition-colors"><XIcon /></button>
-                    )}
+                    <RowActions
+                      label={`review ${r.id}`}
+                      onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                      onDelete={() => remove(r.id)}
+                      confirmDelete={false}
+                    />
                   </td>
                 </tr>
               ))}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 // EOCN — Executive Office for Control & Non-Proliferation (UAE).
 // Maintains the UAE consolidated Targeted Financial Sanctions (TFS) list.
@@ -393,14 +394,14 @@ export default function EocnPage() {
 
           {liveMatches.map((m) => (
             <div key={m.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <button
-                type="button"
-                onClick={() => deleteMatch(m.id)}
-                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
-                title="Dismiss"
-              >
-                ×
-              </button>
+              <div className="absolute top-2 right-2 z-10">
+                <RowActions
+                  label={`match ${m.id}`}
+                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onDelete={() => deleteMatch(m.id)}
+                  confirmDelete={false}
+                />
+              </div>
               <div className="flex items-start justify-between gap-3 mb-3 pr-6">
                 <div>
                   <div className="font-mono text-10 text-ink-3">{m.id}</div>

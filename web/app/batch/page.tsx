@@ -3,6 +3,7 @@
 import Papa from "papaparse";
 import { useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 import {
   BarChart,
   Bar,
@@ -564,6 +565,7 @@ export default function BatchPage() {
                   <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">Lists</th>
                   <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">Keywords</th>
                   <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2">Signals</th>
+                  <th className="w-[44px]" aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -608,6 +610,15 @@ export default function BatchPage() {
                           <span className="px-1 py-px rounded-sm font-mono text-10 bg-red-dim text-red">watchman·{r.crossRef!.watchmanHits}</span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      <RowActions
+                        label={`batch row ${r.name}`}
+                        onDelete={() => {
+                          setResults((prev) => prev.filter((x) => x.name !== r.name));
+                        }}
+                        confirmDelete={false}
+                      />
                     </td>
                   </tr>
                 ))}

@@ -22,9 +22,12 @@ import {
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import {
   appendCase,
+  attachAsanaTaskUrl,
   buildCaseRecord,
+  deleteCase,
   loadCases,
 } from "@/lib/data/case-store";
+import { RowActions } from "@/components/shared/RowActions";
 import {
   loadOperatorRole,
   saveOperatorRole,
@@ -167,6 +170,25 @@ export default function StrCasesPage() {
   const [goamlRef, setGoamlRef] = useState("");
   const [mlro, setMlro] = useState("Luisa Fernanda");
   const [approver, setApprover] = useState("");
+  const [entityId, setEntityId] = useState<string>("");
+  const [entityOptions, setEntityOptions] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/entities")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { entities?: Array<{ id: string; name: string }>; defaultId?: string } | null) => {
+        if (cancelled || !j?.entities) return;
+        setEntityOptions(j.entities);
+        if (j.defaultId) setEntityId(j.defaultId);
+        else if (j.entities[0]) setEntityId(j.entities[0].id);
+      })
+      .catch(() => {/* leave dropdown empty — server will fall back to legacy entity */});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [noTippingOff, setNoTippingOff] = useState(true);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -230,6 +252,7 @@ export default function StrCasesPage() {
             narrative: narrative.trim() || undefined,
             mlro,
             approver: approver.trim() || undefined,
+            ...(entityId ? { entityId } : {}),
       }),
       label: "Filing failed",
         },
@@ -263,6 +286,14 @@ export default function StrCasesPage() {
       ...(goamlRef.trim() ? { goAMLReference: goamlRef.trim() } : {}),
         });
         appendCase(record);
+
+        // Persist the Asana task permalink against the case so the
+        // green "Reported to Asana · view task" pill renders in the
+        // /cases detail panel across reloads, not just for this tab's
+        // lifetime.
+        if (res.data.taskUrl) {
+          attachAsanaTaskUrl(record.id, res.data.taskUrl);
+        }
 
         // Immutable audit event — four-eyes sign-off recorded in chain
         writeAuditEvent(
@@ -339,12 +370,29 @@ export default function StrCasesPage() {
                       <div><label className={lCls}>Subject country</label><input value={subjectCountry} onChange={(e) => setSubjectCountry(e.target.value)} placeholder="e.g. UAE, IN, RU" className={iCls} /></div>
                     </div>
                     <div className={`${row} grid-cols-3`}>
-                      <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
+                      <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED, USD, EUR)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                       <div><label className={lCls}>Detected on</label><DateParts value={detectedOn} onChange={setDetectedOn} className={iCls} /></div>
                       <div><label className={lCls}>Filing deadline <span className="normal-case font-normal">FDL Art. 26–27</span></label><DateParts value={deadline} onChange={setDeadline} className={iCls} /></div>
                     </div>
                     <div className="mb-2"><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
                     <div className="mb-2"><label className={lCls}>Suspicion narrative</label><textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} placeholder="Who, what, when, where, why it is suspicious. Do NOT tip off the subject (FDL Art. 29)." className={taCls} /></div>
+                    {entityOptions.length > 1 && (
+                      <div className="mb-2">
+                        <label className={lCls}>Reporting entity</label>
+                        <select
+                          value={entityId}
+                          onChange={(e) => setEntityId(e.target.value)}
+                          className={iCls}
+                          aria-label="Reporting entity for goAML filing"
+                        >
+                          {entityOptions.map((opt) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className={`${row} grid-cols-3`}>
                       <div><label className={lCls}>goAML reference</label><input value={goamlRef} onChange={(e) => setGoamlRef(e.target.value)} placeholder="e.g. RPT-2026-0001" className={iCls} /></div>
                       <div><label className={lCls}>MLRO (preparer)</label><input value={mlro} onChange={(e) => setMlro(e.target.value)} placeholder="MLRO name" className={iCls} /></div>
@@ -463,7 +511,7 @@ export default function StrCasesPage() {
                       Subject
                     </th>
                     <th className="text-right px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
-                      Amount (AED)
+                      Amount (AED, USD, EUR)
                     </th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Status
@@ -471,6 +519,7 @@ export default function StrCasesPage() {
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Opened
                     </th>
+                    <th className="w-[44px]" aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
@@ -493,7 +542,32 @@ export default function StrCasesPage() {
                         </span>
                       </td>
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
-                        {new Date(c.openedAt).toLocaleString()}
+                        {(() => {
+                          // case-store keeps `opened` as a pre-formatted
+                          // UK date string ("27/04/2026") which Date() can't
+                          // parse reliably. Show the raw string when that's
+                          // what we have; only call toLocaleString when the
+                          // value actually parses.
+                          const v = c.openedAt;
+                          if (!v) return "—";
+                          const d = new Date(v);
+                          return Number.isNaN(d.getTime()) ? v : d.toLocaleString();
+                        })()}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        <RowActions
+                          label={`case ${c.id}`}
+                          onEdit={() => {
+                            // Edit re-opens the case in the form above
+                            // by clearing the current draft and scrolling up.
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          onDelete={() => {
+                            deleteCase(c.id);
+                            setCases((prev) => prev.filter((x) => x.id !== c.id));
+                          }}
+                          deleteConfirmMessage={`Delete case ${c.id}? Audit-trail entries remain in the sealed chain; only the register row is removed.`}
+                        />
                       </td>
                     </tr>
                   ))}

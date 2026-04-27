@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 interface Supplier {
   id: string;
@@ -224,10 +225,12 @@ export default function SupplierDdPage() {
                 }`}>
                   {v.tier}
                 </span>
-                <button type="button" onClick={() => remove(v.id)} aria-label={`Delete ${v.name}`}
-                  className="text-ink-3 hover:text-red transition-colors">
-                  <XIcon />
-                </button>
+                <RowActions
+                  label={v.name}
+                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onDelete={() => remove(v.id)}
+                  confirmDelete={false}
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 gap-4 text-11 font-mono mt-2">

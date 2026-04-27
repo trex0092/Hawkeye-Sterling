@@ -14,6 +14,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { postScreeningReport } from "@/lib/api/screeningReport";
+import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
 import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
@@ -1227,43 +1228,9 @@ function PanelBtn({
 }
 
 
-function AsanaStatus({ state }: { state: import("@/lib/hooks/useAutoReport").AutoReportState }) {
-  if (state.status === "idle" || state.status === "disabled") return null;
-  const base =
-    "inline-flex items-center gap-1.5 mt-2 text-10.5 font-medium rounded px-2 py-0.5";
-  if (state.status === "posting") {
-    return (
-      <span className={`${base} bg-bg-2 text-ink-2`}>
-        <span className="w-1.5 h-1.5 rounded-full bg-ink-3 animate-pulse" />
-        Reporting to Asana…
-      </span>
-    );
-  }
-  if (state.status === "sent") {
-    return (
-      <span className={`${base} bg-green-dim text-green`}>
-        <span>✓</span>
-        Reported to Asana
-        {state.taskUrl && /^https?:\/\//i.test(state.taskUrl) && (
-          <a
-            href={state.taskUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="underline hover:text-green/80 ml-1"
-          >
-            view task
-          </a>
-        )}
-      </span>
-    );
-  }
-  return (
-    <span className={`${base} bg-red-dim text-red`} title={state.error}>
-      <span>!</span>
-      Asana report failed
-    </span>
-  );
-}
+// AsanaStatus is now in web/components/shared/AsanaStatus.tsx so other
+// modules can mount the same persistent header indicator. Re-imported at
+// the top of this file.
 
 function formatDoubleMetaphone(
   dm: string | [string, string] | { primary: string; alternate?: string },

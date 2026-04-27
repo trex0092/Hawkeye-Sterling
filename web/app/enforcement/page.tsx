@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 interface Deadline {
   id: string;
@@ -792,15 +793,14 @@ export default function EnforcementPage() {
                     {d.notes}
                   </p>
                 )}
-                <button
-                  type="button"
-                  onClick={() => onDelete(d.id)}
-                  aria-label={`Remove ${d.title}`}
-                  title="Remove from my calendar"
-                  className="absolute top-2 right-2 w-6 h-6 inline-flex items-center justify-center rounded text-ink-3 hover:bg-red-dim hover:text-red transition-colors text-12 leading-none"
-                >
-                  ×
-                </button>
+                <div className="absolute top-2 right-2 z-10">
+                  <RowActions
+                    label={d.title}
+                    onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onDelete={() => onDelete(d.id)}
+                    confirmDelete={false}
+                  />
+                </div>
               </div>
             );
           })}

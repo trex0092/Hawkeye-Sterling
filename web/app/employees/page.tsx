@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 const BUSINESS_UNITS = [
   "ZOE Precious Metals and Jewelery FZE",
@@ -407,16 +408,12 @@ export default function EmployeesPage() {
                           </span>
                         </td>
                         <td className="px-2 py-2 text-right">
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); remove(emp.id); }}
-                            aria-label="Remove employee"
-                            className="text-ink-3 hover:text-red transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </button>
+                          <RowActions
+                            label={`employee ${emp.name ?? emp.id}`}
+                            onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                            onDelete={() => remove(emp.id)}
+                            confirmDelete={false}
+                          />
                         </td>
                       </tr>
                       {expanded && (

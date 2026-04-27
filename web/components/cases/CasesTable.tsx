@@ -1,5 +1,6 @@
 "use client";
 
+import { RowActions } from "@/components/shared/RowActions";
 import type { CaseBadgeTone, CaseRecord, CaseStatus } from "@/lib/types";
 
 interface CasesTableProps {
@@ -27,7 +28,7 @@ export function CasesTable({
             <Th>Status</Th>
             <Th>Evidence</Th>
             <Th>Last activity</Th>
-            <th className="w-[40px]" aria-label="Actions" />
+            <th className="w-[60px]" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
@@ -62,23 +63,12 @@ export function CasesTable({
                   <span className="text-11.5 text-ink-2">{record.lastActivity}</span>
                 </Td>
                 <td className={`px-2 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <button
-                    type="button"
-                    aria-label={`Delete case ${record.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (
-                        window.confirm(
-                          `Delete case ${record.id} (${record.subject})? The audit-trail entries will remain but the case row will be removed from the register.`,
-                        )
-                      ) {
-                        onDelete(record.id);
-                      }
-                    }}
-                    className="w-7 h-7 rounded flex items-center justify-center text-ink-3 hover:bg-red-dim hover:text-red transition-colors"
-                  >
-                    ×
-                  </button>
+                  <RowActions
+                    label={`case ${record.id}`}
+                    onEdit={() => onOpenReport(record)}
+                    onDelete={() => onDelete(record.id)}
+                    deleteConfirmMessage={`Delete case ${record.id} (${record.subject})? The audit-trail entries will remain but the case row will be removed from the register.`}
+                  />
                 </td>
               </tr>
             );

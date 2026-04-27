@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -682,12 +683,14 @@ export default function OversightPage() {
           )}
           {liveApprovals.map((a) => (
             <div key={a.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <button
-                type="button"
-                onClick={() => deleteApproval(a.id)}
-                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
-                title="Dismiss"
-              >×</button>
+              <div className="absolute top-2 right-2 z-10">
+                <RowActions
+                  label={a.title}
+                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onDelete={() => deleteApproval(a.id)}
+                  confirmDelete={false}
+                />
+              </div>
               <div className="flex items-start justify-between gap-3 mb-3 pr-6">
                 <div>
                   <div className="font-mono text-10 text-ink-3">{a.id}</div>
@@ -767,12 +770,14 @@ export default function OversightPage() {
             const openAI = m.actionItems.filter((ai) => !ai.closed).length;
             return (
               <div key={m.id} className="relative bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => deleteMinute(m.id)}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
-                  title="Dismiss"
-                >×</button>
+                <div className="absolute top-2 right-2 z-10">
+                  <RowActions
+                    label={`minute ${m.id}`}
+                    onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onDelete={() => deleteMinute(m.id)}
+                    confirmDelete={false}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => setExpandedMinute(expanded ? null : m.id)}
@@ -889,12 +894,12 @@ export default function OversightPage() {
                       {c.notes}
                     </td>
                     <td className="px-2 py-2.5">
-                      <button
-                        type="button"
-                        onClick={() => deleteCircular(c.id)}
-                        className="w-5 h-5 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors text-14 font-light"
-                        title="Remove"
-                      >×</button>
+                      <RowActions
+                        label={`circular ${c.id}`}
+                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        onDelete={() => deleteCircular(c.id)}
+                        confirmDelete={false}
+                      />
                     </td>
                   </tr>
                 ))}

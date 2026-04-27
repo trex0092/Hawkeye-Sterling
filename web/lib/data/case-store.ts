@@ -53,6 +53,20 @@ export function deleteCase(id: string): void {
   saveCases(existing.filter((c) => c.id !== id));
 }
 
+/**
+ * Records the Asana task permalink against a case after the report POST
+ * succeeds. Called from STR/SAR submit handlers, screening auto-report,
+ * and TM filing — anywhere /api/{sar,screening,tm,module}-report returns
+ * a taskUrl. Surfaces as the persistent green pill in detail panels.
+ */
+export function attachAsanaTaskUrl(id: string, taskUrl: string): void {
+  const existing = loadCases();
+  const next = existing.map((c) =>
+    c.id === id ? { ...c, asanaTaskUrl: taskUrl } : c,
+  );
+  saveCases(next);
+}
+
 // Evidence-vault helper: attach a new evidence entry + audit-trail
 // event to an existing case, or to the most-recent case that matches
 // a subject name when the caller doesn't know the case ID yet.

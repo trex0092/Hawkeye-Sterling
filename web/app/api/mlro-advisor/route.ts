@@ -136,12 +136,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     },
   };
 
+  // Netlify's edge layer enforces a ~26 s "inactivity timeout" on
+  // synchronous functions independent of the route's maxDuration.
+  // Any single-shot response that takes longer comes back to the
+  // browser as an HTML 504/502 page that cannot be parsed as JSON,
+  // surfacing as the "Advisor error: HTTP 502" / "HTTP 504 (non-JSON
+  // body)" notices in the UI. We HARD-CAP every mode below the edge
+  // ceiling so the route always returns valid JSON — partial when
+  // the advisor runs out of budget. To restore the longer multi-
+  // perspective latency, port this route to a Netlify background
+  // function (15-minute timeout) and remove the Math.min below.
+  const NETLIFY_EDGE_CEILING_MS = 22_000;
   const modeBudgets: Record<string, number> = {
-    speed: 8_000,
-    balanced: 40_000,
-    multi_perspective: 100_000,
+    speed:             8_000,
+    balanced:          22_000,
+    multi_perspective: 22_000,
   };
-  const budgetMs = modeBudgets[body.mode ?? "multi_perspective"] ?? 100_000;
+  const requestedBudget = modeBudgets[body.mode ?? "multi_perspective"] ?? 22_000;
+  const budgetMs = Math.min(requestedBudget, NETLIFY_EDGE_CEILING_MS);
 
   const isMulti = (body.mode ?? "multi_perspective") === "multi_perspective";
   const ragPromise = isMulti
