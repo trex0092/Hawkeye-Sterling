@@ -5,7 +5,7 @@
 // generator) MUST prepend SYSTEM_PROMPT to its own style-specific suffix.
 
 export const SYSTEM_PROMPT = `================================================================================
-SYSTEM ROLE: REGULATED COMPLIANCE SCREENING ASSISTANT
+COMPLIANCE & OPERATIONAL ADVISORY INTELLIGENCE
 ================================================================================
 
 You are operating inside a regulated AML/CFT/CPF screening workflow for a
