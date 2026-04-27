@@ -569,6 +569,21 @@ function AsanaRebuildSection() {
     }
   };
 
+  const [showEnvRef, setShowEnvRef] = useState(false);
+
+  const NEW_PROJECTS: Array<{ board: string; envVar: string }> = [
+    { board: "03 · Audit Log 10-Year Trail",          envVar: "ASANA_AUDIT_LOG_PROJECT_GID" },
+    { board: "04 · Four-Eyes Approvals",               envVar: "ASANA_FOUR_EYES_PROJECT_GID" },
+    { board: "09 · Compliance Ops — Daily & Weekly",  envVar: "ASANA_COMPLIANCE_OPS_PROJECT_GID" },
+    { board: "11 · Employees",                         envVar: "ASANA_EMPLOYEES_PROJECT_GID" },
+    { board: "12 · Training",                          envVar: "ASANA_TRAINING_PROJECT_GID" },
+    { board: "13 · Compliance Governance",             envVar: "ASANA_GOVERNANCE_PROJECT_GID" },
+    { board: "14 · Routines — Scheduled",              envVar: "ASANA_ROUTINES_PROJECT_GID" },
+    { board: "17 · Export Control & Dual-Use",         envVar: "ASANA_EXPORT_CTRL_PROJECT_GID" },
+    { board: "18 · Regulator Portal Handoff",          envVar: "ASANA_REGULATOR_PROJECT_GID" },
+    { board: "19 · Incidents & Grievances",            envVar: "ASANA_INCIDENTS_PROJECT_GID" },
+  ];
+
   return (
     <div className="mt-8 border border-hair-2 rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
@@ -577,7 +592,7 @@ function AsanaRebuildSection() {
             Asana · Workflow Admin
           </div>
           <div className="text-12 text-ink-2">
-            Rebuild all 9 project boards — wipes existing sections and recreates them in the correct order.
+            Rebuilds sections on all configured boards (up to 19). Boards missing a GID env var are skipped.
           </div>
         </div>
         <button
@@ -588,6 +603,33 @@ function AsanaRebuildSection() {
         >
           {state === "running" ? "Rebuilding…" : "Rebuild Sections"}
         </button>
+      </div>
+
+      {/* Env-var reference — 10 new boards that need GIDs in Netlify */}
+      <div className="mb-4 border border-hair-1 rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowEnvRef((v) => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 bg-bg-1 hover:bg-bg-panel text-12 font-semibold text-ink-1 transition-colors"
+        >
+          <span>Netlify env vars — new boards (add as you create each project in Asana)</span>
+          <span className="text-ink-3 text-11">{showEnvRef ? "▲ hide" : "▼ show"}</span>
+        </button>
+        {showEnvRef && (
+          <div className="divide-y divide-hair-1">
+            {NEW_PROJECTS.map(({ board, envVar }) => (
+              <div key={envVar} className="flex items-center justify-between px-3 py-2 bg-bg-panel">
+                <span className="text-12 text-ink-1">{board}</span>
+                <span className="font-mono text-11 text-brand bg-brand-dim/30 px-2 py-0.5 rounded select-all">
+                  {envVar}
+                </span>
+              </div>
+            ))}
+            <div className="px-3 py-2 bg-bg-1 text-11 text-ink-3">
+              Boards 01, 02, 05, 06, 07, 08, 10, 15, 16 are hardcoded — no env var needed.
+            </div>
+          </div>
+        )}
       </div>
 
       {state === "error" && (
