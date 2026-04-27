@@ -21,13 +21,17 @@
 [functions]
   # Look for the scheduled Netlify Function(s) at the repo root.
   directory = "netlify/functions"
-  # Bundle the compiled brain + policy modules (weaponized.ts imports
-  # ../policy/systemPrompt.js transitively) with every Netlify function.
+  # Bundle the compiled brain + policy + integrations modules.
+  # weaponized.ts imports ../policy/systemPrompt.js transitively, and the
+  # mlro-advisor-deep-background function imports invokeMlroAdvisor +
+  # the quality gates from dist/src/integrations.
   included_files = [
     "dist/src/brain/**/*.js",
     "dist/src/brain/**/*.js.map",
     "dist/src/policy/**/*.js",
     "dist/src/policy/**/*.js.map",
+    "dist/src/integrations/**/*.js",
+    "dist/src/integrations/**/*.js.map",
   ]
 
 [context.production]
