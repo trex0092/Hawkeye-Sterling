@@ -339,7 +339,7 @@ export default function StrCasesPage() {
                       <div><label className={lCls}>Subject country</label><input value={subjectCountry} onChange={(e) => setSubjectCountry(e.target.value)} placeholder="e.g. UAE, IN, RU" className={iCls} /></div>
                     </div>
                     <div className={`${row} grid-cols-3`}>
-                      <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
+                      <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED, USD, EUR)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                       <div><label className={lCls}>Detected on</label><DateParts value={detectedOn} onChange={setDetectedOn} className={iCls} /></div>
                       <div><label className={lCls}>Filing deadline <span className="normal-case font-normal">FDL Art. 26–27</span></label><DateParts value={deadline} onChange={setDeadline} className={iCls} /></div>
                     </div>
@@ -463,7 +463,7 @@ export default function StrCasesPage() {
                       Subject
                     </th>
                     <th className="text-right px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
-                      Amount (AED)
+                      Amount (AED, USD, EUR)
                     </th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Status
