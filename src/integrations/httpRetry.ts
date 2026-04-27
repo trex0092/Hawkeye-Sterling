@@ -208,7 +208,7 @@ async function readAnthropicSSEBody(
           if (idleTimer) clearTimeout(idleTimer);
           outerSignal.removeEventListener('abort', onOuterAbort);
           settled = true;
-          resolve({ text, partial: false, streamError });
+          resolve({ text, partial: false, ...(streamError ? { streamError } : {}) });
           return;
         }
         if (chunk) {
