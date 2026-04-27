@@ -606,6 +606,7 @@ export default function ShipmentsPage() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [customRows, setCustomRows] = useState<Consignment[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [releasedIds, setReleasedIds] = useState<string[]>([]);
 
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
@@ -617,8 +618,12 @@ export default function ShipmentsPage() {
     () => [
       ...CONSIGNMENTS.filter((c) => !deletedIds.includes(c.id)),
       ...customRows.filter((c) => !deletedIds.includes(c.id)),
-    ],
-    [deletedIds, customRows],
+    ].map((c) =>
+      releasedIds.includes(c.id)
+        ? { ...c, status: "delivered" as ShipmentStatus, rggStep: 5 as const, transitProgress: 100, assayPending: false }
+        : c
+    ),
+    [deletedIds, customRows, releasedIds],
   );
 
   const onAddRow = (row: Consignment) => {
@@ -992,7 +997,7 @@ export default function ShipmentsPage() {
                   <button
                     type="button"
                     className="shrink-0 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
-                    onClick={() => {}}
+                    onClick={() => setReleasedIds((prev) => prev.includes(detail.id) ? prev : [...prev, detail.id])}
                   >
                     Authorise release
                   </button>
