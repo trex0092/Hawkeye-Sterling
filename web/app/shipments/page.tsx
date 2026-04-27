@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { RowActions } from "@/components/shared/RowActions";
 
 // Operator-saved deletes persist to localStorage so the working register
 // survives reload. The seed CONSIGNMENTS array stays the system-of-record;
@@ -814,18 +815,14 @@ export default function ShipmentsPage() {
                 selected === c.id ? "border-brand shadow-sm" : "border-hair-2"
               }`}
             >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(c.id);
-                }}
-                aria-label={`Remove consignment ${c.id}`}
-                title="Remove from my register"
-                className="absolute top-2 right-2 w-6 h-6 inline-flex items-center justify-center rounded text-ink-3 hover:bg-red-dim hover:text-red transition-colors text-12 leading-none z-10"
-              >
-                ×
-              </button>
+              <div className="absolute top-2 right-2 z-10">
+                <RowActions
+                  label={`consignment ${c.id}`}
+                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onDelete={() => onDelete(c.id)}
+                  confirmDelete={false}
+                />
+              </div>
               <div className="flex items-start justify-between gap-3 mb-2 pr-7">
                 <div>
                   <span className="font-mono text-11 text-ink-3">{c.id}</span>
