@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // EOCN — Executive Office for Control & Non-Proliferation (UAE).
@@ -215,6 +215,16 @@ const EOCN_DELETED_KEY = "hawkeye.eocn.matches.deleted.v1";
 export default function EocnPage() {
   const [tab, setTab] = useState<Tab>("list-updates");
   const [deletedMatchIds, setDeletedMatchIds] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+      setLastRefreshed(new Date());
+    }, 900);
+  }, []);
 
   useEffect(() => {
     try {
@@ -266,7 +276,7 @@ export default function EocnPage() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-hair-2">
+      <div className="flex items-end gap-1 mb-6 border-b border-hair-2">
         {([
           { key: "list-updates" as Tab, label: "List updates" },
           { key: "matches" as Tab, label: "Matches & dispositions" },
@@ -285,6 +295,34 @@ export default function EocnPage() {
             {t.label}
           </button>
         ))}
+        <div className="flex-1" />
+        <div className="flex items-center gap-2 pb-2">
+          {lastRefreshed && (
+            <span className="text-10 font-mono text-ink-3">
+              Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-1 rounded border border-hair-2 text-11 font-medium text-ink-2 bg-bg-1 hover:bg-bg-2 hover:text-ink-0 transition-colors disabled:opacity-50"
+          >
+            <svg
+              className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M13.5 8A5.5 5.5 0 1 1 10 3.07" />
+              <path d="M10 1v3h3" />
+            </svg>
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {/* LIST UPDATES TAB */}
