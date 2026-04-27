@@ -4,6 +4,7 @@ import { detectAnomalies } from "../../../../dist/src/integrations/osintBridge.j
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",

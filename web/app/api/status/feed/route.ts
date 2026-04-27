@@ -2,6 +2,7 @@ import { getJson, listKeys } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 // RSS 2.0 feed of status events — incidents, maintenance windows,
 // and status transitions — so PagerDuty / Slack / any RSS reader

@@ -5,6 +5,7 @@ import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // MLRO triage inbox — "00 · Master Inbox". All form submissions land here
 // first; MLRO routes them to downstream Projects 01–19.

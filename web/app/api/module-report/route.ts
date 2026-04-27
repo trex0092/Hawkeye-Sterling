@@ -3,6 +3,7 @@ import { withGuard } from "@/lib/server/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 const MASTER_INBOX_GID    = "1214148630166524"; // 00 · Master Inbox (fallback)
 const DEFAULT_WORKSPACE_GID = "1213645083721316";

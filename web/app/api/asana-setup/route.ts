@@ -3,6 +3,7 @@ import { withGuard } from "@/lib/server/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 const WORKSPACE_GID     = "1213645083721316";
 const API               = "https://app.asana.com/api/1.0";

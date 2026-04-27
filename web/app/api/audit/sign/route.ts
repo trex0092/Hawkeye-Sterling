@@ -5,6 +5,7 @@ import { getJson, listKeys, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 // HMAC-signed audit chain. The four-eyes workflow needs every MLRO
 // disposition / STR / freeze / goAML submission sealed into an

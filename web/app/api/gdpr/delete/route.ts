@@ -4,6 +4,7 @@ import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 // GDPR Article 17 — Right to erasure. Deletes all records whose
 // subjectId / id / email field matches the supplied identifier. Does

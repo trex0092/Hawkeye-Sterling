@@ -20,6 +20,7 @@ import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface EnrolledSubject {
   id: string;

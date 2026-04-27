@@ -4,6 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 const PREFIX = "corrections/";
 

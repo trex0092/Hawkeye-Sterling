@@ -4,6 +4,7 @@ import { postWebhook } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // Dedicated endpoint for Transaction-Monitor compliance reports. Files
 // one Asana task per transaction into ASANA_TM_PROJECT_GID (separate
