@@ -18,9 +18,13 @@ import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watch
 import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
 import { checkJube } from "@/lib/server/jube-client";           // jube AML
 
-const DEFAULT_PROJECT_GID  = "1214148630166524"; // Project 00 — Master Inbox
+const MASTER_INBOX_GID     = "1214148630166524"; // 00 · Master Inbox (fallback)
 const DEFAULT_WORKSPACE_GID = "1213645083721316";
 const DEFAULT_ASSIGNEE_GID  = "1213645083721304";
+// Route batch screening to 01 · Screening — Sanctions & Watchlists
+function batchScreenProjectGid(): string {
+  return process.env["ASANA_SCREENING_PROJECT_GID"] ?? process.env["ASANA_PROJECT_GID"] ?? MASTER_INBOX_GID;
+}
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -274,7 +278,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           data: {
             name: `[BATCH · ${topSeverity}] ${elevated.length} elevated subject(s) — ${results.length} total screened`,
             notes: lines.join("\n"),
-            projects: [process.env["ASANA_PROJECT_GID"] ?? DEFAULT_PROJECT_GID],
+            projects: [batchScreenProjectGid()],
             workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
             assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
           },

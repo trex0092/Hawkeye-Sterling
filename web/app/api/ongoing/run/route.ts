@@ -316,7 +316,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           }
           if (newAdverseArticles.length > 0) {
             const asanaToken = process.env["ASANA_TOKEN"];
-            const inboxProject = process.env["ASANA_PROJECT_GID"];
+            const inboxProject = process.env["ASANA_SCREENING_PROJECT_GID"] ?? process.env["ASANA_PROJECT_GID"];
             if (asanaToken && inboxProject) {
               try {
                 const topSeverity = newAdverseArticles.some(
