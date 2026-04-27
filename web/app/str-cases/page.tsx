@@ -329,7 +329,7 @@ export default function StrCasesPage() {
       <Card>
             <form onSubmit={openCase}>
               <CardSection title="Case identity">
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-2">
                   <Field label="Case title">
                     <input
                       value={title}
@@ -346,7 +346,7 @@ export default function StrCasesPage() {
                     />
                   </Field>
                 </div>
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-2">
                   <Field label="Subject / entity">
                     <input
                       value={subject}
@@ -367,7 +367,7 @@ export default function StrCasesPage() {
               </CardSection>
 
               <CardSection title="Timing & transaction value">
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
+                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-3">
                   <Field label="Transaction amount" hint="(AED)">
                     <input
                       value={amount}
@@ -414,7 +414,7 @@ export default function StrCasesPage() {
               </CardSection>
 
               <CardSection title="Approval chain">
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
+                <div className="grid gap-x-3 gap-y-1.5 grid-cols-1 md:grid-cols-3">
                   <Field label="goAML reference">
                     <input
                       value={goamlRef}

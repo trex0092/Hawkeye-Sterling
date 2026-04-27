@@ -137,7 +137,7 @@ export function KpiGrid({
 
 export function Card({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
       {children}
     </div>
   );
@@ -151,8 +151,8 @@ export function CardSection({
   children: ReactNode;
 }) {
   return (
-    <section className="pb-4 mb-4 border-b border-dashed border-hair last:border-0 last:mb-0 last:pb-0">
-      <h3 className="font-mono text-10 uppercase tracking-wide-4 text-brand-deep m-0 mb-3 font-semibold">
+    <section className="pb-1.5 mb-1.5 border-b border-dashed border-hair last:border-0 last:mb-0 last:pb-0">
+      <h3 className="font-mono text-9 uppercase tracking-wide-4 text-brand-deep m-0 mb-1.5 font-semibold">
         {title}
       </h3>
       {children}
@@ -170,7 +170,7 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1 mb-2 last:mb-0">
+    <label className="flex flex-col gap-0.5 mb-1 last:mb-0">
       <span className="font-mono text-10 uppercase tracking-wide-3 text-ink-2 font-semibold">
         {label}
         {hint && (
@@ -185,9 +185,9 @@ export function Field({
 }
 
 export const textInputCls =
-  "w-full bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand min-h-[40px]";
+  "w-full bg-transparent border border-hair-2 rounded px-2.5 py-1 text-12 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand min-h-[30px]";
 export const textareaCls =
-  "w-full bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand min-h-[96px] leading-[1.55]";
+  "w-full bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand min-h-[60px] leading-[1.55]";
 
 export function ActionRow({
   left,
@@ -197,7 +197,7 @@ export function ActionRow({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 pt-6 mt-6 border-t border-hair-2 flex-wrap">
+    <div className="flex items-center justify-between gap-4 pt-4 mt-4 border-t border-hair-2 flex-wrap">
       <div className="flex gap-2 flex-wrap">{left}</div>
       {right && (
         <div className="flex items-center gap-3 flex-wrap ml-auto">{right}</div>
