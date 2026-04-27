@@ -62,6 +62,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint analysis" },
       { label: "Reg Q&A", href: "/compliance-qa", hint: "Source-cited regulatory answers" },
       { label: "OSINT", href: "/osint", hint: "Subject enrichment & SpiderFoot" },
+      { label: "Adverse Media", href: "/adverse-media", hint: "Taranis AI news monitoring" },
+      { label: "Vessel Check", href: "/vessel-check", hint: "IMO sanctions & ownership" },
+      { label: "Benford Analysis", href: "/benford", hint: "Forensic accounting digit test" },
     ],
   },
   {

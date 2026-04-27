@@ -141,3 +141,10 @@ export {
   type MetaCognitionCategory,
   type MetaCognitionPrimitive,
 } from './meta-cognition.js';
+export {
+  analyseBenford,
+  screenTransactionSets,
+  type BenfordInput,
+  type BenfordResult,
+  type BenfordRisk,
+} from './benford.js';

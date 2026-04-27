@@ -18,6 +18,7 @@ import { domainIntel } from "../../../../dist/src/integrations/webCheck.js";
 import { spiderFootScan } from "../../../../dist/src/integrations/spiderfoot.js";
 import { yenteMatch } from "../../../../dist/src/integrations/yente.js";
 import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
+import { harvesterScan } from "../../../../dist/src/integrations/osintBridge.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // Run all enrichment sources in parallel — all fail-soft
-  const [gleifResult, domainResult, yenteResult, osintResult, adverseMediaResult] = await Promise.all([
+  const [gleifResult, domainResult, yenteResult, osintResult, adverseMediaResult, harvesterResult] = await Promise.all([
     resolvedLei
       ? lookupLei(resolvedLei, { maxDepth: 5 }).catch(() => null)
       : Promise.resolve(null),
@@ -77,6 +78,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? spiderFootScan(body.domain, { moduleSet: "passive", maxWaitMs: 90_000 }).catch(() => null)
       : Promise.resolve(null),
     searchAdverseMedia(name, { limit: 20, minRelevance: 0 }).catch(() => null),
+    body.domain
+      ? harvesterScan(body.domain).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const yenteTop = Array.isArray(yenteResult) ? yenteResult[0]?.hits[0] : null;
@@ -99,6 +103,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         adverseCount: adverseMediaResult.adverseCount,
         highRelevanceCount: adverseMediaResult.highRelevanceCount,
         items: adverseMediaResult.items.slice(0, 10),
+      } : null,
+      harvesterResult: harvesterResult?.ok ? {
+        emails: harvesterResult.emails,
+        hosts: harvesterResult.hosts,
+        ips: harvesterResult.ips,
       } : null,
       enrichedAt: new Date().toISOString(),
     },

@@ -6,6 +6,7 @@ import {
   StreamingAnomalyGate,
   extractFeatures,
 } from "../../../../../dist/src/brain/streaming-anomaly.js";
+import { analyseBenford, type BenfordRisk } from "../../../../../dist/src/brain/benford.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,7 @@ interface SubjectAlertRoll {
   heldTransactions: number;    // score >= 0.90 — immediate review
   flaggedTransactions: number; // score 0.75-0.90 — same-day review
   thresholdBreaches: number;
+  benfordRisk?: BenfordRisk;
   top?: { rule: string; detail: string } | null;
 }
 
@@ -188,6 +190,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const anomalies = detectAnomalies(txs);
     const thresholdBreaches = countThresholdBreaches(txs);
 
+    // Benford's Law forensic check — flags non-conforming amount distributions
+    const benfordResult = analyseBenford({ amounts: txs.map((t) => t.amount), label: s.name });
+    const benfordRisk = benfordResult.risk;
+
     // Streaming anomaly gate (PySAD-style HalfSpaceTrees + EMA z-score).
     // Scores each transaction in chronological order, building a per-subject
     // behavioural baseline as it goes. Produces hold/flag/pass tiers.
@@ -215,7 +221,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const subjectAlerts = structuringAlerts + smurfingAlerts + anomalies + thresholdBreaches + heldTransactions;
     totalTx += txs.length;
-    totalAlerts += subjectAlerts;
+    totalAlerts += subjectAlerts + (benfordRisk === 'suspicious' ? 1 : 0);
 
     const top =
       heldTransactions > 0
@@ -245,6 +251,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       heldTransactions,
       flaggedTransactions,
       thresholdBreaches,
+      ...(benfordRisk !== 'insufficient-data' ? { benfordRisk } : {}),
       ...(top !== null ? { top } : {}),
     });
   }
