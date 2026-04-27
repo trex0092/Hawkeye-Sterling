@@ -19,12 +19,12 @@ export interface ModeBudget {
   advisorMs?: number;
 }
 
-// Per-mode budgets. The hard ceiling is 60s per request; modes pack into it.
-// Claude Sonnet needs up to 25s and Opus up to 35s for an 8 k-token response.
+// Per-mode budgets. Multi-perspective mode runs up to 90 s total.
+// Claude Sonnet needs up to 25 s (executor) and Opus up to 65 s (advisor).
 export const MODE_BUDGETS: Record<ReasoningMode, ModeBudget> = {
   speed:             { totalMs: 20_000, executorMs: 20_000 },
   balanced:          { totalMs: 45_000, advisorMs: 45_000 },
-  multi_perspective: { totalMs: 60_000, executorMs: 25_000, advisorMs: 35_000 },
+  multi_perspective: { totalMs: 90_000, executorMs: 25_000, advisorMs: 65_000 },
 };
 
 export interface MlroAdvisorConfig {
@@ -32,7 +32,7 @@ export interface MlroAdvisorConfig {
   executorModel?: string;  // defaults to Claude Sonnet
   advisorModel?: string;   // defaults to Claude Opus
   maxTokens?: number;
-  /** Hard ceiling per request. Default 60s. */
+  /** Per-request budget in ms. Defaults to the mode's totalMs. */
   budgetMs?: number;
 }
 
@@ -266,7 +266,7 @@ export async function invokeMlroAdvisor(
   if (!req.question.trim()) throw new Error('MlroAdvisorRequest.question must be non-empty');
   const mode: ReasoningMode = req.mode ?? 'multi_perspective';
   const budget = MODE_BUDGETS[mode];
-  const hardCeiling = Math.min(cfg.budgetMs ?? 60_000, 60_000);
+  const hardCeiling = cfg.budgetMs ?? budget.totalMs;
   const totalBudget = Math.min(budget.totalMs, hardCeiling);
   const t0 = Date.now();
   const trail: ReasoningTrailStep[] = [];
