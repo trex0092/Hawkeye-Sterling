@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 // Responsible Minerals Initiative — RMAP audit tracker.
 // UAE-based precious-metals entities sourcing from CAHRAs (Conflict-Affected
@@ -369,15 +370,13 @@ export default function RmiPage() {
                     </div>
                   )}
                 </td>
-                <td className="px-2 py-2.5">
-                  <button
-                    type="button"
-                    onClick={() => deleteEntry(s.id)}
-                    className="w-5 h-5 flex items-center justify-center rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors"
-                    title="Remove"
-                  >
-                    ×
-                  </button>
+                <td className="px-2 py-2.5 text-right">
+                  <RowActions
+                    label={`smelter ${s.id}`}
+                    onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onDelete={() => deleteEntry(s.id)}
+                    confirmDelete={false}
+                  />
                 </td>
               </tr>
             ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RowActions } from "@/components/shared/RowActions";
 
 // Policies (SOP vault) — your charter, redlines, risk appetite, sector
 // policies. Brain cites these inline on every disposition. Versioned
@@ -379,14 +380,12 @@ export default function PoliciesPage() {
                           <span className="font-mono text-10 text-ink-3">
                             reviewed {fmtDate(p.lastReviewed)}
                           </span>
-                          <button
-                            type="button"
-                            title="Delete policy"
-                            onClick={() => deletePolicy(p.id)}
-                            className="text-ink-3 hover:text-red transition-colors leading-none text-12 font-mono"
-                          >
-                            ×
-                          </button>
+                          <RowActions
+                            label={`policy ${p.id}`}
+                            onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                            onDelete={() => deletePolicy(p.id)}
+                            confirmDelete={false}
+                          />
                         </div>
                       </div>
                       {editing === p.id ? (
