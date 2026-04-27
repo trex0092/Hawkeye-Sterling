@@ -560,6 +560,25 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
 
   const scores = [...rawScores, ...normScores];
   const best = scores.reduce((a, b) => (b.score > a.score ? b : a));
+
+  // Soundex-only veto: soundex is a coarse 4-char code that collapses many
+  // unrelated names (e.g. "Ozcan" and "Osama" both → "O250"). When soundex is
+  // the ONLY passing algorithm and no character-similarity or Double Metaphone
+  // algorithm also passes, the match is a false positive. Floor to 0 so the
+  // candidate is never surfaced as a sanction hit.
+  const anyNonSoundexPasses = scores.some(
+    (s) => s.method !== 'soundex' && s.pass,
+  );
+  if (best.method === 'soundex' && best.score === 1 && !anyNonSoundexPasses) {
+    return {
+      subject,
+      candidate,
+      scores,
+      best: { method: 'soundex', score: 0, threshold: 1, pass: false },
+      phoneticAgreement: false,
+    };
+  }
+
   const phoneticAgreement =
     (rawScores.find((s) => s.method === 'soundex')?.pass ?? false) ||
     (rawScores.find((s) => s.method === 'double_metaphone')?.pass ?? false) ||

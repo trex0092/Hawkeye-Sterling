@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { writeAuditEvent } from "@/lib/audit";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 type Cadence = "daily" | "twice-daily" | "weekly" | "monthly";
 type MonitorStatus = "active" | "paused" | "overdue";
@@ -396,9 +397,19 @@ export default function OngoingMonitorPage() {
                     <td className="px-3 py-2 font-mono text-10 text-ink-2">
                       <div>{s.lastRun || "—"}</div>
                       {lastResults[s.id] && (
-                        <div className={`text-10 font-semibold mt-0.5 ${lastResults[s.id]!.severity === "critical" ? "text-red" : lastResults[s.id]!.severity === "high" ? "text-amber" : "text-green"}`}>
-                          {lastResults[s.id]!.severity.toUpperCase()} · {lastResults[s.id]!.topScore}/100
-                        </div>
+                        <>
+                          <div className={`text-10 font-semibold mt-0.5 ${lastResults[s.id]!.severity === "critical" ? "text-red" : lastResults[s.id]!.severity === "high" ? "text-amber" : "text-green"}`}>
+                            {lastResults[s.id]!.severity.toUpperCase()} · {lastResults[s.id]!.topScore}/100
+                          </div>
+                          <div className="mt-1">
+                            <AsanaReportButton payload={{
+                              module: "ongoing-monitor",
+                              label: s.name,
+                              summary: `Ongoing monitoring: ${s.name}; Tier: ${s.tier}; Cadence: ${s.cadence}; Severity: ${lastResults[s.id]!.severity}; Score: ${lastResults[s.id]!.topScore}/100`,
+                              metadata: { caseId: s.caseId, tier: s.tier, severity: lastResults[s.id]!.severity, topScore: lastResults[s.id]!.topScore },
+                            }} />
+                          </div>
+                        </>
                       )}
                       <button type="button" onClick={() => { void screenNow(s); }} disabled={screening[s.id]}
                         className="mt-1 text-10 font-mono text-brand hover:text-brand-deep underline disabled:opacity-50">

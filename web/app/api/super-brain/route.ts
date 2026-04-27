@@ -231,7 +231,34 @@ export async function POST(req: Request): Promise<NextResponse> {
         return [];
       }
     })();
-    const typologyHits = rawTypologyHits.map((h) => ({
+
+    // Keyword-group → typology bridge: when adverse-media keywords fire for a
+    // financial-crime family that the regex fingerprints missed (e.g., "terrorism
+    // financing" is in the news headline but not in the typology pattern list),
+    // synthesise a typology hit so the verdict is never CLEAR while TF/ML/PF
+    // keyword signals are active. Deduped against text-match hits by id.
+    const KW_TO_TYPOLOGY: Record<string, { id: string; name: string; family: 'ml' | 'tf' | 'pf' | 'fraud' | 'corruption' | 'cyber'; weight: number }> = {
+      "terrorism-financing": { id: "tf_keyword_signal", name: "Terrorism financing (adverse-media signal)", family: "tf", weight: 0.9 },
+      "proliferation-wmd":   { id: "pf_keyword_signal", name: "Proliferation / WMD (adverse-media signal)", family: "pf", weight: 0.9 },
+      "money-laundering":    { id: "ml_keyword_signal", name: "Money laundering (adverse-media signal)",    family: "ml", weight: 0.8 },
+      "bribery-corruption":  { id: "corruption_keyword_signal", name: "Corruption / bribery (adverse-media signal)", family: "corruption", weight: 0.8 },
+      "cybercrime":          { id: "cyber_keyword_signal", name: "Cybercrime (adverse-media signal)",        family: "cyber", weight: 0.7 },
+      "fraud-forgery":       { id: "fraud_keyword_signal", name: "Fraud / forgery (adverse-media signal)",  family: "fraud", weight: 0.7 },
+      "organised-crime":     { id: "ml_orgcrime_signal", name: "Organised crime (adverse-media signal)",    family: "ml", weight: 0.75 },
+      "human-trafficking":   { id: "ml_ht_signal", name: "Human trafficking (adverse-media signal)",        family: "ml", weight: 0.8 },
+    };
+    const textHitIds = new Set(rawTypologyHits.map((h) => h.typology.id));
+    const syntheticTypologyHits = adverseKeywordGroups
+      .filter((g) => g.group in KW_TO_TYPOLOGY)
+      .map((g) => {
+        const t = KW_TO_TYPOLOGY[g.group]!;
+        if (textHitIds.has(t.id)) return null;
+        return { typology: t, snippet: `${g.label} · ${g.count} keyword${g.count === 1 ? "" : "s"} detected in adverse-media text` };
+      })
+      .filter((h): h is NonNullable<typeof h> => h !== null);
+
+    const allRawHits = [...rawTypologyHits, ...syntheticTypologyHits];
+    const typologyHits = allRawHits.map((h) => ({
       id: h.typology.id,
       name: h.typology.name,
       family: h.typology.family,
@@ -240,7 +267,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     }));
     const typologyScore = (() => {
       try {
-        return typologyCompositeScore(rawTypologyHits);
+        // typologyCompositeScore expects the raw hits shape; pass it the text-match
+        // hits only (it uses regex-match counts internally). Add the synthetic
+        // hit weights on top to ensure the keyword-bridge raises the score.
+        const baseScore = typologyCompositeScore(rawTypologyHits);
+        const syntheticBoost = syntheticTypologyHits.reduce((acc, h) => acc + h.typology.weight * 100, 0);
+        return Math.min(100, baseScore + syntheticBoost * 0.5);
       } catch {
         return 0;
       }

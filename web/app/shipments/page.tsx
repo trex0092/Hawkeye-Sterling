@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // Operator-saved deletes persist to localStorage so the working register
 // survives reload. The seed CONSIGNMENTS array stays the system-of-record;
@@ -829,9 +830,17 @@ export default function ShipmentsPage() {
                 <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
                   Consignment manifest — {detail.id}
                 </span>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${STATUS_TONE[detail.status]}`}>
-                  {STATUS_LABEL[detail.status]}
-                </span>
+                <div className="flex items-center gap-2">
+                  <AsanaReportButton payload={{
+                    module: "shipments",
+                    label: `${detail.id} · ${detail.refinery}`,
+                    summary: `Consignment: ${detail.id}; Refinery: ${detail.refinery}; Origin: ${detail.miningCountry}; Status: ${detail.status}; USD value: $${detail.usdValue.toLocaleString()}; Weight: ${detail.grossWeightKg} kg`,
+                    metadata: { id: detail.id, refinery: detail.refinery, status: detail.status, usdValue: detail.usdValue, direction: detail.direction, originCountry: detail.originCountry },
+                  }} />
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${STATUS_TONE[detail.status]}`}>
+                    {STATUS_LABEL[detail.status]}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-12">
