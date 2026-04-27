@@ -137,7 +137,7 @@ export function KpiGrid({
 
 export function Card({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-bg-panel border border-hair-2 rounded-xl p-7">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
       {children}
     </div>
   );
@@ -151,8 +151,8 @@ export function CardSection({
   children: ReactNode;
 }) {
   return (
-    <section className="pb-6 mb-6 border-b border-dashed border-hair last:border-0 last:mb-0 last:pb-0">
-      <h3 className="font-mono text-10 uppercase tracking-wide-4 text-brand-deep m-0 mb-4 font-semibold">
+    <section className="pb-4 mb-4 border-b border-dashed border-hair last:border-0 last:mb-0 last:pb-0">
+      <h3 className="font-mono text-10 uppercase tracking-wide-4 text-brand-deep m-0 mb-3 font-semibold">
         {title}
       </h3>
       {children}
@@ -170,7 +170,7 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 mb-4 last:mb-0">
+    <label className="flex flex-col gap-1 mb-2 last:mb-0">
       <span className="font-mono text-10 uppercase tracking-wide-3 text-ink-2 font-semibold">
         {label}
         {hint && (
