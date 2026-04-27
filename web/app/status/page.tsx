@@ -538,7 +538,77 @@ export default function StatusPage() {
         {!data && !err && (
           <div className="text-12 text-ink-2">Loading status…</div>
         )}
+
+        <AsanaRebuildSection />
     </ModuleLayout>
+  );
+}
+
+function AsanaRebuildSection() {
+  const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [results, setResults] = useState<Array<{ name: string; deleted: number; created: number; errors: string[] }>>([]);
+  const [errMsg, setErrMsg] = useState("");
+
+  const run = async () => {
+    setState("running");
+    setResults([]);
+    setErrMsg("");
+    try {
+      const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
+      const data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
+      if (data.ok) {
+        setResults(data.results ?? []);
+        setState("done");
+      } else {
+        setErrMsg(data.error ?? "Rebuild failed");
+        setState("error");
+      }
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : "Network error");
+      setState("error");
+    }
+  };
+
+  return (
+    <div className="mt-8 border border-hair-2 rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-11 font-semibold uppercase tracking-wide-4 text-brand mb-0.5">
+            Asana · Workflow Admin
+          </div>
+          <div className="text-12 text-ink-2">
+            Rebuild all 9 project boards — wipes existing sections and recreates them in the correct order.
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={run}
+          disabled={state === "running"}
+          className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity shrink-0"
+        >
+          {state === "running" ? "Rebuilding…" : "Rebuild Sections"}
+        </button>
+      </div>
+
+      {state === "error" && (
+        <div className="bg-red-dim border border-red/30 rounded px-3 py-2 text-12 text-red">
+          {errMsg}
+        </div>
+      )}
+
+      {state === "done" && results.length > 0 && (
+        <div className="space-y-1.5">
+          {results.map((r) => (
+            <div key={r.name} className={`flex items-center justify-between px-3 py-2 rounded text-12 ${r.errors.length > 0 ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
+              <span className="font-medium">{r.name}</span>
+              <span className="font-mono text-11 opacity-80">
+                {r.errors.length > 0 ? `⚠ ${r.errors.join(", ")}` : `✓ ${r.deleted} deleted · ${r.created} created`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
