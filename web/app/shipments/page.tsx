@@ -427,6 +427,287 @@ const RISK_LEVEL_TONE: Record<string, string> = {
   "High-Risk":   "bg-red-dim text-red border-red/30",
 };
 
+function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment; onSave: (c: Consignment) => void; onCancel: () => void }) {
+  const [draft, setDraft] = useState<Consignment>(initial);
+  const [err, setErr] = useState("");
+
+  const set = <K extends keyof Consignment>(k: K, v: Consignment[K]) =>
+    setDraft((d) => ({ ...d, [k]: v }));
+
+  const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
+  const lCls = "block text-10 uppercase tracking-wide-3 text-ink-3 mb-1";
+  const sectCls = "text-10 font-mono uppercase tracking-wide-3 text-brand mb-2";
+
+  const toggleRisk = (level: string) => {
+    const cur = draft.riskLevels ?? [];
+    set("riskLevels", cur.includes(level) ? cur.filter((r) => r !== level) : [...cur, level]);
+  };
+
+  const submit = () => {
+    if (!draft.refinery.trim()) { setErr("Supplier is required."); return; }
+    const flagsArr = Array.isArray(draft.flags)
+      ? draft.flags
+      : String(draft.flags ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    onSave({ ...draft, flags: flagsArr });
+  };
+
+  const flagsText = (draft.flags ?? []).join(", ");
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-4xl bg-bg-panel border border-brand/20 rounded-xl p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand">Edit consignment</div>
+            <div className="font-mono text-11 text-ink-3 mt-0.5">{draft.id}</div>
+          </div>
+          <button type="button" onClick={onCancel} className="text-ink-3 hover:text-ink-0 text-18 leading-none px-2">×</button>
+        </div>
+        {err && <p className="text-11 text-red mb-2">{err}</p>}
+
+        {/* Status & metrics */}
+        <div className="mb-4">
+          <div className={sectCls}>Status &amp; metrics</div>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className={lCls}>Status</label>
+              <select value={draft.status} onChange={(e) => set("status", e.target.value as ShipmentStatus)} className={iCls}>
+                <option value="in-flight">In flight</option>
+                <option value="arrived">Arrived</option>
+                <option value="awaiting-assay">Awaiting assay</option>
+                <option value="at-vault">At vault</option>
+                <option value="held">Held</option>
+                <option value="delivered">Delivered</option>
+              </select>
+            </div>
+            <div>
+              <label className={lCls}>Transit %</label>
+              <input type="number" min={0} max={100} value={draft.transitProgress}
+                onChange={(e) => set("transitProgress", parseInt(e.target.value, 10) || 0)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>OECD step (1–5)</label>
+              <select value={draft.rggStep} onChange={(e) => set("rggStep", parseInt(e.target.value, 10) as 1 | 2 | 3 | 4 | 5)} className={iCls}>
+                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={lCls}>Assay pending</label>
+              <select value={draft.assayPending ? "yes" : "no"} onChange={(e) => set("assayPending", e.target.value === "yes")} className={iCls}>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label className={lCls}>USD value</label>
+              <input type="number" value={draft.usdValue} onChange={(e) => set("usdValue", parseFloat(e.target.value) || 0)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Gross weight (kg)</label>
+              <input type="number" step="0.01" value={draft.grossWeightKg}
+                onChange={(e) => {
+                  const kg = parseFloat(e.target.value) || 0;
+                  setDraft((d) => ({ ...d, grossWeightKg: kg, weightGms: Math.round(kg * 1000) }));
+                }}
+                className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Net weight (kg)</label>
+              <input type="number" step="0.01" value={draft.netWeightKg} onChange={(e) => set("netWeightKg", parseFloat(e.target.value) || 0)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Lot number</label>
+              <input value={draft.lotNumber} onChange={(e) => set("lotNumber", e.target.value)} className={iCls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className={lCls}>Flags (comma-separated)</label>
+              <input value={flagsText} onChange={(e) => set("flags", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className={iCls} placeholder="e.g. SANCTION-MATCH, PRICE-VARIANCE" />
+            </div>
+            <div>
+              <label className={lCls}>Risk level</label>
+              <div className="flex gap-2">
+                {RISK_LEVEL_OPTIONS.map((lvl) => {
+                  const active = (draft.riskLevels ?? []).includes(lvl);
+                  return (
+                    <button key={lvl} type="button" onClick={() => toggleRisk(lvl)}
+                      className={`flex-1 py-1.5 rounded border text-11 font-semibold transition-colors ${
+                        active ? RISK_LEVEL_TONE[lvl] : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
+                      }`}>{lvl}</button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* §1 Origin */}
+        <div className="mb-4 pt-3 border-t border-hair-2">
+          <div className={sectCls}>§1 Origin</div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lCls}>Mine of origin</label>
+              <input value={draft.mineOfOrigin} onChange={(e) => set("mineOfOrigin", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Mining country</label>
+              <input value={draft.miningCountry} onChange={(e) => set("miningCountry", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Origin country code</label>
+              <input value={draft.originCountry} onChange={(e) => set("originCountry", e.target.value.toUpperCase())} className={iCls} placeholder="ZA / CH / AE" />
+            </div>
+            <div className="col-span-2">
+              <label className={lCls}>Origin (free text)</label>
+              <input value={draft.origin} onChange={(e) => set("origin", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Export licence</label>
+              <input value={draft.exportLicence} onChange={(e) => set("exportLicence", e.target.value)} className={iCls} />
+            </div>
+            <div className="col-span-2">
+              <label className={lCls}>Description</label>
+              <input value={draft.description} onChange={(e) => set("description", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Dispatch date</label>
+              <input value={draft.dispatchDate} onChange={(e) => set("dispatchDate", e.target.value)} className={iCls} placeholder="DD/MM/YYYY" />
+            </div>
+          </div>
+        </div>
+
+        {/* §2 Refinery */}
+        <div className="mb-4 pt-3 border-t border-hair-2">
+          <div className={sectCls}>§2 Refinery</div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lCls}>Supplier *</label>
+              <input value={draft.refinery} onChange={(e) => set("refinery", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>LBMA ID / DGD</label>
+              <input value={draft.refineryLbmaId} onChange={(e) => set("refineryLbmaId", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Audit date</label>
+              <input value={draft.refineryAuditDate} onChange={(e) => set("refineryAuditDate", e.target.value)} className={iCls} placeholder="DD/MM/YYYY" />
+            </div>
+            <div>
+              <label className={lCls}>Good Delivery</label>
+              <select value={draft.lbmaGoodDelivery ? "yes" : "no"} onChange={(e) => set("lbmaGoodDelivery", e.target.value === "yes")} className={iCls}>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label className={lCls}>Fineness</label>
+              <input type="number" step="0.01" value={draft.fineness} onChange={(e) => set("fineness", parseFloat(e.target.value) || 0)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Bars</label>
+              <input type="number" value={draft.bars} onChange={(e) => set("bars", parseInt(e.target.value, 10) || 0)} className={iCls} />
+            </div>
+          </div>
+        </div>
+
+        {/* §3 Counterparty */}
+        <div className="mb-4 pt-3 border-t border-hair-2">
+          <div className={sectCls}>§3 Counterparty</div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lCls}>Counterparty (Supplier)</label>
+              <input value={draft.counterparty} onChange={(e) => set("counterparty", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Consignee</label>
+              <input value={draft.consignee} onChange={(e) => set("consignee", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Jurisdiction</label>
+              <input value={draft.counterpartyJurisdiction} onChange={(e) => set("counterpartyJurisdiction", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>CDD ref</label>
+              <input value={draft.counterpartyCddRef} onChange={(e) => set("counterpartyCddRef", e.target.value)} className={iCls} />
+            </div>
+            <div className="col-span-2">
+              <label className={lCls}>Invoice no.</label>
+              <input value={draft.invoiceNumber} onChange={(e) => set("invoiceNumber", e.target.value)} className={iCls} />
+            </div>
+          </div>
+        </div>
+
+        {/* §4 Logistics */}
+        <div className="mb-4 pt-3 border-t border-hair-2">
+          <div className={sectCls}>§4 Logistics &amp; vault</div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lCls}>Direction</label>
+              <select value={draft.direction} onChange={(e) => set("direction", e.target.value as "Import" | "Export")} className={iCls}>
+                <option value="Import">Import</option>
+                <option value="Export">Export</option>
+              </select>
+            </div>
+            <div>
+              <label className={lCls}>Carrier</label>
+              <input value={draft.carrier} onChange={(e) => set("carrier", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Transportation agent</label>
+              <input value={draft.transportationAgent} onChange={(e) => set("transportationAgent", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>AWB</label>
+              <input value={draft.awb} onChange={(e) => set("awb", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Clearance date</label>
+              <input value={draft.clearanceDate} onChange={(e) => set("clearanceDate", e.target.value)} className={iCls} placeholder="DD/MM/YYYY" />
+            </div>
+            <div>
+              <label className={lCls}>ETA</label>
+              <input value={draft.eta} onChange={(e) => set("eta", e.target.value)} className={iCls} placeholder="DD/MM/YYYY" />
+            </div>
+            <div>
+              <label className={lCls}>Custodian</label>
+              <input value={draft.custodian} onChange={(e) => set("custodian", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Vault location</label>
+              <input value={draft.vaultLocation} onChange={(e) => set("vaultLocation", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Delivery location</label>
+              <input value={draft.deliveryLocation} onChange={(e) => set("deliveryLocation", e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className={lCls}>Vault cert ref</label>
+              <input value={draft.vaultCertRef} onChange={(e) => set("vaultCertRef", e.target.value)} className={iCls} />
+            </div>
+            <div className="col-span-2">
+              <label className={lCls}>Insurance ref</label>
+              <input value={draft.insuranceRef} onChange={(e) => set("insuranceRef", e.target.value)} className={iCls} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-3 border-t border-hair-2">
+          <button type="button" onClick={submit} className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Save changes</button>
+          <button type="button" onClick={onCancel} className="text-11 font-semibold px-4 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+          <span className="ml-auto self-center text-10 text-ink-3 font-mono">Chain-of-custody ledger is WORM and not editable here.</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void; onCancel: () => void }) {
   const [reference, setReference] = useState("");
   const [origin, setOrigin] = useState("");
@@ -656,8 +937,7 @@ export default function ShipmentsPage() {
   const [customRows, setCustomRows] = useState<Consignment[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [releasedIds, setReleasedIds] = useState<string[]>([]);
-  const [editingShipmentId, setEditingShipmentId] = useState<string | null>(null);
-  const [editShipmentDraft, setEditShipmentDraft] = useState<{ status: ShipmentStatus; notes: string; awb: string; eta: string; transitProgress: string }>({ status: "in-flight", notes: "", awb: "", eta: "", transitProgress: "" });
+  const [editingShipment, setEditingShipment] = useState<Consignment | null>(null);
 
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
@@ -703,30 +983,22 @@ export default function ShipmentsPage() {
   };
 
   const startEditShipment = (c: Consignment) => {
-    setEditingShipmentId(c.id);
-    setEditShipmentDraft({ status: c.status, notes: "", awb: c.awb, eta: c.eta, transitProgress: String(c.transitProgress) });
+    setEditingShipment(c);
   };
 
-  const saveShipmentEdit = (c: Consignment) => {
-    const patched: Consignment = {
-      ...c,
-      status: editShipmentDraft.status,
-      awb: editShipmentDraft.awb || c.awb,
-      eta: editShipmentDraft.eta || c.eta,
-      transitProgress: parseInt(editShipmentDraft.transitProgress) || c.transitProgress,
-    };
+  const saveShipmentEdit = (patched: Consignment) => {
     // overlay: remove from seed via deletedIds, push patched to customRows
     setDeletedIds((prev) => {
-      const next = prev.includes(c.id) ? prev : [...prev, c.id];
+      const next = prev.includes(patched.id) ? prev : [...prev, patched.id];
       saveDeletedIds(next);
       return next;
     });
     setCustomRows((prev) => {
-      const next = [...prev.filter((x) => x.id !== c.id), patched];
+      const next = [...prev.filter((x) => x.id !== patched.id), patched];
       saveCustom(next);
       return next;
     });
-    setEditingShipmentId(null);
+    setEditingShipment(null);
   };
 
   const onRestoreAll = () => {
@@ -852,43 +1124,6 @@ export default function ShipmentsPage() {
                   confirmDelete={false}
                 />
               </div>
-              {editingShipmentId === c.id && (
-                <div className="mb-3 bg-bg-1 rounded-lg p-3 border border-brand/30" onClick={(e) => e.stopPropagation()}>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div>
-                      <label className="block text-10 text-ink-3 mb-0.5">Status</label>
-                      <select value={editShipmentDraft.status} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, status: e.target.value as ShipmentStatus }))}
-                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
-                        <option value="in-flight">In flight</option>
-                        <option value="at-vault">At vault</option>
-                        <option value="awaiting-assay">Awaiting assay</option>
-                        <option value="held">Held</option>
-                        <option value="arrived">Arrived</option>
-                        <option value="delivered">Delivered</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-10 text-ink-3 mb-0.5">Transit %</label>
-                      <input type="number" min="0" max="100" value={editShipmentDraft.transitProgress} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, transitProgress: e.target.value }))}
-                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
-                    </div>
-                    <div>
-                      <label className="block text-10 text-ink-3 mb-0.5">AWB</label>
-                      <input value={editShipmentDraft.awb} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, awb: e.target.value }))}
-                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" />
-                    </div>
-                    <div>
-                      <label className="block text-10 text-ink-3 mb-0.5">ETA</label>
-                      <input value={editShipmentDraft.eta} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, eta: e.target.value }))}
-                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={(e) => { e.stopPropagation(); saveShipmentEdit(c); }} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setEditingShipmentId(null); }} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
-                  </div>
-                </div>
-              )}
               <div className="flex items-start justify-between gap-3 mb-2 pr-7">
                 <div>
                   <span className="font-mono text-11 text-ink-3">{c.id}</span>
@@ -1074,6 +1309,14 @@ export default function ShipmentsPage() {
           </div>
         )}
       </div>
+
+      {editingShipment && (
+        <EditShipmentForm
+          initial={editingShipment}
+          onSave={saveShipmentEdit}
+          onCancel={() => setEditingShipment(null)}
+        />
+      )}
     </ModuleLayout>
   );
 }
