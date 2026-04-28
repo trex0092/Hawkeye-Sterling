@@ -18,16 +18,16 @@ const DEFAULT_CLS =
 function isoToDisplay(iso: string): string {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return iso ?? "";
-  return `${m[3]}/${m[2]}/${m[1]}`;
+  const [, yyyy, mm, dd] = m;
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 function displayToIso(display: string): string | null {
   const m = display.trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
   if (!m) return null;
-  const dd = m[1].padStart(2, "0");
-  const mm = m[2].padStart(2, "0");
-  const yyyy = m[3];
-  return `${yyyy}-${mm}-${dd}`;
+  const [, d, mo, y] = m;
+  if (!d || !mo || !y) return null;
+  return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
 export function IsoDateInput({
