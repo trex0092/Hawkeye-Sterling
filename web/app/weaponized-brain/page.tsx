@@ -178,6 +178,9 @@ export default function WeaponizedBrainPage() {
           </p>
         </div>
 
+        <AuditStrip />
+        <BrainConsole />
+
         {state.status === "loading" && (
           <div className="text-12 text-ink-2">Loading weaponized manifest…</div>
         )}
@@ -190,6 +193,585 @@ export default function WeaponizedBrainPage() {
       </div>
     </ModuleLayout>
   );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Live self-audit strip — green/red status from auditBrain() exposed via
+// /api/weaponized-brain/audit. Proves the catalogue resolves, the IDs are
+// unique, and every faculty/template points at a real mode.
+// ────────────────────────────────────────────────────────────────────────────
+
+interface AuditReport {
+  ok: boolean;
+  totals: {
+    faculties: number;
+    reasoningModes: number;
+    questionTemplates: number;
+    scenarios: number;
+    adverseMediaCategories: number;
+    adverseMediaKeywords: number;
+    adverseMediaQueryLength: number;
+  };
+  implementation: { implementedCount: number; totalCount: number; percent: number };
+  problems: string[];
+}
+
+interface AuditResponse {
+  ok: boolean;
+  report?: AuditReport;
+  integrity?: { charterHash: string; catalogueHash: string; compositeHash?: string };
+  error?: string;
+}
+
+function AuditStrip() {
+  const [data, setData] = useState<AuditResponse | null>(null);
+  const [reloading, setReloading] = useState(false);
+
+  const load = () => {
+    setReloading(true);
+    fetch("/api/weaponized-brain/audit")
+      .then((r) => r.json() as Promise<AuditResponse>)
+      .then(setData)
+      .catch((e: unknown) =>
+        setData({ ok: false, error: e instanceof Error ? e.message : String(e) }),
+      )
+      .finally(() => setReloading(false));
+  };
+  useEffect(load, []);
+
+  if (!data) {
+    return (
+      <div className="mb-4 text-11 font-mono text-ink-3 px-3 py-2 border border-hair-2 rounded bg-bg-panel">
+        Auditing brain…
+      </div>
+    );
+  }
+  if (!data.ok || !data.report) {
+    return (
+      <div className="mb-4 text-12 text-red bg-red-dim border border-red/20 rounded px-3 py-2">
+        Audit failed: {data.error ?? "unknown"}
+      </div>
+    );
+  }
+  const r = data.report;
+  const ok = r.ok && r.problems.length === 0;
+  return (
+    <div
+      className={`mb-6 rounded-lg border px-4 py-3 ${
+        ok ? "bg-bg-panel border-hair-2" : "bg-red-dim border-red/30"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-4">
+        <span
+          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-11 font-mono uppercase tracking-wide-3 ${
+            ok ? "bg-green-100 text-green-800" : "bg-red text-bg-0"
+          }`}
+        >
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
+          {ok ? "Brain audit · OK" : `Brain audit · ${r.problems.length} problem(s)`}
+        </span>
+        <AuditChip label="Faculties" value={r.totals.faculties} />
+        <AuditChip label="Reasoning modes" value={r.totals.reasoningModes} />
+        <AuditChip label="Templates" value={r.totals.questionTemplates} />
+        <AuditChip label="Scenarios" value={r.totals.scenarios} />
+        <AuditChip
+          label="Implementation"
+          value={`${r.implementation.implementedCount}/${r.implementation.totalCount} (${r.implementation.percent}%)`}
+        />
+        <button
+          type="button"
+          onClick={load}
+          disabled={reloading}
+          className="ml-auto text-10 font-mono uppercase tracking-wide-3 px-2 py-1 border border-hair-2 rounded hover:bg-bg-2 disabled:opacity-50"
+        >
+          {reloading ? "Re-auditing…" : "Re-audit"}
+        </button>
+      </div>
+      {!ok && r.problems.length > 0 && (
+        <ul className="mt-2 text-11 font-mono text-red list-disc pl-5 max-h-32 overflow-auto">
+          {r.problems.slice(0, 20).map((p, i) => (
+            <li key={i}>{p}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function AuditChip({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="flex flex-col leading-tight">
+      <span className="text-9 uppercase tracking-wide-3 text-ink-3">{label}</span>
+      <span className="font-mono text-12 text-ink-0">{value}</span>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Live reasoning console — POSTs the supplied subject + narrative to
+// /api/weaponized-brain/reason and renders the full reasoning chain, every
+// brain module cited, the redlines fired, the disposition, and the
+// catalogue-summary fragment of the weaponized system prompt that any LLM
+// invocation would inherit. This turns the Brain page from a manifest into
+// the firing range every other module screens through.
+// ────────────────────────────────────────────────────────────────────────────
+
+interface ReasonResponse {
+  ok: boolean;
+  composite?: { score: number; breakdown: Record<string, number> };
+  disposition?: { code: string; label: string; rationale: string };
+  screen?: {
+    topScore: number;
+    severity: string;
+    hits: Array<{
+      listId: string;
+      listRef: string;
+      candidateName: string;
+      score: number;
+      method: string;
+      reason: string;
+    }>;
+  };
+  jurisdiction?: { iso2: string; name: string; region: string; cahra: boolean; regimes: string[] } | null;
+  pep?: { type: string; tier: number; salience: number } | null;
+  adverseMedia?: Array<{ categoryId: string; keyword: string }>;
+  typologies?: {
+    hits: Array<{ id: string; name: string; family: string; weight: number; snippet: string }>;
+    compositeScore: number;
+  };
+  redlines?: { fired: Array<{ id: string; label: string; action: string; regulatoryAnchor: string }>; action: string | null; summary: string };
+  cited?: Array<{ kind: string; id: string; label: string; detail?: string }>;
+  steps?: Array<{ step: string; cited: string[]; finding: string }>;
+  variants?: {
+    aliasExpansion: string[];
+    nameVariants: string[];
+    doubleMetaphone: { primary: string; secondary: string };
+    soundex: string;
+  };
+  promptPreview?: string;
+  error?: string;
+}
+
+const SAMPLE_PRESETS: Array<{ id: string; label: string; payload: { subject: { name: string; jurisdiction?: string; entityType?: string; sector?: string; aliases?: string[] }; roleText?: string; narrative?: string } }> = [
+  {
+    id: "russian-pep",
+    label: "Russian PEP · TF narrative",
+    payload: {
+      subject: { name: "Vladimir Petrov", jurisdiction: "Russia", entityType: "individual", aliases: ["V. Petrov", "Владимир Петров"] },
+      roleText: "Deputy Minister of Defence of the Russian Federation",
+      narrative:
+        "Wire transfers totalling USD 4.2m from a UAE corporate account to two Cyprus shell entities, followed by onward transfers to crypto exchanges. Counterparties named in OFAC SDN. Adverse media references terrorism financing, sanctions evasion, and proliferation procurement networks routed through the Caucasus.",
+    },
+  },
+  {
+    id: "uae-gold",
+    label: "UAE gold refinery · CAHRA exposure",
+    payload: {
+      subject: { name: "Emirates Bullion Refinery LLC", jurisdiction: "United Arab Emirates", entityType: "organisation", sector: "gold refinery" },
+      roleText: "",
+      narrative:
+        "Refinery accepting doré gold consignments declared as Mali-origin. Supplier paperwork lists transit via Dubai. No OECD Annex II disclosures attached. Counterparty bank in CAHRA jurisdiction; cash-intensive cross-border channels; structuring of inbound payments below USD 55,000.",
+    },
+  },
+  {
+    id: "crypto-vasp",
+    label: "Crypto VASP · cybercrime nexus",
+    payload: {
+      subject: { name: "AlphaSwap Exchange", jurisdiction: "Seychelles", entityType: "organisation", sector: "virtual asset service provider" },
+      roleText: "",
+      narrative:
+        "VASP processing high volumes of privacy-coin swaps with destinations in mixers and bridge contracts associated with ransomware payments. Cybercrime, fraud, and human trafficking proceeds reported by OSINT sources. No travel-rule compliance evident.",
+    },
+  },
+];
+
+function BrainConsole() {
+  const [name, setName] = useState("");
+  const [aliases, setAliases] = useState("");
+  const [jurisdiction, setJurisdiction] = useState("");
+  const [entityType, setEntityType] = useState<string>("individual");
+  const [sector, setSector] = useState("");
+  const [roleText, setRoleText] = useState("");
+  const [narrative, setNarrative] = useState("");
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<ReasonResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadPreset = (id: string) => {
+    const preset = SAMPLE_PRESETS.find((p) => p.id === id);
+    if (!preset) return;
+    setName(preset.payload.subject.name);
+    setAliases((preset.payload.subject.aliases ?? []).join(", "));
+    setJurisdiction(preset.payload.subject.jurisdiction ?? "");
+    setEntityType(preset.payload.subject.entityType ?? "individual");
+    setSector(preset.payload.subject.sector ?? "");
+    setRoleText(preset.payload.roleText ?? "");
+    setNarrative(preset.payload.narrative ?? "");
+  };
+
+  const run = async () => {
+    if (!name.trim()) {
+      setError("Subject name is required.");
+      return;
+    }
+    setRunning(true);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await fetch("/api/weaponized-brain/reason", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: {
+            name: name.trim(),
+            aliases: aliases
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+            entityType,
+            jurisdiction: jurisdiction.trim() || undefined,
+            sector: sector.trim() || undefined,
+          },
+          roleText: roleText.trim() || undefined,
+          narrative: narrative.trim() || undefined,
+        }),
+      });
+      const data = (await res.json()) as ReasonResponse;
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? `HTTP ${res.status}`);
+      } else {
+        setResult(data);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="mb-10 border border-hair-2 rounded-xl overflow-hidden">
+      <div className="bg-ink-0 text-bg-0 px-4 py-2.5 flex flex-wrap items-center gap-3">
+        <div className="text-10 uppercase tracking-wide-4 text-bg-0/50">FIRING RANGE</div>
+        <div className="font-display text-18">Live brain reasoning console</div>
+        <div className="ml-auto flex items-center gap-2 text-10 font-mono">
+          <span className="text-bg-0/50">PRESET:</span>
+          {SAMPLE_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => loadPreset(p.id)}
+              className="px-2 py-0.5 rounded border border-bg-0/20 hover:bg-bg-0/10 uppercase tracking-wide-2"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-0">
+        {/* Inputs */}
+        <div className="p-4 border-r border-hair-2 space-y-3">
+          <Field label="Subject name *">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Vladimir Petrov"
+              className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
+            />
+          </Field>
+          <Field label="Aliases (comma-separated)">
+            <input
+              type="text"
+              value={aliases}
+              onChange={(e) => setAliases(e.target.value)}
+              placeholder="V. Petrov, Владимир Петров"
+              className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Jurisdiction">
+              <input
+                type="text"
+                value={jurisdiction}
+                onChange={(e) => setJurisdiction(e.target.value)}
+                placeholder="Russia · RU · United Arab Emirates"
+                className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
+              />
+            </Field>
+            <Field label="Entity type">
+              <select
+                value={entityType}
+                onChange={(e) => setEntityType(e.target.value)}
+                className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
+              >
+                <option value="individual">individual</option>
+                <option value="organisation">organisation</option>
+                <option value="vessel">vessel</option>
+                <option value="aircraft">aircraft</option>
+                <option value="other">other</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Sector / business activity">
+            <input
+              type="text"
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              placeholder="gold refinery, correspondent banking, crypto VASP…"
+              className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
+            />
+          </Field>
+          <Field label="Role text (PEP classifier input)">
+            <input
+              type="text"
+              value={roleText}
+              onChange={(e) => setRoleText(e.target.value)}
+              placeholder="e.g. Deputy Minister of Defence"
+              className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
+            />
+          </Field>
+          <Field label="Narrative / adverse-media text">
+            <textarea
+              value={narrative}
+              onChange={(e) => setNarrative(e.target.value)}
+              rows={6}
+              placeholder="Paste OSINT, transaction patterns, news headlines, account narrative…"
+              className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1 font-mono"
+            />
+          </Field>
+          <div className="flex gap-2 items-center">
+            <button
+              type="button"
+              onClick={run}
+              disabled={running}
+              className="px-4 py-2 bg-brand text-bg-0 rounded text-12 font-semibold uppercase tracking-wide-3 disabled:opacity-50"
+            >
+              {running ? "Reasoning…" : "Fire the brain"}
+            </button>
+            {error && <span className="text-11 text-red">{error}</span>}
+          </div>
+        </div>
+
+        {/* Output */}
+        <div className="p-4 bg-bg-1/40 max-h-[720px] overflow-auto">
+          {!result && !running && (
+            <div className="text-11 text-ink-3 italic">
+              Pick a preset above or fill in a subject. The full reasoning chain — watchlist hits, jurisdiction profile, redlines fired, doctrines in scope, typology fingerprints, meta-cognition primitives, composite score and disposition — will render here.
+            </div>
+          )}
+          {running && <div className="text-12 text-ink-2 font-mono">Composing reasoning chain…</div>}
+          {result && <BrainResult r={result} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-9 uppercase tracking-wide-3 text-ink-3 block mb-1">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const KIND_TONE: Record<string, string> = {
+  redline: "bg-red text-bg-0",
+  regime: "bg-amber-100 text-amber-900",
+  doctrine: "bg-violet-dim text-violet",
+  typology: "bg-red-dim text-red",
+  "meta-cognition": "bg-blue-100 text-blue-900",
+  jurisdiction: "bg-bg-2 text-ink-1",
+};
+
+function BrainResult({ r }: { r: ReasonResponse }) {
+  const verdict = r.disposition?.code ?? "—";
+  const score = r.composite?.score ?? 0;
+  const severity = r.screen?.severity ?? "clear";
+  const sevTone =
+    severity === "critical"
+      ? "bg-red text-bg-0"
+      : severity === "high"
+        ? "bg-amber-200 text-amber-900"
+        : severity === "medium"
+          ? "bg-amber-100 text-amber-800"
+          : severity === "low"
+            ? "bg-bg-2 text-ink-1"
+            : "bg-green-100 text-green-800";
+
+  return (
+    <div className="space-y-4">
+      {/* Verdict header */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className={`px-2 py-0.5 rounded-full text-11 font-mono uppercase tracking-wide-3 ${sevTone}`}>
+          {severity}
+        </span>
+        <span className="font-mono text-22 font-semibold text-ink-0">{score}/100</span>
+        <span className="px-2 py-0.5 rounded text-11 font-mono uppercase tracking-wide-3 bg-ink-0 text-bg-0">
+          {verdict}
+        </span>
+        {r.disposition && <span className="text-11 text-ink-1">{r.disposition.label}</span>}
+      </div>
+      {r.disposition && (
+        <div className="text-11 text-ink-2 italic border-l-2 border-brand pl-2">
+          {r.disposition.rationale}
+        </div>
+      )}
+
+      {/* Composite breakdown */}
+      {r.composite?.breakdown && (
+        <ResultSection title="Composite breakdown">
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(r.composite.breakdown).map(([k, v]) => (
+              <span key={k} className="text-10 font-mono px-1.5 py-0.5 rounded bg-bg-2 text-ink-1">
+                {humanKey(k)}: <span className="text-brand">{v}</span>
+              </span>
+            ))}
+          </div>
+        </ResultSection>
+      )}
+
+      {/* Reasoning chain */}
+      {r.steps && r.steps.length > 0 && (
+        <ResultSection title="Reasoning chain">
+          <ol className="space-y-2 list-decimal pl-5">
+            {r.steps.map((s, i) => (
+              <li key={i} className="text-11 text-ink-1">
+                <span className="font-semibold text-ink-0">{s.step}.</span> {s.finding}
+                {s.cited.length > 0 && (
+                  <div className="mt-0.5 flex flex-wrap gap-1">
+                    {s.cited.map((c) => (
+                      <span key={c} className="text-9 font-mono px-1 rounded bg-bg-2 text-ink-2">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
+        </ResultSection>
+      )}
+
+      {/* Redlines */}
+      {r.redlines && r.redlines.fired.length > 0 && (
+        <ResultSection title={`Redlines fired (${r.redlines.fired.length})`}>
+          <div className="space-y-1.5">
+            {r.redlines.fired.map((rl) => (
+              <div key={rl.id} className="border-l-2 border-red pl-2 text-11">
+                <div className="font-semibold text-ink-0">{rl.label}</div>
+                <div className="text-10 font-mono text-ink-3">
+                  {rl.id} · action={rl.action} · {rl.regulatoryAnchor}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ResultSection>
+      )}
+
+      {/* Watchlist hits */}
+      {r.screen && r.screen.hits.length > 0 && (
+        <ResultSection title={`Watchlist hits (${r.screen.hits.length})`}>
+          <div className="space-y-1">
+            {r.screen.hits.map((h, i) => (
+              <div key={i} className="text-11 flex items-baseline gap-2">
+                <span className="font-mono text-10 px-1 rounded bg-red-dim text-red">
+                  {h.score}
+                </span>
+                <span className="text-ink-0">{h.candidateName}</span>
+                <span className="text-10 font-mono text-ink-3">
+                  {h.listId} · {h.listRef} · {h.method}
+                </span>
+              </div>
+            ))}
+          </div>
+        </ResultSection>
+      )}
+
+      {/* Typology fingerprints */}
+      {r.typologies && r.typologies.hits.length > 0 && (
+        <ResultSection title={`Typology fingerprints (${r.typologies.hits.length})`}>
+          <div className="space-y-1">
+            {r.typologies.hits.map((t) => (
+              <div key={t.id} className="text-11">
+                <span className="font-semibold text-ink-0">{t.name}</span>{" "}
+                <span className="text-10 font-mono text-ink-3">
+                  {t.family} · w={t.weight}
+                </span>
+                <div className="text-10 text-ink-2 italic">{t.snippet}</div>
+              </div>
+            ))}
+          </div>
+        </ResultSection>
+      )}
+
+      {/* Cited modules */}
+      {r.cited && r.cited.length > 0 && (
+        <ResultSection title={`Brain modules cited (${r.cited.length})`}>
+          <div className="flex flex-wrap gap-1.5">
+            {r.cited.map((c, i) => (
+              <span
+                key={i}
+                title={c.detail}
+                className={`text-10 font-mono px-1.5 py-0.5 rounded ${KIND_TONE[c.kind] ?? "bg-bg-2 text-ink-1"}`}
+              >
+                <span className="opacity-60">{c.kind}:</span> {c.label}
+              </span>
+            ))}
+          </div>
+        </ResultSection>
+      )}
+
+      {/* Variants */}
+      {r.variants && (
+        <ResultSection title="Name-variant index">
+          <div className="grid grid-cols-2 gap-2 text-10 font-mono">
+            <div>
+              <div className="text-ink-3 uppercase tracking-wide-3 text-9">Phonetic</div>
+              <div className="text-ink-1">
+                metaphone: {r.variants.doubleMetaphone.primary}
+                {r.variants.doubleMetaphone.secondary && `/${r.variants.doubleMetaphone.secondary}`}
+                {" · "}soundex: {r.variants.soundex}
+              </div>
+            </div>
+            <div>
+              <div className="text-ink-3 uppercase tracking-wide-3 text-9">Aliases</div>
+              <div className="text-ink-1">{r.variants.aliasExpansion.slice(0, 6).join(", ") || "—"}</div>
+            </div>
+            <div className="col-span-2">
+              <div className="text-ink-3 uppercase tracking-wide-3 text-9">Translit variants</div>
+              <div className="text-ink-1">{r.variants.nameVariants.slice(0, 8).join(" · ") || "—"}</div>
+            </div>
+          </div>
+        </ResultSection>
+      )}
+
+      {/* Weaponized prompt preview */}
+      {r.promptPreview && (
+        <ResultSection title="Weaponized system-prompt preview (catalogue summary fragment)">
+          <pre className="text-10 font-mono text-ink-1 bg-bg-1 border border-hair-2 rounded p-2 whitespace-pre-wrap max-h-56 overflow-auto">
+            {r.promptPreview}
+          </pre>
+        </ResultSection>
+      )}
+    </div>
+  );
+}
+
+function ResultSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-1.5">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function humanKey(k: string): string {
+  return k.replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase());
 }
 
 function BrainDashboard({
