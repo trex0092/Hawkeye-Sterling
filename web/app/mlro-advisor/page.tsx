@@ -464,7 +464,9 @@ export default function MlroAdvisorPage() {
         intro={
           <>
             Sonnet executor → Opus advisor · 132 directives · charter P1–P10.{" "}
-            <span className="text-ink-3">Standalone mode — no screening context required.</span>
+            <span className="text-ink-3">
+              50 MLRO topics · 250 common-sense rules · 40 FATF Recs · standalone mode.
+            </span>
           </>
         }
       />
@@ -991,23 +993,36 @@ function ClassifierResultPanels({
   const ip = analysis.intelligenceProfile;
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-3">
-      {ip && (
-        <div className="flex items-center gap-3">
-          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
-            Brain coverage
-          </div>
-          <div className="flex-1 h-2 bg-bg-2 rounded overflow-hidden max-w-xs">
+      {ip && (() => {
+        const score = ip.coverageScore;
+        const grade =
+          score >= 75 ? { label: "STRONG", cls: "text-brand", bar: "bg-brand" }
+          : score >= 45 ? { label: "MEDIUM", cls: "text-amber", bar: "bg-amber" }
+          : { label: "WEAK",   cls: "text-red",   bar: "bg-red" };
+        return (
+          <div className="flex items-center gap-3">
+            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+              Brain coverage
+            </div>
+            <div className="flex-1 h-2 bg-bg-2 rounded overflow-hidden max-w-xs">
+              <div
+                className={`h-2 ${grade.bar}`}
+                style={{ width: `${Math.min(100, score)}%` }}
+              />
+            </div>
+            <div className={`font-mono text-12 font-semibold ${grade.cls}`}>{score}/100</div>
             <div
-              className="h-2 bg-brand"
-              style={{ width: `${Math.min(100, ip.coverageScore)}%` }}
-            />
+              className={`text-10 font-mono font-semibold uppercase tracking-wide-3 ${grade.cls}`}
+              title="STRONG ≥75 = safe to act on; MEDIUM 45–74 = corroborate; WEAK <45 = escalate to Opus deep-reasoning."
+            >
+              {grade.label}
+            </div>
+            <div className="text-10 font-mono text-ink-3 ml-1">
+              ({ip.totalArtefacts} artefacts · {ip.doctrineCount} doc · {ip.fatfRecCount} FATF · {ip.playbookCount} pb · {ip.redFlagCount} rf · {ip.typologyCount} typ · {ip.jurisdictionCount} juris)
+            </div>
           </div>
-          <div className="font-mono text-12 text-brand font-semibold">{ip.coverageScore}/100</div>
-          <div className="text-10 font-mono text-ink-3 ml-1">
-            ({ip.totalArtefacts} artefacts · {ip.doctrineCount} doc · {ip.fatfRecCount} FATF · {ip.playbookCount} pb · {ip.redFlagCount} rf · {ip.typologyCount} typ · {ip.jurisdictionCount} juris)
-          </div>
-        </div>
-      )}
+        );
+      })()}
       {analysis.fatfRecDetails && analysis.fatfRecDetails.length > 0 && (
         <details className="group">
           <summary className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 cursor-pointer hover:text-ink-1 select-none">

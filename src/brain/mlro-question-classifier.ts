@@ -153,7 +153,25 @@ const KEYWORD_TOPIC_MAP: Record<MlroTopic, RegExp[]> = {
 
 // ── Topic → hint maps ─────────────────────────────────────────────────────
 
-const TOPIC_TO_DOCTRINES: Record<MlroTopic, DoctrineId[]> = {
+/** Every MlroTopic literal — single source of truth for audit + UI listings. */
+export const ALL_MLRO_TOPICS: readonly MlroTopic[] = [
+  'cdd', 'edd', 'ongoing_monitoring', 'source_of_funds', 'source_of_wealth',
+  'beneficial_ownership', 'pep_handling', 'pep_rca', 'sanctions_screening',
+  'adverse_media', 'str_sar_filing', 'recordkeeping', 'training', 'governance',
+  'four_eyes', 'correspondent_banking', 'vasp_crypto', 'dpms_precious_metals',
+  'trade_based_ml', 'structuring', 'npo_risk', 'shell_company',
+  'proliferation_financing', 'cahra_jurisdiction', 'risk_appetite',
+  'tipping_off_guard', 'regulatory_reporting', 'audit_examination',
+  'typology_research', 'general_compliance',
+  'ai_fraud', 'deepfake_kyc', 'fintech_baas', 'embedded_finance',
+  'ai_governance', 'esg_climate', 'modern_slavery', 'sectoral_sanctions',
+  'third_party_risk', 'outsourcing', 'gambling_betting', 'real_estate_aml',
+  'insurance_aml', 'tax_evasion', 'cyber_incident',
+  'data_protection_pdpl', 'wire_transfer_travel_rule', 'mvts_remittance',
+  'environmental_predicate', 'wildlife_predicate',
+] as const;
+
+export const TOPIC_TO_DOCTRINES: Record<MlroTopic, DoctrineId[]> = {
   cdd: ['fatf_rba', 'wolfsberg_faq', 'uae_fdl_10_2025', 'uae_fdl_20_2018'],
   edd: ['fatf_rba', 'wolfsberg_faq', 'uae_fdl_20_2018'],
   ongoing_monitoring: ['fatf_rba', 'wolfsberg_faq', 'iso_31000'],
@@ -207,7 +225,7 @@ const TOPIC_TO_DOCTRINES: Record<MlroTopic, DoctrineId[]> = {
   general_compliance: ['fatf_rba', 'wolfsberg_faq'],
 };
 
-const TOPIC_TO_PLAYBOOKS: Record<MlroTopic, string[]> = {
+export const TOPIC_TO_PLAYBOOKS: Record<MlroTopic, string[]> = {
   cdd: ['pb_cdd_natural_person', 'pb_cdd_legal_person'],
   edd: ['pb_edd_high_risk', 'pb_celebrity_hnwi'],
   ongoing_monitoring: ['pb_periodic_review', 'pb_risk_rating_refresh'],
@@ -261,7 +279,7 @@ const TOPIC_TO_PLAYBOOKS: Record<MlroTopic, string[]> = {
   general_compliance: [],
 };
 
-const TOPIC_TO_RED_FLAGS: Record<MlroTopic, string[]> = {
+export const TOPIC_TO_RED_FLAGS: Record<MlroTopic, string[]> = {
   cdd: ['rf_incomplete_kyc', 'rf_inconsistent_id', 'rf_address_mismatch'],
   edd: ['rf_high_risk_jurisdiction', 'rf_complex_ownership', 'rf_unusual_purpose'],
   ongoing_monitoring: ['rf_alert_fatigue', 'rf_pattern_change', 'rf_unexpected_velocity'],
@@ -315,7 +333,7 @@ const TOPIC_TO_RED_FLAGS: Record<MlroTopic, string[]> = {
   general_compliance: [],
 };
 
-const TOPIC_TO_FATF: Record<MlroTopic, string[]> = {
+export const TOPIC_TO_FATF: Record<MlroTopic, string[]> = {
   cdd: ['fatf_r10', 'fatf_r11'],
   edd: ['fatf_r10', 'fatf_r12', 'fatf_r19'],
   ongoing_monitoring: ['fatf_r10', 'fatf_r20'],
@@ -369,7 +387,7 @@ const TOPIC_TO_FATF: Record<MlroTopic, string[]> = {
   general_compliance: ['fatf_r1'],
 };
 
-const TOPIC_TO_TYPOLOGIES: Record<MlroTopic, TypologyId[]> = {
+export const TOPIC_TO_TYPOLOGIES: Record<MlroTopic, TypologyId[]> = {
   cdd: [],
   edd: ['pep'],
   ongoing_monitoring: [],

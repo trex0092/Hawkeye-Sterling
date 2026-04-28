@@ -16,6 +16,29 @@ import type { CaseRecord } from "@/lib/types";
 
 type QaState = "awaiting-review" | "approved" | "challenged";
 
+type ChallengeReason =
+  | "narrative_incomplete"
+  | "hits_undocumented"
+  | "tipping_off_concern"
+  | "goaml_format_issue"
+  | "incorrect_disposition"
+  | "missing_evidence"
+  | "other";
+
+const CHALLENGE_REASONS: { id: ChallengeReason; label: string }[] = [
+  { id: "narrative_incomplete", label: "Narrative incomplete / unclear" },
+  { id: "hits_undocumented", label: "Sanctions / PEP / adverse-media hits not documented" },
+  { id: "tipping_off_concern", label: "Tipping-off / disclosure concern in narrative" },
+  { id: "goaml_format_issue", label: "goAML format / schema issue" },
+  { id: "incorrect_disposition", label: "Disposition does not match evidence" },
+  { id: "missing_evidence", label: "Required evidence missing from case" },
+  { id: "other", label: "Other (see note)" },
+];
+
+/** SLA thresholds in hours for QA turnaround. ≤24h = green, ≤48h = amber, >48h = red. */
+const SLA_HOURS_AMBER = 24;
+const SLA_HOURS_BREACH = 48;
+
 const QA_STORAGE_KEY = "hawkeye.sar-qa-review.v1";
 
 interface QaReview {
@@ -24,6 +47,21 @@ interface QaReview {
   reviewer?: string;
   at?: string;
   note?: string;
+  challengeReason?: ChallengeReason;
+}
+
+function ageHours(filedIso?: string): number | null {
+  if (!filedIso) return null;
+  const t = new Date(filedIso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.max(0, (Date.now() - t) / 3600000);
+}
+
+function slaTone(hours: number | null): { label: string; cls: string } {
+  if (hours === null) return { label: "no filing timestamp", cls: "bg-bg-2 text-ink-3" };
+  if (hours <= SLA_HOURS_AMBER) return { label: `${hours.toFixed(1)}h · within SLA`, cls: "bg-green-dim text-green" };
+  if (hours <= SLA_HOURS_BREACH) return { label: `${hours.toFixed(1)}h · approaching SLA`, cls: "bg-amber-dim text-amber" };
+  return { label: `${hours.toFixed(1)}h · SLA BREACHED`, cls: "bg-red-dim text-red font-semibold" };
 }
 
 function loadReviews(): Record<string, QaReview> {
@@ -50,6 +88,7 @@ export default function SarQaPage() {
   const [role, setRole] = useState<OperatorRole>("analyst");
   const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
+  const [reasonDraft, setReasonDraft] = useState<Record<string, ChallengeReason>>({});
 
   useEffect(() => {
     setCases(loadCases().filter((c) => c.status === "reported"));
@@ -59,12 +98,14 @@ export default function SarQaPage() {
 
   const stamp = (caseId: string, state: QaState) => {
     const note = noteDraft[caseId] ?? "";
+    const reason = reasonDraft[caseId];
     const entry: QaReview = {
       caseId,
       state,
       reviewer: "current-mlro",
       at: new Date().toISOString(),
       ...(note ? { note } : {}),
+      ...(state === "challenged" && reason ? { challengeReason: reason } : {}),
     };
     const next = { ...reviews, [caseId]: entry };
     saveReviews(next);
@@ -103,6 +144,8 @@ export default function SarQaPage() {
           ) : (
             cases.map((c) => {
               const review = reviews[c.id];
+              const filedAt = c.reported ?? c.timeline?.[0]?.timestamp;
+              const sla = slaTone(review ? null : ageHours(filedAt));
               return (
                 <div
                   key={c.id}
@@ -113,6 +156,14 @@ export default function SarQaPage() {
                       {c.subject}
                     </h3>
                     <div className="flex items-center gap-2">
+                      {!review && (
+                        <span
+                          className={`text-10 font-mono px-2 py-0.5 rounded uppercase tracking-wide-3 ${sla.cls}`}
+                          title="QA SLA: ≤24h green · ≤48h amber · >48h breach"
+                        >
+                          {sla.label}
+                        </span>
+                      )}
                       <span className="font-mono text-10 text-ink-3">{c.id}</span>
                       <RowActions
                         label={`SAR review ${c.id}`}
@@ -154,12 +205,30 @@ export default function SarQaPage() {
                     </div>
                   ) : (
                     <>
+                      <label className="block text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+                        Challenge reason (only used if challenging)
+                      </label>
+                      <select
+                        value={reasonDraft[c.id] ?? ""}
+                        onChange={(e) =>
+                          setReasonDraft({
+                            ...reasonDraft,
+                            [c.id]: e.target.value as ChallengeReason,
+                          })
+                        }
+                        className="w-full text-11 px-3 py-2 rounded border border-hair-2 bg-bg-panel text-ink-0 mb-2"
+                      >
+                        <option value="">— select reason —</option>
+                        {CHALLENGE_REASONS.map((r) => (
+                          <option key={r.id} value={r.id}>{r.label}</option>
+                        ))}
+                      </select>
                       <textarea
                         value={noteDraft[c.id] ?? ""}
                         onChange={(e) =>
                           setNoteDraft({ ...noteDraft, [c.id]: e.target.value })
                         }
-                        placeholder="Peer-review note (optional)"
+                        placeholder="Peer-review note (optional but recommended for challenges)"
                         rows={2}
                         className="w-full text-11 px-3 py-2 rounded border border-hair-2 bg-bg-panel text-ink-0 mb-2"
                       />
@@ -174,8 +243,9 @@ export default function SarQaPage() {
                         </button>
                         <button
                           type="button"
-                          disabled={role !== "mlro"}
+                          disabled={role !== "mlro" || !reasonDraft[c.id]}
                           onClick={() => { stamp(c.id, "challenged"); setEditingCaseId(null); }}
+                          title={!reasonDraft[c.id] ? "Pick a challenge reason first" : "Challenge filing"}
                           className="text-11 font-semibold px-3 py-1.5 rounded bg-red-dim text-red hover:bg-red hover:text-white disabled:opacity-40"
                         >
                           Challenge
@@ -186,6 +256,11 @@ export default function SarQaPage() {
                         )}
                       </div>
                     </>
+                  )}
+                  {review?.challengeReason && (
+                    <div className="mt-2 text-11 text-red font-mono uppercase tracking-wide-3">
+                      Reason: {CHALLENGE_REASONS.find((r) => r.id === review.challengeReason)?.label ?? review.challengeReason}
+                    </div>
                   )}
                   {review?.note && (
                     <div className="mt-2 text-11 text-ink-2 italic">
