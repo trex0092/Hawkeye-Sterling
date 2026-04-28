@@ -26,6 +26,7 @@ import {
   buildCaseRecord,
   deleteCase,
   loadCases,
+  saveCases,
 } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import {
@@ -140,6 +141,8 @@ export default function StrCasesPage() {
   // stay in sync. Previously this list was session-only state — a page
   // reload erased every filing, and the /cases module never saw them.
   const [cases, setCases] = useState<CaseRow[]>([]);
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
+  const [editCaseDraft, setEditCaseDraft] = useState({ title: "", subject: "", status: "" });
   useEffect(() => {
     if (!canPerform(role, "str_read")) return;
     setCases(
@@ -524,6 +527,40 @@ export default function StrCasesPage() {
                 </thead>
                 <tbody>
                   {cases.map((c) => (
+                    editingCaseId === c.id ? (
+                      <tr key={c.id} className="border-b border-hair last:border-0 bg-bg-1">
+                        <td colSpan={7} className="px-3 py-2">
+                          <div className="grid grid-cols-3 gap-2 mb-1.5">
+                            <div>
+                              <label className="block text-10 text-ink-3 mb-0.5">Title / Case name</label>
+                              <input value={editCaseDraft.title} onChange={(e) => setEditCaseDraft((d) => ({ ...d, title: e.target.value }))}
+                                className="w-full text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" />
+                            </div>
+                            <div>
+                              <label className="block text-10 text-ink-3 mb-0.5">Subject</label>
+                              <input value={editCaseDraft.subject} onChange={(e) => setEditCaseDraft((d) => ({ ...d, subject: e.target.value }))}
+                                className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                            </div>
+                            <div>
+                              <label className="block text-10 text-ink-3 mb-0.5">Status</label>
+                              <input value={editCaseDraft.status} onChange={(e) => setEditCaseDraft((d) => ({ ...d, status: e.target.value }))}
+                                className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => {
+                              // Update case in case-store
+                              const allCases = loadCases();
+                              const updated = allCases.map((x) => x.id === c.id ? { ...x, subject: editCaseDraft.subject || x.subject, statusLabel: editCaseDraft.status || x.statusLabel } : x);
+                              saveCases(updated);
+                              setCases((prev) => prev.map((x) => x.id === c.id ? { ...x, title: editCaseDraft.title || x.title, subject: editCaseDraft.subject || x.subject, status: editCaseDraft.status || x.status } : x));
+                              setEditingCaseId(null);
+                            }} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                            <button type="button" onClick={() => setEditingCaseId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
                     <tr
                       key={c.id}
                       className="border-b border-hair last:border-0 hover:bg-bg-1"
@@ -543,11 +580,6 @@ export default function StrCasesPage() {
                       </td>
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
                         {(() => {
-                          // case-store keeps `opened` as a pre-formatted
-                          // UK date string ("27/04/2026") which Date() can't
-                          // parse reliably. Show the raw string when that's
-                          // what we have; only call toLocaleString when the
-                          // value actually parses.
                           const v = c.openedAt;
                           if (!v) return "—";
                           const d = new Date(v);
@@ -558,9 +590,8 @@ export default function StrCasesPage() {
                         <RowActions
                           label={`case ${c.id}`}
                           onEdit={() => {
-                            // Edit re-opens the case in the form above
-                            // by clearing the current draft and scrolling up.
-                            window.scrollTo({ top: 0, behavior: "smooth" });
+                            setEditingCaseId(c.id);
+                            setEditCaseDraft({ title: c.title, subject: c.subject, status: c.status });
                           }}
                           onDelete={() => {
                             deleteCase(c.id);
@@ -570,6 +601,7 @@ export default function StrCasesPage() {
                         />
                       </td>
                     </tr>
+                    )
                   ))}
                 </tbody>
               </table>

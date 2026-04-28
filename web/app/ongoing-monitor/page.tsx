@@ -184,6 +184,8 @@ export default function OngoingMonitorPage() {
   const [draft, setDraft] = useState(BLANK);
   const [screening, setScreening] = useState<Record<string, boolean>>({});
   const [lastResults, setLastResults] = useState<Record<string, ScreenResult>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{ name: string; caseId: string; tier: MonitoredSubject["tier"]; cadence: Cadence; enrolledBy: string; notes: string }>(BLANK);
 
   // Enrichment state
   const [enrichName, setEnrichName] = useState("");
@@ -229,6 +231,30 @@ export default function OngoingMonitorPage() {
   const set = (k: keyof typeof BLANK) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setDraft((d) => ({ ...d, [k]: e.target.value }));
+
+  const setE = (k: keyof typeof BLANK) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setEditDraft((d) => ({ ...d, [k]: e.target.value }));
+
+  const startEdit = (s: MonitoredSubject) => {
+    setEditingId(s.id);
+    setEditDraft({ name: s.name, caseId: s.caseId, tier: s.tier, cadence: s.cadence, enrolledBy: s.enrolledBy, notes: s.notes });
+  };
+
+  const saveSubjectEdit = (id: string) => {
+    const next = subjects.map((s) => s.id !== id ? s : {
+      ...s,
+      name: editDraft.name || s.name,
+      caseId: editDraft.caseId,
+      tier: editDraft.tier,
+      cadence: editDraft.cadence,
+      enrolledBy: editDraft.enrolledBy,
+      notes: editDraft.notes,
+    });
+    save(next);
+    setSubjects(next);
+    setEditingId(null);
+  };
 
   const add = async () => {
     if (!draft.name) return;
@@ -391,6 +417,32 @@ export default function OngoingMonitorPage() {
                     No subjects enrolled. Use the form above to add subjects.
                   </td></tr>
                 ) : subjects.map((s, i) => (
+                  editingId === s.id ? (
+                    <tr key={s.id} className={i < subjects.length - 1 ? "border-b border-hair" : ""}>
+                      <td colSpan={9} className="px-3 py-2">
+                        <div className="grid grid-cols-5 gap-2 mb-1.5">
+                          <input value={editDraft.name} onChange={setE("name")} placeholder="Subject name" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0 col-span-2" />
+                          <input value={editDraft.caseId} onChange={setE("caseId")} placeholder="Case ID" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                          <select value={editDraft.tier} onChange={setE("tier")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                            <option value="high">High risk</option>
+                            <option value="medium">Medium risk</option>
+                            <option value="standard">Standard</option>
+                          </select>
+                          <select value={editDraft.cadence} onChange={setE("cadence")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                            {(Object.entries(CADENCE_LABEL) as [Cadence, string][]).map(([k, v]) => (
+                              <option key={k} value={k}>{v}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <input value={editDraft.notes} onChange={setE("notes")} placeholder="Notes" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-56" />
+                          <input value={editDraft.enrolledBy} onChange={setE("enrolledBy")} placeholder="Enrolled by" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-32" />
+                          <button type="button" onClick={() => saveSubjectEdit(s.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
                   <tr key={s.id} className={i < subjects.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2 text-ink-0 font-medium">
                       {s.name}
@@ -446,12 +498,13 @@ export default function OngoingMonitorPage() {
                     <td className="px-2 py-2 text-right">
                       <RowActions
                         label={`subject ${s.id}`}
-                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        onEdit={() => startEdit(s)}
                         onDelete={() => remove(s.id)}
                         confirmDelete={false}
                       />
                     </td>
                   </tr>
+                  )
                 ))}
               </tbody>
             </table>

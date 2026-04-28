@@ -121,6 +121,8 @@ export default function EmployeesPage() {
   const [adding, setAdding] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(BLANK_FORM);
 
   useEffect(() => {
     setEmployees(load());
@@ -171,6 +173,50 @@ export default function EmployeesPage() {
     setEmployees(next);
     if (expandedId === id) setExpandedId(null);
   };
+
+  const startEmpEdit = (emp: Employee) => {
+    setEditingId(emp.id);
+    setExpandedId(emp.id);
+    setEditForm({
+      name: emp.name, nationality: emp.nationality, emiratesId: emp.emiratesId,
+      emiratesIdExpiry: fmtDMY(emp.emiratesIdExpiry), dateOfBirth: fmtDMY(emp.dateOfBirth),
+      passport: emp.passport, passportExpiry: fmtDMY(emp.passportExpiry),
+      designation: emp.designation, dateOfJoining: fmtDMY(emp.dateOfJoining),
+      email: emp.email, businessUnits: emp.businessUnits,
+    });
+  };
+
+  const saveEmpEdit = (id: string) => {
+    const next = employees.map((e) => e.id !== id ? e : {
+      ...e,
+      name: editForm.name || e.name,
+      nationality: editForm.nationality,
+      emiratesId: editForm.emiratesId,
+      emiratesIdExpiry: coerce(editForm.emiratesIdExpiry),
+      dateOfBirth: coerce(editForm.dateOfBirth),
+      passport: editForm.passport,
+      passportExpiry: coerce(editForm.passportExpiry),
+      designation: editForm.designation,
+      dateOfJoining: coerce(editForm.dateOfJoining),
+      email: editForm.email || e.email,
+      businessUnits: editForm.businessUnits,
+    });
+    save(next);
+    setEmployees(next);
+    setEditingId(null);
+  };
+
+  const toggleEditUnit = (u: BusinessUnit) =>
+    setEditForm((f) => ({
+      ...f,
+      businessUnits: f.businessUnits.includes(u)
+        ? f.businessUnits.filter((x) => x !== u)
+        : [...f.businessUnits, u],
+    }));
+
+  const setEmp = <K extends keyof typeof BLANK_FORM>(k: K) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setEditForm((f) => ({ ...f, [k]: e.target.value }));
 
   const filtered = employees.filter(
     (e) =>
@@ -410,13 +456,52 @@ export default function EmployeesPage() {
                         <td className="px-2 py-2 text-right">
                           <RowActions
                             label={`employee ${emp.name ?? emp.id}`}
-                            onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                            onEdit={() => startEmpEdit(emp)}
                             onDelete={() => remove(emp.id)}
                             confirmDelete={false}
                           />
                         </td>
                       </tr>
-                      {expanded && (
+                      {expanded && editingId === emp.id && (
+                        <tr className={i < filtered.length - 1 ? "border-b border-hair" : ""}>
+                          <td colSpan={11} className="px-4 py-3 bg-bg-1">
+                            <div className="grid grid-cols-3 gap-2 mb-2">
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Name</label><input value={editForm.name} onChange={setEmp("name")} className="w-full text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" /></div>
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Nationality</label><input value={editForm.nationality} onChange={setEmp("nationality")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Designation</label><input value={editForm.designation} onChange={setEmp("designation")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 mb-2">
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Emirates ID</label><input value={editForm.emiratesId} onChange={setEmp("emiratesId")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
+                              <div><label className="block text-10 text-ink-3 mb-0.5">EID Expiry (dd/mm/yyyy)</label><input value={editForm.emiratesIdExpiry} onChange={setEmp("emiratesIdExpiry")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Date of Birth (dd/mm/yyyy)</label><input value={editForm.dateOfBirth} onChange={setEmp("dateOfBirth")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 mb-2">
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Passport</label><input value={editForm.passport} onChange={setEmp("passport")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
+                              <div><label className="block text-10 text-ink-3 mb-0.5">PP Expiry (dd/mm/yyyy)</label><input value={editForm.passportExpiry} onChange={setEmp("passportExpiry")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
+                              <div><label className="block text-10 text-ink-3 mb-0.5">Email</label><input value={editForm.email} onChange={setEmp("email")} type="email" className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
+                            </div>
+                            <div className="mb-2">
+                              <div className="text-10 text-ink-3 mb-1">Business Units</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {BUSINESS_UNITS.map((u) => {
+                                  const sel = editForm.businessUnits.includes(u);
+                                  return (
+                                    <button key={u} type="button" onClick={() => toggleEditUnit(u)}
+                                      className={`text-11 px-2.5 py-0.5 rounded-full border transition-colors ${sel ? "bg-brand-dim border-brand text-brand-deep" : "border-hair-2 text-ink-2 hover:border-hair-0"}`}>
+                                      {sel && "✓ "}{u}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0">Save</button>
+                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1.5 rounded text-ink-2">Cancel</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {expanded && editingId !== emp.id && (
                         <tr className={i < filtered.length - 1 ? "border-b border-hair" : ""}>
                           <td colSpan={11} className="px-4 py-3 bg-bg-1">
                             <div className="grid grid-cols-4 gap-4 text-11">

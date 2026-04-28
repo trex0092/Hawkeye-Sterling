@@ -203,10 +203,37 @@ export default function TrainingPage() {
   const [activeTab, setActiveTab] = useState<Tab>("log");
   const [rows, setRows] = useState<TrainingRow[]>([]);
   const [draft, setDraft] = useState(BLANK);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState(BLANK);
 
   useEffect(() => {
     setRows(load());
   }, []);
+
+  const startEdit = (r: TrainingRow) => {
+    setEditingId(r.id);
+    setEditDraft({ name: r.name, course: r.course, provider: r.provider, completed: fmtDMY(r.completed), durationHrs: r.durationHrs, delivery: r.delivery });
+  };
+
+  const saveRowEdit = (id: string) => {
+    const completedIso = parseDMY(editDraft.completed);
+    const next = rows.map((r) => r.id !== id ? r : {
+      ...r,
+      name: editDraft.name || r.name,
+      course: editDraft.course || r.course,
+      provider: editDraft.provider,
+      completed: completedIso || r.completed,
+      durationHrs: editDraft.durationHrs,
+      delivery: editDraft.delivery,
+      status: deriveStatus(completedIso || r.completed),
+    });
+    save(next);
+    setRows(next);
+    setEditingId(null);
+  };
+
+  const setEdit = (k: keyof typeof BLANK) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setEditDraft((d) => ({ ...d, [k]: e.target.value }));
 
   const add = () => {
     if (!draft.name || !draft.course) return;
@@ -291,6 +318,24 @@ export default function TrainingPage() {
                 </thead>
                 <tbody>
                   {rows.map((r, i) => (
+                    editingId === r.id ? (
+                      <tr key={r.id} className={i < rows.length - 1 ? "border-b border-hair" : ""}>
+                        <td colSpan={8} className="px-3 py-2">
+                          <div className="grid grid-cols-6 gap-2 mb-1.5">
+                            <input value={editDraft.name} onChange={setEdit("name")} placeholder="Name" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0 col-span-1" />
+                            <input value={editDraft.course} onChange={setEdit("course")} placeholder="Course" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 col-span-2" />
+                            <input value={editDraft.provider} onChange={setEdit("provider")} placeholder="Provider" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                            <input value={editDraft.completed} onChange={setEdit("completed")} placeholder="dd/mm/yyyy" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                            <input value={editDraft.durationHrs} onChange={setEdit("durationHrs")} type="number" min="0" step="0.5" placeholder="Hrs" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <input value={editDraft.delivery} onChange={setEdit("delivery")} placeholder="Delivery method" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-40" />
+                            <button type="button" onClick={() => saveRowEdit(r.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                            <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
                     <tr
                       key={r.id}
                       className={i < rows.length - 1 ? "border-b border-hair" : ""}
@@ -309,12 +354,13 @@ export default function TrainingPage() {
                       <td className="px-2 py-2 text-right">
                         <RowActions
                           label={`training row ${r.id}`}
-                          onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                          onEdit={() => startEdit(r)}
                           onDelete={() => remove(r.id)}
                           confirmDelete={false}
                         />
                       </td>
                     </tr>
+                    )
                   ))}
                 </tbody>
               </table>

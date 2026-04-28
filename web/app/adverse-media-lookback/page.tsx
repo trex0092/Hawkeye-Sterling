@@ -169,12 +169,18 @@ export default function AdverseMediaLookbackPage() {
   const [entries, setEntries] = useState<AmEntry[]>([]);
   const [draft, setDraft] = useState(BLANK);
   const [filterSubject, setFilterSubject] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState(BLANK);
 
   useEffect(() => { setEntries(load()); }, []);
 
   const set = (k: keyof typeof BLANK) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setDraft((d) => ({ ...d, [k]: e.target.value }));
+
+  const setE = (k: keyof typeof BLANK) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setEditDraft((d) => ({ ...d, [k]: e.target.value }));
 
   const add = () => {
     if (!draft.subject || !draft.headline || !draft.articleDate) return;
@@ -193,6 +199,18 @@ export default function AdverseMediaLookbackPage() {
     const next = entries.filter((e) => e.id !== id);
     save(next);
     setEntries(next);
+  };
+
+  const startEdit = (e: AmEntry) => {
+    setEditingId(e.id);
+    setEditDraft({ subject: e.subject, source: e.source, url: e.url, articleDate: e.articleDate, category: e.category, severity: e.severity, headline: e.headline, loggedBy: e.loggedBy });
+  };
+
+  const saveEntryEdit = (id: string) => {
+    const next = entries.map((e) => e.id !== id ? e : { ...e, ...editDraft });
+    save(next);
+    setEntries(next);
+    setEditingId(null);
   };
 
   const visible = filterSubject
@@ -327,6 +345,32 @@ export default function AdverseMediaLookbackPage() {
               </thead>
               <tbody>
                 {visible.map((e, i) => (
+                  editingId === e.id ? (
+                    <tr key={e.id} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
+                      <td colSpan={8} className="px-3 py-2">
+                        <div className="grid grid-cols-4 gap-2 mb-1.5">
+                          <input value={editDraft.subject} onChange={setE("subject")} placeholder="Subject" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" />
+                          <input value={editDraft.headline} onChange={setE("headline")} placeholder="Headline" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 col-span-2" />
+                          <input value={editDraft.source} onChange={setE("source")} placeholder="Source" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 mb-1.5">
+                          <input value={editDraft.articleDate} onChange={setE("articleDate")} placeholder="dd/mm/yyyy" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                          <select value={editDraft.category} onChange={setE("category")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                            {Object.entries(CAT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                          </select>
+                          <select value={editDraft.severity} onChange={setE("severity")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                            {(["critical", "high", "medium", "low", "clear"] as AmSeverity[]).map((s) => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                          <input value={editDraft.loggedBy} onChange={setE("loggedBy")} placeholder="Logged by" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <input value={editDraft.url} onChange={setE("url")} placeholder="URL (optional)" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-64" />
+                          <button type="button" onClick={() => saveEntryEdit(e.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
                   <tr key={e.id} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2 text-ink-0 font-medium">{e.subject}</td>
                     <td className="px-3 py-2 font-mono text-10 text-ink-2">{e.articleDate}</td>
@@ -342,12 +386,13 @@ export default function AdverseMediaLookbackPage() {
                     <td className="px-2 py-2 text-right">
                       <RowActions
                         label={`event ${e.id}`}
-                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        onEdit={() => startEdit(e)}
                         onDelete={() => remove(e.id)}
                         confirmDelete={false}
                       />
                     </td>
                   </tr>
+                  )
                 ))}
               </tbody>
             </table>

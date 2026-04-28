@@ -212,10 +212,16 @@ const DECL_TONE: Record<DeclarationStatus, string> = {
 type Tab = "list-updates" | "matches" | "declarations";
 
 const EOCN_DELETED_KEY = "hawkeye.eocn.matches.deleted.v1";
+const EOCN_CUSTOM_KEY = "hawkeye.eocn.matches.custom.v1";
+
+type MatchEditDraft = Pick<EocnMatch, "disposition" | "notes" | "goAmlRef" | "mlroSignedOff">;
 
 export default function EocnPage() {
   const [tab, setTab] = useState<Tab>("list-updates");
   const [deletedMatchIds, setDeletedMatchIds] = useState<string[]>([]);
+  const [customMatches, setCustomMatches] = useState<EocnMatch[]>([]);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
+  const [editMatchDraft, setEditMatchDraft] = useState<MatchEditDraft>({ disposition: "under-review", notes: "", goAmlRef: "", mlroSignedOff: false });
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
@@ -232,20 +238,50 @@ export default function EocnPage() {
       const raw = localStorage.getItem(EOCN_DELETED_KEY);
       if (raw) setDeletedMatchIds(JSON.parse(raw) as string[]);
     } catch { /* ignore */ }
+    try {
+      const raw2 = localStorage.getItem(EOCN_CUSTOM_KEY);
+      if (raw2) setCustomMatches(JSON.parse(raw2) as EocnMatch[]);
+    } catch { /* ignore */ }
   }, []);
 
   const deleteMatch = (id: string) => {
     const next = [...deletedMatchIds, id];
     setDeletedMatchIds(next);
     try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    // also remove from custom if present
+    const nextCustom = customMatches.filter((m) => m.id !== id);
+    setCustomMatches(nextCustom);
+    try { localStorage.setItem(EOCN_CUSTOM_KEY, JSON.stringify(nextCustom)); } catch { /* ignore */ }
   };
 
   const restoreMatches = () => {
     setDeletedMatchIds([]);
+    setCustomMatches([]);
     try { localStorage.removeItem(EOCN_DELETED_KEY); } catch { /* ignore */ }
+    try { localStorage.removeItem(EOCN_CUSTOM_KEY); } catch { /* ignore */ }
   };
 
-  const liveMatches = useMemo(() => MATCHES.filter((m) => !deletedMatchIds.includes(m.id)), [deletedMatchIds]);
+  const startEditMatch = (m: EocnMatch) => {
+    setEditingMatchId(m.id);
+    setEditMatchDraft({ disposition: m.disposition, notes: m.notes, goAmlRef: m.goAmlRef ?? "", mlroSignedOff: m.mlroSignedOff });
+  };
+
+  const saveMatchEdit = (m: EocnMatch) => {
+    const patched: EocnMatch = { ...m, ...editMatchDraft };
+    // remove original from seed (via deletedIds) and upsert in custom
+    const newDeleted = deletedMatchIds.includes(m.id) ? deletedMatchIds : [...deletedMatchIds, m.id];
+    setDeletedMatchIds(newDeleted);
+    try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(newDeleted)); } catch { /* ignore */ }
+    const nextCustom = [...customMatches.filter((c) => c.id !== m.id), patched];
+    setCustomMatches(nextCustom);
+    try { localStorage.setItem(EOCN_CUSTOM_KEY, JSON.stringify(nextCustom)); } catch { /* ignore */ }
+    setEditingMatchId(null);
+  };
+
+  const liveMatches = useMemo(
+    () => [...MATCHES.filter((m) => !deletedMatchIds.includes(m.id)), ...customMatches.filter((m) => !deletedMatchIds.includes(m.id))],
+    [deletedMatchIds, customMatches],
+  );
 
   const pendingScreening = LIST_UPDATES.filter((u) => u.screeningStatus === "pending").length;
   const openMatches = liveMatches.filter((m) => m.disposition === "under-review" || m.disposition === "escalated").length;
@@ -397,11 +433,47 @@ export default function EocnPage() {
               <div className="absolute top-2 right-2 z-10">
                 <RowActions
                   label={`match ${m.id}`}
-                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onEdit={() => startEditMatch(m)}
                   onDelete={() => deleteMatch(m.id)}
                   confirmDelete={false}
                 />
               </div>
+              {editingMatchId === m.id && (
+                <div className="mb-4 bg-bg-1 rounded-lg p-3 border border-brand/30">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Edit match</div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-0.5">Disposition</label>
+                      <select value={editMatchDraft.disposition} onChange={(e) => setEditMatchDraft((d) => ({ ...d, disposition: e.target.value as MatchDisposition }))}
+                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                        <option value="under-review">Under review</option>
+                        <option value="confirmed">Confirmed match</option>
+                        <option value="false-positive">False positive</option>
+                        <option value="escalated">Escalated</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-0.5">goAML Ref</label>
+                      <input value={editMatchDraft.goAmlRef} onChange={(e) => setEditMatchDraft((d) => ({ ...d, goAmlRef: e.target.value }))}
+                        placeholder="goAML-STR-..." className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" />
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-10 text-ink-3 mb-0.5">Notes</label>
+                    <textarea value={editMatchDraft.notes} onChange={(e) => setEditMatchDraft((d) => ({ ...d, notes: e.target.value }))} rows={2}
+                      className="w-full text-12 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-12 text-ink-1 cursor-pointer">
+                      <input type="checkbox" className="accent-brand" checked={editMatchDraft.mlroSignedOff}
+                        onChange={(e) => setEditMatchDraft((d) => ({ ...d, mlroSignedOff: e.target.checked }))} />
+                      MLRO signed off
+                    </label>
+                    <button type="button" onClick={() => saveMatchEdit(m)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                    <button type="button" onClick={() => setEditingMatchId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                  </div>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-3 mb-3 pr-6">
                 <div>
                   <div className="font-mono text-10 text-ink-3">{m.id}</div>

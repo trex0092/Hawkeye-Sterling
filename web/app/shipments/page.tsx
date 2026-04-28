@@ -656,6 +656,8 @@ export default function ShipmentsPage() {
   const [customRows, setCustomRows] = useState<Consignment[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [releasedIds, setReleasedIds] = useState<string[]>([]);
+  const [editingShipmentId, setEditingShipmentId] = useState<string | null>(null);
+  const [editShipmentDraft, setEditShipmentDraft] = useState<{ status: ShipmentStatus; notes: string; awb: string; eta: string; transitProgress: string }>({ status: "in-flight", notes: "", awb: "", eta: "", transitProgress: "" });
 
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
@@ -698,6 +700,33 @@ export default function ShipmentsPage() {
       saveDeletedIds(next);
       return next;
     });
+  };
+
+  const startEditShipment = (c: Consignment) => {
+    setEditingShipmentId(c.id);
+    setEditShipmentDraft({ status: c.status, notes: "", awb: c.awb, eta: c.eta, transitProgress: String(c.transitProgress) });
+  };
+
+  const saveShipmentEdit = (c: Consignment) => {
+    const patched: Consignment = {
+      ...c,
+      status: editShipmentDraft.status,
+      awb: editShipmentDraft.awb || c.awb,
+      eta: editShipmentDraft.eta || c.eta,
+      transitProgress: parseInt(editShipmentDraft.transitProgress) || c.transitProgress,
+    };
+    // overlay: remove from seed via deletedIds, push patched to customRows
+    setDeletedIds((prev) => {
+      const next = prev.includes(c.id) ? prev : [...prev, c.id];
+      saveDeletedIds(next);
+      return next;
+    });
+    setCustomRows((prev) => {
+      const next = [...prev.filter((x) => x.id !== c.id), patched];
+      saveCustom(next);
+      return next;
+    });
+    setEditingShipmentId(null);
   };
 
   const onRestoreAll = () => {
@@ -818,11 +847,48 @@ export default function ShipmentsPage() {
               <div className="absolute top-2 right-2 z-10">
                 <RowActions
                   label={`consignment ${c.id}`}
-                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onEdit={() => startEditShipment(c)}
                   onDelete={() => onDelete(c.id)}
                   confirmDelete={false}
                 />
               </div>
+              {editingShipmentId === c.id && (
+                <div className="mb-3 bg-bg-1 rounded-lg p-3 border border-brand/30" onClick={(e) => e.stopPropagation()}>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-0.5">Status</label>
+                      <select value={editShipmentDraft.status} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, status: e.target.value as ShipmentStatus }))}
+                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                        <option value="in-flight">In flight</option>
+                        <option value="at-vault">At vault</option>
+                        <option value="awaiting-assay">Awaiting assay</option>
+                        <option value="held">Held</option>
+                        <option value="arrived">Arrived</option>
+                        <option value="delivered">Delivered</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-0.5">Transit %</label>
+                      <input type="number" min="0" max="100" value={editShipmentDraft.transitProgress} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, transitProgress: e.target.value }))}
+                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-0.5">AWB</label>
+                      <input value={editShipmentDraft.awb} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, awb: e.target.value }))}
+                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-0.5">ETA</label>
+                      <input value={editShipmentDraft.eta} onChange={(e) => setEditShipmentDraft((d) => ({ ...d, eta: e.target.value }))}
+                        className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); saveShipmentEdit(c); }} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setEditingShipmentId(null); }} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                  </div>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-3 mb-2 pr-7">
                 <div>
                   <span className="font-mono text-11 text-ink-3">{c.id}</span>

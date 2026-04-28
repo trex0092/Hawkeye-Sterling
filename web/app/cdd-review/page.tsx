@@ -124,6 +124,8 @@ export default function CddReviewPage() {
   const [manualRecords, setManualRecords] = useState<ReviewRecord[]>([]);
   const [caseRecords, setCaseRecords] = useState<ReviewRecord[]>([]);
   const [draft, setDraft] = useState(BLANK);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState(BLANK);
 
   useEffect(() => {
     setManualRecords(loadManual());
@@ -169,6 +171,27 @@ export default function CddReviewPage() {
     const next = manualRecords.filter((r) => r.id !== id);
     saveManual(next);
     setManualRecords(next);
+  };
+
+  const startEdit = (r: ReviewRecord) => {
+    setEditingId(r.id);
+    setEditDraft({ subject: r.subject, tier: r.tier, lastReview: r.lastReview, notes: r.notes });
+  };
+
+  const setE = (k: keyof typeof BLANK) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setEditDraft((d) => ({ ...d, [k]: e.target.value }));
+
+  const saveRecordEdit = (id: string) => {
+    const update = (r: ReviewRecord) => r.id === id ? { ...r, ...editDraft } : r;
+    if (id.startsWith("manual-")) {
+      const next = manualRecords.map(update);
+      saveManual(next);
+      setManualRecords(next);
+    } else {
+      setCaseRecords((prev) => prev.map(update));
+    }
+    setEditingId(null);
   };
 
   return (
@@ -227,6 +250,26 @@ export default function CddReviewPage() {
                   No subjects tracked yet. Cases auto-import when filed; add manual subjects above.
                 </td></tr>
               ) : sorted.map((r, i) => (
+                editingId === r.id ? (
+                  <tr key={r.id} className={i < sorted.length - 1 ? "border-b border-hair" : ""}>
+                    <td colSpan={7} className="px-3 py-2">
+                      <div className="grid grid-cols-4 gap-2 mb-1.5">
+                        <input value={editDraft.subject} onChange={setE("subject")} placeholder="Subject" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" />
+                        <select value={editDraft.tier} onChange={setE("tier")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
+                          <option value="high">High risk (3 months)</option>
+                          <option value="medium">Medium risk (6 months)</option>
+                          <option value="standard">Low risk (12 months)</option>
+                        </select>
+                        <input value={editDraft.lastReview} onChange={setE("lastReview")} placeholder="Last review dd/mm/yyyy" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                        <input value={editDraft.notes} onChange={setE("notes")} placeholder="Notes" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => saveRecordEdit(r.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                        <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
                 <tr key={r.id} className={i < sorted.length - 1 ? "border-b border-hair" : ""}>
                   <td className="px-3 py-2 text-ink-0 font-medium">{r.subject}</td>
                   <td className="px-3 py-2">
@@ -251,12 +294,13 @@ export default function CddReviewPage() {
                   <td className="px-2 py-2 text-right">
                     <RowActions
                       label={`review ${r.id}`}
-                      onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                      onEdit={() => startEdit(r)}
                       onDelete={() => remove(r.id)}
                       confirmDelete={false}
                     />
                   </td>
                 </tr>
+                )
               ))}
             </tbody>
           </table>

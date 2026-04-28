@@ -49,6 +49,7 @@ export default function SarQaPage() {
   const [reviews, setReviews] = useState<Record<string, QaReview>>({});
   const [role, setRole] = useState<OperatorRole>("analyst");
   const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
 
   useEffect(() => {
     setCases(loadCases().filter((c) => c.status === "reported"));
@@ -115,7 +116,10 @@ export default function SarQaPage() {
                       <span className="font-mono text-10 text-ink-3">{c.id}</span>
                       <RowActions
                         label={`SAR review ${c.id}`}
-                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        onEdit={() => {
+                          setEditingCaseId(c.id);
+                          setNoteDraft({ ...noteDraft, [c.id]: reviews[c.id]?.note ?? "" });
+                        }}
                         onDelete={() => {
                           deleteCase(c.id);
                           setCases((prev) => prev.filter((x) => x.id !== c.id));
@@ -130,7 +134,7 @@ export default function SarQaPage() {
                       state={{ status: "sent", taskUrl: c.asanaTaskUrl }}
                     />
                   )}
-                  {review ? (
+                  {review && editingCaseId !== c.id ? (
                     <div
                       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${
                         review.state === "approved"
@@ -163,7 +167,7 @@ export default function SarQaPage() {
                         <button
                           type="button"
                           disabled={role !== "mlro"}
-                          onClick={() => stamp(c.id, "approved")}
+                          onClick={() => { stamp(c.id, "approved"); setEditingCaseId(null); }}
                           className="text-11 font-semibold px-3 py-1.5 rounded bg-green text-white hover:opacity-90 disabled:opacity-40"
                         >
                           ✓ Approve
@@ -171,11 +175,15 @@ export default function SarQaPage() {
                         <button
                           type="button"
                           disabled={role !== "mlro"}
-                          onClick={() => stamp(c.id, "challenged")}
+                          onClick={() => { stamp(c.id, "challenged"); setEditingCaseId(null); }}
                           className="text-11 font-semibold px-3 py-1.5 rounded bg-red-dim text-red hover:bg-red hover:text-white disabled:opacity-40"
                         >
                           Challenge
                         </button>
+                        {editingCaseId === c.id && (
+                          <button type="button" onClick={() => setEditingCaseId(null)}
+                            className="text-11 font-medium px-3 py-1.5 rounded text-ink-2">Cancel</button>
+                        )}
                       </div>
                     </>
                   )}
