@@ -230,7 +230,23 @@ function AuditStrip() {
   const load = () => {
     setReloading(true);
     fetch("/api/weaponized-brain/audit")
-      .then((r) => r.json() as Promise<AuditResponse>)
+      .then(async (r) => {
+        // Defensive parse — the audit route is anon-allowed but if a future
+        // gate change ever returns an empty body or HTML error page, surface
+        // the status instead of throwing "Unexpected end of JSON input".
+        const text = await r.text();
+        if (!text) {
+          return { ok: false, error: `HTTP ${r.status} (empty body)` } as AuditResponse;
+        }
+        try {
+          return JSON.parse(text) as AuditResponse;
+        } catch {
+          return {
+            ok: false,
+            error: `HTTP ${r.status} (non-JSON: ${text.slice(0, 120)})`,
+          } as AuditResponse;
+        }
+      })
       .then(setData)
       .catch((e: unknown) =>
         setData({ ok: false, error: e instanceof Error ? e.message : String(e) }),

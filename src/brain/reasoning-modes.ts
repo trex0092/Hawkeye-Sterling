@@ -13,6 +13,7 @@ import { WAVE4_MODES, WAVE4_OVERRIDES } from './reasoning-modes-wave4.js';
 import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
 import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
 import { WAVE11_MODES, WAVE11_OVERRIDES } from './reasoning-modes-wave11.js';
+import { WAVE12_MODES, WAVE12_OVERRIDES } from './reasoning-modes-wave12.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -357,6 +358,19 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]!;
   const w11override = WAVE11_OVERRIDES.find((o) => o.id === r.id);
   if (w11override) REASONING_MODES[i] = w11override;
+}
+
+// Merge Wave 12: 17 template-fill reasoning modes. Closes the gap between
+// the question-template authors and the registry so auditBrain reports zero
+// dangling template→mode references.
+const existingIdsW12 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE12_MODES) {
+  if (!existingIdsW12.has(m.id)) REASONING_MODES.push(m);
+}
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w12override = WAVE12_OVERRIDES.find((o) => o.id === r.id);
+  if (w12override) REASONING_MODES[i] = w12override;
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(

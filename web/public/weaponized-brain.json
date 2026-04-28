@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-28T07:35:36+00:00",
+  "generatedAt": "2026-04-28T12:00:13+04:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-28T07:35:36+00:00",
+    "generatedAt": "2026-04-28T12:00:13+04:00",
     "charter": {
       "prohibitions": [
         {
@@ -252,30 +252,99 @@
             "rigorous derivation"
           ],
           "modeCount": 17
+        },
+        {
+          "id": "synthesis",
+          "displayName": "Synthesis",
+          "describes": "Cross-modal fusion — combine heterogeneous evidence streams into a single coherent verdict.",
+          "synonyms": [
+            "fusion",
+            "integration",
+            "cross-modal reasoning",
+            "evidence weaving",
+            "multi-source synthesis",
+            "holistic reasoning",
+            "composite verdicting"
+          ],
+          "modeCount": 9
+        },
+        {
+          "id": "anticipation",
+          "displayName": "Anticipation",
+          "describes": "Forward-looking reasoning — project network evolution, adversary moves, and recalibration triggers.",
+          "synonyms": [
+            "foresight",
+            "forecasting",
+            "predictive reasoning",
+            "horizon scanning",
+            "pre-mortem",
+            "scenario projection",
+            "red-team simulation"
+          ],
+          "modeCount": 4
+        },
+        {
+          "id": "geopolitical_awareness",
+          "displayName": "Geopolitical Awareness",
+          "describes": "Sanctions, state-sponsored typologies, conflict-zone exposure, and recalibration on regime shifts.",
+          "synonyms": [
+            "geopolitical reasoning",
+            "sanctions awareness",
+            "state-actor analysis",
+            "jurisdictional politics",
+            "conflict-zone exposure",
+            "regime watch"
+          ],
+          "modeCount": 4
+        },
+        {
+          "id": "forensic_accounting",
+          "displayName": "Forensic Accounting",
+          "describes": "Quantitative integrity tests on financial data — distributional law checks, journal-entry anomalies, and reconciliation.",
+          "synonyms": [
+            "forensic audit",
+            "investigative accounting",
+            "fraud examination",
+            "distributional analysis",
+            "ledger forensics"
+          ],
+          "modeCount": 1
+        },
+        {
+          "id": "quantum_intelligence",
+          "displayName": "Quantum Intelligence",
+          "describes": "Probabilistic belief propagation across superposed hypotheses — reason under irreducible uncertainty.",
+          "synonyms": [
+            "belief propagation",
+            "probabilistic graph reasoning",
+            "superposition reasoning",
+            "uncertainty propagation"
+          ],
+          "modeCount": 1
         }
       ],
       "reasoningModes": {
-        "total": 425,
+        "total": 442,
         "byCategory": {
           "logic": 21,
           "cognitive_science": 24,
           "decision_theory": 20,
-          "forensic": 37,
+          "forensic": 38,
           "compliance_framework": 31,
-          "legal_reasoning": 10,
+          "legal_reasoning": 13,
           "strategic": 15,
           "causal": 5,
-          "statistical": 19,
+          "statistical": 20,
           "graph_analysis": 12,
           "threat_modeling": 14,
-          "behavioral_signals": 5,
-          "data_quality": 12,
-          "governance": 16,
+          "behavioral_signals": 7,
+          "data_quality": 13,
+          "governance": 21,
           "crypto_defi": 19,
           "sectoral_typology": 27,
           "osint": 6,
           "esg": 4,
-          "predicate_crime": 6,
+          "predicate_crime": 9,
           "proliferation": 4,
           "correspondent_banking": 4,
           "hawala_ivt": 3,
@@ -292,7 +361,7 @@
           "behavioral_science": 5,
           "network_science": 5,
           "cryptoasset_forensics": 5,
-          "geopolitical_risk": 4,
+          "geopolitical_risk": 5,
           "corporate_intelligence": 4,
           "epistemic_quality": 4,
           "psychological_profiling": 4,
@@ -304,7 +373,7 @@
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 151,
+          "wave2": 168,
           "wave3": 73,
           "wave4": 29,
           "wave5": 37,
@@ -1071,13 +1140,13 @@
     },
     "integrity": {
       "charterHash": "65a67258",
-      "catalogueHash": "154a89b1"
+      "catalogueHash": "cbd26e81"
     }
   },
   "integrity": {
     "charterHash": "65a67258",
-    "catalogueHash": "154a89b1",
-    "compositeHash": "cbd75e9f"
+    "catalogueHash": "cbd26e81",
+    "compositeHash": "9d089a8d"
   },
   "enhanced": {
     "extended": {

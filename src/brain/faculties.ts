@@ -196,6 +196,85 @@ export const FACULTIES: Faculty[] = [
       'circular_walk', 'list_walk', 'ubo_tree_walk', 'jurisdiction_cascade',
     ],
   },
+  {
+    id: 'synthesis',
+    displayName: 'Synthesis',
+    describes:
+      'Cross-modal fusion — combine heterogeneous evidence streams into a single coherent verdict.',
+    synonyms: [
+      'fusion', 'integration', 'cross-modal reasoning', 'evidence weaving',
+      'multi-source synthesis', 'holistic reasoning', 'composite verdicting',
+    ],
+    modes: [
+      'multi_source_intelligence_fusion',
+      'gr.conflict_zone_nexus_mapping',
+      'eq.source_reliability_scoring',
+      'eq.evidence_triangulation_check',
+      'pp.narrative_coherence_scoring',
+      'it.whistleblower_intelligence_integration',
+      'si.cross_modal_fusion',
+      'si.meta_pattern_recognition',
+      'si.ensemble_verdict_fusion',
+    ],
+  },
+  {
+    id: 'anticipation',
+    displayName: 'Anticipation',
+    describes:
+      'Forward-looking reasoning — project network evolution, adversary moves, and recalibration triggers.',
+    synonyms: [
+      'foresight', 'forecasting', 'predictive reasoning', 'horizon scanning',
+      'pre-mortem', 'scenario projection', 'red-team simulation',
+    ],
+    modes: [
+      'ns.temporal_network_evolution',
+      'gr.geopolitical_recalibration_trigger',
+      'si.adversarial_simulation',
+      'si.counterfactual_reasoning',
+    ],
+  },
+  {
+    id: 'geopolitical_awareness',
+    displayName: 'Geopolitical Awareness',
+    describes:
+      'Sanctions, state-sponsored typologies, conflict-zone exposure, and recalibration on regime shifts.',
+    synonyms: [
+      'geopolitical reasoning', 'sanctions awareness', 'state-actor analysis',
+      'jurisdictional politics', 'conflict-zone exposure', 'regime watch',
+    ],
+    modes: [
+      'gr.sanctions_jurisdiction_shift',
+      'gr.state_sponsored_ml_detection',
+      'gr.geopolitical_recalibration_trigger',
+      'gr.conflict_zone_nexus_mapping',
+    ],
+  },
+  {
+    id: 'forensic_accounting',
+    displayName: 'Forensic Accounting',
+    describes:
+      'Quantitative integrity tests on financial data — distributional law checks, journal-entry anomalies, and reconciliation.',
+    synonyms: [
+      'forensic audit', 'investigative accounting', 'fraud examination',
+      'distributional analysis', 'ledger forensics',
+    ],
+    modes: [
+      'qa.benford_law_analysis',
+    ],
+  },
+  {
+    id: 'quantum_intelligence',
+    displayName: 'Quantum Intelligence',
+    describes:
+      'Probabilistic belief propagation across superposed hypotheses — reason under irreducible uncertainty.',
+    synonyms: [
+      'belief propagation', 'probabilistic graph reasoning',
+      'superposition reasoning', 'uncertainty propagation',
+    ],
+    modes: [
+      'si.belief_propagation',
+    ],
+  },
 ];
 
 export const FACULTY_BY_ID: Map<string, Faculty> = new Map(
