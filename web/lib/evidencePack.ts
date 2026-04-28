@@ -44,6 +44,14 @@ export interface EvidencePackEntry {
     alternativeReadings: string[];
     hardenSuggestions: string[];
   };
+  conflicts?: Array<{
+    title: string;
+    severity: "high" | "medium" | "low";
+    jurisdictions: string[];
+    description: string;
+    mitigation: string[];
+    authorities: string[];
+  }>;
 }
 
 const MARGIN = 40;
@@ -143,6 +151,25 @@ export function renderAdvisorEvidencePack(entry: EvidencePackEntry): Blob {
       y += 4;
     }
     y += 4;
+  }
+
+  if (entry.conflicts && entry.conflicts.length > 0) {
+    y = sectionHeader(doc, "Cross-jurisdictional conflicts", y);
+    for (const conflict of entry.conflicts) {
+      const header = `[${conflict.severity.toUpperCase()}] ${conflict.title}  (${conflict.jurisdictions.join(" ↔ ")})`;
+      y = wrappedText(doc, header, y, { bold: true, color: [90, 50, 130] });
+      y = wrappedText(doc, conflict.description, y);
+      if (conflict.mitigation.length > 0) {
+        y = wrappedText(doc, "Mitigation", y, { bold: true, color: [70, 70, 70], fontSize: 8 });
+        conflict.mitigation.forEach((m, i) => {
+          y = wrappedText(doc, `${i + 1}. ${m}`, y);
+        });
+      }
+      if (conflict.authorities.length > 0) {
+        y = wrappedText(doc, conflict.authorities.join(" · "), y, { mono: true, fontSize: 8, color: [110, 110, 110] });
+      }
+      y += 6;
+    }
   }
 
   const c = entry.classifier;
