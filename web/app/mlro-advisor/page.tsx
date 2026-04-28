@@ -96,63 +96,110 @@ interface AdvisorHistoryEntry {
 }
 
 // ── Suggested questions ───────────────────────────────────────────────────────
+// Sources: UAE FDL 20/2018 & Cabinet Decision 10/2019, MoE DPMS rules, UAE FIU
+// (goAML), EOCN sanctions guidance, LBMA Responsible Gold Guidance, OECD CAHRA
+// 5-step Due Diligence, FATF 40 Recommendations, RMI RMAP / CMRT, ESG
+// frameworks (EU CSDDD / CSRD), UN Guiding Principles on Business & Human
+// Rights, UN Security Council Consolidated List & UNSCRs.
 
 const SUGGESTED_GROUPS = [
   {
-    label: "PEP & EDD",
+    label: "UAE FDL & Cabinet Decision",
     questions: [
-      "What is the EDD threshold for PEPs under EU 5AMLD?",
-      "What ongoing monitoring is required for PEPs under FATF Recommendation 12?",
-      "When does a domestic PEP require EDD under UAE AML Law?",
-      "How long must EDD measures continue after a PEP leaves public office?",
+      "What is the record-retention period under UAE FDL 20/2018 Art.16?",
+      "What are the STR reporting obligations under UAE FDL 20/2018?",
+      "What are the tipping-off prohibitions under UAE FDL 20/2018 Art.25?",
+      "What CDD measures does UAE Cabinet Decision 10/2019 require?",
     ],
   },
   {
-    label: "UAE / MENA AML",
+    label: "MoE / DPMS",
     questions: [
-      "What records must a reporting institution maintain under the UAE AML Law?",
-      "What is the filing deadline for STRs under UAE FDL Art. 26–27?",
-      "What are the tipping-off prohibitions under UAE FDL Art. 29?",
-      "What are the DPMS cash transaction reporting thresholds under MoE Circular 08/2021?",
-      "What CDD is required for a UAE gold trader under OECD Due Diligence Guidance?",
+      "What is the DPMS cash-transaction reporting threshold under MoE Circular 08/2021?",
+      "What CDD applies to a UAE gold trader under MoE DPMS rules?",
+      "Is goAML registration mandatory for MoE-supervised DPMS?",
+      "What red flags must DPMS dealers monitor under MoE guidance?",
     ],
   },
   {
-    label: "FATF Standards",
+    label: "UAE FIU / goAML",
     questions: [
-      "What are the FATF criteria for high-risk jurisdictions?",
-      "What constitutes shell company risk under FATF Recommendation 24?",
+      "What is the STR submission timeline to the UAE FIU via goAML?",
+      "When must an Additional Information File (AIF) be filed via goAML?",
+      "What narrative elements must a goAML STR contain?",
+      "Can a reporting entity disclose an STR to the subject?",
+    ],
+  },
+  {
+    label: "EOCN Sanctions",
+    questions: [
+      "How often must we re-screen against the UAE EOCN consolidated list?",
+      "What is the freezing-action timeline under EOCN guidance?",
+      "What records must be kept on EOCN sanctions screening?",
+      "How do we handle a true positive against the EOCN list?",
+    ],
+  },
+  {
+    label: "LBMA Responsible Gold",
+    questions: [
+      "What does the LBMA Responsible Gold Guidance require at Step 1?",
+      "What KYC standards apply under the LBMA RGG?",
+      "What is the LBMA Step 3 supplier audit obligation?",
+      "What public reporting does LBMA Step 5 require?",
+    ],
+  },
+  {
+    label: "OECD CAHRA Due Diligence",
+    questions: [
+      "What are the 5 steps of the OECD Due Diligence Guidance?",
+      "What red flags trigger Step 3 enhanced due diligence under OECD guidance?",
+      "What disengagement criteria does OECD guidance set for high-risk suppliers?",
+      "What public reporting does OECD Step 5 require?",
+    ],
+  },
+  {
+    label: "FATF Recommendations",
+    questions: [
       "What does FATF Recommendation 16 require for wire transfers?",
-      "How does FATF define a virtual asset service provider (VASP)?",
-      "What is the risk-based approach under FATF Recommendation 1?",
+      "What does FATF Recommendation 12 require for PEPs?",
+      "What does FATF Recommendation 15 require of VASPs?",
+      "What ownership threshold does FATF Recommendation 24 apply to UBOs?",
     ],
   },
   {
-    label: "Sanctions & TFS",
+    label: "RMI Minerals",
     questions: [
-      "When is a Suspicious Activity Report required under the Bank Secrecy Act?",
-      "What is the OFAC 50% rule for sanctioned entity ownership?",
-      "How do UN Security Council resolutions apply to targeted financial sanctions?",
-      "What are the record-keeping obligations for OFAC blocked property?",
-      "What is the EU asset freeze obligation under Regulation 2580/2001?",
+      "What does the RMI Responsible Minerals Assurance Process (RMAP) require?",
+      "What is the RMI Conflict Minerals Reporting Template (CMRT) used for?",
+      "What is the RMI smelter audit cadence?",
+      "How does RMI align with OECD 5-step due diligence?",
     ],
   },
   {
-    label: "Virtual Assets",
+    label: "ESG & Sustainability",
     questions: [
-      "What CDD obligations apply to VASPs under FATF Recommendation 15?",
-      "What travel rule requirements apply to crypto transactions above $1,000?",
-      "How should a VASP screen for mixer or privacy-coin exposure?",
-      "What are the UAE VARA licensing categories for virtual assets?",
+      "What does the EU Corporate Sustainability Due Diligence Directive (CSDDD) require?",
+      "What due diligence does the EU Conflict Minerals Regulation 2017/821 require?",
+      "What does CSRD / ESRS S1 require on workforce disclosures?",
+      "How does OECD CAHRA guidance link to ESG due diligence?",
     ],
   },
   {
-    label: "STR / SAR Filing",
+    label: "Human Rights",
     questions: [
-      "What is the threshold for mandatory SAR filing under the Bank Secrecy Act?",
-      "What narrative elements must an STR contain to satisfy goAML requirements?",
-      "What is an Additional Information File (AIF) and when is it required?",
-      "Can a reporting institution share the existence of an STR with the subject?",
+      "What do the UN Guiding Principles on Business & Human Rights (UNGPs) require?",
+      "What are the steps of the UNGP human-rights due-diligence cycle?",
+      "What do the OECD Guidelines for MNEs require on human rights?",
+      "What modern-slavery red flags must DPMS supply chains monitor?",
+    ],
+  },
+  {
+    label: "UN Sanctions & Standards",
+    questions: [
+      "How is the UN Security Council Consolidated List implemented in the UAE?",
+      "What does UNSCR 1373 require on terrorist financing?",
+      "What does UNSCR 1540 require on WMD non-proliferation financing?",
+      "What does the UN Global Compact require on anti-corruption (Principle 10)?",
     ],
   },
 ];
@@ -592,9 +639,6 @@ export default function MlroAdvisorPage() {
               )}
             </div>
 
-            {/* Quick-prompt chips */}
-            <QuickPromptChips onPick={(q) => setQuestion(q)} disabled={running} />
-
             {/* Input */}
             <div className="space-y-2 mb-4">
               <textarea
@@ -668,10 +712,12 @@ export default function MlroAdvisorPage() {
                 {advisorHistory.map((entry) => (
                   <div key={entry.id} className="border border-hair-2 rounded-xl bg-bg-1 overflow-hidden">
                     {/* Entry header */}
-                    <button
-                      type="button"
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => toggleAdvisorEntry(entry.id)}
-                      className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-bg-panel transition-colors"
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleAdvisorEntry(entry.id); }}
+                      className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-bg-panel transition-colors cursor-pointer"
                     >
                       <span
                         className={`mt-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded border text-10 font-semibold uppercase tracking-wide-2 flex-shrink-0 ${verdictCls(entry.result.complianceReview.advisorVerdict)}`}
@@ -685,8 +731,34 @@ export default function MlroAdvisorPage() {
                           {entry.result.partial && " · partial"}
                         </p>
                       </div>
-                      <span className="text-11 text-ink-3 flex-shrink-0">{entry.expanded ? "▲" : "▼"}</span>
-                    </button>
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => { setQuestion(entry.question); setMode(entry.mode); }}
+                          aria-label="Edit question"
+                          title="Edit question — load into input"
+                          className="p-1 rounded text-ink-3 hover:text-brand hover:bg-brand-dim transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdvisorHistory((prev) => prev.filter((e) => e.id !== entry.id))}
+                          aria-label="Delete entry"
+                          title="Delete entry"
+                          className="p-1 rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                        <span className="text-11 text-ink-3 ml-1">{entry.expanded ? "▲" : "▼"}</span>
+                      </div>
+                    </div>
 
                     {/* Entry detail */}
                     {entry.expanded && (
@@ -894,6 +966,32 @@ export default function MlroAdvisorPage() {
                           Advisor fallback
                         </span>
                       )}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setQaQuery(entry.question)}
+                          aria-label="Edit question"
+                          title="Edit question — load into input"
+                          className="p-1 rounded text-ink-3 hover:text-brand hover:bg-brand-dim transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQaHistory((prev) => prev.filter((e) => e.id !== entry.id))}
+                          aria-label="Delete entry"
+                          title="Delete entry"
+                          className="p-1 rounded text-ink-3 hover:text-red hover:bg-red-dim transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                     {/* Answer */}
                     <div className="px-4 py-3 bg-bg-panel">
@@ -975,37 +1073,6 @@ export default function MlroAdvisorPage() {
 }
 
 // ── Classifier UI ───────────────────────────────────────────────────────────
-
-const QUICK_PROMPTS: Array<{ label: string; q: string }> = [
-  { label: "UAE gold trader CDD", q: "What CDD is required for a UAE-based gold trader (DPMS) and what ongoing-monitoring cadence applies?" },
-  { label: "Sanctions re-screen cadence", q: "How often must we re-screen the customer book against OFAC SDN, UN Consolidated, EU CFSP and UAE EOCN?" },
-  { label: "STR filing window", q: "What is the STR/SAR filing deadline under UAE FDL 10/2025 Art.26-27 and what triggers the clock?" },
-  { label: "PEP RCA scope", q: "How far do we extend EDD to relatives and close associates of a foreign PEP?" },
-  { label: "Tipping-off line", q: "Where is the tipping-off line drawn and how do we communicate with a subject mid-investigation without crossing it?" },
-  { label: "Correspondent KYB", q: "What KYB documentation must we hold on a respondent bank in a CAHRA jurisdiction before opening a correspondent account?" },
-  { label: "Crypto Travel Rule", q: "Travel-Rule obligations for a UAE VASP sending USDT above the threshold to a non-UAE counterparty." },
-];
-
-function QuickPromptChips({ onPick, disabled }: { onPick: (q: string) => void; disabled: boolean }) {
-  return (
-    <div className="flex flex-wrap gap-1.5 mb-3">
-      <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 self-center mr-1">
-        Quick prompts
-      </span>
-      {QUICK_PROMPTS.map((p) => (
-        <button
-          key={p.label}
-          type="button"
-          disabled={disabled}
-          onClick={() => onPick(p.q)}
-          className="text-11 px-2 py-1 rounded border border-hair-2 bg-bg-1 hover:border-brand hover:bg-brand-dim hover:text-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {p.label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 interface LiveAnalysisShape {
   primaryTopic: string;
