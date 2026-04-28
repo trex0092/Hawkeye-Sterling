@@ -15,6 +15,113 @@ import {
   type MlroAdvisorRequest,
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
+import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
+
+const HAIKU_MODEL = "claude-haiku-4-5-20251001";
+const HAIKU_TIMEOUT_MS = 18_000;
+const HAIKU_SYSTEM_PROMPT =
+  "You are the MLRO Advisor — a regulator-grade compliance assistant for AML/CFT/sanctions/PEP/adverse-media questions. " +
+  "You answer in 4-10 short paragraphs (or a tight bullet list when the question asks for steps/thresholds). " +
+  "Cite the regulatory anchor inline (e.g. 'FATF R.10', 'UAE FDL 20/2018 Art.16', 'Wolfsberg FAQ', '5AMLD Art.18a'). " +
+  "Never invent regulations or section numbers. If the brain context below already cites the exact anchor, REUSE it verbatim. " +
+  "Do not include extended thinking or chain-of-thought; deliver the answer directly. " +
+  "Never tip off subjects, never disclose internal SAR/STR filings to customers, never give legal advice — only compliance guidance.";
+
+interface HaikuPair { q: string; a: string }
+
+interface HaikuResult {
+  ok: boolean;
+  answer?: string;
+  error?: string;
+  elapsedMs: number;
+}
+
+function buildHaikuPrompt(question: string, contextPairs: HaikuPair[]): string {
+  const analysis = classifyMlroQuestion(question);
+  const lines: string[] = [];
+  if (contextPairs.length) {
+    const ctx = contextPairs
+      .slice(-3)
+      .map((p, i) => `[Prior Q${i + 1}] ${p.q.slice(0, 160)}\n[Prior A${i + 1}] ${p.a.slice(0, 320)}`)
+      .join("\n---\n");
+    lines.push(`REGULATORY SESSION CONTEXT:\n${ctx}\n`);
+  }
+  lines.push("BRAIN CONTEXT (rule-based classifier — use to ground your answer):");
+  lines.push(`Primary topic: ${analysis.primaryTopic}${analysis.topics.length > 1 ? ` (also: ${analysis.topics.slice(1, 4).join(", ")})` : ""}`);
+  if (analysis.jurisdictions.length) lines.push(`Jurisdictions: ${analysis.jurisdictions.join(", ")}`);
+  if (analysis.regimes.length) lines.push(`Sanctions regimes: ${analysis.regimes.slice(0, 6).join(", ")}`);
+  if (analysis.fatfRecDetails.length) {
+    lines.push(`FATF Recommendations anchored: ${analysis.fatfRecDetails.slice(0, 6).map((f) => `R.${f.num} (${f.title})`).join("; ")}`);
+  }
+  if (analysis.doctrineHints.length) lines.push(`Doctrines: ${analysis.doctrineHints.slice(0, 8).join(", ")}`);
+  if (analysis.playbookHints.length) lines.push(`Relevant playbooks: ${analysis.playbookHints.slice(0, 6).join(", ")}`);
+  if (analysis.redFlagHints.length) lines.push(`Red flags to watch: ${analysis.redFlagHints.slice(0, 6).join(", ")}`);
+  if (analysis.urgencyFlags.length) lines.push(`URGENCY FLAGS: ${analysis.urgencyFlags.join(", ")}`);
+  if (analysis.commonSenseRules.length) {
+    lines.push("Common-sense rules to apply:");
+    for (const rule of analysis.commonSenseRules.slice(0, 5)) lines.push(`  · ${rule}`);
+  }
+  lines.push("");
+  lines.push(`QUESTION:\n${question}`);
+  return lines.join("\n");
+}
+
+async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey: string): Promise<HaikuResult> {
+  const startedAt = Date.now();
+  const ctl = new AbortController();
+  const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
+  try {
+    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: HAIKU_MODEL,
+        max_tokens: 700,
+        stream: true,
+        system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
+      }),
+      signal: ctl.signal,
+    });
+    if (!upstream.ok || !upstream.body) {
+      const txt = await upstream.text().catch(() => "");
+      return { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt };
+    }
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    let answer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const rawLine of chunk.split("\n")) {
+        const line = rawLine.trim();
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
+        try { evt = JSON.parse(payload); } catch { continue; }
+        if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
+          answer += evt.delta.text;
+        }
+      }
+    }
+    return { ok: true, answer, elapsedMs: Date.now() - startedAt };
+  } catch (err) {
+    const aborted = ctl.signal.aborted;
+    return {
+      ok: false,
+      error: aborted ? `Quick budget exceeded (>${Math.round(HAIKU_TIMEOUT_MS / 1000)} s)` : (err instanceof Error ? err.message : String(err)),
+      elapsedMs: Date.now() - startedAt,
+    };
+  } finally {
+    clearTimeout(killTimer);
+  }
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,6 +217,39 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!body.query?.trim()) {
     return NextResponse.json({ ok: false, error: "query is required" }, { status: 400, headers: CORS });
+  }
+
+  // FAST PATH — Balanced depth (the default) routes through the same
+  // Haiku 4.5 single-pass path that the MLRO Advisor "Quick" mode uses.
+  // Reliable ~3-7 s end-to-end; no Sonnet/Opus, no thinking, no
+  // executor → advisor → challenger pipeline that previously timed out
+  // and returned HTML 502 from Netlify edge. Deep depth still uses the
+  // legacy Sonnet/Opus pipeline below for callers who explicitly opt in.
+  if (body.depth !== "deep") {
+    const apiKey = process.env["ANTHROPIC_API_KEY"];
+    if (!apiKey) {
+      return NextResponse.json(
+        { ok: false, error: "ANTHROPIC_API_KEY not configured" },
+        { status: 503, headers: { ...CORS, ...gateHeaders } },
+      );
+    }
+    const fastResult = await runHaikuQuick(body.query.trim(), body.context ?? [], apiKey);
+    if (fastResult.ok) {
+      return NextResponse.json(
+        {
+          ok: true,
+          query: body.query.trim(),
+          answer: fastResult.answer,
+          citations: [],
+          passedQualityGate: true,
+          source: "mlro-advisor-quick",
+          elapsedMs: fastResult.elapsedMs,
+        },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
+      );
+    }
+    // Fall through to legacy path on hard failure (so a transient Anthropic
+    // 5xx still has a second chance via RAG / the slower advisor).
   }
 
   // Hard-cap upstream RAG to 18s so we always have budget for the advisor

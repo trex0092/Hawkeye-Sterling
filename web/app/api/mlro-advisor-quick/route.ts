@@ -1,17 +1,23 @@
 // POST /api/mlro-advisor-quick
 //
-// Streaming "Quick" advisor — single-pass Haiku 4.5, no extended thinking,
+// Fast "Quick" advisor — single-pass Haiku 4.5, no extended thinking,
 // no executor → advisor → challenger pipeline. The brain's rule-based
-// classifier (~10ms, local) enriches the prompt with FATF Recs, playbooks,
-// red flags, doctrines, and common-sense rules so Haiku's answer is well-
-// grounded without slow reasoning.
+// classifier (~10ms, local) enriches the prompt with FATF Recs,
+// playbooks, red flags, doctrines, and common-sense rules so Haiku's
+// answer is well-grounded without slow reasoning.
 //
-// Latency target: first token ≈500 ms, full answer 3-7 s.
+// IMPORTANT: this used to stream SSE deltas, but Netlify's Lambda runtime
+// buffers the entire response before returning, so streaming never
+// actually reached the browser — the client just sat idle until the
+// 12 s server-side kill-timer aborted upstream and the client-side 15 s
+// timer fired. Now we accumulate the full response on the server and
+// return a single JSON object: { ok, answer, elapsedMs }. End-to-end
+// latency is still ~3-7 s with Haiku 4.5 single-pass.
 //
 // Body: { question: string; context?: { q, a }[] }
-// Response: text/event-stream chunks of plain text deltas + a terminating
-//           [DONE] sentinel. The browser reads the stream incrementally.
+// Response: { ok: boolean, answer?: string, elapsedMs: number, error?: string }
 
+import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 
@@ -21,7 +27,11 @@ export const maxDuration = 30;
 
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 700;
-const HARD_TIMEOUT_MS = 12_000;
+// Hard cap inside the Lambda. Netlify's edge inactivity timeout is ~26 s,
+// so we abort upstream well before that to guarantee we always have time
+// to return a clean JSON response (rather than letting Netlify replace
+// our body with an HTML 502).
+const HARD_TIMEOUT_MS = 18_000;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -87,6 +97,7 @@ export async function OPTIONS(): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const startedAt = Date.now();
   const gate = await enforce(req);
   if (!gate.ok && gate.response.status === 429) return gate.response;
 
@@ -94,26 +105,17 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return new Response(JSON.stringify({ ok: false, error: "invalid JSON body" }), {
-      status: 400,
-      headers: { "content-type": "application/json", ...CORS },
-    });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
   const question = body.question?.trim();
   if (!question) {
-    return new Response(JSON.stringify({ ok: false, error: "question is required" }), {
-      status: 400,
-      headers: { "content-type": "application/json", ...CORS },
-    });
+    return NextResponse.json({ ok: false, error: "question is required" }, { status: 400, headers: CORS });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return new Response(JSON.stringify({ ok: false, error: "ANTHROPIC_API_KEY not configured" }), {
-      status: 503,
-      headers: { "content-type": "application/json", ...CORS },
-    });
+    return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503, headers: CORS });
   }
 
   const userPrompt = buildEnrichedUserPrompt(question, body.context ?? []);
@@ -121,9 +123,13 @@ export async function POST(req: Request): Promise<Response> {
   const upstreamCtl = new AbortController();
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);
 
-  let upstream: Response;
   try {
-    upstream = await fetch("https://api.anthropic.com/v1/messages", {
+    // Non-streaming request — we accumulate Anthropic's SSE deltas server-
+    // side because Netlify Lambda buffers the entire HTTP response anyway,
+    // making client-side streaming a fiction. Returning a single JSON
+    // payload is faster (no SSE framing overhead) and reliably crosses
+    // Netlify's edge.
+    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -133,6 +139,9 @@ export async function POST(req: Request): Promise<Response> {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
+        // We still ask Anthropic to stream so we get text as soon as the
+        // first delta lands, but we accumulate it inside the Lambda and
+        // return JSON. This minimises wall-clock latency vs non-streaming.
         stream: true,
         system: [
           { type: "text", text: SYSTEM_PROMPT_BASE, cache_control: { type: "ephemeral" } },
@@ -141,76 +150,54 @@ export async function POST(req: Request): Promise<Response> {
       }),
       signal: upstreamCtl.signal,
     });
-  } catch (err) {
-    clearTimeout(killTimer);
-    const msg = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ ok: false, error: `upstream connect failed: ${msg}` }), {
-      status: 502,
-      headers: { "content-type": "application/json", ...CORS },
-    });
-  }
 
-  if (!upstream.ok || !upstream.body) {
-    clearTimeout(killTimer);
-    const txt = await upstream.text().catch(() => "");
-    return new Response(
-      JSON.stringify({ ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}` }),
-      { status: upstream.status === 429 ? 429 : 502, headers: { "content-type": "application/json", ...CORS } },
-    );
-  }
+    if (!upstream.ok || !upstream.body) {
+      const txt = await upstream.text().catch(() => "");
+      return NextResponse.json(
+        { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt },
+        { status: upstream.status === 429 ? 429 : 502, headers: CORS },
+      );
+    }
 
-  // Pipe Anthropic SSE stream → plain text deltas to the client. We parse
-  // each `data: {...}` line, extract content_block_delta.text, and forward
-  // only the visible deltas. End the stream with a `[DONE]` sentinel so the
-  // client knows it's complete (and not a network drop).
-  const reader = upstream.body.getReader();
-  const decoder = new TextDecoder();
-  const encoder = new TextEncoder();
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    let answer = "";
 
-  const stream = new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      try {
-        const { value, done } = await reader.read();
-        if (done) {
-          controller.enqueue(encoder.encode("\n[DONE]\n"));
-          controller.close();
-          clearTimeout(killTimer);
-          return;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const rawLine of chunk.split("\n")) {
+        const line = rawLine.trim();
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
+        try { evt = JSON.parse(payload); } catch { continue; }
+        if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
+          answer += evt.delta.text;
         }
-        const chunk = decoder.decode(value, { stream: true });
-        // Anthropic SSE format: lines beginning with `data: `.
-        for (const rawLine of chunk.split("\n")) {
-          const line = rawLine.trim();
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (!payload || payload === "[DONE]") continue;
-          let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
-          try { evt = JSON.parse(payload); } catch { continue; }
-          if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-            controller.enqueue(encoder.encode(evt.delta.text));
-          }
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        controller.enqueue(encoder.encode(`\n[ERROR] ${msg}\n[DONE]\n`));
-        controller.close();
-        clearTimeout(killTimer);
       }
-    },
-    cancel() {
-      upstreamCtl.abort();
-      clearTimeout(killTimer);
-    },
-  });
+    }
 
-  return new Response(stream, {
-    status: 200,
-    headers: {
-      ...CORS,
-      "content-type": "text/plain; charset=utf-8",
-      "cache-control": "no-store, no-transform",
-      "x-content-type-options": "nosniff",
-      "x-accel-buffering": "no",
-    },
-  });
+    return NextResponse.json(
+      { ok: true, answer, elapsedMs: Date.now() - startedAt },
+      { status: 200, headers: CORS },
+    );
+  } catch (err) {
+    const aborted = upstreamCtl.signal.aborted;
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: aborted
+          ? `Quick mode budget exceeded (>${Math.round(HARD_TIMEOUT_MS / 1000)} s) — try Balanced.`
+          : `upstream connect failed: ${msg}`,
+        elapsedMs: Date.now() - startedAt,
+      },
+      { status: aborted ? 504 : 502, headers: CORS },
+    );
+  } finally {
+    clearTimeout(killTimer);
+  }
 }

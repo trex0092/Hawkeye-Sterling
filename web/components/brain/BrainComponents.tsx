@@ -445,14 +445,24 @@ const SAMPLE_PRESETS: Array<{ id: string; label: string; payload: { subject: { n
   },
 ];
 
-export function BrainConsole() {
-  const [name, setName] = useState("");
-  const [aliases, setAliases] = useState("");
-  const [jurisdiction, setJurisdiction] = useState("");
-  const [entityType, setEntityType] = useState<string>("individual");
-  const [sector, setSector] = useState("");
-  const [roleText, setRoleText] = useState("");
-  const [narrative, setNarrative] = useState("");
+export interface BrainConsoleInitialValues {
+  name?: string;
+  aliases?: string;
+  jurisdiction?: string;
+  entityType?: string;
+  sector?: string;
+  roleText?: string;
+  narrative?: string;
+}
+
+export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleInitialValues } = {}) {
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [aliases, setAliases] = useState(initialValues?.aliases ?? "");
+  const [jurisdiction, setJurisdiction] = useState(initialValues?.jurisdiction ?? "");
+  const [entityType, setEntityType] = useState<string>(initialValues?.entityType ?? "individual");
+  const [sector, setSector] = useState(initialValues?.sector ?? "");
+  const [roleText, setRoleText] = useState(initialValues?.roleText ?? "");
+  const [narrative, setNarrative] = useState(initialValues?.narrative ?? "");
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<ReasonResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
