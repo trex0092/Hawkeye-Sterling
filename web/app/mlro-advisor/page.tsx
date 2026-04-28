@@ -17,6 +17,23 @@ interface ReasoningStep {
   body: string;
 }
 
+interface QuestionAnalysis {
+  primaryTopic: string;
+  topics: string[];
+  jurisdictions: string[];
+  regimes: string[];
+  typologies: string[];
+  doctrineHints: string[];
+  playbookHints: string[];
+  redFlagHints: string[];
+  fatfRecHints: string[];
+  urgencyFlags: string[];
+  numericThresholds: Array<{ value: number; unit: string; context: string }>;
+  commonSenseRules: string[];
+  suggestedFollowUps: string[];
+  confidence: "high" | "medium" | "low";
+}
+
 interface AdvisorResult {
   ok: boolean;
   mode: string;
@@ -30,6 +47,7 @@ interface AdvisorResult {
     issues: string[];
   };
   charterIntegrityHash?: string;
+  questionAnalysis?: QuestionAnalysis;
   error?: string;
 }
 
@@ -483,6 +501,9 @@ export default function MlroAdvisorPage() {
               )}
             </div>
 
+            {/* Quick-prompt chips */}
+            <QuickPromptChips onPick={(q) => setQuestion(q)} disabled={running} />
+
             {/* Input */}
             <div className="space-y-2 mb-4">
               <textarea
@@ -494,6 +515,8 @@ export default function MlroAdvisorPage() {
                 placeholder='Ask the MLRO Advisor a compliance question — e.g. "What CDD is required for a UAE gold trader?"'
                 className="w-full px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
+              {/* Live classification badges (debounced 400ms) */}
+              <LiveClassifierBadges question={question} />
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-11 font-semibold text-ink-2 uppercase tracking-wide-3">Mode</span>
@@ -586,6 +609,12 @@ export default function MlroAdvisorPage() {
                             <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Regulator-facing narrative</div>
                             <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.narrative}</div>
                           </div>
+                        )}
+                        {entry.result.questionAnalysis && (
+                          <ClassifierResultPanels
+                            analysis={entry.result.questionAnalysis}
+                            onPick={(q) => setQuestion(q)}
+                          />
                         )}
                         {entry.result.reasoningTrail.length > 0 && (
                           <details className="group">
@@ -829,5 +858,182 @@ export default function MlroAdvisorPage() {
         )}
       </div>
     </ModuleLayout>
+  );
+}
+
+// ── Classifier UI ───────────────────────────────────────────────────────────
+
+const QUICK_PROMPTS: Array<{ label: string; q: string }> = [
+  { label: "UAE gold trader CDD", q: "What CDD is required for a UAE-based gold trader (DPMS) and what ongoing-monitoring cadence applies?" },
+  { label: "Sanctions re-screen cadence", q: "How often must we re-screen the customer book against OFAC SDN, UN Consolidated, EU CFSP and UAE EOCN?" },
+  { label: "STR filing window", q: "What is the STR/SAR filing deadline under UAE FDL 10/2025 Art.26-27 and what triggers the clock?" },
+  { label: "PEP RCA scope", q: "How far do we extend EDD to relatives and close associates of a foreign PEP?" },
+  { label: "Tipping-off line", q: "Where is the tipping-off line drawn and how do we communicate with a subject mid-investigation without crossing it?" },
+  { label: "Correspondent KYB", q: "What KYB documentation must we hold on a respondent bank in a CAHRA jurisdiction before opening a correspondent account?" },
+  { label: "Crypto Travel Rule", q: "Travel-Rule obligations for a UAE VASP sending USDT above the threshold to a non-UAE counterparty." },
+];
+
+function QuickPromptChips({ onPick, disabled }: { onPick: (q: string) => void; disabled: boolean }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-3">
+      <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 self-center mr-1">
+        Quick prompts
+      </span>
+      {QUICK_PROMPTS.map((p) => (
+        <button
+          key={p.label}
+          type="button"
+          disabled={disabled}
+          onClick={() => onPick(p.q)}
+          className="text-11 px-2 py-1 rounded border border-hair-2 bg-bg-1 hover:border-brand hover:bg-brand-dim hover:text-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface LiveAnalysisShape {
+  primaryTopic: string;
+  topics: string[];
+  jurisdictions: string[];
+  regimes: string[];
+  fatfRecHints: string[];
+  doctrineHints: string[];
+  redFlagHints: string[];
+  urgencyFlags: string[];
+  confidence: "high" | "medium" | "low";
+}
+
+function LiveClassifierBadges({ question }: { question: string }) {
+  const [analysis, setAnalysis] = useState<LiveAnalysisShape | null>(null);
+  useEffect(() => {
+    const trimmed = question.trim();
+    if (trimmed.length < 12) {
+      setAnalysis(null);
+      return;
+    }
+    const ctl = new AbortController();
+    const t = setTimeout(() => {
+      void fetch("/api/mlro-classify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: trimmed }),
+        signal: ctl.signal,
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { ok?: boolean; analysis?: LiveAnalysisShape } | null) => {
+          if (j?.ok && j.analysis) setAnalysis(j.analysis);
+        })
+        .catch(() => { /* aborted or offline */ });
+    }, 400);
+    return () => {
+      clearTimeout(t);
+      ctl.abort();
+    };
+  }, [question]);
+
+  if (!analysis) return null;
+  const chips: Array<{ label: string; tone: "brand" | "violet" | "amber" | "red" | "ink" }> = [];
+  chips.push({ label: `topic: ${analysis.primaryTopic.replace(/_/g, " ")}`, tone: "brand" });
+  for (const j of analysis.jurisdictions) chips.push({ label: j, tone: "violet" });
+  for (const r of analysis.regimes.slice(0, 4)) chips.push({ label: r, tone: "amber" });
+  for (const f of analysis.fatfRecHints.slice(0, 3)) chips.push({ label: f.replace("_", " "), tone: "ink" });
+  for (const u of analysis.urgencyFlags) chips.push({ label: `⚠ ${u.replace(/_/g, " ")}`, tone: "red" });
+  return (
+    <div className="flex flex-wrap gap-1 items-center text-10 font-mono">
+      <span className="text-ink-3 mr-1">classifier ({analysis.confidence}):</span>
+      {chips.map((c, i) => (
+        <span
+          key={i}
+          className={
+            c.tone === "brand" ? "px-1.5 py-px rounded bg-brand-dim text-brand"
+            : c.tone === "violet" ? "px-1.5 py-px rounded bg-violet-dim text-violet"
+            : c.tone === "amber" ? "px-1.5 py-px rounded bg-amber-dim text-amber"
+            : c.tone === "red" ? "px-1.5 py-px rounded bg-red-dim text-red"
+            : "px-1.5 py-px rounded bg-bg-2 text-ink-1"
+          }
+        >
+          {c.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ClassifierResultPanels({
+  analysis,
+  onPick,
+}: {
+  analysis: QuestionAnalysis;
+  onPick: (q: string) => void;
+}) {
+  const moduleChips: Array<[string, string]> = [
+    ...analysis.doctrineHints.map((d) => ["doctrine", d] as [string, string]),
+    ...analysis.fatfRecHints.map((f) => ["fatf", f.replace("_", " ")] as [string, string]),
+    ...analysis.playbookHints.slice(0, 8).map((p) => ["playbook", p] as [string, string]),
+    ...analysis.redFlagHints.slice(0, 8).map((r) => ["red-flag", r] as [string, string]),
+    ...analysis.typologies.map((t) => ["typology", t] as [string, string]),
+  ];
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-3">
+      <div>
+        <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
+          Brain modules engaged
+          <span className="ml-2 font-mono text-ink-3 normal-case">({moduleChips.length})</span>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {moduleChips.map(([kind, id], i) => (
+            <span
+              key={`${kind}-${id}-${i}`}
+              className={
+                kind === "doctrine" ? "text-10 font-mono px-1.5 py-px rounded bg-violet-dim text-violet"
+                : kind === "fatf" ? "text-10 font-mono px-1.5 py-px rounded bg-amber-dim text-amber"
+                : kind === "playbook" ? "text-10 font-mono px-1.5 py-px rounded bg-brand-dim text-brand"
+                : kind === "red-flag" ? "text-10 font-mono px-1.5 py-px rounded bg-red-dim text-red"
+                : "text-10 font-mono px-1.5 py-px rounded bg-bg-2 text-ink-1"
+              }
+              title={kind}
+            >
+              {id}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {analysis.commonSenseRules.length > 0 && (
+        <details className="group">
+          <summary className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 cursor-pointer hover:text-ink-1 select-none">
+            Common-sense rules applied ({analysis.commonSenseRules.length}) ▶
+          </summary>
+          <ol className="mt-2 space-y-1 list-decimal pl-5">
+            {analysis.commonSenseRules.map((r, i) => (
+              <li key={i} className="text-11 text-ink-1 leading-relaxed">{r}</li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      {analysis.suggestedFollowUps.length > 0 && (
+        <div>
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
+            Suggested next questions
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {analysis.suggestedFollowUps.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => onPick(q)}
+                className="text-11 px-2 py-1 rounded border border-hair-2 bg-bg-1 hover:border-brand hover:bg-brand-dim hover:text-brand transition-colors text-left"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
