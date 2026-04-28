@@ -6,7 +6,7 @@ import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type ReasoningMode = "speed" | "balanced" | "multi_perspective";
+type ReasoningMode = "quick" | "speed" | "balanced" | "multi_perspective";
 
 interface ReasoningStep {
   stepNo: number;
@@ -222,12 +222,15 @@ export default function MlroAdvisorPage() {
 
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
-  const [mode, setMode] = useState<ReasoningMode>("multi_perspective");
+  const [mode, setMode] = useState<ReasoningMode>("quick");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>([]);
+  /** ID of the entry currently being streamed (Quick mode). null when idle. */
+  const [streamingEntryId, setStreamingEntryId] = useState<string | null>(null);
 
   const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
+    quick: 15_000,
     speed: 9_000,
     balanced: 45_000,
     multi_perspective: 600_000,
@@ -247,6 +250,83 @@ export default function MlroAdvisorPage() {
     ]);
     setQuestion("");
   }, []);
+
+  /**
+   * Stream a Quick-mode answer from /api/mlro-advisor-quick. Inserts a
+   * placeholder entry immediately so the user sees the answer area appear
+   * within a frame, then appends text deltas as the upstream Anthropic
+   * stream arrives. Uses Haiku 4.5 single-pass — no thinking, no executor
+   * → advisor → challenger pipeline. Target latency: first token ≈500 ms,
+   * full answer 3-7 s.
+   */
+  const runQuickStream = useCallback(async (q: string): Promise<void> => {
+    const entryId = `adv-${Date.now()}`;
+    const startedAt = new Date();
+
+    // Insert empty entry immediately for instant feedback.
+    setAdvisorHistory((prev) => [
+      {
+        id: entryId,
+        question: q,
+        mode: "quick" as const,
+        result: {
+          ok: true,
+          mode: "quick",
+          elapsedMs: 0,
+          partial: false,
+          reasoningTrail: [],
+          narrative: "",
+          complianceReview: { advisorVerdict: "approved", issues: [] },
+        },
+        askedAt: startedAt.toLocaleTimeString(),
+        expanded: true,
+      },
+      ...prev,
+    ]);
+    setQuestion("");
+    setStreamingEntryId(entryId);
+
+    const ctl = new AbortController();
+    const killTimer = setTimeout(() => ctl.abort(), CLIENT_TIMEOUTS.quick);
+
+    try {
+      const res = await fetch("/api/mlro-advisor-quick", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: q }),
+        signal: ctl.signal,
+      });
+      if (!res.ok || !res.body) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 240)}`);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      // Loop until the stream's `[DONE]` sentinel or the connection closes.
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        // Strip the [DONE] sentinel if present in this chunk.
+        const sentinelIdx = chunk.indexOf("[DONE]");
+        const visible = sentinelIdx >= 0 ? chunk.slice(0, sentinelIdx) : chunk;
+        buffer += visible;
+        // Update the streaming entry in place.
+        setAdvisorHistory((prev) =>
+          prev.map((e) =>
+            e.id === entryId
+              ? { ...e, result: { ...e.result, narrative: buffer, elapsedMs: Date.now() - startedAt.getTime() } }
+              : e,
+          ),
+        );
+        if (sentinelIdx >= 0) break;
+      }
+    } finally {
+      clearTimeout(killTimer);
+      setStreamingEntryId(null);
+    }
+  }, [CLIENT_TIMEOUTS.quick]);
 
   // multi_perspective is offloaded to the Netlify Background Function so it
   // is not killed by Netlify's ~26 s edge inactivity timeout. Speed and
@@ -342,7 +422,9 @@ export default function MlroAdvisorPage() {
     setRunning(true);
     setError(null);
     try {
-      if (mode === "multi_perspective") {
+      if (mode === "quick") {
+        await runQuickStream(q);
+      } else if (mode === "multi_perspective") {
         try {
           await runDeepBackground(q, mode);
         } catch (err) {
@@ -360,16 +442,18 @@ export default function MlroAdvisorPage() {
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError(mode === "speed"
-          ? "Speed mode timed out (>9 s) — check server logs or try again."
-          : "Request timed out — try Speed or Balanced mode.");
+        setError(mode === "quick"
+          ? "Quick mode timed out (>15 s) — try again or switch to Balanced."
+          : mode === "speed"
+            ? "Speed mode timed out (>9 s) — check server logs or try again."
+            : "Request timed out — try Quick or Balanced mode.");
       } else {
         setError(err instanceof Error ? err.message : "Network error");
       }
     } finally {
       setRunning(false);
     }
-  }, [question, mode, runDeepBackground, runSynchronous]);
+  }, [question, mode, runQuickStream, runDeepBackground, runSynchronous]);
 
   const toggleAdvisorEntry = (id: string) =>
     setAdvisorHistory((prev) =>
@@ -463,9 +547,12 @@ export default function MlroAdvisorPage() {
         titleEm="advisor."
         intro={
           <>
-            Sonnet executor → Opus advisor · 132 directives · charter P1–P10.{" "}
+            <strong>Quick mode default — answers stream in ~5 s.</strong> Haiku 4.5
+            grounded by the brain&apos;s rule-based classifier (FATF Recs, playbooks,
+            red flags, doctrines).{" "}
             <span className="text-ink-3">
-              50 MLRO topics · 250 common-sense rules · 40 FATF Recs · standalone mode.
+              50 MLRO topics · 250 common-sense rules · 40 FATF Recs. Switch to
+              Balanced or Deep for charter-gated executor → advisor reasoning trails.
             </span>
           </>
         }
@@ -534,11 +621,23 @@ export default function MlroAdvisorPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-11 font-semibold text-ink-2 uppercase tracking-wide-3">Mode</span>
-                  {(["speed", "balanced", "multi_perspective"] as const).map((m) => (
-                    <button key={m} type="button" onClick={() => setMode(m)} className={tabCls(mode === m)}>
-                      {m === "multi_perspective" ? "Multi (Deep)" : m.charAt(0).toUpperCase() + m.slice(1)}
-                    </button>
-                  ))}
+                  {(["quick", "speed", "balanced", "multi_perspective"] as const).map((m) => {
+                    const label =
+                      m === "quick"             ? "Quick (~5 s)" :
+                      m === "multi_perspective" ? "Deep" :
+                      m === "balanced"          ? "Balanced" :
+                      m === "speed"             ? "Speed" : m;
+                    const title =
+                      m === "quick"             ? "Haiku 4.5 streaming, single-pass, brain-classifier-grounded. Default for everyday Q&A. ~5 s." :
+                      m === "multi_perspective" ? "Sonnet executor → Opus advisor → challenger. Deepest reasoning, charter-gated. ~2 min." :
+                      m === "balanced"          ? "Sonnet advisor only, ~40 s. No executor stage." :
+                      "Sonnet executor only, ~9 s. No advisor review.";
+                    return (
+                      <button key={m} type="button" onClick={() => setMode(m)} className={tabCls(mode === m)} title={title}>
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="flex-1" />
                 <span className="text-10 text-ink-3 font-mono">⌘+Enter to submit</span>
@@ -548,19 +647,19 @@ export default function MlroAdvisorPage() {
                   disabled={!question.trim() || running}
                   className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
-                  {running ? "Analysing…" : "Ask Advisor"}
+                  {running ? (mode === "quick" ? "Streaming…" : "Analysing…") : "Ask Advisor"}
                 </button>
               </div>
             </div>
 
-            {running && (
+            {running && mode !== "quick" && (
               <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center border border-hair-2 rounded-lg bg-bg-1 mb-4">
                 <span className="animate-pulse font-mono text-brand">●</span>
                 {mode === "speed"
-                  ? "Speed mode — replying in seconds…"
+                  ? "Speed mode — Sonnet executor only, ~9 s…"
                   : mode === "balanced"
-                  ? "Balanced mode — Sonnet only, ~40 s…"
-                  : "Multi (Deep) — Sonnet → Opus → challenger via background job · up to ~2 min, polling for result…"}
+                  ? "Balanced mode — Sonnet advisor, ~40 s…"
+                  : "Deep mode — Sonnet → Opus → challenger via background job · up to ~2 min, polling for result…"}
               </div>
             )}
 
@@ -618,10 +717,20 @@ export default function MlroAdvisorPage() {
                             <p className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.guidance}</p>
                           </div>
                         )}
-                        {entry.result.narrative && (
+                        {(entry.result.narrative || streamingEntryId === entry.id) && (
                           <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
-                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Regulator-facing narrative</div>
-                            <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.narrative}</div>
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1 flex items-center gap-2">
+                              <span>{entry.mode === "quick" ? "Answer" : "Regulator-facing narrative"}</span>
+                              {streamingEntryId === entry.id && (
+                                <span className="font-mono text-brand animate-pulse">● streaming</span>
+                              )}
+                            </div>
+                            <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">
+                              {entry.result.narrative || (streamingEntryId === entry.id ? "" : "")}
+                              {streamingEntryId === entry.id && (
+                                <span className="inline-block w-1.5 h-4 bg-brand ml-0.5 animate-pulse align-middle" />
+                              )}
+                            </div>
                           </div>
                         )}
                         {entry.result.questionAnalysis && (
