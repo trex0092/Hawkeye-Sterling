@@ -300,6 +300,91 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     firesWhen: 'Any multi-section output is being finalised.',
   },
 
+  // ── Wave-8 primitives — Common sense, practical wisdom, and situational reasoning (adds 10). ──
+  // These primitives operate ABOVE the formal analytical layer. Before any formal
+  // typology, legal theory, or multi-hop inference, ask the obvious question.
+
+  {
+    id: 'mc.occams-razor',
+    label: "Occam's Razor — Prefer the Simplest Sufficient Explanation",
+    category: 'truth-seeking',
+    directive:
+      "Before committing to a complex multi-hop theory, ask: what is the simplest explanation consistent with ALL the evidence? If a simple, innocent explanation explains the observed facts as well as the suspicious hypothesis, the suspicious hypothesis is not established. A complex theory requires proportionally stronger evidence than a simple one. State the simplest explanation explicitly and document why it is insufficient before escalating to a more complex one.",
+    firesWhen: 'A multi-step or multi-entity theory is being advanced to explain observed financial behaviour.',
+  },
+  {
+    id: 'mc.narrative-coherence',
+    label: 'Narrative Coherence Check',
+    category: 'truth-seeking',
+    directive:
+      "Read the subject's declared narrative end-to-end as a whole story: is it internally consistent? Do the stated business purpose, the transaction pattern, the counterparty relationships, the geographic footprint, and the source of wealth form a coherent picture that a real business or individual would plausibly live? Identify every point where the narrative breaks down — an inconsistency is more informative than a red flag in isolation. A narrative that is consistent but implausible requires more evidence; one that is internally contradictory requires less.",
+    firesWhen: 'A subject or entity has provided a business rationale, source of wealth, or transactional explanation.',
+  },
+  {
+    id: 'mc.economic-rationality',
+    label: 'Economic Rationality Test',
+    category: 'calibration',
+    directive:
+      'Ask: would a rational, legitimate businessperson or individual do this? Apply the test to every suspicious element: (i) Is there a plausible profit motive for a legitimate actor using this structure? (ii) Does the cost and complexity of the arrangement make economic sense for the stated purpose? (iii) Would a commercially rational party choose this routing, jurisdiction, or instrument for legitimate reasons? If YES on all three, the arrangement is economically rational for legitimate purposes and the suspicious hypothesis requires additional evidence. If NO, the economic irrationality is itself a red flag requiring documentation.',
+    firesWhen: 'A financial structure, transaction routing, or entity arrangement is being assessed.',
+  },
+  {
+    id: 'mc.experienced-investigator-heuristic',
+    label: 'Experienced Investigator Heuristic',
+    category: 'calibration',
+    directive:
+      'Ask: what would a seasoned financial-crime investigator with 20 years of UAE/MENA experience think when they look at this case cold? This heuristic captures tacit knowledge that formal rules do not encode: (i) Does the overall risk picture "feel right" at the gestalt level — not just at the individual indicator level? (ii) Are there patterns here that an experienced investigator would recognise intuitively even before the formal analysis is complete? (iii) Would the experienced investigator be satisfied or troubled by the current evidence base? Treat the answer as a calibration signal — if the experienced-investigator heuristic says TROUBLED but the formal analysis says APPROVED, investigate the gap.',
+    firesWhen: 'A final or near-final verdict is being formed.',
+  },
+  {
+    id: 'mc.gestalt-synthesis',
+    label: 'Gestalt Synthesis — The Whole Exceeds the Sum of Its Parts',
+    category: 'decomposition',
+    directive:
+      'After completing the disaggregated indicator-by-indicator analysis, step back and assess the gestalt: does the overall pattern of behaviour across ALL indicators together create a picture that is more alarming or more benign than the individual indicators suggest in isolation? Two POSSIBLE-rated red flags pointing in the same direction can constitute a STRONG combined signal. Conversely, three isolated red flags with unrelated typology origins may be coincidental rather than indicative. State the gestalt verdict — the whole-picture assessment — before the final verdict is emitted.',
+    firesWhen: 'Multiple independent red flags or indicators have been assessed individually and a verdict is being formed.',
+  },
+  {
+    id: 'mc.common-sense-gate',
+    label: 'Common Sense Gate — Ask the Obvious Question First',
+    category: 'hygiene',
+    directive:
+      'Before invoking a complex analytical framework, ask the most obvious question about the situation in plain language: "Why would a legitimate person do this?" or "What is the most common explanation for this kind of transaction?" or "Is there a boring, mundane reason this looks unusual?" If the answer to the obvious question resolves the suspicion, the complex framework is not needed. Document the common-sense question asked and the answer before proceeding to formal analysis. Invoking advanced typologies when a simple question suffices is analytical overkill that wastes investigative resources.',
+    firesWhen: 'Any suspicious indicator is first identified, before formal analysis begins.',
+  },
+  {
+    id: 'mc.plausibility-bounds',
+    label: 'Plausibility Bounds Check',
+    category: 'calibration',
+    directive:
+      'Verify that every asserted fact respects physical, temporal, and financial plausibility constraints: (i) Temporal — can events in the asserted timeline have physically occurred in the stated sequence? (ii) Financial — do the transaction amounts and frequencies make sense given the declared business scale, sector benchmarks, and the subject\'s known economic profile? (iii) Geographic — is the routing physically and commercially plausible for a legitimate business? (iv) Operational — could a legitimate business of this stated size actually conduct operations at this volume and complexity? Any fact that fails a plausibility bound is either misunderstood, fabricated, or indicative of a concealed economic reality.',
+    firesWhen: 'Facts, transactions, or timelines are being assessed as part of a risk narrative.',
+  },
+  {
+    id: 'mc.behavioral-norm-check',
+    label: 'Behavioral Norm Check',
+    category: 'belief-update',
+    directive:
+      'Compare the subject\'s behaviour to what is normal for people or businesses in the same sector, jurisdiction, wealth band, and cultural context. Financial behaviour that is unusual for a Western business may be entirely normal in a Gulf or South Asian context — and vice versa. Before treating a deviation as suspicious, establish: (i) What is the population-level norm for this behaviour in this specific context? (ii) How far does the observed behaviour deviate from that norm in standard deviation terms? (iii) Is the deviation explained by cultural, religious, or sector-specific practices (e.g., seasonal cash flows from Zakat, Hajj-related remittances, DPMS trading norms)? Deviations require context-calibrated interpretation, not culture-blind application of a universal template.',
+    firesWhen: 'Transactional or behavioural patterns are being compared to expected norms.',
+  },
+  {
+    id: 'mc.sufficiency-threshold',
+    label: 'Evidence Sufficiency Threshold',
+    category: 'calibration',
+    directive:
+      'Before concluding, explicitly answer: do we have ENOUGH evidence to support this verdict at this confidence level? Apply the sufficiency test: (i) STR filing requires "reasonable grounds to suspect" — a lower threshold than balance-of-probabilities; (ii) BLOCKED verdict for asset freeze requires "reasonable belief" traceable to specific evidence; (iii) EXIT_RELATIONSHIP requires documented business risk decision, not suspicion alone. If the current evidence is below the sufficiency threshold for the intended action, specify exactly what additional evidence is needed and why it is obtainable. Do not over-conclude from thin evidence; do not under-conclude from adequate evidence.',
+    firesWhen: 'A verdict, filing decision, or risk action is being considered.',
+  },
+  {
+    id: 'mc.pattern-completion',
+    label: 'Pattern Completion — What Does the Partial Pattern Suggest?',
+    category: 'truth-seeking',
+    directive:
+      'When only part of a pattern is visible, reason forward and backward to infer the likely complete pattern: (i) What would this partial pattern look like if it were the beginning of a known typology? (ii) What observable evidence would you expect to find if that typology were fully present — and is that evidence present, absent, or un-examined? (iii) What would the pattern look like at its most benign? Treat the gap between the partial pattern and the expected full pattern as an investigation priority — the missing pieces are as analytically important as the visible ones. Document both what is seen and what SHOULD be seen if the hypothesis is correct.',
+    firesWhen: 'Partial transactional, behavioural, or network data is available and a typology is being considered.',
+  },
+
   // ── Wave-7 primitives — Structural reasoning gates (adds 5). ──
   {
     id: 'mc.verdict-gate-protocol',

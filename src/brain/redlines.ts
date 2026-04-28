@@ -281,6 +281,56 @@ export const REDLINES: Redline[] = [
     regulatoryAnchor: 'FDL 20/2018 Art.14; Wolfsberg PEP FAQ; CBUAE Guidance 2023',
     severity: 'high',
   },
+  // ── Wave 7 redlines — common sense gates, data quality, and challenger integrity ──
+  {
+    id: 'rl_narrative_plausibility_failure',
+    label: 'Narrative fails basic plausibility bounds — temporal, financial, or geographic',
+    precondition: 'The subject\'s declared business narrative, source of wealth, or transaction rationale fails one or more plausibility bounds (temporal impossibility, financial implausibility versus declared scale, geographic irrationality) and no alternative explanation is documented.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'Charter P10 (insufficient information); FDL 20/2018 Art.12',
+    severity: 'high',
+  },
+  {
+    id: 'rl_challenger_overturned_no_mlro_review',
+    label: 'Challenger stage OVERTURNED advisor verdict without scheduled MLRO review',
+    precondition: 'The adversarial challenger stage returns a CHALLENGE OUTCOME: OVERTURNED verdict but no MLRO review appointment has been scheduled within 24 hours of the overturned finding.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'Charter P3 (MLRO disposition authority); Cabinet Resolution 134/2025 Art.19',
+    severity: 'high',
+  },
+  {
+    id: 'rl_sanctions_dataset_stale',
+    label: 'Sanctions screening run on a dataset more than 48 hours old',
+    precondition: 'A sanctions screening result is relied upon for a CDD or transaction decision where the underlying sanctions list dataset was last refreshed more than 48 hours before the screening run.',
+    action: 'block',
+    playbookId: 'pb_confirmed_sanctions_match',
+    regulatoryAnchor: 'Cabinet Decision 74/2020 Art.4; OFAC CACR / SDN update policy; FATF IO.11',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_deepfake_kyc_not_forensic_referred',
+    label: 'KYC document scoring ≥2 deepfake indicators not referred for forensic review',
+    precondition: 'A submitted KYC document returns ≥2 deepfake or document-fraud indicators (EXIF anomaly, GAN artefacts, MRZ checksum failure, font inconsistency, metadata mismatch) and the case has not been escalated for forensic document examination before any onboarding decision proceeds.',
+    action: 'do_not_onboard',
+    regulatoryAnchor: 'FDL 20/2018 Art.12; CBUAE AML Guidance 2023; FATF R.10',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_ubo_chain_break_not_escalated',
+    label: 'UBO chain has a verified break and EDD not initiated within 24 hours',
+    precondition: 'A beneficial-ownership chain walk identifies a layer where the legal owner cannot be confirmed (nominee indicators, missing registry data, jurisdiction with no disclosure obligation) and no EDD has been initiated within 24 hours of identifying the break.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'FATF R.24/25; FDL 20/2018 Art.12; UAE Companies Law Federal Decree-Law No. 32/2021 Art.24',
+    severity: 'high',
+  },
+  {
+    id: 'rl_economic_rationality_failure_unaddressed',
+    label: 'Economically irrational structure documented but not escalated',
+    precondition: 'The economic rationality test identifies a structure or transaction whose cost, complexity, or routing is materially inconsistent with the declared legitimate purpose — i.e., a rational legitimate actor would not choose this arrangement — and the finding has not triggered an EDD request or MLRO escalation.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'Charter P9 (opaque risk methodology); FDL 20/2018 Art.14; FATF R.10',
+    severity: 'high',
+  },
 ];
 
 export const REDLINE_BY_ID: Map<string, Redline> = new Map(REDLINES.map((r) => [r.id, r]));
