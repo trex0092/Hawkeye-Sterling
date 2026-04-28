@@ -331,6 +331,56 @@ export const REDLINES: Redline[] = [
     regulatoryAnchor: 'Charter P9 (opaque risk methodology); FDL 20/2018 Art.14; FATF R.10',
     severity: 'high',
   },
+  // ── Wave 8 redlines — game theory, mechanism design, and strategic rationality gates ──
+  {
+    id: 'rl_synthetic_identity_onboarded',
+    label: 'Synthetic identity detected but onboarding not blocked',
+    precondition: 'KYC analysis returns ≥2 synthetic-identity indicators (real-attribute / fabricated-attribute mix, AI-generated documentation, Emirates ID number mismatch with ICP registry response) and the subject has been onboarded or a relationship has been approved without MLRO sign-off on the synthetic-identity finding.',
+    action: 'do_not_onboard',
+    regulatoryAnchor: 'FDL 20/2018 Art.12; CBUAE AML Guidance 2023; FATF R.10',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_consecutive_mlro_turnover',
+    label: '≥3 MLRO changes in 24 months at counterparty institution — governance instability',
+    precondition: 'An institutional due diligence review of a counterparty institution reveals that ≥3 different persons have occupied the MLRO role within any rolling 24-month window without a documented, credible business rationale for each transition.',
+    action: 'escalate_immediately',
+    playbookId: 'pb_high_risk_customer',
+    regulatoryAnchor: 'FATF R.18; Cabinet Resolution 134/2025 Art.19; CBUAE Fit and Proper Guidance',
+    severity: 'high',
+  },
+  {
+    id: 'rl_mechanism_design_circumvention',
+    label: 'Structure achieves regulatory opacity by mechanism design across ≥2 jurisdictions',
+    precondition: 'Mechanism design audit (mc.mechanism-design-audit) identifies a cross-jurisdictional structure that systematically places the UBO outside every applicable regulatory perimeter and routes transactions below reporting thresholds in each jurisdiction — achieving opacity as a systematic engineering outcome, not incidentally — and no legitimate business rationale has been established for the structure.',
+    action: 'block',
+    regulatoryAnchor: 'FATF R.24/25 (beneficial ownership); FDL 20/2018 Art.12; FATF R.10 INR.10(b)',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_commitment_credibility_failure',
+    label: 'Subject compliance commitment deemed not credible and risk tier maintained at LOW',
+    precondition: 'The commitment-credibility test (mc.commitment-credibility-test) returns LOW credibility for a subject\'s remediation plan, compliance undertaking, or cooperation representation — because the commitment is unverifiable, the subject lacks an enforcement mechanism, or the subject has a history of non-performance — yet the overall risk tier has been set to LOW in reliance on that commitment.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'Charter P9 (opaque risk scoring); FDL 20/2018 Art.14; CBUAE Guidance 2023',
+    severity: 'high',
+  },
+  {
+    id: 'rl_ai_agent_unsanctioned_scope',
+    label: 'Agentic AI operating outside approved capability manifest',
+    precondition: 'An autonomous agent or automated workflow invokes a tool call, makes a risk determination, or executes an action not listed in its approved capability manifest — including accessing CDD data, initiating transactions, or modifying case files without the required human-in-the-loop checkpoint.',
+    action: 'block',
+    regulatoryAnchor: 'EU AI Act Art.14; NIST AI RMF Govern 1.2; Charter P9',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_tf_ml_cross_filing_omitted',
+    label: 'TF or PF finding generated without required dual goAML filing',
+    precondition: 'A finding simultaneously establishes both terrorist financing (TF) and proliferation financing (PF) dimensions for the same subject and only a single goAML STR is prepared, without the required separate PF Freeze/Restriction Report (FFR) or PNMR filing under Cabinet Decision 74/2020.',
+    action: 'block',
+    regulatoryAnchor: 'FDL 26/2021 Art.2; Cabinet Decision 74/2020 Art.4-7; FATF R.5/R.7',
+    severity: 'critical',
+  },
 ];
 
 export const REDLINE_BY_ID: Map<string, Redline> = new Map(REDLINES.map((r) => [r.id, r]));

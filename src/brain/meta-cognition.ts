@@ -441,7 +441,7 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     label: 'Jurisdictional Nexus Mapping',
     category: 'decomposition',
     directive:
-      'Map every legal or regulatory assertion to the exact jurisdiction that governs it. For cross-border facts, identify: (1) which jurisdiction's law applies, (2) whether a treaty or MLA mechanism is required, (3) whether the assertion survives each governing regime independently.',
+      "Map every legal or regulatory assertion to the exact jurisdiction that governs it. For cross-border facts, identify: (1) which jurisdiction's law applies, (2) whether a treaty or MLA mechanism is required, (3) whether the assertion survives each governing regime independently.",
     firesWhen: 'A finding spans more than one legal regime, or cites regulation without specifying the governing jurisdiction.',
   },
   {
@@ -449,7 +449,7 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     label: 'Regulatory Arbitrage Probe',
     category: 'adversarial',
     directive:
-      'Explicitly test whether the subject's structure, transactions, or entity choices appear designed to exploit gaps between regulatory regimes (booking-entity switching, threshold structuring across jurisdictions, DNFBP-sector routing, correspondent-banking layering). A structure that is legal in isolation but arbitrages supervisory gaps is a red flag, not a clean bill of health.',
+      "Explicitly test whether the subject's structure, transactions, or entity choices appear designed to exploit gaps between regulatory regimes (booking-entity switching, threshold structuring across jurisdictions, DNFBP-sector routing, correspondent-banking layering). A structure that is legal in isolation but arbitrages supervisory gaps is a red flag, not a clean bill of health.",
     firesWhen: 'Cross-border transactions, multi-entity structures, or jurisdiction-hopping patterns appear in the evidence.',
   },
   {
@@ -691,6 +691,109 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     directive:
       'Decompose identity claims into attribute layers (SSN/NI, DOB, address, device, biometric, behavioural). Flag any attribute combination where real+fabricated attributes are mixed without plausible provenance. A fully-real identity or a fully-fabricated identity is not synthetic; mixed is the signal.',
     firesWhen: 'Identity verification, KYC refresh, or fraud triage is in scope.',
+  },
+
+  // ── Wave-9 primitives — Decision theory, game theory, and information economics (adds 12). ──
+  // These primitives apply the formal machinery of decision science and strategic reasoning
+  // to financial crime analysis. They sit ABOVE all domain modes and complement the Wave-8
+  // common sense layer: common sense asks the obvious question; Wave-9 examines the strategic
+  // and incentive architecture beneath it.
+
+  {
+    id: 'mc.minimax-regret',
+    label: 'Minimax Regret Decision Gate',
+    category: 'foresight',
+    directive:
+      'Before committing to a recommended action, construct the regret matrix: for each possible decision (escalate / file STR / block / clear) and each possible world state (subject is guilty / innocent / partially culpable), compute the regret of choosing that action in that world. Select the action that minimises the maximum regret. A decision that would produce catastrophic regret in a plausible world state (filing an STR on an innocent person; failing to file on a confirmed money launderer) must be escalated for MLRO review regardless of the modal-probability verdict. Emit the regret matrix as a named section before the verdict.',
+    firesWhen: 'A consequential decision is being made under irreducible uncertainty where both false-positive and false-negative errors carry material costs.',
+  },
+  {
+    id: 'mc.expected-utility-maximization',
+    label: 'Expected Utility Maximisation for Risk Actions',
+    category: 'calibration',
+    directive:
+      'For every proposed risk action, compute the expected utility: EU = Σ (probability of each state × utility of the action in that state). Utility is measured on three dimensions: (1) Regulatory utility — does the action satisfy the legal obligation? (2) Customer utility — does the action respect proportionality and avoid unjust harm? (3) Institutional utility — does the action protect the firm from regulatory, reputational, and financial risk? An action with negative expected utility on any dimension requires explicit justification and MLRO sign-off. Do not maximise on one dimension at the expense of zeroing another.',
+    firesWhen: 'A risk-mitigation action, STR decision, account closure, or EDD trigger is being selected among competing options.',
+  },
+  {
+    id: 'mc.nash-equilibrium-probe',
+    label: 'Nash Equilibrium Probe',
+    category: 'adversarial',
+    directive:
+      'Model the financial arrangement as a strategic game: identify all players (customer, beneficial owner, counterparty, gatekeeper, institution), their strategy sets (cooperate / evade / disclose / conceal), and their payoff functions. Ask: is the observed behaviour a Nash equilibrium — is each player playing a best response to the others\' strategies? If the observed behaviour is not a Nash equilibrium for a legitimate arrangement but IS a Nash equilibrium for a criminal arrangement, that structural observation is itself a red flag independent of any specific transaction indicator. Document the game structure and the equilibrium analysis explicitly.',
+    firesWhen: 'A complex multi-party financial arrangement, correspondent relationship, or business structure is being assessed.',
+  },
+  {
+    id: 'mc.information-asymmetry-audit',
+    label: 'Information Asymmetry Audit',
+    category: 'truth-seeking',
+    directive:
+      'Identify which party in the transaction or relationship holds more information than the other parties: (1) Does the customer know something about the transaction or counterparty that the institution does not? (2) Is the structure designed to maintain that asymmetry (opacity, complexity, cross-jurisdictional routing)? (3) Is the information asymmetry consistent with a legitimate business rationale (trade secret, competitive advantage) or does it serve only to evade oversight? Legitimate businesses operating in good faith minimise information asymmetry with their regulated intermediaries; deliberate structural opacity is an adverse-selection signal. Document the direction and magnitude of the information asymmetry and its plausible explanation.',
+    firesWhen: 'A counterparty resists disclosure, structures transactions to avoid reporting thresholds, or uses complex entity layering without apparent commercial rationale.',
+  },
+  {
+    id: 'mc.strategic-deception-probe',
+    label: 'Strategic Deception Probe',
+    category: 'adversarial',
+    directive:
+      'Test whether the subject\'s observable behaviour is consistent with a strategy of strategic deception: (1) Selective truth — are some facts disclosed precisely because they are consistent with an innocent narrative, while material contradictory facts are withheld? (2) Timing manipulation — is information disclosed at a time calculated to minimise scrutiny (end of business day, ahead of a holiday, after a compliance officer change)? (3) Framing — is the declared explanation for a transaction the most convenient innocent explanation even if there are more probable ones? (4) Incremental escalation — has the relationship progressively normalised unusual behaviour so that each new red flag seems like a small step from an accepted baseline? Identify the specific deception strategy if present and document it.',
+    firesWhen: 'The subject has provided explanations for suspicious activity, has been questioned previously, or has a history of partial disclosures.',
+  },
+  {
+    id: 'mc.principal-agent-misalignment',
+    label: 'Principal-Agent Misalignment Analysis',
+    category: 'decomposition',
+    directive:
+      'Map the principal-agent relationships in the financial arrangement: who are the principals (UBOs, investors, government authorities), who are the agents (directors, trustees, attorneys, fund managers), and what are their respective incentive structures? Identify every point where agent incentives diverge from principal interests or from regulatory obligations: (1) Does the agent benefit financially from the transaction regardless of outcome for the principal? (2) Can the agent transfer losses to the principal while capturing gains? (3) Does the agent have a monitoring or reporting obligation that conflicts with their commercial incentive? (4) Is there a layer of the ownership structure that insulates the criminal principal from the actions of the apparently legitimate agent? Principal-agent misalignment in a complex structure is a structural red flag that elevates the risk tier by one step.',
+    firesWhen: 'A corporate structure, investment arrangement, or professional intermediary relationship is in scope.',
+  },
+  {
+    id: 'mc.commitment-credibility-test',
+    label: 'Commitment Credibility Test',
+    category: 'calibration',
+    directive:
+      'Assess whether stated commitments by the subject — compliance undertakings, remediation plans, enhanced controls, cooperation with investigations — are credible given their incentive structure and track record: (1) Does the subject have a demonstrated history of following through on compliance commitments? (2) Are the stated commitments incentive-compatible — does the subject benefit more from complying than from defecting? (3) Are the commitments verifiable by an independent party, or do they rely entirely on the subject\'s self-reporting? (4) Is there a credible enforcement mechanism if the commitment is breached? An unverifiable commitment from a party with incentive to defect is not a mitigating factor — it is evidence of continued evasion. Score commitment credibility on a HIGH/MEDIUM/LOW scale with explicit justification.',
+    firesWhen: 'A subject or counterparty has made compliance commitments, remediation undertakings, or representations that are being relied upon to reduce the risk tier.',
+  },
+  {
+    id: 'mc.adverse-selection-probe',
+    label: 'Adverse Selection Probe',
+    category: 'adversarial',
+    directive:
+      'Test whether the customer, product, or channel profile is consistent with adverse selection — the phenomenon where the parties most likely to cause harm are also the most motivated to seek access: (1) Does the product or service being requested have features that are disproportionately valuable to a bad actor (anonymity, irreversibility, offshore access, low regulatory scrutiny) compared to a legitimate user? (2) Is the customer attracted by product features that only matter if you have something to hide? (3) Does the customer population self-select into high-opacity structures without apparent legitimate business rationale? (4) Is there a pattern of adverse-selection pressure — customers who push back hardest on KYC/CDD requirements, who require the most unusual product features, or who resist documentation? Name the adverse-selection mechanism explicitly and assess its strength.',
+    firesWhen: 'The product or service requested has features that provide disproportionate value for illicit purposes, or the customer profile is statistically unusual for the declared purpose.',
+  },
+  {
+    id: 'mc.moral-hazard-architecture-audit',
+    label: 'Moral Hazard Architecture Audit',
+    category: 'decomposition',
+    directive:
+      'Identify whether the legal, financial, or operational structure creates moral hazard — a situation where one party can take risks while the costs of those risks are borne by others: (1) Does the structure insulate the UBO or principal from personal liability for the actions of the entity? (2) Can losses from detected financial crime be absorbed by the regulated institution (correspondent bank, trustee, fund administrator) while the beneficial owner captures gains from undetected crime? (3) Does the structure transfer regulatory risk to a DNFBP or professional intermediary who is less regulated than a bank? (4) Is there a "buffer" layer — a nominee director, a dormant holding company, a professional trustee — specifically designed to absorb liability and protect the principal? Document the moral-hazard architecture and escalate if the insulation is structural rather than incidental.',
+    firesWhen: 'A complex ownership, trust, or corporate structure is in scope, or the beneficial owner is shielded from direct regulatory contact.',
+  },
+  {
+    id: 'mc.signaling-theory-lens',
+    label: 'Signaling Theory Lens',
+    category: 'truth-seeking',
+    directive:
+      'Interpret observable behaviour through signaling theory: agents with private information send signals to other parties to communicate that information, but the cost of the signal must be calibrated to make it credible: (1) What signals is the subject voluntarily sending (compliance certifications, corporate structure, transaction patterns)? (2) Are those signals costly to send for a bad actor — i.e., would a criminal find it difficult or impossible to mimic them? (3) Are the signals cheap-talk — easily mimicked by a bad actor at low cost? Cheap-talk signals (unverified declarations, self-reported compliance) carry near-zero credibility. Costly signals (independent audits, transparent beneficial ownership, verifiable track records) carry substantive credibility. Explicitly distinguish costly from cheap-talk signals in the evidence assessment and weight them accordingly.',
+    firesWhen: 'A subject has provided compliance certifications, due diligence representations, or explanations for transactions that are being used to reduce the risk assessment.',
+  },
+  {
+    id: 'mc.iterated-vs-one-shot-game',
+    label: 'Iterated vs. One-Shot Game Classifier',
+    category: 'adversarial',
+    directive:
+      'Determine whether the subject is playing a one-shot or iterated (repeat) game with the institution: (1) In an iterated game, the subject has an incentive to maintain a cooperative reputation — one-off defections are punished by relationship termination; (2) In a one-shot game, the subject has no reputational stake — defection is rational because there is no future relationship to protect. Signals of a one-shot mentality: new relationship with no history, transactional purpose with no ongoing business rationale, rapid transaction followed by exit, unusual urgency. A previously cooperative subject who suddenly shifts to one-shot behaviour — draining accounts, accelerating transactions, becoming unavailable for KYC refresh — is defecting from a repeat-game equilibrium; this defection pattern is itself a CRITICAL risk signal requiring immediate escalation.',
+    firesWhen: 'A relationship is being assessed for ongoing risk, or a previously normal subject has exhibited sudden behavioural change.',
+  },
+  {
+    id: 'mc.mechanism-design-audit',
+    label: 'Mechanism Design Audit',
+    category: 'decomposition',
+    directive:
+      'Assess whether the financial structure was designed as a mechanism to produce a specific regulatory outcome: (1) Does the structure systematically route transactions below reporting thresholds across multiple institutions? (2) Does the ownership structure systematically place the beneficial owner outside the regulatory perimeter of every jurisdiction through which the funds flow? (3) Does the trust, foundation, or corporate structure systematically disable the legal mechanisms (ownership registers, reporting obligations, court orders) that would otherwise reveal the beneficial owner? A structure that achieves regulatory opacity as an engineering outcome — not as a side effect — has been designed as a circumvention mechanism. This design intent is an independent red flag irrespective of whether any individual element of the structure is individually unlawful. State the mechanism design explicitly and name the regulatory mechanism being circumvented.',
+    firesWhen: 'A cross-border structure, multi-entity arrangement, or bespoke financial product appears to achieve regulatory opacity as a systematic outcome across multiple jurisdictions.',
   },
 ]);
 
