@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../engine.js';
+import { FACULTIES } from '../faculties.js';
 import type { EvidenceItem } from '../evidence.js';
 
 describe('engine — end-to-end fusion + introspection pipeline', () => {
@@ -17,7 +18,7 @@ describe('engine — end-to-end fusion + introspection pipeline', () => {
     expect(verdict.posterior).toBeDefined();
     expect(verdict.posterior!).toBeGreaterThan(0);
     expect(verdict.firepower).toBeDefined();
-    expect(verdict.firepower!.activations.length).toBe(10);
+    expect(verdict.firepower!.activations.length).toBe(FACULTIES.length);
     expect(verdict.introspection).toBeDefined();
     expect(verdict.methodology).toMatch(/Fusion methodology/);
   });

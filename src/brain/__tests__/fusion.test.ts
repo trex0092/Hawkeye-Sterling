@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fuseFindings } from '../fusion.js';
+import { FACULTIES } from '../faculties.js';
 import type { EvidenceItem } from '../evidence.js';
 import type { Finding } from '../types.js';
 
@@ -126,14 +127,14 @@ describe('fusion — conflict detection + outcome', () => {
 });
 
 describe('fusion — cognitive firepower', () => {
-  it('reports per-faculty activation across all ten faculties', () => {
+  it('reports per-faculty activation across every registered faculty', () => {
     const findings: Finding[] = [
       f({ modeId: 'a', faculties: ['reasoning'], score: 0.6, confidence: 0.9 }),
       f({ modeId: 'b', faculties: ['data_analysis'], score: 0.5, confidence: 0.8 }),
       f({ modeId: 'c', faculties: ['intelligence'], score: 0.7, confidence: 0.8 }),
     ];
     const r = fuseFindings(findings);
-    expect(r.firepower.activations.length).toBe(10);
+    expect(r.firepower.activations.length).toBe(FACULTIES.length);
     const engaged = r.firepower.activations.filter((a) => a.status !== 'silent');
     expect(engaged.length).toBeGreaterThanOrEqual(3);
     expect(r.firepower.firepowerScore).toBeGreaterThan(0);
