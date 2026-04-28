@@ -112,6 +112,22 @@ const DATA_FRESHNESS = {
   news: "per-request (live RSS)",
 } as const;
 
+// Versioning — tune one of these whenever the composite formula or the
+// audit-trail schema changes. Old reports keep their version stamp so a
+// regulator inspecting a historical filing knows which rules were in
+// force when the disposition was recorded.
+const BRAIN_ENGINE_VERSION = "1.0.0";
+const REPORT_SCHEMA_VERSION = "2.0.0";
+// Build SHA — wired through Netlify's COMMIT_REF env var when deployed,
+// undefined locally. We surface whichever provider env var is present so
+// the audit trail still works on Vercel / GitHub Actions / a plain
+// `next start`.
+const BUILD_SHA =
+  process.env["COMMIT_REF"] ??
+  process.env["VERCEL_GIT_COMMIT_SHA"] ??
+  process.env["GITHUB_SHA"] ??
+  "local";
+
 function makeRunId(): string {
   // 8 hex chars is enough collision-resistance for an audit-trail id;
   // we don't need crypto-strong uniqueness.
@@ -422,6 +438,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const audit = {
       runId: makeRunId(),
       generatedAt: new Date().toISOString(),
+      engineVersion: BRAIN_ENGINE_VERSION,
+      schemaVersion: REPORT_SCHEMA_VERSION,
+      buildSha: BUILD_SHA.slice(0, 12),
       dataFreshness: DATA_FRESHNESS,
       moduleWeights: MODULE_WEIGHTS,
     };

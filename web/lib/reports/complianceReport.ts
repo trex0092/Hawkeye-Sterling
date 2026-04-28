@@ -6,6 +6,8 @@
 // classification · adverse-media overlay · recommendation · goAML package
 // · MLRO decision · regulatory framework.
 
+import { createHash } from "node:crypto";
+
 export type ReportType = "PEP" | "SANCTIONS" | "AM" | "STANDARD" | "SOE";
 
 export interface ReportSubject {
@@ -93,6 +95,9 @@ export interface ReportSuperBrain {
   audit?: {
     runId?: string;
     generatedAt?: string;
+    engineVersion?: string;
+    schemaVersion?: string;
+    buildSha?: string;
     dataFreshness?: Record<string, string>;
     moduleWeights?: Record<string, string | number>;
   } | null;
@@ -151,6 +156,96 @@ function buildId(type: ReportType, d: Date): string {
   const h = String(d.getUTCHours()).padStart(2, "0");
   const mm = String(d.getUTCMinutes()).padStart(2, "0");
   return `HWK-SCR-${y}${m}${day}-${type}-${h}${mm}`;
+}
+
+// Canonical, deterministic JSON for hashing — sorts object keys
+// recursively so two equal payloads always produce the same SHA. Without
+// this two reports built from the same facts would have different
+// payload hashes purely because of key-ordering, which would be
+// catastrophic for replay-defence.
+function canonicalJson(value: unknown): string {
+  if (value === null || value === undefined) return "null";
+  if (typeof value === "number" || typeof value === "boolean")
+    return JSON.stringify(value);
+  if (typeof value === "string") return JSON.stringify(value);
+  if (Array.isArray(value))
+    return `[${value.map((v) => canonicalJson(v)).join(",")}]`;
+  if (typeof value === "object") {
+    const keys = Object.keys(value as Record<string, unknown>).sort();
+    const body = keys
+      .map(
+        (k) =>
+          `${JSON.stringify(k)}:${canonicalJson(
+            (value as Record<string, unknown>)[k],
+          )}`,
+      )
+      .join(",");
+    return `{${body}}`;
+  }
+  return "null";
+}
+
+function sha256(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+// Top-of-report disposition banner — the first thing a regulator should
+// see. Tipping-off prohibition repeated in bold above the fold for
+// SANCTIONS / AM types so it can never be missed.
+function formatBanner(type: ReportType, disposition: string): string[] {
+  const lines: string[] = [];
+  if (type === "SANCTIONS") {
+    lines.push("╔" + "═".repeat(77) + "╗");
+    lines.push(
+      "║   ⚠  POSSIBLE SANCTIONS MATCH — MLRO REVIEW REQUIRED BEFORE ANY ACTION  ⚠ ║",
+    );
+    lines.push(
+      "║   DO NOT FREEZE OR FILE until MLRO has verified match identity            ║",
+    );
+    lines.push(
+      "║   TIPPING-OFF PROHIBITION ABSOLUTE — do not alert the subject             ║",
+    );
+    lines.push("╚" + "═".repeat(77) + "╝");
+  } else if (type === "AM") {
+    lines.push("╔" + "═".repeat(77) + "╗");
+    lines.push(
+      "║   POSITIVE ADVERSE-MEDIA SIGNAL — MLRO ESCALATION REQUIRED              ║",
+    );
+    lines.push(
+      "║   TIPPING-OFF PROHIBITION ABSOLUTE — do not alert the subject           ║",
+    );
+    lines.push("╚" + "═".repeat(77) + "╝");
+  }
+  lines.push(`DISPOSITION         : ${disposition}`);
+  return lines;
+}
+
+// Sanctions-hit detail — when r.hits.length > 0 the MLRO must see every
+// candidate considered, the list it came from, the match score, the
+// matching method, and any associated programs. Without this block the
+// report tells the operator "POSSIBLE MATCH" but doesn't say against
+// what — which is precisely the question an audit asks first.
+function formatSanctionsHits(r: ReportScreeningResult): string[] {
+  if (r.hits.length === 0) return [];
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} SANCTIONS HITS — DETAIL ${"─".repeat(50)}`);
+  const visible = r.hits.slice(0, 10);
+  visible.forEach((h, i) => {
+    const score100 = Math.round(h.score * 100);
+    lines.push(`Hit ${i + 1}`);
+    lines.push(`  list_id              ${h.listId}`);
+    lines.push(`  list_ref             ${h.listRef}`);
+    lines.push(`  candidate            ${h.candidateName}`);
+    lines.push(`  score                ${h.score.toFixed(3)}  (${score100}/100)`);
+    lines.push(`  method               ${h.method}`);
+    if (h.programs && h.programs.length > 0) {
+      lines.push(`  programs             ${h.programs.join(", ")}`);
+    }
+  });
+  if (r.hits.length > 10) {
+    lines.push(`…and ${r.hits.length - 10} more hit(s) — see attached evidence pack.`);
+  }
+  return lines;
 }
 
 function formatHeader(
@@ -843,12 +938,20 @@ function formatDecision(type: ReportType): string[] {
 // weights were in force, and which data sources were consulted. Empty
 // when the super-brain payload didn't include an audit block (older
 // clients) — the report stays valid but loses replay-ability.
-function formatAuditTrail(input: ReportInput): string[] {
+function formatAuditTrail(
+  input: ReportInput,
+  payloadHash: string,
+): string[] {
   const a = input.superBrain?.audit;
   const op = input.operator;
-  if (!a && !op) return [];
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} AUDIT TRAIL ${"─".repeat(63)}`);
+  // Schema + engine + build — pinned to whichever versions were in
+  // force when the brain ran. A regulator inspecting a 2-year-old
+  // filing knows immediately which scoring rules to replay against.
+  if (a?.schemaVersion) lines.push(`report.schema_version ${a.schemaVersion}`);
+  if (a?.engineVersion) lines.push(`brain.engine_version  ${a.engineVersion}`);
+  if (a?.buildSha) lines.push(`brain.build_sha       ${a.buildSha}`);
   if (a?.runId) lines.push(`reasoning.run_id      ${a.runId}`);
   if (a?.generatedAt) lines.push(`brain.generated_at    ${a.generatedAt}`);
   if (a?.dataFreshness && Object.keys(a.dataFreshness).length > 0) {
@@ -869,6 +972,29 @@ function formatAuditTrail(input: ReportInput): string[] {
   lines.push(
     `report.generated_at   ${(input.now ?? new Date()).toISOString()}`,
   );
+  lines.push(`payload.sha256        ${payloadHash}`);
+  lines.push("timestamps            UTC unless otherwise noted");
+  if (a?.runId) {
+    lines.push("");
+    lines.push(
+      "Reproducibility       : this report can be replayed by re-firing",
+    );
+    lines.push(
+      `                        /api/super-brain with run id ${a.runId} against`,
+    );
+    lines.push(
+      "                        the data versions listed above. If any source",
+    );
+    lines.push(
+      "                        has been updated since brain.generated_at, the",
+    );
+    lines.push(
+      "                        recomputed composite may differ — that is the",
+    );
+    lines.push(
+      "                        expected behaviour, not a defect.",
+    );
+  }
   return lines;
 }
 
@@ -883,26 +1009,24 @@ function formatFramework(): string[] {
 export function buildComplianceReport(input: ReportInput): string {
   const now = input.now ?? new Date();
   const type = inferReportType(input.result, input.superBrain);
+  const disposition = dispositionFor(input.result, input.superBrain);
   const out: string[] = [];
 
   out.push(SEP);
   out.push(...formatHeader(type, input, now));
-
-  if (type === "SANCTIONS") {
-    out.push("╔" + "═".repeat(77) + "╗");
-    out.push(
-      "║   ⚠  POSSIBLE SANCTIONS MATCH — MLRO REVIEW REQUIRED BEFORE ANY ACTION  ⚠ ║",
-    );
-    out.push(
-      "║   DO NOT FREEZE OR FILE until MLRO has verified match identity            ║",
-    );
-    out.push("╚" + "═".repeat(77) + "╝");
-  }
+  out.push(...formatBanner(type, disposition));
 
   out.push(...formatSubject(input.subject));
   out.push("");
   out.push(...formatPosture(input.result, input.superBrain));
   out.push(...formatMatrix(input.result, input.superBrain));
+  // Sanctions hit detail goes immediately after the matrix so a reviewer
+  // following "POSSIBLE MATCH — VERIFY" lands on per-hit data without
+  // scrolling.
+  const sanctionsDetail = formatSanctionsHits(input.result);
+  if (sanctionsDetail.length > 0) {
+    out.push(...sanctionsDetail);
+  }
   if (input.superBrain) {
     out.push(...formatPepBlock(input.superBrain));
     out.push(...formatJurisdiction(input.superBrain));
@@ -917,11 +1041,25 @@ export function buildComplianceReport(input: ReportInput): string {
   out.push(...formatGoaml(type, input, now));
   out.push(...formatDecision(type));
   out.push(...formatFramework());
-  const audit = formatAuditTrail(input);
+
+  // Hash the canonical payload (key-sorted) so two reports built from
+  // semantically-equal inputs always produce the same payload.sha256
+  // even if the JSON came over the wire with different key ordering.
+  const payloadHash = sha256(canonicalJson(input));
+  const audit = formatAuditTrail(input, payloadHash);
   if (audit.length > 0) {
     out.push("");
     out.push(...audit);
   }
+
+  // Hash the report content itself so a reviewer can detect tampering
+  // in the .txt / PDF artifact. The hash covers everything ABOVE the
+  // line on which it appears (the line itself and the END OF REPORT
+  // sentinel are excluded so they can never affect the hash).
+  const bodySoFar = out.filter((l) => l != null).join("\n");
+  const reportHash = sha256(bodySoFar);
+  out.push(`report.sha256         ${reportHash}`);
+
   out.push(SEP);
   out.push("END OF REPORT");
   out.push(SEP);

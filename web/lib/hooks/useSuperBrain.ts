@@ -88,6 +88,9 @@ export interface SuperBrainResult {
   audit?: {
     runId: string;
     generatedAt: string;
+    engineVersion?: string;
+    schemaVersion?: string;
+    buildSha?: string;
     dataFreshness: Record<string, string>;
     moduleWeights: Record<string, string | number>;
   };
