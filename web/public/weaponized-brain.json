@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-28T05:19:28+00:00",
+  "generatedAt": "2026-04-28T07:35:36+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-28T05:19:28+00:00",
+    "generatedAt": "2026-04-28T07:35:36+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -255,7 +255,7 @@
         }
       ],
       "reasoningModes": {
-        "total": 385,
+        "total": 425,
         "byCategory": {
           "logic": 21,
           "cognitive_science": 24,
@@ -296,11 +296,15 @@
           "corporate_intelligence": 4,
           "epistemic_quality": 4,
           "psychological_profiling": 4,
-          "insider_threat": 4
+          "insider_threat": 4,
+          "common_sense": 10,
+          "quantitative_analysis": 10,
+          "synthetic_intelligence": 10,
+          "formal_reasoning": 10
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 111,
+          "wave2": 151,
           "wave3": 73,
           "wave4": 29,
           "wave5": 37,
@@ -1067,13 +1071,13 @@
     },
     "integrity": {
       "charterHash": "65a67258",
-      "catalogueHash": "d5541843"
+      "catalogueHash": "154a89b1"
     }
   },
   "integrity": {
     "charterHash": "65a67258",
-    "catalogueHash": "d5541843",
-    "compositeHash": "4488caba"
+    "catalogueHash": "154a89b1",
+    "compositeHash": "cbd75e9f"
   },
   "enhanced": {
     "extended": {
