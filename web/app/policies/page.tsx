@@ -382,7 +382,7 @@ export default function PoliciesPage() {
                           </span>
                           <RowActions
                             label={`policy ${p.id}`}
-                            onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                            onEdit={() => startEdit(p)}
                             onDelete={() => deletePolicy(p.id)}
                             confirmDelete={false}
                           />
