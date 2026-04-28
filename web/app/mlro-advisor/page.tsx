@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { StrDraftModal } from "@/components/shared/StrDraftModal";
+import { downloadEvidencePack, type EvidencePackEntry } from "@/lib/evidencePack";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -275,6 +277,8 @@ export default function MlroAdvisorPage() {
   const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>([]);
   /** ID of the entry currently being streamed (Quick mode). null when idle. */
   const [streamingEntryId, setStreamingEntryId] = useState<string | null>(null);
+  /** Advisor entry currently open in the goAML draft modal (null = closed). */
+  const [strDraftFor, setStrDraftFor] = useState<AdvisorHistoryEntry | null>(null);
 
   const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
     quick: 15_000,
@@ -823,13 +827,32 @@ export default function MlroAdvisorPage() {
                             </div>
                           </details>
                         )}
-                        <div className="flex items-center gap-2 pt-1">
+                        <div className="flex items-center gap-2 pt-1 flex-wrap">
                           <AsanaReportButton payload={{
                             module: "mlro-advisor",
                             label: `MLRO Advisory · ${entry.result.complianceReview.advisorVerdict.replace(/_/g, " ")}`,
                             summary: `Q: ${entry.question.slice(0, 80)} | Verdict: ${entry.result.complianceReview.advisorVerdict} | Mode: ${entry.mode} | ${entry.result.elapsedMs}ms`,
                             metadata: { verdict: entry.result.complianceReview.advisorVerdict, mode: entry.mode, issues: entry.result.complianceReview.issues.length },
                           }} />
+                          <button
+                            type="button"
+                            onClick={() => setStrDraftFor(entry)}
+                            disabled={!entry.result.narrative}
+                            title={entry.result.narrative
+                              ? "Draft a goAML XML report from this verdict"
+                              : "Narrative not yet available"}
+                            className="text-11 px-2.5 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:border-brand hover:text-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Draft STR (XML)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadEvidencePack(buildEvidencePackEntry(entry))}
+                            title="Download a regulator-ready PDF evidence pack with reasoning trail and charter hash"
+                            className="text-11 px-2.5 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:border-brand hover:text-brand transition-colors"
+                          >
+                            Evidence Pack (PDF)
+                          </button>
                           {entry.result.charterIntegrityHash && (
                             <span className="text-10 text-ink-3 font-mono">
                               hash:{entry.result.charterIntegrityHash.slice(0, 12)}
@@ -1068,8 +1091,55 @@ export default function MlroAdvisorPage() {
           </>
         )}
       </div>
+
+      <StrDraftModal
+        open={strDraftFor !== null}
+        onClose={() => setStrDraftFor(null)}
+        payload={{
+          question: strDraftFor?.question ?? "",
+          narrative: strDraftFor?.result.narrative ?? "",
+          defaultJurisdiction: strDraftFor?.result.questionAnalysis?.jurisdictions?.[0],
+        }}
+      />
     </ModuleLayout>
   );
+}
+
+/** Project an advisor history entry onto the EvidencePackEntry shape the
+ *  PDF builder expects. Pulls everything regulator-relevant: verdict,
+ *  narrative, classifier hits, FATF anchors, and the charter hash that
+ *  proves provenance. */
+function buildEvidencePackEntry(entry: AdvisorHistoryEntry): EvidencePackEntry {
+  const a = entry.result.questionAnalysis;
+  return {
+    question: entry.question,
+    askedAt: entry.askedAt,
+    mode: entry.mode,
+    verdict: entry.result.complianceReview.advisorVerdict,
+    narrative: entry.result.narrative,
+    guidance: entry.result.guidance,
+    elapsedMs: entry.result.elapsedMs,
+    partial: entry.result.partial,
+    charterIntegrityHash: entry.result.charterIntegrityHash,
+    reasoningTrail: entry.result.reasoningTrail,
+    charterIssues: entry.result.complianceReview.issues,
+    classifier: a
+      ? {
+          primaryTopic: a.primaryTopic,
+          jurisdictions: a.jurisdictions,
+          regimes: a.regimes,
+          fatfRecs: a.fatfRecDetails?.map((f) => ({
+            num: f.num,
+            title: f.title,
+            citation: f.citation,
+          })),
+          doctrines: a.doctrineHints,
+          redFlags: a.redFlagHints,
+          typologies: a.typologies,
+          commonSenseRules: a.commonSenseRules,
+        }
+      : undefined,
+  };
 }
 
 // ── Classifier UI ───────────────────────────────────────────────────────────
