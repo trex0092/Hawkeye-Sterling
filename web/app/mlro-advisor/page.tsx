@@ -5,6 +5,7 @@ import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { StrDraftModal } from "@/components/shared/StrDraftModal";
 import { downloadEvidencePack, type EvidencePackEntry } from "@/lib/evidencePack";
+import { findApplicableConflicts, type JurisdictionalConflict } from "@/lib/jurisdictionalConflicts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -881,6 +882,10 @@ export default function MlroAdvisorPage() {
                           </div>
                         )}
                         {entry.challenge && <ChallengePanel challenge={entry.challenge} />}
+                        <ConflictsPanel
+                          jurisdictions={entry.result.questionAnalysis?.jurisdictions ?? []}
+                          regimes={entry.result.questionAnalysis?.regimes ?? []}
+                        />
                         {entry.result.questionAnalysis && (
                           <ClassifierResultPanels
                             analysis={entry.result.questionAnalysis}
@@ -1239,7 +1244,82 @@ function buildEvidencePackEntry(entry: AdvisorHistoryEntry): EvidencePackEntry {
           hardenSuggestions: entry.challenge.hardenSuggestions,
         }
       : undefined,
+    conflicts: findApplicableConflicts(
+      entry.result.questionAnalysis?.jurisdictions ?? [],
+      entry.result.questionAnalysis?.regimes ?? [],
+    ).map((c) => ({
+      title: c.title,
+      severity: c.severity,
+      jurisdictions: c.jurisdictions,
+      description: c.description,
+      mitigation: c.mitigation,
+      authorities: c.authorities,
+    })),
   };
+}
+
+function ConflictsPanel({
+  jurisdictions,
+  regimes,
+}: {
+  jurisdictions: string[];
+  regimes: string[];
+}) {
+  const conflicts = findApplicableConflicts(jurisdictions, regimes);
+  if (conflicts.length === 0) return null;
+  return (
+    <div className="bg-bg-panel border border-violet/30 rounded-lg p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-10 font-semibold uppercase tracking-wide-3 text-violet">
+          Cross-jurisdictional conflicts
+        </span>
+        <span className="text-10 font-mono text-ink-3">
+          {conflicts.length} match{conflicts.length === 1 ? "" : "es"}
+        </span>
+      </div>
+      <div className="space-y-3">
+        {conflicts.map((c) => <ConflictCard key={c.id} conflict={c} />)}
+      </div>
+    </div>
+  );
+}
+
+function ConflictCard({ conflict }: { conflict: JurisdictionalConflict }) {
+  const sevCls =
+    conflict.severity === "high" ? "bg-red-100 text-red-700 border-red-300"
+      : conflict.severity === "medium" ? "bg-amber-50 text-amber-700 border-amber-300"
+      : "bg-bg-2 text-ink-2 border-hair-2";
+  return (
+    <div className="border-l-2 border-violet pl-3">
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        <span className={`text-10 font-semibold uppercase tracking-wide-2 px-1.5 py-0.5 rounded border ${sevCls}`}>
+          {conflict.severity}
+        </span>
+        <span className="text-12 text-ink-0 font-medium">{conflict.title}</span>
+        <span className="text-10 font-mono text-ink-3">
+          {conflict.jurisdictions.join(" ↔ ")}
+        </span>
+      </div>
+      <p className="text-12 text-ink-1 leading-relaxed mb-2">{conflict.description}</p>
+      {conflict.mitigation.length > 0 && (
+        <div className="mb-2">
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+            Mitigation
+          </div>
+          <ol className="list-decimal list-inside space-y-0.5">
+            {conflict.mitigation.map((m, i) => (
+              <li key={i} className="text-11 text-ink-1 leading-relaxed">{m}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+      {conflict.authorities.length > 0 && (
+        <div className="text-10 font-mono text-ink-3">
+          {conflict.authorities.join(" · ")}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** One-line summary of the brain classifier's hits, used as the
