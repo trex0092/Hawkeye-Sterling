@@ -17,14 +17,16 @@ export interface ModeBudget {
   totalMs: number;
   executorMs?: number;
   advisorMs?: number;
+  /** Time budget for the optional challenger stage (multi_perspective only). */
+  challengerMs?: number;
 }
 
-// Per-mode budgets. Multi-perspective mode runs up to 90 s total.
-// Claude Sonnet needs up to 25 s (executor) and Opus up to 65 s (advisor).
+// Per-mode budgets.
+// multi_perspective now runs 3 stages (executor→advisor→challenger) up to 120 s.
 export const MODE_BUDGETS: Record<ReasoningMode, ModeBudget> = {
   speed:             { totalMs: 20_000, executorMs: 20_000 },
   balanced:          { totalMs: 45_000, advisorMs: 45_000 },
-  multi_perspective: { totalMs: 90_000, executorMs: 25_000, advisorMs: 65_000 },
+  multi_perspective: { totalMs: 120_000, executorMs: 20_000, advisorMs: 55_000, challengerMs: 35_000 },
 };
 
 export interface MlroAdvisorConfig {
@@ -38,6 +40,14 @@ export interface MlroAdvisorConfig {
   enableThinking?: boolean;
   /** Cache the large system prompt to cut latency/cost on repeated calls. Default true. */
   cacheSystemPrompt?: boolean;
+  /**
+   * Run the adversarial challenger stage after the advisor in multi_perspective mode.
+   * The challenger cross-examines the advisor's verdict for false positives, galaxy-brain
+   * reasoning, and charter violations, and emits a CHALLENGE OUTCOME. Default true.
+   */
+  enableChallengerStage?: boolean;
+  /** Model for the challenger stage. Defaults to the executor model (Sonnet 4.6). */
+  challengerModel?: string;
 }
 
 export interface MlroAdvisorRequest {
@@ -67,7 +77,7 @@ export interface MlroAdvisorRequest {
 
 export interface ReasoningTrailStep {
   stepNo: number;
-  actor: 'executor' | 'advisor';
+  actor: 'executor' | 'advisor' | 'challenger';
   modelId: string;
   at: string; // ISO 8601
   summary: string;
@@ -109,8 +119,9 @@ export const BUDGET_GUIDANCE =
 const DEFAULT_EXECUTOR = 'claude-sonnet-4-6';
 const DEFAULT_ADVISOR  = 'claude-opus-4-7';
 
-const EXECUTOR_DEFAULT_TOKENS = 10_000;
-const ADVISOR_DEFAULT_TOKENS  = 16_000;
+const EXECUTOR_DEFAULT_TOKENS    = 10_000;
+const ADVISOR_DEFAULT_TOKENS     = 16_000;
+const CHALLENGER_DEFAULT_TOKENS  =  8_000;
 
 const EXECUTOR_TASK =
   'You are the Deep-Reasoning EXECUTOR. Using the cognitive catalogue AND the ' +
@@ -195,6 +206,61 @@ export function buildAdvisorRequest(
       executorOutput,
       '',
       'Review this draft against P1–P10 and produce the regulator-facing narrative.',
+    ].join('\n'),
+  };
+}
+
+const CHALLENGER_TASK =
+  'You are the Deep-Reasoning CHALLENGER — the final adversarial gate before any ' +
+  'finding reaches the MLRO. You have the EXECUTOR DRAFT and the ADVISOR OUTPUT. ' +
+  'Your role is exclusively adversarial verification. Apply every adversarial and ' +
+  'calibration meta-cognition primitive: (mc.steelman) construct the strongest ' +
+  'possible innocent explanation consistent with ALL evidence; (mc.red-team) ' +
+  'enumerate the five most damaging defence-counsel challenges to the advisor verdict; ' +
+  '(mc.false-positive-audit) run the false-positive audit — name-match specificity, ' +
+  'strong-identifier corroboration, and plausible-innocence scenario; ' +
+  '(mc.galaxy-brain-guard) flag any multi-hop chain where a sequence of plausible ' +
+  'steps leads to an implausible conclusion; (mc.multi-hypothesis-competition) verify ' +
+  'H1 (ML/TF) scores at least 3× H2 (legitimate rationale) by likelihood ratio; ' +
+  '(mc.inferential-distance-cap) count inferential hops and flag conclusions at ' +
+  '≥4 hops as degraded-confidence; (mc.decision-reversal-test) name the single ' +
+  'piece of evidence that would flip each HIGH or BLOCKED finding. ' +
+  'Verify every cited id (mode, doctrine, red-flag, skill, FATF, sanction regime, ' +
+  'disposition) is in the cognitive catalogue — any uncatalogued id is a P2 ' +
+  'fabrication violation. Report findings in three sections: ' +
+  '(A) UPHELD FINDINGS — survive every challenge with reason; ' +
+  '(B) DOWNGRADED FINDINGS — over-stated or unsupported, with specific evidence gap; ' +
+  '(C) NEW CONCERNS — issues not flagged by the advisor that must be addressed. ' +
+  'End with exactly one verdict token on its own line: ' +
+  'CHALLENGE OUTCOME: UPHELD | PARTIALLY_UPHELD | OVERTURNED, followed by the reason.';
+
+export function buildChallengerRequest(
+  req: MlroAdvisorRequest,
+  executorOutput: string,
+  advisorOutput: string,
+): { system: string; user: string } {
+  return {
+    system: weaponizedSystemPrompt({
+      taskRole: CHALLENGER_TASK,
+      audience: req.audience ?? 'regulator',
+      includeCatalogueSummary: true,
+    }),
+    user: [
+      'ORIGINAL QUESTION:',
+      req.question,
+      '',
+      'CASE CONTEXT:',
+      JSON.stringify(req.caseContext, null, 2),
+      '',
+      'EXECUTOR DRAFT (Stage 1):',
+      executorOutput || '(no executor draft — balanced mode)',
+      '',
+      'ADVISOR OUTPUT (Stage 2):',
+      advisorOutput,
+      '',
+      'Challenge the above. Find every false positive, galaxy-brain inference, ' +
+      'fabricated catalogue id, and charter violation. Verify the multi-hypothesis ' +
+      'competition score. End with CHALLENGE OUTCOME: UPHELD | PARTIALLY_UPHELD | OVERTURNED.',
     ].join('\n'),
   };
 }
@@ -296,10 +362,12 @@ export async function invokeMlroAdvisor(
   const totalBudget = Math.min(budget.totalMs, hardCeiling);
   const t0 = Date.now();
   const trail: ReasoningTrailStep[] = [];
-  const execModel = cfg.executorModel ?? DEFAULT_EXECUTOR;
-  const advModel   = cfg.advisorModel  ?? DEFAULT_ADVISOR;
-  const useThinking = cfg.enableThinking    !== false;
-  const useCache    = cfg.cacheSystemPrompt !== false;
+  const execModel       = cfg.executorModel  ?? DEFAULT_EXECUTOR;
+  const advModel        = cfg.advisorModel   ?? DEFAULT_ADVISOR;
+  const chalModel       = cfg.challengerModel ?? DEFAULT_EXECUTOR;
+  const useThinking     = cfg.enableThinking    !== false;
+  const useCache        = cfg.cacheSystemPrompt !== false;
+  const useChallenger   = cfg.enableChallengerStage !== false;
 
   const makeResult = (partial: boolean, narrative: string | undefined, verdict: MlroAdvisorResult['complianceReview']['advisorVerdict'], error?: string): MlroAdvisorResult => ({
     ok: !partial && !error,
@@ -358,12 +426,47 @@ export async function invokeMlroAdvisor(
   const body = advRes.text ?? '';
   trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: 'Advisor review + final narrative.', body, thinkingSummary: advRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
 
-  const verdict: MlroAdvisorResult['complianceReview']['advisorVerdict'] =
+  let advisorVerdict: MlroAdvisorResult['complianceReview']['advisorVerdict'] =
     /\bBLOCKED\b/i.test(body) ? 'blocked' :
     /\bRETURNED_FOR_REVISION\b/i.test(body) ? 'returned_for_revision' :
     'approved';
 
-  return makeResult(false, body, verdict);
+  // Stage 3 — challenger (multi_perspective only, if budget remains).
+  if (mode === 'multi_perspective' && useChallenger) {
+    const chalStart = new Date().toISOString();
+    const remainingAfterAdvisor = Math.max(1, totalBudget - (Date.now() - t0));
+    const chalBudget = Math.min(budget.challengerMs ?? remainingAfterAdvisor, remainingAfterAdvisor);
+    if (chalBudget > 5_000) {
+      const challenger = buildChallengerRequest(req, executorBody, body);
+      const { result: chalRes, timedOut: chalTimedOut, thrownError: chalThrown } = await withBudget(chalBudget, (signal) =>
+        chat({ model: chalModel, system: challenger.system, user: challenger.user, maxTokens: cfg.maxTokens ?? CHALLENGER_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
+      );
+      if (!chalTimedOut && chalRes?.ok) {
+        const chalBody = chalRes.text ?? '';
+        trail.push({ stepNo: trail.length + 1, actor: 'challenger', modelId: chalModel, at: chalStart, summary: 'Adversarial challenge complete.', body: chalBody, thinkingSummary: chalRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+        // Challenger verdict adjustments:
+        // OVERTURNED → downgrade one level (blocked→returned_for_revision, returned_for_revision→approved)
+        // New BLOCKED or RETURNED_FOR_REVISION signals in the challenger → escalate if not already at that level
+        const isOverturned = /CHALLENGE OUTCOME:\s*OVERTURNED/i.test(chalBody);
+        const chalHasNewBlocked = /\bBLOCKED\b/i.test(chalBody) && !/CHALLENGE OUTCOME:\s*OVERTURNED/i.test(chalBody);
+        const chalHasNewRevision = /\bRETURNED_FOR_REVISION\b/i.test(chalBody);
+        if (isOverturned) {
+          if (advisorVerdict === 'blocked') advisorVerdict = 'returned_for_revision';
+          else if (advisorVerdict === 'returned_for_revision') advisorVerdict = 'approved';
+        } else if (chalHasNewBlocked) {
+          advisorVerdict = 'blocked';
+        } else if (chalHasNewRevision && advisorVerdict === 'approved') {
+          advisorVerdict = 'returned_for_revision';
+        }
+        const combinedNarrative = `${body}\n\n---\n\nCHALLENGER REVIEW:\n${chalBody}`;
+        return makeResult(false, combinedNarrative, advisorVerdict);
+      }
+      // Challenger timed out or failed — log and continue with advisor verdict.
+      trail.push({ stepNo: trail.length + 1, actor: 'challenger', modelId: chalModel, at: chalStart, summary: chalTimedOut ? 'Challenger budget exceeded — skipped.' : 'Challenger failed — skipped.', body: chalRes?.text ?? '', thinkingSummary: chalRes?.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+    }
+  }
+
+  return makeResult(false, body, advisorVerdict);
 }
 
 // ── question splitter and result combiner

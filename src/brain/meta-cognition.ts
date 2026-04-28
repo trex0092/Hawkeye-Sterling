@@ -300,6 +300,48 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     firesWhen: 'Any multi-section output is being finalised.',
   },
 
+  // ── Wave-7 primitives — Structural reasoning gates (adds 5). ──
+  {
+    id: 'mc.verdict-gate-protocol',
+    label: 'Verdict Gate Protocol',
+    category: 'hygiene',
+    directive:
+      'Before emitting ANY verdict (APPROVED / RETURNED_FOR_REVISION / BLOCKED / INCOMPLETE), run a mandatory 5-gate checklist: (1) Is every material fact sourced to a primary instrument? (2) Have all adversarial meta-cognition primitives (steelman, red-team, false-positive audit) been applied and documented? (3) Have all cited catalogue ids been confirmed as registered? (4) Has the multi-hypothesis competition produced a 3× likelihood-ratio margin for the chosen hypothesis? (5) Has the charter-compliance scan (P1–P10) cleared every prohibition? A verdict emitted without all 5 gates explicitly passing is a process violation — add a [GATE INCOMPLETE] marker and state which gates failed.',
+    firesWhen: 'Any final verdict, recommendation, or disposition is about to be emitted.',
+  },
+  {
+    id: 'mc.alternative-evidence-search',
+    label: 'Alternative Evidence Search',
+    category: 'truth-seeking',
+    directive:
+      'Actively search for evidence that CONTRADICTS the current hypothesis before concluding. Name the three categories of evidence that would most strongly support the alternative hypothesis (benign explanation), and state explicitly whether that evidence was sought, found, or absent. A conclusion that rests only on confirming evidence without a documented contradictory evidence search is confirmation-biased and must be flagged.',
+    firesWhen: 'A finding has been formed and a verdict is being considered.',
+  },
+  {
+    id: 'mc.proportionality-test',
+    label: 'Proportionality Test',
+    category: 'calibration',
+    directive:
+      'For every recommended action (EDD, STR filing, account closure, de-risking, regulatory referral), test proportionality against three axes: (1) SEVERITY — does the action match the risk tier? (2) COST — is the compliance cost proportionate to the risk the action mitigates? (3) LEAST-RESTRICTIVE ALTERNATIVE — is there a less invasive action that achieves equivalent risk reduction? A recommendation that fails the least-restrictive-alternative test must be revised or explicitly justified on exceptional grounds.',
+    firesWhen: 'A risk-mitigation action, control recommendation, or remediation step is being proposed.',
+  },
+  {
+    id: 'mc.decision-reversal-test',
+    label: 'Decision Reversal Test',
+    category: 'adversarial',
+    directive:
+      'For every HIGH or BLOCKED verdict, identify the single specific piece of evidence whose addition, removal, or reinterpretation would reverse the verdict. Name it explicitly. If no such pivot point exists, the verdict is over-determined by the evidence — increase confidence. If the pivot point is easily obtainable (a registry check, a document request, a follow-up question), mandate that it be obtained before the verdict is finalised. A verdict that would reverse on evidence the analyst could have obtained but did not is an EDD failure.',
+    firesWhen: 'A HIGH or BLOCKED verdict has been reached.',
+  },
+  {
+    id: 'mc.source-independence-check',
+    label: 'Source Independence Check',
+    category: 'truth-seeking',
+    directive:
+      'Verify that the evidence sources used in a finding are genuinely independent: (1) Do multiple sources cite the same original report, article, or database — if so, they are one source; (2) Does an adverse-media outlet derive from a single press release or regulatory notice — if so, it is one source; (3) Does a sanctions list entry derive from another list without independent verification — if so, the chain is one source. Reclassify correlated sources as a single source and re-assess the confidence level accordingly. A finding rated STRONG based on 5 correlated sources should be re-rated POSSIBLE unless at least 2 sources are demonstrably independent.',
+    firesWhen: 'A finding cites multiple sources and a confidence level above WEAK is being claimed.',
+  },
+
   // ── Wave-5 primitives — Epistemic rigour + financial-crime specifics (adds 5). ──
   {
     id: 'mc.evidence-provenance-chain',
