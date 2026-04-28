@@ -365,6 +365,43 @@ interface ReasonResponse {
     soundex: string;
   };
   promptPreview?: string;
+  // Weaponize-more — five firepower panels.
+  timings?: {
+    quickScreen: number;
+    jurisdiction: number;
+    pep: number;
+    adverseMediaTypology: number;
+    redlines: number;
+    doctrines: number;
+    metaCognition: number;
+    composite: number;
+    total: number;
+  };
+  counterfactuals?: {
+    baseline: { composite: { score: number }; disposition: { code: string; label: string } };
+    nudges: Array<{
+      label: string;
+      hypothesis: string;
+      result: { composite: { score: number }; disposition: { code: string; label: string } };
+      deltaScore: number;
+      deltaDisposition: string | null;
+    }>;
+  };
+  steelman?: Array<{
+    finding: string;
+    counterArgument: string;
+    citation: string;
+    evidenceTest: string;
+  }>;
+  modeCoverage?: {
+    totalCatalogued: number;
+    totalFired: number;
+    byFaculty: Array<{
+      faculty: string;
+      modes: Array<{ id: string; name: string; category: string; faculties: readonly string[] }>;
+    }>;
+  };
+  narrative?: string;
   error?: string;
 }
 
@@ -671,6 +708,25 @@ function BrainResult({ r }: { r: ReasonResponse }) {
           </ol>
         </ResultSection>
       )}
+
+      {/* Per-stage telemetry */}
+      {r.timings && <TelemetryStrip timings={r.timings} />}
+
+      {/* Counterfactual sensitivity dial */}
+      {r.counterfactuals && r.counterfactuals.nudges.length > 0 && (
+        <CounterfactualPanel data={r.counterfactuals} />
+      )}
+
+      {/* Adversarial steelman */}
+      {r.steelman && r.steelman.length > 0 && <SteelmanPanel items={r.steelman} />}
+
+      {/* Mode-coverage map */}
+      {r.modeCoverage && r.modeCoverage.totalFired > 0 && (
+        <ModeCoveragePanel data={r.modeCoverage} />
+      )}
+
+      {/* SAR/STR narrative */}
+      {r.narrative && <NarrativePanel text={r.narrative} />}
 
       {/* Redlines */}
       {r.redlines && r.redlines.fired.length > 0 && (
@@ -1249,5 +1305,211 @@ function Stat({ label, value }: { label: string; value: number | undefined }) {
       <div className="text-9 uppercase tracking-wide-4 text-bg-0/50">{label}</div>
       <div className="text-14 font-mono font-semibold text-brand">{value ?? "—"}</div>
     </div>
+  );
+}
+
+// ── Weaponize-more panels ──────────────────────────────────────────────────
+
+function TelemetryStrip({
+  timings,
+}: {
+  timings: NonNullable<ReasonResponse["timings"]>;
+}) {
+  const stages: Array<[string, number]> = [
+    ["quickScreen", timings.quickScreen],
+    ["jurisdiction", timings.jurisdiction],
+    ["pep", timings.pep],
+    ["adverseMedia/typology", timings.adverseMediaTypology],
+    ["redlines", timings.redlines],
+    ["doctrines", timings.doctrines],
+    ["meta-cognition", timings.metaCognition],
+    ["composite", timings.composite],
+  ];
+  const max = Math.max(1, ...stages.map(([, v]) => v));
+  return (
+    <ResultSection title={`Per-stage telemetry · total ${timings.total} ms`}>
+      <div className="space-y-1">
+        {stages.map(([name, ms]) => (
+          <div key={name} className="flex items-center gap-2 text-10 font-mono">
+            <span className="w-32 text-ink-2 truncate">{name}</span>
+            <div className="flex-1 h-2 bg-bg-2 rounded overflow-hidden">
+              <div className="h-2 bg-brand" style={{ width: `${(ms / max) * 100}%` }} />
+            </div>
+            <span className="w-14 text-right text-ink-1">{ms} ms</span>
+          </div>
+        ))}
+      </div>
+    </ResultSection>
+  );
+}
+
+function CounterfactualPanel({
+  data,
+}: {
+  data: NonNullable<ReasonResponse["counterfactuals"]>;
+}) {
+  return (
+    <ResultSection title={`Counterfactual sensitivity · ${data.nudges.length} nudge${data.nudges.length === 1 ? "" : "s"}`}>
+      <div className="space-y-2">
+        <div className="text-10 font-mono text-ink-3">
+          Re-runs the full reasoning pipeline against perturbed inputs and reports the delta.
+          Disposition flips that survive all three nudges are robust; flips that snap on a single
+          perturbation are sensitive to the exact narrative supplied.
+        </div>
+        <table className="w-full text-11 border-collapse">
+          <thead>
+            <tr className="border-b border-hair-2 text-10 uppercase tracking-wide-3 text-ink-3">
+              <th className="text-left py-1.5 font-mono">Nudge</th>
+              <th className="text-right py-1.5 font-mono">Score</th>
+              <th className="text-right py-1.5 font-mono">Δ Score</th>
+              <th className="text-left py-1.5 font-mono pl-3">Δ Disposition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-hair">
+              <td className="py-1.5 text-ink-2 italic">Baseline</td>
+              <td className="py-1.5 text-right font-mono text-ink-0">{data.baseline.composite.score}</td>
+              <td className="py-1.5 text-right font-mono text-ink-3">—</td>
+              <td className="py-1.5 pl-3 text-ink-2">{data.baseline.disposition.label}</td>
+            </tr>
+            {data.nudges.map((n, i) => {
+              const tone = n.deltaScore > 0 ? "text-red" : n.deltaScore < 0 ? "text-green" : "text-ink-3";
+              return (
+                <tr key={i} className={i < data.nudges.length - 1 ? "border-b border-hair" : ""}>
+                  <td className="py-1.5 text-ink-0">
+                    <div className="font-medium">{n.label}</div>
+                    <div className="text-10 text-ink-3 italic">{n.hypothesis}</div>
+                  </td>
+                  <td className="py-1.5 text-right font-mono text-ink-1">{n.result.composite.score}</td>
+                  <td className={`py-1.5 text-right font-mono ${tone}`}>
+                    {n.deltaScore > 0 ? "+" : ""}{n.deltaScore}
+                  </td>
+                  <td className="py-1.5 pl-3 text-ink-1">
+                    {n.deltaDisposition ?? <span className="text-ink-3">unchanged</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </ResultSection>
+  );
+}
+
+function SteelmanPanel({
+  items,
+}: {
+  items: NonNullable<ReasonResponse["steelman"]>;
+}) {
+  return (
+    <ResultSection title={`Adversarial steelman · ${items.length} counter-argument${items.length === 1 ? "" : "s"}`}>
+      <div className="space-y-2">
+        <div className="text-10 font-mono text-ink-3">
+          The strongest case against each finding. Cite the named meta-cognition primitive
+          and run the evidence test before accepting the original verdict.
+        </div>
+        <ul className="space-y-2 list-none pl-0">
+          {items.map((s, i) => (
+            <li key={i} className="border-l-2 border-violet pl-3 text-11">
+              <div className="font-semibold text-ink-0">{s.finding}</div>
+              <div className="text-ink-1 mt-0.5">{s.counterArgument}</div>
+              <div className="text-10 mt-1 flex flex-wrap gap-2 items-baseline">
+                <span className="font-mono px-1.5 py-px rounded bg-violet-dim text-violet">{s.citation}</span>
+                <span className="text-ink-3 italic">Test: {s.evidenceTest}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </ResultSection>
+  );
+}
+
+function ModeCoveragePanel({
+  data,
+}: {
+  data: NonNullable<ReasonResponse["modeCoverage"]>;
+}) {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const pct = data.totalCatalogued > 0
+    ? Math.round((data.totalFired / data.totalCatalogued) * 100)
+    : 0;
+  return (
+    <ResultSection
+      title={`Mode coverage · ${data.totalFired} of ${data.totalCatalogued} reasoning modes engaged (${pct}%)`}
+    >
+      <div className="space-y-1.5">
+        <div className="h-2 bg-bg-2 rounded overflow-hidden">
+          <div className="h-2 bg-brand" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="text-10 font-mono text-ink-3 mb-1">
+          Modes are grouped by primary faculty. Click to expand.
+        </div>
+        {data.byFaculty.map((f) => {
+          const isOpen = open[f.faculty] ?? false;
+          return (
+            <div key={f.faculty} className="border border-hair-2 rounded">
+              <button
+                type="button"
+                onClick={() => setOpen((o) => ({ ...o, [f.faculty]: !isOpen }))}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 text-11 text-left hover:bg-bg-1"
+              >
+                <span className="font-mono uppercase tracking-wide-3 text-ink-1">{f.faculty}</span>
+                <span className="font-mono text-10 text-ink-3">
+                  {f.modes.length} mode{f.modes.length === 1 ? "" : "s"} {isOpen ? "▴" : "▾"}
+                </span>
+              </button>
+              {isOpen && (
+                <div className="border-t border-hair-2 px-2.5 py-2 grid grid-cols-1 md:grid-cols-2 gap-1">
+                  {f.modes.map((m) => (
+                    <div key={m.id} className="text-10 text-ink-1">
+                      <span className="font-mono text-ink-3">{m.id}</span>
+                      <span className="mx-1 text-ink-3">·</span>
+                      <span>{m.name}</span>
+                      <span className="ml-1 text-9 font-mono px-1 rounded bg-bg-2 text-ink-3">{m.category}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </ResultSection>
+  );
+}
+
+function NarrativePanel({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <ResultSection title="STR/SAR draft narrative">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-10 font-mono text-ink-3">
+            Pure facts, no legal conclusions. Charter P1-P10 applies. Copy into goAML verbatim.
+          </span>
+          <button
+            type="button"
+            onClick={onCopy}
+            className="text-10 font-mono px-2 py-1 rounded bg-bg-2 text-ink-1 hover:bg-bg-1"
+          >
+            {copied ? "Copied ✓" : "Copy to clipboard"}
+          </button>
+        </div>
+        <pre className="text-10 leading-relaxed font-mono whitespace-pre-wrap bg-bg-2 text-ink-0 p-3 rounded border border-hair-2 max-h-96 overflow-auto">
+{text}
+        </pre>
+      </div>
+    </ResultSection>
   );
 }
