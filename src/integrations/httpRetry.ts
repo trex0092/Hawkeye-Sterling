@@ -199,7 +199,7 @@ async function readAnthropicSSEBody(
 
     const armIdle = (): void => {
       if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => settle({ text, thinking: thinking || undefined, partial: true }), idleReadMs);
+      idleTimer = setTimeout(() => settle({ text, ...(thinking ? { thinking } : {}), partial: true }), idleReadMs);
     };
 
     armIdle();
@@ -211,7 +211,7 @@ async function readAnthropicSSEBody(
           if (idleTimer) clearTimeout(idleTimer);
           outerSignal.removeEventListener('abort', onOuterAbort);
           settled = true;
-          resolve({ text, thinking: thinking || undefined, partial: false, ...(streamError ? { streamError } : {}) });
+          resolve({ text, ...(thinking ? { thinking } : {}), partial: false, ...(streamError ? { streamError } : {}) });
           return;
         }
         if (chunk) {
@@ -236,7 +236,7 @@ async function readAnthropicSSEBody(
                 }
               } else if (evt.type === 'error') {
                 streamError = evt.error?.message ?? 'stream error';
-                settle({ text, thinking: thinking || undefined, partial: true, streamError });
+                settle({ text, ...(thinking ? { thinking } : {}), partial: true, streamError });
                 return;
               }
             } catch { /* ignore malformed SSE line */ }
@@ -279,7 +279,7 @@ export async function fetchAnthropicStreamText(
 
   while (attempts < maxAttempts) {
     if (opts.signal?.aborted) {
-      return { ok: false, text: lastText, thinking: lastThinking, error: 'aborted by caller', attempts, elapsedMs: Date.now() - started, partial: lastPartial };
+      return { ok: false, text: lastText, ...(lastThinking !== undefined ? { thinking: lastThinking } : {}), error: 'aborted by caller', attempts, elapsedMs: Date.now() - started, partial: lastPartial };
     }
     attempts++;
 
@@ -321,14 +321,14 @@ export async function fetchAnthropicStreamText(
           try {
             await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal);
           } catch {
-            return { ok: false, text, thinking, error: lastError, attempts, elapsedMs: Date.now() - started, partial: true };
+            return { ok: false, text, ...(thinking !== undefined ? { thinking } : {}), error: lastError, attempts, elapsedMs: Date.now() - started, partial: true };
           }
           continue;
         }
-        return { ok: false, text, thinking, error: lastError, attempts, elapsedMs: Date.now() - started, partial: true };
+        return { ok: false, text, ...(thinking !== undefined ? { thinking } : {}), error: lastError, attempts, elapsedMs: Date.now() - started, partial: true };
       }
 
-      return { ok: true, text, thinking, error: null, attempts, elapsedMs: Date.now() - started, partial: false };
+      return { ok: true, text, ...(thinking !== undefined ? { thinking } : {}), error: null, attempts, elapsedMs: Date.now() - started, partial: false };
 
     } catch (err) {
       clearTimeout(totalTimer);
@@ -339,11 +339,11 @@ export async function fetchAnthropicStreamText(
         try { await sleep(backoff(attempts, initialBackoffMs, maxBackoffMs), opts.signal); } catch { /* aborted */ }
         continue;
       }
-      return { ok: false, text: lastText, thinking: lastThinking, error: msg, attempts, elapsedMs: Date.now() - started, partial: lastPartial };
+      return { ok: false, text: lastText, ...(lastThinking !== undefined ? { thinking: lastThinking } : {}), error: msg, attempts, elapsedMs: Date.now() - started, partial: lastPartial };
     }
   }
 
-  return { ok: false, text: lastText, thinking: lastThinking, error: lastError ?? 'exhausted retries', attempts, elapsedMs: Date.now() - started, partial: lastPartial };
+  return { ok: false, text: lastText, ...(lastThinking !== undefined ? { thinking: lastThinking } : {}), error: lastError ?? 'exhausted retries', attempts, elapsedMs: Date.now() - started, partial: lastPartial };
 }
 
 // ── JSON (non-streaming) helper ───────────────────────────────────────────────

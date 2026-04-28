@@ -513,7 +513,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  return { ok: true, text: result.text, thinking: result.thinking };
+  return { ok: true, text: result.text, ...(result.thinking !== undefined ? { thinking: result.thinking } : {}) };
 };
 
 function withBudget<T>(
@@ -651,7 +651,7 @@ export async function invokeComplianceAgent(
       at: advStart,
       summary: timedOut ? 'Advisor budget exceeded — semantic review incomplete.' : 'Advisor call failed.',
       body: advRes?.text ?? '',
-      thinkingSummary: advRes?.thinking,
+      ...(advRes?.thinking !== undefined ? { thinkingSummary: advRes.thinking } : {}),
     });
     const candidates = candidateDispositionsFor('incomplete', redlines, tippingOff);
     return {
@@ -685,7 +685,7 @@ export async function invokeComplianceAgent(
     at: advStart,
     summary: 'Semantic audit complete.',
     body,
-    thinkingSummary: advRes.thinking,
+    ...(advRes.thinking !== undefined ? { thinkingSummary: advRes.thinking } : {}),
   });
 
   const semantic = parseSemanticVerdict(body);

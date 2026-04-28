@@ -348,7 +348,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  return { ok: true, text: result.text, thinking: result.thinking };
+  return { ok: true, text: result.text, ...(result.thinking !== undefined ? { thinking: result.thinking } : {}) };
 };
 
 function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<{ result?: T; timedOut: boolean; thrownError?: string }> {
@@ -421,11 +421,11 @@ export async function invokeMlroAdvisor(
       chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: cfg.maxTokens ?? EXECUTOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'high', cacheSystem: useCache }),
     );
     if (timedOut || !execRes?.ok) {
-      trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', thinkingSummary: execRes?.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+      trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', ...(execRes?.thinking !== undefined ? { thinkingSummary: execRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
       return makeResult(true, execRes?.text, 'incomplete', timedOut ? 'Deep reasoning budget exceeded — try Speed or Balanced mode.' : (execRes?.error ?? execThrown));
     }
     executorBody = execRes.text ?? '';
-    trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: 'Executor draft produced.', body: executorBody, thinkingSummary: execRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+    trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: 'Executor draft produced.', body: executorBody, ...(execRes.thinking !== undefined ? { thinkingSummary: execRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
   }
 
   // If mode == 'speed', stop here.
@@ -444,11 +444,11 @@ export async function invokeMlroAdvisor(
     chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? ADVISOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
   );
   if (advTimedOut || !advRes?.ok) {
-    trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', thinkingSummary: advRes?.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+    trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', ...(advRes?.thinking !== undefined ? { thinkingSummary: advRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
     return makeResult(true, advRes?.text ?? executorBody, 'incomplete', advTimedOut ? 'Deep reasoning budget exceeded — try Speed or Balanced mode.' : (advRes?.error ?? advThrown));
   }
   const body = advRes.text ?? '';
-  trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: 'Advisor review + final narrative.', body, thinkingSummary: advRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+  trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: 'Advisor review + final narrative.', body, ...(advRes.thinking !== undefined ? { thinkingSummary: advRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
 
   let advisorVerdict: MlroAdvisorResult['complianceReview']['advisorVerdict'] =
     /\bBLOCKED\b/i.test(body) ? 'blocked' :
@@ -467,7 +467,7 @@ export async function invokeMlroAdvisor(
       );
       if (!chalTimedOut && chalRes?.ok) {
         const chalBody = chalRes.text ?? '';
-        trail.push({ stepNo: trail.length + 1, actor: 'challenger', modelId: chalModel, at: chalStart, summary: 'Adversarial challenge complete.', body: chalBody, thinkingSummary: chalRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+        trail.push({ stepNo: trail.length + 1, actor: 'challenger', modelId: chalModel, at: chalStart, summary: 'Adversarial challenge complete.', body: chalBody, ...(chalRes.thinking !== undefined ? { thinkingSummary: chalRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
         // Challenger verdict adjustments:
         // OVERTURNED → downgrade one level (blocked→returned_for_revision, returned_for_revision→approved)
         // New BLOCKED or RETURNED_FOR_REVISION signals in the challenger → escalate if not already at that level
@@ -486,7 +486,7 @@ export async function invokeMlroAdvisor(
         return makeResult(false, combinedNarrative, advisorVerdict);
       }
       // Challenger timed out or failed — log and continue with advisor verdict.
-      trail.push({ stepNo: trail.length + 1, actor: 'challenger', modelId: chalModel, at: chalStart, summary: chalTimedOut ? 'Challenger budget exceeded — skipped.' : 'Challenger failed — skipped.', body: chalRes?.text ?? '', thinkingSummary: chalRes?.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+      trail.push({ stepNo: trail.length + 1, actor: 'challenger', modelId: chalModel, at: chalStart, summary: chalTimedOut ? 'Challenger budget exceeded — skipped.' : 'Challenger failed — skipped.', body: chalRes?.text ?? '', ...(chalRes?.thinking !== undefined ? { thinkingSummary: chalRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
     }
   }
 

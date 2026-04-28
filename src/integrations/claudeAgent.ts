@@ -163,5 +163,5 @@ export async function generateNarrativeReport(
       error: `${prefix}${result.error ?? 'unknown error'} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
     };
   }
-  return { ok: true, html: result.text, thinkingSummary: result.thinking };
+  return { ok: true, html: result.text, ...(result.thinking !== undefined ? { thinkingSummary: result.thinking } : {}) };
 }
