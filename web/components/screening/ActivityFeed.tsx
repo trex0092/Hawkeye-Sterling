@@ -167,8 +167,9 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
         <span className="text-10 font-mono text-ink-3">{entries.length} events</span>
       </div>
 
-      {/* Feed */}
-      <div className="overflow-y-auto max-h-[340px] font-mono text-11">
+      {/* Feed — height grows to fill the available aside column on tall
+          viewports while staying scrollable on shorter screens. */}
+      <div className="overflow-y-auto max-h-[calc(100vh-220px)] min-h-[420px] font-mono text-11">
         {entries.length === 0 ? (
           <div className="px-3 py-6 text-center text-ink-3 text-11">Initialising…</div>
         ) : (
