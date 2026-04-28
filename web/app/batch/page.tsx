@@ -424,7 +424,7 @@ export default function BatchPage() {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); }} />
           <div className="flex gap-2 justify-center">
             <button onClick={() => fileInput.current?.click()}
-              className="px-4 py-2 bg-ink-0 text-bg-0 rounded text-12.5 font-semibold hover:bg-ink-1">
+              className="px-4 py-2 bg-brand text-white rounded text-12.5 font-semibold hover:bg-brand-hover">
               Choose CSV
             </button>
             <button onClick={downloadSample}

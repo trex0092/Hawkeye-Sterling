@@ -252,7 +252,7 @@ export default function CddReviewPage() {
             <input value={draft.notes} onChange={set("notes")} placeholder="Notes (optional)" className={inputCls} />
           </div>
           <button type="button" onClick={add} disabled={!draft.subject}
-            className="mt-2 text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 disabled:opacity-40 transition-colors">
+            className="mt-2 text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors">
             + Add
           </button>
         </div>
