@@ -209,13 +209,15 @@ export const FATF_RECOMMENDATIONS: readonly FatfRecommendation[] = [
     citation: 'FATF R.40 INR.40' },
 ];
 
-const FATF_BY_ID: Record<FatfRecId, FatfRecommendation> = FATF_RECOMMENDATIONS.reduce(
-  (acc, r) => ({ ...acc, [r.id]: r }),
-  {} as Record<FatfRecId, FatfRecommendation>,
+// Use a Map rather than Record<FatfRecId, ...> so strict mode (with
+// noUncheckedIndexedAccess + exactOptionalPropertyTypes) doesn't require
+// proving every FatfRecId key is populated at construction time.
+const FATF_BY_ID: ReadonlyMap<string, FatfRecommendation> = new Map(
+  FATF_RECOMMENDATIONS.map((r) => [r.id, r] as const),
 );
 
 export function fatfById(id: string): FatfRecommendation | undefined {
-  return FATF_BY_ID[id as FatfRecId];
+  return FATF_BY_ID.get(id);
 }
 
 export function fatfByPillar(pillar: FatfPillar): FatfRecommendation[] {
