@@ -62,7 +62,14 @@ export type ReasoningCategory =
   | 'asset_recovery'
   | 'intelligence_fusion'
   | 'quantum_computing'
-  | 'behavioral_economics';
+  | 'behavioral_economics'
+  | 'behavioral_science'
+  | 'network_science'
+  | 'cryptoasset_forensics'
+  | 'corporate_intelligence'
+  | 'epistemic_quality'
+  | 'psychological_profiling'
+  | 'insider_threat';
 
 export type Verdict =
   | 'clear'
@@ -134,7 +141,7 @@ export interface ReasoningMode {
   name: string;
   category: ReasoningCategory;
   faculties: FacultyId[];
-  wave: 1 | 2 | 3 | 4 | 5;
+  wave: 1 | 2 | 3 | 4 | 5 | 6;
   description: string;
   apply: (ctx: BrainContext) => Promise<Finding>;
 }

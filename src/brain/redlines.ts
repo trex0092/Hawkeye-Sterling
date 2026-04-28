@@ -381,6 +381,56 @@ export const REDLINES: Redline[] = [
     regulatoryAnchor: 'FDL 26/2021 Art.2; Cabinet Decision 74/2020 Art.4-7; FATF R.5/R.7',
     severity: 'critical',
   },
+
+  // ── Wave 9 — Behavioral Science & Epistemic Integrity Redlines ─────────────
+  {
+    id: 'rl_confirmed_bias_verdict_unreviewed',
+    label: 'Verdict sealed with documented confirmation bias and no independent review',
+    precondition: 'The confirmation-bias guard (mc.confirmation-bias-guard) has flagged a bias-risk indicator in the analytical chain AND the assessment was sealed without an independent reviewer being appointed or without the disconfirming-evidence search mandate being completed.',
+    action: 'block',
+    regulatoryAnchor: 'FATF R.1 (RBA); CBUAE AML/CFT Standards Art.3.2 (quality of assessment); FDL 10/2025 Art.14 (MLRO responsibilities)',
+    severity: 'high',
+  },
+  {
+    id: 'rl_social_engineering_onboarding',
+    label: 'Social engineering of onboarding analyst detected',
+    precondition: 'Evidence exists — from call recordings, email analysis, or analyst report — that a counterparty or subject deliberately exploited authority bias, social proof, or urgency pressure to circumvent a standard due diligence gate; AND the onboarding was approved without an independent compliance review after the manipulation was detected.',
+    action: 'block',
+    regulatoryAnchor: 'CBUAE AML/CFT Standards Art.7 (CDD integrity); FDL 10/2025 Art.10 (internal controls); FATF R.10',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_insider_compliance_integrity_failure',
+    label: 'Compliance integrity failure — insider motivated reasoning',
+    precondition: 'An assessment produced a risk-lowering conclusion that is directly attributable to a named analyst or approver who held a personal, financial, or hierarchical interest in the subject of the assessment; AND the name-swap test (mc.motivated-reasoning-detector) produces a materially different verdict for an equivalent anonymous counterparty.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'FDL 10/2025 Art.14 (MLRO independence); CBUAE AML/CFT Standards Art.3 (governance); FATF R.18 (internal controls)',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_ai_fabricated_kyc_document',
+    label: 'KYC document identified as AI-generated or deepfake — onboarding blocked',
+    precondition: 'A submitted KYC document scores ≥2 AI-generation or deepfake indicators from the detection framework (absent/inconsistent EXIF metadata, GAN-model image artefacts, MRZ checksum failure, structural perfection inconsistent with human authorship, font/microprint inconsistency) AND onboarding or account activation is attempted without a forensic document examination clearance.',
+    action: 'block',
+    regulatoryAnchor: 'FDL 10/2025 Art.9 (CDD — identity verification); CBUAE KYC Standards; FDL 45/2021 PDPL Art.4 (data accuracy); FATF R.10',
+    severity: 'critical',
+  },
+  {
+    id: 'rl_groupthink_high_risk_approval',
+    label: 'Unanimous committee approval of HIGH/CRITICAL case without documented dissent review',
+    precondition: 'A committee or approval chain has produced a unanimous APPROVE decision on a case with a composite risk score of HIGH or CRITICAL; AND the case record contains no documented dissent solicitation, no named devil\'s advocate, and no indication that junior-member pressure was assessed; AND deliberation time documented in the minutes was under 15 minutes.',
+    action: 'escalate_immediately',
+    regulatoryAnchor: 'CBUAE AML/CFT Standards Art.3.2 (assessment quality); FDL 10/2025 Art.14 (MLRO oversight); FATF R.18 (internal controls)',
+    severity: 'high',
+  },
+  {
+    id: 'rl_undisclosed_cryptoasset_exposure',
+    label: 'Material undisclosed cryptoasset or DeFi exposure confirmed post-onboarding',
+    precondition: 'Post-onboarding on-chain intelligence or transaction monitoring has confirmed that a customer or counterparty holds, transacts, or controls cryptoassets or DeFi positions that were not disclosed during CDD; AND the undisclosed exposure includes a mixer/tumbler interaction, a cross-chain bridge hop to a privacy chain, or a wallet cluster attributed to a sanctioned entity or VASP.',
+    action: 'block',
+    regulatoryAnchor: 'FDL 10/2025 Art.9/11 (CDD — accuracy obligation); VARA VASPS Rulebook; FATF Virtual Assets Guidance 2021; Cabinet Decision 74/2020 Art.4 (TFS)',
+    severity: 'critical',
+  },
 ];
 
 export const REDLINE_BY_ID: Map<string, Redline> = new Map(REDLINES.map((r) => [r.id, r]));

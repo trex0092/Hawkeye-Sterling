@@ -1,8 +1,8 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 337 modes across 38 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5.
+// 372 modes across 46 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5 + wave 6.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
-// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7.
+// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8.
 
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
@@ -11,6 +11,7 @@ import { MODE_OVERRIDES } from './modes/registry.js';
 import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
 import { WAVE4_MODES, WAVE4_OVERRIDES } from './reasoning-modes-wave4.js';
 import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
+import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -313,6 +314,20 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]!;
   const w5override = WAVE5_OVERRIDES.find((o) => o.id === r.id);
   if (w5override) REASONING_MODES[i] = w5override;
+}
+
+// Merge Wave 6: behavioral science, network science, cryptoasset forensics,
+// geopolitical risk, corporate intelligence, epistemic quality,
+// psychological profiling, insider threat.
+const existingIdsW6 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE6_MODES) {
+  if (!existingIdsW6.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE6_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w6override = WAVE6_OVERRIDES.find((o) => o.id === r.id);
+  if (w6override) REASONING_MODES[i] = w6override;
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(

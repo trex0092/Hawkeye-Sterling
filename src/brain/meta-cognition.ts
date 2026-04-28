@@ -18,7 +18,8 @@ export type MetaCognitionCategory =
   | 'decomposition'
   | 'calibration'
   | 'foresight'
-  | 'hygiene';
+  | 'hygiene'
+  | 'behavioral';
 
 export interface MetaCognitionPrimitive {
   readonly id: string;
@@ -794,6 +795,104 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     directive:
       'Assess whether the financial structure was designed as a mechanism to produce a specific regulatory outcome: (1) Does the structure systematically route transactions below reporting thresholds across multiple institutions? (2) Does the ownership structure systematically place the beneficial owner outside the regulatory perimeter of every jurisdiction through which the funds flow? (3) Does the trust, foundation, or corporate structure systematically disable the legal mechanisms (ownership registers, reporting obligations, court orders) that would otherwise reveal the beneficial owner? A structure that achieves regulatory opacity as an engineering outcome — not as a side effect — has been designed as a circumvention mechanism. This design intent is an independent red flag irrespective of whether any individual element of the structure is individually unlawful. State the mechanism design explicitly and name the regulatory mechanism being circumvented.',
     firesWhen: 'A cross-border structure, multi-entity arrangement, or bespoke financial product appears to achieve regulatory opacity as a systematic outcome across multiple jurisdictions.',
+  },
+
+  // ── Wave 10 — Behavioral Science & Epistemic Hygiene ─────────────────────
+  {
+    id: 'mc.confirmation-bias-guard',
+    label: 'Confirmation Bias Guard',
+    category: 'behavioral',
+    directive:
+      'Before finalising any verdict, audit the evidence-selection process: (1) List every piece of evidence that was considered but weighted ≤10% in the final conclusion — were any of these discarded without explicit justification? (2) Identify the first hypothesis formed and verify that subsequent evidence search was not anchored to it. (3) If the adverse evidence inventory is shorter than the supporting inventory for the preferred hypothesis, this is a confirmation bias signal — actively seek three disconfirming data points before proceeding. (4) Name any source or counterparty whose explanation was accepted without independent corroboration. Confirmation bias in a financial-crime assessment is an independent compliance failure; do not emit a verdict that relies on an unchallenged narrative.',
+    firesWhen: 'Any assessment where one hypothesis has significantly more supporting evidence than alternatives, or where the analyst has a prior relationship or commercial interest in a particular outcome.',
+  },
+  {
+    id: 'mc.motivated-reasoning-detector',
+    label: 'Motivated Reasoning Detector',
+    category: 'behavioral',
+    directive:
+      "Probe whether the reasoning chain was constructed to reach a desired conclusion rather than to discover the truth: (1) Would the same analytical framework applied to a different subject with identical facts produce the same verdict? (2) Does the conclusion align with the commercial, relationship, or reputational interest of any internal stakeholder? (3) Were the regulatory thresholds, typology matches, or risk-appetite criteria applied in a way that consistently favours one outcome? If yes to any, flag motivated reasoning and mandate an independent reviewer. The test: swap the subject's name for a stranger — would the verdict hold? If not, the reasoning is suspect.",
+    firesWhen: 'Verdicts where commercial relationship continuation, fee income, or internal stakeholder pressure is visible in the case record alongside a risk-lowering conclusion.',
+  },
+  {
+    id: 'mc.authority-bias-probe',
+    label: 'Authority Bias Probe',
+    category: 'behavioral',
+    directive:
+      "Challenge every assertion made by an authority figure (senior management, legal counsel, external auditor, regulator liaison) that was accepted without independent corroboration: (1) Is the authority figure's assertion independently verifiable from primary documentary evidence? (2) Does the authority figure have an interest in the conclusion they are asserting? (3) Was the assertion accepted because of the speaker's position rather than the quality of the evidence? A compliance assessment that defers to seniority without independent verification is not a compliance assessment — it is a ratification of authority. Flag every unverified authority assertion and require documentary corroboration.",
+    firesWhen: 'A case record contains unverified statements from senior management, external counsel, or named regulators used as primary evidence for a risk-lowering conclusion.',
+  },
+  {
+    id: 'mc.social-proof-fallacy-guard',
+    label: 'Social Proof Fallacy Guard',
+    category: 'behavioral',
+    directive:
+      '"Everyone does it", "market practice", "industry standard", and "commonly accepted" are not mitigating factors in financial crime assessments. Apply this primitive whenever such language appears: (1) Name the specific regulatory provision that authorises the practice — if none exists, the argument fails. (2) Prevalence of a practice among regulated entities does not reduce the individual regulatory breach. (3) If the defence is that multiple banks cleared the same transaction, probe whether those banks had the same risk information or were each given a partial picture (the boiling-frog problem). Flag social-proof reasoning as an independent red flag wherever it substitutes for legal authority.',
+    firesWhen: 'A counterparty, subject, or internal stakeholder argues that a practice is standard, common, or widely used as a defence against a financial-crime risk concern.',
+  },
+  {
+    id: 'mc.sunk-cost-trap',
+    label: 'Sunk-Cost Trap Detector',
+    category: 'behavioral',
+    directive:
+      'Detect and neutralise sunk-cost reasoning in relationship continuation decisions: (1) Would the relationship be onboarded today under current risk appetite if it were a new prospect? (2) Is the primary argument for continuation the duration or revenue of the existing relationship rather than the current risk profile? (3) Are remediation failures being tolerated because prior investment in the remediation programme makes exit feel wasteful? If the answer to any is yes, the sunk-cost trap is active. The correct decision is a zero-based risk assessment: treat the relationship as if it were a new onboarding. Past investment is irrelevant to current risk.',
+    firesWhen: 'A long-standing relationship with elevated risk indicators is being recommended for continuation with reference to historical revenue, tenure, or prior remediation investment.',
+  },
+  {
+    id: 'mc.groupthink-circuit-breaker',
+    label: 'Groupthink Circuit Breaker',
+    category: 'behavioral',
+    directive:
+      'A unanimous decision on a high-risk case is a warning signal, not a comfort. Apply this primitive when a committee, panel, or approval chain produces unanimous agreement: (1) Was dissent actively solicited and documented? (2) Was a devil\'s advocate appointed? (3) Are all approvers in a hierarchical relationship where junior members face pressure to align with seniors? (4) Did the discussion time (documented in minutes) reflect the complexity of the case? If unanimous approval is reached in under 15 minutes on a case with a risk score ≥ High, flag groupthink risk. Mandate a documented dissent review before the verdict is sealed.',
+    firesWhen: 'A committee or approval chain produces unanimous agreement on a high or critical risk case without documented dissent consideration.',
+  },
+  {
+    id: 'mc.moral-disengagement-lens',
+    label: 'Moral Disengagement Lens',
+    category: 'behavioral',
+    directive:
+      'Identify moral disengagement mechanisms in the case record and counterparty communications: (1) Euphemistic labelling — does the language obscure the harm? ("optimised tax structure" for aggressive avoidance; "advisory fee" for a bribe; "facilitation" for corruption). (2) Displacement of responsibility — is a professional intermediary being used to create a chain of deniability? (3) Diffusion of responsibility — does each participant in the structure claim only partial knowledge? (4) Dehumanisation of victims — are the downstream consequences of the financial crime (terrorism, trafficking, sanctions evasion) being abstracted away? Each mechanism is an independent red flag. Name the mechanism in the assessment and treat it as evidence of deliberate construction rather than coincidence.',
+    firesWhen: 'Counterparty communications, corporate documentation, or internal memos use language that obscures harm, diffuses responsibility, or euphemistically reframes financial-crime-adjacent activity.',
+  },
+  {
+    id: 'mc.base-rate-neglect-probe',
+    label: 'Base Rate Neglect Probe',
+    category: 'calibration',
+    directive:
+      'Before adjusting the risk tier, calculate the base rate: (1) What is the empirical SAR / adverse-media / enforcement rate for entities with this sector, jurisdiction, PEP status, and transaction profile? (2) Is the current evidence strong enough to update meaningfully away from that base rate, or are we extrapolating from one or two salient data points? (3) Is the base rate for the proposed hypothesis (e.g., "proceeds of corruption") consistent with the scale of the observed flows? (4) If the base rate is low but the hypothesis is severe, apply Bayesian updating explicitly — state the prior, the likelihood ratio, and the posterior. A vivid but isolated data point does not override a strong base rate; but a strong base rate does not exculpate a vivid data point — both must be addressed.',
+    firesWhen: 'A risk conclusion diverges significantly from the expected base rate for comparable entities, or a single salient fact is carrying disproportionate evidential weight.',
+  },
+  {
+    id: 'mc.hindsight-bias-guard',
+    label: 'Hindsight Bias Guard',
+    category: 'behavioral',
+    directive:
+      'When reviewing historical decisions or conducting look-back analyses: (1) Reconstruct what was known at the time of the original decision — not what is known now. (2) Evaluate the original decision against the information available then, not against the outcome. (3) Do not attribute "should have known" to an analyst who lacked access to information that only became available after the fact. (4) When assessing current controls based on past failures, distinguish between failures attributable to information gaps and failures attributable to analytical errors. Hindsight bias in enforcement analysis inflates historical culpability and underestimates the genuine uncertainty of real-time decision-making.',
+    firesWhen: 'A look-back review, enforcement assessment, or historical transaction review is attributing knowledge to past decision-makers that was not available at the time.',
+  },
+  {
+    id: 'mc.overfitting-guard',
+    label: 'Overfitting Guard',
+    category: 'calibration',
+    directive:
+      'A pattern fit to too few data points is not evidence — it is noise: (1) How many independent data points support the identified pattern? If fewer than five, the pattern hypothesis must be held at "possible" rather than "probable". (2) Does the pattern hold across multiple independent sources, or is it constructed from a single data pipeline with its own systematic bias? (3) Would the same analytical model fit an equal proportion of low-risk entities? If yes, the discriminative power is insufficient. (4) Apply cross-validation: does the pattern persist when the most salient data point is removed? Overfit patterns produce false positives and degrade MLRO credibility — name the sample size and source diversity in every pattern-based finding.',
+    firesWhen: 'A finding relies on a pattern inferred from fewer than five data points, a single source pipeline, or a model whose false-positive rate is unknown.',
+  },
+  {
+    id: 'mc.scope-insensitivity-check',
+    label: 'Scope Insensitivity Check',
+    category: 'calibration',
+    directive:
+      'Ensure that quantitative risk assessment scales proportionally with the magnitude of the underlying evidence: (1) Is a transaction of USD 100,000 receiving the same risk weight as a transaction of USD 100,000,000 with equivalent structural characteristics? (2) Is a single adverse-media hit triggering the same escalation level as fifty corroborated hits across multiple independent sources? (3) Does the risk score increase monotonically with the number of independent corroborating sources? If risk judgements are scale-insensitive, the scoring model is miscalibrated. Apply an explicit magnitude check: state the order-of-magnitude range of the evidence and confirm that the risk tier reflects it.',
+    firesWhen: 'A risk score or escalation decision does not differentiate between materially different magnitudes of evidence or transaction size.',
+  },
+  {
+    id: 'mc.category-error-guard',
+    label: 'Category Error Guard',
+    category: 'hygiene',
+    directive:
+      'Detect and correct category errors — the application of an evidential or analytical standard appropriate to one context to a fundamentally different context: (1) Is civil evidence (balance of probabilities) being treated as equivalent to criminal evidence (beyond reasonable doubt), or vice versa? (2) Is a reputational risk standard being applied to a regulatory compliance question? (3) Is a typological indicator (a pattern common to ML/TF) being treated as conclusive proof rather than as a prior-probability adjuster? (4) Is a regulatory expectation (what a regulator would require) being conflated with a legal prohibition (what the law forbids)? Name the category distinction explicitly and apply the appropriate standard for each layer of the analysis.',
+    firesWhen: 'The analysis mixes evidential standards, regulatory and legal thresholds, or typological indicators and conclusive proof without explicitly distinguishing them.',
   },
 ]);
 

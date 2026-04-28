@@ -32,7 +32,7 @@ export const BRAIN_AMPLIFICATION_FACTOR = BRAIN_AMPLIFICATION_PERCENT / 100;
  * Version of the amplifier contract. Bump this whenever the directive below
  * changes so the catalogueHash shifts and callers refresh their prompts.
  */
-export const COGNITIVE_AMPLIFIER_VERSION = 'v8.0.0' as const;
+export const COGNITIVE_AMPLIFIER_VERSION = 'v9.0.0' as const;
 
 export interface CognitiveAmplifier {
   readonly version: string;
@@ -184,6 +184,17 @@ const DIRECTIVES: readonly string[] = Object.freeze([
   'Apply the commitment credibility test (mc.commitment-credibility-test) to every compliance undertaking, remediation plan, and cooperation representation: score credibility against incentive compatibility, verification mechanism, and enforcement history; an unverifiable commitment from a party with incentive to defect is not a mitigating factor — treat it as evidence of continued evasion and retain the elevated risk tier.',
   'Apply adverse-selection probe (mc.adverse-selection-probe) and moral-hazard architecture audit (mc.moral-hazard-architecture-audit) at every product, channel, and structural review: name the adverse-selection mechanism if present; identify every layer that insulates principals from the consequences of their risk-taking; escalate any structure that systematically transfers regulatory risk to a less-regulated intermediary while the principal captures the economic gains.',
   'Apply the mechanism design audit (mc.mechanism-design-audit) to every multi-jurisdictional structure: if the structure achieves regulatory opacity as a systematic engineering outcome across ≥2 jurisdictions — routing below thresholds, placing beneficial owners outside every regulatory perimeter, disabling ownership registers — treat the design intent as an independent red flag and name the specific regulatory mechanism being circumvented regardless of whether any individual structural element is individually unlawful.',
+
+  // v9.0.0 — BEHAVIORAL SCIENCE & EPISTEMIC HYGIENE: Wave 10 meta-cognition integration,
+  //           cognitive bias elimination, motivated reasoning detection, epistemic calibration.
+  'Apply the confirmation bias guard (mc.confirmation-bias-guard) before sealing every verdict: enumerate all evidence weighted ≤10% in the final conclusion; if adverse evidence inventory is shorter than supporting inventory for the preferred hypothesis, seek three disconfirming data points before proceeding; name every source accepted without independent corroboration — a verdict relying on an unchallenged narrative is a compliance failure in its own right.',
+  'Apply the motivated reasoning detector (mc.motivated-reasoning-detector) to every assessment where commercial or relationship interests are present: apply the name-swap test — would the same verdict hold for an unknown counterparty with identical facts? If not, the reasoning is suspect; flag and require an independent reviewer before the verdict is released.',
+  'Apply the authority bias probe (mc.authority-bias-probe) to every unverified assertion from a senior manager, external counsel, auditor, or named regulator: require documentary corroboration for every authority assertion used in a risk-lowering conclusion; seniority of the speaker is never a substitute for primary-source evidence.',
+  'Apply the social proof fallacy guard (mc.social-proof-fallacy-guard) whenever "market practice", "industry standard", or "everyone does it" language appears: require a specific regulatory provision authorising the practice; prevalence is never a mitigating factor; probe whether multiple institutions were each given a partial picture of the same scheme.',
+  'Apply the sunk-cost trap detector (mc.sunk-cost-trap) to every relationship continuation decision: perform a zero-based risk assessment — would this relationship be approved today as a new onboarding under current risk appetite? If not, continuation must be justified on current risk grounds alone, not on historical revenue or remediation investment.',
+  'Apply the groupthink circuit breaker (mc.groupthink-circuit-breaker) to every committee approval on a HIGH or CRITICAL case: unanimous agreement in under 15 minutes on a complex case is a warning signal; require documented dissent solicitation, a named devil\'s advocate, and a hierarchical-pressure check before the verdict is sealed.',
+  'Apply the moral disengagement lens (mc.moral-disengagement-lens) to every case: flag euphemistic labelling ("advisory fee", "optimised structure"), displacement of responsibility through professional intermediaries, diffusion of responsibility across partial-knowledge participants, and abstraction of downstream harm — each mechanism is an independent red flag naming deliberate construction.',
+  'Apply the category error guard (mc.category-error-guard) to prevent mixing of evidential standards: explicitly distinguish civil evidence (balance of probabilities), criminal evidence (beyond reasonable doubt), regulatory expectations (what a regulator requires), and typological indicators (prior-probability adjusters) — never treat a typological indicator as conclusive proof and never apply a criminal evidentiary standard to a regulatory compliance gate.',
 ]);
 
 export const COGNITIVE_AMPLIFIER: CognitiveAmplifier = Object.freeze({
