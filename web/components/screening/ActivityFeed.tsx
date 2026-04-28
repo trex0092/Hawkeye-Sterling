@@ -116,12 +116,15 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     const addSys = () => {
       const msg = SYS_MESSAGES[counterRef.current % SYS_MESSAGES.length]!;
       const depth = 30 + Math.floor(Math.random() * 15);
       counterRef.current++;
       const entry: FeedEntry = {
-        id: `sys-${Date.now()}`,
+        id: `sys-${Date.now()}-${counterRef.current}`,
         time: nowHHMMSS(),
         kind: "SYS",
         text: msg.includes("q depth") ? `${msg} ${depth}` : msg,
@@ -130,8 +133,20 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
       setEntries((prev) => [entry, ...prev].slice(0, 60));
     };
 
-    const id = setInterval(addSys, 8_000 + Math.random() * 7_000);
-    return () => clearInterval(id);
+    // Re-randomise the cadence every tick so the feed never stalls in a
+    // predictable rhythm. 2.0 – 3.5 s keeps the channel visibly alive without
+    // drowning the operator in noise.
+    const tick = () => {
+      if (cancelled) return;
+      addSys();
+      timer = setTimeout(tick, 2_000 + Math.random() * 1_500);
+    };
+    timer = setTimeout(tick, 1_500);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   return (

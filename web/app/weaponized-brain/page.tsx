@@ -486,7 +486,7 @@ function BrainConsole() {
             sector: sector.trim() || undefined,
           },
           roleText: roleText.trim() || undefined,
-          narrative: narrative.trim() || undefined,
+          adverseMediaText: narrative.trim() || undefined,
         }),
       });
       const data = (await res.json()) as ReasonResponse;
@@ -824,11 +824,69 @@ function BrainResult({ r }: { r: ReasonResponse }) {
       {/* Weaponized prompt preview */}
       {r.promptPreview && (
         <ResultSection title="Weaponized system-prompt preview (catalogue summary fragment)">
-          <pre className="text-10 font-mono text-ink-1 bg-bg-1 border border-hair-2 rounded p-2 whitespace-pre-wrap max-h-56 overflow-auto">
-            {r.promptPreview}
-          </pre>
+          <PromptPreviewPanel text={r.promptPreview} />
         </ResultSection>
       )}
+    </div>
+  );
+}
+
+function PromptPreviewPanel({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const sections = parseStructuredNarrative(text);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-10 font-mono text-ink-3">
+          Catalogue + charter fragment injected into every downstream integration verbatim.
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-10 font-mono px-2 py-1 rounded bg-bg-2 text-ink-1 hover:bg-bg-1 border border-hair-2"
+          >
+            {expanded ? "Collapse" : "Expand"}
+          </button>
+          <button
+            type="button"
+            onClick={onCopy}
+            className="text-10 font-mono px-2 py-1 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors"
+          >
+            {copied ? "Copied ✓" : "Copy"}
+          </button>
+        </div>
+      </div>
+      <div
+        className={`bg-bg-1 border border-hair-2 rounded overflow-auto divide-y divide-hair-2 ${
+          expanded ? "max-h-[36rem]" : "max-h-56"
+        }`}
+      >
+        {sections.length === 0 ? (
+          <pre className="text-10 font-mono text-ink-1 whitespace-pre-wrap p-2 m-0">{text}</pre>
+        ) : (
+          sections.map((s, i) => (
+            <section key={i} className="p-2.5">
+              {s.heading && (
+                <div className="text-9 uppercase tracking-wide-3 text-brand font-semibold font-mono mb-1">
+                  {s.heading}
+                </div>
+              )}
+              <pre className="text-10 font-mono text-ink-1 whitespace-pre-wrap m-0">{s.body}</pre>
+            </section>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -1491,6 +1549,7 @@ function NarrativePanel({ text }: { text: string }) {
       /* clipboard unavailable */
     }
   };
+  const sections = parseStructuredNarrative(text);
   return (
     <ResultSection title="STR/SAR draft narrative">
       <div className="space-y-2">
@@ -1501,15 +1560,56 @@ function NarrativePanel({ text }: { text: string }) {
           <button
             type="button"
             onClick={onCopy}
-            className="text-10 font-mono px-2 py-1 rounded bg-bg-2 text-ink-1 hover:bg-bg-1"
+            className="text-10 font-mono px-2 py-1 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors"
           >
             {copied ? "Copied ✓" : "Copy to clipboard"}
           </button>
         </div>
-        <pre className="text-10 leading-relaxed font-mono whitespace-pre-wrap bg-bg-2 text-ink-0 p-3 rounded border border-hair-2 max-h-96 overflow-auto">
-{text}
-        </pre>
+        <div className="bg-bg-2 border border-hair-2 rounded max-h-96 overflow-auto divide-y divide-hair-2">
+          {sections.length === 0 ? (
+            <pre className="text-10 leading-relaxed font-mono whitespace-pre-wrap text-ink-0 p-3">{text}</pre>
+          ) : (
+            sections.map((s, i) => (
+              <section key={i} className="p-3">
+                {s.heading && (
+                  <div className="text-9 uppercase tracking-wide-3 text-brand font-semibold font-mono mb-1.5">
+                    {s.heading}
+                  </div>
+                )}
+                <pre className="text-10 leading-relaxed font-mono whitespace-pre-wrap text-ink-0 m-0">{s.body}</pre>
+              </section>
+            ))
+          )}
+        </div>
       </div>
     </ResultSection>
   );
+}
+
+/** Split a structured narrative into sections by detecting heading lines.
+ *  A heading is either an ALL-CAPS line, a "==" / "--" underline, or a
+ *  numbered prefix like "1. " on a short standalone line. The first section
+ *  may have no heading. */
+function parseStructuredNarrative(text: string): Array<{ heading: string | null; body: string }> {
+  const lines = text.split(/\r?\n/);
+  const out: Array<{ heading: string | null; body: string }> = [];
+  let current: { heading: string | null; body: string } = { heading: null, body: "" };
+  const isHeading = (line: string): boolean => {
+    const t = line.trim();
+    if (!t || t.length > 80) return false;
+    if (/^[=\-_]{3,}$/.test(t)) return false;
+    if (/^[A-Z0-9 ()/.,&·\-—:]{3,}$/.test(t) && t === t.toUpperCase() && /[A-Z]/.test(t)) return true;
+    if (/^(\d+\.|##+|—)\s+[A-Z]/.test(t) && t.length <= 80) return true;
+    return false;
+  };
+  for (const line of lines) {
+    if (isHeading(line)) {
+      if (current.body.trim() || current.heading) out.push({ ...current, body: current.body.replace(/\n+$/, "") });
+      current = { heading: line.trim().replace(/^[#—]+\s*/, ""), body: "" };
+    } else {
+      current.body += (current.body ? "\n" : "") + line;
+    }
+  }
+  if (current.body.trim() || current.heading) out.push({ ...current, body: current.body.replace(/\n+$/, "") });
+  return out;
 }
