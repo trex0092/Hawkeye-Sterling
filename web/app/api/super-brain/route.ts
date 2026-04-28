@@ -201,7 +201,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // AFTER the composite formula, so its signal never reached result.composite.score
     // — the ERMAN DONMEZ case (2 hits incl. law-enforcement article) rendered 0/100
     // CLEAR even with material adverse media. Compute now and inject into composite.
-    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a) => a.snippet ?? "")]
+    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a) => a.keyword)]
       .filter((s) => s.length > 0)
       .join("\n");
     const adverseMediaScoredEarly = mediaTextEarly
