@@ -56,7 +56,6 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
-import { BrainConsole } from "@/components/brain/BrainComponents";
 import {
   canPerform,
   loadOperatorRole,
@@ -151,7 +150,22 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     () => (canonicalName ? { ...qsSubject, name: canonicalName } : qsSubject),
     [qsSubject, canonicalName],
   );
-  const superBrain = useSuperBrain(qsSubjectForBrain, { adverseMediaText });
+  // Live-reasoning overrides — operator can pin a custom role or narrative
+  // and the super-brain hook re-keys on opts so it auto-refires. Cleared
+  // whenever the active subject changes so overrides don't bleed across
+  // records.
+  const [roleOverride, setRoleOverride] = useState("");
+  const [narrativeOverride, setNarrativeOverride] = useState("");
+  useEffect(() => {
+    setRoleOverride("");
+    setNarrativeOverride("");
+  }, [subject.id]);
+  const effectiveAdverseMediaText =
+    narrativeOverride.trim() || adverseMediaText;
+  const superBrain = useSuperBrain(qsSubjectForBrain, {
+    roleText: roleOverride.trim() || undefined,
+    adverseMediaText: effectiveAdverseMediaText,
+  });
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,
@@ -807,19 +821,17 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         {activeTab === "Ownership" && <OwnershipTab subject={subject} />}
 
         {activeTab === "Live reasoning" && (
-          <div>
-            <p className="text-11 text-ink-2 mb-3">
-              Pre-filled from this subject record. Hit “Fire the brain” to render the full reasoning chain — jurisdiction profile, redlines fired, doctrines in scope, typology fingerprints, composite score and disposition.
-            </p>
-            <BrainConsole
-              initialValues={{
-                name: subject.name,
-                aliases: subject.aliases?.join(", ") ?? "",
-                jurisdiction: subject.jurisdiction ?? "",
-                entityType: subject.entityType ?? "individual",
-              }}
-            />
-          </div>
+          <LiveReasoningTab
+            superBrain={superBrain}
+            subjectName={subject.name}
+            subjectId={subject.id}
+            news={news}
+            roleOverride={roleOverride}
+            setRoleOverride={setRoleOverride}
+            narrativeOverride={narrativeOverride}
+            setNarrativeOverride={setNarrativeOverride}
+            liveNarrativePreview={adverseMediaText}
+          />
         )}
 
         {activeTab !== "Screening" && activeTab !== "Ownership" && activeTab !== "Live reasoning" && (
@@ -829,12 +841,6 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         )}
       </div>
 
-      <SuperBrainPanel
-        state={superBrain}
-        subjectName={subject.name}
-        subjectId={subject.id}
-        news={news}
-      />
       <NewsDossierPanel state={news} />
 
     </aside>
@@ -1255,6 +1261,198 @@ function formatDoubleMetaphone(
   if (typeof dm === "string") return dm;
   if (Array.isArray(dm)) return dm.join(" / ");
   return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
+}
+
+function LiveReasoningTab({
+  superBrain,
+  subjectName,
+  subjectId,
+  news,
+  roleOverride,
+  setRoleOverride,
+  narrativeOverride,
+  setNarrativeOverride,
+  liveNarrativePreview,
+}: {
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subjectName: string;
+  subjectId: string;
+  news: NewsSearchState;
+  roleOverride: string;
+  setRoleOverride: (v: string) => void;
+  narrativeOverride: string;
+  setNarrativeOverride: (v: string) => void;
+  liveNarrativePreview: string;
+}) {
+  const [overridesOpen, setOverridesOpen] = useState(false);
+  const result =
+    superBrain.status === "success" ? superBrain.result : null;
+
+  const articleCount =
+    news.status === "success" ? news.result.articles.length : 0;
+  const narrativeSource = narrativeOverride.trim()
+    ? "operator override"
+    : articleCount > 0
+      ? `${articleCount} live news article${articleCount === 1 ? "" : "s"}`
+      : "subject record";
+
+  const composite = result?.composite ?? null;
+  const disposition = result?.redlines?.action ?? null;
+  const redlinesFired = result?.redlines?.fired?.length ?? 0;
+  const pepTier = (() => {
+    if (!result) return null;
+    const t =
+      (result.pep && result.pep.salience > 0 ? result.pep.tier : null) ??
+      (result.pepAssessment?.isLikelyPEP
+        ? result.pepAssessment.highestTier
+        : null);
+    return t ? t.replace(/^tier_/, "tier ").replace(/_/g, " ") : null;
+  })();
+  const jurisdictionLabel = result?.jurisdiction
+    ? `${result.jurisdiction.iso2}${result.jurisdiction.cahra ? " · CAHRA" : ""}`
+    : null;
+  const adverseCategories =
+    result?.adverseMediaScored?.categoriesTripped?.length ?? 0;
+  const typologyHits = result?.typologies?.hits?.length ?? 0;
+
+  const dispositionTone =
+    disposition && /BLOCK|REJECT|FREEZE/i.test(disposition)
+      ? "bg-red-dim text-red"
+      : disposition && /ENHANCED|REVIEW|EDD/i.test(disposition)
+        ? "bg-amber-dim text-amber"
+        : disposition
+          ? "bg-green-dim text-green"
+          : "bg-bg-2 text-ink-2";
+
+  return (
+    <div>
+      <p className="text-11 text-ink-2 mb-3">
+        Live reasoning auto-fires against this subject and stays in sync with
+        screening, news, and operator overrides. Posture below is derived from
+        the same modules used by Super brain — no second engine, no second
+        click.
+      </p>
+
+      {/* Posture strip */}
+      <div className="grid grid-cols-2 gap-2 mb-3 sm:grid-cols-3">
+        <PostureCell
+          label="Composite"
+          value={
+            composite
+              ? `${composite.score}/100`
+              : superBrain.status === "loading"
+                ? "…"
+                : "—"
+          }
+        />
+        <PostureCell
+          label="Disposition"
+          value={disposition ?? (superBrain.status === "loading" ? "…" : "—")}
+          toneClass={dispositionTone}
+        />
+        <PostureCell label="Redlines" value={String(redlinesFired)} />
+        <PostureCell label="PEP" value={pepTier ?? "—"} />
+        <PostureCell label="Jurisdiction" value={jurisdictionLabel ?? "—"} />
+        <PostureCell
+          label="Signals"
+          value={`${adverseCategories} adv · ${typologyHits} typ`}
+        />
+      </div>
+
+      <div className="text-10 text-ink-3 mb-3 font-mono">
+        narrative source: {narrativeSource}
+        {superBrain.status === "loading" && " · reasoning…"}
+        {superBrain.status === "error" && " · brain unavailable"}
+      </div>
+
+      {/* Override controls */}
+      <div className="mb-4 rounded border border-hair-2 bg-bg-panel">
+        <button
+          type="button"
+          onClick={() => setOverridesOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-2.5 py-1.5 text-11 font-medium text-ink-1 bg-transparent border-none cursor-pointer hover:text-ink-0"
+        >
+          <span>
+            Operator override
+            {(roleOverride.trim() || narrativeOverride.trim()) && (
+              <span className="ml-2 inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet">
+                active
+              </span>
+            )}
+          </span>
+          <span className="text-ink-3 font-mono">{overridesOpen ? "−" : "+"}</span>
+        </button>
+        {overridesOpen && (
+          <div className="px-2.5 pb-2.5 pt-1 border-t border-hair">
+            <Field label="Role text">
+              <input
+                type="text"
+                value={roleOverride}
+                onChange={(e) => setRoleOverride(e.target.value)}
+                placeholder="e.g. State leader, central bank governor, MP…"
+                className="w-full rounded border border-hair-2 bg-bg-1 px-2 py-1 text-12 text-ink-0 placeholder:text-ink-3"
+              />
+            </Field>
+            <Field label="Narrative">
+              <textarea
+                value={narrativeOverride}
+                onChange={(e) => setNarrativeOverride(e.target.value)}
+                placeholder={
+                  liveNarrativePreview
+                    ? `Override the live narrative (default: ${liveNarrativePreview.slice(0, 120)}${liveNarrativePreview.length > 120 ? "…" : ""})`
+                    : "Paste a narrative for the brain to reason against."
+                }
+                rows={3}
+                className="w-full rounded border border-hair-2 bg-bg-1 px-2 py-1 text-12 text-ink-0 placeholder:text-ink-3 resize-y"
+              />
+            </Field>
+            <div className="flex gap-2">
+              <PanelBtn
+                onClick={() => {
+                  setRoleOverride("");
+                  setNarrativeOverride("");
+                }}
+                disabled={!roleOverride && !narrativeOverride}
+              >
+                Reset to live
+              </PanelBtn>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <SuperBrainPanel
+        state={superBrain}
+        subjectName={subjectName}
+        subjectId={subjectId}
+        news={news}
+      />
+    </div>
+  );
+}
+
+function PostureCell({
+  label,
+  value,
+  toneClass,
+}: {
+  label: string;
+  value: string;
+  toneClass?: string;
+}) {
+  return (
+    <div className="rounded border border-hair-2 bg-bg-panel px-2 py-1.5">
+      <div className="text-10 uppercase tracking-wide-4 text-ink-3 mb-0.5">
+        {label}
+      </div>
+      <div
+        className={`text-12 font-mono font-medium truncate ${toneClass ? `inline-block px-1.5 py-px rounded-sm ${toneClass}` : "text-ink-0"}`}
+        title={value}
+      >
+        {value}
+      </div>
+    </div>
+  );
 }
 
 function SuperBrainPanel({
