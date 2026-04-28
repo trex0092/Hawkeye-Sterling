@@ -2,7 +2,6 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
 import { PresetsCard } from "@/components/workbench/PresetsCard";
@@ -212,30 +211,19 @@ export default function WorkbenchPage() {
 
         <main className="px-10 py-8 overflow-y-auto">
           {/* Unified hero */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
-                MODULE 03 · WORKBENCH BRAIN
-              </div>
-              <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">
-                The full <em className="italic text-brand">arsenal.</em>
-              </h1>
-              <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
-                <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
-                Pick the reasoning modes you want to engage, screen a subject, watch the
-                live reasoning chain, or inspect the catalogues, charter directives and audit
-                state of the brain itself.
-              </p>
+          <div className="mb-6">
+            <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+              MODULE 03 · WORKBENCH BRAIN
             </div>
-            <div className="mt-1">
-              <AsanaReportButton
-                payload={{
-                  module: "workbench-brain",
-                  label: "Workbench Brain",
-                  summary: "Workbench Brain session report from Hawkeye Sterling — reasoning modes and Brain analysis reviewed.",
-                }}
-              />
-            </div>
+            <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">
+              The full <em className="italic text-brand">arsenal.</em>
+            </h1>
+            <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
+              <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
+              Pick the reasoning modes you want to engage, screen a subject, watch the
+              live reasoning chain, or inspect the catalogues, charter directives and audit
+              state of the brain itself.
+            </p>
           </div>
 
           {/* Tab strip */}
