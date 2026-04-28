@@ -373,7 +373,6 @@ export default function RmiPage() {
                 <td className="px-2 py-2.5 text-right">
                   <RowActions
                     label={`smelter ${s.id}`}
-                    onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                     onDelete={() => deleteEntry(s.id)}
                     confirmDelete={false}
                   />

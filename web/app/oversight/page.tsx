@@ -597,6 +597,16 @@ export default function OversightPage() {
   const [showAddApproval, setShowAddApproval] = useState(false);
   const [showAddMinute, setShowAddMinute] = useState(false);
 
+  // Inline edit state
+  const [editingApprovalId, setEditingApprovalId] = useState<string | null>(null);
+  const [editApprovalNotes, setEditApprovalNotes] = useState("");
+  const [editingMinuteId, setEditingMinuteId] = useState<string | null>(null);
+  const [editMinuteTitle, setEditMinuteTitle] = useState("");
+  const [editingCircularId, setEditingCircularId] = useState<string | null>(null);
+  const [editCircularNotes, setEditCircularNotes] = useState("");
+  const [editCircularOwner, setEditCircularOwner] = useState("");
+  const [editCircularDue, setEditCircularDue] = useState("");
+
   useEffect(() => { setOverlay(loadOversightOverlay()); }, []);
 
   const updateOverlay = (next: OversightOverlay) => { setOverlay(next); saveOversightOverlay(next); };
@@ -608,6 +618,45 @@ export default function OversightPage() {
   const addMinute = (m: Minute) => { updateOverlay({ ...overlay, customMinutes: [...overlay.customMinutes, m] }); setShowAddMinute(false); };
   const addCircular = (c: Circular) => { updateOverlay({ ...overlay, customCirculars: [...overlay.customCirculars, c] }); setShowAddCircular(false); };
   const restoreAll = () => { updateOverlay(EMPTY_OVERLAY); };
+
+  const startEditApproval = (a: Approval) => { setEditingApprovalId(a.id); setEditApprovalNotes(a.notes); };
+  const saveEditApproval = (id: string) => {
+    const patch = (a: Approval) => a.id === id ? { ...a, notes: editApprovalNotes } : a;
+    const isCustom = overlay.customApprovals.some((a) => a.id === id);
+    if (isCustom) {
+      updateOverlay({ ...overlay, customApprovals: overlay.customApprovals.map(patch) });
+    } else {
+      const orig = [...APPROVALS, ...overlay.customApprovals].find((a) => a.id === id)!;
+      updateOverlay({ ...overlay, deletedApprovalIds: [...overlay.deletedApprovalIds, id], customApprovals: [...overlay.customApprovals, patch(orig)] });
+    }
+    setEditingApprovalId(null);
+  };
+
+  const startEditMinute = (m: Minute) => { setEditingMinuteId(m.id); setEditMinuteTitle(m.title); };
+  const saveEditMinute = (id: string) => {
+    const patch = (m: Minute) => m.id === id ? { ...m, title: editMinuteTitle } : m;
+    const isCustom = overlay.customMinutes.some((m) => m.id === id);
+    if (isCustom) {
+      updateOverlay({ ...overlay, customMinutes: overlay.customMinutes.map(patch) });
+    } else {
+      const orig = [...MINUTES, ...overlay.customMinutes].find((m) => m.id === id)!;
+      updateOverlay({ ...overlay, deletedMinuteIds: [...overlay.deletedMinuteIds, id], customMinutes: [...overlay.customMinutes, patch(orig)] });
+    }
+    setEditingMinuteId(null);
+  };
+
+  const startEditCircular = (c: Circular) => { setEditingCircularId(c.id); setEditCircularNotes(c.notes); setEditCircularOwner(c.owner); setEditCircularDue(c.dueDate); };
+  const saveEditCircular = (id: string) => {
+    const patch = (c: Circular) => c.id === id ? { ...c, notes: editCircularNotes, owner: editCircularOwner, dueDate: editCircularDue } : c;
+    const isCustom = overlay.customCirculars.some((c) => c.id === id);
+    if (isCustom) {
+      updateOverlay({ ...overlay, customCirculars: overlay.customCirculars.map(patch) });
+    } else {
+      const orig = [...CIRCULARS, ...overlay.customCirculars].find((c) => c.id === id)!;
+      updateOverlay({ ...overlay, deletedCircularIds: [...overlay.deletedCircularIds, id], customCirculars: [...overlay.customCirculars, patch(orig)] });
+    }
+    setEditingCircularId(null);
+  };
 
   const liveApprovals = useMemo(() => [...APPROVALS.filter((a) => !overlay.deletedApprovalIds.includes(a.id)), ...overlay.customApprovals], [overlay]);
   const liveMinutes = useMemo(() => [...MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), ...overlay.customMinutes], [overlay]);
@@ -683,10 +732,27 @@ export default function OversightPage() {
           )}
           {liveApprovals.map((a) => (
             <div key={a.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
+              {editingApprovalId === a.id && (
+                <div className="mb-3 space-y-2 pr-8">
+                  <textarea
+                    className="w-full text-11 px-2 py-1.5 rounded border border-brand bg-bg-0 text-ink-0"
+                    rows={3}
+                    value={editApprovalNotes}
+                    onChange={(e) => setEditApprovalNotes(e.target.value)}
+                    placeholder="Notes"
+                  />
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => saveEditApproval(a.id)}
+                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                    <button type="button" onClick={() => setEditingApprovalId(null)}
+                      className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                  </div>
+                </div>
+              )}
               <div className="absolute top-2 right-2 z-10">
                 <RowActions
                   label={a.title}
-                  onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onEdit={() => startEditApproval(a)}
                   onDelete={() => deleteApproval(a.id)}
                   confirmDelete={false}
                 />
@@ -770,10 +836,26 @@ export default function OversightPage() {
             const openAI = m.actionItems.filter((ai) => !ai.closed).length;
             return (
               <div key={m.id} className="relative bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+                {editingMinuteId === m.id && (
+                  <div className="px-4 py-2 border-b border-hair-2 space-y-2">
+                    <input
+                      className="w-full text-12 px-2 py-1.5 rounded border border-brand bg-bg-0 text-ink-0"
+                      value={editMinuteTitle}
+                      onChange={(e) => setEditMinuteTitle(e.target.value)}
+                      placeholder="Meeting title"
+                    />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => saveEditMinute(m.id)}
+                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                      <button type="button" onClick={() => setEditingMinuteId(null)}
+                        className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                    </div>
+                  </div>
+                )}
                 <div className="absolute top-2 right-2 z-10">
                   <RowActions
                     label={`minute ${m.id}`}
-                    onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onEdit={() => startEditMinute(m)}
                     onDelete={() => deleteMinute(m.id)}
                     confirmDelete={false}
                   />
@@ -878,30 +960,41 @@ export default function OversightPage() {
               </thead>
               <tbody>
                 {liveCirculars.map((c, i) => (
-                  <tr key={c.id} className={i < liveCirculars.length - 1 ? "border-b border-hair" : ""}>
-                    <td className="px-3 py-2.5 font-mono text-11 text-ink-0 whitespace-nowrap">{c.ref}</td>
-                    <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{c.date}</td>
-                    <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.issuer}</td>
-                    <td className="px-3 py-2.5 text-ink-0 font-medium max-w-[220px]">{c.title}</td>
-                    <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.owner}</td>
-                    <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{c.dueDate}</td>
-                    <td className="px-3 py-2.5">
-                      <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${DISPOSITION_TONE[c.disposition]}`}>
-                        {DISPOSITION_LABEL[c.disposition]}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[200px] truncate" title={c.notes}>
-                      {c.notes}
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <RowActions
-                        label={`circular ${c.id}`}
-                        onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                        onDelete={() => deleteCircular(c.id)}
-                        confirmDelete={false}
-                      />
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={c.id} className={i < liveCirculars.length - 1 ? "border-b border-hair" : ""}>
+                      <td className="px-3 py-2.5 font-mono text-11 text-ink-0 whitespace-nowrap">{c.ref}</td>
+                      <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{c.date}</td>
+                      <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.issuer}</td>
+                      <td className="px-3 py-2.5 text-ink-0 font-medium max-w-[220px]">{c.title}</td>
+                      <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{editingCircularId === c.id ? <input className="text-11 px-1.5 py-1 rounded border border-brand bg-bg-0 text-ink-0 w-28" value={editCircularOwner} onChange={(e) => setEditCircularOwner(e.target.value)} /> : c.owner}</td>
+                      <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{editingCircularId === c.id ? <input type="date" className="text-10 px-1 py-1 rounded border border-brand bg-bg-0 text-ink-0" value={editCircularDue} onChange={(e) => setEditCircularDue(e.target.value)} /> : c.dueDate}</td>
+                      <td className="px-3 py-2.5">
+                        <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${DISPOSITION_TONE[c.disposition]}`}>
+                          {DISPOSITION_LABEL[c.disposition]}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[200px]">
+                        {editingCircularId === c.id
+                          ? <input className="text-11 px-1.5 py-1 rounded border border-brand bg-bg-0 text-ink-0 w-full" value={editCircularNotes} onChange={(e) => setEditCircularNotes(e.target.value)} />
+                          : <span className="truncate block" title={c.notes}>{c.notes}</span>}
+                      </td>
+                      <td className="px-2 py-2.5">
+                        {editingCircularId === c.id ? (
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => saveEditCircular(c.id)} className="text-10 font-semibold px-2 py-0.5 rounded bg-ink-0 text-bg-0">Save</button>
+                            <button type="button" onClick={() => setEditingCircularId(null)} className="text-10 px-2 py-0.5 rounded text-ink-2">✕</button>
+                          </div>
+                        ) : (
+                          <RowActions
+                            label={`circular ${c.id}`}
+                            onEdit={() => startEditCircular(c)}
+                            onDelete={() => deleteCircular(c.id)}
+                            confirmDelete={false}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>

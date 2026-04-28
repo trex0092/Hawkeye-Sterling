@@ -319,15 +319,17 @@ export default function ClientPortalPage() {
               Entity
             </div>
             <div className="space-y-3">
-              <div>
-                <label className={labelCls}>Registered entity name *</label>
-                <input required value={entity.name} onChange={setE("name")}
-                  placeholder="e.g. Acme Trading FZ-LLC" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Alternate names / transliterations</label>
-                <input value={entity.alternateNames} onChange={setE("alternateNames")}
-                  placeholder="Semi-colon separated" className={inputCls} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Registered entity name *</label>
+                  <input required value={entity.name} onChange={setE("name")}
+                    placeholder="e.g. Acme Trading FZ-LLC" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Alternate names / transliterations</label>
+                  <input value={entity.alternateNames} onChange={setE("alternateNames")}
+                    placeholder="Semi-colon separated" className={inputCls} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

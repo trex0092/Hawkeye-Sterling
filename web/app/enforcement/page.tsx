@@ -671,6 +671,11 @@ function saveOverlay(o: Overlay): void {
 
 export default function EnforcementPage() {
   const [overlay, setOverlay] = useState<Overlay>(EMPTY_OVERLAY);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Omit<Deadline, "id">>({
+    title: "", due: "", authority: "", cadence: "ad-hoc", notes: "",
+  });
+
   // Hydrate from localStorage on mount only — avoids SSR mismatch.
   useEffect(() => {
     setOverlay(loadOverlay());
@@ -682,6 +687,30 @@ export default function EnforcementPage() {
     );
     return live.sort((a, b) => Date.parse(a.due) - Date.parse(b.due));
   }, [overlay]);
+
+  const startEdit = (d: Deadline) => {
+    setEditingId(d.id);
+    setEditDraft({ title: d.title, due: d.due, authority: d.authority, cadence: d.cadence, notes: d.notes ?? "" });
+  };
+
+  const saveEdit = (id: string) => {
+    setOverlay((prev) => {
+      const isCustom = prev.custom.some((d) => d.id === id);
+      let next: Overlay;
+      if (isCustom) {
+        next = { ...prev, custom: prev.custom.map((d) => d.id === id ? { id, ...editDraft } : d) };
+      } else {
+        next = {
+          ...prev,
+          deletedIds: prev.deletedIds.includes(id) ? prev.deletedIds : [...prev.deletedIds, id],
+          custom: [...prev.custom, { id, ...editDraft }],
+        };
+      }
+      saveOverlay(next);
+      return next;
+    });
+    setEditingId(null);
+  };
 
   const onDelete = (id: string) => {
     setOverlay((prev) => {
@@ -770,33 +799,78 @@ export default function EnforcementPage() {
                 key={d.id}
                 className="bg-bg-panel border border-hair-2 rounded-lg p-4 relative"
               >
-                <div className="flex items-baseline justify-between gap-3 mb-1 pr-7">
-                  <h3 className="text-13 font-semibold text-ink-0 m-0">
-                    {d.title}
-                    {isCustom && (
-                      <span className="ml-2 align-middle font-mono text-10 px-1.5 py-0.5 rounded bg-brand-dim text-brand border border-brand-line">
-                        custom
+                {editingId === d.id ? (
+                  <div className="space-y-2 pr-7">
+                    <input
+                      className="w-full text-12 px-2 py-1.5 rounded border border-brand bg-bg-0 text-ink-0"
+                      value={editDraft.title}
+                      onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
+                      placeholder="Title"
+                    />
+                    <div className="grid grid-cols-3 gap-2">
+                      <input
+                        className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                        value={editDraft.authority}
+                        onChange={(e) => setEditDraft({ ...editDraft, authority: e.target.value })}
+                        placeholder="Authority"
+                      />
+                      <input
+                        type="date"
+                        className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                        value={editDraft.due}
+                        onChange={(e) => setEditDraft({ ...editDraft, due: e.target.value })}
+                      />
+                      <select
+                        className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                        value={editDraft.cadence}
+                        onChange={(e) => setEditDraft({ ...editDraft, cadence: e.target.value as Deadline["cadence"] })}
+                      >
+                        <option value="annual">annual</option>
+                        <option value="quarterly">quarterly</option>
+                        <option value="monthly">monthly</option>
+                        <option value="ad-hoc">ad-hoc</option>
+                      </select>
+                    </div>
+                    <input
+                      className="w-full text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
+                      value={editDraft.notes ?? ""}
+                      onChange={(e) => setEditDraft({ ...editDraft, notes: e.target.value })}
+                      placeholder="Notes (optional)"
+                    />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => saveEdit(d.id)}
+                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                      <button type="button" onClick={() => setEditingId(null)}
+                        className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline justify-between gap-3 mb-1 pr-7">
+                      <h3 className="text-13 font-semibold text-ink-0 m-0">
+                        {d.title}
+                        {isCustom && (
+                          <span className="ml-2 align-middle font-mono text-10 px-1.5 py-0.5 rounded bg-brand-dim text-brand border border-brand-line">
+                            custom
+                          </span>
+                        )}
+                      </h3>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 font-semibold uppercase whitespace-nowrap ${tone}`}>
+                        {label}
                       </span>
+                    </div>
+                    <div className="font-mono text-10 text-ink-3 mb-2">
+                      {d.authority} · due {fmtDate(d.due)} · {d.cadence}
+                    </div>
+                    {d.notes && (
+                      <p className="text-11 text-ink-2 m-0 leading-relaxed">{d.notes}</p>
                     )}
-                  </h3>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 font-semibold uppercase whitespace-nowrap ${tone}`}
-                  >
-                    {label}
-                  </span>
-                </div>
-                <div className="font-mono text-10 text-ink-3 mb-2">
-                  {d.authority} · due {fmtDate(d.due)} · {d.cadence}
-                </div>
-                {d.notes && (
-                  <p className="text-11 text-ink-2 m-0 leading-relaxed">
-                    {d.notes}
-                  </p>
+                  </>
                 )}
                 <div className="absolute top-2 right-2 z-10">
                   <RowActions
                     label={d.title}
-                    onEdit={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onEdit={() => startEdit(d)}
                     onDelete={() => onDelete(d.id)}
                     confirmDelete={false}
                   />
