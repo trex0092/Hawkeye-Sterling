@@ -32,12 +32,12 @@ interface JwtHeader {
   typ: "JWT";
 }
 
-function getSecret(): Buffer {
+function getSecret(): string {
   const raw = process.env["JWT_SIGNING_SECRET"];
   if (!raw || raw.length < 32) {
     throw new Error("JWT_SIGNING_SECRET unset or shorter than 32 bytes");
   }
-  return Buffer.from(raw, "utf8");
+  return raw;
 }
 
 function b64uEncode(input: Buffer | string): string {
@@ -49,7 +49,7 @@ function b64uDecode(s: string): Buffer {
   return Buffer.from(s, "base64url");
 }
 
-function sign(headerB64: string, payloadB64: string, secret: Buffer): string {
+function sign(headerB64: string, payloadB64: string, secret: string): string {
   return createHmac("sha256", secret)
     .update(`${headerB64}.${payloadB64}`)
     .digest("base64url");
@@ -83,7 +83,7 @@ export interface JwtVerifyResult {
 }
 
 export function verifyJwt(token: string): JwtVerifyResult {
-  let secret: Buffer;
+  let secret: string;
   try { secret = getSecret(); } catch { return { ok: false, reason: "no_secret" }; }
   const parts = token.split(".");
   if (parts.length !== 3) return { ok: false, reason: "malformed" };
@@ -96,8 +96,10 @@ export function verifyJwt(token: string): JwtVerifyResult {
   if (header.alg !== ALG) return { ok: false, reason: "alg_mismatch" };
 
   const expected = sign(headerB64, payloadB64, secret);
-  const a = Buffer.from(sig, "utf8");
-  const b = Buffer.from(expected, "utf8");
+  const aBuf = Buffer.from(sig, "utf8");
+  const bBuf = Buffer.from(expected, "utf8");
+  const a = new Uint8Array(aBuf.buffer, aBuf.byteOffset, aBuf.byteLength);
+  const b = new Uint8Array(bBuf.buffer, bBuf.byteOffset, bBuf.byteLength);
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
     return { ok: false, reason: "bad_signature" };
   }
