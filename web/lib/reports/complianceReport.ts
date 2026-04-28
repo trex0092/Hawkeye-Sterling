@@ -69,6 +69,24 @@ export interface ReportSuperBrain {
   esg?: Array<{ categoryId: string; domain: string; label: string }>;
   redlines?: { fired: Array<{ label?: string; id?: string; why?: string }>; action: string | null };
   composite?: { score: number; breakdown?: Record<string, number> };
+  // News evidence — when adverse media is positive, the actual articles
+  // that drove the keyword findings are carried into the report so the
+  // file is self-contained for an MLRO defence.
+  newsDossier?: {
+    articleCount: number;
+    topSeverity?: "clear" | "low" | "medium" | "high" | "critical";
+    source?: string;
+    languages?: string[];
+    articles: Array<{
+      title: string;
+      link: string;
+      pubDate: string;
+      source: string;
+      snippet?: string;
+      severity?: "clear" | "low" | "medium" | "high" | "critical";
+      keywordGroups?: string[];
+    }>;
+  } | null;
 }
 
 export interface ReportInput {
@@ -291,6 +309,51 @@ function formatPosture(
   lines.push(`Jurisdictional        ${pad(`${jurisScore}/100`, 11)}  ${jurisLabel}`);
   lines.push(`Redlines              ${pad(`${redlinesScore}/100`, 11)}  ${redlinesLabel}`);
   lines.push(`Typology fingerprints ${pad(`${typScore}/100`, 11)}  ${typLabel}`);
+  // Redlines fired — names, not just counts. When zero we omit the
+  // sub-block so an empty-redlines report stays compact.
+  if (redlinesFired > 0) {
+    lines.push("");
+    lines.push("Redlines fired:");
+    for (const f of (sb?.redlines?.fired ?? []).slice(0, 8)) {
+      const id = f.id ? `[${f.id}] ` : "";
+      const label = f.label ?? f.id ?? "(unnamed redline)";
+      const why = f.why ? ` — ${f.why}` : "";
+      lines.push(`  • ${id}${label}${why}`);
+    }
+    if (redlinesFired > 8) {
+      lines.push(`  …and ${redlinesFired - 8} more.`);
+    }
+  }
+
+  // Typology fingerprints — same treatment. Doctrine name + family +
+  // weight is the regulator-facing signature; snippet (when present)
+  // gives the human-readable hook.
+  if (typHits > 0) {
+    lines.push("");
+    lines.push("Typology fingerprints:");
+    for (const t of (sb?.typologies?.hits ?? []).slice(0, 8)) {
+      const w =
+        typeof t.weight === "number" ? ` · w=${t.weight.toFixed(2)}` : "";
+      const snip = t.snippet ? ` — "${t.snippet}"` : "";
+      lines.push(`  • [${t.id}] ${t.name} (${t.family})${w}${snip}`);
+    }
+    if (typHits > 8) {
+      lines.push(`  …and ${typHits - 8} more.`);
+    }
+  }
+
+  // Composite breakdown — full audit math in one line. Lets a regulator
+  // verify how the headline number was assembled without re-running the
+  // brain. Only emitted when the breakdown is present in the payload.
+  const breakdown = sb?.composite?.breakdown;
+  if (breakdown && Object.keys(breakdown).length > 0) {
+    const parts = Object.entries(breakdown)
+      .map(([k, v]) => `${k}=${Math.round(v as number)}`)
+      .join(" · ");
+    lines.push("");
+    lines.push(`Composite breakdown   ${parts}`);
+  }
+
   if (composite != null && r.topScore !== composite) {
     lines.push("");
     lines.push(
@@ -447,6 +510,46 @@ function formatAdverseMedia(sb: ReportSuperBrain): string[] {
     }
     if (am.length > 15) {
       lines.push(`  …and ${am.length - 15} more — see attached evidence pack.`);
+    }
+  }
+
+  // News evidence — the actual articles that produced the keyword
+  // findings. Carried into the report so the file is self-contained
+  // for MLRO defence and goAML attachment, not just a list of words
+  // that matched.
+  const dossier = sb.newsDossier;
+  if (dossier && dossier.articles.length > 0) {
+    lines.push("");
+    lines.push(
+      `News dossier      : ${dossier.articleCount} article(s) screened${
+        dossier.topSeverity ? ` · top severity ${dossier.topSeverity.toUpperCase()}` : ""
+      }${dossier.source ? ` · source ${dossier.source}` : ""}${
+        dossier.languages && dossier.languages.length > 0
+          ? ` · languages ${dossier.languages.join(", ")}`
+          : ""
+      }`,
+    );
+    lines.push("");
+    lines.push("Articles (first 10):");
+    for (const a of dossier.articles.slice(0, 10)) {
+      const sev = a.severity ? ` [${a.severity.toUpperCase()}]` : "";
+      const date = a.pubDate ? ` (${a.pubDate})` : "";
+      lines.push(`  • ${a.source}${sev}${date}`);
+      lines.push(`    ${a.title}`);
+      if (a.link) lines.push(`    ${a.link}`);
+      if (a.snippet) {
+        const trimmed =
+          a.snippet.length > 140 ? `${a.snippet.slice(0, 140)}…` : a.snippet;
+        lines.push(`    "${trimmed}"`);
+      }
+      if (a.keywordGroups && a.keywordGroups.length > 0) {
+        lines.push(`    matched groups: ${a.keywordGroups.join(", ")}`);
+      }
+    }
+    if (dossier.articles.length > 10) {
+      lines.push(
+        `  …and ${dossier.articles.length - 10} more — full dossier in evidence pack.`,
+      );
     }
   }
 

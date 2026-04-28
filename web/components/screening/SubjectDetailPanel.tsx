@@ -557,6 +557,25 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             esg: superBrain.result.esg,
             redlines: superBrain.result.redlines,
             composite: superBrain.result.composite,
+            ...(news.status === "success"
+              ? {
+                  newsDossier: {
+                    articleCount: news.result.articleCount,
+                    topSeverity: news.result.topSeverity,
+                    source: news.result.source,
+                    languages: news.result.languages,
+                    articles: news.result.articles.slice(0, 25).map((a) => ({
+                      title: a.title,
+                      link: a.link,
+                      pubDate: a.pubDate,
+                      source: a.source,
+                      snippet: a.snippet,
+                      severity: a.severity,
+                      keywordGroups: a.keywordGroups,
+                    })),
+                  },
+                }
+              : {}),
           }
         : null,
   });
@@ -602,6 +621,25 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
               esg: superBrain.result.esg,
               redlines: superBrain.result.redlines,
               composite: superBrain.result.composite,
+              ...(news.status === "success"
+                ? {
+                    newsDossier: {
+                      articleCount: news.result.articleCount,
+                      topSeverity: news.result.topSeverity,
+                      source: news.result.source,
+                      languages: news.result.languages,
+                      articles: news.result.articles.slice(0, 25).map((a) => ({
+                        title: a.title,
+                        link: a.link,
+                        pubDate: a.pubDate,
+                        source: a.source,
+                        snippet: a.snippet,
+                        severity: a.severity,
+                        keywordGroups: a.keywordGroups,
+                      })),
+                    },
+                  }
+                : {}),
             }
           : null,
     };
