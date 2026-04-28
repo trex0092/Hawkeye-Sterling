@@ -98,7 +98,9 @@ interface AdvisorHistoryEntry {
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 20/2018 & Cabinet Decision 10/2019, MoE DPMS rules, UAE FIU
 // (goAML), EOCN sanctions guidance, LBMA Responsible Gold Guidance, OECD CAHRA
-// 5-step Due Diligence, FATF 40 Recommendations, RMI RMAP / CMRT.
+// 5-step Due Diligence, FATF 40 Recommendations, RMI RMAP / CMRT, ESG
+// frameworks (EU CSDDD / CSRD), UN Guiding Principles on Business & Human
+// Rights, UN Security Council Consolidated List & UNSCRs.
 
 const SUGGESTED_GROUPS = [
   {
@@ -171,6 +173,33 @@ const SUGGESTED_GROUPS = [
       "What is the RMI Conflict Minerals Reporting Template (CMRT) used for?",
       "What is the RMI smelter audit cadence?",
       "How does RMI align with OECD 5-step due diligence?",
+    ],
+  },
+  {
+    label: "ESG & Sustainability",
+    questions: [
+      "What does the EU Corporate Sustainability Due Diligence Directive (CSDDD) require?",
+      "What due diligence does the EU Conflict Minerals Regulation 2017/821 require?",
+      "What does CSRD / ESRS S1 require on workforce disclosures?",
+      "How does OECD CAHRA guidance link to ESG due diligence?",
+    ],
+  },
+  {
+    label: "Human Rights",
+    questions: [
+      "What do the UN Guiding Principles on Business & Human Rights (UNGPs) require?",
+      "What are the steps of the UNGP human-rights due-diligence cycle?",
+      "What do the OECD Guidelines for MNEs require on human rights?",
+      "What modern-slavery red flags must DPMS supply chains monitor?",
+    ],
+  },
+  {
+    label: "UN Sanctions & Standards",
+    questions: [
+      "How is the UN Security Council Consolidated List implemented in the UAE?",
+      "What does UNSCR 1373 require on terrorist financing?",
+      "What does UNSCR 1540 require on WMD non-proliferation financing?",
+      "What does the UN Global Compact require on anti-corruption (Principle 10)?",
     ],
   },
 ];
