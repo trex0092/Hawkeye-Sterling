@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleHeader,
-  ComplianceFlag,
   Kpi,
   KpiGrid,
   Card,
@@ -343,10 +342,6 @@ export default function StrCasesPage() {
             }}
             actions={<Btn variant="ghost">+ New case</Btn>}
       />
-
-      <ComplianceFlag tone="green">
-            No tipping off · FDL Art. 29
-      </ComplianceFlag>
 
       <KpiGrid cols={4}>
             <Kpi value={cases.length} label="Total" tone="brand" />
