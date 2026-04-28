@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RegulatorySourcesSection } from "@/components/regulatory/RegulatorySourcesSection";
 
 interface LiveItem {
   id: string;
@@ -652,6 +653,8 @@ export default function RegulatoryPage() {
               No entries match.
             </div>
           )}
+
+          <RegulatorySourcesSection />
         </div>
     </ModuleLayout>
   );
