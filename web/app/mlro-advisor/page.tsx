@@ -95,6 +95,24 @@ interface AdvisorHistoryEntry {
   result: AdvisorResult;
   askedAt: string;
   expanded: boolean;
+  /** Standalone red-team critique against this entry's verdict. Populated
+   *  on demand via /api/mlro-advisor-challenger. */
+  challenge?: ChallengeResult;
+  /** True while a challenge request is in flight for this entry. */
+  challenging?: boolean;
+  /** Last challenge error, if any. */
+  challengeError?: string;
+}
+
+interface ChallengeResult {
+  outcome?: "UPHELD" | "PARTIALLY_UPHELD" | "OVERTURNED";
+  steelman?: string;
+  weakCitations: Array<{ citation: string; why: string }>;
+  alternativeReadings: string[];
+  hardenSuggestions: string[];
+  fullCritique: string;
+  elapsedMs: number;
+  challengedAt: string;
 }
 
 // ── Suggested questions ───────────────────────────────────────────────────────
@@ -501,6 +519,64 @@ export default function MlroAdvisorPage() {
       prev.map((e) => (e.id === id ? { ...e, expanded: !e.expanded } : e)),
     );
 
+  /** Run a standalone red-team / regulator-perspective critique against
+   *  the verdict on this entry. The result is attached to the entry so
+   *  it persists in the session log and is included in the evidence pack. */
+  const runChallenge = useCallback(async (entry: AdvisorHistoryEntry) => {
+    if (!entry.result.narrative) return;
+    setAdvisorHistory((prev) =>
+      prev.map((e) =>
+        e.id === entry.id
+          ? { ...e, challenging: true, challengeError: undefined, expanded: true }
+          : e,
+      ),
+    );
+    try {
+      const res = await fetch("/api/mlro-advisor-challenger", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          question: entry.question,
+          narrative: entry.result.narrative,
+          mode: entry.mode,
+          classifierContext: entry.result.questionAnalysis
+            ? compactClassifierContext(entry.result.questionAnalysis)
+            : undefined,
+        }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        outcome?: ChallengeResult["outcome"];
+        steelman?: string;
+        weakCitations?: Array<{ citation: string; why: string }>;
+        alternativeReadings?: string[];
+        hardenSuggestions?: string[];
+        fullCritique?: string;
+        elapsedMs?: number;
+        error?: string;
+      };
+      if (!data.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      const challenge: ChallengeResult = {
+        outcome: data.outcome,
+        steelman: data.steelman,
+        weakCitations: data.weakCitations ?? [],
+        alternativeReadings: data.alternativeReadings ?? [],
+        hardenSuggestions: data.hardenSuggestions ?? [],
+        fullCritique: data.fullCritique ?? "",
+        elapsedMs: data.elapsedMs ?? 0,
+        challengedAt: new Date().toLocaleTimeString(),
+      };
+      setAdvisorHistory((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, challenging: false, challenge } : e)),
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Challenge failed";
+      setAdvisorHistory((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, challenging: false, challengeError: msg } : e)),
+      );
+    }
+  }, []);
+
   // ── Regulatory Q&A state ─────────────────────────────────────────────────────
   const [qaQuery, setQaQuery] = useState("");
   const [qaLoading, setQaLoading] = useState(false);
@@ -799,6 +875,12 @@ export default function MlroAdvisorPage() {
                             </div>
                           </div>
                         )}
+                        {entry.challengeError && (
+                          <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red">
+                            <span className="font-semibold">Challenger error:</span> {entry.challengeError}
+                          </div>
+                        )}
+                        {entry.challenge && <ChallengePanel challenge={entry.challenge} />}
                         {entry.result.questionAnalysis && (
                           <ClassifierResultPanels
                             analysis={entry.result.questionAnalysis}
@@ -852,6 +934,15 @@ export default function MlroAdvisorPage() {
                             className="text-11 px-2.5 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:border-brand hover:text-brand transition-colors"
                           >
                             Evidence Pack (PDF)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { void runChallenge(entry); }}
+                            disabled={!entry.result.narrative || entry.challenging}
+                            title="Run a regulator-perspective red-team critique against this verdict"
+                            className="text-11 px-2.5 py-1 rounded border border-amber/50 bg-amber-dim text-amber hover:border-amber hover:bg-amber/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {entry.challenging ? "Challenging…" : entry.challenge ? "Re-challenge" : "Challenge verdict"}
                           </button>
                           {entry.result.charterIntegrityHash && (
                             <span className="text-10 text-ink-3 font-mono">
@@ -1139,7 +1230,115 @@ function buildEvidencePackEntry(entry: AdvisorHistoryEntry): EvidencePackEntry {
           commonSenseRules: a.commonSenseRules,
         }
       : undefined,
+    challenge: entry.challenge
+      ? {
+          outcome: entry.challenge.outcome,
+          steelman: entry.challenge.steelman,
+          weakCitations: entry.challenge.weakCitations,
+          alternativeReadings: entry.challenge.alternativeReadings,
+          hardenSuggestions: entry.challenge.hardenSuggestions,
+        }
+      : undefined,
   };
+}
+
+/** One-line summary of the brain classifier's hits, used as the
+ *  classifierContext field in the challenger request body. Keeps the
+ *  challenger grounded on the same regulatory anchors the executor saw. */
+function compactClassifierContext(a: QuestionAnalysis): string {
+  const parts: string[] = [];
+  parts.push(`topic=${a.primaryTopic}`);
+  if (a.jurisdictions.length) parts.push(`juris=${a.jurisdictions.join(",")}`);
+  if (a.regimes.length) parts.push(`regimes=${a.regimes.slice(0, 6).join(",")}`);
+  if (a.fatfRecHints.length) parts.push(`fatf=${a.fatfRecHints.slice(0, 6).join(",")}`);
+  if (a.doctrineHints.length) parts.push(`doctrines=${a.doctrineHints.slice(0, 6).join(",")}`);
+  if (a.redFlagHints.length) parts.push(`red_flags=${a.redFlagHints.slice(0, 6).join(",")}`);
+  return parts.join(" · ");
+}
+
+function ChallengePanel({ challenge }: { challenge: ChallengeResult }) {
+  const outcomeCls =
+    challenge.outcome === "UPHELD" ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+      : challenge.outcome === "PARTIALLY_UPHELD" ? "bg-amber-50 text-amber-700 border-amber-300"
+      : challenge.outcome === "OVERTURNED" ? "bg-red-100 text-red-700 border-red-300"
+      : "bg-gray-100 text-gray-600 border-gray-300";
+  return (
+    <div className="bg-bg-panel border border-amber/30 rounded-lg p-3 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-10 font-semibold uppercase tracking-wide-3 text-amber">
+          Red-team challenge
+        </span>
+        {challenge.outcome && (
+          <span className={`text-10 font-semibold uppercase tracking-wide-2 px-2 py-0.5 rounded border ${outcomeCls}`}>
+            {challenge.outcome.replace(/_/g, " ")}
+          </span>
+        )}
+        <span className="text-10 font-mono text-ink-3">
+          {challenge.challengedAt} · {challenge.elapsedMs}ms
+        </span>
+      </div>
+
+      {challenge.steelman && (
+        <div>
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+            Strongest counter-argument
+          </div>
+          <p className="text-12 text-ink-0 leading-relaxed">{challenge.steelman}</p>
+        </div>
+      )}
+
+      {challenge.weakCitations.length > 0 && (
+        <div>
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+            Weak citations
+          </div>
+          <ul className="space-y-1">
+            {challenge.weakCitations.map((wc, i) => (
+              <li key={i} className="text-12 text-ink-1 leading-relaxed">
+                <span className="font-mono text-amber">{wc.citation}</span>
+                {wc.why && <span className="text-ink-2"> — {wc.why}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {challenge.alternativeReadings.length > 0 && (
+        <div>
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+            Alternative regulatory readings
+          </div>
+          <ul className="list-disc list-inside space-y-0.5">
+            {challenge.alternativeReadings.map((r, i) => (
+              <li key={i} className="text-12 text-ink-1 leading-relaxed">{r}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {challenge.hardenSuggestions.length > 0 && (
+        <div>
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+            Harden suggestions
+          </div>
+          <ol className="list-decimal list-inside space-y-0.5">
+            {challenge.hardenSuggestions.map((h, i) => (
+              <li key={i} className="text-12 text-ink-1 leading-relaxed">{h}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      <details className="group">
+        <summary className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 cursor-pointer hover:text-ink-1 select-none">
+          Raw critique ▶
+        </summary>
+        <pre className="mt-2 text-11 text-ink-2 whitespace-pre-wrap font-mono leading-relaxed">
+          {challenge.fullCritique}
+        </pre>
+      </details>
+    </div>
+  );
 }
 
 // ── Classifier UI ───────────────────────────────────────────────────────────
