@@ -20,7 +20,19 @@ export type DispositionCode =
   | 'D13_transaction_blocked'
   | 'D14_account_frozen_pending_review'
   | 'D15_voluntary_self_disclosure'
-  | 'D16_closed_no_action';
+  | 'D16_closed_no_action'
+  | 'D17_pep_declassification_review'
+  | 'D18_joint_investigation_triggered'
+  | 'D19_cross_border_fiu_referral'
+  | 'D20_asset_tracing_initiated'
+  | 'D21_deferred_prosecution_compliance'
+  | 'D22_mlro_board_escalation'
+  | 'D23_retaliatory_sar_deferred'
+  | 'D24_ubo_resolution_pending'
+  | 'D25_sof_sow_verification_pending'
+  | 'D26_litigation_hold_active'
+  | 'D27_regulatory_inquiry_under_way'
+  | 'D28_sector_derisk_assessment';
 
 export interface Disposition {
   code: DispositionCode;
@@ -51,6 +63,18 @@ export const DISPOSITIONS: Disposition[] = [
   { code: 'D14_account_frozen_pending_review', label: 'Account frozen — senior review pending', description: 'Full account freeze applied pending senior MLRO and legal review. Distinct from D05 in that no FFR has yet been filed; FFR decision due within 24 hours.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, playbookId: 'pb_confirmed_sanctions_match', notableCharterPins: ['P4'] },
   { code: 'D15_voluntary_self_disclosure', label: 'Voluntary self-disclosure to regulator', description: 'Firm initiates proactive self-disclosure to regulator of a detected AML/CFT control failure or near-miss, before regulatory inquiry.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3'] },
   { code: 'D16_closed_no_action', label: 'Closed — no further action', description: 'Case fully reviewed and closed; no AML/CFT concern identified after exhaustive review. Full audit trail retained per 5-year retention rule.', minApprovals: 2, requiresSeniorManagement: false, requiresMlroSignOff: true, notableCharterPins: ['P7'] },
+  { code: 'D17_pep_declassification_review', label: 'PEP declassification review pending', description: 'Subject formerly classified as PEP; formal declassification assessment initiated to determine whether the 1-year (prominent function) or 5-year (head-of-state tier) cooling-off standard has been met. Relationship continues under PEP monitoring during review.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, playbookId: 'pb_pep_onboarding', notableCharterPins: ['P6'] },
+  { code: 'D18_joint_investigation_triggered', label: 'Joint investigation triggered', description: 'Cross-authority or multi-agency joint investigation initiated. Case transferred to coordinated investigation protocol; primary decision authority rests with the lead investigating agency. Relationship suspended pending joint outcome.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3', 'P4'] },
+  { code: 'D19_cross_border_fiu_referral', label: 'Cross-border FIU referral', description: 'Matter referred to a foreign Financial Intelligence Unit through the Egmont Group mutual assistance channel or applicable bilateral MLA agreement. goAML referral record filed; case placed in awaiting-response status.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3', 'P4'] },
+  { code: 'D20_asset_tracing_initiated', label: 'Asset tracing and preservation initiated', description: 'Asset tracing and preservation proceedings commenced under civil or criminal recovery framework. Legal hold imposed on identified assets pending court or competent authority order. Does not constitute a TFS freeze under Cabinet Decision 74/2020.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P4'] },
+  { code: 'D21_deferred_prosecution_compliance', label: 'Deferred prosecution / consent order compliance monitoring', description: 'Subject or counterparty institution is under an active Deferred Prosecution Agreement (DPA), Non-Prosecution Agreement (NPA), or consent order. Enhanced monitoring applied for the duration of the monitorship period as a condition of the agreement.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, playbookId: 'pb_high_risk_customer', notableCharterPins: ['P3', 'P6'] },
+  { code: 'D22_mlro_board_escalation', label: 'Escalated to Board Risk Committee', description: 'Case escalated to Board Risk Committee for a binary go / no-go decision where the commercial, reputational, and regulatory stakes exceed MLRO authority thresholds. Commercial team is excluded from the Board deliberation. Board decision is the final authority and must be minuted.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3'] },
+  { code: 'D23_retaliatory_sar_deferred', label: 'STR deferred — retaliatory SAR legal review', description: 'Proposed STR filing deferred pending independent legal review for risk that the filing could constitute a retaliatory or weaponised use of suspicious-activity reporting. The deferral must not exceed 24 hours; if legal review is inconclusive, the STR is filed and the concern noted separately.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3', 'P4'] },
+  { code: 'D24_ubo_resolution_pending', label: 'UBO resolution pending', description: 'Ultimate Beneficial Owner chain is unresolved. Case suspended pending receipt of corporate-documentary evidence (certified register extract, notarised ownership chain, court-verified trust deed). Relationship or transaction cannot proceed until UBO is identified to natural-person level.', minApprovals: 1, requiresSeniorManagement: false, requiresMlroSignOff: true, notableCharterPins: ['P6', 'P7'] },
+  { code: 'D25_sof_sow_verification_pending', label: 'Source of Funds / Source of Wealth verification pending', description: 'Source of Funds (SoF) and / or Source of Wealth (SoW) documentation has been formally requested. Approval and any material transaction or onboarding decision are suspended until documentation is received and independently verified. Case must resolve within the SLA window or escalate to D08.', minApprovals: 1, requiresSeniorManagement: false, requiresMlroSignOff: true, notableCharterPins: ['P6', 'P7'] },
+  { code: 'D26_litigation_hold_active', label: 'Litigation hold active', description: 'Legal preservation order (litigation hold) has been invoked. No case-file modification, deletion, or archiving is permitted for the duration of the hold. Hold must be documented with a reference number, scope description, invoking authority, and anticipated duration.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P7'] },
+  { code: 'D27_regulatory_inquiry_under_way', label: 'Active regulatory inquiry — heightened confidentiality', description: 'A competent authority (CBUAE, SCA, DFSA, ADGM FSRA, or equivalent) has initiated an active inquiry. Heightened confidentiality protocol is in force. All internal communications referencing the inquiry are subject to legal professional privilege review before dissemination. No information related to the inquiry may be shared with the subject of the inquiry.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3', 'P4'] },
+  { code: 'D28_sector_derisk_assessment', label: 'Sector-level derisking assessment', description: 'The relationship is subject to a systematic portfolio-wide or sector-level derisking review initiated by the MLRO or Board Risk Committee. Individual relationship assessment is suspended pending the portfolio decision. Sector-level reviews must be completed within 30 calendar days.', minApprovals: 2, requiresSeniorManagement: true, requiresMlroSignOff: true, notableCharterPins: ['P3'] },
 ];
 
 export const DISPOSITION_BY_CODE: Map<DispositionCode, Disposition> = new Map(

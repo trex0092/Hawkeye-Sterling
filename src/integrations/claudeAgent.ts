@@ -27,6 +27,8 @@ export interface NarrativeReportRequest {
 export interface NarrativeReportResult {
   ok: boolean;
   html?: string;
+  /** Adaptive thinking summary from the model — shows how the report was reasoned. */
+  thinkingSummary?: string;
   charts?: Array<{
     id: string;
     kind: 'bar' | 'line' | 'pie' | 'scatter' | 'heatmap' | 'timeline';
@@ -120,7 +122,7 @@ export async function generateNarrativeReport(
   const systemContent = useCache
     ? [{ type: 'text' as const, text: payload.system, cache_control: { type: 'ephemeral' } }]
     : payload.system;
-  const thinkingBlock    = useThinking ? { thinking: { type: 'adaptive' } } : {};
+  const thinkingBlock    = useThinking ? { thinking: { type: 'adaptive', display: 'summarized' } } : {};
   const outputConfigBlock = { output_config: { effort: 'xhigh' } };
 
   const result = await fetchAnthropicStreamText(
@@ -161,5 +163,5 @@ export async function generateNarrativeReport(
       error: `${prefix}${result.error ?? 'unknown error'} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
     };
   }
-  return { ok: true, html: result.text };
+  return { ok: true, html: result.text, ...(result.thinking !== undefined ? { thinkingSummary: result.thinking } : {}) };
 }

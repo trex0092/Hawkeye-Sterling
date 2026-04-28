@@ -1,5 +1,5 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 302 modes across 25 categories, wave 1 + wave 2 + wave 3 + wave 4.
+// 337 modes across 38 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
 // inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7.
@@ -10,6 +10,7 @@ import type {
 import { MODE_OVERRIDES } from './modes/registry.js';
 import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
 import { WAVE4_MODES, WAVE4_OVERRIDES } from './reasoning-modes-wave4.js';
+import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -299,6 +300,19 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]!;
   const w4override = WAVE4_OVERRIDES.find((o) => o.id === r.id);
   if (w4override) REASONING_MODES[i] = w4override;
+}
+
+// Merge Wave 5: decision theory, behavioral economics, strategic reasoning,
+// intelligence fusion, asset recovery, conduct risk, identity fraud, digital economy, human rights.
+const existingIdsW5 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE5_MODES) {
+  if (!existingIdsW5.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE5_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w5override = WAVE5_OVERRIDES.find((o) => o.id === r.id);
+  if (w5override) REASONING_MODES[i] = w5override;
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
