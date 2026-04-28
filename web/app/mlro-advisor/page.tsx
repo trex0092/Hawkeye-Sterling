@@ -27,11 +27,23 @@ interface QuestionAnalysis {
   playbookHints: string[];
   redFlagHints: string[];
   fatfRecHints: string[];
+  fatfRecDetails?: Array<{ id: string; num: number; title: string; citation: string; pillar: string }>;
   urgencyFlags: string[];
   numericThresholds: Array<{ value: number; unit: string; context: string }>;
   commonSenseRules: string[];
   suggestedFollowUps: string[];
   confidence: "high" | "medium" | "low";
+  intelligenceProfile?: {
+    coverageScore: number;
+    doctrineCount: number;
+    fatfRecCount: number;
+    playbookCount: number;
+    redFlagCount: number;
+    typologyCount: number;
+    jurisdictionCount: number;
+    secondaryTopicCount: number;
+    totalArtefacts: number;
+  };
 }
 
 interface AdvisorResult {
@@ -976,8 +988,42 @@ function ClassifierResultPanels({
     ...analysis.redFlagHints.slice(0, 8).map((r) => ["red-flag", r] as [string, string]),
     ...analysis.typologies.map((t) => ["typology", t] as [string, string]),
   ];
+  const ip = analysis.intelligenceProfile;
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-3">
+      {ip && (
+        <div className="flex items-center gap-3">
+          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+            Brain coverage
+          </div>
+          <div className="flex-1 h-2 bg-bg-2 rounded overflow-hidden max-w-xs">
+            <div
+              className="h-2 bg-brand"
+              style={{ width: `${Math.min(100, ip.coverageScore)}%` }}
+            />
+          </div>
+          <div className="font-mono text-12 text-brand font-semibold">{ip.coverageScore}/100</div>
+          <div className="text-10 font-mono text-ink-3 ml-1">
+            ({ip.totalArtefacts} artefacts · {ip.doctrineCount} doc · {ip.fatfRecCount} FATF · {ip.playbookCount} pb · {ip.redFlagCount} rf · {ip.typologyCount} typ · {ip.jurisdictionCount} juris)
+          </div>
+        </div>
+      )}
+      {analysis.fatfRecDetails && analysis.fatfRecDetails.length > 0 && (
+        <details className="group">
+          <summary className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 cursor-pointer hover:text-ink-1 select-none">
+            FATF Recommendations anchored ({analysis.fatfRecDetails.length}) ▶
+          </summary>
+          <div className="mt-2 space-y-1">
+            {analysis.fatfRecDetails.map((f) => (
+              <div key={f.id} className="text-11 leading-snug border-l-2 border-amber pl-2">
+                <span className="font-mono font-semibold text-amber">R.{f.num}</span>{" "}
+                <span className="text-ink-0">{f.title}</span>
+                <span className="ml-2 font-mono text-10 text-ink-3">{f.citation}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
       <div>
         <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
           Brain modules engaged

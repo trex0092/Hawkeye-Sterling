@@ -21,6 +21,7 @@ import type { TypologyId } from './typologies.js';
 import type { SanctionRegimeId } from './sanction-regimes.js';
 import type { DoctrineId } from './doctrines.js';
 import { COMMON_SENSE_RULES, rulesForTopic } from './mlro-common-sense.js';
+import { fatfById } from './fatf-recommendations.js';
 
 export type MlroTopic =
   | 'cdd' | 'edd' | 'ongoing_monitoring' | 'source_of_funds' | 'source_of_wealth'
@@ -30,7 +31,14 @@ export type MlroTopic =
   | 'trade_based_ml' | 'structuring' | 'npo_risk' | 'shell_company'
   | 'proliferation_financing' | 'cahra_jurisdiction' | 'risk_appetite'
   | 'tipping_off_guard' | 'regulatory_reporting' | 'audit_examination'
-  | 'typology_research' | 'general_compliance';
+  | 'typology_research' | 'general_compliance'
+  // Wave-2 expansion (intelligence amp).
+  | 'ai_fraud' | 'deepfake_kyc' | 'fintech_baas' | 'embedded_finance'
+  | 'ai_governance' | 'esg_climate' | 'modern_slavery' | 'sectoral_sanctions'
+  | 'third_party_risk' | 'outsourcing' | 'gambling_betting' | 'real_estate_aml'
+  | 'insurance_aml' | 'tax_evasion' | 'cyber_incident'
+  | 'data_protection_pdpl' | 'wire_transfer_travel_rule' | 'mvts_remittance'
+  | 'environmental_predicate' | 'wildlife_predicate';
 
 export type UrgencyFlag =
   | 'tipping_off_risk' | 'imminent_sar_window' | 'retention_breach'
@@ -42,6 +50,31 @@ export interface NumericThreshold {
   context: string;
 }
 
+export interface FatfRecDetail {
+  id: string;
+  num: number;
+  title: string;
+  citation: string;
+  pillar: string;
+}
+
+export interface IntelligenceProfile {
+  /** 0..100 overall coverage of the question by the brain. */
+  coverageScore: number;
+  /** doctrine + FATF + playbook + red-flag + typology counts. */
+  doctrineCount: number;
+  fatfRecCount: number;
+  playbookCount: number;
+  redFlagCount: number;
+  typologyCount: number;
+  /** Number of jurisdictions detected. */
+  jurisdictionCount: number;
+  /** Number of secondary topics resolved beyond the primary. */
+  secondaryTopicCount: number;
+  /** Sum of all distinct knowledge artefacts surfaced. */
+  totalArtefacts: number;
+}
+
 export interface MlroQuestionAnalysis {
   topics: MlroTopic[];
   primaryTopic: MlroTopic;
@@ -50,6 +83,7 @@ export interface MlroQuestionAnalysis {
   typologies: TypologyId[];
   doctrineHints: DoctrineId[];
   fatfRecHints: string[];
+  fatfRecDetails: FatfRecDetail[];
   playbookHints: string[];
   redFlagHints: string[];
   urgencyFlags: UrgencyFlag[];
@@ -58,6 +92,7 @@ export interface MlroQuestionAnalysis {
   suggestedFollowUps: string[];
   confidence: 'high' | 'medium' | 'low';
   enrichedPreamble: string;
+  intelligenceProfile: IntelligenceProfile;
 }
 
 // ── Topic keyword map ──────────────────────────────────────────────────────
@@ -92,6 +127,27 @@ const KEYWORD_TOPIC_MAP: Record<MlroTopic, RegExp[]> = {
   regulatory_reporting: [/regulator(?:y)? (?:report|filing|return)/i, /annual return/i, /quarterly report/i, /supervisor (?:filing|return)/i, /\beocn\s*annual\b/i, /\bgoaml\b/i],
   audit_examination: [/internal audit/i, /external audit/i, /regulatory examination/i, /supervisor visit/i, /examiner/i, /audit (?:findings?|report)/i, /\biia\b/i],
   typology_research: [/typolog/i, /red flag indicator/i, /pattern of life/i, /predicate offence/i, /emerging threat/i, /case stud(?:y|ies)/i, /\bfatf\s*typolog/i],
+  // Wave-2 keyword maps.
+  ai_fraud: [/\bai\s*(?:enabled|generated|powered)\s*fraud/i, /generative\s*ai\s*scam/i, /llm\s*(?:abuse|fraud)/i, /synthetic\s*media\s*fraud/i, /voice\s*clon/i, /chatbot\s*scam/i],
+  deepfake_kyc: [/deepfake/i, /deep.?fake/i, /face\s*swap/i, /liveness\s*(?:check|bypass|spoof)/i, /presentation\s*attack/i, /\bpad\b\s*(?:test|control)?/i, /synthetic\s*identit/i, /injection\s*attack/i],
+  fintech_baas: [/banking.?as.?a.?service/i, /\bbaas\b/i, /\bfintech\b/i, /sponsor\s*bank/i, /program\s*(?:bank|manager)/i],
+  embedded_finance: [/embedded\s*(?:finance|payments|lending|insurance)/i, /api.?based\s*finance/i, /platform\s*payments?/i],
+  ai_governance: [/\bai\s*governance\b/i, /eu\s*ai\s*act/i, /\bnist\s*ai\s*rmf\b/i, /\biso\s*42001\b/i, /algorithmic\s*account/i, /model\s*risk\s*management/i, /\bmrm\b/i, /explainable\s*ai|\bxai\b/i],
+  esg_climate: [/\besg\b/i, /climate\s*(?:risk|disclosure|finance)/i, /greenwashing/i, /carbon\s*market/i, /sustainable\s*finance/i, /tcfd|csrd|sfdr/i],
+  modern_slavery: [/modern\s*slaver/i, /forced\s*labour/i, /human\s*trafficking/i, /uflpa/i, /uk\s*modern\s*slavery\s*act/i, /\bcsddd\b/i],
+  sectoral_sanctions: [/sectoral\s*sanctions/i, /\bssi\b\b/i, /price\s*cap/i, /russia\s*sectoral/i, /capital\s*market\s*restriction/i, /\bocti\b/i],
+  third_party_risk: [/third.?party\s*risk/i, /\btprm\b/i, /vendor\s*due\s*diligence/i, /supplier\s*risk/i, /due\s*diligence\s*on\s*(?:vendor|supplier)/i],
+  outsourcing: [/outsourc/i, /managed\s*service/i, /service\s*provider\s*risk/i, /eba\s*outsourcing/i, /cbuae\s*outsourcing/i],
+  gambling_betting: [/gambling/i, /casino/i, /sports\s*bet/i, /igaming/i, /lottery/i],
+  real_estate_aml: [/real\s*estate/i, /property\s*purchase/i, /off.?plan\b/i, /\bdmo\b\s*real\s*estate/i, /\brera\b/i, /title\s*deed/i],
+  insurance_aml: [/insurance\s*aml/i, /life\s*insurance\s*ml/i, /surrender\s*policy/i, /single\s*premium/i, /reinsurance/i],
+  tax_evasion: [/tax\s*evasion/i, /\bcrs\b/i, /\bfatca\b\s*(?:reporting|due\s*diligence)/i, /aggressive\s*tax\s*planning/i, /tax\s*haven/i],
+  cyber_incident: [/cyber\s*(?:incident|attack|breach)/i, /ransomware/i, /\bdfir\b/i, /sec\s*4\s*day\s*disclosure/i, /\bnis2\b/i, /\bdora\b/i],
+  data_protection_pdpl: [/\bpdpl\b/i, /\bgdpr\b/i, /data\s*protection/i, /erasure\s*request/i, /right\s*to\s*be\s*forgotten/i, /\bdpia\b/i],
+  wire_transfer_travel_rule: [/wire\s*transfer\s*rule/i, /travel\s*rule/i, /originator\s*information/i, /beneficiary\s*information/i, /fatf\s*r\.?\s*16/i],
+  mvts_remittance: [/\bmvts\b/i, /money\s*transfer\s*service/i, /remittance/i, /money\s*service\s*business/i, /\bmsb\b/i, /\bhawala\b/i],
+  environmental_predicate: [/environmental\s*crime/i, /illegal\s*log/i, /illegal\s*mining/i, /\biuu\b/i, /\bflegt\b/i, /\beutr\b/i],
+  wildlife_predicate: [/wildlife\s*traffick/i, /\bcites\b/i, /ivory/i, /pangolin/i, /rhino\s*horn/i, /endangered\s*species/i],
   general_compliance: [/.+/], // fallback — matches anything
 };
 
@@ -127,6 +183,27 @@ const TOPIC_TO_DOCTRINES: Record<MlroTopic, DoctrineId[]> = {
   regulatory_reporting: ['uae_fdl_10_2025', 'egmont_fiu'],
   audit_examination: ['three_lines_defence', 'fatf_effectiveness'],
   typology_research: ['fatf_rba', 'fatf_effectiveness'],
+  // Wave-2.
+  ai_fraud: ['fatf_rba', 'eu_ai_act', 'nist_ai_rmf', 'owasp_llm_top_10'],
+  deepfake_kyc: ['fatf_rba', 'eu_ai_act', 'nist_ai_rmf', 'owasp_llm_top_10', 'hartono_dual_persona'],
+  fintech_baas: ['fatf_rba', 'wolfsberg_faq', 'three_lines_defence'],
+  embedded_finance: ['fatf_rba', 'wolfsberg_faq', 'three_lines_defence'],
+  ai_governance: ['eu_ai_act', 'nist_ai_rmf', 'iso_42001', 'owasp_llm_top_10', 'hartono_dual_persona'],
+  esg_climate: ['fatf_rba', 'iso_31000', 'fatf_r3_env_predicate'],
+  modern_slavery: ['fatf_rba', 'fatf_r3_env_predicate'],
+  sectoral_sanctions: ['uae_cd_74_2020', 'uae_cr_134_2025', 'fatf_rba'],
+  third_party_risk: ['three_lines_defence', 'iso_31000', 'coso_erm', 'wolfsberg_faq'],
+  outsourcing: ['three_lines_defence', 'iso_31000', 'wolfsberg_faq'],
+  gambling_betting: ['fatf_rba', 'wolfsberg_faq'],
+  real_estate_aml: ['fatf_rba', 'wolfsberg_faq', 'uae_fdl_20_2018'],
+  insurance_aml: ['fatf_rba', 'wolfsberg_faq', 'uae_fdl_20_2018'],
+  tax_evasion: ['fatf_rba', 'wolfsberg_faq', 'fatf_r3_env_predicate'],
+  cyber_incident: ['three_lines_defence', 'iso_31000', 'wolfsberg_faq'],
+  data_protection_pdpl: ['pdpl_fdl_45_2021', 'three_lines_defence'],
+  wire_transfer_travel_rule: ['fatf_rba', 'wolfsberg_faq'],
+  mvts_remittance: ['fatf_rba', 'wolfsberg_faq', 'uae_fdl_20_2018'],
+  environmental_predicate: ['fatf_r3_env_predicate', 'fatf_rba'],
+  wildlife_predicate: ['fatf_r3_env_predicate', 'fatf_rba'],
   general_compliance: ['fatf_rba', 'wolfsberg_faq'],
 };
 
@@ -160,6 +237,27 @@ const TOPIC_TO_PLAYBOOKS: Record<MlroTopic, string[]> = {
   regulatory_reporting: ['pb_eocn_tfs', 'pb_fiu_goaml_filing'],
   audit_examination: ['pb_periodic_review'],
   typology_research: [],
+  // Wave-2.
+  ai_fraud: ['pb_synthetic_id', 'pb_app_fraud', 'pb_pig_butchering'],
+  deepfake_kyc: ['pb_synthetic_id', 'pb_account_takeover'],
+  fintech_baas: ['pb_periodic_review', 'pb_branch_risk_assessment'],
+  embedded_finance: ['pb_periodic_review', 'pb_branch_risk_assessment'],
+  ai_governance: [],
+  esg_climate: ['pb_environmental_crime'],
+  modern_slavery: ['pb_human_trafficking'],
+  sectoral_sanctions: ['pb_russia_sanctions', 'pb_iran_sanctions', 'pb_dprk_sanctions', 'pb_shadow_fleet'],
+  third_party_risk: ['pb_branch_risk_assessment'],
+  outsourcing: ['pb_branch_risk_assessment'],
+  gambling_betting: ['pb_gaming', 'pb_casino_junket'],
+  real_estate_aml: ['pb_real_estate', 'pb_real_estate_agent'],
+  insurance_aml: ['pb_insurance'],
+  tax_evasion: ['pb_tax_evasion'],
+  cyber_incident: ['pb_swift_fin_compromise', 'pb_atm_cashout', 'pb_ransomware_proceeds'],
+  data_protection_pdpl: [],
+  wire_transfer_travel_rule: ['pb_wire_transfer', 'pb_travel_rule'],
+  mvts_remittance: ['pb_remittance', 'pb_underground_banking', 'pb_hawala'],
+  environmental_predicate: ['pb_environmental_crime', 'pb_timber_flegt', 'pb_iuu_fishing'],
+  wildlife_predicate: ['pb_wildlife_trafficking'],
   general_compliance: [],
 };
 
@@ -193,6 +291,27 @@ const TOPIC_TO_RED_FLAGS: Record<MlroTopic, string[]> = {
   regulatory_reporting: ['rf_late_filing', 'rf_unanswered_rfi'],
   audit_examination: ['rf_finding_overdue', 'rf_concealed_finding'],
   typology_research: ['rf_outdated_typology'],
+  // Wave-2.
+  ai_fraud: ['rf_voice_clone', 'rf_synthetic_persona', 'rf_llm_prompt_injection'],
+  deepfake_kyc: ['rf_liveness_bypass', 'rf_face_swap', 'rf_injection_attack'],
+  fintech_baas: ['rf_program_manager_concentration', 'rf_unverified_subagent'],
+  embedded_finance: ['rf_platform_aggregation', 'rf_pass_through_kyc'],
+  ai_governance: ['rf_unbounded_model_use', 'rf_no_model_card', 'rf_unmonitored_drift'],
+  esg_climate: ['rf_greenwash_marketing', 'rf_carbon_double_counting'],
+  modern_slavery: ['rf_forced_labour_supply_chain', 'rf_passport_retention', 'rf_wage_underpayment'],
+  sectoral_sanctions: ['rf_price_cap_breach', 'rf_dark_fleet', 'rf_capital_market_restriction'],
+  third_party_risk: ['rf_vendor_concentration', 'rf_subcontractor_unknown'],
+  outsourcing: ['rf_offshore_concentration', 'rf_data_residency_violation'],
+  gambling_betting: ['rf_chip_dumping', 'rf_minimal_play_pattern'],
+  real_estate_aml: ['rf_cash_property_purchase', 'rf_offshore_buyer', 'rf_corporate_buyer_no_substance'],
+  insurance_aml: ['rf_early_surrender', 'rf_third_party_premium'],
+  tax_evasion: ['rf_offshore_account_undisclosed', 'rf_loan_back_scheme'],
+  cyber_incident: ['rf_unusual_access', 'rf_ransom_note', 'rf_data_exfil'],
+  data_protection_pdpl: ['rf_excess_retention', 'rf_unauthorised_processing'],
+  wire_transfer_travel_rule: ['rf_missing_originator', 'rf_missing_beneficiary', 'rf_truncated_address'],
+  mvts_remittance: ['rf_unlicensed_msb', 'rf_round_amount_offset'],
+  environmental_predicate: ['rf_illegal_logging', 'rf_iuu_catch'],
+  wildlife_predicate: ['rf_cites_certificate_anomaly', 'rf_mislabel_freight'],
   general_compliance: [],
 };
 
@@ -226,6 +345,27 @@ const TOPIC_TO_FATF: Record<MlroTopic, string[]> = {
   regulatory_reporting: ['fatf_r29', 'fatf_r33'],
   audit_examination: ['fatf_r18', 'fatf_r34'],
   typology_research: ['fatf_r1', 'fatf_r3'],
+  // Wave-2.
+  ai_fraud: ['fatf_r15', 'fatf_r10'],
+  deepfake_kyc: ['fatf_r10', 'fatf_r15'],
+  fintech_baas: ['fatf_r17', 'fatf_r18'],
+  embedded_finance: ['fatf_r17', 'fatf_r18'],
+  ai_governance: ['fatf_r1', 'fatf_r15'],
+  esg_climate: ['fatf_r3'],
+  modern_slavery: ['fatf_r3'],
+  sectoral_sanctions: ['fatf_r6', 'fatf_r7'],
+  third_party_risk: ['fatf_r17', 'fatf_r18'],
+  outsourcing: ['fatf_r17', 'fatf_r18'],
+  gambling_betting: ['fatf_r22', 'fatf_r23'],
+  real_estate_aml: ['fatf_r22', 'fatf_r23'],
+  insurance_aml: ['fatf_r10'],
+  tax_evasion: ['fatf_r3'],
+  cyber_incident: ['fatf_r1'],
+  data_protection_pdpl: ['fatf_r9', 'fatf_r2'],
+  wire_transfer_travel_rule: ['fatf_r16'],
+  mvts_remittance: ['fatf_r14', 'fatf_r16'],
+  environmental_predicate: ['fatf_r3'],
+  wildlife_predicate: ['fatf_r3'],
   general_compliance: ['fatf_r1'],
 };
 
@@ -259,6 +399,27 @@ const TOPIC_TO_TYPOLOGIES: Record<MlroTopic, TypologyId[]> = {
   regulatory_reporting: [],
   audit_examination: [],
   typology_research: [],
+  // Wave-2.
+  ai_fraud: ['synthetic_identity', 'bec_fraud', 'advance_fee_fraud'],
+  deepfake_kyc: ['synthetic_identity'],
+  fintech_baas: [],
+  embedded_finance: [],
+  ai_governance: ['ai_governance_breach'],
+  esg_climate: ['carbon_market_fraud', 'environmental_crime'],
+  modern_slavery: ['human_trafficking'],
+  sectoral_sanctions: ['sanctions_evasion', 'maritime_stss'],
+  third_party_risk: [],
+  outsourcing: [],
+  gambling_betting: [],
+  real_estate_aml: ['real_estate_cash'],
+  insurance_aml: ['insurance_wrap'],
+  tax_evasion: [],
+  cyber_incident: ['defi_exploit'],
+  data_protection_pdpl: [],
+  wire_transfer_travel_rule: [],
+  mvts_remittance: ['cash_courier'],
+  environmental_predicate: ['environmental_crime'],
+  wildlife_predicate: ['wildlife_trafficking'],
   general_compliance: [],
 };
 
@@ -413,6 +574,107 @@ const TOPIC_TO_FOLLOWUPS: Record<MlroTopic, string[]> = {
     'How do I document a compliance decision properly?',
     'When does self-disclosure mitigate enforcement risk?',
   ],
+  // Wave-2.
+  ai_fraud: [
+    'How do I detect AI-generated KYC documents?',
+    'What controls protect against voice-clone authorisation fraud?',
+    'How does prompt-injection threaten internal LLM-based controls?',
+  ],
+  deepfake_kyc: [
+    'What liveness-detection standards (ISO 30107-3) apply at onboarding?',
+    'How do I respond to a confirmed deepfake KYC attempt?',
+    'How do I select a presentation-attack-detection provider?',
+  ],
+  fintech_baas: [
+    'How do I allocate AML responsibility between sponsor bank and program manager?',
+    'What due diligence applies to onboarding a new BaaS program?',
+    'How do I monitor concentration risk across BaaS programs?',
+  ],
+  embedded_finance: [
+    'How do I treat embedded-payments accounts under FATF R.10?',
+    'What KYC applies at the platform vs the merchant level?',
+    'How do I supervise pass-through KYC chains?',
+  ],
+  ai_governance: [
+    'How do I align internal AI use with the EU AI Act risk tiers?',
+    'What does NIST AI RMF require for high-stakes AML decisions?',
+    'How do I document a model card for a screening engine?',
+  ],
+  esg_climate: [
+    'How do greenwashing risks intersect with adverse-media monitoring?',
+    'What due diligence applies to carbon-credit counterparties?',
+    'How does CSRD disclosure interact with AML risk assessment?',
+  ],
+  modern_slavery: [
+    'How does forced-labour due diligence apply to supply-chain finance?',
+    'What does UFLPA require for goods of Xinjiang origin?',
+    'How does CSDDD mandate supplier diligence in scope?',
+  ],
+  sectoral_sanctions: [
+    'How does the Russia oil price-cap apply to maritime trade finance?',
+    'How do I assess SSI list exposure on capital-market instruments?',
+    'What controls protect against sectoral-sanctions evasion via shadow fleet?',
+  ],
+  third_party_risk: [
+    'What due diligence applies to a critical third party at onboarding?',
+    'How do I tier vendors by AML / sanctions / cyber risk?',
+    'When does TPRM trigger an STR?',
+  ],
+  outsourcing: [
+    'How do I align outsourced AML operations with FATF R.18?',
+    'What does the EBA outsourcing guideline require for AML functions?',
+    'How do I supervise an outsourced transaction-monitoring provider?',
+  ],
+  gambling_betting: [
+    'What CDD threshold applies to casino chip purchases?',
+    'How do I detect chip-dumping or minimal-play patterns?',
+    'How do I supervise sports-betting affiliates?',
+  ],
+  real_estate_aml: [
+    'What CDD applies to a UAE off-plan real-estate purchase?',
+    'How do I treat a corporate buyer with no operating substance?',
+    'When does cash purchase trigger STR?',
+  ],
+  insurance_aml: [
+    'How do I detect single-premium ML in life insurance?',
+    'What CDD applies to a third-party premium payer?',
+    'How do early-surrender patterns indicate ML?',
+  ],
+  tax_evasion: [
+    'How do I distinguish tax planning from tax evasion in AML risk?',
+    'What FATCA / CRS controls catch undisclosed offshore accounts?',
+    'How does loan-back ML scheme appear in transactions?',
+  ],
+  cyber_incident: [
+    'What is the disclosure window for a material cyber incident?',
+    'How do I trace ransomware payments through crypto?',
+    'How does DORA affect AML operational resilience?',
+  ],
+  data_protection_pdpl: [
+    'How do I handle a GDPR / PDPL erasure request during AML retention?',
+    'When does AML processing require a DPIA?',
+    'How do I document lawful basis for AML processing?',
+  ],
+  wire_transfer_travel_rule: [
+    'What originator/beneficiary information must accompany a USD 1,500 wire?',
+    'How do I treat a wire missing required Travel Rule information?',
+    'How do I apply the Travel Rule to virtual asset transfers?',
+  ],
+  mvts_remittance: [
+    'How do I supervise a hawala-style remittance corridor?',
+    'What red flags indicate unlicensed MVTS activity?',
+    'How does FATF R.14 apply to cross-border MVTS?',
+  ],
+  environmental_predicate: [
+    'How do I detect proceeds of illegal logging in trade finance?',
+    'What controls protect against IUU-fishing proceeds?',
+    'How does FATF R.3 cover environmental predicate offences?',
+  ],
+  wildlife_predicate: [
+    'How do I authenticate a CITES export permit?',
+    'What red flags indicate ivory or pangolin smuggling?',
+    'How do I coordinate with INTERPOL Project Wisdom?',
+  ],
 };
 
 // ── Jurisdictions and regimes ─────────────────────────────────────────────
@@ -541,6 +803,48 @@ export function classifyMlroQuestion(question: string): MlroQuestionAnalysis {
     commonSenseRules,
   });
 
+  // Resolve full FATF Recommendation details from the IDs.
+  const fatfRecDetails: FatfRecDetail[] = fatfRecHints
+    .map((id) => fatfById(id))
+    .filter((r): r is NonNullable<typeof r> => r !== undefined)
+    .map((r) => ({
+      id: r.id,
+      num: r.num,
+      title: r.title,
+      citation: r.citation,
+      pillar: r.pillar,
+    }));
+
+  // Intelligence profile — composite coverage score across artefact axes.
+  const totalArtefacts =
+    doctrineHints.length + fatfRecHints.length + playbookHints.length +
+    redFlagHints.length + typologies.length + regimes.length;
+  // Coverage 0..100: each axis worth up to 15 points, capped per axis to
+  // discourage runaway scoring on a single dimension (e.g. 20 redflags).
+  const cap = (n: number, max: number) => Math.min(n, max);
+  const coverageScore = Math.min(100, Math.round(
+    cap(doctrineHints.length, 8) * 2 +
+    cap(fatfRecHints.length, 8) * 2 +
+    cap(playbookHints.length, 8) * 2 +
+    cap(redFlagHints.length, 8) * 1.5 +
+    cap(typologies.length, 6) * 2 +
+    cap(regimes.length, 6) * 1.5 +
+    cap(jurisdictions.length, 4) * 2 +
+    cap(topics.length - 1, 4) * 2,
+  ));
+
+  const intelligenceProfile: IntelligenceProfile = {
+    coverageScore,
+    doctrineCount: doctrineHints.length,
+    fatfRecCount: fatfRecHints.length,
+    playbookCount: playbookHints.length,
+    redFlagCount: redFlagHints.length,
+    typologyCount: typologies.length,
+    jurisdictionCount: jurisdictions.length,
+    secondaryTopicCount: Math.max(0, topics.length - 1),
+    totalArtefacts,
+  };
+
   return {
     topics,
     primaryTopic,
@@ -549,6 +853,7 @@ export function classifyMlroQuestion(question: string): MlroQuestionAnalysis {
     typologies,
     doctrineHints,
     fatfRecHints,
+    fatfRecDetails,
     playbookHints,
     redFlagHints,
     urgencyFlags,
@@ -557,6 +862,7 @@ export function classifyMlroQuestion(question: string): MlroQuestionAnalysis {
     suggestedFollowUps,
     confidence,
     enrichedPreamble,
+    intelligenceProfile,
   };
 }
 

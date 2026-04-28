@@ -219,6 +219,146 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_typ_04', topic: 'typology_research', rule: 'Map each typology to predicate offences and FATF Recommendations; isolated typologies without R-mapping reduce to descriptive lore.', doctrineAnchor: 'FATF R.3 + Glossary' },
   { id: 'cs_typ_05', topic: 'typology_research', rule: 'Track emerging typologies (AI-enabled fraud, deep-fake KYC bypass, on-chain mixers) and refresh within one cycle of public reporting.', doctrineAnchor: 'FATF + INTERPOL emerging-threat reports' },
 
+  // ── AI fraud ──────────────────────────────────────────────────────────
+  { id: 'cs_aif_01', topic: 'ai_fraud', rule: 'Treat any unverified text-only customer instruction (email, chat, SMS) as potentially LLM-generated; require call-back to known number for high-value or beneficiary changes.', doctrineAnchor: 'NIST AI RMF Govern 2.1' },
+  { id: 'cs_aif_02', topic: 'ai_fraud', rule: 'Voice authorisation alone is insufficient post 2024 — voice-clone tooling can replicate any sample over 3 seconds; require two-factor or biometric-on-device confirmation.', doctrineAnchor: 'FATF Emerging Threats Report 2024' },
+  { id: 'cs_aif_03', topic: 'ai_fraud', rule: 'Flag customer disclosures referencing "AI advisor", "trading bot", or "guaranteed yield AI fund" — recurring pattern in pig-butchering and Ponzi typologies.', doctrineAnchor: 'FATF Pig-Butchering Typology 2023' },
+  { id: 'cs_aif_04', topic: 'ai_fraud', rule: 'AI-generated KYC documents typically fail forensic checks (font kerning, metadata absence, header anomalies); train ops staff on detection and require document-forensics tool at onboarding.', doctrineAnchor: 'FATF Identity Guidance 2020' },
+  { id: 'cs_aif_05', topic: 'ai_fraud', rule: 'Internal LLM tooling exposed to customer text is a prompt-injection target; sandbox model output, never auto-execute model-recommended actions on customer accounts.', doctrineAnchor: 'OWASP LLM Top 10 (LLM01 prompt injection)' },
+
+  // ── Deepfake KYC ──────────────────────────────────────────────────────
+  { id: 'cs_dfk_01', topic: 'deepfake_kyc', rule: 'Onboarding liveness must meet ISO/IEC 30107-3 Level 2 (PAD) at minimum; Level 1 is bypassable with consumer-grade deepfakes.', doctrineAnchor: 'ISO/IEC 30107-3' },
+  { id: 'cs_dfk_02', topic: 'deepfake_kyc', rule: 'Inject randomised challenges (head turn, blink count, smile) into the liveness flow; static head-on capture is the canonical deepfake bypass.', doctrineAnchor: 'NIST FRTE/SP 800-63 IAL' },
+  { id: 'cs_dfk_03', topic: 'deepfake_kyc', rule: 'Detect virtual-camera injection attacks at the device layer (driver-level enumeration, signed-attestation); browser-side detection alone is insufficient.', doctrineAnchor: 'FIDO Alliance Face Verification Certification' },
+  { id: 'cs_dfk_04', topic: 'deepfake_kyc', rule: 'Confirmed deepfake KYC → file STR, retain biometric capture under legal hold, notify shared fraud bureau (HUNTER / SIRA), do not reuse the captured selfie elsewhere.', doctrineAnchor: 'UAE FDL 20/2018 Art.16' },
+  { id: 'cs_dfk_05', topic: 'deepfake_kyc', rule: 'Vendor PAD providers must publish FRR/FAR/APCER metrics from independent testing (NIST, iBeta) — internal claims alone do not satisfy regulator expectations.', doctrineAnchor: 'iBeta Level 2 PAD certification' },
+
+  // ── Fintech BaaS ──────────────────────────────────────────────────────
+  { id: 'cs_baas_01', topic: 'fintech_baas', rule: 'Sponsor bank retains end-customer AML responsibility regardless of program-manager arrangement — outsourcing programme operations does not outsource liability.', doctrineAnchor: 'FATF R.17 INR.17' },
+  { id: 'cs_baas_02', topic: 'fintech_baas', rule: 'Define written allocation of CDD, monitoring, screening, and STR-filing responsibilities between sponsor and program manager; no gaps.', doctrineAnchor: 'EBA Outsourcing Guidelines EBA/GL/2019/02' },
+  { id: 'cs_baas_03', topic: 'fintech_baas', rule: 'Concentration limits on sponsor exposure to any single program manager — programme failure must not collapse the sponsor\'s control framework.', doctrineAnchor: 'CBUAE Outsourcing Regulation' },
+  { id: 'cs_baas_04', topic: 'fintech_baas', rule: 'Programme onboarding requires AML risk assessment, compliance-officer interview, sample CDD review, and right-to-audit clause in the contract.', doctrineAnchor: 'EBA Outsourcing Guidelines' },
+  { id: 'cs_baas_05', topic: 'fintech_baas', rule: 'Maintain a programme-manager registry with kill-switch playbook; on AML control failure, suspend new account opening immediately and remediate before resumption.', doctrineAnchor: 'CBUAE BaaS supervisory guidance' },
+
+  // ── Embedded finance ──────────────────────────────────────────────────
+  { id: 'cs_ef_01', topic: 'embedded_finance', rule: 'In an embedded-payments flow, the regulated entity (payment licence holder) is responsible for KYC of the end-user; pass-through KYC chains must not break this chain.', doctrineAnchor: 'EU PSD2; UAE Payment Token Services Reg' },
+  { id: 'cs_ef_02', topic: 'embedded_finance', rule: 'Platform-level merchant onboarding is not a substitute for end-user KYC where the end-user holds funds or initiates payments.', doctrineAnchor: 'FATF R.10' },
+  { id: 'cs_ef_03', topic: 'embedded_finance', rule: 'Aggregated KYC under a platform umbrella requires explicit regulator approval; default position is per-end-user CDD.', doctrineAnchor: 'CBUAE Stored-Value Facilities Regulation' },
+  { id: 'cs_ef_04', topic: 'embedded_finance', rule: 'Embedded lending (BNPL, point-of-sale finance) requires creditworthiness + AML check on the consumer; merchant KYC is insufficient.', doctrineAnchor: 'EU CCD 2008/48/EC; FATF R.10' },
+  { id: 'cs_ef_05', topic: 'embedded_finance', rule: 'Document data-flow between platform, processor, and licensed entity; PDPL / GDPR compliance is the licensed entity\'s ultimate responsibility.', doctrineAnchor: 'UAE PDPL FDL 45/2021' },
+
+  // ── AI governance ─────────────────────────────────────────────────────
+  { id: 'cs_aig_01', topic: 'ai_governance', rule: 'AML decisioning models are "high-risk" under the EU AI Act — require risk management system, data governance, human oversight, transparency, and post-market monitoring.', doctrineAnchor: 'EU AI Act Art.6 + Annex III' },
+  { id: 'cs_aig_02', topic: 'ai_governance', rule: 'Maintain a model card per AI/ML system: training data lineage, performance metrics, intended use, known limitations, governance owner.', doctrineAnchor: 'NIST AI RMF Govern 1.4' },
+  { id: 'cs_aig_03', topic: 'ai_governance', rule: 'Drift monitoring required: PSI, KS-test, or equivalent on input features and outputs; deteriorating drift triggers retrain or rollback.', doctrineAnchor: 'NIST AI RMF Manage 4.1' },
+  { id: 'cs_aig_04', topic: 'ai_governance', rule: 'Explainability is non-negotiable for adverse customer impact (account closure, screening hit confirmation); SHAP / LIME / counterfactual explanations must be retrievable on request.', doctrineAnchor: 'EU AI Act Art.13; OECD AI Principles' },
+  { id: 'cs_aig_05', topic: 'ai_governance', rule: 'Use of a foundation model (LLM) for compliance decisions requires evaluation against the OWASP LLM Top 10, not just functional accuracy.', doctrineAnchor: 'OWASP LLM Top 10 v1.1' },
+
+  // ── ESG / climate ─────────────────────────────────────────────────────
+  { id: 'cs_esg_01', topic: 'esg_climate', rule: 'Greenwashing is increasingly an enforcement priority — verify ESG / sustainability claims against independent assurance (ISSB/ISAE 3000) before relying on them.', doctrineAnchor: 'ISSB IFRS S1/S2; SFDR' },
+  { id: 'cs_esg_02', topic: 'esg_climate', rule: 'Carbon-credit counterparties require KYC on registry account, retirement-ledger access, and double-counting check (ICVCM CCP).', doctrineAnchor: 'ICVCM Core Carbon Principles' },
+  { id: 'cs_esg_03', topic: 'esg_climate', rule: 'CSRD / CSDDD bring environmental & human-rights diligence into AML scope for in-scope groups; align ESG due diligence with AML R.10 EDD where possible.', doctrineAnchor: 'EU CSRD 2022/2464; CSDDD 2024/1760' },
+  { id: 'cs_esg_04', topic: 'esg_climate', rule: 'Climate-related transition-risk customers (high-emission sectors) may face counterparty pressure and stranded-asset risk — factor into CRR refresh.', doctrineAnchor: 'TCFD; CBUAE Climate Risk Mgt Framework' },
+  { id: 'cs_esg_05', topic: 'esg_climate', rule: 'Carbon-market fraud is a FATF-recognised typology — mismatched offsets, ghost projects, double issuance — apply environmental-crime predicate framing.', doctrineAnchor: 'FATF Environmental Crime Report 2021' },
+
+  // ── Modern slavery ────────────────────────────────────────────────────
+  { id: 'cs_ms_01', topic: 'modern_slavery', rule: 'Identify supply-chain forced-labour exposure via UFLPA rebuttable presumption (Xinjiang origin), ILO indicators, and second-tier supplier visibility.', doctrineAnchor: 'US UFLPA 2021; ILO Forced Labour Indicators' },
+  { id: 'cs_ms_02', topic: 'modern_slavery', rule: 'CSDDD due-diligence obligations propagate up to in-scope groups\' direct suppliers; map your customers in scope for these expectations.', doctrineAnchor: 'EU CSDDD 2024/1760' },
+  { id: 'cs_ms_03', topic: 'modern_slavery', rule: 'Red flags: passport retention by employer, wage underpayment, restricted movement, debt-bondage indicators in employment-disbursement accounts.', doctrineAnchor: 'FATF Human-Trafficking Typology 2018' },
+  { id: 'cs_ms_04', topic: 'modern_slavery', rule: 'Modern slavery proceeds laundered via cash-intensive SMEs (massage, nail bars, manual-labour subcontractors); screen these segments with sector-tuned typologies.', doctrineAnchor: 'FATF Human-Trafficking Typology 2018' },
+  { id: 'cs_ms_05', topic: 'modern_slavery', rule: 'STR filings on suspected human trafficking should be classified as TF-adjacent for FIU prioritisation, even where TF predicate is not established.', doctrineAnchor: 'UNODC Trafficking in Persons Protocol' },
+
+  // ── Sectoral sanctions ────────────────────────────────────────────────
+  { id: 'cs_ss_01', topic: 'sectoral_sanctions', rule: 'Sectoral controls differ from SDN: they restrict specific products, services, or activities rather than full asset freeze. Map each transaction line-by-line to applicable Directive.', doctrineAnchor: 'OFAC SSI; EU Reg 833/2014' },
+  { id: 'cs_ss_02', topic: 'sectoral_sanctions', rule: 'Russia oil price-cap requires attestation chain at every tier; service providers (insurance, finance, brokerage) need price-cap compliance at counterparty onboarding.', doctrineAnchor: 'Price-Cap Coalition Guidance 2022-2024' },
+  { id: 'cs_ss_03', topic: 'sectoral_sanctions', rule: 'Capital-market restrictions: new issuances post-cutoff are blocked even though secondary trading of legacy paper may be permitted; check ISIN issue date.', doctrineAnchor: 'EU Reg 833/2014 Art.5' },
+  { id: 'cs_ss_04', topic: 'sectoral_sanctions', rule: 'Shadow-fleet maritime evasion: AIS gaps + STS transfers + flag-of-convenience swap are the canonical fingerprints; require IMO + class society + insurer triangulation.', doctrineAnchor: 'OFAC / OFSI shipping advisories 2022-2024' },
+  { id: 'cs_ss_05', topic: 'sectoral_sanctions', rule: 'EU sectoral SDD-list inclusion does not equal SDN-equivalent freeze; verify the specific Annex and Article that applies to the counterparty before transaction decision.', doctrineAnchor: 'EU Council Reg 269/2014, 833/2014' },
+
+  // ── Third-party risk ─────────────────────────────────────────────────
+  { id: 'cs_tpr_01', topic: 'third_party_risk', rule: 'Tier vendors at onboarding by AML / sanctions / cyber / data-protection risk; minimum diligence depth scales with tier.', doctrineAnchor: 'EBA Outsourcing Guidelines; ISO 31000' },
+  { id: 'cs_tpr_02', topic: 'third_party_risk', rule: 'Critical vendors require right-to-audit, exit plan, sub-contractor visibility, business-continuity plan and SOC 2 Type II (or equivalent) at a minimum.', doctrineAnchor: 'EBA Outsourcing GL/2019/02' },
+  { id: 'cs_tpr_03', topic: 'third_party_risk', rule: 'Vendor security incidents are reportable events: define SLA for incident notification (e.g. 24h), align with internal escalation playbook.', doctrineAnchor: 'EU DORA 2022/2554' },
+  { id: 'cs_tpr_04', topic: 'third_party_risk', rule: 'Concentration risk across critical vendors must be reported to the Risk Committee; multiple critical functions on a single provider triggers diversification plan.', doctrineAnchor: 'EU DORA Art.28' },
+  { id: 'cs_tpr_05', topic: 'third_party_risk', rule: 'Document a vendor\'s sub-contractors at engagement; chain-of-trust gaps are a top regulatory finding in TPRM exams.', doctrineAnchor: 'EBA Outsourcing GL/2019/02 Art.71' },
+
+  // ── Outsourcing ───────────────────────────────────────────────────────
+  { id: 'cs_out_01', topic: 'outsourcing', rule: 'Outsourcing AML functions does not transfer regulatory accountability — the licensed entity remains accountable for compliance outcomes.', doctrineAnchor: 'FATF R.18; CBUAE Outsourcing Regulation' },
+  { id: 'cs_out_02', topic: 'outsourcing', rule: 'Critical-or-important outsourcing requires regulator notification and, in some jurisdictions, prior approval.', doctrineAnchor: 'EBA Outsourcing GL/2019/02; CBUAE OS Reg' },
+  { id: 'cs_out_03', topic: 'outsourcing', rule: 'Data-residency and access controls must align with PDPL / GDPR expectations; offshore TM operations require regulator-sanctioned data-flow framework.', doctrineAnchor: 'UAE PDPL; EU GDPR Art.44-49' },
+  { id: 'cs_out_04', topic: 'outsourcing', rule: 'Outsourced AML monitoring requires sample-based quality assurance by the licensed entity; "trust the vendor" is not a control.', doctrineAnchor: 'FATF R.18 INR.18' },
+  { id: 'cs_out_05', topic: 'outsourcing', rule: 'Exit plan required for any critical outsourced AML function — including data return, knowledge transfer, and continuity of detection rules.', doctrineAnchor: 'EBA Outsourcing GL/2019/02 Art.79' },
+
+  // ── Gambling / betting ────────────────────────────────────────────────
+  { id: 'cs_gam_01', topic: 'gambling_betting', rule: 'Casino CDD threshold ≥ USD/EUR 3,000 single transaction (FATF R.22) — or as set by jurisdiction; some jurisdictions apply CDD on entry.', doctrineAnchor: 'FATF R.22 INR.22' },
+  { id: 'cs_gam_02', topic: 'gambling_betting', rule: 'Chip dumping in poker: large losing sessions to a counter-party with no game logic is canonical ML; flag via game telemetry analysis.', doctrineAnchor: 'FATF Casino Typologies 2009' },
+  { id: 'cs_gam_03', topic: 'gambling_betting', rule: 'Sports betting: arbitrage betting at multiple bookmakers / accounts to reduce variance is a classic structuring proxy — apply linked-account aggregation.', doctrineAnchor: 'FATF Sports Betting Typology 2009' },
+  { id: 'cs_gam_04', topic: 'gambling_betting', rule: 'Junket / VIP rooms require enhanced due diligence on the junket operator, source-of-funds for buy-ins, and independent audit of cage records.', doctrineAnchor: 'Macao Gaming Inspection; UNODC' },
+  { id: 'cs_gam_05', topic: 'gambling_betting', rule: 'iGaming KYC at registration + EDD on first deposit ≥ EUR 2,000 — then continuous monitoring of deposit / withdrawal patterns vs game volume.', doctrineAnchor: 'EU 4AMLD Art.11; EGBA Standards' },
+
+  // ── Real-estate AML ───────────────────────────────────────────────────
+  { id: 'cs_re_01', topic: 'real_estate_aml', rule: 'Cash purchase of real estate at any value triggers CDD per FATF R.22; UAE thresholds apply at AED 55,000 and above with EOCN reporting.', doctrineAnchor: 'FATF R.22; UAE CD 10/2019' },
+  { id: 'cs_re_02', topic: 'real_estate_aml', rule: 'Off-plan / pre-construction purchases require additional diligence: developer escrow, construction-progress alignment with payments, source of funds at each milestone.', doctrineAnchor: 'UAE RERA Law 8/2007; Dubai Land Dept' },
+  { id: 'cs_re_03', topic: 'real_estate_aml', rule: 'Corporate buyer with no operating substance + cash purchase + offshore UBO is a near-textbook ML pattern; require substance-test before transaction.', doctrineAnchor: 'FATF Real Estate Typology 2007/2022' },
+  { id: 'cs_re_04', topic: 'real_estate_aml', rule: 'Title-deed transfers must align with payment-flow records; mismatch in price between contract, deed, and bank transfer is a TBML / sanctions-evasion red flag.', doctrineAnchor: 'FATF Real Estate Typology' },
+  { id: 'cs_re_05', topic: 'real_estate_aml', rule: 'Real-estate agents are DNFBPs under FATF R.22; in UAE, registered with MoE and supervised under DNFBP Circulars.', doctrineAnchor: 'UAE MoE DNFBP Circular' },
+
+  // ── Insurance AML ─────────────────────────────────────────────────────
+  { id: 'cs_ins_01', topic: 'insurance_aml', rule: 'Single-premium life insurance > USD/EUR 25,000 is a known ML vector; require source-of-funds at issuance and at any premium top-up.', doctrineAnchor: 'IAIS ICP 22; FATF Life Insurance Typology' },
+  { id: 'cs_ins_02', topic: 'insurance_aml', rule: 'Third-party premium payments require enhanced due diligence on payer-policyholder relationship and lawful purpose.', doctrineAnchor: 'FATF R.10 INR.10' },
+  { id: 'cs_ins_03', topic: 'insurance_aml', rule: 'Early surrender within 12-24 months of issuance with payout to a third party is a textbook ML pattern; flag for STR review.', doctrineAnchor: 'FATF Life Insurance Typology 2015' },
+  { id: 'cs_ins_04', topic: 'insurance_aml', rule: 'Free-look-period cancellations with payout redirection to non-policyholder accounts require enhanced scrutiny.', doctrineAnchor: 'IAIS ICP 22' },
+  { id: 'cs_ins_05', topic: 'insurance_aml', rule: 'Reinsurance and treaty arrangements require BO and sanctions diligence on cedent + reinsurer + retrocessionaire chain.', doctrineAnchor: 'IAIS ICP 13; Wolfsberg Reinsurance Guidance' },
+
+  // ── Tax evasion ───────────────────────────────────────────────────────
+  { id: 'cs_te_01', topic: 'tax_evasion', rule: 'Tax evasion is a designated FATF predicate offence; STR filing required on suspicion regardless of whether the underlying tax is criminal in the home country.', doctrineAnchor: 'FATF R.3 INR.3 (designated category 21)' },
+  { id: 'cs_te_02', topic: 'tax_evasion', rule: 'Apply CRS / FATCA reporting to all reportable accounts; CRS gaps (declared "non-reportable" with weak basis) are an STR trigger.', doctrineAnchor: 'OECD CRS; US FATCA' },
+  { id: 'cs_te_03', topic: 'tax_evasion', rule: 'Loan-back schemes (offshore-funded loan to onshore taxpayer) are a textbook tax-evasion pattern; document substance of the lender and arms-length terms.', doctrineAnchor: 'OECD BEPS Action 4' },
+  { id: 'cs_te_04', topic: 'tax_evasion', rule: 'Aggressive tax-planning structures (Mauritius / BVI / Cayman holding) require BO transparency and substance verification — zero-tax does not equal compliance.', doctrineAnchor: 'OECD BEPS; UAE economic substance regulations' },
+  { id: 'cs_te_05', topic: 'tax_evasion', rule: 'Voluntary tax-disclosure regimes (where applicable) do not exempt the firm from STR obligations on the underlying conduct.', doctrineAnchor: 'FATF R.20 + relevant national VDP rules' },
+
+  // ── Cyber incident ────────────────────────────────────────────────────
+  { id: 'cs_cyb_01', topic: 'cyber_incident', rule: 'Material cyber incidents must be reported per the relevant regime — SEC 4-business-day disclosure for US-listed firms; DORA major-ICT-incident notification in EU.', doctrineAnchor: 'SEC Cybersecurity Disclosure Rule 2023; EU DORA Art.19' },
+  { id: 'cs_cyb_02', topic: 'cyber_incident', rule: 'Ransomware payment may itself be a sanctions violation — screen the destination wallet against OFAC + comparable lists before any payment consideration.', doctrineAnchor: 'OFAC Ransomware Advisory 2021' },
+  { id: 'cs_cyb_03', topic: 'cyber_incident', rule: 'Preserve forensic evidence in admissible form (chain-of-custody, hash) — incident response must align with DFIR best-practice and regulator expectations.', doctrineAnchor: 'NIST SP 800-86; ISO/IEC 27037' },
+  { id: 'cs_cyb_04', topic: 'cyber_incident', rule: 'Cyber-incident-induced operational disruption that affects AML controls (TM offline, screening latency) is itself a reportable AML control failure.', doctrineAnchor: 'EU DORA; CBUAE Operational Resilience' },
+  { id: 'cs_cyb_05', topic: 'cyber_incident', rule: 'Coordinate incident response with sector CERT, FIU, and supervisor; isolated handling without regulator notification is an enforcement-priority finding.', doctrineAnchor: 'NIS2 Directive 2022/2555' },
+
+  // ── Data protection / PDPL ────────────────────────────────────────────
+  { id: 'cs_dp_01', topic: 'data_protection_pdpl', rule: 'AML processing has a lawful basis under PDPL / GDPR (compliance with legal obligation); document the basis, not "consent".', doctrineAnchor: 'UAE PDPL FDL 45/2021 Art.5; GDPR Art.6(1)(c)' },
+  { id: 'cs_dp_02', topic: 'data_protection_pdpl', rule: 'Erasure requests on AML-retained records are refused on legal-obligation grounds; document the refusal rationale and retention period.', doctrineAnchor: 'GDPR Art.17(3)(b); UAE PDPL' },
+  { id: 'cs_dp_03', topic: 'data_protection_pdpl', rule: 'AML risk assessments using personal data may require a DPIA — particularly where automated profiling is involved.', doctrineAnchor: 'GDPR Art.35; UAE PDPL DPIA guidance' },
+  { id: 'cs_dp_04', topic: 'data_protection_pdpl', rule: 'Cross-border AML data transfers require a permitted mechanism (adequacy, SCC, BCR, or specific derogation under Art.49).', doctrineAnchor: 'GDPR Chapter V; UAE PDPL Art.22' },
+  { id: 'cs_dp_05', topic: 'data_protection_pdpl', rule: 'Data-subject access rights coexist with tipping-off — handle SARs (subject access requests) with legal-counsel review during active investigation.', doctrineAnchor: 'GDPR Art.15; UAE PDPL Art.13' },
+
+  // ── Wire transfer Travel Rule ────────────────────────────────────────
+  { id: 'cs_wt_01', topic: 'wire_transfer_travel_rule', rule: 'Cross-border wires ≥ USD/EUR 1,000 must include originator name, account/IBAN, and physical address (or national-ID); beneficiary name + account.', doctrineAnchor: 'FATF R.16 INR.16' },
+  { id: 'cs_wt_02', topic: 'wire_transfer_travel_rule', rule: 'Truncated, missing, or meaningless originator data is a Travel-Rule breach; reject the transfer or apply enhanced scrutiny per risk-based approach.', doctrineAnchor: 'FATF R.16 INR.16(c)' },
+  { id: 'cs_wt_03', topic: 'wire_transfer_travel_rule', rule: 'Virtual asset transfers ≥ USD/EUR 1,000 are subject to the Travel Rule; both originating and beneficiary VASPs must exchange required information.', doctrineAnchor: 'FATF Updated R.16 Guidance 2021' },
+  { id: 'cs_wt_04', topic: 'wire_transfer_travel_rule', rule: 'Batch processing or "cover payment" methods cannot be used to circumvent Travel-Rule obligations; the originating institution remains responsible.', doctrineAnchor: 'FATF R.16 INR.16(b)' },
+  { id: 'cs_wt_05', topic: 'wire_transfer_travel_rule', rule: 'Counterparty VASP non-compliance with Travel Rule requires risk-based response: hold, decline, or terminate the corridor as appropriate.', doctrineAnchor: 'FATF R.16 INR.16; FATF VA Guidance 2021' },
+
+  // ── MVTS / Remittance ─────────────────────────────────────────────────
+  { id: 'cs_mvts_01', topic: 'mvts_remittance', rule: 'MVTS providers must be licensed/registered and subject to AML/CFT supervision; agents are within scope of the principal\'s programme.', doctrineAnchor: 'FATF R.14 INR.14' },
+  { id: 'cs_mvts_02', topic: 'mvts_remittance', rule: 'Hawala-style settlement (offsetting deposits without wire) is a designated MVTS activity in most jurisdictions and requires licensing.', doctrineAnchor: 'FATF Hawala Typology 2013' },
+  { id: 'cs_mvts_03', topic: 'mvts_remittance', rule: 'Customer base of MVTS is structurally migrant / remitter — apply tailored CDD and ongoing-monitoring rules sensitive to corridor patterns.', doctrineAnchor: 'FATF MVTS Guidance 2016' },
+  { id: 'cs_mvts_04', topic: 'mvts_remittance', rule: 'Round-amount / offsetting flow patterns between unrelated parties in different jurisdictions are textbook underground-banking signatures.', doctrineAnchor: 'FATF Hawala / Underground Banking Typology' },
+  { id: 'cs_mvts_05', topic: 'mvts_remittance', rule: 'Action against unregistered MVTS is mandatory — ignoring known unlicensed activity is itself a supervisory failure.', doctrineAnchor: 'FATF R.14 INR.14(b)' },
+
+  // ── Environmental predicate ──────────────────────────────────────────
+  { id: 'cs_env_01', topic: 'environmental_predicate', rule: 'Environmental crime is a designated FATF predicate offence (R.3 + 22 categories list, 2021 update).', doctrineAnchor: 'FATF R.3 INR.3; FATF Environmental Crime Report 2021' },
+  { id: 'cs_env_02', topic: 'environmental_predicate', rule: 'Illegal logging proceeds enter trade finance via false-origin certification; verify FLEGT licence and chain-of-custody for high-risk timber species.', doctrineAnchor: 'EU FLEGT; EUTR; FATF Illegal Logging Typology' },
+  { id: 'cs_env_03', topic: 'environmental_predicate', rule: 'IUU fishing proceeds: cross-reference vessel against RFMO IUU lists, validate catch certificate (EU IUU Reg.), screen for AIS gaps and STS transfers.', doctrineAnchor: 'EU IUU Reg 1005/2008; INTERPOL Project Scale' },
+  { id: 'cs_env_04', topic: 'environmental_predicate', rule: 'Illegal mining proceeds laundered via gold and gemstone trade — apply OECD DDG Annex II and KP certification rigour, especially on artisanal-source supply.', doctrineAnchor: 'OECD DDG Annex II; LBMA RGG' },
+  { id: 'cs_env_05', topic: 'environmental_predicate', rule: 'STR filings on environmental-crime proceeds must explicitly cite the predicate (timber, fisheries, mining, wildlife) and FATF R.3 categorisation.', doctrineAnchor: 'FATF R.20; FATF Environmental Crime Report 2021' },
+
+  // ── Wildlife predicate ───────────────────────────────────────────────
+  { id: 'cs_wlp_01', topic: 'wildlife_predicate', rule: 'CITES Appendix I species (e.g. ivory, rhino horn) carry a strict prohibition; permits are commercial trade by definition for Appendix II.', doctrineAnchor: 'CITES Convention; UN ECOSOC' },
+  { id: 'cs_wlp_02', topic: 'wildlife_predicate', rule: 'Mislabel-freight typology: "plastic figurines" for ivory, "fish meal" for pangolin scales — verify HS-code consistency with weight and provenance docs.', doctrineAnchor: 'FATF Wildlife Trafficking Typology 2020' },
+  { id: 'cs_wlp_03', topic: 'wildlife_predicate', rule: 'Trafficking hubs (Vietnam, Mozambique, UAE transit) require enhanced shipping-route diligence on cargo manifests and consignees.', doctrineAnchor: 'TRAFFIC; UNODC World Wildlife Crime Report' },
+  { id: 'cs_wlp_04', topic: 'wildlife_predicate', rule: 'Coordinate STR-flagged wildlife cases with INTERPOL Project Wisdom and UNODC focal point — cross-border evidence sharing is critical for prosecution.', doctrineAnchor: 'INTERPOL; UNODC' },
+  { id: 'cs_wlp_05', topic: 'wildlife_predicate', rule: 'Wildlife trafficking is a designated FATF predicate offence (2021 R.3 update) — STR + ML investigation flow applies.', doctrineAnchor: 'FATF R.3 INR.3; FATF Wildlife Crime Report 2020' },
+
   // ── General compliance ────────────────────────────────────────────────
   { id: 'cs_gc_01', topic: 'general_compliance', rule: 'When in doubt, apply the conservative interpretation; regulators rarely sanction a firm for over-compliance, only for under-compliance.', doctrineAnchor: 'Wolfsberg AML Principles' },
   { id: 'cs_gc_02', topic: 'general_compliance', rule: 'Document the decision, the rationale, the approver, and the evidence; "we discussed it and decided" is not a record.', doctrineAnchor: 'FATF R.11' },
