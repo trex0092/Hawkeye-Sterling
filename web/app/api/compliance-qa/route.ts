@@ -25,11 +25,14 @@ export const maxDuration = 120;
 // call already returned) escape the route's local try/catch and crash the
 // Lambda with HTTP 502 + raw runtime trace. Swallowing them here keeps the
 // function alive long enough to return a clean JSON response. Only registered
-// once per Lambda warm instance.
-declare const globalThis: { __hsComplianceQaRejectionGuard?: boolean } & typeof global;
-if (typeof process !== "undefined" && !globalThis.__hsComplianceQaRejectionGuard) {
-  globalThis.__hsComplianceQaRejectionGuard = true;
-  process.on("unhandledRejection", (reason) => {
+// once per Lambda warm instance — we tag a property on globalThis as the
+// idempotency marker (cast through `unknown` to avoid redeclaring the
+// built-in globalThis type, which fails strict-mode typechecking).
+const REJECTION_GUARD_KEY = "__hsComplianceQaRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
     const msg = reason instanceof Error ? reason.message : String(reason);
     if (msg.includes("AbortError") || msg.includes("aborted")) {
       // Expected — upstream timeouts during RAG/advisor fallback.
