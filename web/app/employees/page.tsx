@@ -269,7 +269,7 @@ export default function EmployeesPage() {
           <button
             type="button"
             onClick={() => setAdding((v) => !v)}
-            className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 transition-colors"
+            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors"
           >
             {adding ? "Cancel" : "+ Add employee"}
           </button>
