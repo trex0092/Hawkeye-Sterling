@@ -350,7 +350,7 @@ export default function MlroAdvisorPage() {
         titleEm="advisor."
         intro={
           <>
-            Sonnet executor → Opus advisor · 86 directives · charter P1–P10.{" "}
+            Sonnet executor → Opus advisor · 132 directives · charter P1–P10.{" "}
             <span className="text-ink-3">Standalone mode — no screening context required.</span>
           </>
         }
@@ -376,7 +376,7 @@ export default function MlroAdvisorPage() {
                   Deep Reasoning · MLRO Advisor
                 </div>
                 <div className="text-12 text-ink-2">
-                  Sonnet executor → Opus advisor · 86 directives · charter P1–P10
+                  Sonnet executor → Opus advisor · 132 directives · charter P1–P10
                   <span className="ml-2 text-ink-3">— standalone mode</span>
                 </div>
               </div>

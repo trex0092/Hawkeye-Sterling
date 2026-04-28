@@ -186,7 +186,10 @@ export async function POST(req: Request): Promise<NextResponse> {
           partialAnswer,
           source: "mlro-advisor-fallback",
         },
-        { status: advisorResult.partial ? 504 : 502, headers: { ...CORS, ...gateHeaders } },
+        // Return 200 for advisor-logic failures so CDN/Netlify edge never
+        // replaces the JSON body with an HTML error page; ok:false in the body
+        // signals the error to the client. Reserve 504 for genuine timeouts.
+        { status: advisorResult.partial ? 504 : 200, headers: { ...CORS, ...gateHeaders } },
       );
     }
 
