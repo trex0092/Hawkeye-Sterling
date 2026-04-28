@@ -1,6 +1,7 @@
 // Hawkeye Sterling — adverse-media ingestion (Phase 6).
-// Three pluggable providers: NewsAPI, GDELT DOC API, generic RSS. Each
-// returns normalised AdverseMediaArticle items the brain can score via
+// Four pluggable providers: NewsAPI, GDELT DOC API, Google Programmable
+// Search (CSE), and generic RSS. Each returns normalised
+// AdverseMediaArticle items the brain can score via
 // classifyAdverseMedia() (from src/brain/adverse-media.ts).
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
@@ -8,7 +9,7 @@ declare const process: { env?: Record<string, string | undefined> } | undefined;
 import { ADVERSE_MEDIA_QUERY, classifyAdverseMedia, type AdverseMediaHit } from '../brain/adverse-media.js';
 
 export interface AdverseMediaArticle {
-  source: 'newsapi' | 'gdelt' | 'rss';
+  source: 'newsapi' | 'gdelt' | 'google_cse' | 'rss';
   sourceDomain?: string;
   headline: string;
   url: string;
@@ -83,6 +84,74 @@ export async function searchGdelt(opts: SearchOptions): Promise<AdverseMediaArti
       hits: classifyAdverseMedia(a.title ?? ''),
     };
   });
+}
+
+/** Google Programmable Search Engine (CSE) — requires GOOGLE_CSE_KEY +
+ *  GOOGLE_CSE_CX. Indexes the open web rather than a curated news corpus,
+ *  so it surfaces enforcement-agency pages, court dockets, regulator
+ *  press-releases, and NGO reports that NewsAPI/GDELT miss. Pass
+ *  `dateRestrict` (e.g. "d30") to bound recency. */
+export async function searchGoogleCse(
+  opts: SearchOptions & { dateRestrict?: string },
+): Promise<AdverseMediaArticle[]> {
+  const apiKey = (typeof process !== 'undefined' ? process.env?.GOOGLE_CSE_KEY : undefined);
+  const cx = (typeof process !== 'undefined' ? process.env?.GOOGLE_CSE_CX : undefined);
+  if (!apiKey) throw new Error('GOOGLE_CSE_KEY not set');
+  if (!cx) throw new Error('GOOGLE_CSE_CX not set');
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  const q = opts.subjectName
+    ? `"${opts.subjectName.replace(/"/g, '')}" (${ADVERSE_MEDIA_QUERY})`
+    : ADVERSE_MEDIA_QUERY;
+  // CSE caps `num` at 10 per call. Page through up to 50 results.
+  const want = Math.min(opts.limit ?? 25, 50);
+  const out: AdverseMediaArticle[] = [];
+  for (let start = 1; start <= want; start += 10) {
+    const url = new URL('https://www.googleapis.com/customsearch/v1');
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set('cx', cx);
+    url.searchParams.set('q', q);
+    url.searchParams.set('num', String(Math.min(10, want - (start - 1))));
+    url.searchParams.set('start', String(start));
+    if (opts.dateRestrict) url.searchParams.set('dateRestrict', opts.dateRestrict);
+    const res = await fetchImpl(url.toString());
+    if (!res.ok) {
+      // 429 = quota exhausted; 400 = bad query — return what we have.
+      if (out.length > 0) break;
+      throw new Error(`Google CSE HTTP ${res.status}`);
+    }
+    const json = (await res.json()) as {
+      items?: Array<{
+        title?: string;
+        link?: string;
+        snippet?: string;
+        displayLink?: string;
+        pagemap?: { metatags?: Array<{ 'article:published_time'?: string; 'og:updated_time'?: string }> };
+      }>;
+    };
+    const items = json.items ?? [];
+    for (const a of items) {
+      const text = `${a.title ?? ''} ${a.snippet ?? ''}`;
+      const meta = a.pagemap?.metatags?.[0];
+      const publishedAt = meta?.['article:published_time'] ?? meta?.['og:updated_time'];
+      const sourceDomain = a.displayLink ?? (a.link ? safeHost(a.link) : undefined);
+      const article: AdverseMediaArticle = {
+        source: 'google_cse',
+        headline: a.title ?? '',
+        url: a.link ?? '',
+        hits: classifyAdverseMedia(text),
+      };
+      if (sourceDomain !== undefined) article.sourceDomain = sourceDomain;
+      if (publishedAt !== undefined) article.publishedAt = publishedAt;
+      if (a.snippet !== undefined) article.excerpt = a.snippet;
+      out.push(article);
+    }
+    if (items.length < 10) break; // no more pages
+  }
+  return out;
+}
+
+function safeHost(u: string): string | undefined {
+  try { return new URL(u).hostname; } catch { return undefined; }
 }
 
 /** Generic RSS — pass a feed URL. Uses DOMParser if present, regex fallback otherwise. */
