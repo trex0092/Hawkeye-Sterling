@@ -16,6 +16,7 @@ import type { ApiKeyRecord } from "./api-keys";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { looksLikeJwt, verifyJwt } from "./jwt";
 
 export interface EnforcementAllow {
   ok: true;
@@ -74,6 +75,45 @@ export async function enforce(
   let tierId = "free";
   let remainingMonthly: number | null = null;
   let record: ApiKeyRecord | null = null;
+
+  // JWT path: caller exchanged an API key for a short-lived bearer JWT
+  // via /api/auth/token. Verify the signature + expiry and use the
+  // embedded { sub, tier } as the rate-limit identity. The monthly
+  // quota counter is intentionally NOT decremented here — it was
+  // decremented at issuance time. This keeps a hot loop on a token
+  // from triple-spending a key's quota.
+  if (!anonymous && looksLikeJwt(plaintext)) {
+    const v = verifyJwt(plaintext);
+    if (!v.ok || !v.payload) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: `invalid JWT: ${v.reason ?? "unknown"}` },
+          { status: 401 },
+        ),
+      };
+    }
+    keyId = v.payload.sub;
+    tierId = v.payload.tier;
+    const rl = await consumeRateLimit(keyId, tierId);
+    if (!rl.allowed) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "rate limit exceeded", retryAfterSec: rl.retryAfterSec },
+          { status: 429, headers: rateLimitHeaders(rl) },
+        ),
+      };
+    }
+    return {
+      ok: true,
+      tier: rl.tier,
+      keyId,
+      record: null,
+      remainingMonthly: null,
+      headers: rateLimitHeaders(rl),
+    };
+  }
 
   if (!anonymous) {
     const check = await validateAndConsume(plaintext);

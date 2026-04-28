@@ -8,6 +8,7 @@
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
+import { combineDS, type BeliefMass } from './dempster-shafer.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
