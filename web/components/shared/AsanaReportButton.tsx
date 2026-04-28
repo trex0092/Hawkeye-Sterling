@@ -109,16 +109,22 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
       type="button"
       onClick={report}
       disabled={disabled || state.status === "posting"}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-bg-2 border border-hair-2 text-ink-1 hover:bg-bg-1 hover:text-ink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-green-dim text-green border border-green/30 hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
     >
       {state.status === "posting" ? (
         <>
-          <span className="w-1.5 h-1.5 rounded-full bg-ink-3 animate-pulse" />
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
+            style={{ animation: "live-pulse 2s ease-in-out infinite" }}
+          />
           Reporting…
         </>
       ) : (
         <>
-          <span className="w-1.5 h-1.5 rounded-full bg-ink-3" />
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
+            style={{ animation: "live-pulse 2s ease-in-out infinite" }}
+          />
           Report to Asana
         </>
       )}
