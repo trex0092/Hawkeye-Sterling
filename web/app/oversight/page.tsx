@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { DateParts } from "@/components/ui/DateParts";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -967,7 +968,7 @@ export default function OversightPage() {
                       <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{c.issuer}</td>
                       <td className="px-3 py-2.5 text-ink-0 font-medium max-w-[220px]">{c.title}</td>
                       <td className="px-3 py-2.5 text-11 text-ink-2 whitespace-nowrap">{editingCircularId === c.id ? <input className="text-11 px-1.5 py-1 rounded border border-brand bg-bg-0 text-ink-0 w-28" value={editCircularOwner} onChange={(e) => setEditCircularOwner(e.target.value)} /> : c.owner}</td>
-                      <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{editingCircularId === c.id ? <input type="date" className="text-10 px-1 py-1 rounded border border-brand bg-bg-0 text-ink-0" value={editCircularDue} onChange={(e) => setEditCircularDue(e.target.value)} /> : c.dueDate}</td>
+                      <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{editingCircularId === c.id ? <DateParts className="text-10 px-1 py-1 rounded border border-brand bg-bg-0 text-ink-0" value={editCircularDue} onChange={setEditCircularDue} /> : c.dueDate}</td>
                       <td className="px-3 py-2.5">
                         <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${DISPOSITION_TONE[c.disposition]}`}>
                           {DISPOSITION_LABEL[c.disposition]}

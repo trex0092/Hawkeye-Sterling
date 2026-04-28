@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface Supplier {
   id: string;
@@ -209,11 +210,10 @@ export default function SupplierDdPage() {
             </div>
             <div>
               <label className="block text-10 text-ink-3 mb-1">Last review date</label>
-              <input
-                type="date"
+              <IsoDateInput
                 className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
                 value={form.lastReview}
-                onChange={(e) => setForm((f) => ({ ...f, lastReview: e.target.value }))}
+                onChange={(iso) => setForm((f) => ({ ...f, lastReview: iso }))}
               />
             </div>
             <div className="flex items-center gap-5 pt-4">
@@ -286,11 +286,10 @@ export default function SupplierDdPage() {
                     <option value="significant">Significant</option>
                     <option value="standard">Standard</option>
                   </select>
-                  <input
-                    type="date"
+                  <IsoDateInput
                     className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
                     value={editForm.lastReview}
-                    onChange={(e) => setEditForm((f) => ({ ...f, lastReview: e.target.value }))}
+                    onChange={(iso) => setEditForm((f) => ({ ...f, lastReview: iso }))}
                   />
                   <div className="flex items-center gap-4">
                     <label className="flex items-center gap-1.5 text-11 text-ink-1 cursor-pointer">

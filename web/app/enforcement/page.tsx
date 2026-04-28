@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface Deadline {
   id: string;
@@ -814,11 +815,10 @@ export default function EnforcementPage() {
                         onChange={(e) => setEditDraft({ ...editDraft, authority: e.target.value })}
                         placeholder="Authority"
                       />
-                      <input
-                        type="date"
+                      <IsoDateInput
                         className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
                         value={editDraft.due}
-                        onChange={(e) => setEditDraft({ ...editDraft, due: e.target.value })}
+                        onChange={(iso) => setEditDraft({ ...editDraft, due: iso })}
                       />
                       <select
                         className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
@@ -992,10 +992,9 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
         </div>
         <div>
           <label className={labelCls}>Due date</label>
-          <input
-            type="date"
+          <IsoDateInput
             value={due}
-            onChange={(e) => setDue(e.target.value)}
+            onChange={setDue}
             className={inputCls}
             required
           />
