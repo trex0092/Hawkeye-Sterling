@@ -6,6 +6,7 @@ import {
   type ReasoningMode,
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
 import { askComplianceQuestion } from "../../../../dist/src/integrations/complianceRag.js";
+import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,18 +95,33 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Enrich the question with conversation context + detected jurisdiction
+  // Pre-classify the question with the rule-based MLRO classifier so we can
+  // inject doctrine / playbook / FATF / typology / common-sense anchors into
+  // the advisor user prompt. The classifier is pure-TS, runs in <1 ms, and
+  // makes the advisor cite verifiable anchors instead of relying on model
+  // recall (charter P9: no opaque scoring).
+  const analysis = classifyMlroQuestion(body.question);
+
+  // Enrich the question with conversation context + classifier pre-brief.
   const preamble = buildContextPreamble(body.context ?? []);
-  const enrichedQuestion = `${preamble}${body.question.trim()}`.slice(0, 3500);
+  const enrichedQuestion = `${preamble}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 3500);
 
-  const detectedJurisdiction = body.jurisdiction ?? detectJurisdiction(body.question);
+  const detectedJurisdiction = body.jurisdiction
+    ?? detectJurisdiction(body.question)
+    ?? (analysis.jurisdictions[0] ?? undefined);
 
-  // Build a rich evidence ID list from everything the super-brain found
+  // Build a rich evidence ID list — caller-supplied + classifier hints.
   const evidenceIds = Array.from(
     new Set([
       ...(body.evidenceIds ?? []),
       ...(body.typologyIds ?? []),
       ...(body.adverseGroups ?? []).map((g) => `adverse:${g}`),
+      ...analysis.typologies.map((t) => `typology:${t}`),
+      ...analysis.doctrineHints.map((d) => `doctrine:${d}`),
+      ...analysis.playbookHints.map((p) => `playbook:${p}`),
+      ...analysis.redFlagHints.map((r) => `redflag:${r}`),
+      ...analysis.fatfRecHints.map((f) => `fatf:${f}`),
+      ...analysis.urgencyFlags.map((u) => `urgency:${u}`),
       ...(detectedJurisdiction ? [`jurisdiction:${detectedJurisdiction}`] : []),
     ]),
   );
@@ -190,7 +206,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     } : null;
 
     return NextResponse.json(
-      { ...result, ok: true, regulatoryContext, detectedJurisdiction: detectedJurisdiction ?? null },
+      {
+        ...result,
+        ok: true,
+        regulatoryContext,
+        detectedJurisdiction: detectedJurisdiction ?? null,
+        questionAnalysis: analysis,
+      },
       { headers: gateHeaders },
     );
   } catch (err) {
