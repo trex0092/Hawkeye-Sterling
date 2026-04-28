@@ -105,8 +105,8 @@ export function buildTopicGraph(topic: MlroTopic): KgGraph {
     nodes.set(nk('typology', t), {
       kind: 'typology',
       id: t,
-      label: ty?.name ?? t,
-      ...(ty?.family !== undefined ? { detail: ty.family } : {}),
+      label: ty?.displayName ?? t,
+      ...(ty?.describes !== undefined ? { detail: ty.describes } : {}),
     });
     edges.push({ from: center, to: nk('typology', t), weight: 0.8 });
   }
