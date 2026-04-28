@@ -72,6 +72,8 @@ export interface ReasoningTrailStep {
   at: string; // ISO 8601
   summary: string;
   body: string;
+  /** Adaptive thinking summary produced by the model (requires display:"summarized"). */
+  thinkingSummary?: string;
   citedModeIds: string[];
   citedDoctrineIds: string[];
   citedRedFlagIds: string[];
@@ -211,14 +213,14 @@ export type ChatCall = (input: {
   effort?: string;
   /** Wrap system in a cache_control ephemeral block for prompt caching. */
   cacheSystem?: boolean;
-}) => Promise<{ ok: boolean; text?: string; error?: string }>;
+}) => Promise<{ ok: boolean; text?: string; thinking?: string; error?: string }>;
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal, thinking, effort, cacheSystem }) => {
   if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
   const systemContent = cacheSystem
     ? [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' } }]
     : system;
-  const thinkingBlock = thinking ? { thinking: { type: 'adaptive' } } : {};
+  const thinkingBlock = thinking ? { thinking: { type: 'adaptive', display: 'summarized' } } : {};
   const outputConfigBlock = effort ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
@@ -256,7 +258,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  return { ok: true, text: result.text };
+  return { ok: true, text: result.text, thinking: result.thinking };
 };
 
 function withBudget<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<{ result?: T; timedOut: boolean; thrownError?: string }> {
@@ -327,11 +329,11 @@ export async function invokeMlroAdvisor(
       chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: cfg.maxTokens ?? EXECUTOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'high', cacheSystem: useCache }),
     );
     if (timedOut || !execRes?.ok) {
-      trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+      trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', thinkingSummary: execRes?.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
       return makeResult(true, execRes?.text, 'incomplete', timedOut ? 'Deep reasoning budget exceeded — try Speed or Balanced mode.' : (execRes?.error ?? execThrown));
     }
     executorBody = execRes.text ?? '';
-    trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: 'Executor draft produced.', body: executorBody, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+    trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: 'Executor draft produced.', body: executorBody, thinkingSummary: execRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
   }
 
   // If mode == 'speed', stop here.
@@ -350,11 +352,11 @@ export async function invokeMlroAdvisor(
     chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? ADVISOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
   );
   if (advTimedOut || !advRes?.ok) {
-    trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+    trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', thinkingSummary: advRes?.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
     return makeResult(true, advRes?.text ?? executorBody, 'incomplete', advTimedOut ? 'Deep reasoning budget exceeded — try Speed or Balanced mode.' : (advRes?.error ?? advThrown));
   }
   const body = advRes.text ?? '';
-  trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: 'Advisor review + final narrative.', body, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
+  trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: 'Advisor review + final narrative.', body, thinkingSummary: advRes.thinking, citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
 
   const verdict: MlroAdvisorResult['complianceReview']['advisorVerdict'] =
     /\bBLOCKED\b/i.test(body) ? 'blocked' :

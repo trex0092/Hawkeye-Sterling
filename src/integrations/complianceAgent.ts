@@ -90,6 +90,8 @@ export interface AgentTrailStep {
   at: string; // ISO 8601
   summary: string;
   body: string;
+  /** Adaptive thinking summary from the model (requires display:"summarized"). */
+  thinkingSummary?: string;
 }
 
 export interface ComplianceReviewResult {
@@ -464,14 +466,14 @@ export type ChatCall = (input: {
   thinking?: boolean;
   effort?: string;
   cacheSystem?: boolean;
-}) => Promise<{ ok: boolean; text?: string; error?: string }>;
+}) => Promise<{ ok: boolean; text?: string; thinking?: string; error?: string }>;
 
 const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal, thinking, effort, cacheSystem }) => {
   if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
   const systemContent = cacheSystem
     ? [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' } }]
     : system;
-  const thinkingBlock = thinking ? { thinking: { type: 'adaptive' } } : {};
+  const thinkingBlock = thinking ? { thinking: { type: 'adaptive', display: 'summarized' } } : {};
   const outputConfigBlock = effort ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
@@ -511,7 +513,7 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
       error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
     };
   }
-  return { ok: true, text: result.text };
+  return { ok: true, text: result.text, thinking: result.thinking };
 };
 
 function withBudget<T>(
@@ -649,6 +651,7 @@ export async function invokeComplianceAgent(
       at: advStart,
       summary: timedOut ? 'Advisor budget exceeded — semantic review incomplete.' : 'Advisor call failed.',
       body: advRes?.text ?? '',
+      thinkingSummary: advRes?.thinking,
     });
     const candidates = candidateDispositionsFor('incomplete', redlines, tippingOff);
     return {
@@ -682,6 +685,7 @@ export async function invokeComplianceAgent(
     at: advStart,
     summary: 'Semantic audit complete.',
     body,
+    thinkingSummary: advRes.thinking,
   });
 
   const semantic = parseSemanticVerdict(body);

@@ -300,6 +300,230 @@ const RAW: ReadonlyArray<MetaCognitionPrimitive> = Object.freeze([
     firesWhen: 'Any multi-section output is being finalised.',
   },
 
+  // ── Wave-5 primitives — Epistemic rigour + financial-crime specifics (adds 5). ──
+  {
+    id: 'mc.evidence-provenance-chain',
+    label: 'Evidence Provenance Chain',
+    category: 'truth-seeking',
+    directive:
+      'Walk every evidentiary fact back to its ultimate source before accepting it. Map: primary source → intermediary (database, API, analyst) → claim as presented. Reject any fact where the provenance chain breaks or contains training-data as a link.',
+    firesWhen: 'A material fact is being accepted without tracing who first observed it and when.',
+  },
+  {
+    id: 'mc.jurisdictional-nexus-mapping',
+    label: 'Jurisdictional Nexus Mapping',
+    category: 'decomposition',
+    directive:
+      'Map every legal or regulatory assertion to the exact jurisdiction that governs it. For cross-border facts, identify: (1) which jurisdiction's law applies, (2) whether a treaty or MLA mechanism is required, (3) whether the assertion survives each governing regime independently.',
+    firesWhen: 'A finding spans more than one legal regime, or cites regulation without specifying the governing jurisdiction.',
+  },
+  {
+    id: 'mc.regulatory-arbitrage-probe',
+    label: 'Regulatory Arbitrage Probe',
+    category: 'adversarial',
+    directive:
+      'Explicitly test whether the subject's structure, transactions, or entity choices appear designed to exploit gaps between regulatory regimes (booking-entity switching, threshold structuring across jurisdictions, DNFBP-sector routing, correspondent-banking layering). A structure that is legal in isolation but arbitrages supervisory gaps is a red flag, not a clean bill of health.',
+    firesWhen: 'Cross-border transactions, multi-entity structures, or jurisdiction-hopping patterns appear in the evidence.',
+  },
+  {
+    id: 'mc.temporal-coherence-audit',
+    label: 'Temporal Coherence Audit',
+    category: 'calibration',
+    directive:
+      'Verify that all events in the reasoning chain are temporally coherent: (1) causes precede effects, (2) regulatory versions cited were in force at the relevant date, (3) list-version dates match the screening event date. Flag any anachronism or retroactive application of rules not yet enacted at the time of the conduct.',
+    firesWhen: 'The case involves historical transactions, retrospective review, or multiple time periods.',
+  },
+  {
+    id: 'mc.network-topology-reasoning',
+    label: 'Network Topology Reasoning',
+    category: 'decomposition',
+    directive:
+      'Reason about ownership and control as a directed graph: nodes are legal persons/entities, edges are ownership ≥25%, directorship, signatory authority, or contractual control. Identify: hub nodes (high in-degree = concentration risk), cut nodes (removal disconnects the UBO from the regulated entity), and shell chains (≥3 hops with no apparent business rationale). Refuse to conclude UBO identity without tracing the full path.',
+    firesWhen: 'UBO determination, group-structure analysis, nominee arrangements, or PEP-linked entity networks are in scope.',
+  },
+
+  // ── Wave-6 primitives — Super-machine: 22 high-density AML, epistemic, and adversarial additions. ──
+
+  // ─ AML typology decomposition ───────────────────────────────────────────
+  {
+    id: 'mc.placement-layering-integration',
+    label: 'Placement-Layering-Integration Stage Classifier',
+    category: 'decomposition',
+    directive:
+      'Classify every suspicious transaction or fund movement into its ML stage: Placement (cash → financial system), Layering (obscuring trail through conversions/transfers), or Integration (re-introduction into legitimate economy). Refuse to emit a final ML risk rating without stage identification. A finding that cannot be stage-classified may be predicate-crime evidence rather than ML evidence — distinguish explicitly.',
+    firesWhen: 'A money-laundering risk assessment or transaction-pattern finding is being produced.',
+  },
+  {
+    id: 'mc.money-flow-reconstruction',
+    label: 'Money-Flow Reconstruction',
+    category: 'decomposition',
+    directive:
+      'Reconstruct the complete funds-flow graph: origination → intermediaries → destination. For each node, record: entity, account, jurisdiction, date, amount, currency, and the instrument used. A reconstructed flow with gaps is incomplete, not inconclusive — label every gap as a "missing link" and specify what evidence would fill it.',
+    firesWhen: 'Transaction analysis, SAR drafting, FIU production-order response, or correspondent-chain analysis is in scope.',
+  },
+  {
+    id: 'mc.typology-match-audit',
+    label: 'Typology Match Audit',
+    category: 'truth-seeking',
+    directive:
+      'For each risk finding, identify the governing FATF, MENAFATF, UNODC, or ACAMS typology it maps to. State the typology identifier, the key indicators in the typology, and which of those indicators are present in the evidence. A "typology match" with fewer than three matching indicators is a weak signal — flag it as such.',
+    firesWhen: 'A risk-pattern or red-flag finding is being emitted.',
+  },
+  {
+    id: 'mc.trade-based-ml-decomposition',
+    label: 'Trade-Based ML Decomposition',
+    category: 'decomposition',
+    directive:
+      'When trade finance is in scope, decompose along the four FATF TBML indicators: (1) over/under-invoicing of goods or services, (2) multiple invoicing for the same shipment, (3) falsely described goods or services, (4) short-shipping or over-shipping. Each indicator requires independent documentary evidence — price benchmark, HS code verification, trade-route plausibility, and counterparty legitimacy.',
+    firesWhen: 'Trade finance, import/export transactions, free-trade-zone activity, or goods-for-cash arrangements appear in the evidence.',
+  },
+  {
+    id: 'mc.virtual-asset-tracing',
+    label: 'Virtual-Asset Tracing Protocol',
+    category: 'decomposition',
+    directive:
+      'For virtual-asset flows, require: (1) wallet attribution (on-chain address → real-world entity via exchange KYC or VASP disclosure), (2) chain-hop tracing across bridging/mixing/swapping services, (3) darknet-market or high-risk-VASP exposure percentage, (4) Travel Rule compliance status. On-chain data alone is pseudonymous, not anonymous — never stop at the hash.',
+    firesWhen: 'Cryptocurrency, DeFi, NFT, stablecoin, or VASP-related activity is referenced.',
+  },
+  {
+    id: 'mc.correspondent-banking-risk',
+    label: 'Correspondent Banking Risk Ladder',
+    category: 'decomposition',
+    directive:
+      'Assess correspondent-banking risk across five rungs: (1) respondent CAMEL/regulatory rating, (2) jurisdiction FATF/MENAFATF mutual evaluation outcome, (3) USD/EUR clearing concentration, (4) nested-correspondent depth (≥2 hops = heightened), (5) payable-through account indicators. Each rung must be evidenced. A finding that escalates only on rung-4 or higher without primary evidence is speculative.',
+    firesWhen: 'Correspondent, respondent, or nostro/vostro relationships appear in the scope.',
+  },
+  {
+    id: 'mc.sanctions-evasion-probe',
+    label: 'Sanctions Evasion Probe',
+    category: 'adversarial',
+    directive:
+      'Probe for the nine primary sanctions-evasion typologies: (1) front companies, (2) name manipulation / transliteration gaming, (3) flags of convenience, (4) ship-to-ship transfers, (5) false documentation, (6) jurisdiction shopping (non-OFAC partners), (7) third-country routing, (8) crypto layering through non-sanctioned VASPs, (9) trade-goods substitution. Assert absence only when each typology has been explicitly tested against the evidence.',
+    firesWhen: 'Any sanctions-nexus finding is being evaluated, including "no match" conclusions.',
+  },
+  {
+    id: 'mc.pep-nexus-gradient',
+    label: 'PEP Nexus Gradient',
+    category: 'calibration',
+    directive:
+      'Score PEP risk on four dimensions independently: (1) Role seniority (head of state > minister > senior official > low-level official), (2) Jurisdiction corruption index (Transparency International CPI — cite the year), (3) Recency of role exit (in-role > ≤12 months > 1–5 years > >5 years), (4) Direct vs. RCA (relative or close associate) nexus. Aggregate score must be shown before emitting the PEP risk level — not just the label.',
+    firesWhen: 'A PEP determination or PEP-risk rating is being made.',
+  },
+  {
+    id: 'mc.beneficial-ownership-stress-test',
+    label: 'Beneficial Ownership Stress Test',
+    category: 'decomposition',
+    directive:
+      'Stress-test UBO conclusions against three attack scenarios: (A) Nominee scenario — are legal owners actually nominees for an undisclosed principal? (B) Fragmentation scenario — is ownership fragmented just below the 25% reporting threshold across connected parties? (C) Indirect-control scenario — does a third party exercise control through contractual or voting rights not visible in the share register? A UBO conclusion is only reportable if it survives all three scenarios.',
+    firesWhen: 'A beneficial ownership determination or UBO identity assertion is being finalised.',
+  },
+  {
+    id: 'mc.geographic-risk-layering',
+    label: 'Geographic Risk Layering',
+    category: 'decomposition',
+    directive:
+      'Layer geographic risk along five independent axes: (1) Subject nationality, (2) Entity incorporation jurisdiction, (3) Operating jurisdiction, (4) Transaction routing jurisdiction, (5) Counterparty jurisdiction. Each axis uses the FATF/MENAFATF Mutual Evaluation Report, OFAC/HMT/EU designation status, Basel AML Index, and Transparency International CPI. A country that scores high on only one axis is lower risk than one scoring on three or more — show the matrix.',
+    firesWhen: 'A jurisdiction-risk assessment, country-risk rating, or geographic-risk narrative is produced.',
+  },
+  {
+    id: 'mc.product-channel-risk-matrix',
+    label: 'Product & Channel Risk Matrix',
+    category: 'decomposition',
+    directive:
+      'Assess inherent risk along two product/channel dimensions independently: (1) Product risk — anonymity, velocity, convertibility, cross-border reach, reversibility, and threshold avoidance potential; (2) Channel risk — digital vs. face-to-face, DNFBP vs. bank, cash-intensive vs. electronic. Map each dimension to the relevant FATF guidance and emit the matrix before concluding on inherent risk.',
+    firesWhen: 'A product-risk, channel-risk, or inherent-risk assessment is being made.',
+  },
+  {
+    id: 'mc.adverse-media-triage',
+    label: 'Adverse Media Triage Protocol',
+    category: 'belief-update',
+    directive:
+      'Triage adverse media findings on four axes before updating belief: (1) Source tier (tier-1 newswire > regional press > blog/social > unverified), (2) Subject certainty (named individually vs. mentioned in same article as another subject), (3) Allegation vs. conviction (allegation alone carries epistemic weight, not legal weight — distinguish explicitly), (4) Temporal relevance (date of alleged conduct, not date of article). A single unverified article about a common name is not adverse media — it is a research lead.',
+    firesWhen: 'Adverse media, negative news, or reputational findings are being evaluated.',
+  },
+
+  // ─ Epistemic & adversarial additions ────────────────────────────────────
+  {
+    id: 'mc.adversarial-simulation',
+    label: 'Adversarial Simulation',
+    category: 'adversarial',
+    directive:
+      'Simulate an intelligent, well-resourced adversary who knows the recommendation and is motivated to defeat it. Enumerate the three most likely exploitation vectors. For each vector, assess whether the current controls or next-step recommendations would detect it. If any vector survives undetected, escalate or harden the recommendation before emission.',
+    firesWhen: 'A risk-mitigation recommendation, control design, or SAR filing decision is being finalised.',
+  },
+  {
+    id: 'mc.false-positive-audit',
+    label: 'False-Positive Audit',
+    category: 'adversarial',
+    directive:
+      'Before every adverse conclusion, run the false-positive audit: (1) Name-match specificity — is the subject name common in the relevant culture/region? (2) Address/DOB corroboration — is there at least one strong identifier confirming identity? (3) Plausible-innocence scenario — construct the most plausible innocent explanation consistent with all the evidence. If the innocent explanation cannot be falsified by available evidence, the verdict must be POSSIBLE or lower, not HIT.',
+    firesWhen: 'An adverse verdict (HIT, BLOCKED, ESCALATE) is about to be emitted.',
+  },
+  {
+    id: 'mc.recency-decay',
+    label: 'Recency-Decay Weighting',
+    category: 'belief-update',
+    directive:
+      'Apply exponential recency decay to all evidence: evidence older than 5 years carries 50% weight; older than 10 years carries 25%; older than 15 years carries 10% unless corroborated by more recent evidence. A finding based solely on decade-old adverse media is a low-confidence signal. Show decay factors explicitly in the evidence-weighing step.',
+    firesWhen: 'Evidence includes historical data, past convictions, or news articles more than 3 years old.',
+  },
+  {
+    id: 'mc.inferential-distance-cap',
+    label: 'Inferential Distance Cap',
+    category: 'calibration',
+    directive:
+      'Count the inferential hops from primary evidence to the conclusion. Cap confident risk conclusions at three hops. At four hops, confidence degrades to POSSIBLE. At five or more hops, the conclusion is speculative and must be flagged as a hypothesis requiring additional evidence before it can support a risk rating. State the hop count explicitly.',
+    firesWhen: 'A risk conclusion depends on a chain of inferences rather than direct evidence.',
+  },
+  {
+    id: 'mc.missing-data-materiality',
+    label: 'Missing-Data Materiality Assessment',
+    category: 'hygiene',
+    directive:
+      'Classify every data gap as: (A) Material — its presence or absence would change the verdict, (B) Informative — it narrows but does not flip the verdict, (C) Immaterial — its absence does not affect the verdict. For every Material gap, specify the exact data element needed, the authoritative source, and the mechanism to obtain it (KYC refresh, EDD, production order, MLAT). Do not emit a verdict with unresolved Material gaps.',
+    firesWhen: 'A verdict is being emitted under evidential uncertainty.',
+  },
+  {
+    id: 'mc.multi-hypothesis-competition',
+    label: 'Multi-Hypothesis Competition',
+    category: 'truth-seeking',
+    directive:
+      'Formulate at least three competing hypotheses before selecting a conclusion: H1 (ML/TF), H2 (legitimate business rationale), H3 (regulatory/tax avoidance but not ML/TF). Score each hypothesis against the evidence using likelihood ratios. Only adopt H1 if it scores at least 3× the next best hypothesis. A conclusion selected by exclusion of alternatives without explicit scoring is inadmissible.',
+    firesWhen: 'A final risk classification, SAR decision, or disposition recommendation is being made.',
+  },
+  {
+    id: 'mc.control-effectiveness-baseline',
+    label: 'Control Effectiveness Baseline',
+    category: 'foresight',
+    directive:
+      'Before recommending a control enhancement, establish the baseline: (1) What control currently exists? (2) What failure mode does the proposed enhancement target? (3) What is the estimated residual risk after the enhancement? (4) What is the implementation lead time and cost? A recommendation that does not establish the baseline is an opinion, not a risk-management decision.',
+    firesWhen: 'A control recommendation, remediation action, or risk-mitigation step is being proposed.',
+  },
+  {
+    id: 'mc.entity-resolution-discipline',
+    label: 'Entity Resolution Discipline',
+    category: 'truth-seeking',
+    directive:
+      'Before treating two named entities as the same person or organisation, require positive resolution on at least two independent strong identifiers (date of birth, national ID, LEI, registered address, biometric). Name similarity alone is not resolution. Document: matched identifiers, unmatched identifiers, and the resolution confidence level (EXACT / STRONG / POSSIBLE / WEAK). Never merge entities at POSSIBLE or below without explicit MLRO sign-off.',
+    firesWhen: 'Two or more entities share a name, partial identifier, or alias.',
+  },
+  {
+    id: 'mc.cash-intensive-nexus',
+    label: 'Cash-Intensive Business Nexus',
+    category: 'truth-seeking',
+    directive:
+      'For subjects operating in cash-intensive sectors (retail, hospitality, car wash, car dealer, money services, precious metals/stones, real estate, gambling), apply the cash-nexus test: (1) Does declared turnover match industry benchmarks for the sector and geography? (2) Is the cash deposit pattern consistent with the business cycle? (3) Are there structuring indicators (deposits just below reporting thresholds)? (4) Is there a plausible cash-to-product conversion mechanism? Absence of the nexus shifts the finding from sector risk to specific ML risk.',
+    firesWhen: 'The subject operates in or is connected to a cash-intensive sector.',
+  },
+  {
+    id: 'mc.regulatory-action-history',
+    label: 'Regulatory Action History Analysis',
+    category: 'belief-update',
+    directive:
+      'Integrate prior regulatory actions (fines, enforcement notices, deferred prosecution agreements, consent orders, supervisory letters) as prior-probability anchors. A subject with a prior AML/CFT enforcement action in the same risk category carries a 3× higher Bayesian prior for repeat conduct. Specify: issuing authority, date, nature of violation, and whether remediation was completed and verified.',
+    firesWhen: 'Prior regulatory enforcement, sanctions designations, or court orders are referenced in the evidence.',
+  },
+
   // ── Wave-4 primitives — AI governance + Wave-4 predicates (adds 5). ──
   {
     id: 'mc.ai-dual-persona-lens',
