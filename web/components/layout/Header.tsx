@@ -24,18 +24,20 @@ const NAV_TABS = [
 ] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
-// stays readable. Grouped by domain for quick navigation.
+// stays readable. Column order: Operations · Governance · Enrichment ·
+// Intelligence (operator-first → analyst-last).
 const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: string; hint: string }> }> = [
   {
-    title: "Intelligence",
+    title: "Operations",
     items: [
-      { label: "Workbench Brain", href: "/workbench", hint: "Screening · live reasoning · manifest" },
-      { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
-      { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
-      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
-      { label: "OSINT", href: "/osint", hint: "Subject enrichment & SpiderFoot" },
-      { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
-      { label: "Status", href: "/status", hint: "Live endpoint health" },
+      { label: "Client portal", href: "/client-portal", hint: "External KYC" },
+      { label: "UBO declaration", href: "/ubo-declaration", hint: "Public UBO form" },
+      { label: "Supplier DD", href: "/vendor-dd", hint: "Supplier onboarding" },
+      { label: "Employees", href: "/employees", hint: "HR registry & doc expiry" },
+      { label: "Training", href: "/training", hint: "Staff certification" },
+      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
+      { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
+      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
     ],
   },
   {
@@ -65,16 +67,15 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     ],
   },
   {
-    title: "Operations",
+    title: "Intelligence",
     items: [
-      { label: "Client portal", href: "/client-portal", hint: "External KYC" },
-      { label: "UBO declaration", href: "/ubo-declaration", hint: "Public UBO form" },
-      { label: "Supplier DD", href: "/vendor-dd", hint: "Supplier onboarding" },
-      { label: "Employees", href: "/employees", hint: "HR registry & doc expiry" },
-      { label: "Training", href: "/training", hint: "Staff certification" },
-      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
-      { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
-      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
+      { label: "Workbench Brain", href: "/workbench", hint: "Screening · live reasoning · manifest" },
+      { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
+      { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
+      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
+      { label: "OSINT", href: "/osint", hint: "Subject enrichment & SpiderFoot" },
+      { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
+      { label: "Status", href: "/status", hint: "Live endpoint health" },
     ],
   },
 ];

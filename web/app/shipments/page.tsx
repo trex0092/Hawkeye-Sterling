@@ -724,6 +724,9 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
   const [lotNumber, setLotNumber] = useState("");
   const [vaultLocation, setVaultLocation] = useState("Brink's Dubai DMCC");
   const [counterparty, setCounterparty] = useState("");
+  const [cddRef, setCddRef] = useState("");
+  const [clearanceDate, setClearanceDate] = useState("");
+  const [invoiceNo, setInvoiceNo] = useState("");
   const [err, setErr] = useState("");
 
   const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
@@ -761,8 +764,8 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       transportationAgent: "—",
       awb: awb.trim() || "—",
       lotNumber: lotNumber.trim() || "—",
-      invoiceNumber: "—",
-      clearanceDate: "—",
+      invoiceNumber: invoiceNo.trim() || "—",
+      clearanceDate: clearanceDate.trim() || "—",
       transitProgress: status === "delivered" ? 100 : status === "at-vault" ? 95 : status === "arrived" ? 100 : 50,
       vaultLocation: vaultLocation.trim(),
       deliveryLocation: vaultLocation.trim(),
@@ -778,7 +781,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       lbmaGoodDelivery: false,
       counterparty: counterparty.trim() || "—",
       counterpartyJurisdiction: originCountry.trim().toUpperCase() || "AE",
-      counterpartyCddRef: "—",
+      counterpartyCddRef: cddRef.trim() || "—",
       custodian: "—",
       insuranceRef: "—",
       vaultCertRef: "—",
@@ -873,7 +876,9 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Buyer / consignee" className={iCls} />
         </div>
         <div className="col-span-2">
-          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk level</label>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
+            Risk level <span className="text-ink-3 normal-case tracking-normal">(multi-select)</span>
+          </label>
           <div className="flex gap-2">
             {RISK_LEVEL_OPTIONS.map((lvl) => {
               const active = riskLevels.includes(lvl);
@@ -882,6 +887,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
                   key={lvl}
                   type="button"
                   onClick={() => toggleRisk(lvl)}
+                  aria-pressed={active}
                   className={`flex-1 py-1.5 rounded border text-11 font-semibold transition-colors ${
                     active
                       ? RISK_LEVEL_TONE[lvl]
@@ -893,6 +899,37 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* Row 6 — CDD reference / clearance date / invoice number */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">CDD ref.</label>
+          <input
+            value={cddRef}
+            onChange={(e) => setCddRef(e.target.value)}
+            placeholder="CDD-2025-0042"
+            className={iCls}
+          />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Clearance date</label>
+          <input
+            type="date"
+            value={clearanceDate}
+            onChange={(e) => setClearanceDate(e.target.value)}
+            className={iCls}
+          />
+        </div>
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice no.</label>
+          <input
+            value={invoiceNo}
+            onChange={(e) => setInvoiceNo(e.target.value)}
+            placeholder="INV-2025-0042"
+            className={iCls}
+          />
         </div>
       </div>
 
