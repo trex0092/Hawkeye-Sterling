@@ -550,7 +550,9 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       superBrain.status === "success"
         ? {
             pep: superBrain.result.pep,
+            pepAssessment: superBrain.result.pepAssessment ?? null,
             jurisdiction: superBrain.result.jurisdiction,
+            jurisdictionRich: superBrain.result.jurisdictionRich ?? null,
             adverseMedia: superBrain.result.adverseMedia,
             adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
             adverseMediaScored: superBrain.result.adverseMediaScored ?? null,
@@ -616,7 +618,9 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         superBrain.status === "success"
           ? {
               pep: superBrain.result.pep,
+              pepAssessment: superBrain.result.pepAssessment ?? null,
               jurisdiction: superBrain.result.jurisdiction,
+              jurisdictionRich: superBrain.result.jurisdictionRich ?? null,
               adverseMedia: superBrain.result.adverseMedia,
               adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
               adverseMediaScored: superBrain.result.adverseMediaScored ?? null,

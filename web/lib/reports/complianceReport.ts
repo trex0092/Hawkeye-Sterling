@@ -43,6 +43,21 @@ export interface ReportSuperBrain {
     type: string;
     salience: number;
     rationale?: string;
+    matchedRule?: string;
+  } | null;
+  // Detailed PEP assessment — the role-match evidence behind the
+  // classification (which database rule fired, which roles matched,
+  // what snippet supports each). Without this the PEP block reports
+  // a verdict without showing its work.
+  pepAssessment?: {
+    isLikelyPEP?: boolean;
+    highestTier?: string;
+    riskScore?: number;
+    matchedRoles?: Array<{
+      tier: string;
+      label: string;
+      snippet?: string;
+    }>;
   } | null;
   jurisdiction?: {
     iso2: string;
@@ -50,6 +65,13 @@ export interface ReportSuperBrain {
     region: string;
     cahra: boolean;
     regimes: string[];
+  } | null;
+  jurisdictionRich?: {
+    code?: string;
+    name?: string;
+    tiers?: string[];
+    riskScore?: number;
+    notes?: string[];
   } | null;
   adverseMedia?: Array<{ categoryId: string; keyword: string; offset?: number }>;
   adverseKeywordGroups?: Array<{ group: string; label: string; count: number }>;
@@ -527,16 +549,73 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
   return lines;
 }
 
+// PEP CLASSIFICATION + EVIDENCE. Emits when *either* the primary
+// classifier fires (sb.pep) or the secondary assessment marks the
+// subject as likely PEP (sb.pepAssessment.isLikelyPEP). matchedRoles
+// is the evidence backing the verdict — every role that triggered
+// the classifier with the supporting snippet, so an MLRO can audit
+// the call without re-firing the brain.
 function formatPepBlock(sb: ReportSuperBrain): string[] {
-  const pep = sb.pep;
-  if (!pep) return [];
+  const pep = sb.pep && sb.pep.salience > 0 ? sb.pep : null;
+  const assessment =
+    sb.pepAssessment && sb.pepAssessment.isLikelyPEP ? sb.pepAssessment : null;
+  if (!pep && !assessment) return [];
   const lines: string[] = [];
-  lines.push(`${SUB.slice(0, 3)} PEP CLASSIFICATION ${"─".repeat(56)}`);
-  lines.push(`Flag              : PEP (primary)`);
-  lines.push(`PEP class         : ${pep.type.replace(/_/g, " ").toUpperCase()}`);
-  lines.push(`PEP tier          : ${pep.tier}`);
-  lines.push(`Salience          : ${Math.round(pep.salience * 100)}%`);
-  if (pep.rationale) lines.push(`Rationale         : ${pep.rationale}`);
+  lines.push(`${SUB.slice(0, 3)} PEP CLASSIFICATION & EVIDENCE ${"─".repeat(45)}`);
+  lines.push(`Flag              : PEP${pep ? " (primary classifier)" : " (assessment-only)"}`);
+  if (pep) {
+    lines.push(`PEP class         : ${pep.type.replace(/_/g, " ").toUpperCase()}`);
+    lines.push(`PEP tier          : ${pep.tier.replace(/^tier_/, "tier ").replace(/_/g, " ")}`);
+    lines.push(`Salience          : ${Math.round(pep.salience * 100)}%`);
+    if (pep.matchedRule) lines.push(`Matched rule      : ${pep.matchedRule}`);
+    if (pep.rationale) lines.push(`Rationale         : ${pep.rationale}`);
+  }
+  if (assessment) {
+    if (assessment.highestTier) {
+      lines.push(
+        `Assessment tier   : ${assessment.highestTier.replace(/^tier_/, "tier ").replace(/_/g, " ")}`,
+      );
+    }
+    if (typeof assessment.riskScore === "number") {
+      lines.push(`Assessment score  : ${Math.round(assessment.riskScore)}/100`);
+    }
+  }
+
+  // Role-match evidence — the actual rows in the PEP rule book that
+  // tripped, with the supporting snippet (when the classifier surfaced
+  // it). Cap at 8 to keep the block readable; surplus is referenced.
+  const roles = assessment?.matchedRoles ?? [];
+  if (roles.length > 0) {
+    lines.push("");
+    lines.push("Matched roles (evidence):");
+    for (const r of roles.slice(0, 8)) {
+      const tierLabel = r.tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
+      lines.push(`  • [${tierLabel}] ${r.label}`);
+      if (r.snippet) {
+        const trimmed =
+          r.snippet.length > 160 ? `${r.snippet.slice(0, 160)}…` : r.snippet;
+        lines.push(`        "${trimmed}"`);
+      }
+    }
+    if (roles.length > 8) {
+      lines.push(`  …and ${roles.length - 8} more matched role(s).`);
+    }
+  }
+
+  // Source posture — PEP classification is bundled-fixture / rule-
+  // based and doesn't constitute a sanctions finding. State the limit
+  // so a reader doesn't read tier_1 as a freezing trigger.
+  lines.push("");
+  lines.push(
+    "Source posture    : rule-based / bundled PEP classifier. Tier alone does",
+  );
+  lines.push(
+    "                    not constitute a sanctions match; invokes EDD and",
+  );
+  lines.push(
+    "                    senior-management approval under FATF R.12 / FDL",
+  );
+  lines.push("                    10/2025 Art.17.");
   return lines;
 }
 
@@ -682,11 +761,30 @@ function formatAdverseMedia(sb: ReportSuperBrain): string[] {
 function formatJurisdiction(sb: ReportSuperBrain): string[] {
   const j = sb.jurisdiction;
   if (!j) return [];
+  const rich = sb.jurisdictionRich ?? null;
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} JURISDICTION RISK ${"─".repeat(57)}`);
   lines.push(`Jurisdiction      : ${j.name} (${j.iso2}) · ${j.region}`);
   lines.push(`CAHRA             : ${j.cahra ? "YES" : "no"}`);
   if (j.regimes.length) lines.push(`Active regimes    : ${j.regimes.join(", ")}`);
+  if (rich) {
+    if (typeof rich.riskScore === "number") {
+      lines.push(`Jurisdiction risk : ${Math.round(rich.riskScore)}/100`);
+    }
+    if (rich.tiers && rich.tiers.length > 0) {
+      lines.push(`Tier(s)           : ${rich.tiers.join(", ")}`);
+    }
+    if (rich.notes && rich.notes.length > 0) {
+      lines.push("");
+      lines.push("Notes (evidence):");
+      for (const n of rich.notes.slice(0, 6)) {
+        lines.push(`  • ${n}`);
+      }
+      if (rich.notes.length > 6) {
+        lines.push(`  …and ${rich.notes.length - 6} more.`);
+      }
+    }
+  }
   return lines;
 }
 
