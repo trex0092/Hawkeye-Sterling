@@ -130,7 +130,7 @@ function ToolbarButton({
     "inline-flex items-center gap-1.5 rounded font-sans border transition-colors cursor-pointer";
   const size = small ? "px-2.5 py-[5px] text-11.5 font-medium" : "px-3.5 py-[7px] text-12.5 font-medium";
   const variant = primary
-    ? "bg-ink-0 text-bg-0 border-ink-0 font-semibold hover:bg-ink-1 hover:border-ink-1"
+    ? "bg-brand text-white border-brand font-semibold hover:bg-brand-hover hover:border-brand-hover"
     : "bg-bg-panel text-ink-0 border-hair-2 hover:border-hair-3 hover:bg-bg-2";
   return (
     <button type="button" onClick={onClick} className={`${base} ${size} ${variant}`}>

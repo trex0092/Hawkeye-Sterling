@@ -5,7 +5,6 @@ import {
   SidebarSection,
   SidebarShell,
 } from "@/components/layout/SidebarParts";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import type { FacultyFilter, FacultyFilterKey } from "@/lib/types";
 
 interface WorkbenchSidebarProps {
@@ -21,16 +20,6 @@ export function WorkbenchSidebar({
 }: WorkbenchSidebarProps) {
   return (
     <SidebarShell>
-      <SidebarSection title="Report">
-        <AsanaReportButton
-          payload={{
-            module: "workbench",
-            label: "MLRO Workbench",
-            summary: "Module report submitted from Hawkeye Sterling dashboard — MLRO Workbench.",
-          }}
-        />
-      </SidebarSection>
-
       <SidebarSection title="Pipeline">
         <div className="text-12 text-ink-1 px-2">
           <div className="mb-3">
