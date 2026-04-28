@@ -8,6 +8,10 @@ export interface ClaudeAgentConfig {
   sandboxImage?: string;
   timeoutMs?: number;
   maxSteps?: number;
+  /** Enable adaptive thinking. Default true. */
+  enableThinking?: boolean;
+  /** Cache the system prompt for repeated calls. Default true. */
+  cacheSystemPrompt?: boolean;
 }
 
 export interface NarrativeReportRequest {
@@ -111,6 +115,14 @@ export async function generateNarrativeReport(
     return { ok: false, error: 'message content must be non-empty' };
   }
 
+  const useThinking = config.enableThinking    !== false;
+  const useCache    = config.cacheSystemPrompt !== false;
+  const systemContent = useCache
+    ? [{ type: 'text' as const, text: payload.system, cache_control: { type: 'ephemeral' } }]
+    : payload.system;
+  const thinkingBlock    = useThinking ? { thinking: { type: 'adaptive' } } : {};
+  const outputConfigBlock = { output_config: { effort: 'xhigh' } };
+
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {
@@ -124,7 +136,9 @@ export async function generateNarrativeReport(
         model: config.model || DEFAULT_MODEL,
         max_tokens: 16000,
         stream: true,
-        system: payload.system,
+        system: systemContent,
+        ...thinkingBlock,
+        ...outputConfigBlock,
         messages,
         metadata: {
           product: 'hawkeye-sterling',
