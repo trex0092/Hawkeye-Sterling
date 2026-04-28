@@ -37,6 +37,13 @@ export interface EvidencePackEntry {
     typologies?: string[];
     commonSenseRules?: string[];
   };
+  challenge?: {
+    outcome?: "UPHELD" | "PARTIALLY_UPHELD" | "OVERTURNED";
+    steelman?: string;
+    weakCitations: Array<{ citation: string; why: string }>;
+    alternativeReadings: string[];
+    hardenSuggestions: string[];
+  };
 }
 
 const MARGIN = 40;
@@ -104,6 +111,38 @@ export function renderAdvisorEvidencePack(entry: EvidencePackEntry): Blob {
     y = sectionHeader(doc, "Regulator-facing narrative", y);
     y = wrappedText(doc, entry.narrative, y);
     y += 6;
+  }
+
+  const ch = entry.challenge;
+  if (ch) {
+    const outcomeLine = ch.outcome ? `Outcome: ${ch.outcome.replace(/_/g, " ")}` : "";
+    y = sectionHeader(doc, `Red-team challenge${outcomeLine ? ` — ${outcomeLine}` : ""}`, y);
+    if (ch.steelman) {
+      y = wrappedText(doc, "Strongest counter-argument", y, { bold: true, color: [120, 80, 0] });
+      y = wrappedText(doc, ch.steelman, y);
+      y += 4;
+    }
+    if (ch.weakCitations.length > 0) {
+      y = wrappedText(doc, "Weak citations", y, { bold: true, color: [120, 80, 0] });
+      for (const wc of ch.weakCitations) {
+        const line = wc.why ? `• ${wc.citation} — ${wc.why}` : `• ${wc.citation}`;
+        y = wrappedText(doc, line, y);
+      }
+      y += 4;
+    }
+    if (ch.alternativeReadings.length > 0) {
+      y = wrappedText(doc, "Alternative regulatory readings", y, { bold: true, color: [120, 80, 0] });
+      for (const r of ch.alternativeReadings) y = wrappedText(doc, `• ${r}`, y);
+      y += 4;
+    }
+    if (ch.hardenSuggestions.length > 0) {
+      y = wrappedText(doc, "Harden suggestions", y, { bold: true, color: [120, 80, 0] });
+      ch.hardenSuggestions.forEach((h, i) => {
+        y = wrappedText(doc, `${i + 1}. ${h}`, y);
+      });
+      y += 4;
+    }
+    y += 4;
   }
 
   const c = entry.classifier;
