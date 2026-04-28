@@ -20,6 +20,25 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
+// Module-level safety net. Orphaned promises inside the upstream RAG / advisor
+// pipeline (e.g. an aborted fetch whose rejection arrives after the awaited
+// call already returned) escape the route's local try/catch and crash the
+// Lambda with HTTP 502 + raw runtime trace. Swallowing them here keeps the
+// function alive long enough to return a clean JSON response. Only registered
+// once per Lambda warm instance.
+declare const globalThis: { __hsComplianceQaRejectionGuard?: boolean } & typeof global;
+if (typeof process !== "undefined" && !globalThis.__hsComplianceQaRejectionGuard) {
+  globalThis.__hsComplianceQaRejectionGuard = true;
+  process.on("unhandledRejection", (reason) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) {
+      // Expected — upstream timeouts during RAG/advisor fallback.
+      return;
+    }
+    console.error("[compliance-qa] unhandled rejection", msg);
+  });
+}
+
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, OPTIONS",
