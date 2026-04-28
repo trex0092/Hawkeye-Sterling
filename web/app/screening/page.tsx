@@ -18,6 +18,7 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 // ── Adverse Media types ───────────────────────────────────────────────────────
 
@@ -817,11 +818,10 @@ export default function ScreeningPage() {
                 onChange={(e) => setAmSubject(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && void searchAdverseMedia()}
               />
-              <input
-                type="date"
+              <IsoDateInput
                 className="px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 text-ink-2 focus:outline-none focus:border-brand"
                 value={amDateFrom}
-                onChange={(e) => setAmDateFrom(e.target.value)}
+                onChange={setAmDateFrom}
                 title="From date (optional)"
               />
               <button

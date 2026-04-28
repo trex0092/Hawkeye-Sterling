@@ -204,7 +204,7 @@ export default function UboDeclarationPage() {
           <button
             type="button"
             onClick={addUbo}
-            className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1"
+            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors"
           >
             + Add UBO
           </button>
@@ -216,7 +216,7 @@ export default function UboDeclarationPage() {
             </div>
             <button
               type="submit"
-              className="text-12 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+              className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover transition-colors"
             >
               Submit declaration
             </button>

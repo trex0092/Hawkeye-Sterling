@@ -384,7 +384,7 @@ export default function TrainingPage() {
                 type="button"
                 onClick={add}
                 disabled={!draft.name || !draft.course}
-                className="mt-3 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                className="mt-3 text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 disabled:opacity-40 transition-colors"
               >
                 + Log training
               </button>
