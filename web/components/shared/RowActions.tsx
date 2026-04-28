@@ -29,12 +29,15 @@ interface RowActionsProps {
   deleteConfirmMessage?: string;
 }
 
-// Deliberately tiny: 18×18 hit target, 11px glyph, low default opacity.
-// Surfaces on hover, never dominates the row.
+// 18×18 hit target, 11px glyph. Edit pencil sits in amber/yellow at rest;
+// delete X sits in red at rest. Both intensify slightly on hover so the
+// affordance is visible without hover too — matches the user-facing
+// convention "yellow = edit, red = delete" used across the rest of the
+// regulated tooling we benchmark against.
 const BTN =
-  "w-[18px] h-[18px] rounded-sm flex items-center justify-center text-11 leading-none text-ink-3/60 transition-all hover:scale-110";
-const EDIT_HOVER = "hover:bg-bg-2 hover:text-ink-0";
-const DELETE_HOVER = "hover:bg-red-dim hover:text-red";
+  "w-[18px] h-[18px] rounded-sm flex items-center justify-center text-11 leading-none transition-all hover:scale-110";
+const EDIT_TONE = "text-amber/80 hover:bg-amber-dim hover:text-amber";
+const DELETE_TONE = "text-red/80 hover:bg-red-dim hover:text-red";
 
 export function RowActions({
   onEdit,
@@ -65,7 +68,7 @@ export function RowActions({
           aria-label={`Edit ${label}`}
           title="Edit"
           onClick={handleEdit}
-          className={`${BTN} ${EDIT_HOVER}`}
+          className={`${BTN} ${EDIT_TONE}`}
         >
           ✎
         </button>
@@ -75,7 +78,7 @@ export function RowActions({
         aria-label={`Delete ${label}`}
         title="Delete"
         onClick={handleDelete}
-        className={`${BTN} ${DELETE_HOVER}`}
+        className={`${BTN} ${DELETE_TONE}`}
       >
         ×
       </button>
