@@ -195,6 +195,38 @@ export async function POST(req: Request): Promise<NextResponse> {
     const redlinesPenalty = redlines.fired.length * 10;
     const adverseMediaPenalty = Math.min(adverseMedia.length * 8, 30);
     const pepPenalty = pep && pep.salience > 0 ? Math.round(pep.salience * 20) : 0;
+
+    // Structured adverse-media score: classifyAdverseMedia() over freeText +
+    // evidence array, weighted by category severity. Was previously computed
+    // AFTER the composite formula, so its signal never reached result.composite.score
+    // — the ERMAN DONMEZ case (2 hits incl. law-enforcement article) rendered 0/100
+    // CLEAR even with material adverse media. Compute now and inject into composite.
+    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a) => a.snippet ?? "")]
+      .filter((s) => s.length > 0)
+      .join("\n");
+    const adverseMediaScoredEarly = mediaTextEarly
+      ? (() => { try { return scoreAdverseMedia(mediaTextEarly, []); } catch { return null; } })()
+      : null;
+    // Map composite (0..1) into a 0..40 penalty, clamped. Floor it at 8 when
+    // any high-severity category (TF/PF/sanctions/corruption) trips, so a
+    // single law-enforcement / arrest article cannot render CLEAR.
+    const HIGH_SEVERITY_CATS = new Set([
+      "terrorist_financing",
+      "proliferation_financing",
+      "sanctions_violations",
+      "corruption_organised_crime",
+      "drug_trafficking",
+      "human_trafficking_modern_slavery",
+    ]);
+    const adverseMediaScoredPenalty = (() => {
+      if (!adverseMediaScoredEarly) return 0;
+      const base = Math.round(adverseMediaScoredEarly.compositeScore * 40);
+      const tripsHighSeverity = adverseMediaScoredEarly.categoriesTripped
+        .some((c) => HIGH_SEVERITY_CATS.has(c));
+      const minWhenTripped = tripsHighSeverity && adverseMediaScoredEarly.compositeScore > 0 ? 8 : 0;
+      return Math.max(base, minWhenTripped);
+    })();
+
     const composite = Math.max(
       0,
       Math.min(
@@ -204,6 +236,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           regimesPenalty +
           redlinesPenalty +
           adverseMediaPenalty +
+          adverseMediaScoredPenalty +
           adverseKeywordPenalty +
           pepPenalty,
       ),
@@ -314,16 +347,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     })();
 
-    // Structured adverse-media scorer (5-category confidence + composite).
+    // Structured adverse-media scorer — already computed pre-composite as
+    // adverseMediaScoredEarly so the composite formula could consume it.
+    // Recompute here against the full mediaText (which may aggregate
+    // additional snippets gathered downstream of the early pass).
     const adverseMediaScored = mediaText
       ? (() => {
           try {
             return scoreAdverseMedia(mediaText, []);
           } catch {
-            return null;
+            return adverseMediaScoredEarly;
           }
         })()
-      : null;
+      : adverseMediaScoredEarly;
 
     // Richer PEP assessment across role + title heuristics. Uses the
     // synthetic role from the known-PEP fixture when no analyst roleText
@@ -374,6 +410,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           regimesPenalty,
           redlinesPenalty,
           adverseMediaPenalty,
+          adverseMediaScoredPenalty,
           adverseKeywordPenalty,
           pepPenalty,
         },

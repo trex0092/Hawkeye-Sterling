@@ -217,16 +217,24 @@ const MINERAL_TABS: { key: FilterMineral; label: string }[] = [
 ];
 
 const RMI_DELETED_KEY = "hawkeye.rmi.deleted.v1";
+const RMI_EDITS_KEY = "hawkeye.rmi.edits.v1";
+
+type SmelterEdit = Partial<Pick<Smelter, "name" | "country" | "countryCode" | "mineral" | "rmapStatus" | "rmapId" | "lastAuditDate" | "nextAuditDue" | "cahraRisk" | "activeSupplier" | "annualVolumeKg" | "notes">>;
 
 export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [edits, setEdits] = useState<Record<string, SmelterEdit>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<SmelterEdit>({});
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(RMI_DELETED_KEY);
       if (raw) setDeletedIds(JSON.parse(raw) as string[]);
+      const editsRaw = localStorage.getItem(RMI_EDITS_KEY);
+      if (editsRaw) setEdits(JSON.parse(editsRaw) as Record<string, SmelterEdit>);
     } catch { /* ignore */ }
   }, []);
 
@@ -238,10 +246,50 @@ export default function RmiPage() {
 
   const restoreAll = () => {
     setDeletedIds([]);
-    try { localStorage.removeItem(RMI_DELETED_KEY); } catch { /* ignore */ }
+    setEdits({});
+    try {
+      localStorage.removeItem(RMI_DELETED_KEY);
+      localStorage.removeItem(RMI_EDITS_KEY);
+    } catch { /* ignore */ }
   };
 
-  const liveSmelters = useMemo(() => SMELTERS.filter((s) => !deletedIds.includes(s.id)), [deletedIds]);
+  const startEdit = (s: Smelter) => {
+    setEditingId(s.id);
+    const overlay = edits[s.id] ?? {};
+    setEditDraft({
+      name: overlay.name ?? s.name,
+      country: overlay.country ?? s.country,
+      countryCode: overlay.countryCode ?? s.countryCode,
+      mineral: overlay.mineral ?? s.mineral,
+      rmapStatus: overlay.rmapStatus ?? s.rmapStatus,
+      rmapId: overlay.rmapId ?? s.rmapId,
+      lastAuditDate: overlay.lastAuditDate ?? s.lastAuditDate,
+      nextAuditDue: overlay.nextAuditDue ?? s.nextAuditDue,
+      cahraRisk: overlay.cahraRisk ?? s.cahraRisk,
+      activeSupplier: overlay.activeSupplier ?? s.activeSupplier,
+      ...(overlay.annualVolumeKg !== undefined ? { annualVolumeKg: overlay.annualVolumeKg } : (s.annualVolumeKg !== undefined ? { annualVolumeKg: s.annualVolumeKg } : {})),
+      notes: overlay.notes ?? s.notes,
+    });
+  };
+
+  const saveEdit = (id: string) => {
+    const next = { ...edits, [id]: { ...edits[id], ...editDraft } };
+    setEdits(next);
+    try { localStorage.setItem(RMI_EDITS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft({});
+  };
+
+  const liveSmelters = useMemo(
+    () => SMELTERS
+      .filter((s) => !deletedIds.includes(s.id))
+      .map((s) => ({ ...s, ...(edits[s.id] ?? {}) }) as Smelter),
+    [deletedIds, edits],
+  );
   const visible = mineralFilter === "all" ? liveSmelters : liveSmelters.filter((s) => s.mineral === mineralFilter);
 
   const conformant = liveSmelters.filter((s) => s.rmapStatus === "conformant" && s.activeSupplier).length;
@@ -335,49 +383,199 @@ export default function RmiPage() {
           </thead>
           <tbody>
             {visible.map((s, i) => (
-              <tr key={s.id} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
-                <td className="px-3 py-2.5 font-medium text-ink-0">{s.name}</td>
-                <td className="px-3 py-2.5 text-ink-2 whitespace-nowrap">{s.country}</td>
-                <td className="px-3 py-2.5">
-                  <span className="font-mono text-10 bg-bg-2 text-ink-1 px-1.5 py-px rounded">{MINERAL_LABEL[s.mineral]}</span>
-                </td>
-                <td className="px-3 py-2.5 font-mono text-10 text-ink-3">{s.rmapId}</td>
-                <td className="px-3 py-2.5">
-                  <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${RMAP_TONE[s.rmapStatus]}`}>
-                    {RMAP_LABEL[s.rmapStatus]}
-                  </span>
-                </td>
-                <td className="px-3 py-2.5">
-                  <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${CAHRA_TONE[s.cahraRisk]}`}>
-                    {s.cahraRisk}
-                  </span>
-                </td>
-                <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.lastAuditDate}</td>
-                <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.nextAuditDue}</td>
-                <td className="px-3 py-2.5 text-center">
-                  {s.activeSupplier
-                    ? <span className="text-green font-mono text-11">●</span>
-                    : <span className="text-ink-3 font-mono text-11">○</span>}
-                </td>
-                <td className="px-3 py-2.5">
-                  {s.flags.length > 0 && (
-                    <div className="flex flex-col gap-0.5">
-                      {s.flags.map((f) => (
-                        <span key={f} className="text-10 font-mono bg-red-dim text-red px-1.5 py-px rounded-sm font-semibold whitespace-nowrap">
-                          {f}
-                        </span>
-                      ))}
+              editingId === s.id ? (
+                <tr key={s.id} className={i < visible.length - 1 ? "border-b border-hair bg-bg-1" : "bg-bg-1"}>
+                  <td colSpan={11} className="px-3 py-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-3">
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        Smelter / Refiner
+                        <input
+                          type="text"
+                          value={editDraft.name ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, name: e.target.value }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-sans text-ink-0"
+                        />
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        Country
+                        <input
+                          type="text"
+                          value={editDraft.country ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, country: e.target.value }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-sans text-ink-0"
+                        />
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        ISO-2
+                        <input
+                          type="text"
+                          maxLength={2}
+                          value={editDraft.countryCode ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, countryCode: e.target.value.toUpperCase() }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono uppercase text-ink-0"
+                        />
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        Mineral
+                        <select
+                          value={editDraft.mineral ?? "gold"}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, mineral: e.target.value as MineralType }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded text-ink-0"
+                        >
+                          <option value="gold">Gold</option>
+                          <option value="tantalum">Tantalum</option>
+                          <option value="tin">Tin</option>
+                          <option value="tungsten">Tungsten</option>
+                          <option value="cobalt">Cobalt</option>
+                        </select>
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        RMAP ID
+                        <input
+                          type="text"
+                          value={editDraft.rmapId ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, rmapId: e.target.value }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
+                        />
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        RMAP Status
+                        <select
+                          value={editDraft.rmapStatus ?? "conformant"}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, rmapStatus: e.target.value as RmapStatus }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded text-ink-0"
+                        >
+                          <option value="conformant">Conformant</option>
+                          <option value="active">Active (in audit)</option>
+                          <option value="expired">Expired</option>
+                          <option value="not-enrolled">Not enrolled</option>
+                          <option value="suspended">Suspended</option>
+                        </select>
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        CAHRA Risk
+                        <select
+                          value={editDraft.cahraRisk ?? "low"}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, cahraRisk: e.target.value as CahraRisk }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded text-ink-0"
+                        >
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        Last audit
+                        <input
+                          type="date"
+                          value={editDraft.lastAuditDate ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, lastAuditDate: e.target.value }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
+                        />
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        Next audit due
+                        <input
+                          type="date"
+                          value={editDraft.nextAuditDue ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, nextAuditDue: e.target.value }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
+                        />
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2 flex items-center gap-2 mt-5">
+                        <input
+                          type="checkbox"
+                          checked={editDraft.activeSupplier ?? false}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, activeSupplier: e.target.checked }))}
+                        />
+                        Active supplier
+                      </label>
+                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
+                        Annual volume (kg)
+                        <input
+                          type="number"
+                          value={editDraft.annualVolumeKg ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({
+                            ...d,
+                            ...(e.target.value === "" ? { annualVolumeKg: undefined } : { annualVolumeKg: Number(e.target.value) }),
+                          }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
+                        />
+                      </label>
                     </div>
-                  )}
-                </td>
-                <td className="px-2 py-2.5 text-right">
-                  <RowActions
-                    label={`smelter ${s.id}`}
-                    onDelete={() => deleteEntry(s.id)}
-                    confirmDelete={false}
-                  />
-                </td>
-              </tr>
+                    <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2 block mb-3">
+                      Notes
+                      <textarea
+                        rows={2}
+                        value={editDraft.notes ?? ""}
+                        onChange={(e) => setEditDraft((d) => ({ ...d, notes: e.target.value }))}
+                        className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-sans text-ink-0"
+                      />
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => saveEdit(s.id)}
+                        className="px-3 py-1.5 text-11 font-mono uppercase tracking-wide-3 bg-brand text-white rounded hover:bg-brand/90"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="px-3 py-1.5 text-11 font-mono uppercase tracking-wide-3 bg-bg-2 text-ink-1 rounded hover:bg-bg-2/70"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={s.id} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
+                  <td className="px-3 py-2.5 font-medium text-ink-0">{s.name}</td>
+                  <td className="px-3 py-2.5 text-ink-2 whitespace-nowrap">{s.country}</td>
+                  <td className="px-3 py-2.5">
+                    <span className="font-mono text-10 bg-bg-2 text-ink-1 px-1.5 py-px rounded">{MINERAL_LABEL[s.mineral]}</span>
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3">{s.rmapId}</td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${RMAP_TONE[s.rmapStatus]}`}>
+                      {RMAP_LABEL[s.rmapStatus]}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${CAHRA_TONE[s.cahraRisk]}`}>
+                      {s.cahraRisk}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.lastAuditDate}</td>
+                  <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{s.nextAuditDue}</td>
+                  <td className="px-3 py-2.5 text-center">
+                    {s.activeSupplier
+                      ? <span className="text-green font-mono text-11">●</span>
+                      : <span className="text-ink-3 font-mono text-11">○</span>}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {s.flags.length > 0 && (
+                      <div className="flex flex-col gap-0.5">
+                        {s.flags.map((f) => (
+                          <span key={f} className="text-10 font-mono bg-red-dim text-red px-1.5 py-px rounded-sm font-semibold whitespace-nowrap">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-2 py-2.5 text-right">
+                    <RowActions
+                      label={`smelter ${s.id}`}
+                      onEdit={() => startEdit(s)}
+                      onDelete={() => deleteEntry(s.id)}
+                      confirmDelete={false}
+                    />
+                  </td>
+                </tr>
+              )
             ))}
           </tbody>
         </table>
