@@ -55,20 +55,46 @@ export function getStore(): MinimalStore {
   if (cached) return cached;
   try {
     const ns = getNetlifyStore(buildStoreOptions());
+    const markFallback = (op: string, err: unknown) => {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.warn(`[store] ${op} failed (${detail}) — degrading to in-memory store for this process.`);
+      cached = buildMemoryStore();
+      usingInMemoryFallback = true;
+    };
     cached = {
       get: async (key) => {
-        const v = await ns.get(key);
-        return typeof v === "string" ? v : v == null ? null : String(v);
+        try {
+          const v = await ns.get(key);
+          return typeof v === "string" ? v : v == null ? null : String(v);
+        } catch (err) {
+          markFallback("get", err);
+          return cached!.get(key);
+        }
       },
       set: async (key, data) => {
-        await ns.set(key, data);
+        try {
+          await ns.set(key, data);
+        } catch (err) {
+          markFallback("set", err);
+          await cached!.set(key, data);
+        }
       },
       delete: async (key) => {
-        await ns.delete(key);
+        try {
+          await ns.delete(key);
+        } catch (err) {
+          markFallback("delete", err);
+          await cached!.delete(key);
+        }
       },
       list: async (opts) => {
-        const r = await ns.list({ ...(opts?.prefix ? { prefix: opts.prefix } : {}) });
-        return { blobs: r.blobs.map((b) => ({ key: b.key })) };
+        try {
+          const r = await ns.list({ ...(opts?.prefix ? { prefix: opts.prefix } : {}) });
+          return { blobs: r.blobs.map((b) => ({ key: b.key })) };
+        } catch (err) {
+          markFallback("list", err);
+          return cached!.list(opts);
+        }
       },
     };
     return cached;
@@ -116,12 +142,20 @@ export async function getJson<T>(key: string): Promise<T | null> {
 
 export async function setJson<T>(key: string, value: T): Promise<void> {
   const store = getStore();
-  await store.set(key, JSON.stringify(value));
+  try {
+    await store.set(key, JSON.stringify(value));
+  } catch (err) {
+    console.warn(`[store] setJson(${key}) failed:`, err instanceof Error ? err.message : err);
+  }
 }
 
 export async function del(key: string): Promise<void> {
   const store = getStore();
-  await store.delete(key);
+  try {
+    await store.delete(key);
+  } catch (err) {
+    console.warn(`[store] del(${key}) failed:`, err instanceof Error ? err.message : err);
+  }
 }
 
 export async function listKeys(prefix?: string): Promise<string[]> {
