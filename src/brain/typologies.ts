@@ -79,7 +79,10 @@ export type TypologyId =
   | 'crypto_p2p_exchange'
   | 'daigou_parallel_import'
   | 'construction_ml'
-  | 'healthcare_billing_fraud';
+  | 'healthcare_billing_fraud'
+  // Wave 6 — crypto on-/off-ramp obfuscation, free-zone bearer-share loopholes
+  | 'crypto_onramp_obfuscation'
+  | 'bearer_share_fz_loophole';
 
 export interface Typology {
   id: TypologyId;
@@ -93,7 +96,7 @@ export interface Typology {
 export const TYPOLOGIES: Typology[] = [
   { id: 'structuring', displayName: 'Structuring / smurfing', describes: 'Breaking transactions below reporting thresholds.', redFlagIds: ['rf_structuring_threshold', 'rf_structuring_branches'], reasoningModes: ['velocity_analysis', 'spike_detection', 'pattern_of_life'], doctrines: ['fatf_rba'] },
   { id: 'smurfing', displayName: 'Smurfing (multi-agent structuring)', describes: 'Distributed cash deposits across many agents.', redFlagIds: ['rf_structuring_threshold'], reasoningModes: ['peer_group_anomaly', 'link_analysis', 'community_detection'], doctrines: ['fatf_rba'] },
-  { id: 'tbml', displayName: 'Trade-Based Money Laundering', describes: 'Laundering value through trade mis-invoicing or phantom shipment.', redFlagIds: ['rf_tbml_over_invoice', 'rf_tbml_phantom_shipment', 'rf_tbml_ucp600_gap'], reasoningModes: ['tbml_overlay', 'tbml_over_invoicing', 'tbml_phantom_shipment', 'ucp600_discipline'], doctrines: ['fatf_rba'] },
+  { id: 'tbml', displayName: 'Trade-Based Money Laundering', describes: 'Laundering value through trade mis-invoicing or phantom shipment.', redFlagIds: ['rf_tbml_over_invoice', 'rf_tbml_phantom_shipment', 'rf_tbml_ucp600_gap', 'rf_tbml_round_trip', 'rf_tbml_unit_price_outlier'], reasoningModes: ['tbml_overlay', 'tbml_over_invoicing', 'tbml_phantom_shipment', 'ucp600_discipline'], doctrines: ['fatf_rba'] },
   { id: 'dpms_retail', displayName: 'DPMS retail cash', describes: 'Retail precious-metals transactions with cash red flags.', redFlagIds: ['rf_dpms_cash_walk_in', 'rf_dpms_no_receipt'], reasoningModes: ['dpms_retail_threshold', 'kpi_dpms_thirty'], doctrines: ['uae_moe_dnfbp_circulars', 'lbma_rgg'] },
   { id: 'dpms_refinery', displayName: 'DPMS refinery supply chain', describes: 'Doré/scrap inputs from CAHRA without OECD documentation.', redFlagIds: ['rf_dpms_refiner_cahra'], reasoningModes: ['lbma_rgg_five_step', 'oecd_ddg_annex', 'provenance_trace'], doctrines: ['lbma_rgg', 'oecd_ddg'] },
   { id: 'bullion_wholesale', displayName: 'Bullion wholesale loco split', describes: 'Wholesale bullion routed via split loco arrangements.', redFlagIds: [], reasoningModes: ['source_triangulation', 'jurisdiction_cascade'], doctrines: ['lbma_rgg'] },
@@ -104,7 +107,7 @@ export const TYPOLOGIES: Typology[] = [
   { id: 'vasp', displayName: 'Virtual-asset service provider', describes: 'Crypto-native risk patterns.', redFlagIds: ['rf_vasp_mixer', 'rf_vasp_travel_rule_gap'], reasoningModes: ['vasp_wallet_screen', 'vasp_travel_rule', 'chain_analysis'], doctrines: ['fatf_rba'] },
   { id: 'tbml_phantom_shipment', displayName: 'Phantom shipment', describes: 'Paper trade with no underlying movement of goods.', redFlagIds: ['rf_tbml_phantom_shipment'], reasoningModes: ['tbml_phantom_shipment', 'sanctions_maritime_stss'], doctrines: ['fatf_rba'] },
   { id: 'correspondent_banking', displayName: 'Nested correspondent banking', describes: 'Respondent providing services to downstream banks without RE visibility.', redFlagIds: [], reasoningModes: ['corresp_nested_bank_flow', 'kyb_strict'], doctrines: ['wolfsberg_correspondent'] },
-  { id: 'shell_company_chain', displayName: 'Shell-company chain', describes: 'Layered shell entities in opaque jurisdictions.', redFlagIds: ['rf_sanc_shell_chain', 'rf_ubo_common_address'], reasoningModes: ['ubo_tree_walk', 'community_detection'], doctrines: ['fatf_rba'] },
+  { id: 'shell_company_chain', displayName: 'Shell-company chain', describes: 'Layered shell entities in opaque jurisdictions.', redFlagIds: ['rf_sanc_shell_chain', 'rf_ubo_common_address', 'rf_shell_director_overlap', 'rf_shell_back_to_back'], reasoningModes: ['ubo_tree_walk', 'community_detection'], doctrines: ['fatf_rba'] },
   { id: 'nominee_directors', displayName: 'Nominee directors / shareholders', describes: 'Formal parties hiding true controller.', redFlagIds: ['rf_ubo_bearer_shares'], reasoningModes: ['ubo_nominee_directors', 'entity_resolution'], doctrines: ['fatf_rba'] },
   { id: 'cash_courier', displayName: 'Cross-border cash courier', describes: 'Currency or negotiable instruments moved physically across borders.', redFlagIds: [], reasoningModes: ['cash_courier_ctn', 'jurisdiction_cascade'], doctrines: ['fatf_rba'] },
   { id: 'real_estate_cash', displayName: 'Real estate cash purchase', describes: 'High-value property bought in cash or via shell.', redFlagIds: [], reasoningModes: ['real_estate_cash', 'source_triangulation'], doctrines: ['fatf_rba'] },
@@ -118,10 +121,10 @@ export const TYPOLOGIES: Typology[] = [
   { id: 'advance_fee_fraud', displayName: 'Advance-fee fraud', describes: 'Victim pays a fee against a promised benefit that never materialises.', redFlagIds: [], reasoningModes: ['advance_fee', 'narrative_coherence'], doctrines: [] },
   { id: 'bec_fraud', displayName: 'Business Email Compromise', describes: 'Fraudulent payment redirect via compromised or spoofed email.', redFlagIds: [], reasoningModes: ['bec_fraud', 'linguistic_forensics'], doctrines: [] },
   { id: 'invoice_fraud', displayName: 'Invoice fraud', describes: 'False or duplicated invoices used to extract payment.', redFlagIds: [], reasoningModes: ['invoice_fraud', 'reconciliation'], doctrines: [] },
-  { id: 'synthetic_identity', displayName: 'Synthetic identity', describes: 'Identity fabricated by combining real and fake attributes.', redFlagIds: [], reasoningModes: ['synthetic_id', 'entity_resolution'], doctrines: [] },
+  { id: 'synthetic_identity', displayName: 'Synthetic identity', describes: 'Identity fabricated by combining real and fake attributes.', redFlagIds: ['rf_synthetic_id_thin_file'], reasoningModes: ['synthetic_id', 'entity_resolution'], doctrines: [] },
   { id: 'ponzi_pyramid', displayName: 'Ponzi / pyramid scheme', describes: 'Returns paid from new-investor capital.', redFlagIds: [], reasoningModes: ['ponzi_scheme', 'time_series'], doctrines: [] },
   { id: 'phoenix_company', displayName: 'Phoenix company', describes: 'Liquidation-resurrection pattern to shed liabilities.', redFlagIds: [], reasoningModes: ['phoenix_company', 'timeline_reconstruction'], doctrines: [] },
-  { id: 'npo_diversion', displayName: 'NPO diversion', describes: 'Charity funds diverted to non-charitable purposes in conflict zones.', redFlagIds: [], reasoningModes: ['source_triangulation', 'jurisdiction_cascade'], doctrines: ['fatf_rba'] },
+  { id: 'npo_diversion', displayName: 'NPO diversion', describes: 'Charity funds diverted to non-charitable purposes in conflict zones.', redFlagIds: ['rf_npo_field_office_cash_payouts', 'rf_npo_donor_chain_circular'], reasoningModes: ['source_triangulation', 'jurisdiction_cascade'], doctrines: ['fatf_rba'] },
   { id: 'kleptocracy', displayName: 'Kleptocracy / grand corruption', describes: 'State-capture-level misappropriation of public funds.', redFlagIds: ['rf_pep_wealth_mismatch'], reasoningModes: ['pep_domestic_minister', 'source_triangulation'], doctrines: ['wolfsberg_faq'] },
   { id: 'human_trafficking', displayName: 'Human trafficking / modern slavery', describes: 'Financial patterns associated with trafficking in persons.', redFlagIds: [], reasoningModes: ['pattern_of_life', 'velocity_analysis'], doctrines: [] },
   { id: 'wildlife_trafficking', displayName: 'Wildlife trafficking', describes: 'Financial patterns associated with IWT.', redFlagIds: [], reasoningModes: ['pattern_of_life', 'jurisdiction_cascade'], doctrines: [] },
@@ -155,7 +158,7 @@ export const TYPOLOGIES: Typology[] = [
   { id: 'crypto_ransomware', displayName: 'Crypto ransomware monetisation', describes: 'Ransomware operator cash-out path: ransom wallet → mixing → OTC → fiat; UN Consolidated / OFAC SDN exposure.', redFlagIds: [], reasoningModes: ['chain_analysis', 'taint_propagation', 'sanctions_regime_matrix'], doctrines: [] },
   { id: 'payroll_fraud', displayName: 'Payroll / ghost-employee fraud', describes: 'Fictitious payees added to payroll; funds routed to mule accounts controlled by fraudster.', redFlagIds: [], reasoningModes: ['reconciliation', 'pattern_of_life'], doctrines: [] },
   { id: 'professional_money_laundering', displayName: 'Professional money laundering network', describes: 'Specialist third-party services providing layering infrastructure for multiple criminal clients.', redFlagIds: [], reasoningModes: ['community_detection', 'link_analysis'], doctrines: ['fatf_rba'] },
-  { id: 'funnel_account', displayName: 'Funnel / mule account', describes: 'Account that aggregates proceeds from multiple victims then rapidly disburses to third parties; a key money-mule indicator.', redFlagIds: [], reasoningModes: ['velocity_analysis', 'pattern_of_life'], doctrines: [] },
+  { id: 'funnel_account', displayName: 'Funnel / mule account', describes: 'Account that aggregates proceeds from multiple victims then rapidly disburses to third parties; a key money-mule indicator.', redFlagIds: ['rf_funnel_rapid_disburse'], reasoningModes: ['velocity_analysis', 'pattern_of_life'], doctrines: [] },
   { id: 'cash_intensive_business', displayName: 'Cash-intensive business ML', describes: 'Commingling illicit cash into revenues of a cash-heavy business (restaurant, carwash, parking).', redFlagIds: [], reasoningModes: ['pattern_of_life', 'risk_adjusted'], doctrines: [] },
   { id: 'correspondent_shell', displayName: 'Correspondent banking — shell respondent', describes: 'Shell bank or unregulated entity accessing the formal system through a correspondent relationship.', redFlagIds: [], reasoningModes: ['corresp_nested_bank_flow', 'kyb_strict'], doctrines: ['wolfsberg_correspondent'] },
   { id: 'virtual_iban_abuse', displayName: 'Virtual IBAN / EMI account abuse', describes: 'Electronic money institution or virtual IBAN account used to obscure ultimate beneficiary or aggregate mule payments.', redFlagIds: [], reasoningModes: ['velocity_analysis', 'entity_resolution'], doctrines: [] },
@@ -164,6 +167,9 @@ export const TYPOLOGIES: Typology[] = [
   { id: 'daigou_parallel_import', displayName: 'Daigou / parallel-import trade ML', describes: 'Cross-border resale of luxury or restricted goods using parallel-import channels to exploit price arbitrage and obscure value transfer.', redFlagIds: [], reasoningModes: ['tbml_overlay', 'provenance_trace'], doctrines: [] },
   { id: 'construction_ml', displayName: 'Construction / infrastructure ML', describes: 'Inflated contracts, ghost sub-contractors, and kickbacks in large-scale construction projects.', redFlagIds: [], reasoningModes: ['source_triangulation', 'reconciliation'], doctrines: ['fatf_rba'] },
   { id: 'healthcare_billing_fraud', displayName: 'Healthcare / insurance billing fraud', describes: 'Fraudulent claims, phantom procedures, or upcoding generating illicit proceeds then laundered.', redFlagIds: [], reasoningModes: ['reconciliation', 'pattern_of_life'], doctrines: [] },
+  // Wave 6 — additional weaponization
+  { id: 'crypto_onramp_obfuscation', displayName: 'Crypto on-/off-ramp obfuscation', describes: 'Card-funded or cash-funded crypto purchase rapidly chain-hopped through mixers, privacy coins, or P2P/OTC desks to convert proceeds to fiat with no KYC link.', redFlagIds: ['rf_crypto_onramp_card_to_mixer', 'rf_crypto_offramp_otc_cash'], reasoningModes: ['chain_analysis', 'taint_propagation', 'velocity_analysis', 'vasp_travel_rule'], doctrines: ['fatf_rba'] },
+  { id: 'bearer_share_fz_loophole', displayName: 'Bearer-share / free-zone loophole', describes: 'UAE / GCC free-zone holding entity used as substance-light invoicing vehicle, often combined with bearer-share-equivalent ownership to obscure UBO and bypass mainland AML supervision.', redFlagIds: ['rf_bearer_share_fz_holding', 'rf_fz_no_substance'], reasoningModes: ['ubo_bearer_shares', 'ubo_tree_walk', 'jurisdiction_cascade', 'kyb_strict'], doctrines: ['fatf_rba', 'uae_fdl_20_2018'] },
 ];
 
 export const TYPOLOGY_BY_ID: Map<TypologyId, Typology> = new Map(

@@ -55,6 +55,8 @@ import {
   type OutputSection,
   type ProhibitionId,
 } from '../policy/systemPrompt.js';
+import { TYPOLOGY_PRIORS, hasCalibratedPrior } from './typology-priors.js';
+import { primacyOf } from './regime-conflict.js';
 
 export interface WeaponizedBrainManifest {
   product: 'Hawkeye Sterling';
@@ -158,6 +160,18 @@ export interface WeaponizedBrainManifest {
       byCategory: Record<MetaCognitionCategory, number>;
       ids: string[];
     };
+    bayesianCalibration: {
+      defaultPrior: number;
+      calibratedCount: number;
+      uncalibratedCount: number;
+      typologyPriors: Record<string, number>;
+    };
+    regimeConflict: {
+      tier1Count: number;
+      tier2Count: number;
+      tier3Count: number;
+      primacy: Record<string, number>;
+    };
   };
   integrity: {
     charterHash: string;
@@ -232,6 +246,32 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     kpiByCluster[cluster] = list.length;
   }
 
+  const calibratedTypologyPriors: Record<string, number> = {};
+  let calibratedCount = 0;
+  for (const t of TYPOLOGIES) {
+    const p = TYPOLOGY_PRIORS[t.id];
+    if (typeof p === 'number') {
+      calibratedTypologyPriors[t.id] = p;
+      calibratedCount += 1;
+    }
+  }
+  const uncalibratedCount = TYPOLOGIES.length - calibratedCount;
+
+  const regimePrimacy: Record<string, number> = {};
+  let tier1 = 0;
+  let tier2 = 0;
+  let tier3 = 0;
+  for (const r of SANCTION_REGIMES) {
+    const p = primacyOf(r.id);
+    regimePrimacy[r.id] = p;
+    if (p >= 0.95) tier1 += 1;
+    else if (p >= 0.75) tier2 += 1;
+    else tier3 += 1;
+  }
+  // Reference imported helper to keep tree-shaking honest about the export.
+  const _hasCalibrated = hasCalibratedPrior;
+  void _hasCalibrated;
+
   const catalogueSignature = JSON.stringify({
     faculties: faculties.map((f) => f.id).sort(),
     modes: REASONING_MODES.map((m) => m.id).sort(),
@@ -248,6 +288,8 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
     redlines: REDLINES.map((r) => r.id).sort(),
     fatf: FATF_RECOMMENDATIONS.map((r) => r.id).sort(),
     dispositions: DISPOSITIONS.map((d) => d.code).sort(),
+    typologyPriors: Object.entries(calibratedTypologyPriors).sort(([a], [b]) => a.localeCompare(b)),
+    regimePrimacy: Object.entries(regimePrimacy).sort(([a], [b]) => a.localeCompare(b)),
     skills: JSON.parse(skillsCatalogueSignature()),
     amplifier: {
       version: COGNITIVE_AMPLIFIER.version,
@@ -355,6 +397,18 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
         total: META_COGNITION.length,
         byCategory: META_COGNITION_CATEGORY_COUNTS as Record<MetaCognitionCategory, number>,
         ids: META_COGNITION.map((m) => m.id),
+      },
+      bayesianCalibration: {
+        defaultPrior: 0.01,
+        calibratedCount,
+        uncalibratedCount,
+        typologyPriors: calibratedTypologyPriors,
+      },
+      regimeConflict: {
+        tier1Count: tier1,
+        tier2Count: tier2,
+        tier3Count: tier3,
+        primacy: regimePrimacy,
       },
     },
     integrity: {

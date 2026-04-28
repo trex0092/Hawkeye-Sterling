@@ -77,6 +77,30 @@ export const RED_FLAGS: RedFlag[] = [
   // ── Wave 4 — AI synthetic-media fraud ───────────────────────────────
   { id: 'rf_ai_synthetic_ceo_deepfake', typology: 'ai_synthetic_media_fraud', indicator: 'Payment or policy instruction apparently authorised via live video/voice call matching the profile of a known deepfake CEO-fraud pattern.', severity: 'high', reasoningModes: ['linguistic_forensics', 'pattern_of_life', 'timeline_reconstruction'], sources: [] },
   { id: 'rf_ai_synthetic_kyc_bypass', typology: 'ai_synthetic_media_fraud', indicator: 'Onboarding liveness / biometric check shows indicators of face-swap, liveness spoof, or AI-generated document.', severity: 'high', reasoningModes: ['linguistic_forensics', 'entity_resolution'], sources: [] },
+
+  // ── Wave 6 — crypto on-/off-ramp obfuscation ────────────────────────
+  { id: 'rf_crypto_onramp_card_to_mixer', typology: 'crypto_onramp_obfuscation', indicator: 'Card-funded crypto purchase on a centralised exchange followed within minutes by withdrawal to a private wallet that subsequently routes through a mixer or chain-hop.', severity: 'high', reasoningModes: ['chain_analysis', 'taint_propagation', 'velocity_analysis'], sources: ['FATF VASP guidance', 'Chainalysis crypto crime report'] },
+  { id: 'rf_crypto_offramp_otc_cash', typology: 'crypto_onramp_obfuscation', indicator: 'Privacy-coin or mixer-tainted crypto sold via unlicensed P2P / OTC desk for fiat cash with no Travel-Rule data and no KYC linkage to the originator.', severity: 'high', reasoningModes: ['vasp_travel_rule', 'chain_analysis', 'jurisdiction_cascade'], sources: ['FATF R.16', 'FATF VASP guidance'] },
+
+  // ── Wave 6 — NPO diversion (terrorism financing predicate) ──────────
+  { id: 'rf_npo_field_office_cash_payouts', typology: 'npo_diversion', indicator: 'Charity field office in a conflict-affected area issues large cash payouts with no beneficiary register or with beneficiaries that cannot be independently verified.', severity: 'high', reasoningModes: ['source_triangulation', 'jurisdiction_cascade', 'documentation_quality'], sources: ['FATF R.8', 'UN 1267 / 1373'] },
+  { id: 'rf_npo_donor_chain_circular', typology: 'npo_diversion', indicator: 'Inbound donations originate from related parties or shell entities and the funds flow back as field-office expenses to the same beneficial network — a circular donor chain.', severity: 'high', reasoningModes: ['link_analysis', 'community_detection', 'reconciliation'], sources: ['FATF R.8'] },
+
+  // ── Wave 6 — shell-layering / sanctions evasion ─────────────────────
+  { id: 'rf_shell_director_overlap', typology: 'shell_company_chain', indicator: 'The same nominee director, registered agent, or company-formation service appears across more than five shell entities active simultaneously, several of which are counterparties to one another.', severity: 'high', reasoningModes: ['entity_resolution', 'community_detection', 'ubo_nominee_directors'], sources: ['FATF R.24', 'OpenCorporates typology'] },
+  { id: 'rf_shell_back_to_back', typology: 'shell_company_chain', indicator: 'Loan, supply, or service contract between two related shell entities with offsetting terms and no apparent operational substance — classic back-to-back layering.', severity: 'high', reasoningModes: ['reconciliation', 'narrative_coherence', 'ubo_tree_walk'], sources: ['Wolfsberg FAQ', 'FATF RBA'] },
+
+  // ── Wave 6 — bearer-share / free-zone loophole ──────────────────────
+  { id: 'rf_bearer_share_fz_holding', typology: 'bearer_share_fz_loophole', indicator: 'UAE / GCC free-zone holding entity registered with bearer-share equivalent or undisclosed beneficial owner not refreshed against the local UBO register.', severity: 'high', reasoningModes: ['ubo_bearer_shares', 'ubo_tree_walk', 'jurisdiction_cascade'], sources: ['UAE FDL 20/2018', 'FATF R.24'] },
+  { id: 'rf_fz_no_substance', typology: 'bearer_share_fz_loophole', indicator: 'Free-zone licensee with mailbox-only office, zero employees, and no demonstrable economic activity yet invoicing mainland operations or third-country counterparties at material volume.', severity: 'high', reasoningModes: ['kyb_strict', 'narrative_coherence', 'reconciliation'], sources: ['UAE Cabinet Resolution 31/2019 — Economic Substance', 'FATF R.24'] },
+
+  // ── Wave 6 — TBML invoice anomalies ─────────────────────────────────
+  { id: 'rf_tbml_round_trip', typology: 'tbml', indicator: 'Same goods or HS-code class invoiced multiple times between related parties across jurisdictions within a short window — carousel / round-trip pattern.', severity: 'high', reasoningModes: ['tbml_overlay', 'tbml_over_invoicing', 'reconciliation', 'community_detection'], sources: ['FATF TBML report', 'WCO carousel-fraud typology'] },
+  { id: 'rf_tbml_unit_price_outlier', typology: 'tbml', indicator: 'Per-unit declared price diverges by more than three standard deviations from peer-benchmark shipments of the same HS-code in the same month.', severity: 'medium', reasoningModes: ['regression', 'peer_benchmark', 'commodity_price_anomaly'], sources: ['FATF TBML report'] },
+
+  // ── Wave 6 — synthetic identity / mule funnel ───────────────────────
+  { id: 'rf_synthetic_id_thin_file', typology: 'synthetic_identity', indicator: 'Identity record presents as adult yet credit / utility / address footprint is under 90 days and shows no historical address change — characteristic synthetic-identity pattern.', severity: 'high', reasoningModes: ['synthetic_id', 'entity_resolution', 'pattern_of_life'], sources: ['FRB synthetic-identity toolkit'] },
+  { id: 'rf_funnel_rapid_disburse', typology: 'funnel_account', indicator: 'Account aggregates ten or more inbound transfers from unrelated payers and disburses more than 90% of the consolidated balance within 24 hours to third-party accounts.', severity: 'high', reasoningModes: ['velocity_analysis', 'pattern_of_life', 'spike_detection'], sources: ['FATF mule-network typology'] },
 ];
 
 export const RED_FLAGS_BY_TYPOLOGY: Record<string, RedFlag[]> = RED_FLAGS.reduce(

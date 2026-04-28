@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-28T12:00:13+04:00",
+  "generatedAt": "2026-04-28T13:23:10+04:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-28T12:00:13+04:00",
+    "generatedAt": "2026-04-28T13:23:10+04:00",
     "charter": {
       "prohibitions": [
         {
@@ -489,17 +489,17 @@
         }
       },
       "redFlags": {
-        "total": 33,
+        "total": 45,
         "bySeverity": {
           "low": 0,
-          "medium": 6,
-          "high": 27
+          "medium": 7,
+          "high": 38
         },
         "byTypology": {
           "structuring": 2,
           "dpms_retail": 2,
           "dpms_refinery": 1,
-          "tbml": 3,
+          "tbml": 5,
           "sanctions_evasion": 2,
           "proliferation": 1,
           "pep": 2,
@@ -511,11 +511,17 @@
           "carbon_market_fraud": 2,
           "insider_threat": 2,
           "ai_governance_breach": 4,
-          "ai_synthetic_media_fraud": 2
+          "ai_synthetic_media_fraud": 2,
+          "crypto_onramp_obfuscation": 2,
+          "npo_diversion": 2,
+          "shell_company_chain": 2,
+          "bearer_share_fz_loophole": 2,
+          "synthetic_identity": 1,
+          "funnel_account": 1
         }
       },
       "typologies": {
-        "total": 71,
+        "total": 73,
         "ids": [
           "structuring",
           "smurfing",
@@ -587,7 +593,9 @@
           "crypto_p2p_exchange",
           "daigou_parallel_import",
           "construction_ml",
-          "healthcare_billing_fraud"
+          "healthcare_billing_fraud",
+          "crypto_onramp_obfuscation",
+          "bearer_share_fz_loophole"
         ]
       },
       "matching": {
@@ -1136,17 +1144,136 @@
           "mc.scope-insensitivity-check",
           "mc.category-error-guard"
         ]
+      },
+      "bayesianCalibration": {
+        "defaultPrior": 0.01,
+        "calibratedCount": 73,
+        "uncalibratedCount": 0,
+        "typologyPriors": {
+          "structuring": 0.03,
+          "smurfing": 0.015,
+          "tbml": 0.018,
+          "dpms_retail": 0.025,
+          "dpms_refinery": 0.015,
+          "bullion_wholesale": 0.012,
+          "pep": 0.08,
+          "pep_rca": 0.04,
+          "sanctions_evasion": 0.06,
+          "proliferation": 0.02,
+          "vasp": 0.045,
+          "tbml_phantom_shipment": 0.008,
+          "correspondent_banking": 0.008,
+          "shell_company_chain": 0.03,
+          "nominee_directors": 0.02,
+          "cash_courier": 0.01,
+          "real_estate_cash": 0.015,
+          "art_dealer": 0.005,
+          "yacht_jet": 0.004,
+          "family_office": 0.01,
+          "insurance_wrap": 0.006,
+          "fund_capital_call": 0.008,
+          "market_manipulation": 0.008,
+          "insider_trading": 0.005,
+          "advance_fee_fraud": 0.01,
+          "bec_fraud": 0.018,
+          "invoice_fraud": 0.012,
+          "synthetic_identity": 0.012,
+          "ponzi_pyramid": 0.006,
+          "phoenix_company": 0.008,
+          "npo_diversion": 0.006,
+          "kleptocracy": 0.012,
+          "human_trafficking": 0.004,
+          "wildlife_trafficking": 0.003,
+          "narcotics_trafficking": 0.012,
+          "arms_trafficking": 0.008,
+          "maritime_stss": 0.012,
+          "privacy_coin_laundering": 0.01,
+          "mixer_usage": 0.015,
+          "nft_wash_trade": 0.02,
+          "defi_exploit": 0.005,
+          "environmental_crime": 0.008,
+          "carbon_market_fraud": 0.005,
+          "insider_threat": 0.006,
+          "ai_governance_breach": 0.025,
+          "ai_synthetic_media_fraud": 0.008,
+          "hawala_network": 0.02,
+          "cyber_extortion": 0.008,
+          "romance_fraud": 0.009,
+          "tax_evasion_offshore": 0.025,
+          "customs_fraud": 0.014,
+          "social_media_investment_fraud": 0.012,
+          "precious_stones": 0.01,
+          "gambling_ml": 0.01,
+          "loan_stacking": 0.014,
+          "bust_out_fraud": 0.009,
+          "real_estate_over_valuation": 0.008,
+          "luxury_goods_ml": 0.01,
+          "legal_services_ml": 0.01,
+          "crypto_ransomware": 0.008,
+          "payroll_fraud": 0.007,
+          "professional_money_laundering": 0.012,
+          "funnel_account": 0.022,
+          "cash_intensive_business": 0.02,
+          "correspondent_shell": 0.006,
+          "virtual_iban_abuse": 0.012,
+          "invoice_discounting_fraud": 0.01,
+          "crypto_p2p_exchange": 0.02,
+          "daigou_parallel_import": 0.006,
+          "construction_ml": 0.012,
+          "healthcare_billing_fraud": 0.008,
+          "crypto_onramp_obfuscation": 0.018,
+          "bearer_share_fz_loophole": 0.02
+        }
+      },
+      "regimeConflict": {
+        "tier1Count": 9,
+        "tier2Count": 12,
+        "tier3Count": 11,
+        "primacy": {
+          "un_1267": 1,
+          "un_1988": 1,
+          "un_dprk": 1,
+          "un_iran": 1,
+          "un_libya": 1,
+          "un_somalia": 1,
+          "ofac_sdn": 0.85,
+          "ofac_cons": 0.8,
+          "ofac_capta": 0.8,
+          "ofac_13599": 0.8,
+          "ofac_ukraine_related": 0.8,
+          "eu_consolidated": 0.8,
+          "eu_russia": 0.8,
+          "eu_belarus": 0.8,
+          "eu_iran": 0.8,
+          "uk_ofsi": 0.8,
+          "uk_russia": 0.8,
+          "uk_belarus": 0.8,
+          "uae_eocn": 1,
+          "uae_local_terrorist": 1,
+          "switzerland_fdfa": 0.65,
+          "canada_sema": 0.65,
+          "australia_dfat": 0.65,
+          "australia_russia": 0.65,
+          "japan_meti": 0.65,
+          "japan_mofa": 0.65,
+          "singapore_mas": 0.65,
+          "south_korea_mofa": 0.6,
+          "new_zealand_mfat": 0.55,
+          "norway_mfa": 0.55,
+          "liechtenstein_llv": 0.5,
+          "un_mali": 1
+        }
       }
     },
     "integrity": {
       "charterHash": "65a67258",
-      "catalogueHash": "cbd26e81"
+      "catalogueHash": "4bbed657"
     }
   },
   "integrity": {
     "charterHash": "65a67258",
-    "catalogueHash": "cbd26e81",
-    "compositeHash": "9d089a8d"
+    "catalogueHash": "4bbed657",
+    "compositeHash": "5e4953cd"
   },
   "enhanced": {
     "extended": {
@@ -1154,8 +1281,8 @@
         "questionTemplates": 72,
         "sectorRubrics": 12,
         "scenarios": 69,
-        "typologies": 71,
-        "redFlags": 33,
+        "typologies": 73,
+        "redFlags": 45,
         "redFlagsExtended": 93,
         "adverseMediaCategories": 13,
         "metaCognition": 103
@@ -1286,7 +1413,7 @@
           "count": 5
         }
       ],
-      "typologyCount": 71,
+      "typologyCount": 73,
       "topTypologies": [
         {
           "id": "structuring",
@@ -1342,9 +1469,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 20,
       "regulatoryRecords": 581,
-      "taxonomyRecords": 466,
+      "taxonomyRecords": 480,
       "skillsRecords": 893,
-      "totalRecords": 1940
+      "totalRecords": 1954
     }
   }
 }
