@@ -200,49 +200,133 @@ export default function MlroAdvisorPage() {
   const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
     speed: 9_000,
     balanced: 45_000,
-    multi_perspective: 110_000,
+    multi_perspective: 600_000,
   };
 
-  const handleAsk = useCallback(async () => {
-    const q = question.trim();
-    if (!q) return;
-    setRunning(true);
-    setError(null);
+  const recordAdvisorEntry = useCallback((q: string, m: ReasoningMode, data: AdvisorResult) => {
+    setAdvisorHistory((prev) => [
+      {
+        id: `adv-${Date.now()}`,
+        question: q,
+        mode: m,
+        result: data,
+        askedAt: new Date().toLocaleTimeString(),
+        expanded: false,
+      },
+      ...prev,
+    ]);
+    setQuestion("");
+  }, []);
+
+  // multi_perspective is offloaded to the Netlify Background Function so it
+  // is not killed by Netlify's ~26 s edge inactivity timeout. Speed and
+  // Balanced still use the synchronous route.
+  const runDeepBackground = useCallback(async (q: string, m: ReasoningMode): Promise<void> => {
+    const jobId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
+      ? crypto.randomUUID()
+      : `job-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const startResp = await fetch("/.netlify/functions/mlro-advisor-deep-background", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jobId, question: q, mode: m, audience: "regulator" }),
+    });
+    if (startResp.status === 404) {
+      // Background function isn't deployed in this environment (e.g. local
+      // `next dev` without `netlify dev`). Fall through to sync.
+      throw new Error("__no_background__");
+    }
+    if (startResp.status !== 202 && !startResp.ok) {
+      const txt = await startResp.text().catch(() => "");
+      throw new Error(`Background start failed (HTTP ${startResp.status}): ${txt.slice(0, 240)}`);
+    }
+
+    const pollDeadline = Date.now() + CLIENT_TIMEOUTS.multi_perspective;
+    let pollIntervalMs = 2_500;
+    // Allow a brief grace period for the first blob write before the GET
+    // can find the record.
+    let notFoundStreak = 0;
+    while (Date.now() < pollDeadline) {
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
+      pollIntervalMs = Math.min(pollIntervalMs + 500, 5_000);
+      const pollResp = await fetch(`/api/advisor-job/${encodeURIComponent(jobId)}`, {
+        method: "GET",
+        headers: { "cache-control": "no-store" },
+      });
+      if (pollResp.status === 404) {
+        notFoundStreak += 1;
+        if (notFoundStreak > 30) {
+          throw new Error("Background job never reported in — check function logs.");
+        }
+        continue;
+      }
+      notFoundStreak = 0;
+      const rawText = await pollResp.text();
+      let payload: { ok: boolean; status?: string; result?: AdvisorResult; error?: string } | null = null;
+      try { payload = JSON.parse(rawText); } catch { /* ignore */ }
+      if (!payload) continue;
+      if (payload.status === "done" && payload.result) {
+        recordAdvisorEntry(q, m, payload.result);
+        return;
+      }
+      if (payload.status === "failed") {
+        throw new Error(payload.error ?? payload.result?.error ?? "advisor pipeline failed");
+      }
+      // status === "running" → keep polling
+    }
+    throw new Error("Multi (Deep) timed out — check Netlify function logs.");
+  }, [CLIENT_TIMEOUTS.multi_perspective, recordAdvisorEntry]);
+
+  const runSynchronous = useCallback(async (q: string, m: ReasoningMode): Promise<void> => {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), CLIENT_TIMEOUTS[mode]);
+    const syncTimeout = m === "multi_perspective" ? 110_000 : CLIENT_TIMEOUTS[m];
+    const timer = setTimeout(() => ctl.abort(), syncTimeout);
     try {
       const res = await fetch("/api/mlro-advisor", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: q, subjectName: "Regulatory Query", mode, audience: "regulator" }),
+        body: JSON.stringify({ question: q, subjectName: "Regulatory Query", mode: m, audience: "regulator" }),
         signal: ctl.signal,
       });
       const rawText = await res.text();
       let data: AdvisorResult | null = null;
       try { data = JSON.parse(rawText) as AdvisorResult; }
       catch {
-        setError(
+        throw new Error(
           res.status === 504 || res.status === 524
             ? "Request timed out — try Speed or Balanced mode."
             : `Server error ${res.status} — check ANTHROPIC_API_KEY is configured.`,
         );
-        return;
       }
       if (!res.ok || !data.ok) {
-        setError(data.error ?? data.guidance ?? `HTTP ${res.status}`);
+        throw new Error(data.error ?? data.guidance ?? `HTTP ${res.status}`);
+      }
+      recordAdvisorEntry(q, m, data);
+    } finally {
+      clearTimeout(timer);
+    }
+  }, [CLIENT_TIMEOUTS, recordAdvisorEntry]);
+
+  const handleAsk = useCallback(async () => {
+    const q = question.trim();
+    if (!q) return;
+    setRunning(true);
+    setError(null);
+    try {
+      if (mode === "multi_perspective") {
+        try {
+          await runDeepBackground(q, mode);
+        } catch (err) {
+          // Fall back to the synchronous route only when the background
+          // function isn't reachable (local dev). Real failures should
+          // surface to the user.
+          if (err instanceof Error && err.message === "__no_background__") {
+            await runSynchronous(q, mode);
+          } else {
+            throw err;
+          }
+        }
       } else {
-        setAdvisorHistory((prev) => [
-          {
-            id: `adv-${Date.now()}`,
-            question: q,
-            mode,
-            result: data,
-            askedAt: new Date().toLocaleTimeString(),
-            expanded: false,
-          },
-          ...prev,
-        ]);
-        setQuestion("");
+        await runSynchronous(q, mode);
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -253,10 +337,9 @@ export default function MlroAdvisorPage() {
         setError(err instanceof Error ? err.message : "Network error");
       }
     } finally {
-      clearTimeout(timer);
       setRunning(false);
     }
-  }, [question, mode, CLIENT_TIMEOUTS]);
+  }, [question, mode, runDeepBackground, runSynchronous]);
 
   const toggleAdvisorEntry = (id: string) =>
     setAdvisorHistory((prev) =>
@@ -440,7 +523,7 @@ export default function MlroAdvisorPage() {
                   ? "Speed mode — replying in seconds…"
                   : mode === "balanced"
                   ? "Balanced mode — Sonnet only, ~40 s…"
-                  : "Dual-model pipeline — Sonnet executor → Opus advisor · up to 110 s…"}
+                  : "Multi (Deep) — Sonnet → Opus → challenger via background job · up to ~2 min, polling for result…"}
               </div>
             )}
 
