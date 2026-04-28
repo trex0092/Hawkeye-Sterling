@@ -62,16 +62,16 @@ const SEVERITY_COLOUR: Record<string, string> = {
   clear:    "bg-emerald-50 text-emerald-700 border-emerald-300",
 };
 
-type TabKey = "screening" | "live-reasoning" | "manifest";
+type TabKey = "screening" | "manifest";
 
 const TABS: Array<{ id: TabKey; label: string; sub: string }> = [
-  { id: "screening",       label: "Screening",       sub: "Pick modes · run super-brain" },
-  { id: "live-reasoning",  label: "Live reasoning",  sub: "Subject narrative → full chain" },
-  { id: "manifest",        label: "Manifest",        sub: "Audit · catalogues · charter" },
+  { id: "screening", label: "Screening", sub: "Pick modes · run super-brain" },
+  { id: "manifest",  label: "Manifest",  sub: "Audit · catalogues · charter" },
 ];
 
 export default function WorkbenchPage() {
   const [tab, setTab] = useState<TabKey>("screening");
+  const [hypotheticalOpen, setHypotheticalOpen] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState<FacultyFilterKey>("all");
   const [query, setQuery] = useState("");
@@ -220,9 +220,11 @@ export default function WorkbenchPage() {
             </h1>
             <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
               <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
-              Pick the reasoning modes you want to engage, screen a subject, watch the
-              live reasoning chain, or inspect the catalogues, charter directives and audit
-              state of the brain itself.
+              Pick the reasoning modes you want to engage and screen a subject, or
+              inspect the catalogues, charter directives and audit state of the brain
+              itself. <span className="text-ink-3">Live reasoning is now available
+              inline on every queued subject (Screening → subject row → Live reasoning
+              tab) — or on a hypothetical via the button below.</span>
             </p>
           </div>
 
@@ -276,6 +278,14 @@ export default function WorkbenchPage() {
                     Required to run
                   </span>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setHypotheticalOpen(true)}
+                  className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand whitespace-nowrap"
+                  title="Open the brain inspector on a synthetic subject — full reasoning chain rendered without enrolling in the screening queue"
+                >
+                  Run on hypothetical
+                </button>
               </div>
 
               <WorkbenchToolbar
@@ -508,14 +518,40 @@ export default function WorkbenchPage() {
             </>
           )}
 
-          {/* ── LIVE REASONING TAB ──────────────────────────────────────── */}
-          {tab === "live-reasoning" && (
-            <BrainConsole />
-          )}
-
           {/* ── MANIFEST TAB ────────────────────────────────────────────── */}
           {tab === "manifest" && (
             <BrainManifestPanel />
+          )}
+
+          {/* ── HYPOTHETICAL-SUBJECT MODAL ──────────────────────────────── */}
+          {hypotheticalOpen && (
+            <div
+              className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center overflow-y-auto py-10 px-4"
+              onClick={(e) => { if (e.target === e.currentTarget) setHypotheticalOpen(false); }}
+            >
+              <div className="bg-bg-0 border border-hair-2 rounded-xl max-w-5xl w-full">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2">
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+                      Brain inspector · hypothetical subject
+                    </div>
+                    <div className="text-13 text-ink-0 font-semibold">
+                      Run the brain on a synthetic profile
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setHypotheticalOpen(false)}
+                    className="text-11 font-medium px-3 py-1.5 rounded text-ink-2 hover:bg-bg-1"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="p-5">
+                  <BrainConsole />
+                </div>
+              </div>
+            </div>
           )}
         </main>
       </div>

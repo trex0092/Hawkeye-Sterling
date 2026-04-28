@@ -252,18 +252,18 @@ export default function MlroAdvisorPage() {
   }, []);
 
   /**
-   * Stream a Quick-mode answer from /api/mlro-advisor-quick. Inserts a
-   * placeholder entry immediately so the user sees the answer area appear
-   * within a frame, then appends text deltas as the upstream Anthropic
-   * stream arrives. Uses Haiku 4.5 single-pass — no thinking, no executor
-   * → advisor → challenger pipeline. Target latency: first token ≈500 ms,
-   * full answer 3-7 s.
+   * Run a Quick-mode answer via /api/mlro-advisor-quick. Single-pass
+   * Haiku 4.5, no extended thinking, brain-classifier-grounded prompt.
+   * Returns a single JSON {answer, elapsedMs} — Netlify Lambda buffers
+   * responses regardless, so genuine SSE streaming wasn't reaching the
+   * client. Target end-to-end latency: 3-7 s. The placeholder entry
+   * appears instantly while the request is in flight so the user has
+   * visual feedback.
    */
-  const runQuickStream = useCallback(async (q: string): Promise<void> => {
+  const runQuick = useCallback(async (q: string): Promise<void> => {
     const entryId = `adv-${Date.now()}`;
     const startedAt = new Date();
 
-    // Insert empty entry immediately for instant feedback.
     setAdvisorHistory((prev) => [
       {
         id: entryId,
@@ -296,32 +296,22 @@ export default function MlroAdvisorPage() {
         body: JSON.stringify({ question: q }),
         signal: ctl.signal,
       });
-      if (!res.ok || !res.body) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 240)}`);
+      const data = (await res.json()) as { ok: boolean; answer?: string; error?: string; elapsedMs?: number };
+      if (!data.ok || !data.answer) {
+        throw new Error(data.error ?? `HTTP ${res.status}`);
       }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      // Loop until the stream's `[DONE]` sentinel or the connection closes.
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        // Strip the [DONE] sentinel if present in this chunk.
-        const sentinelIdx = chunk.indexOf("[DONE]");
-        const visible = sentinelIdx >= 0 ? chunk.slice(0, sentinelIdx) : chunk;
-        buffer += visible;
-        // Update the streaming entry in place.
-        setAdvisorHistory((prev) =>
-          prev.map((e) =>
-            e.id === entryId
-              ? { ...e, result: { ...e.result, narrative: buffer, elapsedMs: Date.now() - startedAt.getTime() } }
-              : e,
-          ),
-        );
-        if (sentinelIdx >= 0) break;
-      }
+      setAdvisorHistory((prev) =>
+        prev.map((e) =>
+          e.id === entryId
+            ? { ...e, result: { ...e.result, narrative: data.answer ?? "", elapsedMs: data.elapsedMs ?? Date.now() - startedAt.getTime() } }
+            : e,
+        ),
+      );
+    } catch (err) {
+      // Drop the placeholder entry on error so the catch in handleAsk
+      // can render the error banner cleanly.
+      setAdvisorHistory((prev) => prev.filter((e) => e.id !== entryId));
+      throw err;
     } finally {
       clearTimeout(killTimer);
       setStreamingEntryId(null);
@@ -423,7 +413,7 @@ export default function MlroAdvisorPage() {
     setError(null);
     try {
       if (mode === "quick") {
-        await runQuickStream(q);
+        await runQuick(q);
       } else if (mode === "multi_perspective") {
         try {
           await runDeepBackground(q, mode);
@@ -453,7 +443,7 @@ export default function MlroAdvisorPage() {
     } finally {
       setRunning(false);
     }
-  }, [question, mode, runQuickStream, runDeepBackground, runSynchronous]);
+  }, [question, mode, runQuick, runDeepBackground, runSynchronous]);
 
   const toggleAdvisorEntry = (id: string) =>
     setAdvisorHistory((prev) =>
@@ -722,7 +712,7 @@ export default function MlroAdvisorPage() {
                             <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1 flex items-center gap-2">
                               <span>{entry.mode === "quick" ? "Answer" : "Regulator-facing narrative"}</span>
                               {streamingEntryId === entry.id && (
-                                <span className="font-mono text-brand animate-pulse">● streaming</span>
+                                <span className="font-mono text-brand animate-pulse">● working ~5 s</span>
                               )}
                             </div>
                             <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">

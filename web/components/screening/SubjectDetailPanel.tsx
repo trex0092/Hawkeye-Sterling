@@ -56,6 +56,7 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
+import { BrainConsole } from "@/components/brain/BrainComponents";
 import {
   canPerform,
   loadOperatorRole,
@@ -67,7 +68,7 @@ import {
   buildCaseRecord,
 } from "@/lib/data/case-store";
 
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Timeline", "Evidence"] as const;
+const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Timeline", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
@@ -805,7 +806,23 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
         {activeTab === "Ownership" && <OwnershipTab subject={subject} />}
 
-        {activeTab !== "Screening" && activeTab !== "Ownership" && (
+        {activeTab === "Live reasoning" && (
+          <div>
+            <p className="text-11 text-ink-2 mb-3">
+              Pre-filled from this subject record. Hit “Fire the brain” to render the full reasoning chain — jurisdiction profile, redlines fired, doctrines in scope, typology fingerprints, composite score and disposition.
+            </p>
+            <BrainConsole
+              initialValues={{
+                name: subject.name,
+                aliases: subject.aliases?.join(", ") ?? "",
+                jurisdiction: subject.jurisdiction ?? "",
+                entityType: subject.entityType ?? "individual",
+              }}
+            />
+          </div>
+        )}
+
+        {activeTab !== "Screening" && activeTab !== "Ownership" && activeTab !== "Live reasoning" && (
           <div className="text-11 text-ink-2 py-6">
             {activeTab} data will populate here once the module is wired to the engine.
           </div>
