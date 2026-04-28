@@ -90,10 +90,27 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "query is required" }, { status: 400, headers: CORS });
   }
 
-  const result = await askComplianceQuestion({
-    query: body.query.trim(),
-    mode: body.mode ?? "multi-agent",
-  });
+  // Hard-cap upstream RAG to 18s so we always have budget for the advisor
+  // fallback inside Netlify's ~26s sync function timeout. Any throw here
+  // (AbortError, network reset, DNS fail) MUST be caught — an uncaught
+  // rejection escapes the Lambda and produces HTTP 502 with the raw
+  // runtime trace, which the client cannot parse.
+  let result: Awaited<ReturnType<typeof askComplianceQuestion>>;
+  try {
+    result = await askComplianceQuestion(
+      { query: body.query.trim(), mode: body.mode ?? "multi-agent" },
+      { timeoutMs: 18_000 },
+    );
+  } catch (err) {
+    console.error("[compliance-qa] RAG call threw", err);
+    result = {
+      ok: false,
+      query: body.query.trim(),
+      citations: [],
+      passedQualityGate: false,
+      error: `RAG client error: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 
   if (result.ok) {
     return NextResponse.json(result, { status: 200, headers: { ...CORS, ...gateHeaders } });
