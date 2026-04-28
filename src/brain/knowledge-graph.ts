@@ -129,6 +129,31 @@ export function buildTopicGraph(topic: MlroTopic): KgGraph {
     }
   }
 
+  // Second-hop: doctrine → authority siblings (top 2 per authority). Lets the
+  // operator see "what other doctrines from the same regulator/standard apply",
+  // e.g. surfacing all UAE FDL doctrines once one is hit.
+  const authoritiesCovered = new Set<string>();
+  for (const d of probe.doctrineHints) {
+    const doc = DOCTRINES.find((x) => x.id === d);
+    if (!doc?.authority || authoritiesCovered.has(doc.authority)) continue;
+    authoritiesCovered.add(doc.authority);
+    const siblings = DOCTRINES
+      .filter((x) => x.authority === doc.authority && x.id !== d)
+      .slice(0, 2);
+    for (const s of siblings) {
+      const key = nk('doctrine', s.id);
+      if (!nodes.has(key)) {
+        nodes.set(key, {
+          kind: 'doctrine',
+          id: s.id,
+          label: s.title,
+          ...(s.authority !== undefined ? { detail: s.authority } : {}),
+        });
+        edges.push({ from: nk('doctrine', d), to: key, weight: 0.4 });
+      }
+    }
+  }
+
   // Common-sense rules (5 max for the centre topic).
   const rules = COMMON_SENSE_RULES.filter((r) => r.topic === topic).slice(0, 5);
   for (const r of rules) {

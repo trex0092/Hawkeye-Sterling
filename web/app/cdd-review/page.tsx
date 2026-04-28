@@ -14,6 +14,21 @@ import type { CaseRecord } from "@/lib/types";
 
 type ReviewTier = "high" | "medium" | "standard";
 type ReviewStatus = "overdue" | "due-soon" | "current" | "unknown";
+type ReviewOutcome = "passed" | "deferred" | "escalated" | "exited";
+
+const OUTCOME_LABEL: Record<ReviewOutcome, string> = {
+  passed: "Passed — relationship continues",
+  deferred: "Deferred — awaiting documents",
+  escalated: "Escalated — referred to MLRO",
+  exited: "Exited — relationship terminated",
+};
+
+const OUTCOME_TONE: Record<ReviewOutcome, string> = {
+  passed: "bg-green-dim text-green",
+  deferred: "bg-amber-dim text-amber",
+  escalated: "bg-red-dim text-red",
+  exited: "bg-bg-2 text-ink-2",
+};
 
 interface ReviewRecord {
   id: string;
@@ -22,6 +37,10 @@ interface ReviewRecord {
   lastReview: string; // dd/mm/yyyy — "" if never reviewed
   notes: string;
   source: "case" | "manual";
+  /** Outcome of the most recent review — captured for audit trail. */
+  lastOutcome?: ReviewOutcome;
+  /** ISO timestamp of when the outcome was stamped. */
+  lastOutcomeAt?: string;
 }
 
 const STORAGE = "hawkeye.cdd-review.v1";
@@ -155,9 +174,13 @@ export default function CddReviewPage() {
     setDraft(BLANK);
   };
 
-  const markReviewed = (id: string) => {
-    const today = isoToDMY(new Date().toISOString());
-    const update = (r: ReviewRecord) => r.id === id ? { ...r, lastReview: today } : r;
+  const markReviewed = (id: string, outcome: ReviewOutcome) => {
+    const nowIso = new Date().toISOString();
+    const today = isoToDMY(nowIso);
+    const update = (r: ReviewRecord) =>
+      r.id === id
+        ? { ...r, lastReview: today, lastOutcome: outcome, lastOutcomeAt: nowIso }
+        : r;
     if (id.startsWith("manual-")) {
       const next = manualRecords.map(update);
       saveManual(next);
@@ -280,14 +303,32 @@ export default function CddReviewPage() {
                   <td className="px-3 py-2 font-mono text-10 text-ink-2">{r.lastReview || "—"}</td>
                   <td className="px-3 py-2 font-mono text-10 text-ink-2">{r.nextDue}</td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${STATUS_TONE[r.status]}`}>
                         {r.status === "due-soon" ? "due soon" : r.status === "overdue" ? `${r.daysOverdue}d overdue` : r.status}
                       </span>
-                      <button type="button" onClick={() => markReviewed(r.id)}
-                        className="text-10 font-mono text-brand hover:text-brand-deep underline whitespace-nowrap">
-                        mark reviewed
-                      </button>
+                      {r.lastOutcome && (
+                        <span
+                          className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${OUTCOME_TONE[r.lastOutcome]}`}
+                          title={r.lastOutcomeAt ? `Stamped ${new Date(r.lastOutcomeAt).toLocaleString()}` : ""}
+                        >
+                          {r.lastOutcome}
+                        </span>
+                      )}
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          const v = e.target.value as ReviewOutcome | "";
+                          if (v) markReviewed(r.id, v);
+                        }}
+                        className="text-10 font-mono px-1.5 py-px rounded border border-hair-2 bg-bg-panel text-brand hover:border-brand whitespace-nowrap"
+                        title="Stamp this review outcome — captures timestamp + outcome for audit trail"
+                      >
+                        <option value="">mark reviewed…</option>
+                        {(Object.keys(OUTCOME_LABEL) as ReviewOutcome[]).map((o) => (
+                          <option key={o} value={o}>{OUTCOME_LABEL[o]}</option>
+                        ))}
+                      </select>
                     </div>
                   </td>
                   <td className="px-3 py-2 text-ink-3 text-10 max-w-[160px] truncate" title={r.notes}>{r.notes || "—"}</td>
