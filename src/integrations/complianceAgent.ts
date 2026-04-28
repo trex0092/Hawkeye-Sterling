@@ -31,6 +31,10 @@ export interface ComplianceAgentConfig {
   maxTokens?: number;
   /** Hard ceiling per request. Default 60s. */
   budgetMs?: number;
+  /** Enable adaptive thinking. Default true. */
+  enableThinking?: boolean;
+  /** Cache the large system prompt for repeated calls. Default true. */
+  cacheSystemPrompt?: boolean;
 }
 
 export interface ComplianceReviewRequest {
@@ -457,10 +461,18 @@ export type ChatCall = (input: {
   maxTokens: number;
   apiKey: string;
   signal?: AbortSignal;
+  thinking?: boolean;
+  effort?: string;
+  cacheSystem?: boolean;
 }) => Promise<{ ok: boolean; text?: string; error?: string }>;
 
-const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
+const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal, thinking, effort, cacheSystem }) => {
   if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
+  const systemContent = cacheSystem
+    ? [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' } }]
+    : system;
+  const thinkingBlock = thinking ? { thinking: { type: 'adaptive' } } : {};
+  const outputConfigBlock = effort ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {
@@ -474,7 +486,9 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
         model,
         max_tokens: maxTokens,
         stream: true,
-        system,
+        system: systemContent,
+        ...thinkingBlock,
+        ...outputConfigBlock,
         messages: [{ role: 'user', content: user }],
         metadata: {
           product: 'hawkeye-sterling',
@@ -545,6 +559,8 @@ export async function invokeComplianceAgent(
   const t0 = Date.now();
   const hardCeiling = Math.min(cfg.budgetMs ?? 60_000, 60_000);
   const trail: AgentTrailStep[] = [];
+  const useThinking = cfg.enableThinking    !== false;
+  const useCache    = cfg.cacheSystemPrompt !== false;
 
   // ── Stage 1: deterministic prechecks.
   const precheckStart = new Date().toISOString();
@@ -617,9 +633,12 @@ export async function invokeComplianceAgent(
       model: cfg.model ?? DEFAULT_MODEL,
       system,
       user,
-      maxTokens: cfg.maxTokens ?? 8000,
+      maxTokens: cfg.maxTokens ?? 16_000,
       apiKey: cfg.apiKey,
       signal,
+      thinking: useThinking,
+      effort: 'xhigh',
+      cacheSystem: useCache,
     }),
   );
 
