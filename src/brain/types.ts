@@ -69,7 +69,11 @@ export type ReasoningCategory =
   | 'corporate_intelligence'
   | 'epistemic_quality'
   | 'psychological_profiling'
-  | 'insider_threat';
+  | 'insider_threat'
+  | 'common_sense'
+  | 'quantitative_analysis'
+  | 'synthetic_intelligence'
+  | 'formal_reasoning';
 
 export type Verdict =
   | 'clear'
@@ -141,7 +145,7 @@ export interface ReasoningMode {
   name: string;
   category: ReasoningCategory;
   faculties: FacultyId[];
-  wave: 1 | 2 | 3 | 4 | 5 | 6;
+  wave: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
   description: string;
   apply: (ctx: BrainContext) => Promise<Finding>;
 }

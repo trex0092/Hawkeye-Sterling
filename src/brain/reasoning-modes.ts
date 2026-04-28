@@ -1,8 +1,8 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 372 modes across 46 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5 + wave 6.
+// 412 modes across 50 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5 + wave 6 + wave 11.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
-// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8.
+// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8/11.
 
 import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
@@ -12,6 +12,7 @@ import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
 import { WAVE4_MODES, WAVE4_OVERRIDES } from './reasoning-modes-wave4.js';
 import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
 import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
+import { WAVE11_MODES, WAVE11_OVERRIDES } from './reasoning-modes-wave11.js';
 
 const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
   async (_ctx: BrainContext): Promise<Finding> => ({
@@ -343,6 +344,19 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]!;
   const w6override = WAVE6_OVERRIDES.find((o) => o.id === r.id);
   if (w6override) REASONING_MODES[i] = w6override;
+}
+
+// Merge Wave 11: common sense, quantitative analysis, synthetic intelligence,
+// formal reasoning. 40 new modes across 4 new categories.
+const existingIdsW11 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE11_MODES) {
+  if (!existingIdsW11.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE11_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w11override = WAVE11_OVERRIDES.find((o) => o.id === r.id);
+  if (w11override) REASONING_MODES[i] = w11override;
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
