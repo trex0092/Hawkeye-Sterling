@@ -84,6 +84,40 @@ interface Body {
   adverseMediaText?: string;
 }
 
+// Audit-trail constants — surfaced in the response so the compliance
+// report can carry a defensible record of which weights produced the
+// composite score. If any of these are tuned the report's audit trail
+// must reflect the new values for in-flight cases (no silent drift).
+const MODULE_WEIGHTS = {
+  quickScreen: "pass-through (sanctions top score)",
+  jurisdictionCAHRA: 15,
+  regimesCap: 12,
+  redlinesPerHit: 10,
+  adverseMediaPerHit: 8,
+  adverseMediaCap: 30,
+  adverseMediaScoredCap: 40,
+  adverseMediaScoredFloorHighSeverity: 8,
+  pepMaxFromSalience: 20,
+} as const;
+
+// Static data sources — what the brain consulted to produce its
+// answer. Lists are bundled at build, news is live per-request, PEP
+// fixtures are bundled. Surfaces in the audit trail so a regulator
+// can replay exactly what the brain saw on disposition day.
+const DATA_FRESHNESS = {
+  watchlists: "bundled-at-build",
+  pep: "bundled-at-build",
+  jurisdictions: "bundled-at-build",
+  typologies: "bundled-at-build",
+  news: "per-request (live RSS)",
+} as const;
+
+function makeRunId(): string {
+  // 8 hex chars is enough collision-resistance for an audit-trail id;
+  // we don't need crypto-strong uniqueness.
+  return `sb_${Math.random().toString(16).slice(2, 10)}`;
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   // Gate + rate-limit BEFORE parsing the JSON body so an attacker can't
   // blast megabytes of junk into a free-tier endpoint. gateHeaders is
@@ -385,8 +419,16 @@ export async function POST(req: Request): Promise<NextResponse> {
         })()
       : null;
 
+    const audit = {
+      runId: makeRunId(),
+      generatedAt: new Date().toISOString(),
+      dataFreshness: DATA_FRESHNESS,
+      moduleWeights: MODULE_WEIGHTS,
+    };
+
     return NextResponse.json({
       ok: true,
+      audit,
       screen,
       pep,
       adverseMedia,

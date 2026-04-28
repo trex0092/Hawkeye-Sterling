@@ -530,6 +530,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       jurisdiction: subject.jurisdiction,
       ...(subject.aliases ? { aliases: subject.aliases } : {}),
     },
+    operator: { role },
     result:
       screening.status === "success"
         ? {
@@ -576,6 +577,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
                   },
                 }
               : {}),
+            ...(superBrain.result.audit ? { audit: superBrain.result.audit } : {}),
           }
         : null,
   });
@@ -597,6 +599,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         jurisdiction: subject.jurisdiction,
         ...(subject.aliases ? { aliases: subject.aliases } : {}),
       },
+      operator: { role },
       result: {
         topScore: screening.result.topScore,
         severity: screening.result.severity,
@@ -640,6 +643,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
                     },
                   }
                 : {}),
+              ...(superBrain.result.audit ? { audit: superBrain.result.audit } : {}),
             }
           : null,
     };

@@ -87,6 +87,20 @@ export interface ReportSuperBrain {
       keywordGroups?: string[];
     }>;
   } | null;
+  // Audit trail — run id, when the brain was fired, what data sources
+  // it consulted, and what module weights were in force. A regulator
+  // can replay the disposition with this footer alone.
+  audit?: {
+    runId?: string;
+    generatedAt?: string;
+    dataFreshness?: Record<string, string>;
+    moduleWeights?: Record<string, string | number>;
+  } | null;
+}
+
+export interface ReportOperator {
+  role?: string;
+  id?: string;
 }
 
 export interface ReportInput {
@@ -95,6 +109,7 @@ export interface ReportInput {
   superBrain?: ReportSuperBrain | null;
   reportingEntity?: string;
   mlro?: string;
+  operator?: ReportOperator | null;
   now?: Date;
 }
 
@@ -823,6 +838,40 @@ function formatDecision(type: ReportType): string[] {
   return lines;
 }
 
+// Audit trail — printed at the very bottom of the report so a regulator
+// can verify which brain run produced the disposition, which module
+// weights were in force, and which data sources were consulted. Empty
+// when the super-brain payload didn't include an audit block (older
+// clients) — the report stays valid but loses replay-ability.
+function formatAuditTrail(input: ReportInput): string[] {
+  const a = input.superBrain?.audit;
+  const op = input.operator;
+  if (!a && !op) return [];
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} AUDIT TRAIL ${"─".repeat(63)}`);
+  if (a?.runId) lines.push(`reasoning.run_id      ${a.runId}`);
+  if (a?.generatedAt) lines.push(`brain.generated_at    ${a.generatedAt}`);
+  if (a?.dataFreshness && Object.keys(a.dataFreshness).length > 0) {
+    const parts = Object.entries(a.dataFreshness)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(" · ");
+    lines.push(`brain.data_freshness  ${parts}`);
+  }
+  if (a?.moduleWeights && Object.keys(a.moduleWeights).length > 0) {
+    lines.push(`brain.module_weights:`);
+    for (const [k, v] of Object.entries(a.moduleWeights)) {
+      lines.push(`  ${pad(k, 36)} ${v}`);
+    }
+  }
+  if (op?.role) {
+    lines.push(`operator.role         ${op.role}${op.id ? ` (${op.id})` : ""}`);
+  }
+  lines.push(
+    `report.generated_at   ${(input.now ?? new Date()).toISOString()}`,
+  );
+  return lines;
+}
+
 function formatFramework(): string[] {
   const lines: string[] = [];
   lines.push("Regulatory framework applied:");
@@ -868,6 +917,11 @@ export function buildComplianceReport(input: ReportInput): string {
   out.push(...formatGoaml(type, input, now));
   out.push(...formatDecision(type));
   out.push(...formatFramework());
+  const audit = formatAuditTrail(input);
+  if (audit.length > 0) {
+    out.push("");
+    out.push(...audit);
+  }
   out.push(SEP);
   out.push("END OF REPORT");
   out.push(SEP);
