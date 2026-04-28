@@ -34,6 +34,10 @@ export interface MlroAdvisorConfig {
   maxTokens?: number;
   /** Per-request budget in ms. Defaults to the mode's totalMs. */
   budgetMs?: number;
+  /** Enable adaptive thinking on both models. Default true. */
+  enableThinking?: boolean;
+  /** Cache the large system prompt to cut latency/cost on repeated calls. Default true. */
+  cacheSystemPrompt?: boolean;
 }
 
 export interface MlroAdvisorRequest {
@@ -101,7 +105,10 @@ export const BUDGET_GUIDANCE =
   'the results in the History tab.';
 
 const DEFAULT_EXECUTOR = 'claude-sonnet-4-6';
-const DEFAULT_ADVISOR = 'claude-opus-4-7';
+const DEFAULT_ADVISOR  = 'claude-opus-4-7';
+
+const EXECUTOR_DEFAULT_TOKENS = 10_000;
+const ADVISOR_DEFAULT_TOKENS  = 16_000;
 
 const EXECUTOR_TASK =
   'You are the Deep-Reasoning EXECUTOR. Using the cognitive catalogue AND the ' +
@@ -198,10 +205,21 @@ export type ChatCall = (input: {
   maxTokens: number;
   apiKey: string;
   signal?: AbortSignal;
+  /** Enable adaptive thinking. Omit or false to disable. */
+  thinking?: boolean;
+  /** Effort level for output_config (low | medium | high | xhigh | max). */
+  effort?: string;
+  /** Wrap system in a cache_control ephemeral block for prompt caching. */
+  cacheSystem?: boolean;
 }) => Promise<{ ok: boolean; text?: string; error?: string }>;
 
-const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal }) => {
+const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, signal, thinking, effort, cacheSystem }) => {
   if (!user.trim()) return { ok: false, error: 'message content must be non-empty' };
+  const systemContent = cacheSystem
+    ? [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' } }]
+    : system;
+  const thinkingBlock = thinking ? { thinking: { type: 'adaptive' } } : {};
+  const outputConfigBlock = effort ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {
@@ -215,7 +233,9 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
         model,
         max_tokens: maxTokens,
         stream: true,
-        system,
+        system: systemContent,
+        ...thinkingBlock,
+        ...outputConfigBlock,
         messages: [{ role: 'user', content: user }],
       }),
     },
@@ -275,7 +295,9 @@ export async function invokeMlroAdvisor(
   const t0 = Date.now();
   const trail: ReasoningTrailStep[] = [];
   const execModel = cfg.executorModel ?? DEFAULT_EXECUTOR;
-  const advModel = cfg.advisorModel ?? DEFAULT_ADVISOR;
+  const advModel   = cfg.advisorModel  ?? DEFAULT_ADVISOR;
+  const useThinking = cfg.enableThinking    !== false;
+  const useCache    = cfg.cacheSystemPrompt !== false;
 
   const makeResult = (partial: boolean, narrative: string | undefined, verdict: MlroAdvisorResult['complianceReview']['advisorVerdict'], error?: string): MlroAdvisorResult => ({
     ok: !partial && !error,
@@ -302,7 +324,7 @@ export async function invokeMlroAdvisor(
     const execStart = new Date().toISOString();
     const execBudget = Math.min(budget.executorMs ?? totalBudget, totalBudget);
     const { result: execRes, timedOut, thrownError: execThrown } = await withBudget(execBudget, (signal) =>
-      chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: cfg.maxTokens ?? 8000, apiKey: cfg.apiKey, signal }),
+      chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: cfg.maxTokens ?? EXECUTOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'high', cacheSystem: useCache }),
     );
     if (timedOut || !execRes?.ok) {
       trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
@@ -325,7 +347,7 @@ export async function invokeMlroAdvisor(
   const remaining = Math.max(1, totalBudget - (Date.now() - t0));
   const advBudget = Math.min(budget.advisorMs ?? remaining, remaining);
   const { result: advRes, timedOut: advTimedOut, thrownError: advThrown } = await withBudget(advBudget, (signal) =>
-    chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? 8000, apiKey: cfg.apiKey, signal }),
+    chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? ADVISOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
   );
   if (advTimedOut || !advRes?.ok) {
     trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
