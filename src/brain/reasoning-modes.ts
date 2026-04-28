@@ -270,6 +270,21 @@ export const REASONING_MODES: ReasoningMode[] = [
   m('phoenix_company', 'Phoenix Company', 'sectoral_typology', ['smartness'], 2, 'Repeated insolvency and re-incorporation to shed liabilities.'),
   m('sanctions_maritime_stss', 'Maritime STS Sanctions Evasion', 'sectoral_typology', ['intelligence'], 2, 'Ship-to-ship transfers, AIS spoofing, flag/name changes.'),
   m('kyb_strict', 'Strict KYB', 'sectoral_typology', ['strong_brain'], 2, 'Enhanced entity onboarding — UBO, source-of-funds, licence validation.'),
+  m('pig_butchering', 'Pig-Butchering (Sha Zhu Pan)', 'sectoral_typology', ['intelligence'], 2, 'Fan-in/drain: many small inbound senders + rapid near-total outbound drain to a VASP/OTC.'),
+  m('romance_scam', 'Romance Scam', 'sectoral_typology', ['intelligence'], 2, 'New account + affective beneficiary label + escalating transfers + no commercial nexus.'),
+  m('narco_tf', 'Narco-TF Nexus', 'sectoral_typology', ['intelligence'], 2, 'Drug-proceeds → TF conversion: narco corridor + perishable-goods front + CAHRA outbound.'),
+
+  // ── GRAPH ANALYSIS — additional ───────────────────────────────────────────
+  m('relationship_mapping', 'Relationship Mapping', 'graph_analysis', ['intelligence', 'data_analysis'], 2, 'BFS to PEP / sanctioned / adverse-media nodes within 3 hops.'),
+  m('network_centrality', 'Network Centrality', 'graph_analysis', ['data_analysis', 'intelligence'], 2, 'Degree + 2-hop bridge proxy for financial hub detection.'),
+
+  // ── META / COGNITIVE — additional ─────────────────────────────────────────
+  m('multi_jurisdictional_conflict', 'Multi-Jurisdictional Conflict', 'compliance_framework', ['ratiocination'], 2, 'Highest-standard rule across ≥2 regime obligations.'),
+  m('evidence_chain_audit', 'Evidence Chain Audit', 'data_quality', ['ratiocination'], 2, 'Dangling evidence refs + assertive-without-evidence detection.'),
+  m('ontology_mismatch_detector', 'Ontology Mismatch Detector', 'data_quality', ['ratiocination'], 2, 'Flags category/faculty drift from the declared mode signature.'),
+  m('prior_belief_decay', 'Prior Belief Decay', 'statistical', ['reasoning', 'ratiocination'], 2, 'Half-life decay on stale evidence; flags stale drivers of high-score verdicts.'),
+  m('counterfactual_simulator', 'Counterfactual Simulator', 'cognitive_science', ['reasoning', 'deep_thinking'], 2, 'Verdict-tier fragility test: collapses if the heaviest evidence item is removed.'),
+  m('adversarial_red_team', 'Adversarial Red Team', 'cognitive_science', ['reasoning', 'argumentation'], 2, 'Steelmans the counter-narrative; requires leading hypothesis be explicitly challenged.'),
 ];
 
 // Apply wave 1/2 real implementations from modes/registry.ts.

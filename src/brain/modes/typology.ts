@@ -457,6 +457,122 @@ export const maritimeStssApply = async (ctx: BrainContext): Promise<Finding> => 
     { hypothesis: 'sanctioned' });
 };
 
+// ── pig_butchering ─────────────────────────────────────────────────────────
+// Sha Zhu Pan pattern: many small inbound transfers from distinct senders
+// followed by rapid near-total outbound drain to a single VASP or OTC broker.
+export const pigButcheringApply = async (ctx: BrainContext): Promise<Finding> => {
+  const txs = ctx.evidence.transactions ?? [];
+  if (txs.length === 0) {
+    return mk('pig_butchering', 'sectoral_typology', ['intelligence'],
+      'inconclusive', 0, 0.5, 'Pig-butchering: no transaction data.');
+  }
+  const inbound  = txs.filter((t) => { const r = t as Record<string, unknown>; return r['direction'] === 'in'  || Number(r['amount']) > 0; });
+  const outbound = txs.filter((t) => { const r = t as Record<string, unknown>; return r['direction'] === 'out' || Number(r['amount']) < 0; });
+  const distinctSenders = new Set(
+    inbound.map((t) => { const r = t as Record<string, unknown>; return typeof r['counterparty'] === 'string' ? r['counterparty'] : ''; }).filter(Boolean),
+  ).size;
+  const totalIn  = inbound.reduce((s: number, t) => s + Math.abs(Number((t as Record<string, unknown>)['amount'])), 0);
+  const totalOut = outbound.reduce((s: number, t) => s + Math.abs(Number((t as Record<string, unknown>)['amount'])), 0);
+  const drainRatio = totalIn > 0 ? totalOut / totalIn : 0;
+
+  // Core pattern: ≥5 distinct senders + ≥90% drain within the observation window.
+  if (distinctSenders >= 5 && drainRatio >= 0.9) {
+    return mk('pig_butchering', 'sectoral_typology', ['intelligence'],
+      'escalate', 0.85, 0.8,
+      `Pig-butchering: ${distinctSenders} distinct inbound senders, ${Math.round(drainRatio * 100)}% of inflows immediately drained. Fan-in/drain pattern matches Sha Zhu Pan typology — escalate full victim-fund-flow map to MLRO.`,
+      { hypothesis: 'illicit_risk' });
+  }
+  if (distinctSenders >= 3 && drainRatio >= 0.7) {
+    return mk('pig_butchering', 'sectoral_typology', ['intelligence'],
+      'flag', 0.5, 0.7,
+      `Pig-butchering: ${distinctSenders} distinct inbound senders, ${Math.round(drainRatio * 100)}% drain — partial fan-in/drain pattern. Requires romance_scam cross-check.`,
+      { hypothesis: 'illicit_risk' });
+  }
+  return mk('pig_butchering', 'sectoral_typology', ['intelligence'],
+    'clear', 0.05, 0.65,
+    `Pig-butchering: ${distinctSenders} distinct sender(s), ${Math.round(drainRatio * 100)}% drain — below Sha Zhu Pan threshold.`);
+};
+
+// ── romance_scam ───────────────────────────────────────────────────────────
+// Indicators: newly opened account + escalating transfers to a single
+// foreign beneficiary described in affective terms + no commercial nexus.
+export const romanceScamApply = async (ctx: BrainContext): Promise<Finding> => {
+  const txs = ctx.evidence.transactions ?? [];
+  const r = ctx.subject as unknown as Record<string, unknown>;
+  const accountAgeDays   = typeof r['accountAgeDays']   === 'number' ? r['accountAgeDays']   : 999;
+  const affectiveLabel   = typeof r['affectiveLabel']    === 'boolean' ? r['affectiveLabel']  : false;
+  const singleBeneficiary = typeof r['singleForeignBeneficiary'] === 'boolean' ? r['singleForeignBeneficiary'] : false;
+
+  // Check for escalating amounts: each transfer larger than the prior.
+  let escalating = false;
+  if (txs.length >= 3) {
+    const amounts = txs.map((t) => Math.abs(Number((t as Record<string, unknown>)['amount'])));
+    let up = 0;
+    for (let i = 1; i < amounts.length; i++) if (amounts[i]! > amounts[i - 1]!) up++;
+    escalating = up >= Math.floor(amounts.length * 0.6);
+  }
+
+  const signals: string[] = [];
+  if (accountAgeDays < 90)  signals.push(`new account (${accountAgeDays}d)`);
+  if (affectiveLabel)        signals.push('affective beneficiary label');
+  if (singleBeneficiary)    signals.push('single foreign beneficiary');
+  if (escalating)           signals.push('escalating transfer amounts');
+
+  if (signals.length >= 3) {
+    return mk('romance_scam', 'sectoral_typology', ['intelligence'],
+      'escalate', 0.8, 0.75,
+      `Romance scam: ${signals.length} indicators — ${signals.join('; ')}. Pattern consistent with grooming-phase proceeds aggregation.`,
+      { hypothesis: 'illicit_risk' });
+  }
+  if (signals.length === 2) {
+    return mk('romance_scam', 'sectoral_typology', ['intelligence'],
+      'flag', 0.45, 0.65,
+      `Romance scam: ${signals.join('; ')} — two signals present. Cross-check with pig_butchering mode.`,
+      { hypothesis: 'illicit_risk' });
+  }
+  return mk('romance_scam', 'sectoral_typology', ['intelligence'],
+    'clear', 0.05, 0.6,
+    `Romance scam: ${signals.length} signal(s) — below escalation threshold.`);
+};
+
+// ── narco_tf ───────────────────────────────────────────────────────────────
+// Drug-proceeds-to-TF nexus: large cash deposits from a declared perishable-
+// goods / logistics business in a narco-corridor jurisdiction + outbound
+// transfers to a CAHRA-adjacent destination.
+export const narcoTfApply = async (ctx: BrainContext): Promise<Finding> => {
+  const txs = ctx.evidence.transactions ?? [];
+  const r = ctx.subject as unknown as Record<string, unknown>;
+
+  const narcoCorridor    = typeof r['narcoCorridor']   === 'boolean' ? r['narcoCorridor']   : false;
+  const perishableGoods  = typeof r['perishableGoods'] === 'boolean' ? r['perishableGoods'] : false;
+  const cahraOutbound    = typeof r['cahraOutbound']   === 'boolean' ? r['cahraOutbound']   : false;
+  const cashHeavy        = txs.length > 0
+    ? txs.filter((t) => (t as Record<string, unknown>).cashDeposit === true).length / txs.length
+    : 0;
+
+  const signals: string[] = [];
+  if (narcoCorridor)   signals.push('narco-corridor jurisdiction');
+  if (perishableGoods) signals.push('perishable-goods declared business');
+  if (cahraOutbound)   signals.push('CAHRA-adjacent outbound destination');
+  if (cashHeavy >= 0.5) signals.push(`cash-heavy deposits (${Math.round(cashHeavy * 100)}%)`);
+
+  if (narcoCorridor && cahraOutbound && (perishableGoods || cashHeavy >= 0.5)) {
+    return mk('narco_tf', 'sectoral_typology', ['intelligence'],
+      'escalate', 0.85, 0.8,
+      `Narco-TF nexus: ${signals.join('; ')}. Pattern consistent with FATF narco-TF typology (2021). Cite narco_tf id; mandate DEA EPIC / Europol EMPACT cross-reference.`,
+      { hypothesis: 'illicit_risk' });
+  }
+  if (signals.length >= 2) {
+    return mk('narco_tf', 'sectoral_typology', ['intelligence'],
+      'flag', 0.5, 0.7,
+      `Narco-TF: ${signals.join('; ')} — partial indicator set. Require full CAHRA and corridor verification.`,
+      { hypothesis: 'illicit_risk' });
+  }
+  return mk('narco_tf', 'sectoral_typology', ['intelligence'],
+    'clear', 0.05, 0.65,
+    `Narco-TF: ${signals.length} signal(s) — below threshold.`);
+};
+
 export const TYPOLOGY_MODE_APPLIES = {
   insider_threat: insiderThreatApply,
   collusion_pattern: collusionPatternApply,
@@ -468,4 +584,7 @@ export const TYPOLOGY_MODE_APPLIES = {
   phoenix_company: phoenixCompanyApply,
   advance_fee: advanceFeeApply,
   sanctions_maritime_stss: maritimeStssApply,
+  pig_butchering: pigButcheringApply,
+  romance_scam: romanceScamApply,
+  narco_tf: narcoTfApply,
 } as const;

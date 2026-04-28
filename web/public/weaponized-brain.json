@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-28T09:15:19+04:00",
+  "generatedAt": "2026-04-28T05:19:28+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-28T09:15:19+04:00",
+    "generatedAt": "2026-04-28T05:19:28+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -255,24 +255,24 @@
         }
       ],
       "reasoningModes": {
-        "total": 374,
+        "total": 385,
         "byCategory": {
           "logic": 21,
-          "cognitive_science": 22,
+          "cognitive_science": 24,
           "decision_theory": 20,
           "forensic": 37,
-          "compliance_framework": 30,
+          "compliance_framework": 31,
           "legal_reasoning": 10,
           "strategic": 15,
           "causal": 5,
-          "statistical": 18,
-          "graph_analysis": 10,
+          "statistical": 19,
+          "graph_analysis": 12,
           "threat_modeling": 14,
           "behavioral_signals": 5,
-          "data_quality": 10,
+          "data_quality": 12,
           "governance": 16,
           "crypto_defi": 19,
-          "sectoral_typology": 24,
+          "sectoral_typology": 27,
           "osint": 6,
           "esg": 4,
           "predicate_crime": 6,
@@ -300,7 +300,7 @@
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 100,
+          "wave2": 111,
           "wave3": 73,
           "wave4": 29,
           "wave5": 37,
@@ -1067,13 +1067,13 @@
     },
     "integrity": {
       "charterHash": "65a67258",
-      "catalogueHash": "d4883519"
+      "catalogueHash": "d5541843"
     }
   },
   "integrity": {
     "charterHash": "65a67258",
-    "catalogueHash": "d4883519",
-    "compositeHash": "2bf7da3a"
+    "catalogueHash": "d5541843",
+    "compositeHash": "4488caba"
   },
   "enhanced": {
     "extended": {

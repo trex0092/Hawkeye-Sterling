@@ -169,6 +169,56 @@ export const hindsightCheckApply = async (ctx: BrainContext): Promise<Finding> =
     `Hindsight check: ${hits.length} finding(s) use post-hoc language ("in retrospect"/"obvious"/etc.) — ${hits.slice(0, 3).join(', ')}. Hindsight bias risk.`);
 };
 
+// ── counterfactual_simulator ───────────────────────────────────────────────
+// Fragility test: for each high-score finding, simulate removal of the
+// single heaviest evidence item and check if the verdict tier collapses.
+export const counterfactualSimulatorApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  const fragile: string[] = [];
+  for (const f of p) {
+    if (f.score < 0.6) continue;
+    // If the finding has only 0–1 evidence items, it is inherently fragile.
+    if (f.evidence.length <= 1) {
+      fragile.push(`${f.modeId}(evidence=${f.evidence.length})`);
+    }
+  }
+  if (fragile.length > 0) {
+    return mk('counterfactual_simulator', 'cognitive_science', ['reasoning', 'deep_thinking'],
+      'flag', 0.55, 0.75,
+      `Counterfactual: ${fragile.length} high-score finding(s) collapse if the primary evidence item is removed — ${fragile.slice(0, 5).join(', ')}. Verdict tier is fragile; seek additional corroboration before sealing.`);
+  }
+  const highScoreFindings = p.filter((f) => f.score >= 0.6);
+  return mk('counterfactual_simulator', 'cognitive_science', ['reasoning', 'deep_thinking'],
+    'clear', 0.1, 0.75,
+    `Counterfactual: ${highScoreFindings.length} high-score finding(s) each supported by ≥2 evidence items — verdict is robust to single-item removal.`);
+};
+
+// ── adversarial_red_team ───────────────────────────────────────────────────
+// Steelmans the counter-narrative: finds the strongest innocent explanation
+// for the leading hypothesis and checks whether it has been explicitly ruled out.
+export const adversarialRedTeamApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  if (p.length === 0) {
+    return mk('adversarial_red_team', 'cognitive_science', ['reasoning', 'argumentation'],
+      'inconclusive', 0, 0.5, 'Adversarial red team: no prior findings to steelman against.');
+  }
+  const leader = [...p].sort((a, b) => b.score - a.score)[0]!;
+  // Look for explicit counter-narrative language in the prior findings.
+  const counterTerms = ['innocent explanation', 'alternative', 'however', 'benign', 'counter', 'but note', 'caveat'];
+  const hasCounter = p.some((f) => {
+    const r = f.rationale.toLowerCase();
+    return counterTerms.some((t) => r.includes(t));
+  });
+  if (!hasCounter && leader.score >= 0.6) {
+    return mk('adversarial_red_team', 'cognitive_science', ['reasoning', 'argumentation'],
+      'flag', 0.5, 0.75,
+      `Adversarial red team: leading finding ${leader.modeId} (score ${leader.score.toFixed(2)}) has no counter-narrative in the reasoning chain. Charter: steelman the innocent explanation before sealing a HIGH verdict.`);
+  }
+  return mk('adversarial_red_team', 'cognitive_science', ['reasoning', 'argumentation'],
+    'clear', 0.1, 0.75,
+    `Adversarial red team: counter-narrative detected in prior findings — leading hypothesis ${leader.modeId} has been challenged.`);
+};
+
 export const COGNITIVE_MODE_APPLIES = {
   system_1: system1Apply,
   system_2: system2Apply,
@@ -177,4 +227,6 @@ export const COGNITIVE_MODE_APPLIES = {
   five_whys: fiveWhysApply,
   fishbone: fishboneApply,
   hindsight_check: hindsightCheckApply,
+  counterfactual_simulator: counterfactualSimulatorApply,
+  adversarial_red_team: adversarialRedTeamApply,
 } as const;

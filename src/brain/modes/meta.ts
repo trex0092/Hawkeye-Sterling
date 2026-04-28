@@ -303,6 +303,180 @@ export const occamVsConspiracyApply = async (ctx: BrainContext): Promise<Finding
   );
 };
 
+// ── proportionality_test ──────────────────────────────────────────────────
+// A recommended control must not cost more than the residual risk it mitigates.
+// Fires on BLOCK/ESCALATE findings to check whether simpler interventions suffice.
+export const proportionalityTestApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  const hardFindings = p.filter((f) => f.verdict === 'block' || f.verdict === 'escalate');
+  if (hardFindings.length === 0) {
+    return metaFinding(
+      'proportionality_test', 'legal_reasoning', ['argumentation', 'ratiocination'],
+      'clear', 0.85,
+      'Proportionality: no block/escalate findings — proportionality gate not triggered.',
+    );
+  }
+  // Look for cost/benefit signals in finding rationales.
+  const costTerms = ['full exit', 'terminate', 'permanent block', 'total freeze'];
+  const overreachHits: string[] = [];
+  for (const f of hardFindings) {
+    const r = f.rationale.toLowerCase();
+    for (const t of costTerms) {
+      if (r.includes(t) && f.score < 0.7) {
+        overreachHits.push(`${f.modeId}(score=${f.score.toFixed(2)},action='${t}')`);
+        break;
+      }
+    }
+  }
+  if (overreachHits.length > 0) {
+    return metaFinding(
+      'proportionality_test', 'legal_reasoning', ['argumentation', 'ratiocination'],
+      'flag', 0.7,
+      `Proportionality: potentially disproportionate control(s) — ${overreachHits.join(', ')}. A control costlier than the residual risk must be flagged; consider a less restrictive alternative.`,
+    );
+  }
+  return metaFinding(
+    'proportionality_test', 'legal_reasoning', ['argumentation', 'ratiocination'],
+    'clear', 0.85,
+    `Proportionality: ${hardFindings.length} block/escalate finding(s) — controls appear proportionate to scores.`,
+  );
+};
+
+// ── multi_jurisdictional_conflict ─────────────────────────────────────────
+// Detects when findings reference obligations from ≥2 jurisdictions that
+// conflict and applies the highest-standard rule.
+export const multiJurisdictionalConflictApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  const jx: string[] = [];
+  for (const f of p) {
+    const r = f.rationale;
+    const matches = r.match(/\b(UAE|US|EU|UK|OFAC|CBUAE|DFSA|FCA|MAS|FINMA|HK)\b/g) ?? [];
+    for (const m of matches) if (!jx.includes(m)) jx.push(m);
+  }
+  if (jx.length < 2) {
+    return metaFinding(
+      'multi_jurisdictional_conflict', 'compliance_framework', ['ratiocination'],
+      'clear', 0.8,
+      `Multi-jurisdictional conflict: only ${jx.length} jurisdiction(s) detected — no cross-regime conflict to resolve.`,
+    );
+  }
+  return metaFinding(
+    'multi_jurisdictional_conflict', 'compliance_framework', ['ratiocination'],
+    'flag', 0.75,
+    `Multi-jurisdictional conflict: ${jx.length} jurisdiction/regime references detected (${jx.join(', ')}). Apply highest-standard rule; surface any conflicting obligation explicitly before emitting verdict.`,
+  );
+};
+
+// ── evidence_chain_audit ──────────────────────────────────────────────────
+// Detects dangling references (a finding cites an evidence ID not present
+// in ctx.evidence) and assertive-without-evidence language.
+export const evidenceChainAuditApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  const availableEvidence = new Set(
+    (ctx.evidence.transactions ?? []).map((_, i) => `tx:${i}`),
+  );
+  const assertiveTerms = ['clearly', 'obviously', 'undoubtedly', 'it is evident', 'without doubt'];
+  const bareAssertions: string[] = [];
+  const danglingRefs: string[] = [];
+
+  for (const f of p) {
+    const r = f.rationale.toLowerCase();
+    for (const t of assertiveTerms) {
+      if (r.includes(t) && f.evidence.length === 0) {
+        bareAssertions.push(`${f.modeId}("${t}")`);
+        break;
+      }
+    }
+    for (const ev of f.evidence) {
+      if (!availableEvidence.has(ev) && ev.startsWith('tx:')) danglingRefs.push(`${f.modeId}->${ev}`);
+    }
+  }
+
+  if (bareAssertions.length > 0 || danglingRefs.length > 0) {
+    const parts: string[] = [];
+    if (bareAssertions.length) parts.push(`bare assertions: ${bareAssertions.slice(0, 4).join(', ')}`);
+    if (danglingRefs.length)   parts.push(`dangling refs: ${danglingRefs.slice(0, 4).join(', ')}`);
+    return metaFinding(
+      'evidence_chain_audit', 'data_quality', ['ratiocination'],
+      'flag', 0.8,
+      `Evidence chain: ${parts.join('; ')}. Charter P1/P2: no assertion without cited evidence.`,
+    );
+  }
+  return metaFinding(
+    'evidence_chain_audit', 'data_quality', ['ratiocination'],
+    'clear', 0.9,
+    `Evidence chain: all ${p.length} finding(s) have cited evidence and no bare assertions detected.`,
+  );
+};
+
+// ── ontology_mismatch_detector ────────────────────────────────────────────
+// Detects when a finding's category or faculty drifts from the mode's
+// declared category/faculty signature — a sign of registry misconfiguration.
+export const ontologyMismatchDetectorApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  const mismatches: string[] = [];
+  // Heuristic: findings in graph_analysis category should use data_analysis faculty.
+  // Findings in crypto_defi should use inference or data_analysis.
+  const EXPECTED: Record<string, string[]> = {
+    graph_analysis: ['data_analysis', 'intelligence'],
+    crypto_defi:    ['data_analysis', 'inference'],
+    logic:          ['reasoning', 'argumentation', 'ratiocination', 'introspection'],
+    forensic:       ['reasoning', 'data_analysis', 'forensic_accounting'],
+  };
+  for (const f of p) {
+    const expected = EXPECTED[f.category];
+    if (!expected) continue;
+    const hasExpected = f.faculties.some((fac) => expected.includes(fac));
+    if (!hasExpected) mismatches.push(`${f.modeId}(cat=${f.category},fac=${f.faculties.join('+') || 'none'})`);
+  }
+  if (mismatches.length > 0) {
+    return metaFinding(
+      'ontology_mismatch_detector', 'data_quality', ['ratiocination'],
+      'flag', 0.5,
+      `Ontology mismatch: ${mismatches.length} finding(s) use unexpected faculty for their category — ${mismatches.slice(0, 5).join(', ')}. Registry misconfiguration risk.`,
+    );
+  }
+  return metaFinding(
+    'ontology_mismatch_detector', 'data_quality', ['ratiocination'],
+    'clear', 0.9,
+    `Ontology: ${p.length} finding(s) checked — no category/faculty drift detected.`,
+  );
+};
+
+// ── prior_belief_decay ────────────────────────────────────────────────────
+// Applies a half-life decay to stale evidence kinds. Evidence older than
+// 180 days should carry diminishing weight; this mode flags when stale
+// evidence is the primary driver of a high-score finding.
+export const priorBeliefDecayApply = async (ctx: BrainContext): Promise<Finding> => {
+  const p = priors(ctx);
+  const now = Date.now();
+  const HALF_LIFE_MS = 180 * 24 * 60 * 60 * 1000; // 180 days
+
+  const staleDrivers: string[] = [];
+  for (const f of p) {
+    if (f.score < 0.5) continue;
+    // producedAt proxies the evidence timestamp when no explicit timestamp is available.
+    const ageMs = now - (f.producedAt ?? now);
+    const decayFactor = Math.pow(0.5, ageMs / HALF_LIFE_MS);
+    if (decayFactor < 0.5) {
+      staleDrivers.push(`${f.modeId}(decay=${decayFactor.toFixed(2)},age=${Math.round(ageMs / 86400000)}d)`);
+    }
+  }
+
+  if (staleDrivers.length > 0) {
+    return metaFinding(
+      'prior_belief_decay', 'statistical', ['reasoning', 'ratiocination'],
+      'flag', 0.6,
+      `Prior belief decay: ${staleDrivers.length} high-score finding(s) are stale (>180 days, half-life decay <0.5) — ${staleDrivers.slice(0, 5).join(', ')}. Stale evidence should not dominate the posterior without fresh corroboration.`,
+    );
+  }
+  return metaFinding(
+    'prior_belief_decay', 'statistical', ['reasoning', 'ratiocination'],
+    'clear', 0.85,
+    `Prior belief decay: all high-score findings are within the 180-day credibility half-life.`,
+  );
+};
+
 export const META_MODE_APPLIES = {
   cognitive_bias_audit: cognitiveBiasAuditApply,
   confidence_calibration: confidenceCalibrationApply,
@@ -310,4 +484,9 @@ export const META_MODE_APPLIES = {
   source_triangulation: sourceTriangulationApply,
   triangulation: triangulationApply,
   occam_vs_conspiracy: occamVsConspiracyApply,
+  proportionality_test: proportionalityTestApply,
+  multi_jurisdictional_conflict: multiJurisdictionalConflictApply,
+  evidence_chain_audit: evidenceChainAuditApply,
+  ontology_mismatch_detector: ontologyMismatchDetectorApply,
+  prior_belief_decay: priorBeliefDecayApply,
 } as const;

@@ -18,6 +18,7 @@ import { BEHAVIORAL_MODE_APPLIES } from './behavioral.js';
 import { GOVERNANCE_MODE_APPLIES } from './governance.js';
 import { DATA_QUALITY_MODE_APPLIES } from './data_quality.js';
 import { COGNITIVE_MODE_APPLIES } from './cognitive.js';
+import { NETWORK_MODE_APPLIES } from './network.js';
 import { TYPOLOGY_MODE_APPLIES } from './typology.js';
 import { COMPLIANCE_MODE_APPLIES } from './compliance.js';
 
@@ -36,6 +37,7 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...GOVERNANCE_MODE_APPLIES,
   ...DATA_QUALITY_MODE_APPLIES,
   ...COGNITIVE_MODE_APPLIES,
+  ...NETWORK_MODE_APPLIES,
   ...TYPOLOGY_MODE_APPLIES,
   ...COMPLIANCE_MODE_APPLIES,
 };
