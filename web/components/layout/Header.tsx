@@ -38,6 +38,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
       { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
       { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
+      { label: "Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
     ],
   },
   {
@@ -54,6 +55,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
       { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
+      { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
     ],
   },
   {
@@ -76,6 +78,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "OSINT", href: "/osint", hint: "Subject enrichment & SpiderFoot" },
       { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
       { label: "Status", href: "/status", hint: "Live endpoint health" },
+      { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain · firing counts · drift" },
+      { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country exposure · FATF lists" },
+      { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
     ],
   },
 ];

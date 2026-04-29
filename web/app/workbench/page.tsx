@@ -16,6 +16,7 @@ import {
   PRESETS,
 } from "@/lib/data/modes";
 import type { FacultyFilterKey, ReasoningPreset } from "@/lib/types";
+import { recordModeFiring } from "@/lib/telemetry";
 import {
   BrainConsole,
   BrainManifestPanel,
@@ -164,6 +165,7 @@ export default function WorkbenchPage() {
     const taxonomyIds = Array.from(
       new Set(selectedModes.flatMap((m) => m.taxonomyIds)),
     );
+    recordModeFiring(ids);
     setRunResult({
       ranAt: new Date().toISOString(),
       modeCount: ids.length,
