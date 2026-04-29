@@ -122,6 +122,34 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ),
   ];
 
+  // ── Adverse-media findings — full evidence block for the PDF ───
+  // The .txt has emitted this for several PRs already (hit volume,
+  // categories with counts, keyword groups, top keywords, per-hit
+  // evidence with offsets, news dossier with article links). The
+  // PDF render historically only showed the chip overlay above and
+  // dropped everything else. Operator can't take that to a regulator
+  // — every adverse-media disposition needs the EVIDENCE in the
+  // file, not a category badge. Rebuilt below.
+  const amScored = sb?.adverseMediaScored ?? null;
+  const amTotalHits =
+    amScored?.total ??
+    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+      (sb?.adverseMedia?.length ?? 0);
+  const amDistinctKw = amScored?.distinctKeywords ?? (sb?.adverseMedia?.length ?? 0);
+  const amCategoriesTripped =
+    amScored?.categoriesTripped && amScored.categoriesTripped.length > 0
+      ? amScored.categoriesTripped
+      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
+  const amVectorScore =
+    amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
+  const amTopKeywords = amScored?.topKeywords ?? [];
+  const newsArticles = (
+    sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string; keywordGroups?: string[] }>; articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
+  )?.newsDossier?.articles ?? [];
+  const newsDossierMeta = (
+    sb as { newsDossier?: { articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
+  )?.newsDossier;
+
   // Recommendation
   let rec = "";
   if (sev === "critical") {
@@ -293,6 +321,31 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     /* adverse media list */
     .am-list{list-style:none;display:flex;flex-direction:column;gap:5px}
     .am-list li{display:flex;align-items:center;gap:8px}
+
+    /* adverse-media findings & evidence — full block (was previously
+       only emitted in the .txt; now in the PDF too so the regulator
+       reads the same evidence on either artefact). */
+    .am-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+    .am-metric{border:1px solid var(--border);border-radius:5px;background:var(--card);padding:8px 10px}
+    .am-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:3px}
+    .am-metric-value{font-size:14px;font-weight:700;color:var(--ink0)}
+    .am-block{margin:10px 0;padding:10px 12px;border:1px solid var(--border);border-left:2px solid var(--brand);border-radius:4px;background:var(--card)}
+    .am-block-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:6px;font-weight:600}
+    .am-bullets{list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--ink1);line-height:1.5}
+    .am-bullets li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .am-bullets.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px}
+    .am-posture{margin-top:10px;padding:8px 10px;border:1px dashed var(--border);border-radius:4px;font-size:10.5px;color:var(--ink2);line-height:1.5;background:var(--bg)}
+    .am-posture strong{color:var(--ink1)}
+
+    /* news dossier — clickable article cards */
+    .news-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+    .news-item{border:1px solid var(--border);border-left:2px solid var(--brand);border-radius:4px;background:var(--bg);padding:7px 10px}
+    .news-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:9.5px;color:var(--ink3);margin-bottom:3px}
+    .news-source{font-weight:600;color:var(--ink2)}
+    .news-title{font-size:11px;font-weight:600;color:var(--ink0);line-height:1.4;margin-bottom:3px}
+    .news-snippet{font-size:10px;color:var(--ink2);line-height:1.45;margin-top:3px}
+    .news-link{font-size:9.5px;color:var(--brand);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-decoration:none;word-break:break-all;display:inline-block;margin-top:3px}
+    .news-link:hover{text-decoration:underline}
 
     /* recommendation */
     .rec-line{padding:5px 0;border-bottom:1px solid var(--border);color:var(--ink0);font-size:11px}
@@ -483,11 +536,109 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     </div>
   </div>` : ""}
 
-  <!-- ADVERSE MEDIA -->
-  ${amRows.length > 0 ? `
+  <!-- ADVERSE MEDIA — FINDINGS & EVIDENCE -->
+  ${amCount > 0 || amTotalHits > 0 ? `
   <div class="section">
-    <div class="section-title">Adverse Media Overlay</div>
-    <ul class="am-list">${amRows.join("")}</ul>
+    <div class="section-title">Adverse Media — Findings &amp; Evidence</div>
+
+    <!-- Hit-volume metrics -->
+    <div class="am-metrics">
+      <div class="am-metric">
+        <div class="am-metric-label">Hit volume</div>
+        <div class="am-metric-value">${amTotalHits} keyword hit${amTotalHits === 1 ? "" : "s"}</div>
+      </div>
+      <div class="am-metric">
+        <div class="am-metric-label">Distinct terms</div>
+        <div class="am-metric-value">${amDistinctKw}</div>
+      </div>
+      <div class="am-metric">
+        <div class="am-metric-label">Categories tripped</div>
+        <div class="am-metric-value">${amCategoriesTripped.length}</div>
+      </div>
+      ${amVectorScore != null ? `
+      <div class="am-metric">
+        <div class="am-metric-label">Vector score</div>
+        <div class="am-metric-value">${amVectorScore}/100</div>
+      </div>` : ""}
+    </div>
+
+    <!-- Categories tripped (with counts when scored) -->
+    ${amCategoriesTripped.length > 0 ? `
+    <div class="am-block">
+      <div class="am-block-title">Categories tripped</div>
+      <ul class="am-bullets">
+        ${amCategoriesTripped.map((c) => {
+          const count = amScored?.byCategory?.[c];
+          return `<li><span class="chip chip-amber">${e(c.replace(/_/g, " "))}</span>${count != null ? ` <span class="muted">${count} hit${count === 1 ? "" : "s"}</span>` : ""}</li>`;
+        }).join("")}
+      </ul>
+    </div>` : ""}
+
+    <!-- Keyword groups fired (operator-friendly AML doctrine grouping) -->
+    ${(sb?.adverseKeywordGroups ?? []).length > 0 ? `
+    <div class="am-block">
+      <div class="am-block-title">Keyword groups fired</div>
+      <ul class="am-bullets">
+        ${(sb!.adverseKeywordGroups ?? []).map((g) =>
+          `<li><span class="chip chip-red">${e(g.label)}</span> <span class="muted">${g.count} hit${g.count === 1 ? "" : "s"}</span> <span class="mono muted">[${e(g.group)}]</span></li>`
+        ).join("")}
+      </ul>
+    </div>` : ""}
+
+    <!-- Top keywords -->
+    ${amTopKeywords.length > 0 ? `
+    <div class="am-block">
+      <div class="am-block-title">Top keywords</div>
+      <ul class="am-bullets">
+        ${amTopKeywords.slice(0, 10).map((k) =>
+          `<li><span class="mono" style="color:var(--ink0)">"${e(k.keyword)}"</span> → <span class="muted">${e(k.categoryId)}</span> <span class="muted">(${k.count} occurrence${k.count === 1 ? "" : "s"})</span></li>`
+        ).join("")}
+      </ul>
+    </div>` : ""}
+
+    <!-- Per-hit evidence — exact match locations -->
+    ${(sb?.adverseMedia ?? []).length > 0 ? `
+    <div class="am-block">
+      <div class="am-block-title">Per-hit evidence (first 15)</div>
+      <ul class="am-bullets mono">
+        ${(sb!.adverseMedia ?? []).slice(0, 15).map((a) =>
+          `<li><span class="muted">[${e(a.categoryId)}]</span> "${e(a.keyword)}"${a.offset != null ? ` <span class="muted">@${a.offset}</span>` : ""}</li>`
+        ).join("")}
+      </ul>
+      ${(sb?.adverseMedia ?? []).length > 15 ? `<div class="muted" style="font-size:10px;margin-top:4px">…and ${(sb!.adverseMedia ?? []).length - 15} more — see attached evidence pack.</div>` : ""}
+    </div>` : ""}
+
+    <!-- News dossier with clickable article links -->
+    ${newsArticles.length > 0 ? `
+    <div class="am-block">
+      <div class="am-block-title">News dossier ${newsArticles.length} article${newsArticles.length === 1 ? "" : "s"}${newsDossierMeta?.topSeverity ? ` · top severity ${e(newsDossierMeta.topSeverity.toUpperCase())}` : ""}${newsDossierMeta?.source ? ` · source ${e(newsDossierMeta.source)}` : ""}${newsDossierMeta?.languages?.length ? ` · ${e(newsDossierMeta.languages.join(", "))}` : ""}</div>
+      <div class="news-list">
+        ${newsArticles.slice(0, 10).map((a) => {
+          const sevTone = a.severity === "critical" || a.severity === "high"
+            ? "chip-red"
+            : a.severity === "medium"
+              ? "chip-amber"
+              : "chip-green";
+          const sevChip = a.severity ? `<span class="chip ${sevTone}">${e(a.severity.toUpperCase())}</span>` : "";
+          const dateBit = a.pubDate ? ` <span class="muted mono">${e(a.pubDate)}</span>` : "";
+          const groups = (a.keywordGroups ?? []).slice(0, 3);
+          const groupsBit = groups.length > 0 ? ` <span class="muted">· ${e(groups.join(" · "))}</span>` : "";
+          const snippetTrim = a.snippet && a.snippet.length > 220 ? a.snippet.slice(0, 220) + "…" : (a.snippet ?? "");
+          return `<div class="news-item">
+            <div class="news-meta">${sevChip} <span class="news-source">${e(a.source ?? "—")}</span>${dateBit}${groupsBit}</div>
+            <div class="news-title">${e(a.title)}</div>
+            ${snippetTrim ? `<div class="news-snippet">${e(snippetTrim)}</div>` : ""}
+            ${a.link ? `<a class="news-link" href="${e(a.link)}" target="_blank" rel="noopener noreferrer">${e(a.link)}</a>` : ""}
+          </div>`;
+        }).join("")}
+      </div>
+      ${newsArticles.length > 10 ? `<div class="muted" style="font-size:10px;margin-top:6px">…and ${newsArticles.length - 10} more article(s) — full dossier in JSON sidecar / .txt export.</div>` : ""}
+    </div>` : ""}
+
+    <!-- Source posture / constructive-knowledge limit -->
+    <div class="am-posture">
+      <strong>Source posture:</strong> open-source / classifier-derived. Constructive-knowledge threshold (FDL 10/2025 Art.2(3)) requires analyst review and live-news corroboration before SAR / EDD action.
+    </div>
   </div>` : ""}
 
   <!-- FACTS -->
