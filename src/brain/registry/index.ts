@@ -25,3 +25,11 @@ export type { GuardOutcome } from './taxonomic-guard.js';
 export { retrieve } from './retriever.js';
 
 export { buildSeedRegistry, _resetSeedRegistryForTests } from './seed-catalogue.js';
+
+export { parseCitations, validateCitations } from './citation-validator.js';
+export type {
+  ParsedCitation,
+  CitationDefect,
+  UngroundedClaim,
+  ValidationReport,
+} from './citation-validator.js';
