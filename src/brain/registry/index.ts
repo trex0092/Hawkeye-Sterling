@@ -33,3 +33,22 @@ export type {
   UngroundedClaim,
   ValidationReport,
 } from './citation-validator.js';
+
+export { checkCompletion, buildFailClosed, SECTION_IDS } from './response-schema.js';
+export type {
+  AdvisorResponseV1,
+  Verdict,
+  ConfidenceScore,
+  FactsSection,
+  RedFlagsSection,
+  FrameworkCitationsSection,
+  DecisionSection,
+  ConfidenceSection,
+  CounterArgumentSection,
+  AuditTrailSection,
+  EscalationPathSection,
+  CompletionDefect,
+  CompletionResult,
+  FailClosedResponse,
+  SectionId,
+} from './response-schema.js';
