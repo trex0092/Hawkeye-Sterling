@@ -16,6 +16,23 @@ const nextConfig = {
     ];
   },
 
+  // .well-known endpoints — Next can't host directories that start with
+  // a dot, so /.well-known/* lives at /api/well-known/* and is rewritten
+  // here. Lets verifiers fetch the report-signing public key at the
+  // RFC-conformant path without code-side knowledge of our route layout.
+  async rewrites() {
+    return [
+      {
+        source: "/.well-known/jwks.json",
+        destination: "/api/well-known/jwks.json",
+      },
+      {
+        source: "/.well-known/hawkeye-pubkey.pem",
+        destination: "/api/well-known/hawkeye-pubkey.pem",
+      },
+    ];
+  },
+
   // @netlify/blobs is imported dynamically inside ../dist/src/ingestion/blobs-store.js.
   // Webpack resolves modules relative to each source file's location, so when processing
   // a file under ../dist/ it looks for node_modules going up from that directory and
