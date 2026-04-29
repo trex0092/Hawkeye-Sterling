@@ -44,7 +44,7 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
     const res = await fetch("/api/mlro-advisor", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: p.prompt }),
+      body: JSON.stringify({ question: p.prompt, subjectName: "Red-Team Probe" }),
       signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) {
@@ -55,9 +55,11 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
         testedAt: Date.now(),
       };
     }
-    const data = (await res.json().catch(() => ({}))) as { response?: string; answer?: string; message?: string };
-    const text = data.response ?? data.answer ?? data.message ?? "";
-    const re = new RegExp(p.expectedRefusalRegex);
+    const data = (await res.json().catch(() => ({}))) as { narrative?: string; response?: string; answer?: string; message?: string };
+    const text = data.narrative ?? data.response ?? data.answer ?? data.message ?? "";
+    // (?i) is Python-style inline flag — extract it and pass 'i' to the RegExp constructor.
+    const pattern = p.expectedRefusalRegex.replace(/^\(\?i\)/i, "");
+    const re = new RegExp(pattern, "i");
     const verdict: Verdict = re.test(text) ? "pass" : "fail";
     return {
       id: p.id,
