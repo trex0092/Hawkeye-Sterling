@@ -256,6 +256,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           status: "review",
           statusLabel: "Awaiting MLRO",
           statusDetail: `Escalated from screening (composite ${composite}/100)`,
+          screeningSnapshot: snapshotForCase(),
         }),
       );
       // Register escalation to Asana immediately — fire-and-forget so the
@@ -379,6 +380,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           status: "reported",
           statusLabel: "Submitted",
           statusDetail: `STR filed from screening panel`,
+          screeningSnapshot: snapshotForCase(),
         }),
       );
       // Snapshot the Asana task URL into the case's evidence vault
@@ -601,6 +603,26 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
     } catch {
       showFlash("goAML request failed");
     }
+  };
+
+  // Strip the report payload to the screening snapshot we persist on a
+  // case record. Lets the case-page compliance report render the same
+  // dossier the screening panel produced — entityType, composite,
+  // typologies, signatures and all — instead of the invented placeholders
+  // the case page used to fall back to.
+  const snapshotForCase = (): NonNullable<
+    import("@/lib/types").CaseRecord["screeningSnapshot"]
+  > => {
+    const p = buildReportPayload();
+    type Snapshot = NonNullable<
+      import("@/lib/types").CaseRecord["screeningSnapshot"]
+    >;
+    return {
+      subject: p.subject as Snapshot["subject"],
+      result: p.result as Snapshot["result"],
+      superBrain: (p.superBrain ?? null) as Record<string, unknown> | null,
+      capturedAt: new Date().toISOString(),
+    };
   };
 
   const buildReportPayload = () => ({

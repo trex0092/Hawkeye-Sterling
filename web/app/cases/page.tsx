@@ -16,7 +16,26 @@ import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // Shape a case record into the compliance-report payload so the modal
 // renders the same MLRO dossier the screening panel produces.
+//
+// When the case carries a screeningSnapshot (cases opened after the
+// snapshot field was introduced), we use that verbatim — the report
+// renders with the actual composite score, typology hits, signatures
+// and entityType the operator saw in the screening panel.
+//
+// When the snapshot is missing (legacy case records, or a case opened
+// outside the screening flow), we fall back to a minimal payload that
+// lets the report builder render *something* without crashing —
+// status-derived severity, entityType "other", empty hits — and flag
+// the absence so the case detail panel can warn the operator that the
+// rendered report is degraded.
 function caseToReportPayload(c: CaseRecord): unknown {
+  if (c.screeningSnapshot) {
+    return {
+      subject: c.screeningSnapshot.subject,
+      result: c.screeningSnapshot.result,
+      superBrain: c.screeningSnapshot.superBrain ?? null,
+    };
+  }
   return {
     subject: {
       id: c.id,
