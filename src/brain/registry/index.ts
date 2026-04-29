@@ -35,6 +35,19 @@ export type {
 } from './citation-validator.js';
 
 export { checkCompletion, buildFailClosed, SECTION_IDS } from './response-schema.js';
+
+export { AuditLogStore, persistedSourceFromChunk } from './audit-log.js';
+export type {
+  AuditEntryV1,
+  AuditEntryInput,
+  AuditQuery,
+  AuditQueryResult,
+  AdvisorMode,
+  ModelBuildHashes,
+  ReasoningTurn,
+  PersistedSource,
+  UserFeedback,
+} from './audit-log.js';
 export type {
   AdvisorResponseV1,
   Verdict,
