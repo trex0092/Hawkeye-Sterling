@@ -265,6 +265,182 @@ const DEFAULT_POLICIES: Policy[] = [
       "No employee may solicit or accept gifts, hospitality, or entertainment from customers, suppliers, or counterparties with a value exceeding AED 500 per occasion or AED 1,000 per calendar year from the same source. All gifts and entertainment received above AED 200 must be declared in the Gifts Register within 5 business days. Gifts of cash or cash equivalents (gift cards, vouchers) are prohibited regardless of value. Providing gifts to public officials or regulators is prohibited in all circumstances. Facilitation payments are never acceptable. Breaches are reported to the MLRO and may constitute grounds for disciplinary action or referral to law enforcement. The Gifts Register is reviewed by Internal Audit annually.",
     lastReviewed: "2026-04-01",
   },
+  {
+    id: "ungp-human-rights",
+    section: "Human Rights",
+    title: "UN Guiding Principles Human-Rights Policy",
+    body:
+      "We commit to respect internationally recognised human rights as articulated in the International Bill of Human Rights and the ILO Core Conventions. Salient human-rights risks across our operations and value chain are identified annually and prioritised by severity (scale, scope, irremediability) and likelihood, consistent with UNGP Pillar 2. We integrate findings into business decisions, track effectiveness, and communicate externally. Operational-level grievance mechanisms must be legitimate, accessible, predictable, equitable, transparent, rights-compatible, and a source of continuous learning. Where we have caused or contributed to adverse impacts we provide or cooperate in remedy. The MLRO escalates any salient-risk breach to the Board within 15 business days.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "ai-governance",
+    section: "AI Governance",
+    title: "Responsible AI Governance Policy",
+    body:
+      "Every AI / ML system in scope (rule-augmenting models, screening uplift, narrative drafting, anomaly detection) is classified into a risk tier aligned with the EU AI Act and NIST AI RMF Govern-Map-Measure-Manage profile. High-risk systems require: (1) a published model card; (2) documented training-data lineage; (3) bias and fairness evaluation across protected cohorts; (4) human-in-the-loop disposition for any adverse customer outcome; (5) post-deployment monitoring for drift. The MLRO is the accountable owner; the AI Governance Committee approves go-live. Generative-AI outputs in regulatory filings must be reviewed by a qualified human and labelled in the audit chain.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "ai-explainability",
+    section: "AI Governance",
+    title: "AI Explainability & Contestability Policy",
+    body:
+      "Any AI-derived score that materially affects a customer disposition (onboarding refusal, exit, EDD, freeze) must be accompanied by a human-readable explanation citing the contributing features and the policy rule applied. Customers may contest an AI-derived disposition; contests are routed to a non-author MLRO reviewer within 5 business days. Black-box models without satisfactory feature attribution are prohibited from making terminal decisions. Explanations are stored in the case file and retained for the full 10-year window. Quarterly explainability audits sampled by Internal Audit.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "lbma-rgg-policy",
+    section: "Responsible Sourcing",
+    title: "LBMA Responsible Gold Guidance Policy",
+    body:
+      "All gold counterparties are due-diligenced under the LBMA RGG five-step framework: (1) establish strong company management systems; (2) identify and assess supply-chain risks; (3) design and implement a strategy to respond to identified risks; (4) arrange for an independent third-party audit of the supply chain; (5) report annually on supply-chain due-diligence. Counterparty country-of-origin and refinery-of-origin must be evidenced before settlement. Gold from CAHRA jurisdictions requires Step-3 mitigation evidence reviewed by the MLRO. Annual public RGG report is published within 90 days of fiscal year-end.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "uae-rsg-policy",
+    section: "Responsible Sourcing",
+    title: "UAE Responsible Sourcing of Gold Policy",
+    body:
+      "We comply with the UAE Good Delivery (UAEGD) Standard and the DMCC Rules for Risk-Based Due Diligence in the Gold and Precious Metals Supply Chain. Country-of-origin attestation, KYS (Know-Your-Supplier) onboarding files, and chain-of-custody records are mandatory before any gold receipt. A risk-based five-step due-diligence cycle is operated and audited annually by an approved DMCC reviewer. Findings are reported to the DMCC Precious Metals & Gemstones Office within statutory deadlines.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "rmi-rmap-policy",
+    section: "Responsible Sourcing",
+    title: "Responsible Minerals Initiative / RMAP Policy",
+    body:
+      "All tin, tungsten, tantalum, gold (3TG) and cobalt smelters in our supply chain must hold valid RMAP-conformant status or be on an active corrective-action plan tracked by the MLRO. The annual Conflict Minerals Reporting Template (CMRT) is collected from every Tier-1 supplier; non-response triggers a 60-day cure period followed by escalation. Smelter list is reconciled against the RMI public list quarterly. Non-conformant smelters with no remediation pathway are exited.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "cahra-policy",
+    section: "Responsible Sourcing",
+    title: "CAHRA Determination Policy",
+    body:
+      "Conflict-Affected and High-Risk Areas are determined using the OECD-DDG indicative list as a baseline, supplemented by the Heidelberg Conflict Barometer, ACLED conflict data, the Fragile States Index, and UN Panel of Experts reports. The CAHRA list is reviewed quarterly by the MLRO and ratified by the Board. Sourcing from a CAHRA jurisdiction is permitted only with documented Step-3 mitigation, independent audit (Step-4), and senior-management approval. CAHRA determinations are published in the annual responsible-sourcing report.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "oecd-anti-bribery",
+    section: "Anti-Bribery",
+    title: "OECD Anti-Bribery Convention Policy",
+    body:
+      "We prohibit bribery of foreign public officials in international business transactions, consistent with the OECD Anti-Bribery Convention, UAE Federal Decree-Law No. 31/2021 (Penal Code) Articles 234-239, and the UK Bribery Act where extraterritorial. Facilitation payments are not permitted. Third-party intermediaries are subject to anti-bribery due diligence and contractual representations. Books and records must accurately reflect every transaction; off-book accounts are prohibited. Suspected bribery is reported to the MLRO immediately and, where required, to law enforcement.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "oecd-mne-guidelines",
+    section: "Human Rights",
+    title: "OECD Guidelines for Multinational Enterprises Policy",
+    body:
+      "We adopt the OECD Guidelines for Multinational Enterprises chapters on disclosure, human rights, employment, environment, anti-bribery, consumer interests, and tax. We participate in good faith with the UAE National Contact Point in any specific instance raised. Annual self-assessment against each chapter is reported to the Board. Material non-conformities trigger a remediation plan reviewed by the MLRO and Internal Audit.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "oecd-ddg-policy",
+    section: "Responsible Sourcing",
+    title: "OECD Due Diligence Guidance Policy",
+    body:
+      "The OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas is the primary reference framework for our minerals due-diligence programme. Annex II red flags (location, supplier, transaction circumstances) are screened on every consignment. Step-3 risk-mitigation strategies are documented in the case file with measurable targets and a re-assessment date. Supply-chain ruptures or unmitigated Annex-II hits trigger temporary suspension pending Board review.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "fatf-rba-policy",
+    section: "Risk Appetite",
+    title: "FATF Risk-Based Approach Policy",
+    body:
+      "The firm operates a documented FATF Risk-Based Approach: customer, geographic, product, channel, and transaction risk factors are scored on a calibrated matrix; controls are commensurate with assessed risk. The methodology is reviewed annually and ratified by the Board. Higher-risk relationships receive enhanced due-diligence and intensified ongoing monitoring; lower-risk relationships receive simplified measures only where explicit FATF and CBUAE conditions are met. Risk-acceptance decisions outside appetite require MLRO and Board sign-off.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "fatf-grey-list-policy",
+    section: "Screening",
+    title: "FATF Grey-List Jurisdiction Policy",
+    body:
+      "Counterparties resident, incorporated, or beneficially owned in a FATF Increased-Monitoring (grey-list) jurisdiction are tagged in the case file and subject to: (1) source-of-funds verification independent of the customer; (2) MLRO pre-approval of any single transaction ≥ AED 200,000; (3) ongoing monitoring at the highest tier; (4) annual re-KYC. Grey-list status is refreshed within 5 business days of each FATF plenary publication. Any uplift to FATF Call-for-Action (black) list triggers an immediate freeze and Board notification.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "moe-circular-impl",
+    section: "Reporting",
+    title: "MoE Circular Implementation Policy",
+    body:
+      "Every UAE Ministry of Economy circular relevant to DNFBPs is reviewed by the MLRO within 5 business days of publication. A circular-implementation log records: date received, applicable scope, gap analysis vs current policy, target close date, owner, and Board ratification. The implementation deadline is the earlier of the regulator-stated date or 30 calendar days from publication. Open circulars are reported to the Board Audit Committee monthly.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "fiu-goaml-tech",
+    section: "Reporting",
+    title: "FIU goAML Technical Policy",
+    body:
+      "All reports to the UAE Financial Intelligence Unit are submitted exclusively through the goAML XML portal using the active schema version. The technical pipeline performs schema validation, business-rule validation, and four-eyes review prior to submission. Submission acknowledgements (XML envelope IDs) are captured in the audit chain with the corresponding case ID. Any rejection is remediated and re-submitted within 5 business days with root-cause analysis.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "modern-slavery-policy",
+    section: "Human Rights",
+    title: "Modern Slavery Policy",
+    body:
+      "We have a zero-tolerance approach to modern slavery in our business and supply chain. Annual modern-slavery statements are prepared in accordance with the UK Modern Slavery Act 2015 Section 54, the Australian Modern Slavery Act 2018, and the California Transparency in Supply Chains Act where applicable. Statements are signed by the Board, published on our website, and lodged with the relevant national registers. Suppliers contractually warrant compliance and submit to audit. Confirmed instances trigger remediation aligned with the UNGP, not punitive disengagement.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "forced-labour-policy",
+    section: "Human Rights",
+    title: "Forced Labour Policy",
+    body:
+      "We apply the ILO Indicators of Forced Labour to all upstream and downstream relationships: abuse of vulnerability, deception, restriction of movement, isolation, physical and sexual violence, intimidation and threats, retention of identity documents, withholding of wages, debt bondage, abusive working and living conditions, and excessive overtime. Any indicator confirmed in the supply chain triggers a documented investigation and remediation plan with worker-voice input. Where remediation is impossible we exit responsibly. Supplier exits are coordinated with NGO partners to avoid worker harm.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "child-labour-policy",
+    section: "Human Rights",
+    title: "Child Labour Policy",
+    body:
+      "We prohibit any form of child labour in our operations and supply chain. The minimum age for any worker is 15 (or the local statutory minimum if higher); for hazardous work, 18. Worst forms of child labour as defined in ILO Convention 182 are subject to immediate escalation to the MLRO and the relevant national authority. Where children are found in our value chain, remediation prioritises return to education and family economic support, not summary disengagement.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "un-sanctions-impl",
+    section: "Screening",
+    title: "UN Security Council Sanctions Implementation Policy",
+    body:
+      "We implement UNSC sanctions regimes including Resolution 1267 (Al-Qaida / ISIL / Taliban), 1718 (DPRK), and 2231 (Iran nuclear). Designations are propagated to screening engines within 24 hours of UN Sanctions List publication. Any positive match is treated as a hard-stop freeze with no commercial override; tipping-off prohibited. Travel-Rule, dual-use export controls, and maritime sectoral restrictions arising under these regimes are enforced through the relevant operational policies. EOCN is the UAE national contact point for delisting and licence applications.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "un-comtrade-validation",
+    section: "Reporting",
+    title: "UN Comtrade Trade-Statistics Validation Policy",
+    body:
+      "Counterparty trade narratives (declared origin, declared destination, declared product, declared volume) are validated against UN Comtrade bilateral trade statistics on a sample basis. Material divergence between declared trade and Comtrade-reported flows is recorded as a TBML red flag and dispositioned by the MLRO within 5 business days. Validation queries and outputs are stored in the case file for the 10-year retention window.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "environmental-dd",
+    section: "Responsible Sourcing",
+    title: "Environmental Due Diligence Policy",
+    body:
+      "Environmental crime predicates (illegal logging, IUU fishing, wildlife trafficking, illegal mining, illegal waste trafficking) are screened across the customer and counterparty book in line with FATF Best Practices on Environmental Crime. CITES documentation is verified for any in-scope fauna/flora; FLEGT licences for timber; CITES-equivalent attestations for processed wildlife products. Confirmed environmental-crime nexus is treated as a financial-crime predicate and triggers an STR.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "responsible-ai-procurement",
+    section: "AI Governance",
+    title: "Responsible AI Procurement Policy",
+    body:
+      "Third-party AI products are procured only from vendors who provide: (1) a model card or system card; (2) evidence of bias testing; (3) data-lineage documentation including any synthetic data generation; (4) contractual representations on training-data licensing and IP; (5) a security questionnaire covering OWASP LLM Top-10 controls. Vendors must accept audit rights and incident-disclosure obligations. Procurements without these artefacts require AI Governance Committee waiver with documented compensating controls.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "esg-disclosure",
+    section: "Disclosure",
+    title: "ESG Disclosure Policy",
+    body:
+      "We publish an annual ESG report aligned with the IFRS Sustainability Disclosure Standards (S1 / S2), the GRI Standards, and where applicable the SFDR Article 8/9 templates. Climate disclosures follow the TCFD recommendations and double-materiality assessment principles. Forward-looking metrics include scope-1, scope-2, and material scope-3 emissions, water stewardship, and human-rights salient risks. Greenwashing is prohibited; every quantitative disclosure must trace to an auditable methodology in the disclosure-control register.",
+    lastReviewed: "2026-04-15",
+  },
 ];
 
 function load(): Policy[] {
@@ -288,6 +464,7 @@ function save(policies: Policy[]) {
 const SECTIONS = [
   "Charter", "Redlines", "Risk Appetite", "Onboarding", "Screening",
   "Reporting", "Governance", "Data", "Sector: DPMS", "Sector: VASP", "PEP Policy",
+  "Human Rights", "AI Governance", "Responsible Sourcing", "Anti-Bribery", "Disclosure",
 ];
 
 const BLANK_NEW: Omit<Policy, "id"> = {
