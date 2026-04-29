@@ -11,6 +11,7 @@ import { CoveragePanel } from "@/components/workbench/CoveragePanel";
 import {
   DEFAULT_SELECTED_MODE_IDS,
   FACULTY_FILTERS,
+  MINIMAL_SELECTED_MODE_IDS,
   MODES,
   PRESETS,
 } from "@/lib/data/modes";
@@ -138,6 +139,16 @@ export default function WorkbenchPage() {
   const handlePreset = (preset: ReasoningPreset) => {
     setSelectedIds(new Set(preset.modeIds));
     setActivePresetId(preset.id);
+  };
+
+  const handleSelectAll = () => {
+    setSelectedIds(new Set(MODES.map((m) => m.id)));
+    setActivePresetId("__weaponize_all");
+  };
+
+  const handleResetMinimal = () => {
+    setSelectedIds(new Set(MINIMAL_SELECTED_MODE_IDS));
+    setActivePresetId(null);
   };
 
   const handleRun = async () => {
@@ -297,6 +308,27 @@ export default function WorkbenchPage() {
                 running={isRunning}
                 subjectRequired={subjectName.trim() === ""}
               />
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+                  title="Activate every mode (covers 100% of Skills, Reasoning, and Deep-Analysis taxonomy IDs)"
+                >
+                  Weaponize all ({MODES.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetMinimal}
+                  className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand"
+                  title="Scope back to the minimal demo seed (4 modes)"
+                >
+                  Reset to minimal
+                </button>
+                <span className="text-11 text-ink-3 font-mono ml-auto">
+                  {selectedIds.size} / {MODES.length} active
+                </span>
+              </div>
               <PresetsCard
                 presets={PRESETS}
                 onSelect={handlePreset}
