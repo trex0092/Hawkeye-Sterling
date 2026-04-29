@@ -1,7 +1,7 @@
 "use client";
 
 import Papa from "papaparse";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import {
@@ -253,6 +253,41 @@ export default function BatchPage() {
   const [filterSev, setFilterSev] = useState<string>("all");
   const [page, setPage] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Pre-populate the row set when ?names=foo,bar,baz is in the URL —
+  // EOCN announcement detail panels link into /batch with the
+  // designated names already in hand. ?source=eocn-announcement-id
+  // is preserved as `caseId` per row for audit traceability.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const namesRaw = params.get("names");
+    if (!namesRaw) return;
+    const source = params.get("source") ?? undefined;
+    const split = namesRaw
+      .split(/[\n;|,]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .slice(0, 200);
+    if (split.length === 0) return;
+    setRows(
+      split.map((name) =>
+        source ? { name, caseId: source } : { name },
+      ),
+    );
+    setResults([]);
+    setSummary(null);
+    setProgress(null);
+    setError(null);
+    setPage(0);
+    // Clean the URL so a refresh doesn't keep re-injecting the same
+    // names.
+    window.history.replaceState(
+      {},
+      "",
+      window.location.pathname,
+    );
+  }, []);
 
   const running = progress !== null && (summary === null);
 
