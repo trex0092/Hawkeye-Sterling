@@ -67,7 +67,12 @@ import {
   buildCaseRecord,
 } from "@/lib/data/case-store";
 
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Timeline", "Evidence"] as const;
+// Timeline tab removed — its content was a placeholder + the same
+// adverse-media dossier rendered below the tabs unconditionally,
+// which made it visually identical to the Screening tab. Real
+// per-event timeline can return as its own panel when the engine
+// is wired.
+const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
@@ -900,6 +905,15 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
               subject.pep?.tier ||
               null
             }
+            hasAdverseMedia={
+              superBrain.status === "success" &&
+              ((superBrain.result.adverseKeywordGroups?.length ?? 0) > 0 ||
+                (superBrain.result.adverseMedia?.length ?? 0) > 0 ||
+                (superBrain.result.adverseMediaScored?.total ?? 0) > 0)
+            }
+            adverseMediaSeverity={
+              news.status === "success" ? news.result.topSeverity : null
+            }
           />
         </Field>
       </Section>
@@ -1110,6 +1124,8 @@ function CddPostureBadge({
   hasRedline,
   isPep,
   pepTier,
+  hasAdverseMedia,
+  adverseMediaSeverity,
 }: {
   stored: "CDD" | "EDD" | "SDD";
   brainSeverity: import("@/lib/api/quickScreen.types").QuickScreenSeverity | null;
@@ -1118,14 +1134,38 @@ function CddPostureBadge({
   hasRedline: boolean;
   isPep: boolean;
   pepTier: string | null;
+  hasAdverseMedia: boolean;
+  adverseMediaSeverity:
+    | "clear"
+    | "low"
+    | "medium"
+    | "high"
+    | "critical"
+    | null;
 }) {
   const reasons: string[] = [];
   if (brainSeverity === "critical") reasons.push("critical severity");
   if (brainScore != null && brainScore >= 85) reasons.push(`composite ${brainScore}/100`);
   if (hasSanctionsHit) reasons.push("confirmed sanctions hit");
   if (hasRedline) reasons.push("redline fired");
-  if (isPep && pepTier && /tier_1|tier 1|head_of_state/i.test(pepTier)) {
-    reasons.push("tier-1 PEP");
+  // FATF R.12 / FDL 10/2025 Art.17: any PEP tier triggers EDD, not
+  // just tier-1. Earlier logic left tier-2/3/4 PEPs and assessment-
+  // only PEPs sitting on standard CDD.
+  if (isPep) {
+    const tierLabel = pepTier
+      ? pepTier.replace(/^tier_/, "tier ").replace(/_/g, " ")
+      : "PEP";
+    reasons.push(tierLabel);
+  }
+  // FATF R.10 / FDL 10/2025 Art.16: any adverse-media positive
+  // requires EDD until analyst review and live-news corroboration
+  // clear it. Severity surfaced in rationale.
+  if (hasAdverseMedia) {
+    if (adverseMediaSeverity === "critical" || adverseMediaSeverity === "high") {
+      reasons.push(`adverse media (${adverseMediaSeverity})`);
+    } else {
+      reasons.push("adverse media");
+    }
   }
 
   const upgraded = reasons.length > 0 && stored !== "EDD";
@@ -1133,7 +1173,8 @@ function CddPostureBadge({
   const zeroTolerance =
     hasSanctionsHit ||
     brainSeverity === "critical" ||
-    (hasRedline && brainScore != null && brainScore >= 85);
+    (hasRedline && brainScore != null && brainScore >= 85) ||
+    adverseMediaSeverity === "critical";
 
   return (
     <div>

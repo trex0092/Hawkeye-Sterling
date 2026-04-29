@@ -65,16 +65,6 @@ function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "cri
   return "clear";
 }
 
-// Auto-hyperlink raw URLs so the news-dossier links in the embedded
-// canonical body are clickable in the HTML / PDF render. Operates on
-// already-escaped HTML — input is the post-escapeHtml string.
-function autolinkUrls(escaped: string): string {
-  return escaped.replace(
-    /(https?:\/\/[^\s<>"]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>',
-  );
-}
-
 function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
   const s = input.subject;
@@ -163,6 +153,64 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     "LBMA Responsible Gold Guidance v9",
     "OECD Due Diligence Guidance — Gold Supplement",
   ].map(f => `<li>${e(f)}</li>`).join("");
+
+  // Extract audit-trail fields from the canonical text the report
+  // builder produced. Renders them as a small styled panel in the
+  // PDF — the .txt download remains the canonical hash-protected
+  // form; the PDF just surfaces the integrity / signature lines so
+  // a regulator can read them without opening the .txt sidecar.
+  const grab = (re: RegExp): string => text.match(re)?.[1]?.trim() ?? "";
+  const runId = grab(/reasoning\.run_id\s+(\S+)/);
+  const generatedAtIso = grab(/brain\.generated_at\s+(\S+)/);
+  const engineVersion = grab(/brain\.engine_version\s+(\S+)/);
+  const schemaVersion = grab(/report\.schema_version\s+(\S+)/);
+  const buildSha = grab(/brain\.build_sha\s+(\S+)/);
+  const operatorRole = grab(/operator\.role\s+(.+)/);
+  const payloadSha = grab(/payload\.sha256\s+([a-f0-9]+)/);
+  const reportSha = grab(/report\.sha256\s+([a-f0-9]+)/);
+  const hmacSig = grab(/report\.signature\s+hmac-sha256:([a-f0-9]+)/);
+  const hmacFp = grab(/signing\.key_fp\s+([a-f0-9]+)/);
+  const edSig = grab(/report\.signature_ed25519\s+([a-f0-9]+)/);
+  const edFp = grab(/signing\.pubkey_fp\s+([a-f0-9]+)/);
+
+  const auditCell = (label: string, value: string): string =>
+    value
+      ? `<div class="audit-row"><span class="audit-label">${e(label)}</span><span class="audit-value">${e(value)}</span></div>`
+      : "";
+  const auditGridRows = [
+    auditCell("Run ID", runId),
+    auditCell("Brain generated", generatedAtIso),
+    auditCell("Engine version", engineVersion),
+    auditCell("Schema version", schemaVersion),
+    auditCell("Build SHA", buildSha),
+    auditCell("Operator", operatorRole),
+    auditCell("Payload SHA-256", payloadSha),
+    auditCell("Report SHA-256", reportSha),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  const signatureBlock =
+    hmacSig || edSig
+      ? `<div class="audit-signatures">
+          <div class="audit-sig-title">Signatures</div>
+          ${
+            hmacSig
+              ? `<div class="audit-sig"><span class="audit-sig-label">HMAC-SHA256</span><span class="audit-sig-fp">key fp ${e(hmacFp)}</span><code class="audit-sig-hex">${e(hmacSig)}</code></div>`
+              : ""
+          }
+          ${
+            edSig
+              ? `<div class="audit-sig"><span class="audit-sig-label">Ed25519</span><span class="audit-sig-fp">pubkey fp ${e(edFp)}</span><code class="audit-sig-hex">${e(edSig)}</code></div>`
+              : ""
+          }
+        </div>`
+      : "";
+
+  const integrityNote =
+    hmacSig || edSig
+      ? "Signatures cover report.sha256. Verify with the matching key — recipes in the .txt export. All timestamps UTC."
+      : "Report is hash-protected (SHA-256) but unsigned. Set REPORT_SIGNING_KEY and/or REPORT_ED25519_PRIVATE_KEY to enable authenticity proof. All timestamps UTC.";
 
   return `<!doctype html>
 <html lang="en">
@@ -269,29 +317,45 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     /* footer */
     .footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--ink3)}
 
-    /* canonical body — full text report, byte-identical to .txt
-       output. Carries the audit trail and SHA hashes so the PDF
-       and the .txt are interchangeable for regulator filing. */
-    .canonical{
-      margin-top:24px;
-      padding:14px 16px;
+    /* audit-trail panel — hashes / signatures / provenance, rendered
+       visually in the PDF. Same fields the .txt export carries in
+       monospace; the PDF surfaces them as a styled grid so the .txt
+       and PDF are distinct presentations of the same data, not
+       bundled. */
+    .audit-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:6px 18px;
+      padding:12px 14px;
       background:var(--card);
       border:1px solid var(--border);
       border-radius:5px;
+      margin-bottom:10px;
+    }
+    .audit-row{display:flex;justify-content:space-between;gap:12px;font-size:10.5px;line-height:1.5}
+    .audit-label{color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;font-size:9.5px;flex-shrink:0}
+    .audit-value{
+      color:var(--ink1);
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
       font-size:10px;
-      line-height:1.45;
-      color:var(--ink1);
-      white-space:pre-wrap;
-      word-break:break-word;
-      page-break-inside:auto;
+      text-align:right;
+      word-break:break-all;
+      max-width:60%;
     }
-    .canonical-title{
-      font-size:9px;text-transform:uppercase;letter-spacing:.08em;
-      color:var(--ink3);margin:18px 0 4px;
+    .audit-signatures{
+      padding:12px 14px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:5px;
+      margin-bottom:10px;
     }
-    .canonical a{color:var(--brand);text-decoration:none}
-    .canonical a:hover{text-decoration:underline}
+    .audit-sig-title{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:6px}
+    .audit-sig{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border)}
+    .audit-sig:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+    .audit-sig-label{font-size:10.5px;font-weight:600;color:var(--brand)}
+    .audit-sig-fp{font-size:9.5px;color:var(--ink3);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .audit-sig-hex{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:9px;color:var(--ink1);word-break:break-all}
+    .audit-note{font-size:10px;color:var(--ink3);line-height:1.5;margin-top:6px}
 
     /* print overrides — white background for paper, page numbers,
        running brand header so every page carries the report id. */
@@ -299,7 +363,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       :root{--bg:#fff;--card:#f8f8f8;--border:#ddd;--ink0:#000;--ink1:#222;--ink2:#555;--ink3:#888;--brand:#c0156a;--brand-dim:rgba(192,21,106,.08)}
       body{background:#fff;color:#222;padding:16px 20px}
       .toolbar{display:none}
-      .canonical{font-size:9.5px;background:#fff;border-color:#ddd}
+      .audit-grid,.audit-signatures{background:#fff;border-color:#ddd}
       .canonical a{color:#222;text-decoration:underline}
       @page{
         margin:18mm 16mm;
@@ -432,7 +496,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     <p style="color:var(--ink1);font-size:11.5px;line-height:1.7">
       On ${e(now.toUTCString().replace(" GMT", " UTC"))}, Hawkeye Sterling screened the ${e(s.entityType)} <strong style="color:var(--ink0)">${e(s.name)}</strong>${s.nationality ? ` (${e(s.nationality)} national)` : ""}${s.caseId ? ` under case ${e(s.caseId)}` : ""}, returning a composite risk score of <strong style="color:${sevColor}">${composite}/100</strong> (band: ${e(sev.toUpperCase())}).
       The sanctions vector ${r.hits.length === 0 ? `returned <strong>CLEAR</strong> (0 hits across the screened corpora)` : `returned <strong>${r.hits.length}</strong> possible match(es) at top match strength ${r.topScore}/100 — a name-similarity result does not constitute a confirmed designation`}.
-      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"} — see canonical body below for full findings.` : ""}
+      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"} — see findings section above for evidence.` : ""}
       ${pepTier ? `Subject classified as possible PEP (${e(pepTier)}) — requires independent verification.` : ""}
     </p>
   </div>
@@ -483,9 +547,15 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     <ul class="reg-list">${regFramework}</ul>
   </div>
 
-  <!-- CANONICAL TEXT BODY -->
-  <div class="canonical-title">Canonical report body (text-identical to .txt export — covered by report.sha256)</div>
-  <pre class="canonical">${autolinkUrls(escapeHtml(text))}</pre>
+  <!-- AUDIT TRAIL & INTEGRITY -->
+  <div class="section">
+    <div class="section-title">Audit trail &amp; integrity</div>
+    <div class="audit-grid">
+      ${auditGridRows}
+    </div>
+    ${signatureBlock}
+    <div class="audit-note">${e(integrityNote)}</div>
+  </div>
 
   <!-- FOOTER -->
   <div class="footer">
