@@ -13,7 +13,10 @@
     "export:taxonomies": "node scripts/export-taxonomies.cjs",
     "gen:skills-doc": "tsc && node scripts/gen-skills-doc.mjs",
     "brain:weaponize": "tsc && node scripts/weaponize-brain.mjs",
-    "server:brain-reason": "tsc && node server/brain-reason.mjs"
+    "server:brain-reason": "tsc && node server/brain-reason.mjs",
+    "registry:ingest": "tsc && node scripts/registry-ingest.mjs",
+    "registry:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/registry/index.js').then(({buildSeedRegistry})=>{const s=buildSeedRegistry();const snap=s.snapshot();console.log(JSON.stringify({chunks:s.size(),pending:snap.chunks.filter(c=>c.metadata.pending).length,registryHash:snap.registryHash},null,2))})\"",
+    "brain:nightly-eval": "tsc && node scripts/registry-nightly-eval.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^8.0.0"

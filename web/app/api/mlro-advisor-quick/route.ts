@@ -6,23 +6,30 @@
 // playbooks, red flags, doctrines, and common-sense rules so Haiku's
 // answer is well-grounded without slow reasoning.
 //
+// Two-pass deterministic critique: after Haiku answers, a sub-ms
+// verifier checks the response against four axes (citation grounding,
+// topic anchoring, structure sanity, no refusal/CoT-leak). If any axis
+// fails, ONE retry is issued with the defects fed back as
+// "fix these" hints. Most answers ship after pass 1; the retry only
+// fires when it actually saves a bad answer.
+//
 // IMPORTANT: this used to stream SSE deltas, but Netlify's Lambda runtime
 // buffers the entire response before returning, so streaming never
 // actually reached the browser — the client just sat idle until the
 // 12 s server-side kill-timer aborted upstream and the client-side 15 s
 // timer fired. Now we accumulate the full response on the server and
-// return a single JSON object: { ok, answer, elapsedMs }. End-to-end
-// latency is still ~3-7 s with Haiku 4.5 single-pass.
+// return a single JSON object: { ok, answer, elapsedMs, verification }.
 //
 // Body: { question: string; context?: { q, a }[] }
-// Response: { ok: boolean, answer?: string, elapsedMs: number, error?: string }
+// Response: { ok, answer, elapsedMs, advisorScore, citationReport,
+//             suggestedFollowUps, verification }
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
-import { verifyCitations } from "@/lib/server/citation-verifier";
+import { verifyCitations, type CitationReport } from "@/lib/server/citation-verifier";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +75,128 @@ function buildContextPreamble(pairs: ContextPair[]): string {
     .map((p, i) => `[Prior Q${i + 1}] ${p.q.slice(0, 160)}\n[Prior A${i + 1}] ${p.a.slice(0, 320)}`)
     .join("\n---\n");
   return `REGULATORY SESSION CONTEXT (prior Q&A in this session — use for continuity):\n${lines}\n\n`;
+}
+
+// ── Deterministic answer verifier ───────────────────────────────────────────
+//
+// Sub-ms post-pass over Haiku's draft. Returns a list of defects keyed by
+// axis. Empty array means the answer is shippable; non-empty means we
+// retry once with the defects fed back as targeted fix-it hints.
+//
+// Axes:
+//   1. citation_missing      — answer cites no recognised regulatory anchor
+//   2. citation_broken       — answer cites an anchor that didn't verify
+//   3. topic_anchor_missing  — classifier flagged FATF Recs for the topic
+//                              but the answer cited none of them
+//   4. too_short             — Quick mode should produce 4-10 paragraphs
+//   5. cot_leak              — answer includes thinking scaffolding
+//   6. refusal               — answer refuses a legitimate compliance ask
+
+interface AnswerDefect {
+  axis:
+    | "citation_missing"
+    | "citation_broken"
+    | "topic_anchor_missing"
+    | "too_short"
+    | "cot_leak"
+    | "refusal";
+  detail: string;
+}
+
+interface AnswerVerification {
+  passed: boolean;
+  defects: AnswerDefect[];
+}
+
+function citedFatfRecs(report: CitationReport): Set<string> {
+  const out = new Set<string>();
+  for (const c of report.citations) {
+    if (c.category !== "fatf_recommendation" || !c.verified) continue;
+    const m = c.raw.match(/(\d+)/);
+    if (m) out.add(m[1]!);
+  }
+  return out;
+}
+
+function verifyAnswer(
+  answer: string,
+  citationReport: CitationReport,
+  classifier: ReturnType<typeof classifyMlroQuestion>,
+): AnswerVerification {
+  const defects: AnswerDefect[] = [];
+
+  if (citationReport.verifiedCount === 0) {
+    defects.push({
+      axis: "citation_missing",
+      detail:
+        "Answer cites no recognised regulatory anchor. Cite at least one " +
+        "primary source (FATF Rec, FDL 10/2025 article, Cabinet Resolution, " +
+        "5/6AMLD, MLR 2017, BSA, etc.).",
+    });
+  }
+
+  if (citationReport.unknownCount > 0) {
+    const broken = citationReport.citations
+      .filter((c) => !c.verified)
+      .map((c) => `"${c.raw}" (${c.note ?? "not in catalogue"})`)
+      .join("; ");
+    defects.push({
+      axis: "citation_broken",
+      detail:
+        "These citations did not verify against the bundled regulatory " +
+        `catalogue: ${broken}. Replace each with a verified anchor or ` +
+        "remove the cite.",
+    });
+  }
+
+  const fatfHints = classifier.fatfRecHints as string[];
+  if (fatfHints.length > 0) {
+    const cited = citedFatfRecs(citationReport);
+    const expected = fatfHints.map((h: string) => String(h).replace(/[^0-9]/g, "")).filter(Boolean);
+    const matched = expected.some((e: string) => cited.has(e));
+    if (!matched && expected.length > 0) {
+      const expectedList = expected.slice(0, 4).map((e: string) => `R.${e}`).join(", ");
+      defects.push({
+        axis: "topic_anchor_missing",
+        detail:
+          `Question's primary topic is "${classifier.primaryTopic}". The brain ` +
+          `flagged FATF ${expectedList} as the canonical anchors — answer must ` +
+          `cite at least one of them.`,
+      });
+    }
+  }
+
+  const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount < 60) {
+    defects.push({
+      axis: "too_short",
+      detail:
+        `Answer is only ${wordCount} words. Quick mode should produce 4-10 ` +
+        "short paragraphs (or a tight bullet list of comparable substance).",
+    });
+  }
+
+  const head = answer.slice(0, 240);
+  if (/^\s*(?:thinking[: ]|let me think|first[, ] i (?:will|need|'ll)|i'll start by|<thinking>)/i.test(head)) {
+    defects.push({
+      axis: "cot_leak",
+      detail:
+        "Answer leaks chain-of-thought scaffolding. Deliver the final " +
+        "answer directly — no 'let me think' / 'first I'll' preamble.",
+    });
+  }
+
+  if (/^\s*(?:i (?:cannot|can't|am unable|'m not able)|sorry,? (?:i|but i)|unable to (?:answer|help|provide))/i.test(head)) {
+    defects.push({
+      axis: "refusal",
+      detail:
+        "Answer refuses a legitimate compliance question. The MLRO Advisor " +
+        "answers all in-scope AML/CFT/sanctions/PEP/adverse-media questions; " +
+        "only refuse when the input gate explicitly flags out-of-scope.",
+    });
+  }
+
+  return { passed: defects.length === 0, defects };
 }
 
 function buildEnrichedUserPrompt(question: string, contextPairs: ContextPair[]): string {
@@ -139,51 +268,47 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503, headers: CORS });
   }
 
+  const analysis = classifyMlroQuestion(question);
   const userPrompt = buildEnrichedUserPrompt(question, body.context ?? []);
 
   const upstreamCtl = new AbortController();
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);
 
-  try {
-    // Non-streaming request — we accumulate Anthropic's SSE deltas server-
-    // side because Netlify Lambda buffers the entire HTTP response anyway,
-    // making client-side streaming a fiction. Returning a single JSON
-    // payload is faster (no SSE framing overhead) and reliably crosses
-    // Netlify's edge.
+  /** Single Haiku turn — caller passes either the initial enriched prompt
+   *  or a follow-up rewrite prompt with defect feedback. Returns the
+   *  full text or throws on upstream / network / abort errors. */
+  async function callHaiku(userMessage: string): Promise<string> {
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "x-api-key": apiKey,
+        "x-api-key": apiKey!,
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        // We still ask Anthropic to stream so we get text as soon as the
-        // first delta lands, but we accumulate it inside the Lambda and
-        // return JSON. This minimises wall-clock latency vs non-streaming.
+        // Stream so we get text as soon as the first delta lands; we
+        // accumulate it inside the Lambda and return JSON.
         stream: true,
         system: [
           { type: "text", text: SYSTEM_PROMPT_BASE, cache_control: { type: "ephemeral" } },
         ],
-        messages: [{ role: "user", content: userPrompt }],
+        messages: [{ role: "user", content: userMessage }],
       }),
       signal: upstreamCtl.signal,
     });
 
     if (!upstream.ok || !upstream.body) {
       const txt = await upstream.text().catch(() => "");
-      return NextResponse.json(
-        { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt },
-        { status: upstream.status === 429 ? 429 : 502, headers: CORS },
-      );
+      const err = new Error(`upstream ${upstream.status}: ${txt.slice(0, 240)}`);
+      (err as Error & { upstreamStatus?: number }).upstreamStatus = upstream.status;
+      throw err;
     }
 
     const reader = upstream.body.getReader();
     const decoder = new TextDecoder();
-    let answer = "";
-
+    let text = "";
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -196,18 +321,86 @@ export async function POST(req: Request): Promise<Response> {
         let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
         try { evt = JSON.parse(payload); } catch { continue; }
         if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-          answer += evt.delta.text;
+          text += evt.delta.text;
         }
       }
     }
+    return text;
+  }
 
-    // Confidence + citations + follow-ups — same intelligence pack
-    // the deep advisor returns, computed cheaply from the rendered
-    // answer + the rule-based classifier.
+  /** Build the rewrite prompt for the second pass. The original enriched
+   *  prompt is reused so the model still has the full classifier context;
+   *  the previous draft and the verifier's defects are appended as a
+   *  targeted fix-it instruction. */
+  function buildRewritePrompt(originalPrompt: string, draft: string, defects: AnswerDefect[]): string {
+    const bullets = defects.map((d) => `  · [${d.axis}] ${d.detail}`).join("\n");
+    return [
+      originalPrompt,
+      "",
+      "PREVIOUS DRAFT (failed deterministic verification — do NOT repeat its mistakes):",
+      "<<<DRAFT",
+      draft.trim(),
+      "DRAFT>>>",
+      "",
+      "VERIFICATION DEFECTS to FIX (each must be resolved in your rewrite):",
+      bullets,
+      "",
+      "Produce a corrected answer. Same format constraints as the original instruction (4-10 short paragraphs or tight bullet list, cite primary regulatory anchors inline, no chain-of-thought). Address every defect listed above.",
+    ].join("\n");
+  }
+
+  try {
+    let answer: string;
+    try {
+      answer = await callHaiku(userPrompt);
+    } catch (err) {
+      const status = (err as Error & { upstreamStatus?: number }).upstreamStatus;
+      if (typeof status === "number") {
+        return NextResponse.json(
+          { ok: false, error: (err as Error).message, elapsedMs: Date.now() - startedAt },
+          { status: status === 429 ? 429 : 502, headers: CORS },
+        );
+      }
+      throw err;
+    }
+
+    let citationReport = verifyCitations(answer);
+    let verification = verifyAnswer(answer, citationReport, analysis);
+    let retried = false;
+    const initialDefects = verification.defects;
+
+    // Conditional rewrite — only fires when the deterministic verifier
+    // found at least one defect AND we still have budget for a second
+    // Haiku call. The rewrite prompt feeds the defects back as targeted
+    // fix-it hints so Haiku knows exactly what to repair.
+    const remainingBudgetMs = HARD_TIMEOUT_MS - (Date.now() - startedAt);
+    if (!verification.passed && remainingBudgetMs > 6_000) {
+      try {
+        const rewritePrompt = buildRewritePrompt(userPrompt, answer, verification.defects);
+        const rewritten = await callHaiku(rewritePrompt);
+        retried = true;
+        const rewrittenReport = verifyCitations(rewritten);
+        const rewrittenVerification = verifyAnswer(rewritten, rewrittenReport, analysis);
+        // Keep the rewrite if it's strictly better (fewer defects) OR the
+        // same count — the rewrite at least addressed structure/citation
+        // gaps even when it didn't fully eliminate them.
+        if (rewrittenVerification.defects.length <= verification.defects.length) {
+          answer = rewritten;
+          citationReport = rewrittenReport;
+          verification = rewrittenVerification;
+        }
+      } catch {
+        // Rewrite failed (timeout, upstream error). Stick with the
+        // original draft + defects rather than 502'ing — the user still
+        // gets an answer plus a warning chip from the verification chip.
+      }
+    }
+
+    // Confidence + citations + follow-ups — same intelligence pack the
+    // deep advisor returns. AdvisorScore reflects whichever draft we
+    // ultimately chose.
     const advisorScore = scoreAdvisorAnswer(answer, "approved");
-    const citationReport = verifyCitations(answer);
-    const analysisLite = classifyMlroQuestion(question);
-    const suggestedFollowUps = analysisLite.suggestedFollowUps?.slice(0, 3) ?? [];
+    const suggestedFollowUps = analysis.suggestedFollowUps?.slice(0, 3) ?? [];
 
     return NextResponse.json(
       {
@@ -217,6 +410,23 @@ export async function POST(req: Request): Promise<Response> {
         advisorScore,
         citationReport,
         suggestedFollowUps,
+        verification: {
+          passed: verification.passed,
+          defects: verification.defects,
+          retried,
+          initialDefectCount: initialDefects.length,
+        },
+        // Lightweight classifier hits the UI surfaces as chips above the
+        // answer ("smart context") so the operator can see what the
+        // brain pulled in before grounding Haiku.
+        classifierHits: {
+          primaryTopic: analysis.primaryTopic,
+          secondaryTopics: analysis.topics.slice(1, 4),
+          jurisdictions: analysis.jurisdictions,
+          fatfRecs: analysis.fatfRecDetails.slice(0, 6).map((r: { num: number; title: string }) => ({ num: r.num, title: r.title })),
+          confidence: analysis.confidence,
+          coverageScore: analysis.intelligenceProfile?.coverageScore ?? 0,
+        },
       },
       { status: 200, headers: CORS },
     );
