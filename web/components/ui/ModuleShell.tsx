@@ -8,6 +8,9 @@ export function ModuleShell({ children }: { children: ReactNode }) {
 
 interface ModuleHeaderProps {
   title: string;
+  /** Optional italic pink trailing word — matches the brand accent
+   *  used on screening hero ("Experience the *standard.*"). */
+  titleEm?: string;
   subtitle?: string;
   dotColor?: "brand" | "amber" | "green" | "red";
   badge?: { label: string; tone?: "default" | "critical" };
@@ -23,6 +26,7 @@ const DOT_COLOR: Record<NonNullable<ModuleHeaderProps["dotColor"]>, string> = {
 
 export function ModuleHeader({
   title,
+  titleEm,
   subtitle,
   dotColor = "brand",
   badge,
@@ -35,6 +39,12 @@ export function ModuleHeader({
           <span className={`w-2 h-2 rounded-full ${DOT_COLOR[dotColor]}`} />
           <h1 className="font-display font-normal text-36 leading-[1.1] tracking-tightest m-0 text-ink-0">
             {title}
+            {titleEm && (
+              <>
+                {" "}
+                <em className="italic text-brand">{titleEm}</em>
+              </>
+            )}
           </h1>
         </div>
         {subtitle && (

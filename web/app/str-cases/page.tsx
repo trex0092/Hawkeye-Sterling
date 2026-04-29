@@ -333,7 +333,8 @@ export default function StrCasesPage() {
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
       <ModuleHeader
-            title="STR Case Management"
+            title="STR Case"
+            titleEm="Management"
             subtitle="Module 05 · file without delay · no tipping-off"
             dotColor="brand"
             badge={{
