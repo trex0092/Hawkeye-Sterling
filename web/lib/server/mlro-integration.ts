@@ -31,7 +31,7 @@ import {
 } from "../../../dist/src/brain/registry/index.js";
 import { persistedSourceFromChunk, AuditLogStore } from "../../../dist/src/brain/registry/audit-log.js";
 import type { AdvisorResponseV1 } from "../../../dist/src/brain/registry/index.js";
-import { setJson, listKeys } from "./store.js";
+import { setJson, listKeys } from "./store";
 
 const REGISTRY = buildSeedRegistry();
 
