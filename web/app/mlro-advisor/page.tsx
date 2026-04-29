@@ -100,6 +100,30 @@ interface AdvisorResult {
     casePrecedentApplied?: boolean;
     regulatoryUpdatesApplied?: boolean;
   };
+  /** Quick-mode deterministic-verifier output. `passed` = the rendered
+   *  answer cleared all four axes (citation grounding, topic anchor,
+   *  structure sanity, no refusal/CoT-leak). `retried` = the verifier
+   *  triggered a rewrite pass. `initialDefectCount` lets the UI
+   *  distinguish "passed first try" from "passed after auto-correction". */
+  verification?: {
+    passed: boolean;
+    retried: boolean;
+    initialDefectCount: number;
+    defects: Array<{ axis: string; detail: string }>;
+  };
+  /** Compact summary of what the rule-based classifier surfaced for
+   *  this question — primary topic, secondary topics, jurisdictions,
+   *  FATF Recs, confidence, and the coverage score. Drives the
+   *  "smart context" chip row above Quick-mode answers so the operator
+   *  can see what the brain pulled in BEFORE Haiku ran. */
+  classifierHits?: {
+    primaryTopic: string;
+    secondaryTopics: string[];
+    jurisdictions: string[];
+    fatfRecs: Array<{ num: number; title: string }>;
+    confidence: "high" | "medium" | "low";
+    coverageScore: number;
+  };
   error?: string;
 }
 
@@ -404,14 +428,36 @@ export default function MlroAdvisorPage() {
         body: JSON.stringify({ question: q }),
         signal: ctl.signal,
       });
-      const data = (await res.json()) as { ok: boolean; answer?: string; error?: string; elapsedMs?: number };
+      const data = (await res.json()) as {
+        ok: boolean;
+        answer?: string;
+        error?: string;
+        elapsedMs?: number;
+        advisorScore?: AdvisorResult["advisorScore"];
+        citationReport?: AdvisorResult["citationReport"];
+        suggestedFollowUps?: AdvisorResult["suggestedFollowUps"];
+        verification?: AdvisorResult["verification"];
+        classifierHits?: AdvisorResult["classifierHits"];
+      };
       if (!data.ok || !data.answer) {
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
       setAdvisorHistory((prev) =>
         prev.map((e) =>
           e.id === entryId
-            ? { ...e, result: { ...e.result, narrative: data.answer ?? "", elapsedMs: data.elapsedMs ?? Date.now() - startedAt.getTime() } }
+            ? {
+                ...e,
+                result: {
+                  ...e.result,
+                  narrative: data.answer ?? "",
+                  elapsedMs: data.elapsedMs ?? Date.now() - startedAt.getTime(),
+                  ...(data.advisorScore ? { advisorScore: data.advisorScore } : {}),
+                  ...(data.citationReport ? { citationReport: data.citationReport } : {}),
+                  ...(data.suggestedFollowUps ? { suggestedFollowUps: data.suggestedFollowUps } : {}),
+                  ...(data.verification ? { verification: data.verification } : {}),
+                  ...(data.classifierHits ? { classifierHits: data.classifierHits } : {}),
+                },
+              }
             : e,
         ),
       );
@@ -943,7 +989,81 @@ export default function MlroAdvisorPage() {
                                     : `⚠ ${entry.result.citationReport.unknownCount} unknown cite${entry.result.citationReport.unknownCount === 1 ? "" : "s"}`}
                                 </span>
                               )}
+                              {entry.result.verification && (
+                                (() => {
+                                  const v = entry.result.verification;
+                                  const tone = v.passed
+                                    ? v.retried
+                                      ? "bg-violet-dim text-violet border-violet/40"
+                                      : "bg-green-dim text-green border-green/40"
+                                    : "bg-amber-dim text-amber border-amber/40";
+                                  const label = v.passed
+                                    ? v.retried
+                                      ? `↻ auto-corrected`
+                                      : `✓ verified`
+                                    : `⚠ ${v.defects.length} defect${v.defects.length === 1 ? "" : "s"}`;
+                                  const title = v.passed
+                                    ? v.retried
+                                      ? `Initial draft failed ${v.initialDefectCount} verification axis(es); the rewrite pass cleared every defect.`
+                                      : "Cleared all verification axes on the first pass (citation grounding, topic anchor, structure sanity, no refusal/CoT-leak)."
+                                    : `Verification still flagged ${v.defects.length} defect(s) after retry:\n\n${v.defects.map((d) => `· [${d.axis}] ${d.detail}`).join("\n\n")}`;
+                                  return (
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${tone}`}
+                                      title={title}
+                                    >
+                                      {label}
+                                    </span>
+                                  );
+                                })()
+                              )}
                             </div>
+                            {entry.result.classifierHits && (
+                              (() => {
+                                const h = entry.result.classifierHits;
+                                const chips: Array<{ label: string; tone: string; title: string }> = [];
+                                chips.push({
+                                  label: `topic · ${h.primaryTopic.replace(/_/g, " ")}`,
+                                  tone: "bg-brand-dim text-brand border-brand/30",
+                                  title: `Primary topic resolved by the rule-based classifier (${h.confidence} confidence, coverage ${h.coverageScore}/100). Used to ground Haiku's prompt.`,
+                                });
+                                if (h.secondaryTopics.length > 0) {
+                                  chips.push({
+                                    label: `+ ${h.secondaryTopics.length} secondary`,
+                                    tone: "bg-bg-2 text-ink-1 border-hair-2",
+                                    title: `Secondary topics: ${h.secondaryTopics.map((t) => t.replace(/_/g, " ")).join(", ")}`,
+                                  });
+                                }
+                                if (h.fatfRecs.length > 0) {
+                                  chips.push({
+                                    label: `FATF · ${h.fatfRecs.map((r) => `R.${r.num}`).join(" ")}`,
+                                    tone: "bg-violet-dim text-violet border-violet/30",
+                                    title: `Canonical FATF Recommendations the verifier expected the answer to cite:\n\n${h.fatfRecs.map((r) => `· R.${r.num} — ${r.title}`).join("\n")}`,
+                                  });
+                                }
+                                if (h.jurisdictions.length > 0) {
+                                  chips.push({
+                                    label: `${h.jurisdictions.join(" · ")}`,
+                                    tone: "bg-amber-dim text-amber border-amber/30",
+                                    title: `Jurisdictions detected in the question: ${h.jurisdictions.join(", ")}`,
+                                  });
+                                }
+                                if (chips.length === 0) return null;
+                                return (
+                                  <div className="mb-2 -mt-1 flex flex-wrap gap-1.5">
+                                    {chips.map((c) => (
+                                      <span
+                                        key={c.label}
+                                        className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${c.tone}`}
+                                        title={c.title}
+                                      >
+                                        {c.label}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              })()
+                            )}
                             <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">
                               {entry.result.narrative || (streamingEntryId === entry.id ? "" : "")}
                               {streamingEntryId === entry.id && (
