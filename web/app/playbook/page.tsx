@@ -3339,6 +3339,1570 @@ const PLAYBOOKS: Playbook[] = [
       ]},
     ],
   },
+  {
+    id: "lbma-rgg-step-1",
+    title: "LBMA RGG Step 1 — Strong Management Systems",
+    typology: "lbma-rgg-step-1",
+    family: "DPMS",
+    steps: [
+      { title: "1. Senior commitment & policy", required: true, checks: [
+        "Confirm responsible-sourcing policy is signed by senior management and dated within 12 months",
+        "Verify policy covers OECD Annex II risks (conflict, human-rights abuses, ML/TF, bribery)",
+        "Map policy alignment to LBMA RGG v9 paragraphs 1.1–1.5",
+      ]},
+      { title: "2. Internal accountability", required: true, checks: [
+        "Identify the appointed Compliance Officer and document their independence",
+        "Confirm staff training records cover RGG within last 12 months",
+        "Inspect the grievance / whistleblowing channel and test response timelines",
+      ]},
+      { title: "3. Record-keeping baseline", required: true, checks: [
+        "Validate retention of supplier KYC + transaction records for >= 5 years",
+        "Confirm audit trail captures source mine / scrap origin / counterparty per lot",
+        "Cross-check Step-1 documentation pack against LBMA Refiner Toolkit checklist",
+      ]},
+    ],
+  },
+  {
+    id: "lbma-rgg-step-2",
+    title: "LBMA RGG Step 2 — Identify & Assess Supply-Chain Risks",
+    typology: "lbma-rgg-step-2",
+    family: "DPMS",
+    steps: [
+      { title: "1. Supplier mapping", required: true, checks: [
+        "List every Tier-1 supplier with country of origin, mine ID, and transit route",
+        "Flag any supplier with operations in or transiting a CAHRA jurisdiction",
+        "Capture LBMA / RJC / RMI certification status per supplier",
+      ]},
+      { title: "2. Red-flag screening", required: true, checks: [
+        "Screen each supplier against OFAC, UN, EU, UK, EOCN, and adverse media",
+        "Identify all OECD Annex II Part I (origin) and Part II (transit) red flags",
+        "Document any unusual gold flows, weight discrepancies, or undeclared origin",
+      ]},
+      { title: "3. Risk scoring", required: true, checks: [
+        "Apply documented scoring rubric (low / medium / high) per supplier and per lot",
+        "Escalate any high-risk lot to Compliance Officer within 1 business day",
+        "Refresh assessment on any change of origin, ownership, or transit",
+      ]},
+    ],
+  },
+  {
+    id: "lbma-rgg-step-3",
+    title: "LBMA RGG Step 3 — Risk Response Strategy",
+    typology: "lbma-rgg-step-3",
+    family: "DPMS",
+    steps: [
+      { title: "1. Mitigation plan", required: true, checks: [
+        "Document risk-mitigation actions per high-risk supplier with owner and deadline",
+        "Decide on continued sourcing under mitigation, suspension, or termination",
+        "Obtain senior-management sign-off on the response decision",
+      ]},
+      { title: "2. Implementation", required: true, checks: [
+        "Verify that mitigation measures (enhanced controls, on-site visits, sampling) are operating",
+        "Track measurable improvement against initial risk score within 6 months",
+        "Maintain disengagement log where supplier relationships are terminated",
+      ]},
+      { title: "3. Stakeholder engagement", required: false, checks: [
+        "Engage upstream actors and local government bodies where the OECD Guidance recommends",
+        "Cooperate with industry initiatives addressing identified risks",
+        "Document all engagement records as part of the audit pack",
+      ]},
+    ],
+  },
+  {
+    id: "lbma-rgg-step-4",
+    title: "LBMA RGG Step 4 — Independent Third-Party Audit",
+    typology: "lbma-rgg-step-4",
+    family: "DPMS",
+    steps: [
+      { title: "1. Auditor selection", required: true, checks: [
+        "Confirm auditor is on the LBMA Approved Service Provider list",
+        "Validate auditor independence — no advisory work for the refiner in last 24 months",
+        "Agree audit scope covering full Steps 1–5 plus prior-year findings",
+      ]},
+      { title: "2. Audit fieldwork", required: true, checks: [
+        "Provide auditor with full supplier register, transaction sample, and policy pack",
+        "Make Compliance Officer and senior management available for interview",
+        "Allow on-site sampling of physical inventory and records",
+      ]},
+      { title: "3. Audit report & remediation", required: true, checks: [
+        "Receive Reasonable-Assurance audit opinion in writing",
+        "Track every audit finding to closure with documented evidence",
+        "Submit final audit report to LBMA per RGG submission deadline",
+      ]},
+    ],
+  },
+  {
+    id: "lbma-rgg-step-5",
+    title: "LBMA RGG Step 5 — Annual Public Report",
+    typology: "lbma-rgg-step-5",
+    family: "DPMS",
+    steps: [
+      { title: "1. Report drafting", required: true, checks: [
+        "Cover all 5 RGG steps with management commentary on each",
+        "Disclose CAHRA exposure, high-risk lots, and mitigation outcomes",
+        "Include summary of audit findings and corrective actions",
+      ]},
+      { title: "2. Approval & publication", required: true, checks: [
+        "Obtain CEO and Board sign-off on the public report",
+        "Publish on the refiner's website and submit to LBMA portal",
+        "Maintain prior-year reports accessible for 5 years",
+      ]},
+      { title: "3. Stakeholder communication", required: false, checks: [
+        "Notify customers and counterparties of the published report",
+        "Respond to public queries within 30 calendar days",
+        "Capture lessons learned to feed into next year's Steps 1–4",
+      ]},
+    ],
+  },
+  {
+    id: "uae-rsg-onboarding",
+    title: "UAE RSG (Responsible Sourcing of Gold) — Onboarding",
+    typology: "uae-rsg-onboarding",
+    family: "DPMS",
+    steps: [
+      { title: "1. Scope confirmation", required: true, checks: [
+        "Confirm refiner is licensed under MoE / DMCC and meets UAE-RSG eligibility",
+        "Map gold inputs (ore, doré, scrap, recycled) against UAE-RSG product scope",
+        "Capture mass-balance baseline for the audit period",
+      ]},
+      { title: "2. Counterparty due diligence", required: true, checks: [
+        "Apply UAE-RSG enhanced KYC on every Tier-1 counterparty",
+        "Screen against TFS lists, EOCN, adverse media, and CAHRA register",
+        "Obtain shipping, customs, and chain-of-custody documentation per lot",
+      ]},
+      { title: "3. Internal controls", required: true, checks: [
+        "Designate a UAE-RSG Compliance Officer reporting to senior management",
+        "Embed UAE-RSG into the AML / CFT policy stack",
+        "Plan annual independent reasonable-assurance audit",
+      ]},
+    ],
+  },
+  {
+    id: "uae-rsg-annual-audit",
+    title: "UAE RSG — Annual Reasonable-Assurance Audit",
+    typology: "uae-rsg-annual-audit",
+    family: "DPMS",
+    steps: [
+      { title: "1. Audit firm engagement", required: true, checks: [
+        "Engage an audit firm meeting UAE-RSG independence and competence criteria",
+        "Lock down audit scope: management systems, supplier DD, mass balance, reporting",
+        "Schedule fieldwork to overlap year-end mass-balance close",
+      ]},
+      { title: "2. Evidence pack", required: true, checks: [
+        "Provide full counterparty register with risk ratings and screening evidence",
+        "Open mass-balance ledger and reconcile inputs vs outputs vs inventory",
+        "Make Compliance Officer + senior management available for interview",
+      ]},
+      { title: "3. Reporting & remediation", required: true, checks: [
+        "Receive a Reasonable-Assurance opinion under ISAE 3000 (Revised)",
+        "Remediate all findings within agreed deadlines",
+        "Submit audit report to MoE / DMCC supervisor and to the LBMA where applicable",
+      ]},
+    ],
+  },
+  {
+    id: "dmcc-rule-book",
+    title: "DMCC Rule Book — DPMS Compliance",
+    typology: "dmcc-rule-book",
+    family: "DPMS",
+    steps: [
+      { title: "1. Licensing & registration", required: true, checks: [
+        "Confirm DMCC trade licence is current and activity codes match operations",
+        "Register the MLRO and AML programme with DMCCA",
+        "Maintain DMCC member portal records up to date",
+      ]},
+      { title: "2. AML programme alignment", required: true, checks: [
+        "Map AML policies to DMCC Practice Note on Precious Metals & Stones",
+        "Implement DMCCA reporting calendar for KPIs and incident notifications",
+        "Conduct mandatory annual AML training and retain attendance log",
+      ]},
+      { title: "3. Inspection readiness", required: true, checks: [
+        "Pre-stage CDD, transaction, and STR / DPMSR records for DMCCA inspection",
+        "Run a self-assessment against the DMCC AML Compliance Checklist",
+        "Track and close prior DMCCA findings before next inspection",
+      ]},
+    ],
+  },
+  {
+    id: "fdl-10-2025-art-13",
+    title: "FDL 10/2025 Art.13 — CDD Trigger Workflow",
+    typology: "fdl-10-2025-art-13",
+    family: "CDD",
+    steps: [
+      { title: "1. Trigger identification", required: true, checks: [
+        "Identify the Art.13 trigger: new relationship, occasional > AED 55k, suspicion, or doubt over prior CDD",
+        "Record the trigger date and the responsible analyst",
+        "Decide between Standard / Simplified / Enhanced DD per risk rating",
+      ]},
+      { title: "2. CDD execution", required: true, checks: [
+        "Verify customer identity from independent source documents",
+        "Identify and verify beneficial owner >= 25% per FATF R.10",
+        "Capture purpose / intended nature of relationship and source-of-funds narrative",
+      ]},
+      { title: "3. Disposition & monitoring", required: true, checks: [
+        "Set ongoing-monitoring frequency aligned to final risk rating",
+        "Document disposition rationale and Compliance Officer review",
+        "Lock CDD pack to the case file with FNV-1a audit-chain hash",
+      ]},
+    ],
+  },
+  {
+    id: "cabinet-res-74-2020",
+    title: "Cabinet Res 74/2020 — TFS Without Delay",
+    typology: "cabinet-res-74-2020",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Listing detection", required: true, checks: [
+        "Pull EOCN local list and UN Consolidated list at minimum 3x daily",
+        "Run name + identifier match against full customer base + UBOs",
+        "Capture potential matches with score and rationale",
+      ]},
+      { title: "2. Without-delay freeze", required: true, checks: [
+        "Freeze funds and economic resources within hours of confirmation",
+        "Block any pending transactions and prevent new ones",
+        "Notify EOCN via the prescribed portal within the regulatory deadline",
+      ]},
+      { title: "3. Reporting & customer handling", required: true, checks: [
+        "File partial-match / freeze report with EOCN + FIU",
+        "Ensure no tipping-off — restrict communications to operational essentials",
+        "Maintain the freeze until written de-listing or court order is received",
+      ]},
+    ],
+  },
+  {
+    id: "cabinet-res-10-2019",
+    title: "Cabinet Res 10/2019 — Real-Estate AML Implementation",
+    typology: "cabinet-res-10-2019",
+    family: "REML",
+    steps: [
+      { title: "1. Reportable transaction screen", required: true, checks: [
+        "Identify any cash, virtual asset, or single / linked payment >= AED 55,000",
+        "Confirm transaction is in scope: brokers, agents, and developers covered by Res 10/2019",
+        "Capture full buyer / seller / agent identification per FATF R.22",
+      ]},
+      { title: "2. UBO and source-of-funds", required: true, checks: [
+        "Identify UBO >= 25% on any corporate buyer or seller",
+        "Obtain documentary source-of-funds covering full purchase price",
+        "Cross-check against PEP, sanctions, and adverse-media databases",
+      ]},
+      { title: "3. REBA filing", required: true, checks: [
+        "File the Real-Estate Activity Report (REAR) on goAML within 30 days of trigger",
+        "Retain underlying documentation for 10 years",
+        "Update DLD / land-registry filings with verified UBO information",
+      ]},
+    ],
+  },
+  {
+    id: "cabinet-res-134-2025",
+    title: "Cabinet Res 134/2025 — DPMS Implementation",
+    typology: "cabinet-res-134-2025",
+    family: "DPMS",
+    steps: [
+      { title: "1. Scope confirmation", required: true, checks: [
+        "Confirm activity (refining, trading, jewellery, scrap) is in scope of Res 134/2025",
+        "Map MoE Circular 3/2025 reporting obligations to internal controls",
+        "Refresh DPMS register with all in-scope entities and beneficial owners",
+      ]},
+      { title: "2. CDD / EDD execution", required: true, checks: [
+        "Apply Standard CDD on all customers; EDD on cash > AED 55,000 or PEPs",
+        "Capture origin of metal / stones and supporting trade documents",
+        "Verify customer business profile against transaction expectations",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File DPMSR on goAML within 30 days for any in-scope cash transaction",
+        "Submit periodic compliance returns to MoE per Circular 3/2025 calendar",
+        "Maintain 10-year retention on all DPMSR artefacts and supporting evidence",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r10-cdd",
+    title: "FATF R.10 — Customer Due Diligence",
+    typology: "fatf-r10-cdd",
+    family: "CDD",
+    steps: [
+      { title: "1. Identification", required: true, checks: [
+        "Identify the customer using reliable, independent source documents",
+        "Identify natural persons holding >= 25% ownership or control of legal persons",
+        "Capture the purpose and intended nature of the business relationship",
+      ]},
+      { title: "2. Verification", required: true, checks: [
+        "Verify customer and beneficial owner identity before establishing relationship",
+        "Where verification is incomplete, do not open the account or process the transaction",
+        "Document any reliance on a regulated third party per FATF R.17",
+      ]},
+      { title: "3. Ongoing monitoring", required: true, checks: [
+        "Conduct ongoing due diligence to ensure transactions match the customer profile",
+        "Update CDD records on trigger events and on a risk-based cycle",
+        "Apply enhanced CDD where higher-risk indicators arise",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r11-recordkeeping",
+    title: "FATF R.11 — Record-Keeping",
+    typology: "fatf-r11-recordkeeping",
+    family: "CDD",
+    steps: [
+      { title: "1. Retention scope", required: true, checks: [
+        "Retain CDD records for at least 5 years after end of business relationship",
+        "Retain transaction records, account files, and business correspondence for 5 years",
+        "Cover all jurisdictions where the entity operates",
+      ]},
+      { title: "2. Reconstruction capability", required: true, checks: [
+        "Ensure records permit reconstruction of individual transactions",
+        "Index records so they can be retrieved on demand by competent authorities",
+        "Test retrieval drills annually",
+      ]},
+      { title: "3. Format & integrity", required: true, checks: [
+        "Store records in tamper-evident form with access logging",
+        "Encrypt at rest and in transit",
+        "Apply destruction protocol only after legal hold and retention period clear",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r13-correspondent",
+    title: "FATF R.13 — Correspondent Banking Relationship",
+    typology: "fatf-r13-correspondent",
+    family: "banking",
+    steps: [
+      { title: "1. Respondent assessment", required: true, checks: [
+        "Gather sufficient information to understand respondent business and reputation",
+        "Confirm respondent's AML / CFT controls have been the subject of supervisory review",
+        "Refuse relationships with shell banks and respondents that allow shell banks",
+      ]},
+      { title: "2. Senior approval", required: true, checks: [
+        "Obtain senior-management approval before establishing the relationship",
+        "Document respective AML / CFT responsibilities of each institution",
+        "Capture the Wolfsberg CBDDQ in the file",
+      ]},
+      { title: "3. Payable-through accounts", required: true, checks: [
+        "Where payable-through accounts are used, verify respondent's CDD on its own customers",
+        "Retain the right to obtain underlying customer information on request",
+        "Apply enhanced ongoing monitoring on the respondent's transaction flows",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r14-mvts",
+    title: "FATF R.14 — MVTS Registration & Oversight",
+    typology: "fatf-r14-mvts",
+    family: "MSB",
+    steps: [
+      { title: "1. Licensing", required: true, checks: [
+        "Confirm the MVTS provider holds a current licence or registration with CBUAE",
+        "Identify all agents in the chain and ensure they are listed with the supervisor",
+        "Block any unregistered agent or sub-agent",
+      ]},
+      { title: "2. Programme alignment", required: true, checks: [
+        "Verify provider applies its AML programme equally to all agents",
+        "Confirm transaction-monitoring scenarios cover smurfing, structuring, and high-risk corridors",
+        "Inspect agent training and audit cadence",
+      ]},
+      { title: "3. Sanctions & TFS", required: true, checks: [
+        "Ensure each remittance is screened against EOCN, UN, OFAC at submission",
+        "Block transfers to / from FATF blacklisted jurisdictions absent licence",
+        "Capture full Travel Rule data per FATF R.16",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r15-vasp",
+    title: "FATF R.15 — VASP Risk Assessment",
+    typology: "fatf-r15-vasp",
+    family: "VASP",
+    steps: [
+      { title: "1. Activity classification", required: true, checks: [
+        "Classify the VASP activity (exchange, custody, transfer, issuance, ICO)",
+        "Confirm licensing under VARA / ADGM / DFSA / SCA depending on activity",
+        "Map applicable UAE TFS, Travel Rule, and crypto-specific obligations",
+      ]},
+      { title: "2. Customer & wallet DD", required: true, checks: [
+        "Identify and verify customer identity and source of crypto",
+        "Run on-chain analytics on counterparty wallets via Chainalysis / Elliptic / TRM",
+        "Block interactions with mixers, sanctioned wallets, and darknet markets",
+      ]},
+      { title: "3. Travel Rule", required: true, checks: [
+        "Capture originator + beneficiary information for transfers >= USD 1,000",
+        "Use a Travel Rule protocol (TRP / IVMS-101 / Sygna / Notabene) for transmission",
+        "Reject inbound transfers missing required Travel Rule fields",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r17-third-party",
+    title: "FATF R.17 — Reliance on Third Parties",
+    typology: "fatf-r17-third-party",
+    family: "CDD",
+    steps: [
+      { title: "1. Third-party eligibility", required: true, checks: [
+        "Confirm third party is regulated and supervised under equivalent AML / CFT standards",
+        "Document a written reliance agreement with delivery SLAs",
+        "Exclude high-risk customers, PEPs, and TFS-flagged subjects from reliance",
+      ]},
+      { title: "2. Information transfer", required: true, checks: [
+        "Obtain CDD information from the third party without delay on request",
+        "Verify the third party retains underlying CDD documentation",
+        "Test sample retrieval annually",
+      ]},
+      { title: "3. Ultimate accountability", required: true, checks: [
+        "Confirm regulatory liability remains with the relying institution",
+        "Maintain MLRO oversight of the reliance arrangement",
+        "Review reliance arrangements at least annually",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r19-high-risk-jurisdictions",
+    title: "FATF R.19 — High-Risk Jurisdictions",
+    typology: "fatf-r19-high-risk-jurisdictions",
+    family: "Risk",
+    steps: [
+      { title: "1. Listing awareness", required: true, checks: [
+        "Refresh FATF black-list and grey-list at every plenary update",
+        "Maintain internal high-risk-country register reconciled to FATF, EU, UK, US lists",
+        "Communicate listing changes to first line within 24 hours",
+      ]},
+      { title: "2. EDD application", required: true, checks: [
+        "Apply enhanced CDD on customers from listed jurisdictions",
+        "Obtain senior-management approval for any new relationship",
+        "Limit / decline products with elevated TF risk for listed jurisdictions",
+      ]},
+      { title: "3. Counter-measures", required: true, checks: [
+        "Apply counter-measures called for by FATF or UAE authorities (black-list jurisdictions)",
+        "Block transactions where required by counter-measures",
+        "Document all counter-measure decisions in the case file",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r20-suspicious-reporting",
+    title: "FATF R.20 — Suspicious Transaction Reporting",
+    typology: "fatf-r20-suspicious-reporting",
+    family: "FIU",
+    steps: [
+      { title: "1. Trigger detection", required: true, checks: [
+        "Identify when there is suspicion of ML / TF / predicate offences",
+        "Escalate from analyst to MLRO within 24 hours",
+        "Document the suspicion narrative with concrete indicators",
+      ]},
+      { title: "2. Filing", required: true, checks: [
+        "File STR with goAML within statutory deadline",
+        "Include all relevant CDD, transaction, and supporting evidence",
+        "Apply four-eyes review on the final filing",
+      ]},
+      { title: "3. Post-filing", required: true, checks: [
+        "Maintain confidentiality — no tipping-off to the subject",
+        "Continue to monitor the relationship and update goAML on material change",
+        "Retain the STR and supporting evidence for 10 years",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r21-tipping-off",
+    title: "FATF R.21 — Tipping-Off Boundary",
+    typology: "fatf-r21-tipping-off",
+    family: "FIU",
+    steps: [
+      { title: "1. Awareness", required: true, checks: [
+        "Train staff that disclosure of an STR or investigation is a criminal offence",
+        "Cover lawful exceptions: tipping-off rules within a financial group, lawyer-privilege limits",
+        "Ensure relationship managers know what they can and cannot say to a customer",
+      ]},
+      { title: "2. Operational controls", required: true, checks: [
+        "Restrict access to STR records on a need-to-know basis",
+        "Mask STR-related flags in customer-facing systems",
+        "Audit log all access to suspicion records",
+      ]},
+      { title: "3. Customer-facing scripts", required: true, checks: [
+        "Provide approved scripts for declining or delaying transactions without disclosing reason",
+        "Channel customer questions through the MLRO function",
+        "Document any breach for investigation and disciplinary review",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r22-dnfbp-cdd",
+    title: "FATF R.22 — DNFBP Customer Due Diligence",
+    typology: "fatf-r22-dnfbp-cdd",
+    family: "CDD",
+    steps: [
+      { title: "1. Activity scope", required: true, checks: [
+        "Identify in-scope DNFBP activity: real estate, DPMS, lawyers, accountants, TCSPs",
+        "Apply CDD when the activity threshold is triggered",
+        "Document the trigger and threshold reasoning",
+      ]},
+      { title: "2. Standard CDD", required: true, checks: [
+        "Identify and verify customer + beneficial owner per R.10",
+        "Capture business purpose and source-of-funds narrative",
+        "Set risk rating with documented rationale",
+      ]},
+      { title: "3. Enhanced and ongoing", required: true, checks: [
+        "Apply EDD where the activity carries elevated risk (cash, PEP, complex structures)",
+        "Refresh CDD on a risk-based cycle",
+        "Maintain records per R.11 retention period",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r24-bo-legal-persons",
+    title: "FATF R.24 — Beneficial Ownership of Legal Persons",
+    typology: "fatf-r24-bo-legal-persons",
+    family: "UBO",
+    steps: [
+      { title: "1. Identify ownership", required: true, checks: [
+        "Trace each ownership chain to natural persons holding >= 25%",
+        "Capture the type of control (ownership, voting rights, board, agreement)",
+        "Document any nominee / bearer arrangement",
+      ]},
+      { title: "2. Verify via independent source", required: true, checks: [
+        "Use BOR / public registry / regulator-issued document where available",
+        "Cross-check against registry, declaration, and customer-supplied evidence",
+        "Resolve any conflict between sources before opening",
+      ]},
+      { title: "3. Maintain currency", required: true, checks: [
+        "Refresh BO information on every material change",
+        "Confirm UAE BOR filing status on every refresh",
+        "Capture the date and source of the most recent verification",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r25-bo-legal-arrangements",
+    title: "FATF R.25 — Beneficial Ownership of Trusts & Legal Arrangements",
+    typology: "fatf-r25-bo-legal-arrangements",
+    family: "UBO",
+    steps: [
+      { title: "1. Identify roles", required: true, checks: [
+        "Identify settlor, trustee, protector, beneficiaries, and any other natural person exercising control",
+        "Capture beneficiaries by name where determined; by class where not",
+        "Distinguish testamentary, charitable, and discretionary trust forms",
+      ]},
+      { title: "2. Verify documentation", required: true, checks: [
+        "Obtain trust deed, letter of wishes (where appropriate), and trustee licence",
+        "Verify trustee identity and regulatory standing",
+        "Check that the trustee is not a vehicle to obscure beneficial ownership",
+      ]},
+      { title: "3. Ongoing monitoring", required: true, checks: [
+        "Refresh BO information on appointment / removal of trustees, protectors, beneficiaries",
+        "Re-screen all named persons against TFS and adverse media",
+        "Document material changes to the trust structure",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-r32-cash-couriers",
+    title: "FATF R.32 — Cash Courier Detection",
+    typology: "fatf-r32-cash-couriers",
+    family: "CFT",
+    steps: [
+      { title: "1. Declaration awareness", required: true, checks: [
+        "Confirm staff know UAE cash declaration threshold (AED 60,000 or equivalent)",
+        "Brief on Customs / Federal Authority for Identity & Citizenship reporting channels",
+        "Highlight typology: bulk cash, gift cards, bearer instruments, prepaid cards",
+      ]},
+      { title: "2. Detection patterns", required: true, checks: [
+        "Identify customers depositing large unexplained cash following travel",
+        "Flag rapid cash-in / cash-out patterns suggesting integration of smuggled cash",
+        "Cross-check against travel and PEP intelligence",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File STR where smuggling is suspected",
+        "Coordinate with Customs / FIU under MoU procedures",
+        "Retain evidence and CCTV (where available) for 10 years",
+      ]},
+    ],
+  },
+  {
+    id: "un-1267-aq-daesh",
+    title: "UN Sanctions — 1267 (Al-Qaida & Daesh)",
+    typology: "un-1267-aq-daesh",
+    family: "Sanctions",
+    steps: [
+      { title: "1. List ingestion", required: true, checks: [
+        "Pull UN 1267 Consolidated list at every refresh and reconcile to internal screening list",
+        "Screen all customers, UBOs, and counterparties against narrative + identifier fields",
+        "Capture any partial / phonetic match for review",
+      ]},
+      { title: "2. Without-delay action", required: true, checks: [
+        "Freeze funds and economic resources on confirmed match",
+        "Block any pending or attempted transaction",
+        "Notify EOCN / UAE authorities per Cabinet Res 74/2020 deadlines",
+      ]},
+      { title: "3. Reporting & maintenance", required: true, checks: [
+        "File the freeze report on goAML",
+        "Avoid tipping-off — segregate communications strictly",
+        "Maintain freeze pending UN 1267 Committee de-listing",
+      ]},
+    ],
+  },
+  {
+    id: "un-1718-dprk",
+    title: "UN Sanctions — 1718 (DPRK)",
+    typology: "un-1718-dprk",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Designation screen", required: true, checks: [
+        "Screen against UN 1718 designations and US OFAC SDN DPRK programme",
+        "Identify any DPRK-linked vessels via IMO / MMSI lookup",
+        "Check for STS (ship-to-ship) transfer indicators",
+      ]},
+      { title: "2. Sectoral controls", required: true, checks: [
+        "Block coal, iron, seafood, textiles, refined petroleum trade with DPRK nexus",
+        "Verify cap-compliance on any humanitarian carve-out",
+        "Decline luxury-goods exports to DPRK regardless of value",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File freeze and sanctions notifications to EOCN + UN Panel of Experts where required",
+        "Retain shipping and trade evidence for 10 years",
+        "Refresh customer screening daily during active deals",
+      ]},
+    ],
+  },
+  {
+    id: "un-2231-iran",
+    title: "UN Sanctions — 2231 (Iran post-JCPOA)",
+    typology: "un-2231-iran",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Regime mapping", required: true, checks: [
+        "Identify which UN 2231 measures remain in force (procurement channel, designations)",
+        "Reconcile UN 2231 with US secondary sanctions reach",
+        "Assess JCPOA participant status and snapback impact",
+      ]},
+      { title: "2. Trade & finance controls", required: true, checks: [
+        "Screen for IRGC, MODAFL, and sanctioned Iranian banks",
+        "Block dual-use goods trade absent procurement-channel approval",
+        "Check shipping / vessel registry for Iran nexus",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File any freeze with EOCN per Cabinet Res 74/2020",
+        "Retain procurement-channel evidence per UN 2231 Annex B",
+        "Coordinate with regulator on humanitarian carve-outs",
+      ]},
+    ],
+  },
+  {
+    id: "ofac-sdn-investigation",
+    title: "OFAC SDN — Match Investigation",
+    typology: "ofac-sdn-investigation",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Match scoring", required: true, checks: [
+        "Capture the OFAC programme code, list date, and identifiers (DOB, POB, IDs)",
+        "Run secondary verification against alternative sources to confirm match",
+        "Document score, rationale, and analyst",
+      ]},
+      { title: "2. Disposition", required: true, checks: [
+        "Block / reject the transaction per OFAC enforcement guidelines",
+        "Hold funds in a separate ledger pending OFAC license or rejection",
+        "File OFAC blocking / rejection report within 10 business days",
+      ]},
+      { title: "3. Customer handling", required: true, checks: [
+        "Apply tipping-off rules — refer customer queries to Compliance",
+        "Update CDD profile to reflect blocked / rejected status",
+        "Refresh full file at 6 months and on any list change",
+      ]},
+    ],
+  },
+  {
+    id: "eu-sanctions-russia",
+    title: "EU Russia Sanctions (Reg 833/2014 + 269/2014)",
+    typology: "eu-sanctions-russia",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Regime mapping", required: true, checks: [
+        "Reconcile EU Reg 833/2014 sectoral measures and Reg 269/2014 designations",
+        "Map oil-price-cap and crude / refined product exemptions",
+        "Identify Russian / Belarusian banks subject to SWIFT disconnection",
+      ]},
+      { title: "2. Customer & trade controls", required: true, checks: [
+        "Screen all customers, UBOs, and vessels for Russia / Belarus nexus",
+        "Apply 'no Russian-touch' supply-chain certification on dual-use goods",
+        "Capture flag of convenience and AIS spoofing indicators",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File freeze with EOCN + competent EU authority",
+        "Retain trade documentation, ICPOs, BLs, and price-cap attestations",
+        "Refresh sanctions register on every EU OJ amendment",
+      ]},
+    ],
+  },
+  {
+    id: "ai-model-validation",
+    title: "AI Model — Pre-Deployment Validation",
+    typology: "ai-model-validation",
+    family: "ABC",
+    steps: [
+      { title: "1. Model documentation", required: true, checks: [
+        "Capture intended use, training data, features, and out-of-scope use cases",
+        "Document data lineage and any restricted / sensitive features",
+        "Identify model owner, validator, and approver",
+      ]},
+      { title: "2. Independent validation", required: true, checks: [
+        "Validate model performance on held-out and production-shadow data",
+        "Test for bias across protected / sensitive attributes",
+        "Confirm explainability artefacts (SHAP / LIME / counterfactual) are reproducible",
+      ]},
+      { title: "3. Deployment gating", required: true, checks: [
+        "Obtain Compliance + Risk sign-off before production release",
+        "Set monitoring thresholds for drift, performance, and fairness",
+        "Lock the model card to the deployment ticket",
+      ]},
+    ],
+  },
+  {
+    id: "ai-model-bias-audit",
+    title: "AI Model — Annual Bias Audit",
+    typology: "ai-model-bias-audit",
+    family: "ABC",
+    steps: [
+      { title: "1. Sample selection", required: true, checks: [
+        "Build a stratified sample across protected attributes and risk-rating tiers",
+        "Include rejected / flagged outcomes for false-positive bias review",
+        "Document sampling rationale",
+      ]},
+      { title: "2. Metric computation", required: true, checks: [
+        "Compute disparate-impact, equalised-odds, and calibration metrics",
+        "Compare against documented fairness thresholds",
+        "Triage breaches to bias-cause root analysis",
+      ]},
+      { title: "3. Remediation", required: true, checks: [
+        "Plan reweighting / threshold adjustments / data refresh",
+        "Re-validate the model on a holdout slice post-remediation",
+        "Communicate audit summary to the Compliance / Risk Committee",
+      ]},
+    ],
+  },
+  {
+    id: "ai-explainability-doc",
+    title: "AI Explainability Documentation",
+    typology: "ai-explainability-doc",
+    family: "ABC",
+    steps: [
+      { title: "1. Approach selection", required: true, checks: [
+        "Select per-decision (SHAP / LIME) and global (PDP / surrogate) explainability methods",
+        "Confirm method is consistent with model class (linear / tree / NN / LLM)",
+        "Document any limitations in the approach",
+      ]},
+      { title: "2. Production wiring", required: true, checks: [
+        "Wire explanations into the case-management system at decision time",
+        "Store the explanation alongside the disposition with a tamper-evident hash",
+        "Ensure operator UI surfaces top contributing features in plain language",
+      ]},
+      { title: "3. Operator review", required: true, checks: [
+        "Train operators on reading model explanations before override",
+        "Run quarterly QA on a sample of operator overrides vs explanations",
+        "Surface systematic disagreement to the model owner for tuning",
+      ]},
+    ],
+  },
+  {
+    id: "ai-drift-monitoring",
+    title: "AI Drift Monitoring",
+    typology: "ai-drift-monitoring",
+    family: "ABC",
+    steps: [
+      { title: "1. Reference profile", required: true, checks: [
+        "Snapshot training data distribution and prediction baseline at deployment",
+        "Define drift metrics: PSI, KS, KL-divergence, and feature-rank stability",
+        "Set alarm thresholds with documented rationale",
+      ]},
+      { title: "2. Continuous monitoring", required: true, checks: [
+        "Run daily / weekly drift checks against the reference profile",
+        "Surface alerts to the model owner with severity tiering",
+        "Capture suspected concept drift vs covariate drift in triage notes",
+      ]},
+      { title: "3. Response", required: true, checks: [
+        "Plan retraining or rollback within agreed SLA on alarm",
+        "Re-run pre-deployment validation before re-release",
+        "Notify Compliance on any drift impacting AML / CFT decisions",
+      ]},
+    ],
+  },
+  {
+    id: "ai-genai-output-disposition",
+    title: "Generative AI — Output Disposition Logging",
+    typology: "ai-genai-output-disposition",
+    family: "ABC",
+    steps: [
+      { title: "1. Output capture", required: true, checks: [
+        "Persist prompt, model version, temperature, retrieval context, and full output",
+        "Hash the output into the audit chain",
+        "Capture the operator's disposition (accepted / amended / rejected)",
+      ]},
+      { title: "2. Citation verification", required: true, checks: [
+        "Verify any cited source actually supports the claim",
+        "Block reliance on training-data-as-current-source per charter P3",
+        "Flag fabricated citations to the model owner",
+      ]},
+      { title: "3. Risk surfacing", required: true, checks: [
+        "Reject GenAI use where the question requires legal conclusion (charter P5)",
+        "Force a human-in-the-loop step for any sanctions / freeze recommendation",
+        "Refresh prompt-injection guards per current threat intel",
+      ]},
+    ],
+  },
+  {
+    id: "ungp-pillar-2-corporate",
+    title: "UNGP Pillar 2 — Corporate Responsibility to Respect",
+    typology: "ungp-pillar-2-corporate",
+    family: "OECD",
+    steps: [
+      { title: "1. Human-rights policy commitment", required: true, checks: [
+        "Confirm board-approved human-rights policy aligned to UNGP, ILO core conventions, OECD MNE",
+        "Map salient human-rights risks across operations and value chain",
+        "Communicate the policy to suppliers and counterparties",
+      ]},
+      { title: "2. Human-rights due diligence", required: true, checks: [
+        "Run periodic human-rights due diligence per UNGP 17–21",
+        "Integrate findings into procurement, onboarding, and ongoing monitoring",
+        "Track impacts and effectiveness of mitigation",
+      ]},
+      { title: "3. Remediation & reporting", required: true, checks: [
+        "Operate a grievance mechanism meeting UNGP 31 effectiveness criteria",
+        "Provide for or cooperate in remediation where impact occurred",
+        "Disclose human-rights performance in the annual sustainability / TCFD-S report",
+      ]},
+    ],
+  },
+  {
+    id: "uflpa-uyghur-forced-labour",
+    title: "UFLPA — Uyghur Forced Labour Compliance",
+    typology: "uflpa-uyghur-forced-labour",
+    family: "OECD",
+    steps: [
+      { title: "1. Supply-chain mapping", required: true, checks: [
+        "Map Tier-1 to Tier-N suppliers with country and region detail",
+        "Flag any production / sourcing in or from Xinjiang Uyghur Autonomous Region",
+        "Identify entities on the UFLPA Entity List",
+      ]},
+      { title: "2. Rebuttable presumption", required: true, checks: [
+        "Treat goods with XUAR nexus as inadmissible unless rebutted",
+        "Compile clear and convincing evidence: traceability, audit, on-site verification",
+        "Capture chain-of-custody from raw material to finished good",
+      ]},
+      { title: "3. Customer & customs handling", required: true, checks: [
+        "Communicate UFLPA exposure to US customers / clearance brokers",
+        "Coordinate with CBP requests with documented evidence packs",
+        "Log any seizure / detention and remediate sourcing",
+      ]},
+    ],
+  },
+  {
+    id: "modern-slavery-supply-chain",
+    title: "Modern Slavery — Supply-Chain Audit",
+    typology: "modern-slavery-supply-chain",
+    family: "OECD",
+    steps: [
+      { title: "1. Risk mapping", required: true, checks: [
+        "Apply ILO 11 indicators of forced labour to supplier screening",
+        "Identify high-risk sectors (construction, agriculture, garments, electronics, mining)",
+        "Map labour-broker chains and recruitment-fee practices",
+      ]},
+      { title: "2. On-site audit", required: true, checks: [
+        "Conduct unannounced audits using SMETA / SA8000 / Sedex protocols",
+        "Interview workers off-site without management present",
+        "Inspect dormitories, identity-document storage, and pay-slip records",
+      ]},
+      { title: "3. Disclosure", required: true, checks: [
+        "Publish a Modern Slavery Statement per UK Act / Australia Act / California TISCA",
+        "Disclose remediation actions and KPIs year-on-year",
+        "Submit statement to the public registry within statutory deadline",
+      ]},
+    ],
+  },
+  {
+    id: "tax-evasion-predicate",
+    title: "Tax-Evasion Predicate Investigation",
+    typology: "tax-evasion-predicate",
+    family: "ML",
+    steps: [
+      { title: "1. Indicator review", required: true, checks: [
+        "Identify red flags: undeclared income, fake invoices, transfer-mispricing, carousel fraud",
+        "Cross-check declared revenue with banking turnover and trade flow",
+        "Validate tax residency and treaty claims",
+      ]},
+      { title: "2. Linkage to ML", required: true, checks: [
+        "Treat tax evasion as a predicate offence under FATF and FDL 10/2025",
+        "Document the ML element: placement / layering / integration of tax-evaded proceeds",
+        "Correlate with any FTA / OECD CRS / FATCA flag",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File STR on goAML where suspicion is reasonable",
+        "Coordinate with FTA-disclosure regime where required",
+        "Retain evidence for 10 years",
+      ]},
+    ],
+  },
+  {
+    id: "lawyer-aml-onboarding",
+    title: "Lawyer / Legal-Profession AML Onboarding",
+    typology: "lawyer-aml-onboarding",
+    family: "CDD",
+    steps: [
+      { title: "1. Gateway-service identification", required: true, checks: [
+        "Confirm the matter falls within FATF R.22 gateway services (real estate, BO, trust formation, account management, business sale)",
+        "Document trigger and responsible partner",
+        "Apply CDD before substantive work begins",
+      ]},
+      { title: "2. CDD execution", required: true, checks: [
+        "Identify and verify client + UBO + funder of fees and disbursements",
+        "Capture purpose of retainer and source-of-funds narrative",
+        "Refuse instructions where CDD cannot be completed",
+      ]},
+      { title: "3. Privilege boundary", required: true, checks: [
+        "Distinguish information protected by Legal Professional Privilege vs reportable suspicion",
+        "Maintain separate privileged and AML files",
+        "Take legal advice from another firm where reporting decision interacts with privilege",
+      ]},
+    ],
+  },
+  {
+    id: "auditor-aml-gateway",
+    title: "Auditor / Accountant — AML Gateway-Service",
+    typology: "auditor-aml-gateway",
+    family: "CDD",
+    steps: [
+      { title: "1. Engagement scope", required: true, checks: [
+        "Identify whether the engagement is gateway (BO formation, trust admin, account management, real-estate)",
+        "Document trigger and engagement partner",
+        "Apply CDD before commencement",
+      ]},
+      { title: "2. CDD execution", required: true, checks: [
+        "Identify and verify client + UBO using independent source",
+        "Capture nature of business, source of funds, and engagement scope",
+        "Risk-rate and apply EDD for cash-intensive or PEP cases",
+      ]},
+      { title: "3. Reporting & supervision", required: true, checks: [
+        "File STR on goAML where suspicion exists",
+        "Coordinate disclosure with relevant Self-Regulatory Body",
+        "Retain working papers and CDD for 10 years",
+      ]},
+    ],
+  },
+  {
+    id: "tcsp-trust-formation",
+    title: "TCSP — Trust Formation",
+    typology: "tcsp-trust-formation",
+    family: "UBO",
+    steps: [
+      { title: "1. Settlor & purpose", required: true, checks: [
+        "Identify and verify settlor + source of trust property",
+        "Capture documented purpose and class of beneficiaries",
+        "Reject any settlor unwilling to disclose source of wealth",
+      ]},
+      { title: "2. Trustees & protectors", required: true, checks: [
+        "Identify and verify trustees, protectors, and any controlling parties",
+        "Confirm trustees are licensed where regulation requires",
+        "Screen all named persons for sanctions, PEP, adverse media",
+      ]},
+      { title: "3. Ongoing administration", required: true, checks: [
+        "Refresh CDD on any change in trustees, protectors, or named beneficiaries",
+        "File suspicion with the FIU under R.20 where ML / TF indicators arise",
+        "Maintain records for 10 years post-distribution",
+      ]},
+    ],
+  },
+  {
+    id: "insurance-single-premium",
+    title: "Insurance — Single-Premium Life",
+    typology: "insurance-single-premium",
+    family: "ML",
+    steps: [
+      { title: "1. Policyholder DD", required: true, checks: [
+        "Apply CDD to policyholder + premium funder + beneficiary",
+        "Capture source of premium and rationale for single-premium structure",
+        "Risk-rate and trigger EDD for cash, third-party funder, or PEP",
+      ]},
+      { title: "2. Suspicious indicators", required: true, checks: [
+        "Flag rapid surrender post-issue (suspected layering)",
+        "Flag third-party premium payment without familial link",
+        "Capture frequent change of beneficiary",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "Escalate to MLRO and file STR where suspicion arises",
+        "Retain underwriting and surrender records for 10 years",
+        "Refresh CDD on assignment, surrender, or beneficiary change",
+      ]},
+    ],
+  },
+  {
+    id: "insurance-surrender-anomaly",
+    title: "Insurance — Surrender-Value Anomaly",
+    typology: "insurance-surrender-anomaly",
+    family: "ML",
+    steps: [
+      { title: "1. Pattern detection", required: true, checks: [
+        "Identify surrenders within first 24 months without economic rationale",
+        "Flag where surrender value is paid to a third-party account",
+        "Cross-check against PEP / adverse-media intel",
+      ]},
+      { title: "2. Disposition", required: true, checks: [
+        "Hold the surrender pending Compliance review",
+        "Verify identity and source of original premium funder",
+        "Decide between proceed / withhold / freeze with Compliance sign-off",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File STR where the anomaly remains unexplained",
+        "Capture analyst notes, evidence, and disposition in audit chain",
+        "Apply tipping-off rules in customer correspondence",
+      ]},
+    ],
+  },
+  {
+    id: "fintech-aisp-onboarding",
+    title: "FinTech AISP / Open-Banking Onboarding",
+    typology: "fintech-aisp-onboarding",
+    family: "VASP",
+    steps: [
+      { title: "1. Licensing & passporting", required: true, checks: [
+        "Confirm AISP licence with relevant regulator (CBUAE, ADGM FSRA, DIFC DFSA)",
+        "Map permitted account-information services and out-of-scope activities",
+        "Capture passporting / cross-border arrangements",
+      ]},
+      { title: "2. Customer DD", required: true, checks: [
+        "Apply CDD on AISP user + linked PSU (payment service user)",
+        "Verify consent and SCA (strong customer authentication) compliance",
+        "Risk-rate based on data scope and onward-data sharing",
+      ]},
+      { title: "3. Data, security, and reporting", required: true, checks: [
+        "Confirm PDPL data-handling obligations are met (PDPL Art.22 cross-border)",
+        "Operate breach-reporting within 72 hours of detection",
+        "Surface AML signals to the partner financial institution",
+      ]},
+    ],
+  },
+  {
+    id: "transaction-monitoring-tuning",
+    title: "Transaction Monitoring — Rule Tuning",
+    typology: "transaction-monitoring-tuning",
+    family: "Risk",
+    steps: [
+      { title: "1. Performance baseline", required: true, checks: [
+        "Compute alert volume, true-positive rate, and false-positive rate per rule",
+        "Identify dormant / over-firing / mis-tuned rules",
+        "Document baseline and tuning hypothesis",
+      ]},
+      { title: "2. Threshold change", required: true, checks: [
+        "Run above-the-line / below-the-line analysis on threshold candidates",
+        "Validate proposed tuning against a known-suspicion test set",
+        "Obtain MLRO + Risk sign-off before deployment",
+      ]},
+      { title: "3. Post-tuning review", required: true, checks: [
+        "Monitor 30 / 60 / 90-day performance against the new threshold",
+        "Roll back if true-positive rate degrades materially",
+        "Lock the change to the change-management ticket",
+      ]},
+    ],
+  },
+  {
+    id: "tm-alert-quality-review",
+    title: "TM Alert — Quality Review",
+    typology: "tm-alert-quality-review",
+    family: "Risk",
+    steps: [
+      { title: "1. Sampling", required: true, checks: [
+        "Sample alerts across rules, analysts, and dispositions",
+        "Include closed-no-action and escalated-to-STR alerts",
+        "Document sampling methodology and confidence interval",
+      ]},
+      { title: "2. Review", required: true, checks: [
+        "Assess analyst rationale, evidence sufficiency, and disposition correctness",
+        "Identify false-negative risk by reviewing closed alerts against new typology intel",
+        "Capture coaching needs",
+      ]},
+      { title: "3. Closure", required: true, checks: [
+        "Report findings to the MLRO and analyst line manager",
+        "Drive rule-tuning, training, or process changes from the findings",
+        "Track corrective actions to closure",
+      ]},
+    ],
+  },
+  {
+    id: "fp-rate-rca",
+    title: "False-Positive Rate — Root-Cause Analysis",
+    typology: "fp-rate-rca",
+    family: "Risk",
+    steps: [
+      { title: "1. FP segmentation", required: true, checks: [
+        "Bucket FPs by rule, customer segment, channel, and reason code",
+        "Identify the top-10 contributing patterns",
+        "Quantify operating cost of FPs",
+      ]},
+      { title: "2. Cause analysis", required: true, checks: [
+        "Distinguish data-quality, threshold, and typology-mismatch causes",
+        "Identify candidate data fixes vs rule changes vs additional context",
+        "Document the cause hypothesis with evidence",
+      ]},
+      { title: "3. Remediation", required: true, checks: [
+        "Implement data fixes, rule retuning, or context enrichment",
+        "Validate against a holdout sample",
+        "Track FP-rate reduction to target threshold",
+      ]},
+    ],
+  },
+  {
+    id: "case-quality-review",
+    title: "Case Quality / Four-Eyes Review",
+    typology: "case-quality-review",
+    family: "Risk",
+    steps: [
+      { title: "1. Sample selection", required: true, checks: [
+        "Select sample of dispositioned cases across analysts and case types",
+        "Include high-risk subjects and PEP / sanctions touchpoints",
+        "Document sampling rationale",
+      ]},
+      { title: "2. Review", required: true, checks: [
+        "Assess CDD completeness, evidence quality, and disposition reasoning",
+        "Verify four-eyes approval was applied where required",
+        "Capture missing controls or evidence gaps",
+      ]},
+      { title: "3. Closure", required: true, checks: [
+        "Report results to MLRO with risk-rated findings",
+        "Drive corrective actions, retraining, and policy updates",
+        "Track to closure with documented evidence",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-greylist-onboarding",
+    title: "FATF Grey-List Jurisdiction — Onboarding EDD",
+    typology: "fatf-greylist-onboarding",
+    family: "Risk",
+    steps: [
+      { title: "1. Identification", required: true, checks: [
+        "Confirm jurisdiction is on current FATF grey-list (ICRG monitoring)",
+        "Identify nexus: customer residence, UBO, business location, transit",
+        "Reference the most recent FATF plenary statement",
+      ]},
+      { title: "2. EDD application", required: true, checks: [
+        "Apply enhanced CDD covering source-of-wealth and source-of-funds in depth",
+        "Obtain senior-management approval for relationship",
+        "Set higher-frequency ongoing monitoring",
+      ]},
+      { title: "3. Periodic refresh", required: true, checks: [
+        "Re-assess relationship on each FATF plenary update",
+        "Step-down EDD only after delisting + 12-month observation period",
+        "Document rationale for any retention or exit",
+      ]},
+    ],
+  },
+  {
+    id: "fatf-blacklist-blockade",
+    title: "FATF Black-List Jurisdiction — Counter-Measures",
+    typology: "fatf-blacklist-blockade",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Listing confirmation", required: true, checks: [
+        "Confirm jurisdiction is on FATF call-for-action list (Iran / DPRK / Myanmar)",
+        "Map UAE-mandated counter-measures",
+        "Capture any humanitarian carve-outs",
+      ]},
+      { title: "2. Counter-measures", required: true, checks: [
+        "Block correspondent / payable-through accounts with listed-jurisdiction respondents",
+        "Decline new relationships absent specific licence",
+        "Apply enhanced reporting and monitoring on permitted residual flows",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "File freeze / decline reports with EOCN + FIU as applicable",
+        "Retain evidence and counter-measure rationale for 10 years",
+        "Refresh on every FATF plenary",
+      ]},
+    ],
+  },
+  {
+    id: "moe-circular-3-2025",
+    title: "MoE Circular 3/2025 — DPMS Reporting",
+    typology: "moe-circular-3-2025",
+    family: "MoE",
+    steps: [
+      { title: "1. Scope mapping", required: true, checks: [
+        "Confirm the entity is in scope (refiner / trader / jeweller / scrap dealer)",
+        "Map reporting calendar to MoE Circular 3/2025 deadlines",
+        "Capture all reportable transaction types",
+      ]},
+      { title: "2. Filing execution", required: true, checks: [
+        "File DPMSR within statutory deadline on goAML",
+        "Submit periodic compliance returns to MoE",
+        "Apply four-eyes review on every filing",
+      ]},
+      { title: "3. Inspection readiness", required: true, checks: [
+        "Maintain a live evidence pack indexed to each filing",
+        "Pre-stage documentation for MoE inspection",
+        "Track and close prior MoE findings",
+      ]},
+    ],
+  },
+  {
+    id: "fiu-goaml-amendment",
+    title: "FIU goAML — Filing Amendment Workflow",
+    typology: "fiu-goaml-amendment",
+    family: "FIU",
+    steps: [
+      { title: "1. Trigger detection", required: true, checks: [
+        "Identify any new fact or evidence requiring amendment of a prior STR / DPMSR / REAR",
+        "Capture the discovery date and analyst",
+        "Decide between Amendment (XML) and Withdrawal where applicable",
+      ]},
+      { title: "2. Amendment preparation", required: true, checks: [
+        "Reuse the original goAML message ID and apply the amendment header",
+        "Append new evidence, narrative, and updated CDD",
+        "Apply four-eyes review on the amendment",
+      ]},
+      { title: "3. Submission & retention", required: true, checks: [
+        "Submit amendment within FIU deadline",
+        "Capture FIU acknowledgement and reference number",
+        "Retain amendment trail for 10 years",
+      ]},
+    ],
+  },
+  {
+    id: "eocn-list-refresh",
+    title: "EOCN — Daily List Refresh",
+    typology: "eocn-list-refresh",
+    family: "EOCN",
+    steps: [
+      { title: "1. Source pull", required: true, checks: [
+        "Pull EOCN local terror list and Cabinet-issued additions at minimum 3x daily",
+        "Reconcile to internal screening list with hash check",
+        "Capture pull timestamp and source URL",
+      ]},
+      { title: "2. Mass screening", required: true, checks: [
+        "Screen full customer + UBO base against the refreshed list",
+        "Capture potential matches with score >= 85% for review",
+        "Apply phonetic + Latin / Arabic transliteration matching",
+      ]},
+      { title: "3. Disposition", required: true, checks: [
+        "Resolve potential matches within agreed SLA",
+        "Freeze on confirmed match per Cabinet Res 74/2020",
+        "Document all decisions in the audit chain",
+      ]},
+    ],
+  },
+  {
+    id: "ungp-grievance-mechanism",
+    title: "UNGP 31 — Grievance Mechanism Effectiveness",
+    typology: "ungp-grievance-mechanism",
+    family: "OECD",
+    steps: [
+      { title: "1. Design", required: true, checks: [
+        "Confirm the mechanism meets UNGP 31 criteria: legitimate, accessible, predictable, equitable, transparent, rights-compatible",
+        "Map languages, channels (in-person / online / hotline), and accessibility",
+        "Assess whether external stakeholders can raise grievances",
+      ]},
+      { title: "2. Operation", required: true, checks: [
+        "Capture all grievances with timestamp, category, and severity",
+        "Investigate within agreed SLA",
+        "Track outcomes, remediation, and complainant feedback",
+      ]},
+      { title: "3. Improvement", required: true, checks: [
+        "Annual review of effectiveness against UNGP 31 criteria",
+        "Publish anonymised grievance metrics",
+        "Feed lessons learned into upstream policy",
+      ]},
+    ],
+  },
+  {
+    id: "oecd-rbc-dd",
+    title: "OECD Responsible Business Conduct — Due Diligence",
+    typology: "oecd-rbc-dd",
+    family: "OECD",
+    steps: [
+      { title: "1. Embedding", required: true, checks: [
+        "Embed RBC into policies, management systems, and supplier code",
+        "Allocate responsibility at executive level",
+        "Train procurement, sales, and Compliance staff",
+      ]},
+      { title: "2. Risk identification & mitigation", required: true, checks: [
+        "Identify actual and potential adverse impacts in operations and value chain",
+        "Cease, prevent, or mitigate adverse impacts based on severity and likelihood",
+        "Track effectiveness of measures over time",
+      ]},
+      { title: "3. Communication", required: true, checks: [
+        "Account for how impacts are addressed via public reporting",
+        "Provide for / cooperate in remediation where impact occurred",
+        "Engage with NCPs and stakeholders on findings",
+      ]},
+    ],
+  },
+  {
+    id: "vasp-travel-rule-impl",
+    title: "VASP Travel Rule (FATF R.16) Implementation",
+    typology: "vasp-travel-rule-impl",
+    family: "VASP",
+    steps: [
+      { title: "1. Originator capture", required: true, checks: [
+        "Capture name, account / wallet, address, and ID number for originator on transfers >= USD 1,000",
+        "Capture beneficiary name and account / wallet",
+        "Apply IVMS-101 schema for transmission",
+      ]},
+      { title: "2. Transmission protocol", required: true, checks: [
+        "Use a Travel Rule protocol (TRP, Sygna, Notabene, OpenVASP) for delivery",
+        "Authenticate counterparty VASP before transmission",
+        "Encrypt payloads in transit and at rest",
+      ]},
+      { title: "3. Sunrise gap handling", required: true, checks: [
+        "Hold or reject transfers to counterparties unable to receive Travel Rule data",
+        "Document any sunrise-period exceptions with senior approval",
+        "Refresh counterparty Travel Rule status quarterly",
+      ]},
+    ],
+  },
+  {
+    id: "fatca-crs-onboarding",
+    title: "FATCA / CRS — Onboarding & Reporting",
+    typology: "fatca-crs-onboarding",
+    family: "CDD",
+    steps: [
+      { title: "1. Tax-residency capture", required: true, checks: [
+        "Collect self-certification covering all tax-residency jurisdictions",
+        "Capture US-person indicia (FATCA W-9 / W-8BEN)",
+        "Reconcile self-certification against CDD and KYC evidence",
+      ]},
+      { title: "2. Reporting", required: true, checks: [
+        "Identify reportable accounts under FATCA / CRS",
+        "Submit annual XML returns within FTA deadline",
+        "Reconcile reported balances to ledger at the cut-off date",
+      ]},
+      { title: "3. Curing & remediation", required: true, checks: [
+        "Cure documentation gaps within statutory window",
+        "Apply withholding where required (FATCA recalcitrant)",
+        "Track remediation actions with owners and deadlines",
+      ]},
+    ],
+  },
+  {
+    id: "wolfsberg-cbddq",
+    title: "Wolfsberg CBDDQ — Respondent Onboarding",
+    typology: "wolfsberg-cbddq",
+    family: "banking",
+    steps: [
+      { title: "1. Questionnaire collection", required: true, checks: [
+        "Obtain a current Wolfsberg CBDDQ from the respondent",
+        "Confirm signatory authority and date within 12 months",
+        "Reconcile responses with public regulator and adverse-media data",
+      ]},
+      { title: "2. Risk assessment", required: true, checks: [
+        "Score the respondent across geography, business, customers, and controls",
+        "Document gaps and any compensating controls",
+        "Set ongoing monitoring frequency",
+      ]},
+      { title: "3. Approval & maintenance", required: true, checks: [
+        "Obtain senior-management approval for the relationship",
+        "Refresh CBDDQ annually or on material change",
+        "Test sample respondent transactions quarterly",
+      ]},
+    ],
+  },
+  {
+    id: "stable-coin-issuance-cdd",
+    title: "Stablecoin Issuance — Reserve & CDD",
+    typology: "stable-coin-issuance-cdd",
+    family: "VASP",
+    steps: [
+      { title: "1. Reserve verification", required: true, checks: [
+        "Confirm 1:1 reserve composition with auditable attestations",
+        "Map reserve custodians and their licensing",
+        "Verify segregation from issuer operating funds",
+      ]},
+      { title: "2. Mint / redeem CDD", required: true, checks: [
+        "Apply CDD on mint and redeem counterparties",
+        "Run on-chain analytics for sanctioned wallet exposure",
+        "Decline mint / redeem where Travel Rule data is missing",
+      ]},
+      { title: "3. Resilience & reporting", required: true, checks: [
+        "Operate run / depeg playbooks with regulator notification thresholds",
+        "Publish monthly reserve attestation",
+        "Coordinate with VARA on incident reporting",
+      ]},
+    ],
+  },
+  {
+    id: "defi-protocol-exposure-v2",
+    title: "DeFi Protocol — Exposure Assessment",
+    typology: "defi-protocol-exposure-v2",
+    family: "VASP",
+    steps: [
+      { title: "1. Protocol scoping", required: true, checks: [
+        "Map smart contract addresses, governance arrangement, and key dependencies",
+        "Identify potential FATF VASP characterisation",
+        "Capture audit and bug-bounty status",
+      ]},
+      { title: "2. Customer exposure", required: true, checks: [
+        "Run on-chain analytics on customer wallets interacting with the protocol",
+        "Apply elevated EDD where exposure is material",
+        "Decline exposure to mixers and sanctioned protocols",
+      ]},
+      { title: "3. Ongoing monitoring", required: true, checks: [
+        "Monitor protocol governance changes and exploits",
+        "Refresh wallet-cluster intel from chain-analytics vendor",
+        "Notify Compliance on any mass de-pegging / drain event",
+      ]},
+    ],
+  },
+  {
+    id: "aml-board-mi-pack",
+    title: "Board AML Management-Information Pack",
+    typology: "aml-board-mi-pack",
+    family: "Risk",
+    steps: [
+      { title: "1. KPI compilation", required: true, checks: [
+        "Compile CDD completion, EDD turnaround, STR filings, freeze events, training completion",
+        "Benchmark against prior period and committed targets",
+        "Highlight regulatory updates and inspection findings",
+      ]},
+      { title: "2. Risk overlay", required: true, checks: [
+        "Provide top-10 inherent and residual risk indicators",
+        "Surface emerging-risk briefings (FATF plenary, EOCN updates, sanctions changes)",
+        "Capture material customer / portfolio risk shifts",
+      ]},
+      { title: "3. Decision asks", required: true, checks: [
+        "Present clear decision asks: policy approvals, budget, exits, training",
+        "Track Board decisions and follow-ups in a register",
+        "Distribute pack within 5 business days of meeting",
+      ]},
+    ],
+  },
+  {
+    id: "regulator-inspection-readiness",
+    title: "Regulator Inspection — Readiness",
+    typology: "regulator-inspection-readiness",
+    family: "Risk",
+    steps: [
+      { title: "1. Document pack", required: true, checks: [
+        "Pre-stage policy stack, NRA, EWRA, training records, and inspection-history letters",
+        "Index sample CDD, EDD, STR, freeze, and audit-chain records",
+        "Verify retention completeness against retention schedule",
+      ]},
+      { title: "2. People prep", required: true, checks: [
+        "Brief MLRO, Deputy MLRO, business heads on inspection scope",
+        "Run a mock interview drill",
+        "Designate a single inspection-coordinator role",
+      ]},
+      { title: "3. Live inspection support", required: true, checks: [
+        "Provide a clean room and named SMEs for the inspection team",
+        "Track every information request to a response within SLA",
+        "Capture inspection findings and route to remediation immediately",
+      ]},
+    ],
+  },
+  {
+    id: "ewra-annual",
+    title: "Enterprise-Wide Risk Assessment (Annual)",
+    typology: "ewra-annual",
+    family: "Risk",
+    steps: [
+      { title: "1. Inherent-risk scoring", required: true, checks: [
+        "Score by geography, customer mix, products, channels, transaction volume",
+        "Anchor methodology to UAE NRA and FATF risk-based-approach guidance",
+        "Document data sources and assumptions",
+      ]},
+      { title: "2. Control effectiveness", required: true, checks: [
+        "Assess design and operating effectiveness of all AML / CFT controls",
+        "Reconcile to internal-audit findings and regulator inspection letters",
+        "Identify control gaps and overlaps",
+      ]},
+      { title: "3. Residual risk & strategy", required: true, checks: [
+        "Compute residual-risk score per business line and customer segment",
+        "Capture remediation roadmap with owners and deadlines",
+        "Approve EWRA at Board level and refresh annually",
+      ]},
+    ],
+  },
+  {
+    id: "diamond-cibjo-blue-book",
+    title: "Diamond — CIBJO Blue Book Compliance",
+    typology: "diamond-cibjo-blue-book",
+    family: "DPMS",
+    steps: [
+      { title: "1. Disclosure standards", required: true, checks: [
+        "Apply CIBJO Diamond Blue Book disclosure to natural / lab-grown / treated",
+        "Capture origin and treatment per the Blue Book",
+        "Verify lab certification authenticity (GIA / IGI / HRD)",
+      ]},
+      { title: "2. Kimberley & sanctions", required: true, checks: [
+        "Apply Kimberley Process certification to rough diamonds",
+        "Cross-check sanctions exposure on Russian-origin polished",
+        "Capture chain-of-custody to mine or recycled source",
+      ]},
+      { title: "3. AML touchpoints", required: true, checks: [
+        "Apply DPMS CDD on cash transactions >= AED 55,000",
+        "Capture buyer business profile and source-of-funds",
+        "File DPMSR / STR where indicators arise",
+      ]},
+    ],
+  },
+  {
+    id: "esg-disclosure-tcfd",
+    title: "ESG Disclosure — TCFD-Aligned",
+    typology: "esg-disclosure-tcfd",
+    family: "OECD",
+    steps: [
+      { title: "1. Governance & strategy", required: true, checks: [
+        "Document board oversight of climate-related risks and opportunities",
+        "Map climate scenarios across short / medium / long term",
+        "Identify financial impact pathways",
+      ]},
+      { title: "2. Risk management", required: true, checks: [
+        "Integrate climate risk into the EWRA",
+        "Capture transition and physical-risk metrics",
+        "Set Scope 1 / 2 / 3 emissions baseline and reduction targets",
+      ]},
+      { title: "3. Metrics & disclosure", required: true, checks: [
+        "Publish TCFD-aligned disclosures in the annual report",
+        "Provide assurance on key metrics where required",
+        "Refresh annually with year-on-year commentary",
+      ]},
+    ],
+  },
+  {
+    id: "fdl-10-2025-art-15",
+    title: "FDL 10/2025 Art.15 — MLRO Designation & Independence",
+    typology: "fdl-10-2025-art-15",
+    family: "FIU",
+    steps: [
+      { title: "1. Designation", required: true, checks: [
+        "Notify CBUAE / MoE of MLRO designation within 30 days of appointment",
+        "Confirm MLRO seniority, qualifications, and independence",
+        "Document Deputy MLRO succession arrangement",
+      ]},
+      { title: "2. Authority & resourcing", required: true, checks: [
+        "Define MLRO authorities including freeze, decline, and STR-filing decisions",
+        "Allocate budget, staffing, tools, and external advisory access",
+        "Provide direct reporting line to the Board / Audit Committee",
+      ]},
+      { title: "3. Performance & continuity", required: true, checks: [
+        "Run annual performance review against MLRO mandate KPIs",
+        "Track CPD hours and external accreditation",
+        "Document handover protocol on departure or extended absence",
+      ]},
+    ],
+  },
+  {
+    id: "ai-vendor-assessment",
+    title: "AI Vendor / Third-Party Assessment",
+    typology: "ai-vendor-assessment",
+    family: "ABC",
+    steps: [
+      { title: "1. Vendor due diligence", required: true, checks: [
+        "Assess vendor track record, financial strength, and security certifications",
+        "Verify model documentation, training-data provenance, and update cadence",
+        "Identify sub-processors and country of data processing",
+      ]},
+      { title: "2. Contractual safeguards", required: true, checks: [
+        "Lock in audit rights, model-change notification, and incident response",
+        "Specify exit / portability obligations",
+        "Restrict re-use of customer data for vendor-side training",
+      ]},
+      { title: "3. Ongoing oversight", required: true, checks: [
+        "Run quarterly performance and bias monitoring on vendor outputs",
+        "Refresh vendor due diligence annually",
+        "Maintain a single-vendor concentration register at executive level",
+      ]},
+    ],
+  },
 ];
 
 export default function PlaybookPage() {

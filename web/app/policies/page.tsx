@@ -441,6 +441,278 @@ const DEFAULT_POLICIES: Policy[] = [
       "We publish an annual ESG report aligned with the IFRS Sustainability Disclosure Standards (S1 / S2), the GRI Standards, and where applicable the SFDR Article 8/9 templates. Climate disclosures follow the TCFD recommendations and double-materiality assessment principles. Forward-looking metrics include scope-1, scope-2, and material scope-3 emissions, water stewardship, and human-rights salient risks. Greenwashing is prohibited; every quantitative disclosure must trace to an auditable methodology in the disclosure-control register.",
     lastReviewed: "2026-04-15",
   },
+  {
+    id: "code-of-conduct",
+    section: "Charter",
+    title: "Code of Conduct",
+    body:
+      "Every staff member, contractor, and Board member must read and acknowledge the Code of Conduct annually. The Code prohibits bribery, facilitation payments, market abuse, conflicts of interest, retaliation against whistleblowers, and any conduct that would bring the firm into disrepute. Breaches are investigated by Compliance and may result in disciplinary action, dismissal, or referral to law enforcement. Acknowledgement is recorded and access to systems is suspended after a 14-day grace period for any unsigned attestation.",
+    lastReviewed: "2026-04-20",
+  },
+  {
+    id: "three-lines-of-defense",
+    section: "Charter",
+    title: "Three Lines of Defense",
+    body:
+      "Risk and control responsibilities are split: 1LoD (business operations) owns risk identification, control execution, and first-pass disposition; 2LoD (Compliance / Risk / MLRO) sets policy, monitors execution, and challenges 1LoD; 3LoD (Internal Audit) provides independent assurance to the Board. Reporting lines preserve 2LoD and 3LoD independence — neither reports to a 1LoD line manager. The model is reviewed annually by the Board Audit Committee against the IIA Three Lines Model 2020.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "compliance-independence",
+    section: "Charter",
+    title: "Compliance Function Independence Charter",
+    body:
+      "The Compliance function reports administratively to the CEO and functionally to the Board Audit Committee. The CCO and MLRO have direct, unfiltered access to the Board Chair. Compliance budget, staffing, and tools are approved by the Board, not the business heads. No compensation element of any Compliance officer is tied to commercial KPIs. Removal of the CCO or MLRO requires Board approval and regulator notification within 30 days per FDL 10/2025 Art.15.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "ewra-methodology",
+    section: "Risk Appetite",
+    title: "Enterprise-Wide Risk Assessment Methodology",
+    body:
+      "The Enterprise-Wide Risk Assessment (EWRA) is performed annually and on material change. Methodology anchors to FATF risk-based-approach guidance and the latest UAE National Risk Assessment. Inherent risk is scored across geography, customer mix, products, channels, transaction volume, and delivery channels; control effectiveness is tested via sample-based assurance; residual risk drives the EWRA-led control plan. Board approval is required before publication. Material changes (new product, new geography, regulator finding) trigger an out-of-cycle refresh.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "concentration-risk-limits",
+    section: "Risk Appetite",
+    title: "Concentration Risk Limits",
+    body:
+      "Single-customer exposure must not exceed 10% of group AML-relevant revenue. Single-jurisdiction exposure (excluding home market) is capped at 25%. Single-sector exposure is capped at 35% (DPMS / Real Estate / VASP / Banking each measured separately). Breaches trigger Board notification within 5 business days and a remediation plan including controlled de-risking. Limits are reviewed annually against the EWRA and refreshed risk appetite statement.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "source-of-wealth-standards",
+    section: "Onboarding",
+    title: "Source-of-Wealth Verification Standards",
+    body:
+      "Source-of-Wealth (SoW) is documented for all PEPs, high-risk customers, and any customer whose AUM or transaction profile exceeds AED 5,000,000 over a 12-month period. The evidence hierarchy (most to least probative): regulator-issued asset disclosures, audited financial statements, tax filings, Big-4 advisor letters, listed-share custody records, and bank statements covering the wealth-accumulation period. Self-certification alone is insufficient. SoW evidence is dated and refreshed every 24 months for tier-1 PEPs.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "bo-threshold-policy",
+    section: "Onboarding",
+    title: "Beneficial Ownership Threshold Policy",
+    body:
+      "Beneficial owners are identified at the 25% ownership-or-control threshold per FATF R.24/25 and FDL 10/2025 Art.20. Where no natural person meets the threshold through ownership, identification proceeds via control (voting rights, board appointment, contractual rights). Where neither path identifies a BO, the senior managing official is recorded with a documented rationale. Nominee directors or shareholders trigger automatic EDD and verification of the natural person behind the nominee.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "non-face-to-face",
+    section: "Onboarding",
+    title: "Non-Face-to-Face Customer Policy",
+    body:
+      "Customers onboarded without in-person presence must complete liveness-detected biometric verification, document-authenticity checks (NFC where available), and at minimum one out-of-band verification (penny test, video call, employer letter). Higher transaction limits remain restricted until enhanced verification or in-person KYC is completed. Onboarding through a regulated agent is permitted under FATF R.17 reliance with a written reliance agreement. Recordings of liveness sessions are retained for 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "charity-ngo-policy",
+    section: "Onboarding",
+    title: "Charity & NGO Customer Policy",
+    body:
+      "Charities and non-profit organisations are screened against TF risk per FATF R.8. CDD captures registered status, governing-board members, source of funding (donor concentration), end-use of funds, and operational footprint in CAHRA jurisdictions. Cash transactions over AED 55,000 in a 6-month window trigger EDD and a TF-typology review. UAE-resident NGOs must be registered with the Ministry of Community Development (MoCD) or relevant Emirate authority. Cross-border donor flows are monitored against the EOCN list.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "adverse-media-methodology",
+    section: "Screening",
+    title: "Adverse Media Screening Methodology",
+    body:
+      "Adverse-media screening is run at onboarding and refreshed at the same cadence as sanctions screening. Sources include 50,000+ global publications in English, Arabic, French, Chinese, Russian, and Spanish — covering ML, TF, predicate offences, sanctions evasion, fraud, corruption, environmental crime, and human-rights abuses. Hits older than 7 years are de-prioritised unless they relate to ongoing investigations. False-positive workflow requires documented disposition; true positives trigger an EDD case. Source URLs are captured for every adverse-media flag.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "vessel-aircraft-screening",
+    section: "Screening",
+    title: "Vessel & Aircraft Sanctions Screening",
+    body:
+      "Vessels are screened against IMO numbers, MMSI, flag changes, and AIS dark-period indicators. Aircraft are screened against tail number, ICAO 24-bit address, and registry. Screening covers OFAC, UN, EU, UK, OFSI, and EOCN designation lists at every transaction. Vessels exhibiting AIS spoofing, flag-hopping, or STS (ship-to-ship) transfer in proscribed zones are escalated to MLRO regardless of nominal beneficial ownership. Voyage history is captured for any cargo movement linked to DPRK, Iran, Syria, Russia, or Venezuela.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "dual-use-export-control",
+    section: "Screening",
+    title: "Dual-Use Goods & Export Control Policy",
+    body:
+      "Trade in dual-use goods (Wassenaar Arrangement, EAR, EU Reg 2021/821) requires end-user / end-use certification before any payment is processed. Diversion red flags include over-specification, unusual routing, and end-users in proximity to military programmes. Export to FATF black-list jurisdictions or to entities on the BIS Entity List is prohibited absent a specific licence. Annual export-control training is mandatory for trade-finance, payments, and relationship-management staff. Records are retained for 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "ctr-policy",
+    section: "Reporting",
+    title: "Cash Threshold Reporting (CTR) Policy",
+    body:
+      "Single or aggregated cash transactions of AED 55,000 or equivalent (within a 24-hour window or 5-day linked period) are reported to the FIU on goAML within 30 days. Aggregation includes related accounts, related parties, and structured deposits. Operational thresholds for analyst escalation are set 10% below the regulatory threshold to capture structuring at the boundary. The CTR register is reviewed monthly by the MLRO and reconciled to the cash ledger. Failure to file is a disciplinary offence and may constitute a criminal act.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "travel-rule-policy",
+    section: "Reporting",
+    title: "Travel Rule Policy (FATF R.16)",
+    body:
+      "All wires of USD 1,000 or equivalent must carry full originator information (name, account, address, ID number) and beneficiary information (name, account). VASP transfers above the same threshold must transmit Travel Rule data via an approved protocol (TRP, Sygna, Notabene, OpenVASP) using IVMS-101 schema. Inbound transfers missing required Travel Rule data are rejected. Sunrise-period exceptions require senior-management approval and are reviewed quarterly. Records are retained for 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "independent-aml-audit",
+    section: "Governance",
+    title: "Independent AML Audit Policy",
+    body:
+      "An independent third-party AML audit is commissioned every 24 months covering the design and operating effectiveness of the AML / CFT programme: governance, risk assessment, CDD / EDD, screening, transaction monitoring, STR filing, training, and record-keeping. The auditor must be independent of any advisory engagement with the firm in the last 24 months. Findings are reported to the Board Audit Committee within 15 business days of issuance. High-risk findings trigger an interim review at 6 months. Audit reports are retained for 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "conflicts-of-interest",
+    section: "Governance",
+    title: "Conflicts of Interest Policy",
+    body:
+      "All staff, Board members, and senior managers must declare actual, potential, and perceived conflicts of interest in the COI Register at onboarding and annually thereafter. Material conflicts trigger recusal from related decisions. Personal account dealing in instruments influenced by the firm's customers is prohibited. Outside business interests require pre-approval. The COI Register is reviewed by Internal Audit annually and by the Board Audit Committee at least once per year. Concealment of a material conflict is a disciplinary matter.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "information-barriers",
+    section: "Governance",
+    title: "Information Barriers / Chinese Walls Policy",
+    body:
+      "Information barriers separate AML / Compliance / MLRO functions from front-office and trading desks. Customer suspicion files, STR drafts, and freeze decisions are not accessible to commercial lines except on a strict need-to-know basis approved by the MLRO. Wall-crossings are logged with timestamp, requestor, recipient, and rationale. Breach of an information barrier is a disciplinary offence and may also constitute tipping-off under FDL 10/2025. Annual testing of barriers is performed by Internal Audit.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "cpd-policy",
+    section: "Governance",
+    title: "Continuous Professional Development Policy",
+    body:
+      "All AML / CFT staff complete documented CPD covering FATF updates, UAE regulatory changes, sectoral typologies, sanctions developments, and case-study debriefs. Minimum CPD: 40 hours per year for the MLRO and Deputy MLRO; 25 hours for analysts; 15 hours for first-line staff with AML touchpoints. CPD is tracked in the training register. Failure to meet CPD blocks system access after a 30-day grace period. External certifications (CAMS, ICA, ACAMS) are encouraged and partially funded.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "data-quality-mdm",
+    section: "Data",
+    title: "Data Quality & Master Data Management Policy",
+    body:
+      "Customer master data (golden record) is the authoritative source for KYC, screening, monitoring, and reporting. Material data fields (name, DOB, nationality, address, BO chain, risk rating) are validated at onboarding and on every refresh. Data-quality KPIs (completeness, accuracy, timeliness) are reported monthly. Material discrepancies between master data and downstream systems are reconciled within 5 business days. The MDM Steering Committee approves master-data schema changes; the MLRO has veto over changes affecting AML-relevant fields.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "cross-border-data",
+    section: "Data",
+    title: "Cross-Border Data Transfer Policy",
+    body:
+      "Personal data transfers outside the UAE require a documented lawful basis under UAE Federal Decree-Law 45/2021 (PDPL) Art.22. Transfers to jurisdictions without an adequacy decision require Standard Contractual Clauses, explicit consent, or a regulator-approved exception. Transfers to regulators or FIUs under MLAT or international cooperation are exempt where covered by a specific legal gateway. The Cross-Border Transfer Register lists every data flow with destination, lawful basis, safeguards, and review date. The DPO reviews the Register quarterly.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "data-breach-notification",
+    section: "Data",
+    title: "Data Breach Notification Policy",
+    body:
+      "Any actual or suspected breach of personal data integrity, confidentiality, or availability is reported internally within 1 hour of detection. The DPO and MLRO assess severity within 4 hours. Reportable breaches (high risk to data subjects) are notified to the UAE Data Office within 72 hours of awareness per PDPL. Affected data subjects are notified without undue delay where high risk persists. The breach register captures incident, root cause, mitigation, and lessons learned. Annual tabletop exercises test the response runbook.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "real-estate-aml",
+    section: "Sector: Real Estate",
+    title: "Real-Estate AML Policy (Cabinet Res 10/2019)",
+    body:
+      "Brokers, agents, and developers covered by Cabinet Resolution 10/2019 must apply CDD on every buyer, seller, and intermediary. Cash, virtual asset, or single / linked transactions of AED 55,000 or equivalent trigger DPMS-equivalent EDD. Source-of-funds covering the full purchase price must be documented before completion. UBO of any corporate party is identified at the 25% threshold. Real-Estate Activity Reports (REAR) are filed on goAML within 30 days of the trigger event. Records and underlying evidence are retained for 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "tcsp-policy",
+    section: "Sector: TCSP",
+    title: "Trust & Company Service Provider Policy",
+    body:
+      "TCSP services (company formation, trust administration, nominee director / shareholder, registered office) require enhanced CDD on every settlor, trustee, protector, beneficiary, director, shareholder, and source of funds. Bearer-share companies and shelf companies with undisclosed UBOs are not accepted. Nominee arrangements are permitted only where the underlying natural person is identified and screened. STR triggers include any client unwilling to disclose source of wealth, multiple shell-layer transfers, or onboarding under an alias. Records retained 10 years post-relationship.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "legal-profession-aml",
+    section: "Sector: Legal",
+    title: "Legal Profession AML Policy",
+    body:
+      "Lawyers performing in-scope FATF R.22 gateway services (real estate, business sale, trust formation, account management, BO formation) apply CDD before substantive work. Legal Professional Privilege (LPP) does not extend to client communications made for the purpose of furthering a crime, or to information that the lawyer is legally required to report. Where reporting and LPP appear to conflict, the matter is referred to a different firm for independent advice. Privileged and AML files are kept on separate access-controlled systems.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "auditor-aml",
+    section: "Sector: Audit",
+    title: "Auditor / Accountant AML Policy",
+    body:
+      "Engagements involving in-scope FATF R.22 gateway services require CDD before commencement. Auditors must apply professional scepticism to indicators of ML, TF, and predicate offences encountered during the engagement. Suspicions are escalated to the engagement partner and the firm's MLRO; STRs are filed where reasonable suspicion exists. The audit firm coordinates with the relevant Self-Regulatory Body and applies tipping-off rules. Working papers and CDD are retained for 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "insurance-aml",
+    section: "Sector: Insurance",
+    title: "Insurance AML Policy",
+    body:
+      "Life-insurance products (single-premium, investment-linked, surrender-eligible) are within scope. CDD is applied to policyholder, premium funder, and beneficiary. Single-premium deposits over AED 100,000 trigger EDD. Suspicious indicators include rapid surrender within 24 months, third-party premium funders without familial link, frequent change of beneficiary, and assignment to unrelated parties. STR triggers cascade to MLRO with documented evidence. Claims paid to third-party accounts require Compliance pre-approval.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "fintech-open-banking",
+    section: "Sector: FinTech",
+    title: "FinTech / Open Banking AML Policy",
+    body:
+      "Account Information Service Providers (AISPs) and Payment Initiation Service Providers (PISPs) operating under CBUAE, ADGM FSRA, or DIFC DFSA licensing apply CDD to platform users and the linked PSU. Strong customer authentication and consent capture are mandatory. Data scope is limited to the explicit user consent. Onward data sharing requires both regulatory permission and user consent. AML signals (account churn, structuring, sanctioned-counterparty exposure) are surfaced to the partner financial institution within agreed SLAs.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "correspondent-banking",
+    section: "Sector: Banking",
+    title: "Correspondent Banking Policy (FATF R.13)",
+    body:
+      "Correspondent relationships are established only after CBDDQ (Wolfsberg) collection, senior-management approval, and documented respective AML / CFT responsibilities. Shell banks are prohibited; respondents that allow shell-bank access are also prohibited. Payable-through accounts require evidence that the respondent applies CDD on its own customers and grants the firm right of access. Annual review reconfirms respondent licensing, ownership, and AML programme. Termination occurs on adverse regulator action or material risk increase, with regulator notification per Cabinet Res 74/2020 where TFS is implicated.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "trade-finance-aml",
+    section: "Sector: Banking",
+    title: "Trade Finance AML Policy",
+    body:
+      "Letters of credit, bank guarantees, and documentary collections undergo trade-AML screening covering price-anomaly checks (LBMA / LME / commodity reference), goods-vessel-port consistency, dual-use commodity flags, and counterparty UBO transparency. CAHRA-jurisdiction transit triggers EDD. Phantom shipments, circular trade flows, and over- / under-invoicing more than 15% of reference are escalated to MLRO. Every trade-finance instrument is logged in the trade-AML register with disposition rationale. Retention is 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "front-company-trade-diversion",
+    section: "Screening",
+    title: "Front Company & Trade-Diversion Red-Flag Policy",
+    body:
+      "Indicators of front-company use include: registered address shared with multiple unrelated entities, no online or commercial footprint, goods inconsistent with declared activity, recently incorporated companies transacting at high volume, and ownership traced to high-risk jurisdictions through nominee chains. Trade-diversion red flags include circuitous shipping routes, transhipment via free zones, end-use inconsistency, and end-user distance from declared customer. Each indicator is logged; aggregation of three or more indicators triggers MLRO escalation within 24 hours.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "russia-belarus-sanctions",
+    section: "Screening",
+    title: "Russia / Belarus Sanctions Compliance Policy",
+    body:
+      "EU Reg 833/2014 sectoral measures, EU Reg 765/2006 (Belarus), US Executive Orders 14024 / 14071, and UK SAMLA / Russia Regulations 2019 are incorporated into the screening list. Restricted goods, oil-price-cap attestations, dual-use prohibitions, and SWIFT-disconnected respondents are reflected in transaction controls. 'No Russian-touch' supply-chain certification is required on dual-use goods. AIS spoofing and flag-of-convenience indicators are screened on every cargo movement. Updates from the EU Official Journal, OFAC, and UK OFSI are reflected within 24 hours.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "iran-sanctions",
+    section: "Screening",
+    title: "Iran Sanctions Compliance Policy",
+    body:
+      "UN Security Council Resolution 2231 (post-JCPOA), US OFAC primary and secondary sanctions, and EU Reg 267/2012 are reflected in the screening list. IRGC, MODAFL, NIOC, and sanctioned Iranian banks are blocked counterparties. Dual-use goods require procurement-channel approval per UN 2231 Annex B. Humanitarian carve-outs are processed only with regulator no-objection and with full Travel Rule transparency. Iran-connected vessels and aircraft are screened via IMO / ICAO. Records retained 10 years.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "ai-model-risk",
+    section: "AI Governance",
+    title: "AI Model Risk Management Policy",
+    body:
+      "Every AI / ML model used in AML / CFT decisions (screening, scoring, monitoring, GenAI advisory) is registered in the Model Inventory with intended use, training data lineage, performance metrics, validation evidence, drift thresholds, and review cycle. Pre-deployment validation is independent of model development. Production models are monitored daily for drift (PSI / KS) and quarterly for fairness. Model owners are accountable to the Risk and Compliance Committee. Models cannot be promoted without Compliance + Risk sign-off.",
+    lastReviewed: "2026-04-15",
+  },
+  {
+    id: "ai-bias-fairness-audit",
+    section: "AI Governance",
+    title: "AI Bias & Fairness Audit Policy",
+    body:
+      "Annual independent bias audits are conducted on every AML / CFT model with a stratified sample across protected attributes and risk tiers. Metrics computed: disparate impact, equalised odds, calibration by group, and adverse-impact ratios. Documented thresholds for each metric are pre-agreed with Compliance and Risk. Audit findings are reported to the Board Risk Committee. Material breaches block production use until remediation (reweighting, threshold adjustment, data refresh) and re-validation are complete. Audit reports retained 10 years.",
+    lastReviewed: "2026-04-15",
+  },
 ];
 
 function load(): Policy[] {
@@ -465,6 +737,8 @@ const SECTIONS = [
   "Charter", "Redlines", "Risk Appetite", "Onboarding", "Screening",
   "Reporting", "Governance", "Data", "Sector: DPMS", "Sector: VASP", "PEP Policy",
   "Human Rights", "AI Governance", "Responsible Sourcing", "Anti-Bribery", "Disclosure",
+  "Sector: Real Estate", "Sector: TCSP", "Sector: Legal", "Sector: Audit",
+  "Sector: Insurance", "Sector: FinTech", "Sector: Banking",
 ];
 
 const BLANK_NEW: Omit<Policy, "id"> = {
