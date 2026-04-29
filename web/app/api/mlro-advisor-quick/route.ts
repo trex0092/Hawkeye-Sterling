@@ -30,6 +30,13 @@ import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-c
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
 import { verifyCitations, type CitationReport } from "@/lib/server/citation-verifier";
+import {
+  retrieveForQuestion,
+  runPreGenerationRouter,
+  runPostGenerationCheck,
+  appendAuditEntry,
+  type RetrievalContext,
+} from "@/lib/server/mlro-integration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -263,13 +270,52 @@ export async function POST(req: Request): Promise<Response> {
   }
   const question = gateResult.question;
 
+  // Layer 1 retrieval — pull class-tagged chunks for this question so
+  // the Advisor's prompt is anchored to the source-of-truth registry
+  // and Layer 2's citation validator can later check every cite
+  // against this exact retrieval set.
+  const retrieval: RetrievalContext = retrieveForQuestion(question, 12);
+
+  // Layer 5 pre-generation refusal router — six paths (out-of-scope
+  // legal/tax, named individuals, sanctions verdicts, unsigned filing
+  // drafts, low retrieval confidence). Short-circuits before we burn
+  // an API call. The audit log records the refusal so refusal
+  // precision can be graded by Layer 7.
+  const preGen = runPreGenerationRouter({ question, retrieval });
+  if (preGen.refused) {
+    void appendAuditEntry({
+      userId: "anonymous",
+      mode: "quick",
+      questionText: question,
+      modelVersions: { haiku: MODEL },
+      charterVersionHash: "quick-v1",
+      directivesInvoked: [],
+      doctrinesApplied: [],
+      retrievedSources: retrieval.persistedSources,
+      reasoningTrace: [],
+      finalAnswer: null,
+      refusalReason: preGen.reason,
+    }).catch(() => {});
+    return NextResponse.json(
+      {
+        ok: false,
+        refused: true,
+        reason: preGen.reason,
+        message: preGen.message,
+        escalation: preGen.escalation,
+        elapsedMs: Date.now() - startedAt,
+      },
+      { status: 200, headers: CORS },
+    );
+  }
+
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503, headers: CORS });
   }
 
   const analysis = classifyMlroQuestion(question);
-  const userPrompt = buildEnrichedUserPrompt(question, body.context ?? []);
+  const userPrompt = `${retrieval.promptBlock}\n\n${buildEnrichedUserPrompt(question, body.context ?? [])}`;
 
   const upstreamCtl = new AbortController();
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);
@@ -402,6 +448,57 @@ export async function POST(req: Request): Promise<Response> {
     const advisorScore = scoreAdvisorAnswer(answer, "approved");
     const suggestedFollowUps = analysis.suggestedFollowUps?.slice(0, 3) ?? [];
 
+    // Layer 2 retrieval-grounded citation validator + Layer 5 post-
+    // generation router. The validator checks every cite in the
+    // answer against the registry retrieval set (catches invented
+    // articles, forbidden suffixes, class conflation, invented
+    // numeric timing). The post-gen router catches sanctions verdicts
+    // and filing-XML drift that the pre-gen router can't see from
+    // the question alone.
+    const postGen = runPostGenerationCheck({ question, answer, retrieval });
+    if (postGen.router.refused) {
+      void appendAuditEntry({
+        userId: "anonymous",
+        mode: "quick",
+        questionText: question,
+        modelVersions: { haiku: MODEL },
+        charterVersionHash: "quick-v1",
+        directivesInvoked: [],
+        doctrinesApplied: [],
+        retrievedSources: retrieval.persistedSources,
+        reasoningTrace: [{ role: "executor", modelBuild: MODEL, text: answer.slice(0, 4_000) }],
+        finalAnswer: null,
+        validation: postGen.validation,
+        refusalReason: postGen.router.reason,
+      }).catch(() => {});
+      return NextResponse.json(
+        {
+          ok: false,
+          refused: true,
+          reason: postGen.router.reason,
+          message: postGen.router.message,
+          escalation: postGen.router.escalation,
+          elapsedMs: Date.now() - startedAt,
+        },
+        { status: 200, headers: CORS },
+      );
+    }
+
+    // Layer 4 audit log — fire-and-forget; persists to Netlify Blobs.
+    const audit = await appendAuditEntry({
+      userId: "anonymous",
+      mode: "quick",
+      questionText: question,
+      modelVersions: { haiku: MODEL },
+      charterVersionHash: "quick-v1",
+      directivesInvoked: [],
+      doctrinesApplied: [],
+      retrievedSources: retrieval.persistedSources,
+      reasoningTrace: [{ role: "executor", modelBuild: MODEL, text: answer.slice(0, 4_000) }],
+      finalAnswer: null,
+      validation: postGen.validation,
+    }).catch(() => ({ seq: 0, entryHash: "" }));
+
     return NextResponse.json(
       {
         ok: true,
@@ -427,6 +524,25 @@ export async function POST(req: Request): Promise<Response> {
           confidence: analysis.confidence,
           coverageScore: analysis.intelligenceProfile?.coverageScore ?? 0,
         },
+        // Layer-2 retrieval-grounded validation summary — orthogonal to
+        // the bundled-allow-list `citationReport` above. UI can ignore
+        // this for now; the audit log captures it for the regulator.
+        retrievalGroundedValidation: {
+          passed: postGen.validation.passed,
+          summary: postGen.validation.summary,
+          defectCount: postGen.validation.defects.length,
+          ungroundedClaimCount: postGen.validation.ungroundedClaims.length,
+        },
+        // Layer-1 retrieval breadcrumb — class-tagged source ids the
+        // answer was anchored against. Surfaces in the audit log.
+        retrievedSources: retrieval.persistedSources.map((s) => ({
+          class: s.class,
+          classLabel: s.classLabel,
+          sourceId: s.sourceId,
+          articleRef: s.articleRef,
+          version: s.version,
+        })),
+        auditEntrySeq: audit.seq,
       },
       { status: 200, headers: CORS },
     );
