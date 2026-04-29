@@ -36,6 +36,20 @@ export type {
 
 export { checkCompletion, buildFailClosed, SECTION_IDS } from './response-schema.js';
 
+export {
+  preGenerationRouter,
+  postGenerationRouter,
+  retrievalConfidence,
+} from './refusal-router.js';
+export type {
+  RefusalReason,
+  RefusalResponse,
+  PassThrough,
+  RouterOutcome,
+  PreGenerationInput,
+  PostGenerationInput,
+} from './refusal-router.js';
+
 export { AuditLogStore, persistedSourceFromChunk } from './audit-log.js';
 export type {
   AuditEntryV1,
