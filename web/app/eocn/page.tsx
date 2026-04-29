@@ -3,184 +3,26 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import {
+  fixturePayload,
+  type EocnFeedPayload,
+  type ListUpdate as SharedListUpdate,
+  type EocnMatch as SharedEocnMatch,
+  type AnnualDeclaration as SharedAnnualDeclaration,
+  type ListUpdateStatus,
+  type MatchDisposition,
+  type DeclarationStatus,
+} from "@/lib/data/eocn-fixture";
 
 // EOCN — Executive Office for Control & Non-Proliferation (UAE).
 // Maintains the UAE consolidated Targeted Financial Sanctions (TFS) list.
 // All regulated entities must screen against EOCN list within 24h of update
 // and freeze assets / file goAML on any confirmed match.
 
-type ListUpdateStatus = "applied" | "pending" | "failed";
-type MatchDisposition = "false-positive" | "confirmed" | "under-review" | "escalated";
-type DeclarationStatus = "filed" | "overdue" | "in-progress" | "not-due";
+type ListUpdate = SharedListUpdate;
+type EocnMatch = SharedEocnMatch;
+type AnnualDeclaration = SharedAnnualDeclaration;
 
-interface ListUpdate {
-  id: string;
-  date: string;
-  time: string;
-  version: string;
-  deltaAdded: number;
-  deltaRemoved: number;
-  screeningStatus: ListUpdateStatus;
-  screeningCompletedAt?: string;
-  notes: string;
-}
-
-interface EocnMatch {
-  id: string;
-  screenedAt: string;
-  subject: string;
-  matchScore: number;
-  listEntry: string;
-  listVersion: string;
-  disposition: MatchDisposition;
-  dispositionDate?: string;
-  goAmlRef?: string;
-  mlroSignedOff: boolean;
-  notes: string;
-}
-
-interface AnnualDeclaration {
-  year: number;
-  status: DeclarationStatus;
-  filedDate?: string;
-  refNumber?: string;
-  period: string;
-  notes: string;
-}
-
-const LIST_UPDATES: ListUpdate[] = [
-  {
-    id: "LU-2025-0041",
-    date: "2025-04-22",
-    time: "08:15",
-    version: "EOCN-TFS-v2025.041",
-    deltaAdded: 3,
-    deltaRemoved: 1,
-    screeningStatus: "applied",
-    screeningCompletedAt: "2025-04-22 09:47",
-    notes: "3 new designations; 1 delisting. Full re-screen completed within SLA (24h).",
-  },
-  {
-    id: "LU-2025-0038",
-    date: "2025-04-15",
-    time: "10:30",
-    version: "EOCN-TFS-v2025.038",
-    deltaAdded: 0,
-    deltaRemoved: 2,
-    screeningStatus: "applied",
-    screeningCompletedAt: "2025-04-15 11:15",
-    notes: "2 delistings only. Rapid re-screen completed within 45 minutes.",
-  },
-  {
-    id: "LU-2025-0035",
-    date: "2025-04-08",
-    time: "14:00",
-    version: "EOCN-TFS-v2025.035",
-    deltaAdded: 7,
-    deltaRemoved: 0,
-    screeningStatus: "applied",
-    screeningCompletedAt: "2025-04-08 20:30",
-    notes: "7 new designations including 2 UAE-nexus entities. Re-screen flagged 1 potential match (see EOCN-MATCH-0012).",
-  },
-  {
-    id: "LU-2025-0031",
-    date: "2025-04-01",
-    time: "09:00",
-    version: "EOCN-TFS-v2025.031",
-    deltaAdded: 1,
-    deltaRemoved: 0,
-    screeningStatus: "applied",
-    screeningCompletedAt: "2025-04-01 14:22",
-    notes: "1 new designation. No customer matches.",
-  },
-  {
-    id: "LU-2025-0028",
-    date: "2025-03-25",
-    time: "11:45",
-    version: "EOCN-TFS-v2025.028",
-    deltaAdded: 0,
-    deltaRemoved: 0,
-    screeningStatus: "applied",
-    screeningCompletedAt: "2025-03-25 12:10",
-    notes: "Administrative update — no new designations.",
-  },
-];
-
-const MATCHES: EocnMatch[] = [
-  {
-    id: "EOCN-MATCH-0012",
-    screenedAt: "2025-04-08 21:00",
-    subject: "Al-Noor Trading LLC",
-    matchScore: 91,
-    listEntry: "Al Noor General Trading Co — UAE designation 2025-04-08",
-    listVersion: "EOCN-TFS-v2025.035",
-    disposition: "under-review",
-    mlroSignedOff: false,
-    notes: "91% fuzzy match on name. Corporate structure check in progress. 24h MLRO review window active.",
-  },
-  {
-    id: "EOCN-MATCH-0009",
-    screenedAt: "2025-03-12 14:30",
-    subject: "Gulf Gem Jewellers",
-    matchScore: 87,
-    listEntry: "Gulf Gem Exchange — UNSC 1267 designee",
-    listVersion: "EOCN-TFS-v2025.019",
-    disposition: "false-positive",
-    dispositionDate: "2025-03-13 09:15",
-    mlroSignedOff: true,
-    notes: "Different entity — different trade licence, directors, address. MLRO confirmed false positive. Documented.",
-  },
-  {
-    id: "EOCN-MATCH-0007",
-    screenedAt: "2025-02-20 10:00",
-    subject: "Tariq Al-Rashidi",
-    matchScore: 96,
-    listEntry: "Tariq Mohammed Al-Rashidi — MoE TFS designation",
-    listVersion: "EOCN-TFS-v2025.011",
-    disposition: "confirmed",
-    dispositionDate: "2025-02-20 11:30",
-    goAmlRef: "goAML-STR-2025-0033",
-    mlroSignedOff: true,
-    notes: "Confirmed match — same DoB, Emirates ID fragment. Assets frozen. goAML FFR filed within 5 business days. MoE notified.",
-  },
-  {
-    id: "EOCN-MATCH-0005",
-    screenedAt: "2025-01-15 09:20",
-    subject: "Crescent Bullion FZC",
-    matchScore: 88,
-    listEntry: "Crescent Metals & Bullion Co — EU FSF designation",
-    listVersion: "EOCN-TFS-v2025.004",
-    disposition: "escalated",
-    dispositionDate: "2025-01-15 16:00",
-    mlroSignedOff: false,
-    notes: "Match under Board review — entity has UAE trade licence but listed by EU. Pending MoE guidance.",
-  },
-];
-
-const DECLARATIONS: AnnualDeclaration[] = [
-  {
-    year: 2024,
-    status: "filed",
-    filedDate: "2025-02-15",
-    refNumber: "EOCN-DEC-2024-00441",
-    period: "01/01/2024 – 31/12/2024",
-    notes: "Filed on time. Covers all upstream smelters and refiners. LBMA / RJC CoC certificates attached.",
-  },
-  {
-    year: 2023,
-    status: "filed",
-    filedDate: "2024-03-10",
-    refNumber: "EOCN-DEC-2023-00291",
-    period: "01/01/2023 – 31/12/2023",
-    notes: "Filed. One late observation from EOCN acknowledged.",
-  },
-  {
-    year: 2025,
-    status: "in-progress",
-    period: "01/01/2025 – 31/12/2025",
-    notes: "Data collection in progress. Declaration due 31 March 2026.",
-  },
-];
 
 const UPDATE_STATUS_TONE: Record<ListUpdateStatus, string> = {
   applied: "bg-green-dim text-green",
@@ -224,13 +66,65 @@ export default function EocnPage() {
   const [editMatchDraft, setEditMatchDraft] = useState<MatchEditDraft>({ disposition: "under-review", notes: "", goAmlRef: "", mlroSignedOff: false });
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  // Live-feed payload, initialized from the bundled fixture so the
+  // page renders instantly on first load. Replaced by GET
+  // /api/eocn-list-updates on mount and by POST on operator refresh.
+  const [feed, setFeed] = useState<EocnFeedPayload>(() => fixturePayload());
+  const LIST_UPDATES = feed.listUpdates;
+  const MATCHES = feed.matches;
+  const DECLARATIONS = feed.declarations;
 
-  const handleRefresh = useCallback(() => {
+  // Pull the latest snapshot from the API on mount. Best-effort — if
+  // the fetch fails the fixture stays in place.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/eocn-list-updates", {
+          method: "GET",
+          headers: { accept: "application/json" },
+        });
+        if (!r.ok) return;
+        const next = (await r.json()) as EocnFeedPayload;
+        if (!cancelled && next?.listUpdates?.length) {
+          setFeed(next);
+          if (next.lastSyncedAt && next.lastSyncedAt !== new Date(0).toISOString()) {
+            setLastRefreshed(new Date(next.lastSyncedAt));
+          }
+        }
+      } catch {
+        /* fixture fallback */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
+    try {
+      // POST triggers an upstream re-fetch when EOCN_FEED_URL is
+      // configured; otherwise the route returns the fixture but
+      // updates the lastSyncedAt timestamp so operators see fresh
+      // sync metadata.
+      const r = await fetch("/api/eocn-list-updates", {
+        method: "POST",
+        headers: { accept: "application/json", "content-type": "application/json" },
+        body: "{}",
+      });
+      if (r.ok || r.status === 502) {
+        const next = (await r.json()) as EocnFeedPayload;
+        if (next?.listUpdates?.length) {
+          setFeed(next);
+        }
+      }
       setLastRefreshed(new Date());
-    }, 900);
+    } catch {
+      /* swallow — keep last-known data */
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -334,6 +228,22 @@ export default function EocnPage() {
         ))}
         <div className="flex-1" />
         <div className="flex items-center gap-2 pb-2">
+          <span
+            className={`inline-flex items-center px-2 py-px rounded font-mono text-10 font-semibold tracking-wide-2 uppercase ${
+              feed.source === "live"
+                ? "bg-green-dim text-green"
+                : "bg-amber-dim text-amber"
+            }`}
+            title={
+              feed.source === "live"
+                ? `Live feed${feed.upstreamUrl ? ` · ${feed.upstreamUrl}` : ""}`
+                : feed.upstreamError
+                  ? `Demo data · upstream: ${feed.upstreamError}`
+                  : "Demo data — set EOCN_FEED_URL in Netlify env to activate live polling"
+            }
+          >
+            {feed.source === "live" ? "live" : "demo"}
+          </span>
           {lastRefreshed && (
             <span className="text-10 font-mono text-ink-3">
               Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
