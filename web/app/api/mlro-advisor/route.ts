@@ -11,6 +11,13 @@ import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGat
 import { verifyCitations } from "@/lib/server/citation-verifier";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
+  retrieveForQuestion,
+  runPreGenerationRouter,
+  runPostGenerationCheck,
+  appendAuditEntry,
+  type RetrievalContext,
+} from "@/lib/server/mlro-integration";
+import {
   buildJurisdictionComparator,
   buildCasePrecedentPreamble,
   buildRegulatoryUpdatePreamble,
@@ -192,6 +199,41 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Use the sanitised, gate-approved text downstream so injection
   // payloads can't reach the model via the original body.question.
   body.question = gateResult.question;
+
+  // Layer 1 retrieval — pull class-tagged chunks for this question.
+  const retrieval: RetrievalContext = retrieveForQuestion(body.question, 16);
+
+  // Layer 5 pre-generation refusal router — short-circuits before the
+  // executor → advisor → challenger pipeline burns its budget.
+  const preGen = runPreGenerationRouter({
+    question: body.question,
+    retrieval,
+  });
+  if (preGen.refused) {
+    void appendAuditEntry({
+      userId: tenant ?? "anonymous",
+      mode: (body.mode as "speed" | "balanced" | "deep" | "multi_perspective") ?? "balanced",
+      questionText: body.question,
+      modelVersions: { sonnet: "claude-sonnet-4-6", opus: "claude-opus-4-7" },
+      charterVersionHash: "advisor-v1",
+      directivesInvoked: [],
+      doctrinesApplied: [],
+      retrievedSources: retrieval.persistedSources,
+      reasoningTrace: [],
+      finalAnswer: null,
+      refusalReason: preGen.reason,
+    }).catch(() => {});
+    return NextResponse.json(
+      {
+        ok: false,
+        refused: true,
+        reason: preGen.reason,
+        message: preGen.message,
+        escalation: preGen.escalation,
+      },
+      { status: 200, headers: gateHeaders },
+    );
+  }
 
   // Enrich the question with conversation context + classifier pre-brief.
   // ── Persistent advisor session ────────────────────────────────
@@ -400,6 +442,57 @@ export async function POST(req: Request): Promise<NextResponse> {
       regulatoryUpdatesApplied: regulatoryUpdates.length > 0,
     };
 
+    // Layer 2 retrieval-grounded validation + Layer 5 post-generation
+    // router. Fires on the rendered narrative.
+    const postGen = result.narrative
+      ? runPostGenerationCheck({
+          question: body.question,
+          answer: result.narrative,
+          retrieval,
+        })
+      : null;
+    if (postGen?.router.refused) {
+      void appendAuditEntry({
+        userId: tenant ?? "anonymous",
+        mode: (body.mode as "speed" | "balanced" | "deep" | "multi_perspective") ?? "balanced",
+        questionText: body.question,
+        modelVersions: { sonnet: "claude-sonnet-4-6", opus: "claude-opus-4-7" },
+        charterVersionHash: "advisor-v1",
+        directivesInvoked: [],
+        doctrinesApplied: [],
+        retrievedSources: retrieval.persistedSources,
+        reasoningTrace: [],
+        finalAnswer: null,
+        validation: postGen.validation,
+        refusalReason: postGen.router.reason,
+      }).catch(() => {});
+      return NextResponse.json(
+        {
+          ok: false,
+          refused: true,
+          reason: postGen.router.reason,
+          message: postGen.router.message,
+          escalation: postGen.router.escalation,
+        },
+        { status: 200, headers: gateHeaders },
+      );
+    }
+
+    // Layer 4 audit log — fire-and-forget; persists to Netlify Blobs.
+    const audit = await appendAuditEntry({
+      userId: tenant ?? "anonymous",
+      mode: (body.mode as "speed" | "balanced" | "deep" | "multi_perspective") ?? "balanced",
+      questionText: body.question,
+      modelVersions: { sonnet: "claude-sonnet-4-6", opus: "claude-opus-4-7" },
+      charterVersionHash: "advisor-v1",
+      directivesInvoked: [],
+      doctrinesApplied: [],
+      retrievedSources: retrieval.persistedSources,
+      reasoningTrace: [],
+      finalAnswer: null,
+      ...(postGen?.validation ? { validation: postGen.validation } : {}),
+    }).catch(() => ({ seq: 0, entryHash: "" }));
+
     return NextResponse.json(
       {
         ...result,
@@ -411,6 +504,24 @@ export async function POST(req: Request): Promise<NextResponse> {
         citationReport,
         suggestedFollowUps,
         contextFlags,
+        retrievedSources: retrieval.persistedSources.map((s) => ({
+          class: s.class,
+          classLabel: s.classLabel,
+          sourceId: s.sourceId,
+          articleRef: s.articleRef,
+          version: s.version,
+        })),
+        ...(postGen
+          ? {
+              retrievalGroundedValidation: {
+                passed: postGen.validation.passed,
+                summary: postGen.validation.summary,
+                defectCount: postGen.validation.defects.length,
+                ungroundedClaimCount: postGen.validation.ungroundedClaims.length,
+              },
+            }
+          : {}),
+        auditEntrySeq: audit.seq,
       },
       { headers: gateHeaders },
     );
