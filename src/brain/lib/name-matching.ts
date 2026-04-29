@@ -178,7 +178,8 @@ export function jaro(a: string, b: string): number {
   let transpositions = 0, k = 0;
   for (let i = 0; i < a.length; i++) {
     if (!aMatch[i]) continue;
-    while (!bMatch[k]) k++;
+    while (k < b.length && !bMatch[k]) k++;
+    if (k >= b.length) break;
     if (a[i] !== b[k]) transpositions++;
     k++;
   }
@@ -207,7 +208,8 @@ export function jaccardNgrams(a: string, b: string, n = 3): number {
   if (A.size === 0 && B.size === 0) return 1;
   let inter = 0;
   for (const x of A) if (B.has(x)) inter++;
-  return inter / (A.size + B.size - inter);
+  const denom = A.size + B.size - inter;
+  return denom === 0 ? 0 : inter / denom;
 }
 
 // ── Metaphone (simplified, Latin) ────────────────────────────────────────
@@ -287,7 +289,8 @@ export function tokenSetSimilarity(a: string, b: string): number {
   if (A.size === 0 && B.size === 0) return 1;
   let inter = 0;
   for (const t of A) if (B.has(t)) inter++;
-  return inter / (A.size + B.size - inter);
+  const denom = A.size + B.size - inter;
+  return denom === 0 ? 0 : inter / denom;
 }
 
 // ── Composite weighted score ─────────────────────────────────────────────
@@ -315,7 +318,7 @@ export function matchScore(rawA: string, rawB: string): MatchScore {
   else { a = normalizeLatin(rawA); b = normalizeLatin(rawB); }
 
   const jw = jaroWinkler(a, b);
-  const ts = tokenSetSimilarity(rawA, rawB);
+  const ts = tokenSetSimilarity(a, b);
   const jc = jaccardNgrams(a, b, 3);
   const lev = levenshtein(a, b);
   const maxLen = Math.max(a.length, b.length, 1);

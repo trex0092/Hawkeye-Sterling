@@ -3,16 +3,22 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM"],
     "outDir": "dist",
     "rootDir": ".",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["node"],
     "declaration": true,
-    "forceConsistentCasingInFileNames": true
+    "sourceMap": true
   },
-  "include": ["src/**/*", "netlify/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "public", "src/**/__tests__/**", "src/**/*.test.ts"]
 }

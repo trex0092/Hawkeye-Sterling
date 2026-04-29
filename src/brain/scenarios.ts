@@ -209,6 +209,164 @@ export const SCENARIOS: Scenario[] = [
     'Late-Friday invoice-redirect email uses stylometric register distinct from vendor baseline; obfuscation markers and hedging cluster in the payment-instruction sentence.',
     'linguistic_forensic_read',
     ['stylometry_shift','obfuscation_pattern','hedging_cluster','bec_fraud']),
+
+  // ─── WAVE 4 — FATF 2021 environmental predicate + Wave-4 crime ──────
+  s('env_crime_cahra_dore', 'Environmental crime — CAHRA doré with no OECD evidence', 'environmental',
+    'Refinery accepts 480 kg doré declared Tanzanian-origin; customs paper trails terminate at a DRC artisanal mine in a CAHRA; OECD Annex II evidence never attached.',
+    'dpms_refiner_cahra',
+    ['cahra_exposure','provenance_mismatch','fatf_r3_env_predicate','lbma_step_gap']),
+
+  s('env_crime_iuu_seafood', 'Environmental crime — IUU seafood supply chain', 'environmental',
+    'Seafood importer sources from vessel listed on IUU register; AIS shows repeated 24-hour gaps over protected fishing grounds; payments layered through two correspondent banks.',
+    undefined,
+    ['iuu_fishing_nexus','vessel_ais_gap','fatf_r3_env_predicate']),
+
+  s('env_crime_waste_trafficking_basel', 'Environmental crime — hazardous-waste trafficking (Basel gap)', 'environmental',
+    'Hazardous-waste HS code shipped cross-border with mis-declared freight class; no Basel Convention notification; buyer is a shell in opaque jurisdiction.',
+    undefined,
+    ['basel_gap','hs_misclassification','shell_buyer','fatf_r3_env_predicate']),
+
+  s('carbon_phantom_credit_issuance', 'Carbon-market — phantom credit issuance', 'carbon',
+    'Carbon project claims 1.2M tCO2e avoided; satellite baseline shows no change; no verified-MRV record at the declared registry; credits retired in Singapore while re-sold in EU.',
+    undefined,
+    ['phantom_credit','registry_gap','mrv_mismatch','carbon_market_fraud']),
+
+  s('carbon_double_counting_a6', 'Carbon-market — Article-6 double counting', 'carbon',
+    'Same tCO2e claimed under a host-country NDC and resold to an EU buyer as a corresponding-adjusted credit; no corresponding-adjustment entry on either ledger.',
+    undefined,
+    ['double_counting','corresponding_adjustment_absent','carbon_market_fraud']),
+
+  s('insider_threat_offboarding_exfil', 'Insider threat — offboarding bulk exfiltration', 'insider',
+    'Privileged engineer exports 6 GB of source + customer data in the 3 weeks before announced resignation; new employer files patents in overlapping subject-matter 4 months later.',
+    undefined,
+    ['privileged_exfil','offboarding_spike','ip_overlap','insider_threat']),
+
+  s('insider_threat_usb_after_hours', 'Insider threat — removable-media after hours', 'insider',
+    'Analyst with access to client dossiers writes repeatedly to USB storage between 23:00 and 02:00 over 12 nights; DLP alerts triaged as false-positives until volume is reviewed.',
+    undefined,
+    ['usb_after_hours','dlp_gap','pattern_of_life','insider_threat']),
+
+  s('synthetic_id_loan_mill', 'Synthetic identity — loan-mill cluster', 'synthetic_identity',
+    'Fifteen unsecured-loan applicants share blended real + fabricated attributes — all with thin-file SSNs, reused device fingerprints, and coordinated first-payment defaults.',
+    undefined,
+    ['synthetic_id_cluster','device_overlap','first_payment_default','synthetic_identity']),
+
+  s('real_estate_ml_layered', 'Real-estate ML — layered purchase', 'real_estate',
+    'AED 28m villa purchased by a 3-layer BVI / Cayman / UAE FZ structure; funds arrived through 4 correspondent hops; cash closure; declared beneficial owner is a nominee.',
+    undefined,
+    ['shell_chain','jurisdiction_cascade','cash_closure','real_estate_cash']),
+
+  s('luxury_yacht_beneficial_opacity', 'Luxury asset — yacht registration opacity', 'luxury_asset',
+    '60m yacht registered through a chain of SPVs across Marshall Islands → Malta → Guernsey; nominee directors; beneficial use by sanctioned PEP relative; AIS silent on repositioning.',
+    undefined,
+    ['yacht_chain_opacity','nominee_directors','ais_silence','pep_proximity']),
+
+  // ─── WAVE 4 — AI governance + AI incidents ──────────────────────────
+  s('ai_gov_high_risk_no_conformity', 'AI governance — high-risk deployment without conformity assessment', 'ai_governance',
+    'Credit-scoring model deployed across retail portfolio; no EU AI Act Annex III conformity assessment on file; no model card or fairness-monitoring metric; business unit unaware of obligations.',
+    undefined,
+    ['eu_ai_act_annex_iii','conformity_assessment_absent','fairness_monitoring_gap','ai_governance_breach']),
+
+  s('ai_gov_shadow_llm_sensitive', 'AI governance — shadow-LLM on sensitive data', 'ai_governance',
+    'Business unit pastes customer PII and M&A plans into a third-party generative-AI web UI; egress logs show 200+ sessions over a month; no AI registry entry.',
+    undefined,
+    ['shadow_ai','pii_egress','registry_gap','ai_governance_breach']),
+
+  s('ai_agentic_autonomous_spend', 'AI governance — agentic AI autonomous spend', 'ai_governance',
+    'Procurement agent LLM-driven workflow issues purchase orders below a de-minimis threshold; vendor diligence bypassed; no human-in-the-loop; total AED 1.4m across 90 days.',
+    undefined,
+    ['agentic_autonomy','no_human_in_loop','vendor_diligence_bypass','ai_governance_breach']),
+
+  s('ai_prompt_injection_data_exfil', 'AI failure — indirect prompt injection exfiltrates data', 'ai_incident',
+    'Customer-support LLM integrated with case-ticket store falls to indirect prompt injection embedded in a PDF; partial dossier content echoed to attacker-controlled URL.',
+    undefined,
+    ['prompt_injection','owasp_llm_top_10','data_exfiltration','ai_failure']),
+
+  s('ai_synthetic_ceo_deepfake_bec', 'AI synthetic-media — CEO deepfake BEC', 'ai_synthetic_media',
+    'CFO receives live video call from apparent CEO requesting urgent AED 9m wire to new beneficiary; voice cadence + lip-sync indicate synthetic origin; beneficiary account opened 12 days prior.',
+    'linguistic_forensic_read',
+    ['deepfake_executive','voice_clone','new_beneficiary','ai_synthetic_media_fraud']),
+
+  s('ai_liveness_bypass_onboarding', 'AI synthetic-media — liveness-bypass KYC onboarding', 'ai_synthetic_media',
+    'KYC flow passes liveness check; post-onboarding selfie fails device / biometric cross-check; deeper review finds AI-generated ID with EXIF anomalies.',
+    undefined,
+    ['liveness_spoof','ai_generated_kyc_doc','biometric_mismatch','ai_synthetic_media_fraud']),
+
+  // ─── WAVE 5 — Professional ML, Hawala, Romance fraud, Gaming, RE ─────
+  s('hawala_network_gold_settlement', 'Hawala — Gold-settled bilateral netting', 'hawala',
+    'UAE trading company receives AED 4.2m from 18 Pakistani remitters in 10 days; matching outbound AED transfers to a Karachi hawaladar; settlement confirmed via gold shipment invoice matching the net position.',
+    undefined,
+    ['hawala_network','velocity_analysis','pattern_of_life','jurisdiction_cascade']),
+
+  s('romance_pig_butchering_crypto', 'Pig-butchering — crypto investment scam', 'cyber_fraud',
+    'UAE resident contacts "investment advisor" on dating app; over 6 weeks transfers AED 890k to unhosted wallets via a fake exchange claiming 40% monthly returns; funds chain-hop to sanctioned mixer within 48 hours.',
+    undefined,
+    ['romance_fraud','chain_analysis','taint_propagation','unhosted_wallet']),
+
+  s('professional_ml_network_invoicing', 'Professional ML — invoice-layering network', 'professional_ml',
+    'Three UAE FZ entities and two foreign shell companies issue circular invoices totalling AED 28m over 6 months; funds rotate through 4 jurisdictions before landing in a real-estate holding; same beneficial owner identified via UBO cascade.',
+    undefined,
+    ['professional_money_laundering','community_detection','link_analysis','circular_invoicing']),
+
+  s('gambling_online_chip_wash', 'Online gambling — chip washing', 'gambling',
+    'Subject deposits AED 1.8m across 6 online gambling platforms in one month; wagers < 5% of funds; withdraws to 3 different bank accounts citing "winnings"; no documented gaming history.',
+    undefined,
+    ['gambling_ml','velocity_analysis','pattern_of_life','placement_layering']),
+
+  s('funnel_account_mule_network', 'Funnel account — student mule cluster', 'banking',
+    '14 UAE university student accounts each receive AED 60k–80k from unrelated foreign senders over 72 hours; aggregate AED 980k consolidated into one account within 24 hours then wired to a single IBAN in Turkey.',
+    undefined,
+    ['funnel_account','velocity_analysis','smurfing_detection','mule_network']),
+
+  s('vasp_chain_hop_ransomware', 'Ransomware proceeds — chain-hopping cash-out', 'crypto',
+    'OFAC-linked ransomware wallet disburses 7.4 BTC across 3 protocol bridges (BTC→ETH→MATIC→BSC) within 6 hours; proceeds arrive at UAE OTC desk as USDT then converted to AED and collected in cash.',
+    undefined,
+    ['crypto_ransomware','chain_analysis','taint_propagation','sanctions_regime_matrix']),
+
+  s('real_estate_over_valuation_kickback', 'Real estate — over-valuation with cash-back', 'real_estate',
+    'AED 12m villa contracted at AED 17m; AED 5m excess funded by buyer from an offshore account and returned in cash by developer to a third-party account; independent RICS valuation supports AED 12m.',
+    undefined,
+    ['real_estate_over_valuation','real_estate_cash','source_triangulation','cash_intensive']),
+
+  s('insurance_pep_wrap_surrender', 'Insurance wrap — PEP multi-jurisdiction surrender', 'insurance',
+    'Former minister holds 4 single-premium life wrappers (Switzerland, Guernsey, Liechtenstein, UAE) with aggregate EUR 8m premiums; all surrendered within 18 months; proceeds consolidated to a new Cayman holding.',
+    undefined,
+    ['insurance_wrap','pep_domestic_minister','source_triangulation','jurisdiction_cascade']),
+
+  s('correspondent_shell_respondent', 'Correspondent banking — shell respondent access', 'banking',
+    'Caribbean-incorporated entity with no physical presence and no CBUAE licence maintains a USD account via a Lebanese correspondent; routes payments to Iranian counterparties through 3 intermediate hops.',
+    undefined,
+    ['correspondent_shell','corresp_nested_bank_flow','sanctions_regime_matrix','jurisdiction_cascade']),
+
+  s('tax_evasion_offshore_layering', 'Tax evasion — offshore layering via UAE FZ', 'tax_evasion',
+    'European HNW individual channels business profits through a JAFZA company to a BVI holding; no substance in either entity; transfer-pricing study absent; funds ultimately remitted to Switzerland without tax disclosure.',
+    undefined,
+    ['tax_evasion_offshore','jurisdiction_cascade','source_triangulation','ubo_tree_walk']),
+
+  s('daigou_luxury_parallel_import', 'Daigou — luxury parallel-import trade ML', 'tbml',
+    'UAE resident purchases 120 Rolex watches per quarter from Swiss AD; ships to PRC buyers via a logistics company; invoice values 40% below retail; PRC buyers settle via WeChat Pay to UAE personal accounts.',
+    undefined,
+    ['daigou_parallel_import','tbml_over_invoicing','jurisdiction_cascade','customs_fraud']),
+
+  s('construction_kickback_ml', 'Construction — government contract kickback', 'construction',
+    'AED 450m government infrastructure contract awarded to a JV; 12% consultancy fee paid to a BVI entity controlled by a procurement official relative; funds routed via three correspondent hops before real-estate investment.',
+    undefined,
+    ['construction_ml','kleptocracy','pep_domestic_minister','ubo_tree_walk']),
+
+  s('virtual_iban_mule_layering', 'Virtual IBAN — EMI mule layering', 'banking',
+    'UK EMI issues 400 virtual IBANs to UAE applicants in 30 days; each account receives AED 40k-90k; all funds forwarded within 24h to a single UAE bank account; no CDD on the EMI side.',
+    undefined,
+    ['virtual_iban_abuse','funnel_account','velocity_analysis','kyc_gap']),
+
+  s('healthcare_billing_fraud_ml', 'Healthcare — ghost-procedure billing ML', 'healthcare',
+    'UAE private clinic submits AED 6m of insurance claims over 12 months for procedures performed on patients who deny receiving treatment; reimbursements flow to a shell trading company; ultimate funds used to purchase real estate.',
+    undefined,
+    ['healthcare_billing_fraud','reconciliation','placement_layering','real_estate_cash']),
+
+  s('precious_stones_border_smuggle', 'Precious stones — border smuggling value transfer', 'dpms',
+    'Uncut rubies with estimated retail value AED 2.4m declared as "industrial minerals" on customs manifest; buyer is an unregistered dealer; payment made cash-on-delivery; no CITES or origin documentation.',
+    undefined,
+    ['precious_stones','customs_fraud','provenance_trace','jurisdiction_cascade']),
 ];
 
 export const SCENARIO_BY_ID: Map<string, Scenario> = new Map(

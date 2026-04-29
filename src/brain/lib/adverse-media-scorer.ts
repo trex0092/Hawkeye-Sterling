@@ -17,9 +17,17 @@ export interface AdverseMediaScore {
 const CATEGORY_WEIGHTS: Record<AdverseMediaCategoryId, number> = {
   terrorist_financing: 1.0,
   proliferation_financing: 1.0,
+  sanctions_violations: 0.95,
   corruption_organised_crime: 0.85,
+  human_trafficking_modern_slavery: 0.85,
+  cybercrime: 0.80,
+  drug_trafficking: 0.80,
   ml_financial_crime: 0.75,
+  environmental_crime: 0.70,
+  ai: 0.65,
+  tax_crimes: 0.60,
   legal_criminal_regulatory: 0.55,
+  esg: 0.50,
 };
 
 export function scoreAdverseMedia(
@@ -47,6 +55,14 @@ export function scoreAdverseMedia(
     proliferation_financing: 0,
     corruption_organised_crime: 0,
     legal_criminal_regulatory: 0,
+    esg: 0,
+    cybercrime: 0,
+    ai: 0,
+    sanctions_violations: 0,
+    human_trafficking_modern_slavery: 0,
+    tax_crimes: 0,
+    environmental_crime: 0,
+    drug_trafficking: 0,
   };
   const keywordCounts = new Map<string, { cat: AdverseMediaCategoryId; count: number }>();
 

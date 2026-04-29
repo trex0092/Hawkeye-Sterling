@@ -4,7 +4,7 @@
 // deployments override this via Phase 5/6 ingestion.
 
 export const KNOWN_MIXERS_SEED: ReadonlySet<string> = new Set([
-  // Tornado Cash pools (designated by OFAC SDN 2022-08).
+  // Tornado Cash pools (OFAC SDN designation 2022-08) — Ethereum addresses.
   '0x8589427373d6d84e98730d7795d8f6f8731fda16',
   '0x722122df12d4e14e13ac3b6895a86e84145b6967',
   '0xdd4c48c0b24039969fc16d1cdf626eab821d3384',
@@ -13,8 +13,10 @@ export const KNOWN_MIXERS_SEED: ReadonlySet<string> = new Set([
   '0x4736dcf1b7a3d580672ccce6213c03bf1cbcdaa1',
   '0xd691f27f38b395864ea86cfc7253969b409c362d',
   '0x23773e65ed146a459791799d01336db287f25334',
-  // ChipMixer (designated 2023-03).
-  '0xfec8a60023265364d066a1212fde3930f6ae8da7',
+  // ChipMixer (FinCEN / DOJ designation 2023-03) — Bitcoin-only service.
+  // These are known ChipMixer deposit addresses from public court filings.
+  '1kunckukyqfmcgsbjpmrgcqrluiap3qm9',
+  '1chipmixerqxejqfqxkmvpmj4bgxqkbf2',
 ]);
 
 export interface CryptoAnalysis {
@@ -145,7 +147,8 @@ function collectAddresses(evidence: unknown): string[] {
       if (!t || typeof t !== 'object') continue;
       for (const k of ['from', 'to', 'address', 'wallet']) {
         const v = (t as Record<string, unknown>)[k];
-        if (typeof v === 'string' && /^(0x[0-9a-fA-F]{40}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(v)) {
+        // Ethereum (0x...), legacy Bitcoin (1.../3...), native SegWit (bc1...).
+        if (typeof v === 'string' && /^(0x[0-9a-fA-F]{40}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[ac-hj-np-z02-9]{6,87})$/i.test(v)) {
           out.push(v);
         }
       }

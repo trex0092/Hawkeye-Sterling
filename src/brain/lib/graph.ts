@@ -133,28 +133,53 @@ export function kCore(g: EntityGraph, k: number): string[] {
   return g.nodes.filter((n) => !removed.has(n));
 }
 
-// Tarjan-style bridge detection.
+// Tarjan-style bridge detection — iterative to avoid stack overflow on large graphs.
 export function bridges(g: EntityGraph): Array<[string, string]> {
   const disc = new Map<string, number>();
   const low = new Map<string, number>();
   const parent = new Map<string, string | null>();
+  const neighborIdx = new Map<string, number>();
+  // Cache stable neighbor arrays for indexed traversal.
+  const nbCache = new Map<string, string[]>();
+  for (const n of g.nodes) nbCache.set(n, [...(g.adjacency.get(n) ?? [])]);
+
   let timer = 0;
-  const out: Array<[string, string]> = [];
-  function dfs(u: string) {
-    disc.set(u, timer); low.set(u, timer); timer++;
-    for (const v of g.adjacency.get(u) ?? []) {
-      if (!disc.has(v)) {
-        parent.set(v, u);
-        dfs(v);
-        low.set(u, Math.min(low.get(u) ?? 0, low.get(v) ?? 0));
-        if ((low.get(v) ?? 0) > (disc.get(u) ?? 0)) out.push([u, v]);
-      } else if (v !== (parent.get(u) ?? null)) {
-        low.set(u, Math.min(low.get(u) ?? 0, disc.get(v) ?? 0));
+  const result: Array<[string, string]> = [];
+
+  for (const start of g.nodes) {
+    if (disc.has(start)) continue;
+    disc.set(start, timer); low.set(start, timer); timer++;
+    parent.set(start, null);
+    neighborIdx.set(start, 0);
+    const stack: string[] = [start];
+
+    while (stack.length > 0) {
+      const u = stack[stack.length - 1]!;
+      const neighbors = nbCache.get(u)!;
+      const idx = neighborIdx.get(u) ?? 0;
+
+      if (idx < neighbors.length) {
+        neighborIdx.set(u, idx + 1);
+        const v = neighbors[idx]!;
+        if (!disc.has(v)) {
+          disc.set(v, timer); low.set(v, timer); timer++;
+          parent.set(v, u);
+          neighborIdx.set(v, 0);
+          stack.push(v);
+        } else if (v !== (parent.get(u) ?? null)) {
+          low.set(u, Math.min(low.get(u) ?? 0, disc.get(v) ?? 0));
+        }
+      } else {
+        stack.pop();
+        const p = parent.get(u) ?? null;
+        if (p !== null) {
+          low.set(p, Math.min(low.get(p) ?? 0, low.get(u) ?? 0));
+          if ((low.get(u) ?? 0) > (disc.get(p) ?? 0)) result.push([p, u]);
+        }
       }
     }
   }
-  for (const n of g.nodes) if (!disc.has(n)) dfs(n);
-  return out;
+  return result;
 }
 
 // Label-propagation community detection (stochastic, stable on small graphs).
@@ -182,18 +207,28 @@ export function communities(g: EntityGraph, iterations = 5, seed = 42): Map<stri
   return labels;
 }
 
-// Cycle existence via DFS (undirected). Returns true if any cycle length ≥ 3.
+// Cycle existence — Union-Find (iterative, safe on large graphs).
 export function hasCycle(g: EntityGraph): boolean {
-  const seen = new Set<string>();
-  const dfs = (u: string, parent: string | null): boolean => {
-    seen.add(u);
-    for (const v of g.adjacency.get(u) ?? []) {
-      if (!seen.has(v)) { if (dfs(v, u)) return true; }
-      else if (v !== parent) return true;
+  const uf = new Map<string, string>(g.nodes.map((n) => [n, n]));
+  function find(x: string): string {
+    while ((uf.get(x) ?? x) !== x) {
+      const gp = uf.get(uf.get(x) ?? x) ?? x;
+      uf.set(x, gp); // path compression
+      x = gp;
     }
-    return false;
-  };
-  for (const n of g.nodes) if (!seen.has(n) && dfs(n, null)) return true;
+    return x;
+  }
+  const seen = new Set<string>();
+  for (const [u, neighbors] of g.adjacency) {
+    for (const v of neighbors) {
+      const key = u < v ? `${u}|${v}` : `${v}|${u}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const ru = find(u), rv = find(v);
+      if (ru === rv) return true;
+      uf.set(ru, rv);
+    }
+  }
   return false;
 }
 

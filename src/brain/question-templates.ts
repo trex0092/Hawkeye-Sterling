@@ -321,6 +321,161 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     'Hyperbolic-discount signature suggesting distress or coercion?',
     'Mental-accounting splits indicating SoW laundering?',
   ], ['prospect_theory','hyperbolic_discount','mental_accounting','status_quo_bias','reference_point_shift']),
+
+  // ─── WAVE 3 ─────────────────────────────────────────────────────────
+  t('dpms_threshold_probe', 'dpms', 'DPMS — AED 55k Threshold Reporting', [
+    'Single or aggregated transactions at or above AED 55,000 in cash or equivalent?',
+    'goAML DPMS report filed within 48 hours of trigger, reference number obtained?',
+    'Customer identification and transaction documentation complete per MoE Circular 2/2024?',
+    'Source of cash verified; high-risk indicators noted in file?',
+  ], ['risk_based_approach','goaml_schema_preflight','threshold_split_detection']),
+
+  t('vasp_edd_onboarding', 'vasp', 'VASP — EDD Onboarding Probe', [
+    'VARA licence / CBUAE registration confirmed; regime of regulation identified?',
+    'AML/CFT programme reviewed: screening, monitoring, Travel Rule compliance?',
+    'UBOs, directors, key controllers screened against all sanction lists and PEP?',
+    'Jurisdiction risk rated and ongoing monitoring cadence documented?',
+  ], ['vara_rulebook_check','cbr_due_diligence_cascade','travel_rule_gap_analysis','list_walk']),
+
+  t('hawala_ivt_probe', 'aml', 'Hawala / IVT — Red Flag Assessment', [
+    'Funds transmitted without corresponding bank messaging or SWIFT reference?',
+    'Settlement leg via commodity (gold, DPMS) rather than cash/bank transfer?',
+    'Broker network identities verified; business relationship plausible?',
+    'goAML STR filed or SAR escalation decision documented?',
+  ], ['hawala_network_map','settlement_commodity_flow','value_equivalence_check','risk_based_approach']),
+
+  t('proliferation_entity_check', 'sanctions', 'Proliferation Financing — Entity Check', [
+    'UN 1718 / 1737 / 2231 screening result confirmed for all parties?',
+    'Dual-use or controlled goods in transaction; end-user certificate obtained?',
+    'Beneficial ownership traced to determine any DPRK, Iran, or designated PF nexus?',
+    'Competent authority notification made where required?',
+  ], ['pf_red_flag_screen','dual_use_end_user','sanctions_evasion_network','list_walk']),
+
+  t('real_estate_over_valuation', 'aml', 'Real Estate — Over-Valuation Probe', [
+    'Independent valuation vs agreed purchase price; gap percentage?',
+    'Cash payment component; bearer instrument or cryptocurrency involvement?',
+    'Buyer shell structure traced to UBO; nominee director pattern?',
+    'Rapid resale or mortgage fraud indicators within 12 months?',
+  ], ['real_estate_cash','risk_based_approach','ubo_tree_walk','source_triangulation']),
+
+  t('carbon_vcm_integrity', 'esg', 'Carbon / VCM — Integrity Probe', [
+    'Credit vintage, methodology, and project type verified with issuing registry?',
+    'Double-counting risk assessed: retirement confirmed in registry, no parallel sale?',
+    'Project developer due diligence complete; PEP / sanction screening done?',
+    'Pricing compared to market benchmarks; anomalous discount or premium?',
+  ], ['greenwashing_signal','carbon_fraud_pattern','source_triangulation','provenance_trace']),
+
+  t('correspondent_cbr_edd', 'correspondent_banking', 'Correspondent Banking — Wolfsberg EDD', [
+    'Respondent AML programme assessed via Wolfsberg CBDDQ; gaps identified?',
+    'Jurisdiction risk, licence type, and regulatory standing confirmed?',
+    'Nested account and payable-through account risk evaluated?',
+    'Senior management approval and annual review cadence documented?',
+  ], ['cbr_risk_matrix','cbr_due_diligence_cascade','nested_account_detection','payable_through_account']),
+
+  t('insurance_pep_probe', 'aml', 'Insurance — PEP Wrap / Surrender Probe', [
+    'Single-premium bond or whole-life policy funded from politically exposed source?',
+    'Early surrender or loan against policy within 12 months of inception?',
+    'Third-party premium payer; relationship to policyholder documented?',
+    'Beneficiary identity verified; no diversion to unrelated third party?',
+  ], ['insurance_wrap','risk_based_approach','pep_connection_reasoning','source_triangulation']),
+
+  t('ftz_anomaly_probe', 'aml', 'Free Trade Zone — Anomaly Probe', [
+    'Re-export documentation consistent with declared origin and HS codes?',
+    'Entity registered in FTZ with plausible business activity for declared trade volume?',
+    'Value chain discrepancy: over/under-invoicing between import and re-export?',
+    'Ultimate beneficial owner of FTZ entity identified and screened?',
+  ], ['ftz_opacity_screen','re_export_discrepancy','tbml_overlay','ubo_tree_walk']),
+
+  t('funnel_mule_probe', 'aml', 'Funnel Account / Mule Network Probe', [
+    'Account receiving multiple rapid inflows from unrelated senders?',
+    'Outflows within hours; residual balance near zero after each cycle?',
+    'Account holder profile inconsistent with transaction volume and geography?',
+    'Links to known mule recruitment or online fraud platforms?',
+  ], ['funnel_mule_cascade','velocity_anomaly_reasoning','split_payment_detection','link_analysis']),
+
+  t('romance_pig_butchering', 'fraud', 'Romance / Pig-Butchering — Financial Probe', [
+    'Victim profile: social-media acquaintance, investment coaching narrative?',
+    'Crypto transfers to external wallets following fabricated trading platform?',
+    'Escalating transfer amounts with manufactured returns shown on fake portal?',
+    'Funds traced: chain-hop, mixer, P2P cash-out identified on chain?',
+  ], ['romance_scam_financial_profile_reasoning','crypto_ransomware_cashout','p2p_exchange_risk','chain_hopping_velocity']),
+
+  t('bec_fraud_triage', 'fraud', 'BEC Fraud — Financial Triage', [
+    'Payment instruction change received via email; domain spoofing or compromise confirmed?',
+    'Beneficiary account new or recently changed; geography change flagged?',
+    'Transaction recall initiated with originating bank; SWIFT gpi recall reference?',
+    'Law enforcement notification and FIU STR filing decision documented?',
+  ], ['bec_fraud','risk_based_approach','link_analysis','goaml_schema_preflight']),
+
+  t('ngo_charity_edd', 'edd', 'NGO / Charity — FATF R.8 EDD', [
+    'Legal form, registration, and supervisory body in country of operation confirmed?',
+    'Programme activities, beneficiary geography, and fund sources documented?',
+    'Board/trustee screening: PEP, sanctions, adverse media?',
+    'Financial controls and fund disbursement accountability reviewed?',
+  ], ['risk_based_approach','list_walk','jurisdiction_cascade','source_triangulation']),
+
+  t('tax_evasion_offshore', 'aml', 'Tax Evasion — Offshore Structure Probe', [
+    'Offshore entity with no commercial substance beyond holding assets?',
+    'Undeclared income routed via nominee accounts or back-to-back loans?',
+    'CRS / FATCA reporting obligation assessed; automatic exchange received?',
+    'Repatriation mechanism: real estate, luxury goods, or private equity investment?',
+  ], ['tax_evasion_predicate','predicate_crime_cascade','ubo_tree_walk','offshore_layering']),
+
+  t('daigou_parallel_import', 'aml', 'Daigou / Parallel Import — Probe', [
+    'High-volume luxury goods purchases inconsistent with declared occupation or income?',
+    'Goods purchased and exported for resale without import licence or customs clearance?',
+    'Payment patterns: structured cash, card purchase splitting, or crypto settlement?',
+    'Supply chain documentation: customs declarations vs actual goods value?',
+  ], ['re_export_discrepancy','tbml_overlay','structuring_pattern_reasoning','invoice_fabrication_pattern']),
+
+  t('professional_ml_probe', 'aml', 'Professional ML — Ecosystem Probe', [
+    'Legal, accounting, or company-formation professional involved in structuring?',
+    'Professional invoicing volumes inconsistent with legitimate service scope?',
+    'Client referred through multilayer intermediary chain obscuring originator?',
+    'Legal privilege claim assessed; tipping-off risk documented?',
+  ], ['professional_ml_ecosystem','invoice_fabrication_pattern','ubo_tree_walk','legal_privilege_assessment']),
+
+  t('synthetic_id_detection', 'kyc', 'KYC — Synthetic Identity Detection', [
+    'Identity components cross-verified: DOB, address history, issuing authority records?',
+    'Credit profile built too quickly or with unusually clean history for age?',
+    'Digital footprint: email age, device fingerprint, social media profile depth?',
+    'Biometric liveness check result; document authenticity scanner output?',
+  ], ['synthetic_id','entity_resolution','fuzzy_logic','data_quality_score']),
+
+  t('precious_stones_provenance', 'dpms', 'Precious Stones — Provenance Verification', [
+    'Kimberley Process Certificate for rough diamonds; chain-of-custody documentation?',
+    'Gem grading certificate issuer authenticated; laser inscription cross-checked?',
+    'Mine-to-market traceability: country of origin, cutting and polishing centre?',
+    'Pricing benchmarked against Rapaport or comparable market reference?',
+  ], ['cahra_determination','chain_of_custody_reasoning','provenance_trace','source_triangulation']),
+
+  t('travel_rule_compliance_audit', 'vasp', 'VASP — Travel Rule Compliance Audit', [
+    'Originator VASP / CASP identification transmitted for transfers above EUR/USD 1,000?',
+    'Beneficiary VASP verified on FATF-compliant whitelist or registry?',
+    'Sunrise issue or unhosted wallet — enhanced due diligence documented?',
+    'Record-keeping of transmitted data meets 5-year retention standard?',
+  ], ['travel_rule_gap_analysis','vara_rulebook_check','list_walk','record_keeping_standard_reasoning']),
+
+  t('pdpl_data_audit', 'data_privacy', 'PDPL — Data-Sharing Consent Audit', [
+    'Legal basis for each personal data processing activity identified (consent, contract, legal obligation)?',
+    'Data minimisation principle applied: only necessary fields collected and retained?',
+    'Cross-border transfer to non-adequate jurisdiction — safeguards confirmed?',
+    'Data subject rights workflow (access, erasure, portability) tested and operational?',
+  ], ['pdpl_data_minimisation','pdpl_application_reasoning','consent_reasoning','data_quality_score']),
+
+  t('post_str_review', 'mlro', 'MLRO — Post-STR Filing Review', [
+    'goAML submission confirmed; reference number, filing date, and officer on record?',
+    'Tipping-off controls applied: transaction freeze decision, relationship status?',
+    'Ongoing monitoring enhanced; trigger for further STR or exit documented?',
+    'Internal disclosure trail complete for four-eyes review?',
+  ], ['goaml_schema_preflight','tipping_off_analysis','escalation_logic','audit_trail_integrity_assessment']),
+
+  t('regulatory_examination_prep', 'mlro', 'MLRO — Regulatory Examination Self-Assessment', [
+    'EWRA completed within 12 months; risk appetite signed off by board?',
+    'All policies reviewed and approved within stated cadence; gaps remediated?',
+    'Training records complete; staff tested on red flags, sanctions, and tipping-off?',
+    'goAML filing statistics prepared; STR/FFR/PNMR volumes by category documented?',
+  ], ['ewra_scoring_calibration','compliance_maturity_reasoning','examination_preparation_logic','risk_based_approach']),
 ];
 
 export const QUESTION_TEMPLATE_BY_ID: Map<string, QuestionTemplate> = new Map(

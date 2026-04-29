@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Hawkeye — Get Asana GIDs</title>
+<style>
+  body { font-family: monospace; background: #0f0f0f; color: #e0e0e0; padding: 40px; max-width: 800px; }
+  h2 { color: #ec4899; }
+  input { width: 100%; padding: 10px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: monospace; font-size: 13px; border-radius: 4px; box-sizing: border-box; }
+  button { margin-top: 12px; padding: 10px 24px; background: #ec4899; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; }
+  button:hover { background: #be185d; }
+  #output { margin-top: 24px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 20px; white-space: pre; display: none; }
+  .env-block { background: #0a2a0a; border: 1px solid #1a5c1a; border-radius: 4px; padding: 16px; margin-top: 16px; }
+  .copy-btn { margin-top: 8px; padding: 6px 16px; background: #166534; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .label { color: #9ca3af; font-size: 11px; margin-bottom: 4px; }
+  .gid-row { margin: 6px 0; }
+  .key { color: #60a5fa; }
+  .val { color: #34d399; }
+  .error { color: #f87171; }
+  .ok { color: #34d399; }
+</style>
+</head>
+<body>
+<h2>Hawkeye Sterling — Asana GID Finder</h2>
+<p style="color:#9ca3af;font-size:13px">Paste your Asana Personal Access Token and click Fetch. The .env block will appear ready to copy into Netlify.</p>
+
+<div class="label">Asana Personal Access Token</div>
+<input type="password" id="token" placeholder="2/xxxx/xxxx:xxxx">
+<br>
+<button onclick="fetchGids()">Fetch Project GIDs</button>
+
+<div id="output"></div>
+
+<script>
+const WORKSPACE = "1213645083721316";
+
+const PROJECT_MAP = [
+  { envVar: "ASANA_SCREENING_PROJECT_GID",   keywords: ["01", "screening", "sanctions", "watchlist"],   label: "01 · Screening — Sanctions & Watchlists" },
+  { envVar: "ASANA_MLRO_DAILY_PROJECT_GID",  keywords: ["02", "mlro", "daily", "central"],              label: "02 · Central MLRO Daily Dashboard" },
+  { envVar: "ASANA_SAR_PROJECT_GID",         keywords: ["05", "str", "sar", "ctr", "pmr"],              label: "05 · STR/SAR/CTR/PMR" },
+  { envVar: "ASANA_FFR_PROJECT_GID",         keywords: ["06", "ffr", "incident", "asset", "freeze"],    label: "06 · FFR Incidents & Asset Freeze" },
+  { envVar: "ASANA_KYC_PROJECT_GID",         keywords: ["07", "cdd", "edd", "kyc", "sdd"],              label: "07 · CDD/SDD/EDD/KYC" },
+  { envVar: "ASANA_TM_PROJECT_GID",          keywords: ["08", "transaction", "monitoring", "tm"],       label: "08 · Transaction Monitoring" },
+  { envVar: "ASANA_SHIPMENTS_PROJECT_GID",   keywords: ["10", "shipment", "tracking", "bullion"],       label: "10 · Shipments — Tracking" },
+  { envVar: "ASANA_MLRO_PROJECT_GID",        keywords: ["15", "mlro workbench", "workbench"],           label: "15 · MLRO Workbench" },
+  { envVar: "ASANA_SUPPLYCHAIN_PROJECT_GID", keywords: ["16", "supply", "esg", "trade"],                label: "16 · Supply Chain, ESG & Trade" },
+];
+
+function matches(name, keywords) {
+  const lower = name.toLowerCase();
+  return keywords.some(k => lower.includes(k.toLowerCase()));
+}
+
+async function fetchGids() {
+  const token = document.getElementById("token").value.trim();
+  const out = document.getElementById("output");
+  out.style.display = "block";
+  out.innerHTML = "Fetching projects from Asana...";
+
+  try {
+    const res = await fetch(
+      `https://app.asana.com/api/1.0/workspaces/${WORKSPACE}/projects?limit=100&opt_fields=gid,name`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+    );
+    const json = await res.json();
+
+    if (!res.ok) {
+      out.innerHTML = `<span class="error">Error ${res.status}: ${json.errors?.[0]?.message ?? JSON.stringify(json)}</span>`;
+      return;
+    }
+
+    const projects = json.data;
+    out.innerHTML = `<span class="ok">✓ Found ${projects.length} projects in workspace\n\n</span>`;
+
+    const envLines = [];
+    const rows = [];
+
+    for (const mapping of PROJECT_MAP) {
+      const found = projects.find(p => matches(p.name, mapping.keywords));
+      if (found) {
+        envLines.push(`${mapping.envVar}=${found.gid}`);
+        rows.push(`<div class="gid-row"><span class="key">${mapping.envVar}</span>=<span class="val">${found.gid}</span>  <span style="color:#6b7280"># ${found.name}</span></div>`);
+      } else {
+        rows.push(`<div class="gid-row"><span class="error">NOT FOUND: ${mapping.label}</span></div>`);
+      }
+    }
+
+    out.innerHTML += rows.join("");
+
+    const envBlock = envLines.join("\n");
+    out.innerHTML += `
+<div class="env-block">
+<div class="label" style="margin-bottom:8px">📋 Paste this into Netlify → Import from .env file:</div>
+<pre style="color:#34d399;margin:0">${envBlock}</pre>
+<button class="copy-btn" onclick="navigator.clipboard.writeText(${JSON.stringify(envBlock)}).then(()=>this.textContent='Copied!')">Copy to clipboard</button>
+</div>`;
+
+  } catch (e) {
+    out.innerHTML = `<span class="error">Network error: ${e.message}</span>`;
+  }
+}
+</script>
+</body>
+</html>

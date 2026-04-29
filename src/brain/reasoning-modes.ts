@@ -1,26 +1,20 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 200 modes across 16 categories, wave 1 + wave 2.
-// Each entry is registered metadata + a stub apply() that returns an inconclusive
-// placeholder Finding. Real algorithms will be implemented mode-by-mode in Phase 7.
+// 412 modes across 50 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5 + wave 6 + wave 11.
+// Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
+// or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
+// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8/11.
 
 import type {
-  BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
+  FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
+import { MODE_OVERRIDES } from './modes/registry.js';
+import { defaultApply } from './modes/default-apply.js';
 import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
-import { WAVE4_OVERRIDES, WAVE4_NEW } from './reasoning-modes-wave4.js';
-
-const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
-  async (_ctx: BrainContext): Promise<Finding> => ({
-    modeId,
-    category,
-    faculties,
-    score: 0,
-    confidence: 0,
-    verdict: 'inconclusive',
-    rationale: `[stub] ${modeId} — implementation pending (Phase 7).`,
-    evidence: [],
-    producedAt: Date.now(),
-  });
+import { WAVE4_MODES, WAVE4_OVERRIDES } from './reasoning-modes-wave4.js';
+import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
+import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
+import { WAVE11_MODES, WAVE11_OVERRIDES } from './reasoning-modes-wave11.js';
+import { WAVE12_MODES, WAVE12_OVERRIDES } from './reasoning-modes-wave12.js';
 
 const m = (
   id: string,
@@ -31,10 +25,10 @@ const m = (
   description: string,
 ): ReasoningMode => ({
   id, name, category, faculties, wave, description,
-  apply: stubApply(id, category, faculties),
+  apply: defaultApply(id, category, faculties, description),
 });
 
-const WAVE_1_2_MODES: ReasoningMode[] = [
+export const REASONING_MODES: ReasoningMode[] = [
   // ── LOGIC ──────────────────────────────────────────────────────────────
   m('modus_ponens', 'Modus Ponens', 'logic', ['reasoning','inference'], 1, 'If P → Q and P, conclude Q.'),
   m('modus_tollens', 'Modus Tollens', 'logic', ['reasoning','inference'], 1, 'If P → Q and ¬Q, conclude ¬P.'),
@@ -74,6 +68,8 @@ const WAVE_1_2_MODES: ReasoningMode[] = [
   m('framing_check', 'Framing-Effect Check', 'cognitive_science', ['introspection','smartness'], 1, 'Detect decision flips under equivalent rephrasings.'),
   m('overconfidence_check', 'Overconfidence Check', 'cognitive_science', ['introspection'], 1, 'Flag narrow confidence intervals on weak evidence.'),
   m('anchoring_avoidance', 'Anchoring Avoidance', 'cognitive_science', ['introspection','smartness'], 1, 'Neutralise first-seen numeric reference effects.'),
+  m('hallucination_check', 'Hallucination Check', 'epistemic_quality', ['reasoning','introspection'], 2, 'Charter P1+P3 enforcement: every cite-required claim in a rationale must trace to a supplied evidence id; dangling claims are flagged as potential hallucinations.'),
+  m('disparate_impact', 'Disparate Impact Audit', 'epistemic_quality', ['reasoning','introspection'], 2, 'Anti-bias: four-fifths-rule audit across protected attributes (nationality / gender / age / etc); ratio < 0.8 is a flag.'),
 
   // ── DECISION THEORY ───────────────────────────────────────────────────
   m('monte_carlo', 'Monte Carlo Simulation', 'decision_theory', ['data_analysis','deep_thinking'], 1, 'Sample-based estimation under uncertainty.'),
@@ -266,31 +262,106 @@ const WAVE_1_2_MODES: ReasoningMode[] = [
   m('phoenix_company', 'Phoenix Company', 'sectoral_typology', ['smartness'], 2, 'Repeated insolvency and re-incorporation to shed liabilities.'),
   m('sanctions_maritime_stss', 'Maritime STS Sanctions Evasion', 'sectoral_typology', ['intelligence'], 2, 'Ship-to-ship transfers, AIS spoofing, flag/name changes.'),
   m('kyb_strict', 'Strict KYB', 'sectoral_typology', ['strong_brain'], 2, 'Enhanced entity onboarding — UBO, source-of-funds, licence validation.'),
+  m('pig_butchering', 'Pig-Butchering (Sha Zhu Pan)', 'sectoral_typology', ['intelligence'], 2, 'Fan-in/drain: many small inbound senders + rapid near-total outbound drain to a VASP/OTC.'),
+  m('romance_scam', 'Romance Scam', 'sectoral_typology', ['intelligence'], 2, 'New account + affective beneficiary label + escalating transfers + no commercial nexus.'),
+  m('narco_tf', 'Narco-TF Nexus', 'sectoral_typology', ['intelligence'], 2, 'Drug-proceeds → TF conversion: narco corridor + perishable-goods front + CAHRA outbound.'),
+
+  // ── GRAPH ANALYSIS — additional ───────────────────────────────────────────
+  m('relationship_mapping', 'Relationship Mapping', 'graph_analysis', ['intelligence', 'data_analysis'], 2, 'BFS to PEP / sanctioned / adverse-media nodes within 3 hops.'),
+  m('network_centrality', 'Network Centrality', 'graph_analysis', ['data_analysis', 'intelligence'], 2, 'Degree + 2-hop bridge proxy for financial hub detection.'),
+
+  // ── META / COGNITIVE — additional ─────────────────────────────────────────
+  m('multi_jurisdictional_conflict', 'Multi-Jurisdictional Conflict', 'compliance_framework', ['ratiocination'], 2, 'Highest-standard rule across ≥2 regime obligations.'),
+  m('evidence_chain_audit', 'Evidence Chain Audit', 'data_quality', ['ratiocination'], 2, 'Dangling evidence refs + assertive-without-evidence detection.'),
+  m('ontology_mismatch_detector', 'Ontology Mismatch Detector', 'data_quality', ['ratiocination'], 2, 'Flags category/faculty drift from the declared mode signature.'),
+  m('prior_belief_decay', 'Prior Belief Decay', 'statistical', ['reasoning', 'ratiocination'], 2, 'Half-life decay on stale evidence; flags stale drivers of high-score verdicts.'),
+  m('counterfactual_simulator', 'Counterfactual Simulator', 'cognitive_science', ['reasoning', 'deep_thinking'], 2, 'Verdict-tier fragility test: collapses if the heaviest evidence item is removed.'),
+  m('adversarial_red_team', 'Adversarial Red Team', 'cognitive_science', ['reasoning', 'argumentation'], 2, 'Steelmans the counter-narrative; requires leading hypothesis be explicitly challenged.'),
 ];
 
-// Apply wave-3 real-implementation overrides onto the wave 1/2 stubs,
-// then append the 70+ wave-3 new modes, then apply wave-4 overrides, then
-// append wave-4 new modes.
-const WAVE3_OVERRIDE_BY_ID = new Map(WAVE3_OVERRIDES.map((m) => [m.id, m]));
-const WAVE_1_2_MODES_FINAL: ReasoningMode[] = WAVE_1_2_MODES.map(
-  (m) => WAVE3_OVERRIDE_BY_ID.get(m.id) ?? m,
-);
+// Apply wave 1/2 real implementations from modes/registry.ts.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const override = MODE_OVERRIDES[r.id];
+  if (override) REASONING_MODES[i] = { ...r, apply: override };
+}
 
-const WAVE4_OVERRIDE_BY_ID = new Map(WAVE4_OVERRIDES.map((m) => [m.id, m]));
+// Merge Wave 3: new modes + real-implementation upgrades for existing wave 1/2 stubs.
+const existingIds = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE3_MODES) {
+  if (!existingIds.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE3_OVERRIDES — replaces stubs in wave 1/2 with working implementations.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w3override = WAVE3_OVERRIDES.find((o) => o.id === r.id);
+  if (w3override) REASONING_MODES[i] = w3override;
+}
 
-// Apply wave-4 overrides across the whole post-wave-3 combined list.
-const WAVE_1_2_MODES_AFTER_W4: ReasoningMode[] = WAVE_1_2_MODES_FINAL.map(
-  (m) => WAVE4_OVERRIDE_BY_ID.get(m.id) ?? m,
-);
-const WAVE3_MODES_AFTER_W4: ReasoningMode[] = WAVE3_MODES.map(
-  (m) => WAVE4_OVERRIDE_BY_ID.get(m.id) ?? m,
-);
+// Merge Wave 4: new predicate-crime, proliferation, correspondent-banking, hawala modes.
+const existingIdsW4 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE4_MODES) {
+  if (!existingIdsW4.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE4_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w4override = WAVE4_OVERRIDES.find((o) => o.id === r.id);
+  if (w4override) REASONING_MODES[i] = w4override;
+}
 
-export const REASONING_MODES: ReasoningMode[] = [
-  ...WAVE_1_2_MODES_AFTER_W4,
-  ...WAVE3_MODES_AFTER_W4,
-  ...WAVE4_NEW,
-];
+// Merge Wave 5: decision theory, behavioral economics, strategic reasoning,
+// intelligence fusion, asset recovery, conduct risk, identity fraud, digital economy, human rights.
+const existingIdsW5 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE5_MODES) {
+  if (!existingIdsW5.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE5_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w5override = WAVE5_OVERRIDES.find((o) => o.id === r.id);
+  if (w5override) REASONING_MODES[i] = w5override;
+}
+
+// Merge Wave 6: behavioral science, network science, cryptoasset forensics,
+// geopolitical risk, corporate intelligence, epistemic quality,
+// psychological profiling, insider threat.
+const existingIdsW6 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE6_MODES) {
+  if (!existingIdsW6.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE6_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w6override = WAVE6_OVERRIDES.find((o) => o.id === r.id);
+  if (w6override) REASONING_MODES[i] = w6override;
+}
+
+// Merge Wave 11: common sense, quantitative analysis, synthetic intelligence,
+// formal reasoning. 40 new modes across 4 new categories.
+const existingIdsW11 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE11_MODES) {
+  if (!existingIdsW11.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE11_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w11override = WAVE11_OVERRIDES.find((o) => o.id === r.id);
+  if (w11override) REASONING_MODES[i] = w11override;
+}
+
+// Merge Wave 12: 17 template-fill reasoning modes. Closes the gap between
+// the question-template authors and the registry so auditBrain reports zero
+// dangling template→mode references.
+const existingIdsW12 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE12_MODES) {
+  if (!existingIdsW12.has(m.id)) REASONING_MODES.push(m);
+}
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w12override = WAVE12_OVERRIDES.find((o) => o.id === r.id);
+  if (w12override) REASONING_MODES[i] = w12override;
+}
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
   REASONING_MODES.map((r) => [r.id, r]),
@@ -301,10 +372,3 @@ export const REASONING_MODES_BY_CATEGORY: Record<string, ReasoningMode[]> =
     (acc[r.category] ||= []).push(r);
     return acc;
   }, {} as Record<string, ReasoningMode[]>);
-
-export function countModesWithRealApply(): number {
-  // Count of modes whose apply() is a real implementation rather than the
-  // default stub. Wave 3: the 4 overrides + benford_law (registered directly
-  // in WAVE3_MODES). Wave 4: the full override list + every new wave-4 mode.
-  return WAVE3_OVERRIDES.length + 1 + WAVE4_OVERRIDES.length + WAVE4_NEW.length;
-}

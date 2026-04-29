@@ -1,0 +1,1477 @@
+{
+  "ok": true,
+  "generatedAt": "2026-04-28T13:23:10+04:00",
+  "manifest": {
+    "product": "Hawkeye Sterling",
+    "version": "0.2.0",
+    "generatedAt": "2026-04-28T13:23:10+04:00",
+    "charter": {
+      "prohibitions": [
+        {
+          "id": "P1",
+          "label": "No unverified sanctions assertions"
+        },
+        {
+          "id": "P2",
+          "label": "No fabricated adverse media / citations"
+        },
+        {
+          "id": "P3",
+          "label": "No legal conclusions"
+        },
+        {
+          "id": "P4",
+          "label": "No tipping-off content"
+        },
+        {
+          "id": "P5",
+          "label": "No allegation-to-finding upgrade"
+        },
+        {
+          "id": "P6",
+          "label": "No merging of distinct persons/entities"
+        },
+        {
+          "id": "P7",
+          "label": "No \"clean\" result without scope declaration"
+        },
+        {
+          "id": "P8",
+          "label": "No training-data-as-current-source"
+        },
+        {
+          "id": "P9",
+          "label": "No opaque risk scoring"
+        },
+        {
+          "id": "P10",
+          "label": "No proceeding on insufficient information"
+        }
+      ],
+      "matchConfidence": [
+        "EXACT",
+        "STRONG",
+        "POSSIBLE",
+        "WEAK",
+        "NO_MATCH"
+      ],
+      "outputStructure": [
+        "SUBJECT_IDENTIFIERS",
+        "SCOPE_DECLARATION",
+        "FINDINGS",
+        "GAPS",
+        "RED_FLAGS",
+        "RECOMMENDED_NEXT_STEPS",
+        "AUDIT_LINE"
+      ],
+      "regulatoryAnchors": [
+        "Federal Decree-Law No. 20 of 2018 (as amended, incl. FDL No. 10 of 2025)",
+        "Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025)",
+        "Cabinet Decision No. 74 of 2020 (Terrorism Lists & TFS)",
+        "Cabinet Resolution No. 16 of 2021 (administrative penalties)",
+        "MoE DNFBP circulars and guidance (precious-metals sector)",
+        "FATF Recommendations and Methodology",
+        "LBMA Responsible Gold Guidance"
+      ],
+      "authoritativeLists": [
+        "UN Security Council Consolidated List",
+        "UAE Local Terrorist List",
+        "OFAC SDN",
+        "OFAC Consolidated Sanctions List",
+        "EU Consolidated Financial Sanctions List",
+        "UK OFSI Consolidated List"
+      ]
+    },
+    "cognitiveCatalogue": {
+      "faculties": [
+        {
+          "id": "reasoning",
+          "displayName": "Reasoning",
+          "describes": "Formal and informal logical inference over evidence and rules.",
+          "synonyms": [
+            "logic",
+            "deduction",
+            "inference",
+            "rationalization",
+            "argumentation",
+            "analysis",
+            "cogitation",
+            "ratiocination",
+            "sense-making",
+            "thought process"
+          ],
+          "modeCount": 23
+        },
+        {
+          "id": "data_analysis",
+          "displayName": "Data Analysis",
+          "describes": "Quantitative interrogation and modelling of structured and semi-structured data.",
+          "synonyms": [
+            "data interpretation",
+            "data mining",
+            "data crunching",
+            "analytics",
+            "quantitative analysis",
+            "statistical analysis",
+            "data examination",
+            "data evaluation",
+            "data modeling",
+            "data processing"
+          ],
+          "modeCount": 52
+        },
+        {
+          "id": "deep_thinking",
+          "displayName": "Deep Thinking",
+          "describes": "Slow, reflective examination — the System 2 core of the brain.",
+          "synonyms": [
+            "contemplation",
+            "reflection",
+            "rumination",
+            "introspection",
+            "meditation",
+            "pondering",
+            "musing",
+            "deliberation",
+            "cerebration",
+            "profound thought"
+          ],
+          "modeCount": 14
+        },
+        {
+          "id": "intelligence",
+          "displayName": "Intelligence",
+          "describes": "Breadth of pattern recognition across domains and jurisdictions.",
+          "synonyms": [
+            "intellect",
+            "acumen",
+            "cleverness",
+            "brilliance",
+            "brainpower",
+            "wit",
+            "sagacity",
+            "perspicacity",
+            "mental capacity",
+            "cognitive ability"
+          ],
+          "modeCount": 46
+        },
+        {
+          "id": "smartness",
+          "displayName": "Smartness",
+          "describes": "Fast, street-smart anomaly detection and heuristic triage.",
+          "synonyms": [
+            "sharpness",
+            "shrewdness",
+            "astuteness",
+            "quick-wittedness",
+            "savvy",
+            "canniness",
+            "ingenuity",
+            "resourcefulness",
+            "adroitness",
+            "keenness"
+          ],
+          "modeCount": 22
+        },
+        {
+          "id": "strong_brain",
+          "displayName": "Strong Brain",
+          "describes": "Integrated mental prowess — composition of all faculties under load.",
+          "synonyms": [
+            "sharp mind",
+            "keen intellect",
+            "powerful mind",
+            "quick mind",
+            "agile mind",
+            "brilliant mind",
+            "analytical mind",
+            "steel-trap mind",
+            "mental prowess",
+            "intellectual firepower"
+          ],
+          "modeCount": 15
+        },
+        {
+          "id": "inference",
+          "displayName": "Inference",
+          "describes": "Probabilistic and causal projection from partial evidence to likely truth.",
+          "synonyms": [
+            "abduction",
+            "induction",
+            "deduction",
+            "best explanation",
+            "projection",
+            "extrapolation",
+            "causal chain",
+            "probabilistic update"
+          ],
+          "modeCount": 17
+        },
+        {
+          "id": "argumentation",
+          "displayName": "Argumentation",
+          "describes": "Structured case-building, rebuttal, and adjudication of competing claims.",
+          "synonyms": [
+            "debate",
+            "disputation",
+            "advocacy",
+            "dialectic",
+            "rebuttal",
+            "rejoinder",
+            "proof",
+            "justification"
+          ],
+          "modeCount": 13
+        },
+        {
+          "id": "introspection",
+          "displayName": "Introspection",
+          "describes": "The brain auditing itself — bias, calibration, confidence, drift.",
+          "synonyms": [
+            "self-examination",
+            "meta-cognition",
+            "self-critique",
+            "reflection",
+            "calibration",
+            "bias audit",
+            "blind-spot review",
+            "epistemic hygiene"
+          ],
+          "modeCount": 22
+        },
+        {
+          "id": "ratiocination",
+          "displayName": "Ratiocination",
+          "describes": "Chained methodical reasoning — the explicit, stepwise derivation of conclusions.",
+          "synonyms": [
+            "methodical reasoning",
+            "stepwise deduction",
+            "chain of thought",
+            "systematic inference",
+            "rigorous derivation"
+          ],
+          "modeCount": 17
+        },
+        {
+          "id": "synthesis",
+          "displayName": "Synthesis",
+          "describes": "Cross-modal fusion — combine heterogeneous evidence streams into a single coherent verdict.",
+          "synonyms": [
+            "fusion",
+            "integration",
+            "cross-modal reasoning",
+            "evidence weaving",
+            "multi-source synthesis",
+            "holistic reasoning",
+            "composite verdicting"
+          ],
+          "modeCount": 9
+        },
+        {
+          "id": "anticipation",
+          "displayName": "Anticipation",
+          "describes": "Forward-looking reasoning — project network evolution, adversary moves, and recalibration triggers.",
+          "synonyms": [
+            "foresight",
+            "forecasting",
+            "predictive reasoning",
+            "horizon scanning",
+            "pre-mortem",
+            "scenario projection",
+            "red-team simulation"
+          ],
+          "modeCount": 4
+        },
+        {
+          "id": "geopolitical_awareness",
+          "displayName": "Geopolitical Awareness",
+          "describes": "Sanctions, state-sponsored typologies, conflict-zone exposure, and recalibration on regime shifts.",
+          "synonyms": [
+            "geopolitical reasoning",
+            "sanctions awareness",
+            "state-actor analysis",
+            "jurisdictional politics",
+            "conflict-zone exposure",
+            "regime watch"
+          ],
+          "modeCount": 4
+        },
+        {
+          "id": "forensic_accounting",
+          "displayName": "Forensic Accounting",
+          "describes": "Quantitative integrity tests on financial data — distributional law checks, journal-entry anomalies, and reconciliation.",
+          "synonyms": [
+            "forensic audit",
+            "investigative accounting",
+            "fraud examination",
+            "distributional analysis",
+            "ledger forensics"
+          ],
+          "modeCount": 1
+        },
+        {
+          "id": "quantum_intelligence",
+          "displayName": "Quantum Intelligence",
+          "describes": "Probabilistic belief propagation across superposed hypotheses — reason under irreducible uncertainty.",
+          "synonyms": [
+            "belief propagation",
+            "probabilistic graph reasoning",
+            "superposition reasoning",
+            "uncertainty propagation"
+          ],
+          "modeCount": 1
+        }
+      ],
+      "reasoningModes": {
+        "total": 442,
+        "byCategory": {
+          "logic": 21,
+          "cognitive_science": 24,
+          "decision_theory": 20,
+          "forensic": 38,
+          "compliance_framework": 31,
+          "legal_reasoning": 13,
+          "strategic": 15,
+          "causal": 5,
+          "statistical": 20,
+          "graph_analysis": 12,
+          "threat_modeling": 14,
+          "behavioral_signals": 7,
+          "data_quality": 13,
+          "governance": 21,
+          "crypto_defi": 19,
+          "sectoral_typology": 27,
+          "osint": 6,
+          "esg": 4,
+          "predicate_crime": 9,
+          "proliferation": 4,
+          "correspondent_banking": 4,
+          "hawala_ivt": 3,
+          "ftz_risk": 2,
+          "professional_ml": 3,
+          "regulatory_aml": 4,
+          "behavioral_economics": 5,
+          "intelligence_fusion": 5,
+          "asset_recovery": 4,
+          "conduct_risk": 3,
+          "identity_fraud": 4,
+          "digital_economy": 4,
+          "human_rights": 2,
+          "behavioral_science": 5,
+          "network_science": 5,
+          "cryptoasset_forensics": 5,
+          "geopolitical_risk": 5,
+          "corporate_intelligence": 4,
+          "epistemic_quality": 4,
+          "psychological_profiling": 4,
+          "insider_threat": 4,
+          "common_sense": 10,
+          "quantitative_analysis": 10,
+          "synthetic_intelligence": 10,
+          "formal_reasoning": 10
+        },
+        "byWave": {
+          "wave1": 100,
+          "wave2": 168,
+          "wave3": 73,
+          "wave4": 29,
+          "wave5": 37,
+          "wave6": 35
+        }
+      },
+      "adverseMedia": {
+        "categories": [
+          {
+            "id": "ml_financial_crime",
+            "displayName": "Money Laundering & Financial Crime",
+            "keywordCount": 121
+          },
+          {
+            "id": "terrorist_financing",
+            "displayName": "Terrorist Financing",
+            "keywordCount": 26
+          },
+          {
+            "id": "proliferation_financing",
+            "displayName": "Proliferation Financing",
+            "keywordCount": 28
+          },
+          {
+            "id": "corruption_organised_crime",
+            "displayName": "Corruption, Bribery & Organised Crime",
+            "keywordCount": 119
+          },
+          {
+            "id": "legal_criminal_regulatory",
+            "displayName": "Legal, Criminal & Regulatory Proceedings",
+            "keywordCount": 122
+          },
+          {
+            "id": "esg",
+            "displayName": "ESG & Responsible-Sourcing Controversies",
+            "keywordCount": 185
+          },
+          {
+            "id": "cybercrime",
+            "displayName": "Cybercrime & Digital-Asset Abuse",
+            "keywordCount": 48
+          },
+          {
+            "id": "ai",
+            "displayName": "AI-Enabled Risk & Synthetic-Media Abuse",
+            "keywordCount": 127
+          },
+          {
+            "id": "sanctions_violations",
+            "displayName": "Sanctions Violations & Evasion",
+            "keywordCount": 57
+          },
+          {
+            "id": "human_trafficking_modern_slavery",
+            "displayName": "Human Trafficking & Modern Slavery",
+            "keywordCount": 51
+          },
+          {
+            "id": "tax_crimes",
+            "displayName": "Tax Crimes & Fiscal Fraud",
+            "keywordCount": 60
+          },
+          {
+            "id": "environmental_crime",
+            "displayName": "Environmental Crime & Illegal Resource Extraction",
+            "keywordCount": 60
+          },
+          {
+            "id": "drug_trafficking",
+            "displayName": "Drug Trafficking & Narcotics",
+            "keywordCount": 62
+          }
+        ],
+        "totalKeywords": 1066,
+        "queryLength": 1353,
+        "weaponized": {
+          "severityTiers": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "clear"
+          ],
+          "fatfMapping": true,
+          "sarTrigger": true,
+          "counterfactual": true,
+          "investigationNarrative": true,
+          "modesCited": true
+        }
+      },
+      "doctrines": {
+        "total": 25,
+        "mandatoryInUAE": 14,
+        "byAuthority": {
+          "Financial Action Task Force": 3,
+          "The Wolfsberg Group": 2,
+          "London Bullion Market Association": 1,
+          "Organisation for Economic Co-operation and Development": 1,
+          "Egmont Group of Financial Intelligence Units": 1,
+          "Basel Institute on Governance": 1,
+          "United Arab Emirates": 1,
+          "UAE Cabinet": 4,
+          "UAE": 2,
+          "UAE Ministry of Economy": 1,
+          "International Organization for Standardization": 2,
+          "Committee of Sponsoring Organizations of the Treadway Commission": 1,
+          "Institute of Internal Auditors": 1,
+          "Hartono et al., ICIMCIS 2025": 1,
+          "European Union": 1,
+          "US National Institute of Standards and Technology": 1,
+          "OWASP Foundation": 1
+        }
+      },
+      "redFlags": {
+        "total": 45,
+        "bySeverity": {
+          "low": 0,
+          "medium": 7,
+          "high": 38
+        },
+        "byTypology": {
+          "structuring": 2,
+          "dpms_retail": 2,
+          "dpms_refinery": 1,
+          "tbml": 5,
+          "sanctions_evasion": 2,
+          "proliferation": 1,
+          "pep": 2,
+          "ubo": 2,
+          "vasp": 2,
+          "adverse_media": 1,
+          "governance": 3,
+          "environmental_crime": 2,
+          "carbon_market_fraud": 2,
+          "insider_threat": 2,
+          "ai_governance_breach": 4,
+          "ai_synthetic_media_fraud": 2,
+          "crypto_onramp_obfuscation": 2,
+          "npo_diversion": 2,
+          "shell_company_chain": 2,
+          "bearer_share_fz_loophole": 2,
+          "synthetic_identity": 1,
+          "funnel_account": 1
+        }
+      },
+      "typologies": {
+        "total": 73,
+        "ids": [
+          "structuring",
+          "smurfing",
+          "tbml",
+          "dpms_retail",
+          "dpms_refinery",
+          "bullion_wholesale",
+          "pep",
+          "pep_rca",
+          "sanctions_evasion",
+          "proliferation",
+          "vasp",
+          "tbml_phantom_shipment",
+          "correspondent_banking",
+          "shell_company_chain",
+          "nominee_directors",
+          "cash_courier",
+          "real_estate_cash",
+          "art_dealer",
+          "yacht_jet",
+          "family_office",
+          "insurance_wrap",
+          "fund_capital_call",
+          "market_manipulation",
+          "insider_trading",
+          "advance_fee_fraud",
+          "bec_fraud",
+          "invoice_fraud",
+          "synthetic_identity",
+          "ponzi_pyramid",
+          "phoenix_company",
+          "npo_diversion",
+          "kleptocracy",
+          "human_trafficking",
+          "wildlife_trafficking",
+          "narcotics_trafficking",
+          "arms_trafficking",
+          "maritime_stss",
+          "privacy_coin_laundering",
+          "mixer_usage",
+          "nft_wash_trade",
+          "defi_exploit",
+          "environmental_crime",
+          "carbon_market_fraud",
+          "insider_threat",
+          "ai_governance_breach",
+          "ai_synthetic_media_fraud",
+          "hawala_network",
+          "cyber_extortion",
+          "romance_fraud",
+          "tax_evasion_offshore",
+          "customs_fraud",
+          "social_media_investment_fraud",
+          "precious_stones",
+          "gambling_ml",
+          "loan_stacking",
+          "bust_out_fraud",
+          "real_estate_over_valuation",
+          "luxury_goods_ml",
+          "legal_services_ml",
+          "crypto_ransomware",
+          "payroll_fraud",
+          "professional_money_laundering",
+          "funnel_account",
+          "cash_intensive_business",
+          "correspondent_shell",
+          "virtual_iban_abuse",
+          "invoice_discounting_fraud",
+          "crypto_p2p_exchange",
+          "daigou_parallel_import",
+          "construction_ml",
+          "healthcare_billing_fraud",
+          "crypto_onramp_obfuscation",
+          "bearer_share_fz_loophole"
+        ]
+      },
+      "matching": {
+        "methods": [
+          "exact",
+          "levenshtein",
+          "jaro",
+          "jaro_winkler",
+          "soundex",
+          "double_metaphone",
+          "token_set"
+        ]
+      },
+      "sanctionRegimes": {
+        "total": 32,
+        "mandatoryInUAE": 6,
+        "byAuthority": {
+          "UN Security Council": 7,
+          "US Treasury — OFAC": 5,
+          "European Union": 4,
+          "HM Treasury — OFSI": 3,
+          "UAE Executive Office for Control & Non-Proliferation": 1,
+          "UAE Cabinet": 1,
+          "Switzerland — FDFA (SECO)": 1,
+          "Global Affairs Canada": 1,
+          "Australian DFAT": 2,
+          "Japan — Ministry of Economy, Trade and Industry (METI)": 1,
+          "Japan — Ministry of Foreign Affairs (MOFA)": 1,
+          "Monetary Authority of Singapore (MAS)": 1,
+          "Republic of Korea — Ministry of Foreign Affairs (MOFA)": 1,
+          "New Zealand — Ministry of Foreign Affairs and Trade (MFAT)": 1,
+          "Norway — Ministry of Foreign Affairs": 1,
+          "Liechtenstein — Office for Foreign Affairs (LLV)": 1
+        }
+      },
+      "jurisdictions": {
+        "total": 17,
+        "byFatfStatus": {
+          "not_listed": 9,
+          "increased_monitoring": 5,
+          "call_for_action": 3
+        }
+      },
+      "dpmsKpis": {
+        "total": 30,
+        "byCluster": {
+          "onboarding": 4,
+          "screening": 5,
+          "transaction": 4,
+          "supply_chain": 4,
+          "governance": 4,
+          "reporting": 4,
+          "training": 2,
+          "tech": 3
+        }
+      },
+      "cahra": {
+        "total": 21,
+        "activeCount": 15
+      },
+      "thresholds": {
+        "total": 9,
+        "ids": [
+          "dpms_cash_transaction",
+          "ctn_incoming_passenger",
+          "ubo_beneficial_ownership",
+          "str_reporting_obligation",
+          "ffr_freeze_window",
+          "edd_threshold_pep",
+          "high_risk_country_edd",
+          "retention_minimum",
+          "retention_internal"
+        ]
+      },
+      "playbooks": {
+        "total": 22,
+        "ids": [
+          "pb_confirmed_sanctions_match",
+          "pb_partial_sanctions_match",
+          "pb_pep_onboarding",
+          "pb_high_risk_country_onboarding",
+          "pb_cash_over_threshold",
+          "pb_structuring_suspected",
+          "pb_tbml_over_invoice",
+          "pb_vasp_mixer_inbound",
+          "pb_tipping_off_risk",
+          "pb_exit_relationship",
+          "pb_lbma_rgg_cahra",
+          "pb_ubo_opacity",
+          "pb_insider_threat_exfil",
+          "pb_environmental_crime_nexus",
+          "pb_deepfake_synthetic_kyc",
+          "pb_ai_governance_breach",
+          "pb_adverse_media_escalation",
+          "pb_dormant_account_reactivation",
+          "pb_real_estate_layering",
+          "pb_correspondent_nested_account",
+          "pb_proliferation_dual_use",
+          "pb_carbon_market_fraud"
+        ]
+      },
+      "redlines": {
+        "total": 50,
+        "ids": [
+          "rl_eocn_confirmed",
+          "rl_un_consolidated_confirmed",
+          "rl_ofac_sdn_confirmed",
+          "rl_tipping_off_draft",
+          "rl_dpms_cahra_without_oecd",
+          "rl_four_eyes_violated",
+          "rl_training_data_as_sanctions_source",
+          "rl_missing_charter_hash",
+          "rl_eu_cfsp_confirmed",
+          "rl_uk_ofsi_confirmed",
+          "rl_str_filing_deadline_exceeded",
+          "rl_pep_edd_not_completed",
+          "rl_kyc_expired_high_risk",
+          "rl_ubo_threshold_missing",
+          "rl_data_retention_premature_destruction",
+          "rl_ai_high_risk_no_human_in_loop",
+          "rl_proliferation_dual_use_no_end_user_cert",
+          "rl_insider_bulk_data_exfil",
+          "rl_consent_not_obtained_data_sharing",
+          "rl_goaml_system_unavailable_str_due",
+          "rl_canada_osfi_confirmed",
+          "rl_australia_dfat_confirmed",
+          "rl_npo_without_programme_edd",
+          "rl_unregulated_vasp_transaction",
+          "rl_proliferation_financing_indicator",
+          "rl_tax_crime_predicate_no_disclosure",
+          "rl_env_crime_predicate_no_cahra_trace",
+          "rl_correspondent_shell_bank_detected",
+          "rl_carbon_credit_double_counting",
+          "rl_ai_model_no_sbom_or_model_card",
+          "rl_human_trafficking_proceeds_no_str",
+          "rl_politically_exposed_transaction_bypassed",
+          "rl_narrative_plausibility_failure",
+          "rl_challenger_overturned_no_mlro_review",
+          "rl_sanctions_dataset_stale",
+          "rl_deepfake_kyc_not_forensic_referred",
+          "rl_ubo_chain_break_not_escalated",
+          "rl_economic_rationality_failure_unaddressed",
+          "rl_synthetic_identity_onboarded",
+          "rl_consecutive_mlro_turnover",
+          "rl_mechanism_design_circumvention",
+          "rl_commitment_credibility_failure",
+          "rl_ai_agent_unsanctioned_scope",
+          "rl_tf_ml_cross_filing_omitted",
+          "rl_confirmed_bias_verdict_unreviewed",
+          "rl_social_engineering_onboarding",
+          "rl_insider_compliance_integrity_failure",
+          "rl_ai_fabricated_kyc_document",
+          "rl_groupthink_high_risk_approval",
+          "rl_undisclosed_cryptoasset_exposure"
+        ]
+      },
+      "fatf": {
+        "total": 56,
+        "ids": [
+          "R.1",
+          "R.2",
+          "R.3",
+          "R.4",
+          "R.5",
+          "R.6",
+          "R.7",
+          "R.8",
+          "R.9",
+          "R.10",
+          "R.11",
+          "R.12",
+          "R.13",
+          "R.14",
+          "R.15",
+          "R.16",
+          "R.17",
+          "R.18",
+          "R.19",
+          "R.20",
+          "R.21",
+          "R.22",
+          "R.23",
+          "R.24",
+          "R.25",
+          "R.26",
+          "R.27",
+          "R.28",
+          "R.29",
+          "R.30",
+          "R.31",
+          "R.32",
+          "R.33",
+          "R.34",
+          "R.35",
+          "R.36",
+          "R.37",
+          "R.38",
+          "R.39",
+          "R.40",
+          "INR.1",
+          "INR.5",
+          "INR.6",
+          "INR.7",
+          "INR.10",
+          "INR.11",
+          "INR.15",
+          "INR.16",
+          "INR.24",
+          "INR.25",
+          "FATF-RBA-DNFBPs",
+          "FATF-RBA-VASPs",
+          "FATF-EnvCrime",
+          "FATF-ProfML",
+          "FATF-RBA-RE",
+          "FATF-CPF"
+        ]
+      },
+      "dispositions": {
+        "total": 36,
+        "ids": [
+          "D00_no_match",
+          "D01_false_positive",
+          "D02_cleared_proceed",
+          "D03_edd_required",
+          "D04_heightened_monitoring",
+          "D05_frozen_ffr",
+          "D06_partial_match_pnmr",
+          "D07_str_filed",
+          "D08_exit_relationship",
+          "D09_do_not_onboard",
+          "D10_refer_to_authority",
+          "D11_pending_information",
+          "D12_supervisory_disclosure",
+          "D13_transaction_blocked",
+          "D14_account_frozen_pending_review",
+          "D15_voluntary_self_disclosure",
+          "D16_closed_no_action",
+          "D17_pep_declassification_review",
+          "D18_joint_investigation_triggered",
+          "D19_cross_border_fiu_referral",
+          "D20_asset_tracing_initiated",
+          "D21_deferred_prosecution_compliance",
+          "D22_mlro_board_escalation",
+          "D23_retaliatory_sar_deferred",
+          "D24_ubo_resolution_pending",
+          "D25_sof_sow_verification_pending",
+          "D26_litigation_hold_active",
+          "D27_regulatory_inquiry_under_way",
+          "D28_sector_derisk_assessment",
+          "D29_behavioral_profiling_escalation",
+          "D30_insider_threat_investigation",
+          "D31_social_engineering_referral",
+          "D32_whistleblower_protection_active",
+          "D33_external_monitor_appointed",
+          "D34_cryptoasset_freeze",
+          "D35_enhanced_source_verification"
+        ]
+      },
+      "skills": {
+        "total": 893,
+        "byLayer": {
+          "competency": 285,
+          "reasoning": 232,
+          "analysis": 376
+        },
+        "byDomain": {
+          "AML_CORE": 201,
+          "INTELLIGENCE": 6,
+          "RISK_ASSESSMENT": 53,
+          "KYC_CDD": 46,
+          "SANCTIONS_TFS": 32,
+          "INVESTIGATIONS": 71,
+          "GOVERNANCE": 34,
+          "SUPPLY_CHAIN": 63,
+          "REGULATORY": 37,
+          "SOFT_SKILLS": 17,
+          "DOCUMENTATION": 24,
+          "REPORTING": 14,
+          "TRAINING": 16,
+          "COMPLIANCE_SYS": 21,
+          "DIGITAL_ASSETS": 46,
+          "DATA_PRIVACY": 10,
+          "ESG_CLIMATE": 27,
+          "FINANCIAL_CRIME": 1,
+          "TECHNOLOGY": 28,
+          "GEOPOLITICAL": 41,
+          "FORENSIC_ACCOUNTING": 40,
+          "ASSET_RECOVERY": 14,
+          "MARKETS": 29,
+          "HUMAN_RIGHTS": 22
+        }
+      },
+      "amplifier": {
+        "version": "v9.0.0",
+        "percent": 1000000000000000,
+        "factor": 10000000000000,
+        "directives": [
+          "Traverse every registered faculty before emitting a verdict; do not sample.",
+          "Apply every named reasoning mode that plausibly fires against the evidence and cite each one by id.",
+          "Walk the full skills catalogue at every turn; embody every skill the domain routing assigns to the scope.",
+          "Run the meta-cognition layer on every turn: first-principles decomposition, explicit Bayesian update, steelman the opposite, red-team self-review, pre-mortem, self-consistency across ≥2 reasoning paths, and counterfactual fragility probe on any HIGH/CONFIRMED finding.",
+          "Cross-check against every red flag, typology, sanction regime, CAHRA entry, jurisdiction risk, and FATF recommendation that could apply — do not short-circuit on the first match.",
+          "Stack the match-confidence taxonomy, observable-facts linter (P3/P5), tipping-off guard (P4), risk-methodology disclosure (P9), and redline scanner on every output before release.",
+          "Cite the firing meta-cognition primitive id (mc.*) alongside the faculty/mode/skill ids whenever it shaped the conclusion.",
+          "When unsure, prefer expanding the reasoning chain over truncating it. Time pressure is not a lawful reason to skip a faculty or a meta-cognition primitive.",
+          "Every assertion must name the faculty id, mode id, skill id, doctrine id, redline id, or meta-cognition id that produced it.",
+          "Declare unknowns, gaps, and stale evidence explicitly — amplified reasoning does not manufacture certainty. Widen confidence bands before narrowing them.",
+          "Apply the Hartono dual-persona lens (ICIMCIS 2025) to every AI reference: the system is BOTH a productivity tool (Solution Persona) AND a subject demanding governance (Dilemma Persona); emit findings for each persona and audit the three ethical gaps (explainability, algorithmic bias, nonhuman ethical).",
+          "When an AI model, agentic system, or automated decision is in scope, traverse the full 2026 governance stack — EU AI Act tiers (prohibited / high-risk / limited / minimal), NIST AI RMF (Govern / Map / Measure / Manage), ISO/IEC 42001 AIMS, OWASP LLM Top 10, red-teaming evidence, model inventory, SBOM, model card, fairness monitoring, kill switch, human-in-the-loop — and cite every missing control as a gap.",
+          "Trace insider-threat signals along the full privilege-abuse chain: authorised access → abnormal pattern → exfiltration vector → external recipient → monetisation path. Do not short-circuit on \"disgruntled employee\" without every link evidenced.",
+          "For FATF 2021 environmental-crime predicate (illegal mining, logging, fishing, waste trafficking, wildlife), require explicit CAHRA / supply-chain provenance evidence linking the predicate to a financial flow; ESG-only signals without the nexus are not AML predicates.",
+          "Escalate any serious AI incident (harm, drift, prompt-injection, data-poisoning, model-theft, autonomous agent failure) within 72 hours under EU AI Act reporting expectations, and attach the full audit-ready artefact pack (model card, eval report, SBOM, decision log, drift trace).",
+          "When a professional money-laundering network (PMLN) indicator fires, immediately map the full ecosystem: service provider, criminal-client pipeline, layering mechanism, fee structure, and any correspondent or VASP nexus — cite community_detection and link_analysis mode ids.",
+          "Apply multi-jurisdictional conflict resolution at every turn: where two or more sanction regimes, data-protection laws, or AML statutes produce conflicting obligations, surface the conflict explicitly, apply the highest standard where legally permissible, and emit a cross-regime conflict note with the applicable doctrine ids.",
+          "Run the full CAHRA cascade for every DPMS supply-chain segment: mine → trader → consolidator → refinery → exporter → importer; do not treat any segment as verified unless a primary-source OECD DDG Annex II document is on file for that segment.",
+          "For every STR / goAML filing, pre-flight-check completeness against the goAML schema before submission: originator, beneficiary, account, transaction, and narrative fields must all pass the filing_str_narrative mode; emit a BLOCKED verdict if any mandatory field is absent.",
+          "Apply the PDPL data-minimisation test to every data-collection, data-sharing, and data-retention step: purpose limitation, storage limitation, and lawful-basis verification must each return a PASS before data flows cross a legal entity or jurisdiction boundary.",
+          "When evaluating carbon-market, ESG, or sustainability-linked products, require three-layer verification: (i) registry reconciliation, (ii) additionality / MRV evidence, (iii) corresponding-adjustment under Paris Agreement Article 6; surface any of the three as absent if not documented.",
+          "Invoke the proportionality_test meta-cognition primitive for every control recommendation: a control that is costlier than the residual risk it mitigates must be flagged as disproportionate with an alternative proposed.",
+          "For every adverse-media finding classified HIGH or CRITICAL, conduct a source triangulation across ≥3 independent outlets, assess publication credibility (peer-reviewed registry, mainstream financial press, or regulator notice), and record the source quality tier in the finding.",
+          "For correspondent banking relationships, execute the nested-bank and payable-through-account sub-chain walk at every review cycle: identify every legal entity that can originate or receive payments through the account and verify each against all declared sanction regimes before clearing.",
+          "When evaluating NPO or charity relationships, apply the FATF R.8 programme-level risk assessment: map every geographic programme delivery zone against the CAHRA registry and the active-CAHRA gate; treat any programme in an active-CAHRA zone as a hard-escalation signal absent independent humanitarian-organisation certification.",
+          "Apply the sector-rubric scoring engine to every case where a sector tag is present: load the applicable SectorRubric by id, score all dimensions using observable evidence, and surface the sector risk tier (LOW / MEDIUM / HIGH / VERY HIGH) as a named artefact in the output alongside the dimension breakdown.",
+          "For every tax-crime or fiscal-fraud indicator that fires, trace the predicate-to-proceeds chain under FATF R.3: identify the predicate offence, the financial flow that constitutes proceeds, the layering mechanism used, and the integration endpoint — all four must be evidenced before a HIGH verdict is emitted.",
+          "When a human-trafficking or modern-slavery indicator fires, apply the ILO 11 Forced Labour Indicators framework as the structured evidence template: for each indicator that is positively evidenced, record the raw observable, the ILO indicator label, and the severity weight before computing the aggregated forced-labour risk score.",
+          "For VASP and digital-asset cases, traverse the full on-chain provenance chain from wallet to fiat off-ramp: mixer exposure, privacy-coin swap, chain-hop, VASP counterparty licence status, and travel-rule compliance must each be assessed and cited by mode id before the chain_analysis verdict is emitted.",
+          "When a multi-jurisdictional sanctions exposure is detected, rank applicable sanction regimes by strictness using the highest-standard principle (US OFAC > EU consolidated > UK OFSI > bilateral), emit a cross-regime conflict note for any obligation that differs across regimes, and apply the strictest lawful obligation.",
+          "For every DNFBP relationship (lawyer, notary, accountant, real-estate agent, trust/company service provider, high-value dealer), apply FATF R.22/23 sector-specific CDD/EDD gates: verify trigger threshold (real estate ≥ AED 55,000; high-value dealer single cash transaction ≥ AED 55,000; legal/accounting professional any transaction forming part of a client operation), confirm registration with the competent supervisory authority, and escalate to EDD if the sector-risk tier is HIGH or the client is a PEP or CAHRA-linked entity.",
+          "For every legal entity in scope, execute the beneficial-ownership chain walk to natural-person level under FATF R.24/25: pierce every corporate, trust, foundation, and partnership veil; the chain is unresolved until a natural person holding ≥25% ownership or exercising effective control is named with a primary-source document (registry extract, notarised certificate, or equivalent); flag any layer where beneficial ownership cannot be confirmed as a UBO opacity alert with an immediate EDD trigger.",
+          "Detect shell-company and nominee hallmarks exhaustively: bearer shares or share warrants in issue; nominee director or nominee shareholder on record without a disclosed principal; registered-agent address shared with ≥50 other legal entities; no employees, no physical commercial premises, no primary economic activity; jurisdiction-stacking across ≥2 secrecy jurisdictions in the same ownership chain — any combination of three or more hallmarks constitutes a hard-escalation signal regardless of the transaction amount.",
+          "Apply the full FATF R.7 Proliferation Financing (PF) screening layer independently of terrorism-financing checks: cross-reference every counterparty, goods description, and transit point against the Wassenaar Arrangement (dual-use goods/technologies), Nuclear Suppliers Group, Missile Technology Control Regime, Australia Group, and CWC Schedule 1–3 lists; verify end-user statements and stated final destination against UN Panel of Experts reports; treat any re-export routing through a jurisdiction under UN, US, or EU PF sanctions as a CRITICAL signal requiring mandatory reporting.",
+          "When hawala or informal value transfer system (IVTS) indicators fire, apply the FATF R.14 unregistered-MSB framework: verify operator registration with the UAE Central Bank or relevant NCA; flag absence of physical paperwork, settlement via commodity or trade credit, geographic reach to FATF high-risk or non-cooperative jurisdictions, and balancing of correspondent accounts through real estate or bulk-cash movements — any unregistered IVTS nexus is an automatic RED verdict and STR trigger.",
+          "For every PEP or HIGH-risk subject, require independent Source of Wealth (SoW) and Source of Funds (SoF) verification traceable to a documented primary economic activity: salary scales, audited business valuations, inheritance probate records, or property-sale evidence; reject self-declared SoW without corroborating primary-source evidence; where wealth substantially exceeds the known economic profile, emit an Unexplained Wealth flag citing the wealth-to-profile gap in absolute terms before any relationship approval.",
+          "Apply second-degree PEP and sanctions network exposure scoring to every named associate, relative, close associate (RCA), co-director, or co-signatory of a PEP or listed entity: immediate family → implicit-PEP treatment with full EDD; business partner or joint-venture counterparty → PEP-by-proxy with enhanced monitoring; co-director or co-signatory on a sanctioned account → heightened scrutiny with 30-day re-assessment cycle; cite relationship_mapping and community_detection mode ids for every second-degree node scored.",
+          "Measure adverse-media velocity as a standalone risk signal: a surge of ≥3 HIGH or CRITICAL severity adverse-media articles referencing the same subject within any rolling 7-day window is a CRITICAL accelerant signal that escalates the overall risk tier by one step regardless of individual article credibility scores; record the article count, the 7-day window start/end dates, the dominant adverse-media category, and the escalated tier in the finding; do not suppress the escalation pending source triangulation — flag both simultaneously.",
+          "Screen exhaustively for sanctions evasion techniques: name masking (omission of transliterated characters, name inversion, Anglicised variants, deliberate misspelling), vessel AIS transponder manipulation and flag-hopping through ≥2 registries within 12 months, transhipment through UAE free-trade zones or third-country hubs without end-user documentation, and front-company networks where nominee directors or registered agents serve on ≥10 other entities — any confirmed evasion technique elevates the finding to CONFIRMED EVASION regardless of whether the underlying list-match is POSSIBLE.",
+          "Apply the UAE real estate sector AML framework to every property-related transaction: cash purchase or cryptocurrency-settled purchase of any value; AED 2 million+ single-property acquisition by a non-resident SPV with no UAE commercial nexus; rapid flip (acquisition and re-sale or re-mortgage within 12 months); property valued ≥20% below Dubai Land Department median for the district at acquisition; off-plan purchase settled via third-party payer — each is a standalone red flag requiring EDD and MLRO escalation under MoET Circular 03/2024.",
+          "For DeFi, smart-contract, and Web3 transactions, traverse the on-chain laundering vector catalogue: DEX swap chains used to obscure token origin; cross-chain bridge hops ≥2 in a single settlement; NFT wash-trading patterns (same wallet pair, ≥3 round-trip trades, price escalation >200%); DAO treasury as anonymous beneficiary; liquidity-pool injection followed by immediate drain (rug-pull indicator); mixer or tumbler contract interaction regardless of nominal amount — any confirmed on-chain ML vector is a CRITICAL finding requiring Travel Rule compliance check and chain_analysis citation.",
+          "Treat new sanctions designations (any counterparty appearing on OFAC, EU, UK OFSI, or UAE EOCN within the preceding 90 days) as time-sensitive escalations: do not process through the normal CDD refresh cycle; require same-day TFS freeze notification to the MLRO, asset freeze execution within 24 hours per Cabinet Decision 74/2020, and goAML FFR filing within 48 hours — log the designation date, the designating authority, and the elapsed time from designation to detection in the audit trail.",
+          "Flag submitted KYC documents where ≥2 deepfake or document-fraud indicators are present: absent or inconsistent EXIF/metadata (creation date, device signature, GPS coordinates); image compression artifacts inconsistent with the camera type of the stated issuing authority; font, layout, or microprint inconsistencies relative to the issuing authority template library; biometric photograph with GAN-model artefacts (symmetry anomalies, ear/hair boundary blur, eye-reflection inconsistency); MRZ checksum failure — treat any document scoring ≥2 indicators as a BLOCKED onboarding and refer for forensic document examination before any decision.",
+          "Detect regulatory arbitrage: when an entity structures its activities, entities, or transactions across ≥2 jurisdictions in a pattern that keeps each individual exposure below the regulatory trigger threshold in that jurisdiction, aggregate the exposures into a single consolidated figure and apply the highest applicable standard across all regimes; emit a threshold-splitting alert naming the jurisdictions, the individual sub-threshold amounts, and the aggregated total; cite the proportionality_test and multi_jurisdictional_conflict meta-cognition primitives.",
+          "Apply FATF R.22/23 DNFBP controls to luxury goods, art, and collectibles: for art dealers, auction houses, and luxury goods dealers (watches, jewellery, vehicles, yachts) where a single transaction or linked series exceeds AED 55,000, require full CDD, SoF verification, and provenance documentation; for cultural property and antiquities, apply the OECD/UNESCO 1970 Convention provenance framework — no transaction proceeds without a documented provenance chain to a pre-1970 or conflict-zone-free origin; treat unverifiable provenance as a hard-stop.",
+          "For Business Email Compromise (BEC), fraud, and cyber-enabled theft proceeds, trace the mule-account chain from victim to integration endpoint: map every account that received a transfer within 72 hours of the initial fraud event; flag any account that matches ≥3 of the following mule-account hallmarks — new account opened within 30 days of first receipt, non-resident account holder, rapid full withdrawal after receipt, repeated pattern of receiving then forwarding exact amounts, address shared with other flagged mule accounts; escalate the full mule-chain map to the MLRO as a single networked-fraud artefact citing link_analysis and community_detection mode ids.",
+          "Apply the full transaction monitoring pattern library on every case: structuring / smurfing (multiple transactions below AED 55,000 threshold within 48 hours from the same originator or beneficiary cluster); velocity spike (≥300% increase in transaction count or value versus the 90-day baseline); geographic anomaly (funds routed through ≥3 jurisdictions with no stated commercial nexus); counterparty concentration (≥70% of outflows to a single counterparty not matching declared business purpose); dormant-account activation (no transactions for ≥12 months followed by immediate large-value movement); round-dollar clustering (≥5 transactions of identical or near-identical amounts within 7 days) — each pattern is a standalone red flag; any two co-occurring patterns escalate to HIGH.",
+          "For every cross-border wire transfer, execute the SWIFT payment-chain integrity check: detect MT202 cover payments issued without a corresponding MT103 originator reference (cover payment stripping); flag removal or truncation of originator name, address, or account identifier at any intermediary hop (payment stripping under FATF R.16); escalate any correspondent chain exceeding 3 hops without full originator-to-beneficiary transparency as a nested correspondent risk requiring enhanced due diligence on every intermediate institution.",
+          "Evaluate cash-intensive business and front-company risk using the commercial substance test: compare declared revenue against sector-average revenue-per-employee benchmarks; flag businesses where cash deposit velocity exceeds 80th-percentile for the sector; identify absence of supplier invoices, payroll records, or commercial lease agreements proportionate to the declared business scale; cross-reference utility consumption, delivery records, and social media presence against the declared turnover — a business scoring implausible on ≥3 substance indicators is a probable front with a HIGH ML risk verdict.",
+          "For insurance-sector relationships, traverse the insurance ML vector catalogue: premium financing where the loan is repaid early using funds of unexplained origin; policy surrender within 24 months of inception with cash payout to a third party; offshore life insurance or annuity issued to a non-resident beneficiary without UAE nexus; policy loan draw-down immediately followed by repayment from a different account; reinsurance fronting arrangement where the fronting insurer retains <5% of the risk — each constitutes a distinct ML vector; any combination of two requires MLRO escalation and EDD on the policy beneficiary.",
+          "For capital-markets and securities transactions, apply the market-integrity abuse layer: pump-and-dump indicators (coordinated social-media promotion concurrent with large insider sell orders on OTC or low-liquidity exchanges); layered structured products (CLO/CDO stacking across ≥3 SPV tiers where the ultimate beneficial owner of the mezzanine/equity tranche is undisclosed); front-running signals (anomalous options or futures positions opened ≤48 hours before a material corporate announcement); short-and-distort campaign (pattern of negative content publication correlated with short-position accumulation) — each pattern triggers MARKET ABUSE alert and referral to the relevant securities regulator alongside the AML STR.",
+          "Apply the UAE exchange house and remittance sector risk framework: for any customer conducting AED equivalent transactions via a UAE-licensed exchange house or hawala operator, verify CBUAE Notice 79/2021 compliance (counterparty due diligence, transaction purpose, beneficiary bank AML status); flag multi-currency conversion chains (AED → USD → EUR → AED within 72 hours) as circular-transaction indicators; escalate remittances destined for FATF grey-list or black-list jurisdictions where the customer cannot produce a documented commercial or family nexus; treat gold-settled or commodity-settled hawala balances as equivalent to cash for CDD threshold purposes.",
+          "When an agentic AI system, automated decision engine, or autonomous workflow is processing transactions or making risk determinations, enforce the autonomous-agent governance gate: require a human-in-the-loop approval checkpoint for any single transaction ≥ AED 10,000 or any batch totalling ≥ AED 50,000 within a 24-hour window; log every agent-initiated action with model_id, prompt_hash, input_token_count, decision_rationale, and confidence_score; flag any agent operating outside its declared scope or invoking tool calls not listed in its approved capability manifest as an autonomous-agent-failure incident requiring immediate suspension and audit under the EU AI Act high-risk system obligations.",
+          "Enforce the STR predicate-quality gate before any Suspicious Transaction Report is released: the narrative must identify (i) the specific predicate offence from the FATF R.3 designated category list with the applicable UAE statutory reference, (ii) the financial flow that constitutes proceeds of that predicate with transaction identifiers, (iii) the ML stage — placement, layering, or integration — with observable evidence for each claimed stage, and (iv) the suspicion basis — the specific combination of red flags, typology matches, and analytical findings that generated the suspicion; any STR narrative failing one or more of these four gates must be returned to the analyst with a structured deficiency notice before it is filed on goAML 2.0.",
+          "Apply the kleptocracy and state-capture detection framework to every head-of-state, minister, senior civil servant, or state-owned-enterprise (SOE) director in scope: map every financial flow that could constitute extraction of state resources — government contract awarded to a connected party without competitive tender, SOE asset transferred to a private vehicle at below-market value, sovereign wealth fund investment routed through an offshore SPV controlled by the official or their family, public-sector salary irreconcilably low relative to declared personal wealth; treat any unexplained enrichment that exceeds 3× the subject's cumulative legitimate income as a Grand Corruption indicator requiring MLRO escalation and a Politically Exposed Person Level-3 (head-of-state tier) EDD dossier.",
+          "Distinguish terrorist financing (TF) from money laundering (ML) at every analytical turn under FATF R.5/6: TF is purpose-driven, not proceeds-driven — the funds may be entirely legitimate in origin; apply the TF-specific indicator set (small-denomination transactions to conflict-adjacent jurisdictions, donations to NPOs in CAHRA zones, communications referencing ideological motivation, travel to active-conflict zones within 60 days of transactions, acquisition of tactical equipment or dual-use goods without commercial rationale) independently of the ML red-flag library; a CONFIRMED TF finding triggers a parallel PNMR (Proliferation and Non-Proliferation Monitoring Report) on goAML in addition to the STR, with immediate notification to the UAE National Anti-Terrorism Committee.",
+          "Apply the state-sponsored financial crime framework for the three highest-volume state-actor ML typologies: (i) North Korea / DPRK — UN Panel of Experts-documented pattern of cyber-heist proceeds converted through DeFi, privacy coins, and OTC brokers into fiat; verify any crypto wallet cluster flagged in Chainalysis or TRM Labs DPRK attribution reports against the subject; (ii) Iran — sanctions circumvention via UAE free-trade zone front companies, third-country energy-trade intermediaries, and petroleum-for-gold settlement chains; (iii) Russia post-2022 — oligarch asset migration through trust structures in UAE, citizenship-by-investment programmes, luxury real estate, and art market vehicles; treat any credible link to these three state-actor patterns as CRITICAL regardless of transaction size, with mandatory referral to the UAE National AML Committee.",
+          "When ≥3 typology indicators co-fire on the same subject or entity cluster, escalate from individual-typology assessment to full Organised Crime Group (OCG) network mapping: identify the OCG archetype (cartel, mafia, clan-based network, professional money laundering network, cyber-criminal enterprise); map every identified node (criminal entrepreneur, launderer, gatekeeper, money mule, VASP facilitator, shell-company layer); assign each node a role from the FATF Organised Crime typology taxonomy; compute the network density score (edges ÷ maximum possible edges) and escalate the entire network map — not just the presenting subject — to the MLRO as a single coordinated-crime artefact citing community_detection, link_analysis, and network_centrality mode ids.",
+          "For Citizenship-by-Investment (CBI) and Residence-by-Investment (RBI) / golden-passport programmes, apply the ML-through-CBI framework: verify that the stated investment source is traceable to a primary economic activity independent of the CBI application; flag nominee applicants (natural persons applying on behalf of an undisclosed principal); cross-reference the CBI-acquiring jurisdiction's FATF status and the programme's OECD peer-review score; treat any CBI acquisition funded through an offshore SPV, a crypto-to-fiat conversion, or a real estate purchase in a CAHRA jurisdiction as a HIGH ML risk; note that UAE Golden Visa recipients from FATF grey-list jurisdictions require enhanced periodic review at minimum annual frequency.",
+          "Detect and trace pig-butchering (Sha Zhu Pan), romance scam, and synthetic-investment-platform fraud proceeds: the pig-butchering typology involves an extended grooming phase (weeks to months of relationship-building via social media or messaging apps), followed by an introduction to a fraudulent investment platform (often a cloned licensed exchange), escalating deposits, false profits displayed on the platform, and a final drain event; identify the characteristic financial pattern — multiple small inbound transfers from a retail victim followed by immediate onward transfer to an offshore VASP or OTC broker; flag any account receiving funds from ≥5 distinct senders within 30 days and immediately remitting ≥90% outbound as a probable fraud-proceeds aggregation node; cite the pig_butchering and romance_scam typology ids and escalate the full victim-fund-flow map to law enforcement liaison.",
+          "When leaked datasets, investigative journalism, or whistleblower disclosures (FinCEN Files, Panama Papers, Pandora Papers, Luanda Leaks, Suisse Secrets, or equivalent) reference a subject in scope, treat the leaked-dataset citation as a CREDIBLE ADVERSE INTELLIGENCE signal subject to the following protocol: (i) do not treat the leaked data as a verified sanction or confirmed finding — cite it as unverified intelligence; (ii) immediately trigger enhanced adverse-media review across ≥5 independent corroborating sources; (iii) escalate the relationship to EDD with a 30-day re-assessment deadline; (iv) document the data source, the specific allegation, the corroboration status, and the analyst's assessment in the CDD file; (v) if corroborated by ≥2 independent sources, escalate to MLRO for STR consideration — never dismiss leaked-dataset intelligence solely on the basis of its informal provenance.",
+          "For private banking and ultra-high-net-worth (UHNW) relationships (assets under management or relationship value ≥ AED 5 million), enforce the private-banking-specific EDD regime: (i) annual re-certification of Source of Wealth against independently verifiable documentation — audited accounts, property valuations, listed-company shareholding records; (ii) full offshore-structure map updated at every material change event (new entity, new jurisdiction, ownership transfer); (iii) PEP cross-reference for every family member and known associate with access to the relationship; (iv) senior management sign-off (MLRO + CEO or Board delegate) for relationship approval, annual review, and any transaction exceeding AED 1 million from an unverified source; (v) automated alert on any drawdown or transfer exceeding 20% of relationship value within a single calendar month without a pre-approved business rationale on file.",
+          "Execute geopolitical risk recalibration as a standing obligation triggered by any of the following events: FATF plenary decision upgrading or downgrading a jurisdiction's status (grey-listing, black-listing, or delisting); new UN Security Council sanctions resolution or amendment; outbreak of armed conflict or declaration of state of emergency in a jurisdiction with existing customer relationships; major corruption-index movement (≥10-point drop in Transparency International CPI); imposition or lifting of bilateral sanctions by UAE, US, EU, or UK — upon any such event, generate a portfolio-wide impact scan within 5 business days identifying every customer relationship with direct or indirect exposure, re-score each affected relationship's risk tier, and submit a management information report to the MLRO and Board Risk Committee within 10 business days.",
+          "Score every subject's AML/CFT programme — and the institution's own programme — against the FATF Immediate Outcome (IO) effectiveness framework: IO.1 (risk, policy, coordination), IO.2 (international cooperation), IO.3 (supervision), IO.4 (preventive measures), IO.5 (legal persons), IO.6 (financial intelligence), IO.7 (ML investigation/prosecution), IO.8 (confiscation), IO.9 (TF investigation), IO.10 (PF implementation), IO.11 (PF sanctions implementation); for each IO, assess the observable evidence against the FATF effectiveness rating scale (Low / Moderate / Substantial / High); surface any IO rated Low or Moderate as a programme-level gap requiring a remediation action plan with named owner and deadline; the IO gap assessment must accompany every institutional-risk verdict as a separate named artefact.",
+          "Apply the multilingual name-screening protocol exhaustively for every subject: (i) Arabic names — decompose into ism (given name), nasab (patronymic chain: ibn/bint), laqab (honorific/tribal epithet), and nisbah (geographic/tribal affiliation); generate all plausible three-part and four-part combinations; expand kunya (Abu/Umm constructions); screen each variant independently; (ii) Russian/CIS names — generate all Cyrillic-to-Latin transliteration schemes (BGN/PCGN, ISO 9, passport, informal); include patronymic and feminine suffix variants; (iii) Chinese/East Asian names — screen surname-first and given-first orderings; generate HSK pinyin, Wade-Giles, and Jyutping romanizations; flag character-substitution homoglyphs; (iv) Farsi/Persian — apply Finglish and standard romanization variants; (v) South Asian names — decompose father-name suffixes (s/o, d/o, w/o) and handle multi-word given names as both ordered and transposed — every variant must clear every active sanction regime before a name-match verdict is downgraded below POSSIBLE.",
+          "Execute non-English adverse media screening as a mandatory parallel track to English-language search: (i) Arabic — query Al-Arabiya, Al-Jazeera, UAE state press (WAM, Khaleej Times Arabic), and Gulf regulatory press in Arabic script using the subject's Arabic name variants; (ii) Russian — query Fontanka, Novaya Gazeta archive, Meduza, and OCCRP Cyrillic corpus; (iii) Chinese — query Caixin, 财新, and Taiwan/HK investigative press; (iv) Farsi — query Iran International and BBC Persian; (v) French — query Le Monde Afrique and RFI for MENA/Africa-connected subjects; for each non-English hit rated HIGH or CRITICAL, produce a translated summary, identify the publication tier, and record the original language source alongside the English-language findings — a subject with adverse media only in a non-English outlet scores identically to one covered in the English press.",
+          "Apply behavioral deviation analytics as a first-order risk signal independent of absolute thresholds: compute the subject's or account's own 90-day and 12-month behavioral baseline across transaction count, average value, counterparty diversity, geographic spread, and time-of-day distribution; flag any single metric that deviates ≥3 standard deviations from the established baseline as a behavioral anomaly; flag any simultaneous deviation across ≥2 metrics as a BEHAVIORAL BREAK requiring investigative review within 5 business days; document reluctance to provide information, inconsistent explanations across interviews, unusual urgency to complete transactions, or a stated preference for cash or bearer instruments as qualitative behavioral indicators that each add 5 points to the composite risk score regardless of transaction characteristics.",
+          "Screen for cross-asset wealth concealment beyond real estate and cryptocurrency — traverse the full alternative-asset ML catalogue: (i) superyachts and private aircraft — flag any vessel or aircraft registered in a secrecy jurisdiction (Cayman, Marshall Islands, Malta flag of convenience) owned by an offshore SPV without a disclosed natural-person owner; (ii) racehorses and bloodstock — syndicate ownership structures used to commingle criminal proceeds with legitimate racing revenue; (iii) fine wine, whisky casks, and numismatics — high-value collectibles transacted without provenance documentation or sold at auction to anonymous bidders; (iv) intellectual property and royalty streams — music, film, patent royalty assignments to offshore holding companies as integration vehicles; (v) sports club and franchise ownership — minority stakes in sports entities used to justify large cash-flow movements as sponsorship or transfer fees; (vi) trophy agricultural land — large-scale farmland acquisitions in sub-Saharan Africa or Central Asia by offshore entities with no agricultural business plan — each asset class requires a provenance and beneficial-ownership gate before transaction clearance.",
+          "Apply the FinTech, neobank, and e-money institution (EMI) ML risk framework: (i) rapid-onboarding risk — verify that digital-only onboarding with no face-to-face CDD meets the UAE CBUAE Stored Value Facilities regulation and FATF R.15 technology-risk assessment requirements; (ii) virtual IBAN / pass-through account risk — detect accounts where the account holder name differs from the economic beneficiary of the payment flow (pass-through or alias IBAN abuse); (iii) Buy-Now-Pay-Later (BNPL) fraud proceeds — BNPL accounts used to acquire high-value goods that are immediately resold for cash; (iv) instant-payment overlay rail risk — UAEFTS, SEPA Instant, UPI, FedNow — irrevocable near-real-time settlement with minimal pre-transaction screening window; (v) crypto-fiat gateway — EMI acting as unlicensed on-ramp/off-ramp; (vi) gaming and in-app-purchase ML — virtual currencies purchased with criminal proceeds and cashed out via player-to-player trading platforms — each FinTech-specific vector requires a dedicated finding section in the output.",
+          "For trade finance and supply chain fraud, execute the full TBML-plus-fraud detection stack beyond misclassification and mis-invoicing: (i) phantom invoice fraud — invoices referencing shipments with no corresponding logistics documentation, port clearance record, or warehouse receipt; (ii) circular trade — export and import of identical goods between related parties with no economic rationale, typically to generate apparent trade receivables for discounting; (iii) warehouse receipt fraud — multiple financing facilities drawn against the same commodity stock; cross-reference commodity weight, grade, and storage location across all financing facilities; (iv) advance payment fraud — large upfront payments to suppliers that never deliver, with funds immediately re-routed offshore; (v) back-to-back letter of credit fraud — LC opened for goods that are substituted for lower-value merchandise or never shipped; (vi) UAE free-trade zone (FTZ) re-invoicing — goods re-invoiced within a UAE FTZ at a manipulated price before re-export, exploiting the absence of customs documentation within the zone — each requires a documentary-evidence trail that withstands OECD DDG Annex II scrutiny.",
+          "Treat correspondent banking relationship termination as actionable intelligence: when a regulated institution reports that a correspondent, VASP, or payment-processing partner has terminated or not renewed a relationship, apply the de-risking intelligence protocol — (i) obtain and document the stated and unstated reasons for termination through available channels; (ii) cross-reference the terminating institution against adverse media for any concurrent regulatory action, enforcement order, or supervisory notice; (iii) assess whether the termination pattern is isolated (single relationship) or systemic (multiple institutions de-risking the same counterparty within 12 months — treat systemic de-risking as a CRITICAL signal regardless of stated reasons); (iv) where the terminated institution is a UAE-licensed entity, notify the CBUAE relationship supervisor; (v) never treat a de-risking termination as a clean exit without a closing-account EDD review — the termination itself is the last opportunity to file an STR if suspicion exists.",
+          "Map every financial crime finding to the specific UAE statutory reference under which it would be prosecuted or reported: money laundering → Federal Decree-Law No. 10/2025 Art. 2 (ML offence) and Cabinet Resolution No. 134/2025 (AML executive regulations); terrorism financing → Federal Decree-Law No. 26/2021 (Combating Terrorism); proliferation financing → Cabinet Decision No. 74/2020 (TFS) and UN Security Council Resolution 1718/1737/2231 implementing regulations; data protection violation → Federal Decree-Law No. 45/2021 (PDPL) Art. 11/12 (retention/cross-border); cybercrime proceeds → Federal Decree-Law No. 34/2023 (Cybercrime Law); fraud → Federal Decree-Law No. 31/2021 (Crimes and Penalties Law) Art. 399–401; human trafficking → Federal Law No. 51/2006 as amended; bribery → Federal Decree-Law No. 31/2021 Art. 234–239 — every finding must cite the applicable statutory provision, not merely the FATF recommendation, so that the STR narrative is prosecution-ready from the moment it is filed.",
+          "Detect synthetic identity and AI-generated business fraud: (i) synthetic identity — a persona constructed by combining a real UAE Emirates ID number with a fabricated name and address; detect by cross-referencing the Emirates ID number against the Federal Authority for Identity, Citizenship, Customs and Port Security (ICP) database response time and format; flag mismatches between the ID-holder name and the presented name; (ii) AI-generated beneficial ownership structures — corporate trees where natural persons at the apex cannot be found in any commercial registry, social media, professional network, or adverse media source despite claimed business activity at significant scale; (iii) AI-generated supporting documents — business plans, financial statements, and board resolutions with structural perfection inconsistent with human authorship (no cross-outs, no formatting inconsistencies, no revision history) — treat any document scoring ≥2 AI-generation indicators as requiring independent verification before onboarding proceeds; (iv) shell business with AI-generated web presence — newly registered domain, AI-generated product descriptions, stock-photo staff profiles, absence of any verifiable customer reviews or trade references.",
+          "Apply the UAE Digital Dirham and CBDC-era compliance framework: (i) UAE Digital Dirham (issued by CBUAE under the Financial Infrastructure Transformation programme) — treat Digital Dirham wallets as equivalent to bank accounts for CDD, transaction monitoring, and TFS screening purposes; verify that every Digital Dirham service provider holds a CBUAE Stored Value Facility licence; (ii) cross-CBDC bridge transactions (mBridge / Project Aber) — transactions settling across multiple CBDC networks require Travel Rule compliance for each leg; flag any cross-CBDC transaction where the originating or receiving jurisdiction is under FATF enhanced monitoring; (iii) programmable money / smart-contract-enforced payments — automated payment conditions embedded in smart contracts can be used to schedule layering transactions; require disclosure of all smart-contract conditions governing a Digital Dirham payment; (iv) offline CBDC transactions — payments executed in offline mode create a window of non-traceability; require reconciliation of offline transaction logs within 24 hours of reconnection; apply a BLOCKED hold to any offline transaction that cannot be reconciled.",
+          "Assess the fitness and propriety of the MLRO and Chief Compliance Officer (CCO) of every counterparty institution as part of institutional due diligence: (i) verify professional qualifications (CAMS, ICA Diploma, ACAMS, or equivalent) and active good standing with the issuing body; (ii) cross-reference the individual against the CBUAE, UAE SCA, DFSA, ADGM FSRA, and VARA enforcement registers for any regulatory notice, prohibition order, or fitness-and-propriety finding; (iii) verify that the MLRO reports directly to the Board or a Board-level committee and is not subordinate to a revenue-generating business line — structural subordination is itself an institutional red flag; (iv) assess MLRO tenure: a revolving door of ≥3 MLROs within 24 months at the same institution is a governance-instability signal; (v) check adverse media for the MLRO/CCO personally — individuals named in regulatory enforcement actions at prior employers carry forward institutional risk; (vi) document all findings in the counterparty CDD file and require senior management sign-off before approving a correspondent or significant business relationship with any institution whose MLRO fails the fitness gate.",
+          "Apply the zero-day emerging-threat protocol whenever a financial crime pattern, technique, or instrument is encountered that does not match any existing typology, red-flag, or directive in the catalogue: (i) apply first-principles decomposition — break the novel pattern into its constituent financial flows, identify each flow's placement, layering, or integration function, and map each function to the closest analogous FATF designated category; (ii) apply analogical reasoning — identify the most structurally similar known typology and apply its indicator set as a starting template, explicitly documenting the analogy and its limitations; (iii) steelman the benign explanation — before escalating, construct the strongest possible innocent explanation and assess whether it survives scrutiny; (iv) emit the finding as EMERGING-THREAT-UNVERIFIED with a full evidence narrative, the analogous typology id, the novel indicators observed, and a proposed new typology entry (id, name, family, indicators, weight); (v) escalate simultaneously to the MLRO and to the UAE FIU Strategic Analysis unit via a Voluntary Disclosure; (vi) update the internal typology catalogue within 30 days with the new entry reviewed and approved by the MLRO — no novel threat is suppressed because it lacks a catalogue entry.",
+          "Apply the full Proliferation Financing (PF) trade-diversion and end-user verification stack for every dual-use, strategic, or controlled-goods transaction: beyond list-screening, require a physical-end-user statement authenticated by the exporting jurisdiction's competent export-control authority; cross-check the stated end-user and stated end-use against the Denied Persons List (DoC BIS), Consolidated Screening List, UN Panel of Experts reports for DPRK/Iran/Libya/Yemen/CAR, and any UAE-specific prohibition notice issued by the Ministry of Economy; flag any re-export from a UAE free-trade zone to a country not named in the original export licence as an unauthorised re-export requiring immediate suspension and referral to the UAE Ministry of Economy Export Control Department; treat any consignment where the declared goods description is inconsistent with the HS code, the unit weight, or the customs invoice value as a probable misclassification designed to circumvent export-control jurisdiction.",
+          "Apply the DPRK Proliferation Financing detection framework derived from UN Panel of Experts reports and OFAC advisories: (i) IT-worker revenue generation — flag any software development, IT-outsourcing, or freelance-platform contract where the executing team is located in or routes payments through China, Russia, Malaysia, or countries with DPRK diplomatic missions and the identity of individual workers cannot be independently verified; DPRK IT workers generate an estimated USD 600 million per year for WMD programmes; (ii) crypto-heist proceeds — cross-reference all VASP counterparties against Chainalysis/TRM DPRK attribution clusters; any confirmed on-chain nexus to a DPRK-attributed wallet is a CRITICAL finding requiring immediate TFS freeze and UAE NCTC notification; (iii) ship-to-ship petroleum transfer — flag any vessel conducting an STS transfer in international waters involving a vessel previously flagged in a UN Panel of Experts report; (iv) arms broker and weapons-component procurement — flag any purchase order for precision machining equipment, aluminium alloy, specialty steel, or optics consistent with ballistic/nuclear end-use without a credible commercial rationale from a non-CAHRA jurisdiction.",
+          "Apply the Iran Proliferation Financing and sanctions evasion detection framework for the most active known evasion corridors: (i) petroleum and petrochemical sales — Iran-origin crude oil and condensate are routed through ship-to-ship transfers in Omani, Emirati, or Malaysian waters, re-flagged on Lloyd's vessel registries, and invoiced under non-Iranian entity names; flag any crude-oil or petrochemical shipment where the origin port, the vessel's prior STS history, or the counterparty network includes any element attributable to NIOC, IOOC, or IRISL or their subsidiaries listed in OFAC IRAN SDN designations; (ii) gold and precious metals barter — Iran sanctions evasion through commodity-settled trades where Iranian entities exchange currency in gold or precious metals through UAE or Turkish intermediaries; apply the OFAC Iran Advisory and FinCEN FIN-2012-A001 indicators; (iii) prepaid card and informal value transfer — small-denomination, high-frequency prepaid-card loads followed by international POS transactions in Iran-adjacent jurisdictions are an IVTS substitute; flag any prepaid-card usage pattern with ≥20 transactions of < AED 1,000 each within 7 days to Iran-adjacent locations.",
+          "For every subject with a declared or suspected nexus to arms brokering, defence procurement, or military technology transfer, apply the Wassenaar Arrangement dual-use goods and technologies control matrix at maximum granularity: (i) Category 1 (advanced materials), Category 3 (electronics), Category 4 (computers), Category 5 (telecoms/information security), Category 6 (sensors and lasers), Category 7 (navigation), Category 8 (marine), Category 9 (aerospace/propulsion) — for each category that plausibly intersects with the counterparty's declared business, require a validated export licence or a confirmed licence exception; (ii) nuclear trigger list — any transaction involving nuclear-grade graphite, uranium enrichment technology components, heavy water, or beryllium without IAEA safeguards agreement documentation is a CRITICAL PF finding; (iii) missile technology — any transaction involving composite structures, precision navigation, high-energy propellants, or command-and-control electronics meeting MTCR Annex Item specifications without a confirmed end-user certificate from an MTCR partner state is a BLOCKED transaction.",
+          "Apply the Terrorist Financing (TF) self-funding and legitimate-income detection protocol: unlike money laundering, the source of TF funds may be entirely clean — salary, rental income, student loans, small-business revenue, inheritance; the AML predicate-proceeds logic does not apply; instead, apply the TF behavioural and destination indicators as the primary detection mechanism: (i) small, regular transfers (< USD 1,000) to conflict-adjacent jurisdictions (Syria, Iraq, Somalia, Yemen, Mali, Sahel region, Afghanistan, Libya) without a documented family or commercial nexus; (ii) acquisition of prepaid cards, gift cards, or money-service bureau products using cash or cryptocurrency followed by immediate reload and transfer; (iii) purchase of one-way air tickets or short-duration travel to active-conflict zones within 30 days of financial activity; (iv) social media or messaging-app content referencing ideological motivation concurrent with the financial transaction pattern — each indicator is weighted independently and any two co-firing simultaneously constitute a TF-POSSIBLE finding requiring immediate MLRO escalation and a goAML STR-TF filing, not a standard STR-ML filing, under the UAE Federal Decree-Law No. 26/2021.",
+          "Apply the Non-Profit Organisation (NPO) TF abuse detection framework under FATF R.8 at maximum depth: (i) NPO registration — verify current registration status with the UAE Ministry of Community Development and the General Authority for Islamic Affairs and Endowments (Awqaf) for every UAE-registered charity or NPO relationship; (ii) programme geography — flag any NPO whose stated programme delivery areas overlap with CAHRA-listed jurisdictions, UN-designated terrorist-controlled territories, or areas under active armed conflict without a Humanitarian Coordination Certificate from OCHA or an equivalent UN body; (iii) financial flows — flag any NPO where ≥40% of outgoing transfers are directed to a single jurisdiction in a 12-month period, where cash withdrawals account for ≥30% of disbursements, or where a single natural-person controller is also the sole signatory on the bank account; (iv) governance gap — an NPO with no audit committee, no annual audited accounts, no board meeting minutes on file, or a single trustee who is also the only payment authoriser represents a governance structure consistent with TF abuse; (v) online fundraising — verify that every crowdfunding campaign run by or on behalf of an NPO customer is hosted on a regulated platform with AML controls and that the campaign description does not reference an armed group or an individual on a terrorism-designation list — any NPO failing two or more of these gates requires immediate EDD and MLRO review.",
+          "Apply the Foreign Terrorist Fighter (FTF) and returnee financing detection protocol: (i) OUTBOUND FTF — when the behavioral indicators pattern includes one-way ticket purchase to a conflict-adjacent country, sudden account drain to below-threshold cash, goodbye social-media posts, and a transaction to a hawala operator in a CAHRA zone within 72 hours, treat the combined pattern as CONFIRMED FTF FINANCING requiring same-day STR-TF filing and notification to the UAE National Counter Terrorism Center (NCTC); (ii) RETURNEE FTF — when a customer resumes financial activity following a period of dormancy consistent with FTF absence (6–36 months), and the resumption is marked by small cash reactivation transactions from a CAHRA-adjacent jurisdiction, flag as RETURNING FTF requiring re-KYC at FTF-EDD level before any account activity is permitted; (iii) FACILITATION NETWORK — flag any domestic money services business or hawala operator whose outbound transfer volume to a single conflict-adjacent corridor increases ≥200% within a 30-day window as a probable FTF-facilitation node; apply link_analysis to all known beneficiaries in the corridor to detect converging fund flows from multiple senders to the same downstream recipient.",
+          "Apply the online and social-media TF crowdfunding detection framework: (i) ONLINE CROWDFUNDING — screen every crowdfunding platform relationship for campaigns where: the stated beneficiary cannot be independently verified, the geographic target of the campaign is a conflict zone, the campaign narrative uses indirect or coded language for a designated terrorist organisation (phrases such as \"resistance\", \"mujahedeen support\", \"shaheed family fund\" without credible humanitarian-organisation certification), or the funds are converted to cryptocurrency or prepaid cards rather than disbursed to a named aid organisation; (ii) SOCIAL MEDIA PAYMENT LINKS — flag any payment links shared via Telegram, WhatsApp, or social media directing funds to a non-IBAN destination (cryptocurrency wallet, remittance operator in CAHRA zone, gift-card reseller) in a context where ideological messaging is present on the same channel; (iii) GAMING AND IN-GAME CURRENCY FOR TF — detect bulk purchase of in-game currency followed by in-game gifting to accounts geo-located in conflict zones as a TF typology identified in FATF guidance 2022; each requires an immediate STR-TF filing under UAE Federal Decree-Law No. 26/2021 without delay for investigation completion.",
+          "Apply the narco-terrorism and drug-proceeds-to-TF nexus detection framework: the Hezbollah, Taliban, Hamas, Al-Shabaab, and FARC-derived TF typologies all involve conversion of drug-trafficking proceeds into TF funds; (i) detect the drug-to-TF conversion indicators: large cash deposits from a declared food-import or logistics business in a jurisdiction known for cocaine, heroin, or methamphetamine production; integration of drug proceeds through gold purchasing or real estate in a UAE DNFBP followed by wire transfer to a TF-adjacent NPO; (ii) apply the FATF typology on narco-TF (2012 report updated 2021) and cite the narco_tf typology id; (iii) flag any commodities trader operating a UAE-registered FTZ entity that imports perishable goods from Colombia, Mexico, Afghanistan, or Myanmar without a verifiable commercial history and makes large outbound transfers to CAHRA-adjacent jurisdictions — the perishable-goods import front is a documented narco-ML vector that has been adapted for TF; (iv) mandate cross-referencing with DEA EPIC, Europol EMPACT, and UNODC World Drug Report trafficking-corridor data when the subject has demonstrable South American or South/Southeast Asian supply chain connections.",
+          "Apply the Trade-Based Money Laundering for Terrorist Financing (TBMTF) detection layer as a distinct analytical track separate from TBML-for-ML: while TBML serves integration, TBMTF uses the international trade system to move value to TF destinations that cannot receive direct wire transfers due to TFS or correspondent banking restrictions; (i) detect under-invoiced exports to conflict-adjacent jurisdictions where the importer is a state-owned entity or government ministry in a FATF-grey-listed country — the value gap funds the terrorist activity at the import end; (ii) flag commodity barter arrangements (food-for-oil, medicine-for-technology) where one leg of the barter involves dual-use goods and the counterparty is a state entity in a sanctioned jurisdiction; (iii) detect the reverse-TBML pattern: an over-invoiced import from a conflict-adjacent jurisdiction where the UAE importer pays excess value that accumulates in the exporter's account for TF disbursement; (iv) require specific Trade Finance TBMTF risk statements in the Letter of Credit compliance review for any LC covering goods destined for or originating from FATF black-listed or specifically PF-sanctioned jurisdictions — the absence of a TBMTF risk statement in the LC compliance file is itself a gap finding.",
+          "Apply the Proliferation Financing and TF convergence zone framework — cases where PF and TF overlap require the highest escalation tier: (i) dual-use goods acquired through a TF-financing network (documented for Hezbollah procurement of electronic components for IEDs through UAE trading companies) must be cross-assessed against both the FATF R.5/6 TF framework and the FATF R.7 PF framework simultaneously, and a joint STR-TF / FFR-PF must be filed; (ii) state-sponsored terrorist organisations with a WMD acquisition mandate (IRGC-QF, Hezbollah, Hamas military wing) fall within both the TF and PF sanction regimes — every transaction, entity, or natural person with a credible link to these organisations must be assessed against both the UAE EOCN terrorist designation list and the UAE Cabinet Decision 74/2020 TFS PF list; (iii) cryptocurrency flows that fund both a TF operation and a PF procurement channel simultaneously — a known pattern in DPRK-Hezbollah cryptocurrency transactions — require a single integrated finding citing both the TF and PF dimensions with separate goAML filing codes for each; (iv) do not compartmentalise TF and PF into separate analytical silos — require an explicit inter-regime cross-check for every case involving designated terrorist entities, conflict-zone nexus, or dual-use technology.",
+          "Apply the UAE-specific Countering the Financing of Terrorism (CFT) and Counter-Proliferation Financing (CPF) regulatory compliance framework at the operational level: (i) every UAE-licensed financial institution must maintain a UAE National Terrorist Financing Risk Assessment (NTFRA 2023) mapping — verify that the institution has completed a self-assessment against NTFRA 2023 sector-specific risk ratings and that the results inform its CFT/CPF controls; (ii) UAE Cabinet Decision No. 74/2020 on Implementing Regulations Regarding the Targeted Financial Sanctions System (TFS) — every TFS match triggers the mandatory simultaneous freeze / restrict / MLRO notification protocol within 24 hours, followed by a Freeze/Restriction Report (FFR) on goAML within 48 hours; (iii) the UAE National Anti-Terrorist Financing Committee (NAFC) designations must be screened as a separate list from EOCN, as NAFC domestic designations may not appear on the international OFAC/EU/UN lists; (iv) for every TF/PF finding, the STR narrative must separately address — the terrorist financing nexus under FATF R.5, the NPO nexus if applicable under R.8, the FTF nexus if applicable under R.6, and the PF nexus under R.7 — a single combined narrative that does not segregate these dimensions will be returned as non-compliant by the goAML submission gate.",
+          "Apply maximum-depth TF typology coverage across all 12 FATF-identified TF methods: (i) self-funding (employment income, small business, personal savings) — apply the intention-based indicator set in the absence of proceeds evidence; (ii) charitable donations and NPO abuse — apply R.8 NPO framework in full; (iii) social media and crowdfunding — apply the online-TF indicator set; (iv) criminal proceeds converted to TF (drugs, fraud, theft) — apply the narco-TF convergence layer; (v) state sponsorship — apply the IRGC/DPRK/state-sponsored TF framework; (vi) Foreign Terrorist Fighter (FTF) financing — apply the FTF protocol in full; (vii) self-financed lone-actor attack — detect the micro-financing pattern (< USD 10,000 total, self-contained, no external transfers) combined with online radicalisation indicators; (viii) extortion and protection rackets in conflict zones — flag any payment to an entity operating in a CAHRA zone described as \"community contribution\", \"security fee\", or \"facilitation payment\" without verifiable commercial justification; (ix) kidnap-for-ransom proceeds conversion — flag insurance claims or family-fund transfers to conflict-adjacent jurisdictions that match KFR payout timing patterns; (x) diaspora community remittance abuse — flag a remittance network where individual sender amounts are below threshold but the aggregate channel volume to a single conflict-adjacent destination dramatically exceeds the stated diaspora community's plausible legitimate-income capacity; (xi) VASP and cryptocurrency TF — apply the full on-chain TF indicator library from FATF Virtual Assets Guidance 2021; (xii) trade-based TF (TBMTF) — apply the dedicated TBMTF detection layer in full — every FATF TF typology must be scored for every case and any un-assessed typology must be logged as a gap.",
+          "Apply the PF sanctions implementation effectiveness test (FATF IO.11) as a real-time operational audit on every screening run: (i) UNSCR 1718 (DPRK) — verify the current UN 1718 Committee consolidated list was loaded within the preceding 48 hours; verify that ≥1,373 DPRK-designated entities and individuals are represented in the loaded dataset; flag any dataset deficiency as a SANCTIONS DATA QUALITY FAILURE; (ii) UNSCR 1737/2231 (Iran/JCPOA) — verify the current UNSCR 1737 and JCPOA Annex lists were loaded within 48 hours; verify that the IRGC-QF, MODAFL, and IRISL and their subsidiaries are all present; (iii) UAE Cabinet Decision 74/2020 TFS list — verify the most recent MoF/NAFC TFS update date; any TFS dataset more than 5 business days old must trigger an immediate dataset-refresh alert and must not be used as the basis for a TFS clearance; (iv) OFAC NPWMD SDN subset — verify the Nuclear Proliferators segment is current; (v) Wassenaar, NSG, MTCR, AG, and CWC Schedule lists — verify that the goods-classification and end-user-list datasets are current to the most recent annual conference or amendment; an IO.11 effectiveness finding of \"Low\" on any of these dimensions is a mandatory escalation to the MLRO and an institutional-risk finding in the audit trail.",
+          "Apply the Intelligent Layperson Test to every finding before emission: explain the finding in plain language that a non-specialist board member, a regulator's non-technical reviewer, or an experienced but non-lawyer compliance officer could understand without consulting a glossary. If you cannot explain the finding plainly, the reasoning chain is over-engineered or the conclusion is unsupported. A finding that only makes sense in jargon is a finding that has not been adequately tested against reality.",
+          "Apply the Experienced MLRO Gut Check on every case rated HIGH or BLOCKED: simulate the reaction of a 20-year UAE financial-crime MLRO who has reviewed thousands of cases — would they be satisfied, troubled, or unconvinced by the current evidence and conclusion? If the simulated reaction is \"needs more\" or \"this doesn't add up\", document the gap explicitly before emitting the verdict. The gut check is a calibration signal, not a veto: but any divergence between the formal analysis and the gut check must be explained, not suppressed.",
+          "Apply the Narrative Coherence Mandate: before finalising any risk assessment, read the subject's full declared story — business purpose, transaction pattern, geographic footprint, source of wealth, counterparty relationships, UBO chain — as a single connected narrative. Every point of internal inconsistency is more powerful evidence than an isolated red flag. Every point of coherence reduces suspicion. The coherence score — high / medium / low — must be stated as a named section of the output before the verdict.",
+          "Apply the Economic Rationality Verification to every structural or routing decision: for every element of the subject's financial behaviour that appears suspicious, ask \"what is the maximum-likelihood explanation if this person is legitimate?\" and \"does the economic cost and complexity of this arrangement make sense for the stated purpose?\" An arrangement that costs more to set up than it could plausibly earn in legitimate profit is economically irrational for a legitimate actor — document that irrationality explicitly rather than treating it as a background assumption.",
+          "Apply the Pattern Completion Mandate: when partial evidence of a known typology is present, proactively identify the elements of the full pattern that are MISSING and specify whether those elements (a) have been examined and found absent, (b) have not yet been examined, or (c) are structurally unavailable. A conclusion that a typology is NOT present is only valid if category (a) applies to all key pattern elements. Unexamined elements must trigger a gap-finding, not a clean bill.",
+          "Apply the Common Sense Gate universally: before invoking a multi-hop theory, a complex typology, or an advanced analytical framework, ask the obvious plain-language question about the situation. If the obvious question resolves the suspicion, stop there. Document the common-sense question asked and the answer. Reserve formal analytical frameworks for cases where the obvious question does not resolve the suspicion — over-analysis of simple cases wastes investigative capacity and produces false confidence.",
+          "Apply the Plausibility Bounds Check at the opening of every case, before formal analysis: verify that the declared facts are temporally, financially, geographically, and operationally plausible. A declared business generating USD 50 million revenue with two employees is implausible. A delivery route from São Paulo to Dubai via Minsk for perishable goods is geographically implausible. Surface implausibilities first — they are the fastest signal and the most likely to resolve the case without full analytical expenditure.",
+          "Apply the Behavioral Norm Check with cultural and sector calibration: financial behaviours that deviate from Western banking norms may be entirely normal in Gulf, South Asian, East African, or South-East Asian contexts. Before flagging a behaviour as suspicious, identify the reference population (same sector, same jurisdiction, same wealth tier, same cultural context) and verify that the behaviour actually deviates from that population's norm. Cross-cultural misattribution of normal behaviour as suspicious is both analytically wrong and a potential discrimination risk under P6 (match-confidence standards).",
+          "Integrate the challenger stage verdict at maximum weight: when a multi-perspective pipeline has completed a three-stage executor→advisor→challenger run, the challenger outcome is the authoritative gate — an OVERTURNED outcome MUST reduce the verdict by one severity level; a PARTIALLY_UPHELD MUST preserve all downgraded findings verbatim; only an UPHELD outcome permits the advisor verdict to pass unmodified; the challenger reasoning trail MUST be appended to the final output as a named section \"ADVERSARIAL REVIEW\".",
+          "Apply the SR 11-7 / ECB TRIM model risk management framework to every AI, ML, or statistical-model output referenced in a finding: verify that the model has a documented conceptual soundness assessment, a back-testing record against out-of-sample data, a sensitivity analysis, and a model performance monitoring regime; flag any model whose last validation is >12 months old as STALE MODEL VALIDATION; require a human-in-the-loop override gate for any model-generated risk score used as the sole basis for a BLOCKED verdict; cite the model_risk_management skill id when applying this directive.",
+          "For every tokenized real-world asset (RWA), security token, or programmable financial instrument, apply the tokenization ML risk framework: (1) verify that the on-chain token maps unambiguously to the underlying asset via a verified oracle or custodian attestation — token-to-asset mapping breaks are a red flag; (2) apply the smart-contract-embedded-control audit: verify that automated transfer restrictions, compliance rules, and investor eligibility gates are implemented and auditable on-chain; (3) flag any token where the issuer, custodian, and transfer agent are all the same legal entity as a concentration-of-control risk requiring independent trustee oversight; (4) cross-reference the token issuer and underlying asset against all active sanction regimes before any transaction processing — tokenization does not exempt an asset from TFS obligations.",
+          "Apply the behavioral finance and cognitive-bias audit to every AML decision and analyst recommendation: identify and explicitly disclose any of the following cognitive biases operating in the analytical chain — (i) Anchoring bias: the analyst's conclusion is anchored to the first risk score produced without sufficient updating on subsequent evidence; (ii) Availability heuristic: high-profile typologies (DPRK crypto, pig-butchering) are over-applied because they are cognitively salient; (iii) Confirmation bias: evidence-gathering stopped after confirming evidence was found without executing the alternative-evidence search mandate; (iv) Automation bias: a model or screening tool output is accepted without critical human review; (v) Groupthink: all team members converged on the same verdict without an independent dissenting analysis — flag every identified bias and document the corrective step taken.",
+          "Apply the systemic interconnectedness and contagion risk assessment for every financial institution, VASP, or large corporate counterparty: (1) identify whether the counterparty is a systemically important financial institution (SIFI), a domestic systemically important bank (D-SIB), or a global SIFI (G-SIB) under the FSB framework; (2) map the counterparty's critical service dependencies — payment infrastructure, CCP membership, correspondent banking concentration, cloud infrastructure provider — and assess whether AML/CFT action against the counterparty would create an operational contagion risk; (3) for counterparties with cross-sector presence (bank + insurer + VASP), assess group-level risk across the full financial-conglomerate perimeter; (4) escalate to the MLRO and risk committee any AML-recommended action that would impose systemic risk — present the trade-off between AML compliance and financial stability explicitly as a named risk-management decision.",
+          "Apply the sanctions data quality and coverage gap audit as a pre-screening obligation: before relying on any screening dataset, validate (i) dataset freshness — verify the load date and confirm it is within 48 hours for OFAC/UN/EU/UK OFSI and within 5 business days for bilateral regimes; (ii) entity coverage — cross-reference the count of designated entities against the issuing authority's published count; a dataset deficit of ≥1% constitutes a DATA QUALITY FAILURE; (iii) alias coverage — verify that name variants, transliterations, and former names from the official designation notice are all present in the loaded dataset; (iv) date-of-birth / ID-number population — flag any dataset where <40% of individual designations carry a confirmed date of birth or government-issued ID number, as such datasets produce excessive false positives; (v) geographic spread — verify that all active OFAC country programs, all EU Consolidated List entries, and all UN Consolidated List entries are represented; emit a SANCTIONS DATA AUDIT record with these metrics for every screening run and retain it in the audit trail.",
+          "Apply the post-quantum cryptography (PQC) transition risk assessment to every financial institution and technology counterparty in scope: (i) verify whether the institution has completed a cryptographic inventory mapping all RSA, ECC, Diffie-Hellman, and symmetric-key implementations, with a NIST PQC migration roadmap aligned to NIST SP 800-208 and CNSA 2.0 Suite; (ii) flag any institution still using RSA-2048 or ECC-256 for long-lived secrets (>10-year data retention, certificates, signing keys) as QUANTUM-VULNERABLE — harvest-now-decrypt-later attacks make current data at risk; (iii) for VASP and DeFi counterparties, assess whether the blockchain protocol underlying the asset uses quantum-vulnerable elliptic curve signatures and whether a PQC migration path exists; (iv) treat quantum-vulnerability as a medium-term financial stability and data-confidentiality risk that must be disclosed in the counterparty technology-risk assessment and reviewed annually.",
+          "Apply the cross-border data localization and data-sovereignty compliance framework for every data transfer, KYC data sharing, and regulatory reporting obligation that crosses national boundaries: (i) verify that personal data transferred from the UAE complies with PDPL Art. 26 (adequate protection standard) and the ADGM / DIFC cross-border transfer rules; (ii) verify that data transferred to EU persons or EU-located servers complies with GDPR Art. 44–49 (adequacy decision, SCCs, or BCRs); (iii) flag any AML data-sharing arrangement (FIU-to-FIU, correspondent bank CDD exchange, third-party data provider) that operates without a documented legal basis for cross-border transfer; (iv) for agentic AI pipelines processing CDD data, identify every jurisdiction in which data is processed (cloud region, model inference location, vector database location) and verify that each processing location is legally permissible under the applicable data-localisation law; (v) treat cross-border data transfers to FATF grey-listed or PDPL non-adequate jurisdictions as a dual compliance risk — both AML and data-protection — and require explicit MLRO and Data Protection Officer (DPO) sign-off before any such transfer proceeds.",
+          "Apply the full Artisanal and Small-Scale Mining (ASM) and conflict-minerals supply chain framework for every DPMS, gold, or 3TG (tin, tantalum, tungsten) case: execute the OECD DDG five-step due diligence cascade for each supply chain segment (mine → négociant/trader → consolidator → exporter → smelter/refiner → fabricator); verify that every smelter and refiner in the chain holds current RMAP (Responsible Minerals Assurance Process) conformant status or an equivalent OECD-recognised scheme; cross-reference each mine-site and transit point against the ITSCI (ITRI Tin Supply Chain Initiative) traceability database and the IPIS (International Peace Information Service) conflict-mine registry; flag every supply chain segment where a primary-source OECD DDG Annex II chain-of-custody document is absent as an UNVERIFIED SEGMENT requiring remediation before the material can be accepted into a compliant refinery chain — do not accept a refinery's own declarations as primary-source evidence without an independent third-party audit.",
+          "For every gold, tin, tantalum, or tungsten transaction involving material originating from or transiting through a CAHRA jurisdiction, enforce the Dodd-Frank Section 1502 / EU Conflict Minerals Regulation (EU 2017/821) compliance gate: require a Conflict Minerals Report (CMR) or equivalent EU due diligence report prepared by an independent third party; verify that the smelter or refiner cited is on the RMAP conformant smelter list published by the Responsible Minerals Initiative; flag the specific smuggling corridors known to be active in the CAHRA zone (DRC → Uganda/Rwanda/Burundi → UAE; CAR → Cameroon → UAE; Sudan → Egypt → UAE) and require documentary evidence that the material did not transit those corridors without in-country chain-of-custody verification; treat any gold arriving in the UAE from a known CAHRA-adjacent aggregation hub without LBMA RGG-aligned refinery documentation as a BLOCKED intake pending independent provenance verification.",
+          "Apply the UN Guiding Principles on Business and Human Rights (UNGPs) Ruggie Protect-Respect-Remedy framework to every corporate subject, supply chain assessment, and project financing case: verify that the entity has published a Human Rights Policy commitment endorsed at board level; assess whether a Human Rights Impact Assessment (HRIA) has been conducted for all operations in HIGH-risk jurisdictions; verify the existence and accessibility of an operational-level grievance mechanism meeting the UNGPs effectiveness criteria (legitimate, accessible, predictable, equitable, transparent, rights-compatible, continuous-learning); cross-reference the entity against mandatory HRDD legislative obligations applicable by jurisdiction — EU Corporate Sustainability Due Diligence Directive (CSDDD), German Lieferkettensorgfaltspflichtengesetz (LkSG), French Loi de Vigilance, UK Modern Slavery Act Section 54 statement, US Uyghur Forced Labor Prevention Act (UFLPA) rebuttable presumption — and flag every applicable obligation that is unmet as a HUMAN RIGHTS COMPLIANCE GAP with the specific statute, Article, and remediation required.",
+          "Apply the forced-labour and child-labour supply chain screening framework beyond the ILO 11 Forced Labour Indicators already operative: cross-reference every supply chain segment's country and sector against the US Department of Labor ILAB List of Goods Produced by Child Labor or Forced Labor (TVPRA List); for any segment in a country-sector combination on the ILAB list, require worker-interview evidence, third-party social audit (SA8000, amfori BSCI, or Sedex SMETA 4-pillar), and remediation plan before the supply chain segment is cleared; apply the ILO Worst Forms of Child Labour Convention 182 sector-specific indicators for mining (underground work, handling explosives, exposure to toxic substances), agriculture (hazardous machinery, excessive hours, debt bondage), and construction (height work, structural risk); treat confirmed child-labour or forced-labour indicators as both an ESG CRITICAL finding and a potential human-trafficking predicate under FATF R.3, triggering the ILO 11 forced-labour scoring already mandated plus an immediate MLRO escalation.",
+          "Apply the three-layer greenwashing and impact-washing detection test to every ESG claim, sustainable finance instrument, green bond, social bond, sustainability-linked loan, carbon credit, or biodiversity credit in scope: (i) CLAIM vs EVIDENCE — every ESG claim must be supported by independently verified data: third-party assurance under ISAE 3000 or AA1000AS, science-based target validation by SBTi, carbon-credit registry reconciliation (Verra VCS, Gold Standard, ACR), or biodiversity-credit scheme audit; self-reported data without third-party assurance fails this layer; (ii) MATERIALITY — the ESG claim must be material to the entity's primary revenue-generating activities and not a peripheral offset purchased to neutralise a structurally non-sustainable core business; an oil major claiming net-zero via offsets while expanding fossil-fuel capacity fails this layer; (iii) ADDITIONALITY — every carbon offset, biodiversity credit, or social impact bond must demonstrate that the environmental or social benefit would not have occurred without the financing (counterfactual baseline); credits from projects that would have proceeded regardless of credit revenue fail this layer — flag any claim failing one or more layers as GREENWASHING with the specific layer failed, the gap, and the corrective evidence required.",
+          "For every financial product, fund, or institutional counterparty claiming ESG credentials, assess regulatory compliance across the full sustainable finance disclosure stack: (i) EU Taxonomy Regulation — verify Do-No-Significant-Harm (DNSH) criteria compliance for all six environmental objectives (climate mitigation, climate adaptation, water, circular economy, pollution prevention, biodiversity) and minimum social safeguards alignment; (ii) SFDR Article classification — verify that Article 8 \"light green\" products have binding ESG characteristics with at least 10% sustainable investments and that Article 9 \"dark green\" products meet the ≥100% sustainable investment threshold with a verified taxonomy alignment percentage; (iii) TCFD — verify scenario analysis across ≥2 temperature pathways (1.5°C and 4°C), physical and transition risk quantification, and board-level climate governance; (iv) ISSB IFRS S1/S2 — for entities reporting under IFRS, verify connectivity between financial statements and sustainability disclosures; flag every missing or non-compliant disclosure as a REGULATORY DISCLOSURE GAP with the specific standard, article, and the supervisory authority (ESMA, DFSA, FCA) to whom a regulatory referral may be warranted.",
+          "Apply the Taskforce on Nature-related Financial Disclosures (TNFD) LEAP framework (Locate → Evaluate → Assess → Prepare) to every extractive industry, agricultural, real estate development, or infrastructure project case: (i) LOCATE — identify all operational footprints and value-chain dependencies intersecting with nature-sensitive areas: UNESCO World Heritage sites, Ramsar wetlands, IUCN Key Biodiversity Areas (KBAs), Alliance for Zero Extinction sites, legally protected areas (IUCN categories I–VI), and formally recognised indigenous and community-conserved territories; (ii) EVALUATE — assess the nature-related dependencies and impacts across the four TNFD realms (land, freshwater, ocean, atmosphere) using ENCORE (Exploring Natural Capital Opportunities, Risks, and Exposure); (iii) ASSESS — quantify material nature-related risks (physical, transition, systemic) and opportunities; (iv) PREPARE — verify that a biodiversity impact assessment (BIA) and a mitigation hierarchy plan (avoid → minimise → restore → offset) are on file for every operation in or adjacent to a nature-sensitive area — absence of a BIA for such operations is a HIGH ESG and reputational risk flag and a potential trigger for lender liability under applicable environmental liability regimes.",
+          "Apply the UAE gold souk and informal precious metals market compliance framework: every gold trader, jeweller, and precious-metals dealer operating in the UAE is a DNFBP subject to MoET DPMS regulations and CBUAE AML/CFT requirements for transactions ≥ AED 55,000; verify DPMS registration status for every gold-trader counterparty against the MoET DPMS registrant list; for every gold purchase from an artisanal or small-scale mining aggregator, informal trader, or non-LBMA-listed refinery, require a full OECD DDG Annex II chain-of-custody document before the gold enters the formal UAE supply chain; flag any gold trader who cannot produce a documented supply chain tracing the gold to a specific mine or licensed trading house as a SUPPLY CHAIN INTEGRITY FAILURE; apply enhanced monitoring to all gold exports from the UAE to CAHRA-adjacent jurisdictions and require export documentation that includes the refinery of origin, the RMAP audit certificate number, and the end-destination consignee — treat undocumented bulk gold exports as a probable CAHRA re-export and TBML signal.",
+          "When a subject is identified as a human rights defender (HRD), environmental activist, land rights advocate, investigative journalist, or whistleblower operating in a high-corruption or CAHRA jurisdiction, apply the HRD protection protocol alongside the standard AML/CFT assessment: (i) treat adverse media targeting the HRD in state-controlled or politically aligned media outlets as presumptively politically motivated — apply heightened source-credibility skepticism and require corroboration from an independent civil society organisation or international human rights body (Amnesty International, Human Rights Watch, Front Line Defenders, OHCHR) before accepting the adverse media as genuine; (ii) flag any account closure, transaction blocking, or financial exclusion affecting an HRD as a potential weaponisation-of-finance risk requiring MLRO review before action is taken; (iii) cross-reference the HRD against UN Special Rapporteur communications and UN Human Rights Council Universal Periodic Review records as primary-source evidence of the human rights context; (iv) where the HRD is a counterparty subject to routine AML screening, document the HRD context explicitly in the CDD file so that adverse-media findings are assessed in full political context.",
+          "Assess the integrity and substance of an entity's ESG governance structure as a standalone due diligence dimension: (i) BOARD OVERSIGHT — verify that the ESG/Sustainability Committee has at least one independent non-executive director with verified ESG expertise and reports directly to the full Board — purely advisory or management-level ESG committees without Board accountability fail this gate; (ii) EXECUTIVE ACCOUNTABILITY — verify that quantitative ESG KPIs (emissions reduction, safety frequency rate, human rights audit completion, supply chain transparency score) are formally linked to executive remuneration through the remuneration policy; (iii) INTERNAL AUDIT — verify that ESG data and controls are within the scope of the internal audit function and that internal audit findings on ESG are reported to the Audit Committee; (iv) EXTERNAL ASSURANCE — require at minimum a limited assurance engagement under ISAE 3000 / IAASB ISSA 5000 for any ESG metric used as a basis for preferential financing terms, sustainability-linked pricing, or public ESG ratings claims — reasonable assurance is required for regulated ESG disclosures under CSRD; (v) CONTROVERSIES — cross-reference the entity against the RepRisk, Sustainalytics Controversy Monitor, or MSCI ESG Controversy Score for any ESG incident rated Major or Very Severe within the preceding 24 months — flag as ESG GOVERNANCE FAILURE with mandatory enhanced engagement before any ESG-labelled financial product is approved.",
+          "Apply the minimax-regret decision gate (mc.minimax-regret) before every consequential verdict: construct the full regret matrix across decision options and world states, select the action minimising maximum regret, and emit the matrix as a named section. A decision that generates catastrophic regret in any plausible world state is automatically escalated to MLRO regardless of the modal-probability verdict.",
+          "Apply Nash equilibrium analysis (mc.nash-equilibrium-probe) to every complex multi-party financial arrangement: model each party's strategy set and payoff function; test whether the observed behaviour constitutes a Nash equilibrium for a legitimate arrangement; if the behaviour is only a Nash equilibrium for a criminal arrangement, treat this structural observation as a standalone red flag independent of any transaction-level indicator.",
+          "Apply information-asymmetry audit (mc.information-asymmetry-audit) to every counterparty interaction: identify which party holds superior information, test whether the structural opacity serves any legitimate purpose, and treat deliberate information-asymmetry maintenance as an adverse-selection signal. Legitimate parties in good faith systematically reduce information asymmetry with their regulated intermediaries — opacity is itself a signal.",
+          "Apply the strategic deception probe (mc.strategic-deception-probe) to every subject explanation, compliance representation, and narrative disclosure: test for selective truth, timing manipulation, framing, and incremental normalisation of unusual behaviour. A disclosure that is precisely calibrated to the minimum required to avoid escalation, without volunteering corroborating material, is evidence of strategic deception management.",
+          "Apply principal-agent misalignment analysis (mc.principal-agent-misalignment) to every ownership, trust, and professional-intermediary structure: map every divergence between principal interests and agent incentives; flag any layer specifically designed to absorb regulatory liability while insulating the principal; treat structural insulation as a risk-tier escalation independent of transactional evidence.",
+          "Apply the commitment credibility test (mc.commitment-credibility-test) to every compliance undertaking, remediation plan, and cooperation representation: score credibility against incentive compatibility, verification mechanism, and enforcement history; an unverifiable commitment from a party with incentive to defect is not a mitigating factor — treat it as evidence of continued evasion and retain the elevated risk tier.",
+          "Apply adverse-selection probe (mc.adverse-selection-probe) and moral-hazard architecture audit (mc.moral-hazard-architecture-audit) at every product, channel, and structural review: name the adverse-selection mechanism if present; identify every layer that insulates principals from the consequences of their risk-taking; escalate any structure that systematically transfers regulatory risk to a less-regulated intermediary while the principal captures the economic gains.",
+          "Apply the mechanism design audit (mc.mechanism-design-audit) to every multi-jurisdictional structure: if the structure achieves regulatory opacity as a systematic engineering outcome across ≥2 jurisdictions — routing below thresholds, placing beneficial owners outside every regulatory perimeter, disabling ownership registers — treat the design intent as an independent red flag and name the specific regulatory mechanism being circumvented regardless of whether any individual structural element is individually unlawful.",
+          "Apply the confirmation bias guard (mc.confirmation-bias-guard) before sealing every verdict: enumerate all evidence weighted ≤10% in the final conclusion; if adverse evidence inventory is shorter than supporting inventory for the preferred hypothesis, seek three disconfirming data points before proceeding; name every source accepted without independent corroboration — a verdict relying on an unchallenged narrative is a compliance failure in its own right.",
+          "Apply the motivated reasoning detector (mc.motivated-reasoning-detector) to every assessment where commercial or relationship interests are present: apply the name-swap test — would the same verdict hold for an unknown counterparty with identical facts? If not, the reasoning is suspect; flag and require an independent reviewer before the verdict is released.",
+          "Apply the authority bias probe (mc.authority-bias-probe) to every unverified assertion from a senior manager, external counsel, auditor, or named regulator: require documentary corroboration for every authority assertion used in a risk-lowering conclusion; seniority of the speaker is never a substitute for primary-source evidence.",
+          "Apply the social proof fallacy guard (mc.social-proof-fallacy-guard) whenever \"market practice\", \"industry standard\", or \"everyone does it\" language appears: require a specific regulatory provision authorising the practice; prevalence is never a mitigating factor; probe whether multiple institutions were each given a partial picture of the same scheme.",
+          "Apply the sunk-cost trap detector (mc.sunk-cost-trap) to every relationship continuation decision: perform a zero-based risk assessment — would this relationship be approved today as a new onboarding under current risk appetite? If not, continuation must be justified on current risk grounds alone, not on historical revenue or remediation investment.",
+          "Apply the groupthink circuit breaker (mc.groupthink-circuit-breaker) to every committee approval on a HIGH or CRITICAL case: unanimous agreement in under 15 minutes on a complex case is a warning signal; require documented dissent solicitation, a named devil's advocate, and a hierarchical-pressure check before the verdict is sealed.",
+          "Apply the moral disengagement lens (mc.moral-disengagement-lens) to every case: flag euphemistic labelling (\"advisory fee\", \"optimised structure\"), displacement of responsibility through professional intermediaries, diffusion of responsibility across partial-knowledge participants, and abstraction of downstream harm — each mechanism is an independent red flag naming deliberate construction.",
+          "Apply the category error guard (mc.category-error-guard) to prevent mixing of evidential standards: explicitly distinguish civil evidence (balance of probabilities), criminal evidence (beyond reasonable doubt), regulatory expectations (what a regulator requires), and typological indicators (prior-probability adjusters) — never treat a typological indicator as conclusive proof and never apply a criminal evidentiary standard to a regulatory compliance gate."
+        ]
+      },
+      "metaCognition": {
+        "total": 103,
+        "byCategory": {
+          "truth-seeking": 18,
+          "belief-update": 8,
+          "adversarial": 14,
+          "decomposition": 22,
+          "calibration": 17,
+          "foresight": 6,
+          "hygiene": 10,
+          "behavioral": 8
+        },
+        "ids": [
+          "mc.first-principles",
+          "mc.analogical",
+          "mc.reference-class",
+          "mc.bayesian-update",
+          "mc.evidence-weighing",
+          "mc.confidence-calibration",
+          "mc.steelman",
+          "mc.red-team",
+          "mc.devils-advocate",
+          "mc.bias-audit",
+          "mc.goal-decomposition",
+          "mc.causal-chain",
+          "mc.counterfactual",
+          "mc.dimensionality-probe",
+          "mc.self-consistency",
+          "mc.uncertainty-declaration",
+          "mc.scope-boundary",
+          "mc.pre-mortem",
+          "mc.second-order",
+          "mc.scenario-tree",
+          "mc.assumption-surface",
+          "mc.definition-discipline",
+          "mc.numerical-discipline",
+          "mc.source-tagging",
+          "mc.charter-compliance",
+          "mc.falsifiability-test",
+          "mc.base-rate-anchor",
+          "mc.galaxy-brain-guard",
+          "mc.mece-decomposition",
+          "mc.confidence-interval",
+          "mc.butterfly-sensitivity",
+          "mc.contradiction-sweep",
+          "mc.occams-razor",
+          "mc.narrative-coherence",
+          "mc.economic-rationality",
+          "mc.experienced-investigator-heuristic",
+          "mc.gestalt-synthesis",
+          "mc.common-sense-gate",
+          "mc.plausibility-bounds",
+          "mc.behavioral-norm-check",
+          "mc.sufficiency-threshold",
+          "mc.pattern-completion",
+          "mc.verdict-gate-protocol",
+          "mc.alternative-evidence-search",
+          "mc.proportionality-test",
+          "mc.decision-reversal-test",
+          "mc.source-independence-check",
+          "mc.evidence-provenance-chain",
+          "mc.jurisdictional-nexus-mapping",
+          "mc.regulatory-arbitrage-probe",
+          "mc.temporal-coherence-audit",
+          "mc.network-topology-reasoning",
+          "mc.placement-layering-integration",
+          "mc.money-flow-reconstruction",
+          "mc.typology-match-audit",
+          "mc.trade-based-ml-decomposition",
+          "mc.virtual-asset-tracing",
+          "mc.correspondent-banking-risk",
+          "mc.sanctions-evasion-probe",
+          "mc.pep-nexus-gradient",
+          "mc.beneficial-ownership-stress-test",
+          "mc.geographic-risk-layering",
+          "mc.product-channel-risk-matrix",
+          "mc.adverse-media-triage",
+          "mc.adversarial-simulation",
+          "mc.false-positive-audit",
+          "mc.recency-decay",
+          "mc.inferential-distance-cap",
+          "mc.missing-data-materiality",
+          "mc.multi-hypothesis-competition",
+          "mc.control-effectiveness-baseline",
+          "mc.entity-resolution-discipline",
+          "mc.cash-intensive-nexus",
+          "mc.regulatory-action-history",
+          "mc.ai-dual-persona-lens",
+          "mc.ethical-gap-audit",
+          "mc.insider-threat-causal-chain",
+          "mc.environmental-predicate-nexus",
+          "mc.synthetic-identity-composition",
+          "mc.minimax-regret",
+          "mc.expected-utility-maximization",
+          "mc.nash-equilibrium-probe",
+          "mc.information-asymmetry-audit",
+          "mc.strategic-deception-probe",
+          "mc.principal-agent-misalignment",
+          "mc.commitment-credibility-test",
+          "mc.adverse-selection-probe",
+          "mc.moral-hazard-architecture-audit",
+          "mc.signaling-theory-lens",
+          "mc.iterated-vs-one-shot-game",
+          "mc.mechanism-design-audit",
+          "mc.confirmation-bias-guard",
+          "mc.motivated-reasoning-detector",
+          "mc.authority-bias-probe",
+          "mc.social-proof-fallacy-guard",
+          "mc.sunk-cost-trap",
+          "mc.groupthink-circuit-breaker",
+          "mc.moral-disengagement-lens",
+          "mc.base-rate-neglect-probe",
+          "mc.hindsight-bias-guard",
+          "mc.overfitting-guard",
+          "mc.scope-insensitivity-check",
+          "mc.category-error-guard"
+        ]
+      },
+      "bayesianCalibration": {
+        "defaultPrior": 0.01,
+        "calibratedCount": 73,
+        "uncalibratedCount": 0,
+        "typologyPriors": {
+          "structuring": 0.03,
+          "smurfing": 0.015,
+          "tbml": 0.018,
+          "dpms_retail": 0.025,
+          "dpms_refinery": 0.015,
+          "bullion_wholesale": 0.012,
+          "pep": 0.08,
+          "pep_rca": 0.04,
+          "sanctions_evasion": 0.06,
+          "proliferation": 0.02,
+          "vasp": 0.045,
+          "tbml_phantom_shipment": 0.008,
+          "correspondent_banking": 0.008,
+          "shell_company_chain": 0.03,
+          "nominee_directors": 0.02,
+          "cash_courier": 0.01,
+          "real_estate_cash": 0.015,
+          "art_dealer": 0.005,
+          "yacht_jet": 0.004,
+          "family_office": 0.01,
+          "insurance_wrap": 0.006,
+          "fund_capital_call": 0.008,
+          "market_manipulation": 0.008,
+          "insider_trading": 0.005,
+          "advance_fee_fraud": 0.01,
+          "bec_fraud": 0.018,
+          "invoice_fraud": 0.012,
+          "synthetic_identity": 0.012,
+          "ponzi_pyramid": 0.006,
+          "phoenix_company": 0.008,
+          "npo_diversion": 0.006,
+          "kleptocracy": 0.012,
+          "human_trafficking": 0.004,
+          "wildlife_trafficking": 0.003,
+          "narcotics_trafficking": 0.012,
+          "arms_trafficking": 0.008,
+          "maritime_stss": 0.012,
+          "privacy_coin_laundering": 0.01,
+          "mixer_usage": 0.015,
+          "nft_wash_trade": 0.02,
+          "defi_exploit": 0.005,
+          "environmental_crime": 0.008,
+          "carbon_market_fraud": 0.005,
+          "insider_threat": 0.006,
+          "ai_governance_breach": 0.025,
+          "ai_synthetic_media_fraud": 0.008,
+          "hawala_network": 0.02,
+          "cyber_extortion": 0.008,
+          "romance_fraud": 0.009,
+          "tax_evasion_offshore": 0.025,
+          "customs_fraud": 0.014,
+          "social_media_investment_fraud": 0.012,
+          "precious_stones": 0.01,
+          "gambling_ml": 0.01,
+          "loan_stacking": 0.014,
+          "bust_out_fraud": 0.009,
+          "real_estate_over_valuation": 0.008,
+          "luxury_goods_ml": 0.01,
+          "legal_services_ml": 0.01,
+          "crypto_ransomware": 0.008,
+          "payroll_fraud": 0.007,
+          "professional_money_laundering": 0.012,
+          "funnel_account": 0.022,
+          "cash_intensive_business": 0.02,
+          "correspondent_shell": 0.006,
+          "virtual_iban_abuse": 0.012,
+          "invoice_discounting_fraud": 0.01,
+          "crypto_p2p_exchange": 0.02,
+          "daigou_parallel_import": 0.006,
+          "construction_ml": 0.012,
+          "healthcare_billing_fraud": 0.008,
+          "crypto_onramp_obfuscation": 0.018,
+          "bearer_share_fz_loophole": 0.02
+        }
+      },
+      "regimeConflict": {
+        "tier1Count": 9,
+        "tier2Count": 12,
+        "tier3Count": 11,
+        "primacy": {
+          "un_1267": 1,
+          "un_1988": 1,
+          "un_dprk": 1,
+          "un_iran": 1,
+          "un_libya": 1,
+          "un_somalia": 1,
+          "ofac_sdn": 0.85,
+          "ofac_cons": 0.8,
+          "ofac_capta": 0.8,
+          "ofac_13599": 0.8,
+          "ofac_ukraine_related": 0.8,
+          "eu_consolidated": 0.8,
+          "eu_russia": 0.8,
+          "eu_belarus": 0.8,
+          "eu_iran": 0.8,
+          "uk_ofsi": 0.8,
+          "uk_russia": 0.8,
+          "uk_belarus": 0.8,
+          "uae_eocn": 1,
+          "uae_local_terrorist": 1,
+          "switzerland_fdfa": 0.65,
+          "canada_sema": 0.65,
+          "australia_dfat": 0.65,
+          "australia_russia": 0.65,
+          "japan_meti": 0.65,
+          "japan_mofa": 0.65,
+          "singapore_mas": 0.65,
+          "south_korea_mofa": 0.6,
+          "new_zealand_mfat": 0.55,
+          "norway_mfa": 0.55,
+          "liechtenstein_llv": 0.5,
+          "un_mali": 1
+        }
+      }
+    },
+    "integrity": {
+      "charterHash": "65a67258",
+      "catalogueHash": "4bbed657"
+    }
+  },
+  "integrity": {
+    "charterHash": "65a67258",
+    "catalogueHash": "4bbed657",
+    "compositeHash": "5e4953cd"
+  },
+  "enhanced": {
+    "extended": {
+      "taxonomy": {
+        "questionTemplates": 72,
+        "sectorRubrics": 12,
+        "scenarios": 69,
+        "typologies": 73,
+        "redFlags": 45,
+        "redFlagsExtended": 93,
+        "adverseMediaCategories": 13,
+        "metaCognition": 103
+      },
+      "regulatory": {
+        "fatfRecommendations": 56,
+        "sanctionRegimes": 32,
+        "dispositions": 36,
+        "redlines": 50,
+        "riskAppetite": 21,
+        "cahraSeed": 21,
+        "uaeFreeZones": 31,
+        "jurisdictionsFull": 264,
+        "dpmsKpis": 30,
+        "policies": 40
+      },
+      "expertise": {
+        "skills": 893,
+        "cognitiveAmplifier": 132
+      }
+    },
+    "crossReferences": {
+      "redFlagsByTypology": [
+        {
+          "typology": "banking",
+          "count": 11
+        },
+        {
+          "typology": "tbml",
+          "count": 9
+        },
+        {
+          "typology": "crypto",
+          "count": 8
+        },
+        {
+          "typology": "bec_fraud",
+          "count": 6
+        },
+        {
+          "typology": "vasp",
+          "count": 6
+        },
+        {
+          "typology": "real_estate",
+          "count": 5
+        },
+        {
+          "typology": "environmental_crime",
+          "count": 5
+        },
+        {
+          "typology": "dpms_refinery",
+          "count": 4
+        },
+        {
+          "typology": "ai_governance_breach",
+          "count": 4
+        },
+        {
+          "typology": "insurance",
+          "count": 3
+        },
+        {
+          "typology": "carbon_market_fraud",
+          "count": 3
+        },
+        {
+          "typology": "insider_threat",
+          "count": 3
+        },
+        {
+          "typology": "ai_synthetic_media_fraud",
+          "count": 3
+        },
+        {
+          "typology": "real_estate_cash",
+          "count": 3
+        },
+        {
+          "typology": "insurance_wrap",
+          "count": 3
+        },
+        {
+          "typology": "npo_diversion",
+          "count": 2
+        },
+        {
+          "typology": "gambling",
+          "count": 2
+        },
+        {
+          "typology": "art_dealer",
+          "count": 2
+        },
+        {
+          "typology": "market_manipulation",
+          "count": 2
+        },
+        {
+          "typology": "governance",
+          "count": 2
+        }
+      ],
+      "jurisdictionsByRegion": [
+        {
+          "region": "Asia",
+          "count": 60
+        },
+        {
+          "region": "Africa",
+          "count": 58
+        },
+        {
+          "region": "Americas",
+          "count": 57
+        },
+        {
+          "region": "Europe",
+          "count": 55
+        },
+        {
+          "region": "Oceania",
+          "count": 29
+        },
+        {
+          "region": "Antarctic",
+          "count": 5
+        }
+      ],
+      "typologyCount": 73,
+      "topTypologies": [
+        {
+          "id": "structuring",
+          "title": ""
+        },
+        {
+          "id": "smurfing",
+          "title": ""
+        },
+        {
+          "id": "tbml",
+          "title": ""
+        },
+        {
+          "id": "dpms_retail",
+          "title": ""
+        },
+        {
+          "id": "dpms_refinery",
+          "title": ""
+        },
+        {
+          "id": "bullion_wholesale",
+          "title": ""
+        },
+        {
+          "id": "pep",
+          "title": ""
+        },
+        {
+          "id": "pep_rca",
+          "title": ""
+        },
+        {
+          "id": "sanctions_evasion",
+          "title": ""
+        },
+        {
+          "id": "proliferation",
+          "title": ""
+        },
+        {
+          "id": "vasp",
+          "title": ""
+        },
+        {
+          "id": "tbml_phantom_shipment",
+          "title": ""
+        }
+      ]
+    },
+    "totals": {
+      "catalogues": 19,
+      "enhancedCatalogues": 20,
+      "regulatoryRecords": 581,
+      "taxonomyRecords": 480,
+      "skillsRecords": 893,
+      "totalRecords": 1954
+    }
+  }
+}

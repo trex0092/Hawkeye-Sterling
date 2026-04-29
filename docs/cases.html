@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cases & Evidence Trail — Hawkeye Sterling</title>
+  <link rel="stylesheet" href="styles-v5.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">H</span>
+        <span>Hawkeye Sterling</span>
+        <span style="font-size:11px; color: var(--ink-3); font-weight:400; margin-left:4px;">v5.2</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="index.html">Workbench</a>
+        <a href="screening.html">Screening</a>
+        <a href="cases.html" class="active">Cases</a>
+        <a href="workbench.html">Deep reasoning</a>
+        <a href="taxonomy.html">Library</a>
+        <a href="brain.html">Brain</a>
+      </div>
+      <div class="nav-hud">
+        <span class="hud-seg">
+          <span style="font-weight:600;">14:27:38</span>
+          <span style="color: var(--ink-3);">GST</span>
+        </span>
+        <span class="hud-seg">
+          <span class="dot"></span>
+          <span style="font-weight:500;">live</span>
+        </span>
+      </div>
+    </nav>
+  </header>
+
+  <div class="app-layout with-panel">
+    
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-head">Case status</div>
+        <ul class="sidebar-filters">
+          <li class="active">
+            <span>All cases</span>
+            <span class="count">156</span>
+          </li>
+          <li>
+            <span>Active investigation</span>
+            <span class="count">23</span>
+          </li>
+          <li>
+            <span>Awaiting MLRO</span>
+            <span class="count">08</span>
+          </li>
+          <li>
+            <span>Escalated to FIU</span>
+            <span class="count">12</span>
+          </li>
+          <li>
+            <span>Closed · cleared</span>
+            <span class="count">98</span>
+          </li>
+          <li>
+            <span>Closed · reported</span>
+            <span class="count">15</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-head">Evidence vault</div>
+        <div style="font-size: 12px; color: var(--ink-1); padding: 0 8px;">
+          <div style="margin-bottom: 8px;">
+            <div style="font-weight: 500; color: var(--ink-0);">2,847 documents</div>
+            <div style="font-size: 11px; color: var(--ink-2); margin-top: 2px;">Immutable chain</div>
+          </div>
+          <div>
+            <div style="font-weight: 500; color: var(--ink-0);">10-year retention</div>
+            <div style="font-size: 11px; color: var(--ink-2); margin-top: 2px;">FDL 10/2025 Art.24</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      
+      <div class="hero">
+        <div class="hero-eyebrow">MODULE 02 · CASE MANAGEMENT</div>
+        <h1 class="hero-title">Evidence <em>trail.</em></h1>
+        <p class="hero-lede">
+          <strong>Immutable chain · ten-year retention · reasoning persistence.</strong> Every case carries a complete audit trail from first screening through MLRO disposition to FIU filing. Evidence vault, document chain, reasoning modes, and regulatory export.
+        </p>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <span class="toolbar-search-icon">⌕</span>
+          <input type="search" placeholder="Search cases — case ID, subject name, goAML reference" />
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-small">
+            <span>Filter:</span>
+            <span style="font-weight:600;">Active</span>
+          </button>
+          <button class="btn btn-small">
+            <span>Export:</span>
+            <span style="font-weight:600;">goAML</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 100px;">Case ID</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th>Evidence</th>
+              <th>Last activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="table-badge violet" style="width: auto; padding: 0 10px;">CAS-24891</div>
+              </td>
+              <td>
+                <div>
+                  <div class="table-name">Dmitri Volkov-Arenova</div>
+                  <div class="table-meta">OFAC SDN match (87%) · EDD posture · STR filed 2026-04-20</div>
+                </div>
+              </td>
+              <td>
+                <span class="tag" style="background: var(--red-dim); color: var(--red);">Reported</span>
+              </td>
+              <td>
+                <div style="font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-0);">94 docs</div>
+              </td>
+              <td>
+                <div style="font-size: 11.5px; color: var(--ink-2);">2h ago</div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge violet" style="width: auto; padding: 0 10px;">CAS-24883</div>
+              </td>
+              <td>
+                <div>
+                  <div class="table-name">Istanbul Altin Rafinesi A.S</div>
+                  <div class="table-meta">LBMA RGG Step 3 audit gap · Awaiting independent verification</div>
+                </div>
+              </td>
+              <td>
+                <span class="tag" style="background: var(--amber-dim); color: var(--amber);">In review</span>
+              </td>
+              <td>
+                <div style="font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-0);">47 docs</div>
+              </td>
+              <td>
+                <div style="font-size: 11.5px; color: var(--ink-2);">5h ago</div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge orange" style="width: auto; padding: 0 10px;">CAS-24872</div>
+              </td>
+              <td>
+                <div>
+                  <div class="table-name">Fine Gold LLC — Structuring pattern</div>
+                  <div class="table-meta">6 transactions · AED 54,820 avg · Below CTR threshold</div>
+                </div>
+              </td>
+              <td>
+                <span class="tag" style="background: var(--brand-dim); color: var(--brand);">Active</span>
+              </td>
+              <td>
+                <div style="font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-0);">28 docs</div>
+              </td>
+              <td>
+                <div style="font-size: 11.5px; color: var(--ink-2);">1d ago</div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge orange" style="width: auto; padding: 0 10px;">CAS-24865</div>
+              </td>
+              <td>
+                <div>
+                  <div class="table-name">Crescent Refineries Jordan</div>
+                  <div class="table-meta">CAHRA jurisdiction · Multi-list coverage · Step 3 trigger</div>
+                </div>
+              </td>
+              <td>
+                <span class="tag" style="background: var(--brand-dim); color: var(--brand);">Active</span>
+              </td>
+              <td>
+                <div style="font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-0);">112 docs</div>
+              </td>
+              <td>
+                <div style="font-size: 11.5px; color: var(--ink-2);">6h ago</div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="table-badge" style="width: auto; padding: 0 10px; background: var(--green-dim); color: var(--green);">CAS-24856</div>
+              </td>
+              <td>
+                <div>
+                  <div class="table-name">Al-Manara Gold Trading</div>
+                  <div class="table-meta">Routine periodic review · No hits · Cleared</div>
+                </div>
+              </td>
+              <td>
+                <span class="tag" style="background: var(--green-dim); color: var(--green);">Closed</span>
+              </td>
+              <td>
+                <div style="font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-0);">18 docs</div>
+              </td>
+              <td>
+                <div style="font-size: 11.5px; color: var(--ink-2);">2d ago</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+
+    <aside class="right-panel">
+      <div class="panel-head">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <p class="panel-title">Case CAS-24891</p>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-small">Export</button>
+            <button class="btn-primary btn-small" style="background: var(--brand); border-color: var(--brand); color: white;">View timeline</button>
+          </div>
+        </div>
+        <p class="panel-subtitle">Dmitri Volkov-Arenova · Opened 2026-04-18 · Reported 2026-04-20</p>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Case summary</div>
+        <div class="panel-field">
+          <div class="panel-field-label">Status</div>
+          <div class="panel-field-value" style="font-weight: 600; color: var(--red);">Reported to FIU</div>
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">goAML reference</div>
+          <div class="panel-field-value mono">STR-2026-04-20-UA47829</div>
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">MLRO disposition</div>
+          <div class="panel-field-value">Escalated as STR · Frozen without delay</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Evidence vault</div>
+        <div style="display: grid; gap: 8px;">
+          <div style="padding: 10px 12px; background: var(--bg-1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 12px; font-weight: 500; color: var(--ink-0);">Screening report</span>
+              <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2);">PDF · 2.4 MB</span>
+            </div>
+            <div style="font-size: 11px; color: var(--ink-2);">OFAC SDN match · 87% phonetic · 2026-04-18 08:14 GST</div>
+          </div>
+
+          <div style="padding: 10px 12px; background: var(--bg-1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 12px; font-weight: 500; color: var(--ink-0);">CDD package</span>
+              <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2);">12 files</span>
+            </div>
+            <div style="font-size: 11px; color: var(--ink-2);">Passport · Emirates ID · Proof of address · UBO declaration</div>
+          </div>
+
+          <div style="padding: 10px 12px; background: var(--bg-1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 12px; font-weight: 500; color: var(--ink-0);">Transaction records</span>
+              <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2);">28 files</span>
+            </div>
+            <div style="font-size: 11px; color: var(--ink-2);">Invoice trail · Payment confirmations · Blockchain explorer</div>
+          </div>
+
+          <div style="padding: 10px 12px; background: var(--bg-1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 12px; font-weight: 500; color: var(--ink-0);">Reasoning chain</span>
+              <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2);">JSON · 148 KB</span>
+            </div>
+            <div style="font-size: 11px; color: var(--ink-2);">690 modes · Multi-perspective pipeline · Charter P1–P10</div>
+          </div>
+
+          <div style="padding: 10px 12px; background: var(--bg-1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 12px; font-weight: 500; color: var(--ink-0);">Four-eyes approval</span>
+              <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2);">Signed</span>
+            </div>
+            <div style="font-size: 11px; color: var(--ink-2);">MLRO + Deputy MLRO · Electronic signatures · FDL 46/2021</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Audit trail</div>
+        <div style="font-size: 11px; color: var(--ink-2); line-height: 1.6;">
+          <div style="margin-bottom: 8px;">
+            <strong style="color: var(--ink-0);">2026-04-18 08:14</strong> — Screening initiated
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong style="color: var(--ink-0);">2026-04-18 08:16</strong> — OFAC SDN match detected (87%)
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong style="color: var(--ink-0);">2026-04-18 09:22</strong> — Frozen without delay
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong style="color: var(--ink-0);">2026-04-18 14:30</strong> — MLRO disposition: Escalate as STR
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong style="color: var(--ink-0);">2026-04-19 11:15</strong> — Four-eyes approval completed
+          </div>
+          <div>
+            <strong style="color: var(--ink-0);">2026-04-20 09:00</strong> — Filed to UAE FIU via goAML
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</body>
+</html>

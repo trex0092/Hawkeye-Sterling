@@ -2,29 +2,26 @@
   "name": "hawkeye-sterling",
   "version": "0.2.0",
   "private": true,
-  "description": "Hawkeye Sterling — the strongest regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine in the world. Built to surpass Refinitiv World-Check and Dow Jones Risk & Compliance.",
-  "type": "module",
+  "description": "Hawkeye Sterling — regulator-grade AML/CFT/sanctions/PEP/adverse-media screening engine. Built to surpass Refinitiv World-Check.",
   "scripts": {
-    "dev": "netlify dev",
+    "dev": "python3 -m http.server --directory public 8080",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint \"src/**/*.ts\" \"netlify/**/*.ts\"",
-    "ci": "npm run typecheck && npm run lint && npm run test && npm run brain:audit",
-    "brain:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/index.js').then(m=>m.auditBrain())\""
+    "brain:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/index.js').then(m=>m.auditBrain())\"",
+    "extract:prefixes": "node scripts/extract-prefixes.cjs > src/brain/mlro-prefixes.generated.ts",
+    "export:taxonomies": "node scripts/export-taxonomies.cjs",
+    "gen:skills-doc": "tsc && node scripts/gen-skills-doc.mjs",
+    "brain:weaponize": "tsc && node scripts/weaponize-brain.mjs",
+    "server:brain-reason": "tsc && node server/brain-reason.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^8.0.0"
   },
   "devDependencies": {
-    "@netlify/functions": "^3.0.0",
-    "@types/node": "^24.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^9.0.0",
+    "@types/node": "^24.12.2",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0"
+    "vitest": "^4.0.0"
   },
   "engines": {
     "node": ">=20"

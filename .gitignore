@@ -1,12 +1,15 @@
 node_modules/
 dist/
+.next/
 .netlify/
+.cache/
+coverage/
 .env
 .env.local
+.env.*.local
 *.log
+server/audit/
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-coverage/
-.cache/

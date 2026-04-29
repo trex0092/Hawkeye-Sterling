@@ -1,31 +1,63 @@
+# Netlify — Hawkeye Sterling v5 monorepo.
+#
+# Build order:
+#   1. Root: `npm ci && npm run build` → compiles src/brain (TypeScript → dist/).
+#   2. web/: `npm ci && npm run build` → builds Next.js 14 app (SSR + API routes).
+#
+# The Next.js route handler at web/app/api/quick-screen/route.ts imports the
+# compiled brain from ../../../../../dist/src/brain/quick-screen.js, so step 1
+# must complete before step 2.
+
 [build]
-  command = "npm run build"
-  functions = "netlify/functions"
-  publish = "public"
+  command = "npm ci --include=dev && npm run build && node scripts/gen-weaponized-brain.cjs && cd web && npm ci --include=dev && npm run build"
+  publish = "web/.next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [functions]
-  node_bundler = "esbuild"
+  # Look for the scheduled Netlify Function(s) at the repo root.
+  directory = "netlify/functions"
+  # Bundle the compiled brain + policy + integrations modules.
+  # weaponized.ts imports ../policy/systemPrompt.js transitively, and the
+  # mlro-advisor-deep-background function imports invokeMlroAdvisor +
+  # the quality gates from dist/src/integrations.
+  included_files = [
+    "dist/src/brain/**/*.js",
+    "dist/src/brain/**/*.js.map",
+    "dist/src/policy/**/*.js",
+    "dist/src/policy/**/*.js.map",
+    "dist/src/integrations/**/*.js",
+    "dist/src/integrations/**/*.js.map",
+  ]
 
-[functions."refresh-lists"]
-  schedule = "0 3 * * *"
+[context.production]
+  environment = { NODE_ENV = "production" }
 
-[dev]
-  functions = "netlify/functions"
-  publish = "public"
+[context.deploy-preview]
+  environment = { NODE_ENV = "production" }
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+[context.branch-deploy]
+  environment = { NODE_ENV = "development" }
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/*"
   [headers.values]
-    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-    Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Resource-Policy = "same-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    # CSP: self-only for scripts/styles; allow Asana + Anthropic API calls from
+    # the server-side edge (connect-src covers fetch() from the browser). The
+    # nonce-based approach would require Next.js middleware; this initial policy
+    # blocks the highest-risk categories (inline scripts, arbitrary framing).
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://app.asana.com https://api.anthropic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"

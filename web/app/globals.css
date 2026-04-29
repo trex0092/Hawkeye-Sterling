@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ship a light editorial theme by default, with an optional dark palette
+ * selected by data-theme="dark" on <html>. The color tokens are the same
+ * in both palettes — only the values change — so every component reads
+ * from CSS variables and recolors automatically. */
+html {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@layer base {
+  :root {
+    --bg-0: #faf9f7;
+    --bg-1: #f5f3f0;
+    --bg-2: #efebe6;
+    --bg-3: #e8e4df;
+    --bg-panel: #ffffff;
+
+    --hair: rgba(0, 0, 0, 0.06);
+    --hair-2: rgba(0, 0, 0, 0.1);
+    --hair-3: rgba(0, 0, 0, 0.15);
+    --hair-pink: rgba(236, 72, 153, 0.18);
+
+    --ink-0: #1a1614;
+    --ink-1: #44403c;
+    --ink-2: #78716c;
+    --ink-3: #a8a29e;
+    --ink-4: #d6d3d1;
+
+    --brand: #ec4899;
+    --brand-ink: #f472b6;
+    --brand-hover: #db2777;
+    --brand-dim: rgba(236, 72, 153, 0.08);
+    --brand-line: rgba(236, 72, 153, 0.25);
+    --brand-deep: #be185d;
+
+    --violet: #8b5cf6;
+    --violet-dim: rgba(139, 92, 246, 0.1);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245, 158, 11, 0.1);
+    --orange: #f97316;
+    --orange-dim: rgba(249, 115, 22, 0.1);
+
+    --red: #ef4444;
+    --red-dim: rgba(239, 68, 68, 0.1);
+    --green: #10b981;
+    --green-dim: rgba(16, 185, 129, 0.1);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59, 130, 246, 0.1);
+
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  html[data-theme="dark"] {
+    --bg-0: #0e0d0c;
+    --bg-1: #161413;
+    --bg-2: #1d1b19;
+    --bg-3: #24211f;
+    --bg-panel: #1a1816;
+
+    --hair: rgba(255, 255, 255, 0.06);
+    --hair-2: rgba(255, 255, 255, 0.1);
+    --hair-3: rgba(255, 255, 255, 0.18);
+
+    --ink-0: #f5f3f0;
+    --ink-1: #d6d3d1;
+    --ink-2: #a8a29e;
+    --ink-3: #78716c;
+    --ink-4: #44403c;
+
+    --brand: #f472b6;
+    --brand-hover: #ec4899;
+    --brand-dim: rgba(244, 114, 182, 0.18);
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.5), 0 10px 15px rgba(0, 0, 0, 0.5);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 72px;
+    /* accent-color softens native form-control hover/selection
+       (checkboxes, radios, native select options, range thumbs)
+       to the brand pink instead of OS-default dark grey. */
+    accent-color: var(--brand);
+  }
+
+  body {
+    background-color: var(--bg-0);
+    /* Soft pink watermark — a radial-gradient pair applied once at
+       the viewport level. Stays under all content; non-interactive.
+       Tuned to ~6% opacity so it reads as a brand wash, not a
+       distracting image. */
+    background-image:
+      radial-gradient(
+        ellipse at top right,
+        rgba(236, 72, 153, 0.08),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse at bottom left,
+        rgba(244, 114, 182, 0.06),
+        transparent 60%
+      );
+    background-attachment: fixed;
+    color: var(--ink-0);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Native <select> — tell the browser the theme so the OS-rendered
+     popup respects it. In dark mode we also need color-scheme: dark on
+     the element itself so Chromium/Safari use a dark dropdown sheet.
+     Option background/color are set for Chromium (which honours them);
+     Firefox and Safari fall back to OS defaults but color-scheme hint
+     covers them on most platforms. */
+  select {
+    color-scheme: light;
+    background-color: var(--bg-panel);
+    color: var(--ink-0);
+  }
+  html[data-theme="dark"] select {
+    color-scheme: dark;
+  }
+  select option {
+    background-color: var(--bg-0);
+    color: var(--ink-0);
+  }
+  select option:hover,
+  select option:focus,
+  select option:checked {
+    background: linear-gradient(
+      0deg,
+      rgba(236, 72, 153, 0.18),
+      rgba(236, 72, 153, 0.18)
+    );
+    color: var(--ink-0);
+  }
+
+  /* Select control itself — subtle pink-tinted focus ring so keyboard
+     users see where they are without the OS-default blue halo. */
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid rgba(236, 72, 153, 0.35);
+    outline-offset: 1px;
+  }
+
+  ::selection {
+    background: var(--brand-dim);
+    color: var(--brand-deep);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-1);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--ink-4);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-3);
+  }
+
+  /* RTL support: Arabic UI flips the sidebar/column order. */
+  html[dir="rtl"] main {
+    text-align: right;
+  }
+}
+
+@layer utilities {
+  .risk-bar-fill {
+    background: linear-gradient(90deg, var(--brand), var(--violet));
+  }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes feed-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

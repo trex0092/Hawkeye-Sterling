@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smurfing Detector — Hawkeye Sterling</title>
+  <link rel="stylesheet" href="styles-v5.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">H</span>
+        <span>Hawkeye Sterling</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="index.html">Workbench</a>
+        <a href="screening.html">Screening</a>
+        <a href="cases.html">Cases</a>
+        <a href="workbench.html">Deep reasoning</a>
+        <a href="taxonomy.html">Library</a>
+        <a href="brain.html">Brain</a>
+      </div>
+    </nav>
+  </header>
+
+  <div class="app-layout">
+    
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-head">Detection window</div>
+        <ul class="sidebar-filters">
+          <li class="active"><span>Last 7 days</span></li>
+          <li><span>Last 30 days</span></li>
+          <li><span>Last 90 days</span></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-head">Severity</div>
+        <ul class="sidebar-filters">
+          <li><span>Critical</span><span class="count">08</span></li>
+          <li><span>High</span><span class="count">14</span></li>
+          <li><span>Medium</span><span class="count">23</span></li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      
+      <div class="hero">
+        <div class="hero-eyebrow">MODULE 05 · TRANSACTION MONITORING</div>
+        <h1 class="hero-title">Structuring <em>patterns.</em></h1>
+        <p class="hero-lede">
+          <strong>Near-threshold clustering · temporal analysis · typology matching.</strong> Automated detection of structuring patterns — multiple transactions below CTR threshold, rapid succession, coordinated timing.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Pattern ID</th>
+              <th>Subject</th>
+              <th>Cluster</th>
+              <th>Threshold proximity</th>
+              <th>Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background: var(--red-dim);">
+              <td><div class="table-badge" style="background: var(--red-dim); color: var(--red);">SMF-891</div></td>
+              <td>
+                <div class="table-name">Fine Gold LLC</div>
+                <div class="table-meta">6 txns · AED 54,820 avg · 24h window</div>
+              </td>
+              <td><div style="font-family: var(--font-mono); font-size: 11.5px;">6 txns</div></td>
+              <td><div style="font-weight: 600; color: var(--red);">94% of CTR</div></td>
+              <td><span class="tag" style="background: var(--red-dim); color: var(--red);">Critical</span></td>
+            </tr>
+
+            <tr>
+              <td><div class="table-badge orange">SMF-887</div></td>
+              <td>
+                <div class="table-name">Al-Noor Trading Est.</div>
+                <div class="table-meta">8 txns · AED 48,200 avg · 72h window</div>
+              </td>
+              <td><div style="font-family: var(--font-mono); font-size: 11.5px;">8 txns</div></td>
+              <td><div style="font-weight: 600; color: var(--amber);">82% of CTR</div></td>
+              <td><span class="tag" style="background: var(--amber-dim); color: var(--amber);">High</span></td>
+            </tr>
+
+            <tr>
+              <td><div class="table-badge orange">SMF-884</div></td>
+              <td>
+                <div class="table-name">Emirates Bullion Trading</div>
+                <div class="table-meta">12 txns · AED 42,100 avg · 5d window</div>
+              </td>
+              <td><div style="font-family: var(--font-mono); font-size: 11.5px;">12 txns</div></td>
+              <td><div style="font-weight: 600; color: var(--amber);">71% of CTR</div></td>
+              <td><span class="tag" style="background: var(--amber-dim); color: var(--amber);">High</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+
+  </div>
+
+</body>
+</html>
