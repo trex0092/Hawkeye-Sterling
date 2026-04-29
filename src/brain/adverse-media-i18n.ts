@@ -125,11 +125,14 @@ const ZH_KEYWORDS = [
 // ─────────────────────────────────────────────────────────────────────────
 
 /** Latin/Cyrillic script — split on whitespace + common punctuation,
- *  produce both single tokens and bigrams so multi-word phrases match. */
+ *  produce both single tokens and bigrams so multi-word phrases match.
+ *  Apostrophes (ASCII + curly U+2019) are folded to spaces so French
+ *  contractions ("d'argent") tokenise the same way as their catalogue
+ *  entries. */
 function whitespaceTokenize(text: string): Set<string> {
-  const norm = text.toLowerCase();
+  const norm = text.toLowerCase().replace(/[’']/g, " ");
   const words = norm
-    .split(/[\s.,;:!?'"«»\(\)\[\]\/\\<>\-—–]+/u)
+    .split(/[\s.,;:!?"«»\(\)\[\]\/\\<>\-—–]+/u)
     .filter((w) => w.length > 0);
   const out = new Set<string>(words);
   // Bigrams + trigrams
@@ -182,7 +185,9 @@ const AR_KEYWORDS_NORM = AR_KEYWORDS.map((k) =>
     .toLowerCase(),
 );
 
-const FR_KEYWORDS_NORM = FR_KEYWORDS.map((k) => k.toLowerCase());
+// Mirror the apostrophe-folding the tokeniser applies, so multi-word
+// French entries with contractions ("blanchiment d'argent") match.
+const FR_KEYWORDS_NORM = FR_KEYWORDS.map((k) => k.toLowerCase().replace(/[’']/g, " ").replace(/\s+/g, " "));
 const RU_KEYWORDS_NORM = RU_KEYWORDS.map((k) => k.toLowerCase());
 const ZH_KEYWORDS_NORM = ZH_KEYWORDS; // CJK already case-insensitive
 
