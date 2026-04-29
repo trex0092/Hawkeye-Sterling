@@ -88,8 +88,12 @@ export const EOCN_LIST_UPDATES: ListUpdate[] = [
     screeningStatus: "applied",
     screeningCompletedAt: "2026-04-29 12:33",
     notes:
-      "Amend of 17 Names on UNSC Sanction Committee 1988 (Taliban) — name / address / DOB updates per Cabinet Decision 74 of 2020. Re-screen completed within 4h SLA; no new customer matches.",
-    sourceUrl: "https://www.uaeiec.gov.ae/en-us/un-page",
+      "Amend of 17 Names on UNSC 1988 Sanctions Committee list (Taliban) — name / address / DOB updates per UNSC press release SC/16352. EOCN UAE applied via Cabinet Decision 74 of 2020. Re-screen completed within 4h SLA; no new customer matches.",
+    // Authoritative source: UN Security Council press release. The
+    // EOCN UAE portal mirrors UNSC committee actions; pointing
+    // operators directly at press.un.org gives them the canonical
+    // designation list with full names + identifiers.
+    sourceUrl: "https://press.un.org/en/2026/sc16352.doc.htm",
     // Seed names — operator can edit / paste-replace via the
     // detail-panel textarea. These are placeholders pending the
     // EOCN HTML parser harvesting names directly from the

@@ -67,7 +67,14 @@ const VALID_FDL_10_2025_ARTS = new Set([
   36, 37, 38, 39, 40, 41, 42,
 ]);
 
-const VALID_FDL_20_2018_ARTS = new Set([
+// FDL 20/2018 was repealed by FDL 10/2025. We still recognise its
+// shape so the verifier can SAY it's a real law that's been
+// superseded — citing it in 2026+ is incorrect and the chip should
+// flag it. The corresponding FDL 10/2025 article is usually 1:1
+// equivalent (the UAE legislator preserved numbering for most CDD /
+// STR / retention obligations) so the operator can usually just
+// swap "20/2018" for "10/2025" in the model's answer.
+const SUPERSEDED_FDL_20_2018_ARTS = new Set([
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
   11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
   21, 22, 23, 24, 25, 26,
@@ -127,10 +134,14 @@ const PATTERNS: Pattern[] = [
           : { verified: false, note: `FDL 10/2025 Art.${art} not in bundled article catalogue` };
       }
       if (law === "20" && year === "2018") {
-        if (art == null) return { verified: true };
-        return VALID_FDL_20_2018_ARTS.has(art)
-          ? { verified: true }
-          : { verified: false, note: `FDL 20/2018 Art.${art} not in bundled article catalogue` };
+        const recognised = art == null || SUPERSEDED_FDL_20_2018_ARTS.has(art);
+        if (recognised) {
+          return {
+            verified: false,
+            note: `FDL 20/2018 was repealed by FDL 10/2025 — cite the new law${art != null ? ` (likely FDL 10/2025 Art.${art})` : ""}`,
+          };
+        }
+        return { verified: false, note: `FDL 20/2018 Art.${art} unknown (and the law has been repealed; cite FDL 10/2025)` };
       }
       return { verified: false, note: `FDL ${law}/${year} not in catalogue` };
     },
@@ -141,6 +152,16 @@ const PATTERNS: Pattern[] = [
     category: "uae_cabinet_resolution",
     verify: (m): { verified: boolean; note?: string } => {
       const key = `${m[2]}-${m[1]}`;
+      // Cabinet Resolution 10/2019 was the implementing regulation
+      // for the now-repealed FDL 20/2018; it has been superseded by
+      // Cabinet Resolution 134/2025. Flag it the same way as the
+      // parent law so the chip alerts the operator.
+      if (key === "2019-10") {
+        return {
+          verified: false,
+          note: "Cabinet Resolution 10/2019 was the FDL 20/2018 implementing regulation — superseded by Cabinet Resolution 134/2025",
+        };
+      }
       return VALID_CABINET_RESOLUTIONS.has(key)
         ? { verified: true }
         : { verified: false, note: `Cabinet ${m[1]}/${m[2]} not in catalogue` };

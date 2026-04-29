@@ -1692,7 +1692,7 @@ const PLAYBOOKS: Playbook[] = [
         checks: [
           "Register the DNFBP with the Ministry of Economy AML/CFT Department per Cabinet Decision 109/2023 Art.4",
           "Activate goAML access via UAE FIU and link the entity's MoE Trade Licence number",
-          "Appoint and notify the MLRO and Deputy MLRO to MoE within 30 days of activity commencement (FDL 20/2018 Art.21)",
+          "Appoint and notify the MLRO and Deputy MLRO to MoE within 30 days of activity commencement (FDL 10/2025 Art.21)",
           "Subscribe the MLRO to MoE Circulars + EOCN list-update mailing lists; confirm receipt of the latest circular pack",
         ],
       },
@@ -1713,7 +1713,7 @@ const PLAYBOOKS: Playbook[] = [
           "Identify any single or aggregated cash transaction ≥ AED 55,000 with a single customer (MoE Circular 08/AML/2021 — FATF Rec. 22 implementation)",
           "File a DPMS Threshold Report (DPMSR) via goAML within 14 days of the transaction date — file even if the transaction is non-suspicious",
           "Aggregate connected/linked transactions (same beneficial owner, same 24h window) before applying the threshold",
-          "Retain DPMSR submission acknowledgement + supporting invoice/CoC for 5 years (FDL 20/2018 Art.24)",
+          "Retain DPMSR submission acknowledgement + supporting invoice/CoC for 5 years (FDL 10/2025 Art.24)",
         ],
       },
       {
@@ -1740,7 +1740,7 @@ const PLAYBOOKS: Playbook[] = [
   },
   {
     id: "fiu-goaml-filing",
-    title: "FIU UAE — goAML Filing Workflow (FDL 20/2018 Art.15)",
+    title: "FIU UAE — goAML Filing Workflow (FDL 10/2025 Art.15)",
     typology: "fiu_goaml",
     family: "FIU",
     steps: [
@@ -2081,7 +2081,7 @@ const PLAYBOOKS: Playbook[] = [
     family: "ML",
     steps: [
       { title: "1. Border declaration check", required: true, checks: [
-        "Verify customs cash declaration on inbound funds ≥ AED 60,000 (FDL 20/2018 Art.21)",
+        "Verify customs cash declaration on inbound funds ≥ AED 60,000 (FDL 10/2025 Art.21)",
         "Cross-check declared origin against currency-marking / pack-band data",
         "Inspect courier identity and travel pattern against high-risk corridor list",
       ]},

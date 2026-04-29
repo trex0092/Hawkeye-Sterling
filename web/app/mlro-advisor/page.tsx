@@ -154,20 +154,21 @@ interface ChallengeResult {
 }
 
 // ── Suggested questions ───────────────────────────────────────────────────────
-// Sources: UAE FDL 20/2018 & Cabinet Decision 10/2019, MoE DPMS rules, UAE FIU
-// (goAML), EOCN sanctions guidance, LBMA Responsible Gold Guidance, OECD CAHRA
-// 5-step Due Diligence, FATF 40 Recommendations, RMI RMAP / CMRT, ESG
-// frameworks (EU CSDDD / CSRD), UN Guiding Principles on Business & Human
-// Rights, UN Security Council Consolidated List & UNSCRs.
+// Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
+// repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
+// MoE DPMS rules, UAE FIU (goAML), EOCN sanctions guidance, LBMA Responsible
+// Gold Guidance, OECD CAHRA 5-step Due Diligence, FATF 40 Recommendations,
+// RMI RMAP / CMRT, ESG frameworks (EU CSDDD / CSRD), UN Guiding Principles
+// on Business & Human Rights, UN Security Council Consolidated List & UNSCRs.
 
 const SUGGESTED_GROUPS = [
   {
-    label: "UAE FDL & Cabinet Decision",
+    label: "UAE FDL & Cabinet Resolution",
     questions: [
-      "What is the record-retention period under UAE FDL 20/2018 Art.16?",
-      "What are the STR reporting obligations under UAE FDL 20/2018?",
-      "What are the tipping-off prohibitions under UAE FDL 20/2018 Art.25?",
-      "What CDD measures does UAE Cabinet Decision 10/2019 require?",
+      "What is the record-retention period under UAE FDL 10/2025 Art.16?",
+      "What are the STR reporting obligations under UAE FDL 10/2025?",
+      "What are the tipping-off prohibitions under UAE FDL 10/2025 Art.25?",
+      "What CDD measures does UAE Cabinet Resolution 134/2025 require?",
     ],
   },
   {
