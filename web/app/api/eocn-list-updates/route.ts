@@ -149,12 +149,38 @@ async function handleGet(_req: Request): Promise<NextResponse> {
   return NextResponse.json(fixturePayload(), { status: 200 });
 }
 
-// POST — operator-triggered live fetch. Gated. Writes the result to the
-// same blob key the cron uses, so the next GET sees the fresh data
-// without an extra round-trip.
+// Constant-time token comparison — rejects timing oracles on the
+// Bearer token used by the eocn-poll scheduled function.
+function safeTokenEqual(got: string, expected: string): boolean {
+  if (got.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < got.length; i += 1) {
+    diff |= got.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+// POST — live fetch. Two auth paths:
+//   1. cron bypass — Bearer SANCTIONS_CRON_TOKEN (used by
+//      netlify/functions/eocn-poll.mts). No rate-limit consumption.
+//   2. operator path — falls through to enforce(), which handles
+//      ADMIN_TOKEN portal bypass + API-key lookup.
+// Result is written to the same blob key the GET handler reads, so
+// the next GET sees the fresh snapshot without an extra round-trip.
 async function handlePost(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
+  const presented = req.headers
+    .get("authorization")
+    ?.replace(/^Bearer\s+/i, "");
+  const cronMatch =
+    !!cronToken && !!presented && safeTokenEqual(presented, cronToken);
+
+  let gateHeaders: Record<string, string> = {};
+  if (!cronMatch) {
+    const gate = await enforce(req);
+    if (!gate.ok) return gate.response;
+    gateHeaders = gate.headers;
+  }
 
   const fix = fixturePayload();
   const upstream = await fetchUpstream();
@@ -186,7 +212,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   return NextResponse.json(payload, {
     status: upstream.ok ? 200 : 502,
-    headers: gate.headers,
+    headers: gateHeaders,
   });
 }
 
