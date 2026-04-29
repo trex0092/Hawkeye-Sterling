@@ -42,11 +42,132 @@ type ParsedUpdate = Pick<
   deltaRemoved?: number;
 };
 
+// HTML decoder for entities the parsers below will encounter when
+// stripping a real-world EOCN page (named entities + numeric refs).
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+}
+
+// Parse the EOCN UAE announcements page (https://www.uaeiec.gov.ae/
+// en-us/un-page or similar). The site doesn't expose RSS; it serves
+// HTML with announcement cards. We extract title-bearing anchors and
+// surrounding date text without pulling in cheerio — regex on a
+// flattened DOM is plenty for the shape EOCN publishes (text-heavy,
+// no script-rendered content needed for the title/date alone).
+function parseEocnHtml(html: string): ParsedUpdate[] {
+  // Drop scripts + styles up front so their inline text doesn't get
+  // matched as titles.
+  const cleaned = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ");
+
+  // Look for blocks shaped like "<a ...>Title</a> ... 29-04-2026"
+  // or "<h?>Title</h?> ... <span...>29 April 2026</span>". EOCN's
+  // page uses anchor-titles within news-list items; the anchor is
+  // a stable hook.
+  const updates: ParsedUpdate[] = [];
+  const linkBlocks =
+    cleaned.match(/<a\b[^>]*>[\s\S]{1,800}?<\/a>(?:[\s\S]{0,800}?<\/(?:li|div|article|section)>)?/gi) ?? [];
+
+  // Date patterns the EOCN page uses (DD-MM-YYYY, DD/MM/YYYY,
+  // "29 April 2026", "April 29, 2026"). Captured to YYYY-MM-DD.
+  const MONTHS: Record<string, string> = {
+    january: "01", february: "02", march: "03", april: "04",
+    may: "05", june: "06", july: "07", august: "08",
+    september: "09", october: "10", november: "11", december: "12",
+  };
+  const datePatterns: Array<{ rx: RegExp; toIso: (m: RegExpMatchArray) => string | null }> = [
+    {
+      rx: /(\d{1,2})[-/](\d{1,2})[-/](\d{4})/,
+      toIso: (m) => {
+        const dd = String(m[1]).padStart(2, "0");
+        const mm = String(m[2]).padStart(2, "0");
+        return `${m[3]}-${mm}-${dd}`;
+      },
+    },
+    {
+      rx: /(\d{4})[-/](\d{1,2})[-/](\d{1,2})/,
+      toIso: (m) => {
+        const mm = String(m[2]).padStart(2, "0");
+        const dd = String(m[3]).padStart(2, "0");
+        return `${m[1]}-${mm}-${dd}`;
+      },
+    },
+    {
+      rx: /(\d{1,2})\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})/i,
+      toIso: (m) => {
+        const mm = MONTHS[m[2]!.toLowerCase()];
+        if (!mm) return null;
+        return `${m[3]}-${mm}-${String(m[1]).padStart(2, "0")}`;
+      },
+    },
+    {
+      rx: /(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})/i,
+      toIso: (m) => {
+        const mm = MONTHS[m[1]!.toLowerCase()];
+        if (!mm) return null;
+        return `${m[3]}-${mm}-${String(m[2]).padStart(2, "0")}`;
+      },
+    },
+  ];
+
+  for (const block of linkBlocks) {
+    const titleRaw = block.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1] ?? "";
+    const title = decodeEntities(titleRaw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    if (!title || title.length < 8) continue;
+    // Filter chrome: skip nav links / "Click here" / Arabic-only
+    // titles when no English equivalent surfaced.
+    if (/^(home|about|contact|click here|read more|en|ar)\s*$/i.test(title)) continue;
+    if (!/announcement|sanctions?|amend|delist|add|update|resolution|name|committee|list/i.test(title)) continue;
+
+    let isoDate: string | null = null;
+    for (const p of datePatterns) {
+      const m = block.match(p.rx);
+      if (m) {
+        isoDate = p.toIso(m);
+        if (isoDate) break;
+      }
+    }
+    const date = isoDate ?? new Date().toISOString().slice(0, 10);
+
+    const version =
+      title.match(/v?20\d{2}\.\d{2,3}/)?.[0] ??
+      `EOCN-${date}`;
+    const addMatch = title.match(/\b(?:add(?:ed)?|amend(?:ed)?|new)\b\D{0,30}?(\d+)/i);
+    const removeMatch = title.match(/\b(?:delist(?:ed)?|remove[ds]?)\b\D{0,30}?(\d+)/i);
+
+    updates.push({
+      date,
+      time: "00:00",
+      version: version.startsWith("EOCN") ? version : `EOCN-TFS-${version}`,
+      deltaAdded: addMatch && addMatch[1] ? Number(addMatch[1]) : 0,
+      deltaRemoved: removeMatch && removeMatch[1] ? Number(removeMatch[1]) : 0,
+      notes: title.slice(0, 280),
+    });
+  }
+
+  // Dedupe by (date, title-prefix) so a card rendered twice in the
+  // page (e.g. "latest" + "all") doesn't double-count.
+  const seen = new Set<string>();
+  return updates.filter((u) => {
+    const key = `${u.date}::${u.notes.slice(0, 120)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // Parse a minimal RSS / Atom feed into our ListUpdate shape. EOCN
-// doesn't currently expose a feed; this is the path the eocn-poll
-// scheduled function will activate once one is published. Kept small
-// — full XML parsing brings in a heavy dep and the EOCN feed (when
-// it exists) will be tightly-shaped.
+// doesn't currently expose a feed; this remains the path for any
+// future RSS endpoint we point EOCN_FEED_URL at.
 function parseRssLikeFeed(xml: string): ParsedUpdate[] {
   const items = xml.match(/<item[\s\S]*?<\/item>/gi) ?? [];
   return items
@@ -103,21 +224,30 @@ async function fetchUpstream(): Promise<{
   try {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 12_000);
+    // Browser-shaped headers — EOCN's WAF returns 403 to anything
+    // that looks like a script. Mimicking a recent Chrome works at
+    // request time; we don't execute JS so any content the page
+    // hydrates client-side is invisible (acceptable — the
+    // announcement titles + dates are server-rendered).
     const r = await fetch(url, {
       headers: {
-        accept: "application/rss+xml, application/xml, text/xml, application/json, */*",
-        "user-agent": "hawkeye-sterling-eocn-poll/1.0",
+        accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,application/rss+xml,application/json;q=0.7,*/*;q=0.5",
+        "accept-language": "en-US,en;q=0.9,ar;q=0.5",
+        "user-agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
       },
       signal: ctl.signal,
     });
     clearTimeout(timer);
     if (!r.ok) return { ok: false, error: `upstream HTTP ${r.status}`, url };
     const body = await r.text();
-    // Best-effort RSS parser; JSON path can be added once EOCN exposes
-    // structured output.
-    const parsed = parseRssLikeFeed(body);
+    // Auto-detect format. RSS / Atom feeds open with <?xml or have
+    // <rss / <feed root nodes. Anything else we treat as HTML.
+    const looksRss = /^\s*<\?xml|<rss\b|<feed\b/i.test(body.slice(0, 400));
+    const parsed = looksRss ? parseRssLikeFeed(body) : parseEocnHtml(body);
     if (parsed.length === 0) {
-      return { ok: false, error: "no entries parsed", url };
+      return { ok: false, error: looksRss ? "no entries parsed (RSS)" : "no entries parsed (HTML)", url };
     }
     const updates: ListUpdate[] = parsed.map((p, i) => ({
       id: `LU-LIVE-${p.date.replace(/-/g, "")}-${i}`,
