@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import {
   buildComplianceReport,
+  buildComplianceReportStructured,
   type ReportInput,
 } from "@/lib/reports/complianceReport";
 
@@ -535,6 +536,21 @@ async function handleComplianceReport(req: Request): Promise<Response> {
       { ok: false, error: "report generation failed" },
       { status: 500, headers: gateHeaders },
     );
+  }
+
+  // Structured JSON sidecar — same provenance and hashes as the text
+  // version. Lets machine consumers (Asana automation, MAS bridges,
+  // regulator portals) consume the report without parsing the prose.
+  if (format === "json") {
+    const structured = buildComplianceReportStructured(body);
+    return NextResponse.json(structured, {
+      status: 200,
+      headers: {
+        ...gateHeaders,
+        "content-disposition": `attachment; filename="hawkeye-report-${safeFilenameSegment(body.subject.id)}.json"`,
+        "cache-control": "no-store",
+      },
+    });
   }
 
   if (format === "html" || format === "pdf") {

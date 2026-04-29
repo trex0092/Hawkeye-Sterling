@@ -1132,6 +1132,95 @@ function formatFramework(): string[] {
   return lines;
 }
 
+// Structured report for machine consumers (regulator portals, Asana
+// automation, MAS bridges) — same provenance and hashes as the text
+// version so a JSON sidecar and a .txt download can be cross-verified.
+// `text` carries the canonical report verbatim; `hashes` covers it.
+export interface StructuredReport {
+  reportId: string;
+  reportType: ReportType;
+  schemaVersion: string;
+  generatedAt: string;
+  disposition: string;
+  composite: { score: number; band: string; breakdown?: Record<string, number> };
+  sanctions: { topScore: number; severity: string; hits: ReportScreeningResult["hits"] };
+  pep: ReportSuperBrain["pep"] | null;
+  pepAssessment?: ReportSuperBrain["pepAssessment"] | null;
+  jurisdiction: ReportSuperBrain["jurisdiction"] | null;
+  jurisdictionRich?: ReportSuperBrain["jurisdictionRich"] | null;
+  adverseMedia?: ReportSuperBrain["adverseMedia"];
+  adverseKeywordGroups?: ReportSuperBrain["adverseKeywordGroups"];
+  adverseMediaScored?: ReportSuperBrain["adverseMediaScored"] | null;
+  typologies?: ReportSuperBrain["typologies"] | null;
+  redlines?: ReportSuperBrain["redlines"];
+  newsDossier?: ReportSuperBrain["newsDossier"] | null;
+  audit?: ReportSuperBrain["audit"] | null;
+  operator?: ReportOperator | null;
+  hashes: {
+    payloadSha256: string;
+    reportSha256: string;
+    signature?: string;
+    signingKeyFp?: string;
+  };
+  text: string;
+}
+
+export function buildComplianceReportStructured(input: ReportInput): StructuredReport {
+  const text = buildComplianceReport(input);
+  const payloadSha = sha256(canonicalJson(input));
+  // Re-derive the report hash by extracting it from the text — the
+  // builder already computed it; this avoids recomputing the body
+  // and risking drift between the two paths.
+  const reportShaMatch = text.match(/report\.sha256\s+([a-f0-9]{64})/);
+  const reportSha = reportShaMatch ? reportShaMatch[1]! : "";
+  const sigMatch = text.match(/report\.signature\s+hmac-sha256:([a-f0-9]{64})/);
+  const fpMatch = text.match(/signing\.key_fp\s+([a-f0-9]{12})/);
+  const sb = input.superBrain;
+  const composite = sb?.composite?.score ?? input.result.topScore;
+  const reportType = inferReportType(input.result, sb);
+  const disposition = dispositionFor(input.result, sb);
+  const generatedAt = (input.now ?? new Date()).toISOString();
+  const idDate = generatedAt.slice(0, 10).replace(/-/g, "");
+  const idTime = generatedAt.slice(11, 16).replace(":", "");
+  const reportId = `HWK-SCR-${idDate}-${reportType}-${idTime}`;
+  return {
+    reportId,
+    reportType,
+    schemaVersion: sb?.audit?.schemaVersion ?? "2.0.0",
+    generatedAt,
+    disposition,
+    composite: {
+      score: composite,
+      band: bandFor(composite),
+      ...(sb?.composite?.breakdown ? { breakdown: sb.composite.breakdown } : {}),
+    },
+    sanctions: {
+      topScore: input.result.topScore,
+      severity: input.result.severity,
+      hits: input.result.hits,
+    },
+    pep: sb?.pep ?? null,
+    pepAssessment: sb?.pepAssessment ?? null,
+    jurisdiction: sb?.jurisdiction ?? null,
+    jurisdictionRich: sb?.jurisdictionRich ?? null,
+    adverseMedia: sb?.adverseMedia,
+    adverseKeywordGroups: sb?.adverseKeywordGroups,
+    adverseMediaScored: sb?.adverseMediaScored ?? null,
+    typologies: sb?.typologies ?? null,
+    redlines: sb?.redlines,
+    newsDossier: sb?.newsDossier ?? null,
+    audit: sb?.audit ?? null,
+    operator: input.operator ?? null,
+    hashes: {
+      payloadSha256: payloadSha,
+      reportSha256: reportSha,
+      ...(sigMatch ? { signature: `hmac-sha256:${sigMatch[1]}` } : {}),
+      ...(fpMatch ? { signingKeyFp: fpMatch[1] } : {}),
+    },
+    text,
+  };
+}
+
 export function buildComplianceReport(input: ReportInput): string {
   const now = input.now ?? new Date();
   const type = inferReportType(input.result, input.superBrain);
