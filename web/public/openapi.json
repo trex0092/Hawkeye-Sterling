@@ -352,6 +352,210 @@
         },
         "responses": { "200": { "description": "Service health, brain-soul status, and cognitive grade" } }
       }
+    },
+    "/api/payment-screen": {
+      "post": {
+        "summary": "Wire-transfer compliance — parse a SWIFT MT103 and screen ordering + beneficiary parties",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": { "type": "string", "maxLength": 50000, "description": "Raw SWIFT MT103 message text (≤ 50KB)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Parsed envelope plus per-party screening result. UI surfaces the worse of the two severities as the payment verdict." },
+          "400": { "$ref": "#/components/responses/Error" },
+          "413": { "description": "Message exceeds 50KB cap" },
+          "503": { "description": "Watchlist corpus unavailable" }
+        }
+      }
+    },
+    "/api/gleif": {
+      "post": {
+        "summary": "GLEIF LEI lookup — entity record and ownership chain (KYB enrichment)",
+        "tags": ["Enrichment"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Either { lei } for direct lookup or { query } for name search",
+                "properties": {
+                  "lei": { "type": "string", "description": "20-character LEI for direct lookup" },
+                  "maxDepth": { "type": "integer", "default": 3, "description": "Ownership chain traversal depth" },
+                  "query": { "type": "string", "description": "Entity name (search mode)" },
+                  "limit": { "type": "integer", "default": 20, "description": "Max results in search mode" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "LEI record / ownership chain, or search results" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "502": { "description": "Upstream GLEIF error" },
+          "503": { "description": "GLEIF integration not configured" }
+        }
+      }
+    },
+    "/api/crypto-risk": {
+      "post": {
+        "summary": "Wallet AML risk scoring — taint analysis for ETH / BTC / TRX (VASP screening)",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["address"],
+                "properties": {
+                  "address": { "type": "string", "description": "Wallet address" },
+                  "chain": { "type": "string", "enum": ["ethereum", "bitcoin", "tron"], "description": "Defaults to inferred chain" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Wallet risk score + taint exposure breakdown" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "502": { "description": "Upstream provider error" },
+          "503": { "description": "Crypto-risk provider not configured" }
+        }
+      }
+    },
+    "/api/vessel-check": {
+      "post": {
+        "summary": "IMO vessel sanctions screening — ownership, flag state, and list hits",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Single mode { imoNumber } or batch mode { imoNumbers } (max 50)",
+                "properties": {
+                  "imoNumber": { "type": "string", "description": "7-digit IMO number" },
+                  "imoNumbers": { "type": "array", "items": { "type": "string" }, "maxItems": 50, "description": "Batch of IMO numbers (≤ 50)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Vessel record(s) with sanction-list hits and ownership chain" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "503": { "description": "Vessel-check provider not configured" }
+        }
+      }
+    },
+    "/api/benford": {
+      "post": {
+        "summary": "Benford's Law forensic accounting — MAD, chi-squared, p-value, risk tier",
+        "tags": ["Forensics"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amounts"],
+                "properties": {
+                  "amounts": { "type": "array", "items": { "type": "number" }, "description": "Transaction amounts to test" },
+                  "label": { "type": "string", "description": "Optional label echoed in the result" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Per-digit breakdown, MAD, chi-squared, p-value, and risk tier" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "422": { "description": "Insufficient data — fewer samples than required for a stable test" }
+        }
+      }
+    },
+    "/api/cases": {
+      "get": {
+        "summary": "List cases from the tenant case vault",
+        "tags": ["Records"],
+        "responses": {
+          "200": {
+            "description": "Tenant-scoped case list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "tenant": { "type": "string" },
+                    "cases": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Authentication required" }
+        }
+      }
+    },
+    "/api/goaml": {
+      "post": {
+        "summary": "goAML XML envelope generator — FIU-ready submission package",
+        "tags": ["Compliance"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["reportCode", "subject", "narrative"],
+                "properties": {
+                  "reportCode": { "type": "string", "enum": ["STR", "SAR", "FFR", "PNMR", "CTR", "AIF", "EFT", "HRC", "RFI"] },
+                  "subject": {
+                    "type": "object",
+                    "required": ["name", "entityType"],
+                    "properties": {
+                      "name": { "type": "string" },
+                      "entityType": { "type": "string", "enum": ["individual", "organisation", "vessel", "aircraft", "other"] },
+                      "jurisdiction": { "type": "string" },
+                      "dob": { "type": "string", "format": "date" },
+                      "aliases": { "type": "array", "items": { "type": "string" } },
+                      "idNumber": { "type": "string" },
+                      "caseId": { "type": "string" }
+                    }
+                  },
+                  "narrative": { "type": "string" },
+                  "amountAed": { "type": "number" },
+                  "counterparty": { "type": "string" },
+                  "entityId": { "type": "string", "description": "Reporting entity slug; defaults to HAWKEYE_DEFAULT_ENTITY_ID" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "goAML XML envelope ready for FIU upload",
+            "content": {
+              "application/xml": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
     }
   },
   "components": {
