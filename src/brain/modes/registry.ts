@@ -29,6 +29,8 @@ import { STRATEGIC_LEGAL_MODE_APPLIES } from './strategic_legal.js';
 import { MARKET_GOVERNANCE_MODE_APPLIES } from './market_governance.js';
 import { LOGIC_FORMAL_MODE_APPLIES } from './logic_formal.js';
 import { REASONING_DECISION_MODE_APPLIES } from './reasoning_decision.js';
+import { FORENSIC_STRATEGIC_MODE_APPLIES } from './forensic_strategic.js';
+import { GOVERNANCE_CRYPTO_MODE_APPLIES } from './governance_crypto.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
@@ -56,6 +58,8 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...MARKET_GOVERNANCE_MODE_APPLIES,
   ...LOGIC_FORMAL_MODE_APPLIES,
   ...REASONING_DECISION_MODE_APPLIES,
+  ...FORENSIC_STRATEGIC_MODE_APPLIES,
+  ...GOVERNANCE_CRYPTO_MODE_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */
