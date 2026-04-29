@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import {
@@ -52,6 +52,11 @@ type MatchEditDraft = Pick<EocnMatch, "disposition" | "notes" | "goAmlRef" | "ml
 
 export default function EocnPage() {
   const [tab, setTab] = useState<Tab>("list-updates");
+  // Currently-expanded list-update row id. Clicking a row toggles its
+  // detail panel (full notes + version + sync timestamps + "View on
+  // EOCN" button when sourceUrl is present). Single-row open at a
+  // time keeps the table readable.
+  const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
   const [deletedMatchIds, setDeletedMatchIds] = useState<string[]>([]);
   const [customMatches, setCustomMatches] = useState<EocnMatch[]>([]);
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
@@ -285,25 +290,105 @@ export default function EocnPage() {
                 </tr>
               </thead>
               <tbody>
-                {LIST_UPDATES.map((u, i) => (
-                  <tr key={u.id} className={i < LIST_UPDATES.length - 1 ? "border-b border-hair" : ""}>
-                    <td className="px-3 py-2.5 font-mono text-10 text-ink-0">{u.version}</td>
-                    <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{u.date} {u.time}</td>
-                    <td className="px-3 py-2.5 text-center font-mono text-11">
-                      {u.deltaAdded > 0 ? <span className="text-red font-semibold">+{u.deltaAdded}</span> : <span className="text-ink-3">—</span>}
-                    </td>
-                    <td className="px-3 py-2.5 text-center font-mono text-11">
-                      {u.deltaRemoved > 0 ? <span className="text-green font-semibold">-{u.deltaRemoved}</span> : <span className="text-ink-3">—</span>}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${UPDATE_STATUS_TONE[u.screeningStatus]}`}>
-                        {u.screeningStatus}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{u.screeningCompletedAt ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[220px] truncate" title={u.notes}>{u.notes}</td>
-                  </tr>
-                ))}
+                {LIST_UPDATES.map((u, i) => {
+                  const isExpanded = expandedUpdateId === u.id;
+                  const onToggle = (): void =>
+                    setExpandedUpdateId(isExpanded ? null : u.id);
+                  return (
+                    <Fragment key={u.id}>
+                      <tr
+                        onClick={onToggle}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onToggle();
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-expanded={isExpanded}
+                        className={`cursor-pointer hover:bg-bg-2 transition-colors focus:outline-none focus:bg-bg-2 ${
+                          i < LIST_UPDATES.length - 1 ? "border-b border-hair" : ""
+                        } ${isExpanded ? "bg-bg-2" : ""}`}
+                        title="Click to expand"
+                      >
+                        <td className="px-3 py-2.5 font-mono text-10 text-ink-0">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className={`inline-block w-2 text-ink-3 text-9 transition-transform ${isExpanded ? "rotate-90" : ""}`}>▶</span>
+                            {u.version}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{u.date} {u.time}</td>
+                        <td className="px-3 py-2.5 text-center font-mono text-11">
+                          {u.deltaAdded > 0 ? <span className="text-red font-semibold">+{u.deltaAdded}</span> : <span className="text-ink-3">—</span>}
+                        </td>
+                        <td className="px-3 py-2.5 text-center font-mono text-11">
+                          {u.deltaRemoved > 0 ? <span className="text-green font-semibold">-{u.deltaRemoved}</span> : <span className="text-ink-3">—</span>}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${UPDATE_STATUS_TONE[u.screeningStatus]}`}>
+                            {u.screeningStatus}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{u.screeningCompletedAt ?? "—"}</td>
+                        <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[220px] truncate" title={u.notes}>{u.notes}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr className={i < LIST_UPDATES.length - 1 ? "border-b border-hair" : ""}>
+                          <td colSpan={7} className="px-4 py-3 bg-bg-1">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                              <DetailField label="Version" value={u.version} mono />
+                              <DetailField label="Published" value={`${u.date} ${u.time} UTC`} mono />
+                              <DetailField label="Re-screen completed" value={u.screeningCompletedAt ?? "—"} mono />
+                              <DetailField
+                                label="Net change"
+                                value={`+${u.deltaAdded} added · -${u.deltaRemoved} removed`}
+                                mono
+                              />
+                              <DetailField
+                                label="Status"
+                                value={u.screeningStatus.toUpperCase()}
+                              />
+                              <DetailField label="Update ID" value={u.id} mono />
+                            </div>
+                            <div className="bg-bg-panel border border-hair-2 rounded p-3 mb-3">
+                              <div className="text-9 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
+                                Notes
+                              </div>
+                              <div className="text-12 text-ink-0 leading-relaxed">{u.notes}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {u.sourceUrl ? (
+                                <a
+                                  href={u.sourceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-brand/40 bg-brand-dim text-brand hover:border-brand/70 text-11 font-medium transition-colors"
+                                >
+                                  View on EOCN ↗
+                                </a>
+                              ) : (
+                                <span className="inline-flex items-center px-3 py-1.5 rounded border border-hair-2 text-11 text-ink-3">
+                                  No source URL — fixture entry. Set EOCN_FEED_URL to populate from live source.
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedUpdateId(null);
+                                }}
+                                className="inline-flex items-center px-3 py-1.5 rounded border border-hair-2 bg-bg-1 hover:bg-bg-2 text-11 text-ink-2 transition-colors"
+                              >
+                                Close
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -438,5 +523,31 @@ export default function EocnPage() {
       )}
 
     </ModuleLayout>
+  );
+}
+
+// Small label/value cell for the expanded list-update detail panel.
+// Mono optionally renders the value in monospace for IDs / dates /
+// version strings.
+function DetailField({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}): JSX.Element {
+  return (
+    <div>
+      <div className="text-9 font-semibold uppercase tracking-wide-3 text-ink-3 mb-0.5">
+        {label}
+      </div>
+      <div
+        className={`text-11 text-ink-0 ${mono ? "font-mono" : ""}`}
+      >
+        {value}
+      </div>
+    </div>
   );
 }

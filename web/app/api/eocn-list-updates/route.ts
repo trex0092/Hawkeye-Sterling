@@ -40,6 +40,7 @@ type ParsedUpdate = Pick<
 > & {
   deltaAdded?: number;
   deltaRemoved?: number;
+  sourceUrl?: string;
 };
 
 // HTML decoder for entities the parsers below will encounter when
@@ -120,8 +121,17 @@ function parseEocnHtml(html: string): ParsedUpdate[] {
   ];
 
   for (const block of linkBlocks) {
-    const titleRaw = block.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1] ?? "";
+    const anchorMatch = block.match(/<a\b([^>]*)>([\s\S]*?)<\/a>/i);
+    const titleRaw = anchorMatch?.[2] ?? "";
     const title = decodeEntities(titleRaw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    // Capture the href so the row's expand panel can link out to the
+    // canonical EOCN page. Resolve to absolute URL when relative.
+    const hrefMatch = anchorMatch?.[1]?.match(/href\s*=\s*["']([^"']+)["']/i);
+    const sourceUrl = hrefMatch
+      ? hrefMatch[1]!.startsWith("http")
+        ? hrefMatch[1]!
+        : `https://www.uaeiec.gov.ae${hrefMatch[1]!.startsWith("/") ? "" : "/"}${hrefMatch[1]!}`
+      : undefined;
     if (!title || title.length < 8) continue;
     // Filter chrome: skip nav links / "Click here" / Arabic-only
     // titles when no English equivalent surfaced.
@@ -151,6 +161,7 @@ function parseEocnHtml(html: string): ParsedUpdate[] {
       deltaAdded: addMatch && addMatch[1] ? Number(addMatch[1]) : 0,
       deltaRemoved: removeMatch && removeMatch[1] ? Number(removeMatch[1]) : 0,
       notes: title.slice(0, 280),
+      ...(sourceUrl ? { sourceUrl } : {}),
     });
   }
 
@@ -259,6 +270,7 @@ async function fetchUpstream(): Promise<{
       screeningStatus: "applied",
       screeningCompletedAt: `${p.date} ${p.time}`,
       notes: p.notes,
+      ...(p.sourceUrl ? { sourceUrl: p.sourceUrl } : {}),
     }));
     return { ok: true, updates, url };
   } catch (err) {
