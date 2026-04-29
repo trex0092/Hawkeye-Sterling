@@ -26,10 +26,13 @@ describe('taxonomy — invariants', () => {
   });
 
   it('catalogue is at least as large as the established floor', () => {
-    // After PR #221, src/brain matches web at 266/244/341.
-    // These floors guard against accidental shrinkage.
-    expect(SKILLS.length).toBeGreaterThanOrEqual(266);
-    expect(REASONING.length).toBeGreaterThanOrEqual(244);
-    expect(ANALYSIS.length).toBeGreaterThanOrEqual(341);
+    // After PR #221, the RAW arrays hold 266/244/341 names but the build()
+    // pipeline dedupes slug collisions, leaving 265/243/340 unique entries.
+    // These floors are the deduped counts — they guard against accidental
+    // shrinkage of the catalogue, not against new entries that happen to
+    // collide on slug.
+    expect(SKILLS.length).toBeGreaterThanOrEqual(265);
+    expect(REASONING.length).toBeGreaterThanOrEqual(243);
+    expect(ANALYSIS.length).toBeGreaterThanOrEqual(340);
   });
 });
