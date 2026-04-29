@@ -22,13 +22,15 @@ import { NETWORK_MODE_APPLIES } from './network.js';
 import { TYPOLOGY_MODE_APPLIES } from './typology.js';
 import { COMPLIANCE_MODE_APPLIES } from './compliance.js';
 import { UAE_ADVANCED_MODE_APPLIES } from './uae_advanced.js';
+import { INTEGRITY_MODE_APPLIES } from './integrity.js';
+import { COGNITIVE_GUARDS_MODE_APPLIES } from './cognitive_guards.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 // Spread order matters: later bundles override earlier for shared IDs.
-// UAE_ADVANCED_MODE_APPLIES is spread LAST so its PR #223 UAE-focused
-// implementations win over any earlier bundle if an ID collides (audit
-// confirms no current collisions; spread order is defensive).
+// COGNITIVE_GUARDS_MODE_APPLIES is spread LAST so its PR #224 anti-bias /
+// anti-hallucination implementations win over any earlier bundle if an ID
+// collides (audit confirms no current collisions; spread order is defensive).
 export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...META_MODE_APPLIES,
   ...LOGIC_MODE_APPLIES,
@@ -42,6 +44,8 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...TYPOLOGY_MODE_APPLIES,
   ...COMPLIANCE_MODE_APPLIES,
   ...UAE_ADVANCED_MODE_APPLIES,
+  ...INTEGRITY_MODE_APPLIES,
+  ...COGNITIVE_GUARDS_MODE_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */
