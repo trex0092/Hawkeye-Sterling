@@ -900,6 +900,15 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
               subject.pep?.tier ||
               null
             }
+            hasAdverseMedia={
+              superBrain.status === "success" &&
+              ((superBrain.result.adverseKeywordGroups?.length ?? 0) > 0 ||
+                (superBrain.result.adverseMedia?.length ?? 0) > 0 ||
+                (superBrain.result.adverseMediaScored?.total ?? 0) > 0)
+            }
+            adverseMediaSeverity={
+              news.status === "success" ? news.result.topSeverity : null
+            }
           />
         </Field>
       </Section>
@@ -1110,6 +1119,8 @@ function CddPostureBadge({
   hasRedline,
   isPep,
   pepTier,
+  hasAdverseMedia,
+  adverseMediaSeverity,
 }: {
   stored: "CDD" | "EDD" | "SDD";
   brainSeverity: import("@/lib/api/quickScreen.types").QuickScreenSeverity | null;
@@ -1118,14 +1129,40 @@ function CddPostureBadge({
   hasRedline: boolean;
   isPep: boolean;
   pepTier: string | null;
+  hasAdverseMedia: boolean;
+  adverseMediaSeverity:
+    | "clear"
+    | "low"
+    | "medium"
+    | "high"
+    | "critical"
+    | null;
 }) {
   const reasons: string[] = [];
   if (brainSeverity === "critical") reasons.push("critical severity");
   if (brainScore != null && brainScore >= 85) reasons.push(`composite ${brainScore}/100`);
   if (hasSanctionsHit) reasons.push("confirmed sanctions hit");
   if (hasRedline) reasons.push("redline fired");
-  if (isPep && pepTier && /tier_1|tier 1|head_of_state/i.test(pepTier)) {
-    reasons.push("tier-1 PEP");
+  // FATF R.12 / FDL 10/2025 Art.17: ANY PEP tier mandates EDD + senior-
+  // management approval, not just tier-1. Earlier logic only escalated
+  // for head-of-state-class hits, leaving tier-2/3/4 PEPs and
+  // assessment-only PEPs sitting on standard CDD.
+  if (isPep) {
+    const tierLabel = pepTier
+      ? pepTier.replace(/^tier_/, "tier ").replace(/_/g, " ")
+      : "PEP";
+    reasons.push(tierLabel);
+  }
+  // FATF R.10 / FDL 10/2025 Art.16: any positive adverse-media signal
+  // requires EDD until analyst review and live-news corroboration clear
+  // it. Severity-aware so a single LOW-severity hit doesn't carry the
+  // same weight as a HIGH/CRITICAL one in the rationale string.
+  if (hasAdverseMedia) {
+    if (adverseMediaSeverity === "critical" || adverseMediaSeverity === "high") {
+      reasons.push(`adverse media (${adverseMediaSeverity})`);
+    } else {
+      reasons.push("adverse media");
+    }
   }
 
   const upgraded = reasons.length > 0 && stored !== "EDD";
@@ -1133,7 +1170,8 @@ function CddPostureBadge({
   const zeroTolerance =
     hasSanctionsHit ||
     brainSeverity === "critical" ||
-    (hasRedline && brainScore != null && brainScore >= 85);
+    (hasRedline && brainScore != null && brainScore >= 85) ||
+    adverseMediaSeverity === "critical";
 
   return (
     <div>
