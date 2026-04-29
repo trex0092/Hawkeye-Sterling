@@ -96,6 +96,43 @@ export default async (req: Request): Promise<Response> => {
     );
   }
 
+  // Inline guard — the synchronous /api/mlro-advisor route is gated by
+  // web/lib/server/mlro-input-gate.ts before reaching here, but this
+  // background function is also reachable directly so we duplicate the
+  // length + injection checks. Can't import the shared module from a
+  // .mts function (different build context); the deeper out-of-scope
+  // classifier check is skipped here on the assumption that the page
+  // pre-validated via /api/mlro-classify. Hostile inputs that bypass
+  // the page still hit a 422.
+  if (question.length > 2000) {
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        error: `Question exceeds 2000 characters (length ${question.length}).`,
+      }),
+      { status: 413, headers: { "content-type": "application/json" } },
+    );
+  }
+  const INJECTION_RX = [
+    /ignore\s+(?:all\s+|previous\s+|your\s+)?(?:prior\s+)?instructions?/i,
+    /disregard\s+(?:all\s+|previous\s+|your\s+)?instructions?/i,
+    /forget\s+(?:everything|your\s+(?:instructions|prompt|rules))/i,
+    /(?:you\s+are\s+now|act\s+as|pretend\s+to\s+be)\s+(?:a\s+)?(?:different|free|unrestricted|jailbroken|dan)/i,
+    /\bsystem\s*[:>]\s*you\s+are/i,
+    /<\/?(?:system|assistant|user)>/i,
+    /\[\/?(?:inst|sys|system)\]/i,
+    /reveal\s+(?:your|the)\s+(?:system\s+)?prompt/i,
+  ];
+  if (INJECTION_RX.some((rx) => rx.test(question))) {
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        error: "Question contains a pattern recognised as a prompt-injection attempt.",
+      }),
+      { status: 422, headers: { "content-type": "application/json" } },
+    );
+  }
+
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     await writeJob(jobId, {

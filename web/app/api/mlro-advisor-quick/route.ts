@@ -20,6 +20,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
+import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ function buildEnrichedUserPrompt(question: string, contextPairs: ContextPair[]):
   if (analysis.fatfRecDetails.length) {
     lines.push(`FATF Recommendations anchored: ${analysis.fatfRecDetails
       .slice(0, 6)
-      .map((f) => `R.${f.num} (${f.title})`)
+      .map((f: { num: number; title: string }) => `R.${f.num} (${f.title})`)
       .join("; ")}`);
   }
   if (analysis.doctrineHints.length) lines.push(`Doctrines: ${analysis.doctrineHints.slice(0, 8).join(", ")}`);
@@ -108,10 +109,24 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  const question = body.question?.trim();
-  if (!question) {
-    return NextResponse.json({ ok: false, error: "question is required" }, { status: 400, headers: CORS });
+  // Shared input gate — refuses out-of-scope / oversize / prompt-
+  // injection / empty inputs before we burn a Haiku call.
+  const gateResult = gateMlroQuestion(body.question ?? "", {
+    maxChars: 2000,
+    allowGeneral: false,
+  });
+  if (!gateResult.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: gateResult.message,
+        reason: gateResult.reason,
+        ...(gateResult.hint ? { hint: gateResult.hint } : {}),
+      },
+      { status: gateResult.status, headers: CORS },
+    );
   }
+  const question = gateResult.question;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
