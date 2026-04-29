@@ -21,6 +21,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
+import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
+import { verifyCitations } from "@/lib/server/citation-verifier";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -195,8 +197,23 @@ export async function POST(req: Request): Promise<Response> {
       }
     }
 
+    // Confidence + citations + follow-ups — same intelligence pack
+    // the deep advisor returns, computed cheaply from the rendered
+    // answer + the rule-based classifier.
+    const advisorScore = scoreAdvisorAnswer(answer, "approved");
+    const citationReport = verifyCitations(answer);
+    const analysisLite = classifyMlroQuestion(question);
+    const suggestedFollowUps = analysisLite.suggestedFollowUps?.slice(0, 3) ?? [];
+
     return NextResponse.json(
-      { ok: true, answer, elapsedMs: Date.now() - startedAt },
+      {
+        ok: true,
+        answer,
+        elapsedMs: Date.now() - startedAt,
+        advisorScore,
+        citationReport,
+        suggestedFollowUps,
+      },
       { status: 200, headers: CORS },
     );
   } catch (err) {
