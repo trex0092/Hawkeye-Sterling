@@ -226,7 +226,8 @@ export default function TransactionMonitorPage() {
   return (
     <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
       <ModuleHeader
-            title="Transaction Monitor"
+            title="Transaction"
+            titleEm="Monitor"
             subtitle="Module 08 · MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
             dotColor="amber"
             actions={
