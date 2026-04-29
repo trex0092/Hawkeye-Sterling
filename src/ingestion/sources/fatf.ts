@@ -61,15 +61,18 @@ const FALLBACK_GREY: ReadonlyArray<{ name: string; iso2: string }> = [
   { name: 'Yemen', iso2: 'YE' },
 ];
 
-const COUNTRY_TO_ISO2: Record<string, string> = (() => {
+function buildLookup(list: ReadonlyArray<{ name: string; iso2: string }>): Record<string, string> {
   const m: Record<string, string> = {};
-  for (const c of [...FALLBACK_BLACK, ...FALLBACK_GREY]) m[c.name.toLowerCase()] = c.iso2;
+  for (const c of list) m[c.name.toLowerCase()] = c.iso2;
   return m;
-})();
+}
 
-interface ScrapedJurisdiction { name: string; iso2: string | undefined }
+const BLACK_LOOKUP: Record<string, string> = buildLookup(FALLBACK_BLACK);
+const GREY_LOOKUP: Record<string, string>  = buildLookup(FALLBACK_GREY);
 
-function scrapeJurisdictions(html: string): ScrapedJurisdiction[] {
+interface ScrapedJurisdiction { name: string; iso2: string }
+
+function scrapeJurisdictions(html: string, lookup: Record<string, string>): ScrapedJurisdiction[] {
   // Heuristic 1: <h2>/<h3>/<strong>Country</strong> markers used on FATF pages.
   const headings = [...html.matchAll(/<(?:h2|h3|strong)[^>]*>\s*([A-Z][A-Za-zÀ-ſ \-’']{2,60})\s*<\/(?:h2|h3|strong)>/g)]
     .map((m) => m[1]!.replace(/\s+/g, ' ').trim());
@@ -83,10 +86,11 @@ function scrapeJurisdictions(html: string): ScrapedJurisdiction[] {
   for (const candidate of [...headings, ...bullets]) {
     const key = candidate.toLowerCase();
     if (seen.has(key)) continue;
-    const iso2 = COUNTRY_TO_ISO2[key];
-    // Only accept candidates that match a known FATF jurisdiction. This
-    // filters out arbitrary headings like "Background" / "Public Statement"
-    // and keeps the adapter self-validating.
+    const iso2 = lookup[key];
+    // Only accept candidates that match a country in the *expected* list
+    // for this page (CFA → black, IM → grey). This filters arbitrary
+    // headings like "Background" *and* prevents grey-list names mentioned
+    // in CFA prose from being mis-classified as black-list designations.
     if (!iso2) continue;
     seen.add(key);
     out.push({ name: candidate, iso2 });
@@ -94,10 +98,10 @@ function scrapeJurisdictions(html: string): ScrapedJurisdiction[] {
   return out;
 }
 
-async function safeScrape(url: string): Promise<{ html: string; scraped: ScrapedJurisdiction[] }> {
+async function safeScrape(url: string, lookup: Record<string, string>): Promise<{ html: string; scraped: ScrapedJurisdiction[] }> {
   try {
     const html = await fetchText(url, { accept: 'text/html', timeoutMs: 30_000, retries: 1 });
-    return { html, scraped: scrapeJurisdictions(html) };
+    return { html, scraped: scrapeJurisdictions(html, lookup) };
   } catch {
     return { html: '', scraped: [] };
   }
@@ -138,15 +142,15 @@ export const fatfAdapter: SourceAdapter = {
   async fetch() {
     const fetchedAt = Date.now();
     const [cfa, im] = await Promise.all([
-      safeScrape(CALL_FOR_ACTION_URL),
-      safeScrape(INCREASED_MONITORING_URL),
+      safeScrape(CALL_FOR_ACTION_URL, BLACK_LOOKUP),
+      safeScrape(INCREASED_MONITORING_URL, GREY_LOOKUP),
     ]);
 
     const black = cfa.scraped.length > 0
-      ? cfa.scraped.map((s) => ({ name: s.name, iso2: s.iso2! }))
+      ? cfa.scraped.map((s) => ({ name: s.name, iso2: s.iso2 }))
       : FALLBACK_BLACK.map((c) => ({ ...c }));
     const grey = im.scraped.length > 0
-      ? im.scraped.map((s) => ({ name: s.name, iso2: s.iso2! }))
+      ? im.scraped.map((s) => ({ name: s.name, iso2: s.iso2 }))
       : FALLBACK_GREY.map((c) => ({ ...c }));
 
     const entities: NormalisedEntity[] = [
