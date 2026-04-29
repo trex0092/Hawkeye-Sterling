@@ -25,6 +25,7 @@ import { UAE_ADVANCED_MODE_APPLIES } from './uae_advanced.js';
 import { INTEGRITY_MODE_APPLIES } from './integrity.js';
 import { COGNITIVE_GUARDS_MODE_APPLIES } from './cognitive_guards.js';
 import { ANALYTICAL_METHODS_MODE_APPLIES } from './analytical_methods.js';
+import { STRATEGIC_LEGAL_MODE_APPLIES } from './strategic_legal.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
@@ -48,6 +49,7 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...INTEGRITY_MODE_APPLIES,
   ...COGNITIVE_GUARDS_MODE_APPLIES,
   ...ANALYTICAL_METHODS_MODE_APPLIES,
+  ...STRATEGIC_LEGAL_MODE_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */
