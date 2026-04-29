@@ -343,7 +343,7 @@ export default function EocnPage() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1 rounded border border-hair-2 text-11 font-medium text-ink-2 bg-bg-1 hover:bg-bg-2 hover:text-ink-0 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1 rounded border border-green/40 text-11 font-medium text-green bg-green-dim hover:bg-green/15 hover:border-green/60 transition-colors disabled:opacity-50"
           >
             <svg
               className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
