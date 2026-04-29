@@ -9,6 +9,14 @@ import { askComplianceQuestion } from "../../../../dist/src/integrations/complia
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
 import { verifyCitations } from "@/lib/server/citation-verifier";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import {
+  buildJurisdictionComparator,
+  buildCasePrecedentPreamble,
+  buildRegulatoryUpdatePreamble,
+  loadAdvisorSession,
+  appendAdvisorTurn,
+} from "@/lib/server/advisor-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +36,15 @@ interface Body {
   adverseGroups?: string[];
   mode?: ReasoningMode;
   audience?: "regulator" | "mlro" | "board";
-  context?: ContextPair[];  // prior Q&A pairs from the session
+  context?: ContextPair[];  // prior Q&A pairs from the session (in-memory)
+  /** When supplied, the advisor's persistent server-side session for
+   *  this key is loaded + the turn is appended after a successful
+   *  answer. Typically caseId; falls back to operator-id. Lets the
+   *  advisor pick up cross-device / cross-reload. */
+  sessionKey?: string;
+  /** Convenience alias: when the screening panel has a caseId open,
+   *  pass it through. Used as sessionKey when sessionKey isn't set. */
+  caseId?: string;
   /** Optional super-brain snapshot from the screening panel. When
    *  present, the advisor is briefed with the subject's actual
    *  composite/sanctions/PEP/AM/redlines/typology posture so the
@@ -123,6 +139,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok && gate.response.status === 429) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+  // Tenant id (defaults to "portal" for ADMIN_TOKEN portal calls,
+  // keyId per API key otherwise) drives every per-tenant lookup
+  // below: case-precedent search and persistent session storage.
+  const tenant = gate.ok ? tenantIdFromGate(gate) : "anonymous";
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
@@ -174,14 +194,50 @@ export async function POST(req: Request): Promise<NextResponse> {
   body.question = gateResult.question;
 
   // Enrich the question with conversation context + classifier pre-brief.
-  const preamble = buildContextPreamble(body.context ?? []);
+  // ── Persistent advisor session ────────────────────────────────
+  const sessionKey = body.sessionKey ?? body.caseId ?? null;
+  // Server-side session turns merged with any in-memory `context`
+  // pairs the client supplied. In-memory wins on overlap (it's the
+  // most recent state the operator saw).
+  const persistedTurns = sessionKey
+    ? await loadAdvisorSession(tenant, sessionKey)
+    : [];
+  const mergedContext: ContextPair[] = [
+    ...persistedTurns.slice(-3).map((t) => ({ q: t.q, a: t.a })),
+    ...(body.context ?? []),
+  ];
+
+  const preamble = buildContextPreamble(mergedContext);
   const subjectPreamble = buildSubjectPreamble(body.superBrain);
-  // Order matters: prior session context → subject posture → classifier
-  // anchors → question. Subject posture sits between session continuity
-  // and topic anchors so the advisor knows "this subject's facts"
-  // before "here's the framework"; question is last so the model's
-  // attention is freshest on what to actually answer.
-  const enrichedQuestion = `${preamble}${subjectPreamble}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 3500);
+
+  // ── Tier-2 augmentations ──────────────────────────────────────
+  // Each builder produces an empty string when not applicable, so
+  // the prompt isn't padded with "no signal" boilerplate.
+  const jurisdictionDirective = buildJurisdictionComparator(
+    analysis.jurisdictions ?? [],
+  );
+  const [casePrecedent, regulatoryUpdates] = await Promise.all([
+    buildCasePrecedentPreamble(tenant, {
+      jurisdiction:
+        body.jurisdiction ?? body.superBrain?.jurisdiction?.iso2,
+      hasPep: !!body.superBrain?.pep,
+      hasAdverseMedia:
+        (body.superBrain?.adverseMediaScored?.total ?? 0) > 0 ||
+        (body.superBrain?.adverseKeywordGroups?.length ?? 0) > 0,
+      hasSanctionsHit:
+        (body.superBrain?.redlines?.fired?.length ?? 0) > 0,
+      topicHints: analysis.topics ?? [],
+    }),
+    buildRegulatoryUpdatePreamble(analysis.topics ?? []),
+  ]);
+
+  // Order: session continuity → subject posture → case precedent →
+  // regulatory updates → jurisdiction directive → classifier
+  // anchors → question. Tier-2 blocks sit between subject posture
+  // (concrete) and topic anchors (general) so the model anchors on
+  // operator-specific context before drifting to framework-level
+  // guidance.
+  const enrichedQuestion = `${preamble}${subjectPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
 
   const detectedJurisdiction = body.jurisdiction
     ?? detectJurisdiction(body.question)
@@ -314,6 +370,36 @@ export async function POST(req: Request): Promise<NextResponse> {
     // operator can keep drilling without retyping.
     const suggestedFollowUps = analysis.suggestedFollowUps?.slice(0, 3) ?? [];
 
+    // Persist the turn to the operator's server-side session blob
+    // so this conversation survives reload / device switch. Skipped
+    // when no sessionKey was supplied (the advisor still works
+    // statelessly).
+    if (sessionKey && result.narrative) {
+      const tier =
+        advisorScore && advisorScore.confidenceScore >= 75
+          ? "STRONG"
+          : advisorScore && advisorScore.confidenceScore >= 45
+            ? "MEDIUM"
+            : "WEAK";
+      void appendAdvisorTurn(tenant, sessionKey, {
+        q: body.question,
+        a: result.narrative,
+        askedAt: new Date().toISOString(),
+        mode: body.mode ?? "multi_perspective",
+        scoreTier: tier,
+      }).catch((e) => console.warn("[mlro-advisor] session persist failed", e));
+    }
+
+    // Tier-2 context flags surfaced to the UI so chips / banners can
+    // render without the client re-running the same heuristics.
+    const contextFlags = {
+      sessionKey,
+      sessionTurnsLoaded: persistedTurns.length,
+      jurisdictionComparison: jurisdictionDirective.length > 0,
+      casePrecedentApplied: casePrecedent.length > 0,
+      regulatoryUpdatesApplied: regulatoryUpdates.length > 0,
+    };
+
     return NextResponse.json(
       {
         ...result,
@@ -324,6 +410,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         advisorScore,
         citationReport,
         suggestedFollowUps,
+        contextFlags,
       },
       { headers: gateHeaders },
     );

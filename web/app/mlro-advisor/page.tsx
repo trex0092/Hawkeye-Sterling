@@ -89,6 +89,17 @@ interface AdvisorResult {
   /** One-click follow-up questions derived from the rule-based
    *  classifier's per-topic suggestion list. */
   suggestedFollowUps?: string[];
+  /** Tier-2 context flags — which augmentation paths fired on this
+   *  request. Drives the small chip row above the answer so the
+   *  operator can see "case precedent loaded · 2 turns from prior
+   *  session · live EOCN signal". */
+  contextFlags?: {
+    sessionKey?: string | null;
+    sessionTurnsLoaded?: number;
+    jurisdictionComparison?: boolean;
+    casePrecedentApplied?: boolean;
+    regulatoryUpdatesApplied?: boolean;
+  };
   error?: string;
 }
 
@@ -946,6 +957,59 @@ export default function MlroAdvisorPage() {
                                   .map((c) => c.raw)
                                   .join(" · ")}
                               </div>
+                            )}
+                            {entry.result.contextFlags && (
+                              (() => {
+                                const f = entry.result.contextFlags;
+                                const chips: Array<{ label: string; tone: string; title: string }> = [];
+                                if ((f.sessionTurnsLoaded ?? 0) > 0) {
+                                  chips.push({
+                                    label: `↺ ${f.sessionTurnsLoaded} prior turn${f.sessionTurnsLoaded === 1 ? "" : "s"}`,
+                                    tone: "bg-violet-dim text-violet border-violet/30",
+                                    title: `Loaded ${f.sessionTurnsLoaded} prior turn(s) from session ${f.sessionKey ?? "?"} so the answer is continuous with your earlier conversation.`,
+                                  });
+                                }
+                                if (f.casePrecedentApplied) {
+                                  chips.push({
+                                    label: "≈ case precedent",
+                                    tone: "bg-brand-dim text-brand border-brand/30",
+                                    title: "Prior cases from your tenant's vault matched this question's signals (jurisdiction / PEP / adverse-media). The advisor was briefed with their dispositions.",
+                                  });
+                                }
+                                if (f.jurisdictionComparison) {
+                                  chips.push({
+                                    label: "⇄ multi-jurisdiction",
+                                    tone: "bg-amber-dim text-amber border-amber/30",
+                                    title: "Multiple jurisdictions detected — answer should include a comparison table with primary-source citations per jurisdiction.",
+                                  });
+                                }
+                                if (f.regulatoryUpdatesApplied) {
+                                  chips.push({
+                                    label: "🔔 live EOCN signal",
+                                    tone: "bg-green-dim text-green border-green/30",
+                                    title: "EOCN UAE published a sanctions update in the last 7 days. The advisor was briefed with the recent activity in case it affects this answer.",
+                                  });
+                                }
+                                if (chips.length === 0) return null;
+                                return (
+                                  <div className="mt-3 pt-3 border-t border-hair">
+                                    <div className="text-9 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
+                                      Context augmentation
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {chips.map((c) => (
+                                        <span
+                                          key={c.label}
+                                          className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${c.tone}`}
+                                          title={c.title}
+                                        >
+                                          {c.label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()
                             )}
                             {entry.result.suggestedFollowUps && entry.result.suggestedFollowUps.length > 0 && (
                               <div className="mt-3 pt-3 border-t border-hair">
