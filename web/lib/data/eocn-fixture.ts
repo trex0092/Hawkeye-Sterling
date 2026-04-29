@@ -23,6 +23,10 @@ export interface ListUpdate {
   screeningStatus: ListUpdateStatus;
   screeningCompletedAt?: string;
   notes: string;
+  /** Source URL on the EOCN portal — populated when the live HTML
+   *  parser extracts the announcement <a href>. Drives the
+   *  "View on EOCN" button in the row's expanded detail panel. */
+  sourceUrl?: string;
 }
 
 export interface EocnMatch {
@@ -78,6 +82,7 @@ export const EOCN_LIST_UPDATES: ListUpdate[] = [
     screeningCompletedAt: "2026-04-29 12:33",
     notes:
       "Amend of 17 Names on UNSC Sanction Committee 1988 (Taliban) — name / address / DOB updates per Cabinet Decision 74 of 2020. Re-screen completed within 4h SLA; no new customer matches.",
+    sourceUrl: "https://www.uaeiec.gov.ae/en-us/un-page",
   },
   {
     id: "LU-2025-0041",
