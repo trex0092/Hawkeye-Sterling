@@ -38,13 +38,13 @@ export const JURISDICTIONAL_CONFLICTS: JurisdictionalConflict[] = [
     regimes: ["EU_GDPR", "UAE_FDL", "UAE_DATA_LAW"],
     severity: "high",
     description:
-      "GDPR Art.17 grants data subjects a right to erasure, but UAE FDL 20/2018 Art.16 requires reporting institutions to retain CDD and transaction records for 5 years from end-of-relationship. An EU resident asking for deletion of UAE-held AML records cannot be honoured during the retention window.",
+      "GDPR Art.17 grants data subjects a right to erasure, but UAE FDL 10/2025 Art.16 (replacing the previous FDL 20/2018) requires reporting institutions to retain CDD and transaction records for 10 years from end-of-relationship. An EU resident asking for deletion of UAE-held AML records cannot be honoured during the retention window.",
     mitigation: [
       "Decline erasure under GDPR Art.17(3)(b) — compliance with a legal obligation under the law of a Member State or third-country law to which the controller is subject.",
       "Document the rejection with the specific UAE FDL/AML basis and inform the data subject of the retention period in writing.",
       "On retention expiry, purge or anonymise the records and confirm in writing.",
     ],
-    authorities: ["EU GDPR Art.17", "UAE FDL 20/2018 Art.16", "UAE PDPL 45/2021 Art.12"],
+    authorities: ["EU GDPR Art.17", "UAE FDL 10/2025 Art.16", "UAE PDPL 45/2021 Art.12"],
   },
   {
     id: "csddd_vs_uae_supplier_engagement",
@@ -60,7 +60,7 @@ export const JURISDICTIONAL_CONFLICTS: JurisdictionalConflict[] = [
       "If only the human-rights score is high, follow CSDDD remediation; do not de-risk.",
       "Record the rationale and scoring methodology in the file before any action.",
     ],
-    authorities: ["EU CSDDD (Directive 2024/1760)", "FATF Recommendation 1", "UAE FDL 20/2018"],
+    authorities: ["EU CSDDD (Directive 2024/1760)", "FATF Recommendation 1", "UAE FDL 10/2025"],
   },
   {
     id: "fatf_tipping_off_vs_eu_amld_disclosure",
@@ -69,13 +69,13 @@ export const JURISDICTIONAL_CONFLICTS: JurisdictionalConflict[] = [
     regimes: ["FATF", "UAE_FDL", "EU_AMLD"],
     severity: "high",
     description:
-      "FATF R.21 and UAE FDL 20/2018 Art.25 criminalise tipping-off — disclosing to a subject that an STR has been or will be filed. Under EU 5AMLD/6AMLD, customers have certain access rights. Confirming an STR filing in response to a subject-access request would breach the tipping-off prohibition.",
+      "FATF R.21 and UAE FDL 10/2025 Art.25 criminalise tipping-off — disclosing to a subject that an STR has been or will be filed. Under EU 5AMLD/6AMLD, customers have certain access rights. Confirming an STR filing in response to a subject-access request would breach the tipping-off prohibition.",
     mitigation: [
       "Treat any subject-access request mentioning suspicion, STR, FIU, or goAML as in-scope of the tipping-off rule.",
       "Respond using the standard exempt-records language; never confirm or deny an STR exists.",
       "Refer the request to the MLRO and FIU liaison before any reply leaves the institution.",
     ],
-    authorities: ["FATF R.21 (INR.21)", "UAE FDL 20/2018 Art.25", "EU 5AMLD Art.41"],
+    authorities: ["FATF R.21 (INR.21)", "UAE FDL 10/2025 Art.25", "EU 5AMLD Art.41"],
   },
   {
     id: "ofac_sdn_vs_uae_eocn_overlap",
@@ -91,7 +91,7 @@ export const JURISDICTIONAL_CONFLICTS: JurisdictionalConflict[] = [
       "On OFAC SDN hit only: do not freeze under UAE law, but conduct EDD, restrict USD correspondent activity, and consider exit under risk-based approach.",
       "Document the regime-by-regime decision in the case file.",
     ],
-    authorities: ["UN Consolidated List", "OFAC SDN List", "UAE EOCN guidance", "UAE FDL 20/2018"],
+    authorities: ["UN Consolidated List", "OFAC SDN List", "UAE EOCN guidance", "UAE FDL 10/2025"],
   },
   {
     id: "fatf_r10_vs_uae_lite_kyc_thresholds",
