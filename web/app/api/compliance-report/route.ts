@@ -132,25 +132,231 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ),
   ];
 
-  // Recommendation
-  let rec = "";
-  if (sev === "critical") {
-    rec = "FREEZE — freeze in-flight funds and pending transactions, file FFR via goAML within 5 business days, notify EOCN, refuse the relationship, and escalate to CEO and Board Chair.";
-  } else if (sev === "high") {
-    rec = "Escalate to MLRO, open Enhanced Due Diligence, and defer clearance pending analyst review of source-of-wealth and source-of-funds.";
-  } else if (amCount > 0) {
-    rec = "Defer clearance pending (a) live-news corroboration, (b) analyst review of underlying reporting, and (c) enrolment in ongoing screening at thrice-daily cadence.";
-  } else {
-    rec = "Proceed with standard CDD. Subject enrolled in ongoing screening (thrice-daily — 08:30 / 15:00 / 17:30 Dubai) and any delta will be filed to the MLRO automatically.";
+  // Recommendation type — derived from the same hierarchy used by the
+  // canonical text builder. Hoisted here so the findings-summary card
+  // and disposition labels above can reference it.
+  //   r.hits > 0      → SANCTIONS  (FFR pathway)
+  //   pepTier present → PEP        (EDD + Board approval)
+  //   amCount > 0     → AM         (SAR pathway + 24-month review)
+  //   else            → STANDARD   (CDD)
+  const recType: "SANCTIONS" | "PEP" | "AM" | "STANDARD" =
+    r.hits.length > 0
+      ? "SANCTIONS"
+      : pepTier
+        ? "PEP"
+        : amCount > 0
+          ? "AM"
+          : "STANDARD";
+
+  // News evidence — surface up to 6 articles inline with clickable
+  // links. Earlier versions of this PDF rendered keyword categories
+  // alone with no source attribution; an MLRO defending an AM-positive
+  // disposition needs the actual articles in the file.
+  const newsArticles = sb?.newsDossier?.articles ?? [];
+  const newsRows = newsArticles
+    .slice(0, 6)
+    .map((a) => {
+      const sevChip = a.severity
+        ? `<span class="chip chip-${a.severity === "critical" || a.severity === "high" ? "red" : a.severity === "medium" ? "amber" : "green"}">${e(a.severity.toUpperCase())}</span>`
+        : "";
+      const kw = (a.keywordGroups ?? []).slice(0, 3).join(" · ");
+      const dateBit = a.pubDate ? `<span>${e(a.pubDate)}</span>` : "";
+      const snippet = a.snippet
+        ? `<div class="news-snippet">${e(a.snippet.length > 200 ? a.snippet.slice(0, 200) + "…" : a.snippet)}</div>`
+        : "";
+      return `<div class="news-item">
+        <div class="news-meta">${sevChip}<span class="news-source">${e(a.source ?? "—")}</span>${dateBit}${kw ? `<span class="muted">· ${e(kw)}</span>` : ""}</div>
+        <div class="news-title">${e(a.title)}</div>
+        ${snippet}
+        ${a.link ? `<a class="news-link" href="${e(a.link)}" target="_blank" rel="noopener noreferrer">${e(a.link)}</a>` : ""}
+      </div>`;
+    })
+    .join("");
+  const newsOverflow =
+    newsArticles.length > 6
+      ? `<div class="news-overflow">…and ${newsArticles.length - 6} more article(s) — full dossier in JSON sidecar / .txt export.</div>`
+      : "";
+
+  // Findings summary — at-a-glance card just under the subject. Lets
+  // a regulator scan the disposition + signals on page 1 without
+  // reading the matrix.
+  const dispositionLabel =
+    recType === "SANCTIONS"
+      ? "ESCALATE — possible sanctions match"
+      : recType === "PEP"
+        ? "EDD — PEP classification"
+        : recType === "AM"
+          ? "ESCALATE — adverse-media positive"
+          : "CDD posture — periodic review";
+  const dispositionTone =
+    recType === "SANCTIONS" || recType === "AM"
+      ? "alert"
+      : recType === "PEP"
+        ? "warn"
+        : "";
+  const summaryBullets: string[] = [];
+  summaryBullets.push(
+    `<strong>Composite ${composite}/100 (${e(sev.toUpperCase())})</strong> — sanctions ${r.topScore}/100${r.hits.length ? ` · ${r.hits.length} hit(s)` : " · CLEAR"}`,
+  );
+  if (pepTier) {
+    summaryBullets.push(`<strong>PEP</strong> — ${e(pepTier.replace(/^tier_/, "tier ").replace(/_/g, " "))}`);
+  }
+  if (amCount > 0) {
+    const totalHits =
+      sb?.adverseMediaScored?.total ??
+      (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+        (sb?.adverseMedia?.length ?? 0);
+    const cats =
+      sb?.adverseMediaScored?.categoriesTripped?.length ??
+      new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)).size;
+    summaryBullets.push(
+      `<strong>Adverse media</strong> — ${totalHits} keyword hit(s) across ${cats} categor${cats === 1 ? "y" : "ies"}${newsArticles.length > 0 ? ` · ${newsArticles.length} article(s) in dossier` : ""}`,
+    );
+  }
+  if (sb?.jurisdiction) {
+    summaryBullets.push(
+      `<strong>Jurisdiction</strong> — ${e(sb.jurisdiction.name)} (${e(sb.jurisdiction.iso2)})${sb.jurisdiction.cahra ? " · CAHRA" : ""}${sb.jurisdiction.regimes.length ? ` · ${sb.jurisdiction.regimes.length} regime(s)` : ""}`,
+    );
+  }
+  const redlineCount = sb?.redlines?.fired?.length ?? 0;
+  if (redlineCount > 0) {
+    summaryBullets.push(
+      `<strong>Redlines</strong> — ${redlineCount} fired${sb?.redlines?.action ? ` → ${e(sb.redlines.action)}` : ""}`,
+    );
   }
 
-  const recRows = [
-    `► ${rec}`,
-    sev === "clear" || sev === "low" ? "► PROCEED WITH STANDARD CDD" : "",
-    sev === "clear" || sev === "low" ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
-    "► NO goAML FILING REQUIRED",
-    "► STANDARD ONGOING MONITORING",
-  ].filter(Boolean).map(line => `<div class="rec-line">${e(line)}</div>`).join("");
+  // Recommendation — type-aware. recType already computed above, so the
+  // HTML render and the news-evidence / findings-summary cards all share
+  // the same disposition class.
+  const RECS: Record<typeof recType, string[]> = {
+    SANCTIONS: [
+      "ESCALATE TO MLRO IMMEDIATELY — possible sanctions match detected",
+      "SUSPEND ONBOARDING / HALT IN-FLIGHT TRANSACTIONS pending MLRO decision",
+      "VERIFY MATCH IDENTITY before any freezing or filing action",
+      "IF MATCH CONFIRMED: freeze in-flight funds, file FFR via goAML within 5 business days, notify EOCN, escalate to CEO + Board Chair",
+      "TIPPING-OFF PROHIBITION ABSOLUTE — do not alert the subject",
+    ],
+    PEP: [
+      "ENHANCED DUE DILIGENCE (EDD) per FATF R.12 / FDL 10/2025 Art.17",
+      "ESCALATE TO CEO AND BOARD CHAIR FOR APPROVAL DECISION",
+      "NO goAML FILING ON PEP STATUS ALONE",
+      "CONDITIONAL STR IF EDD REVEALS SoF / SoW INCONSISTENCY",
+      "RECOMMEND CONSIDER DECLINING ON REPUTATIONAL-RISK GROUNDS",
+    ],
+    AM: [
+      "IMMEDIATE ESCALATION TO MLRO",
+      "ENHANCED DUE DILIGENCE (EDD) per FATF R.10 / FDL 10/2025 Art.16",
+      "24-MONTH RETROSPECTIVE TRANSACTION REVIEW",
+      "CONSIDER SOURCING SUSPENSION PENDING INVESTIGATION",
+      "SAR IF CONSTRUCTIVE-KNOWLEDGE THRESHOLD CROSSED (FDL 10/2025 Art.2(3))",
+      "TIPPING-OFF PROHIBITION ABSOLUTE",
+    ],
+    STANDARD: [
+      "PROCEED WITH STANDARD CDD",
+      "SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES",
+      "NO goAML FILING REQUIRED",
+      "STANDARD ONGOING MONITORING (thrice-daily — 08:30 / 15:00 / 17:30 Dubai)",
+    ],
+  };
+  const recRows = RECS[recType]
+    .map((line) => `<div class="rec-line">► ${e(line)}</div>`)
+    .join("");
+
+  // MLRO decision checklist — also type-aware. Generic 4-option list
+  // before would let an MLRO sign off on Standard CDD for an AM-positive
+  // subject by accident; now the options match the recommendation.
+  const DECISION_OPTIONS: Record<typeof recType, string[]> = {
+    SANCTIONS: [
+      "Match CONFIRMED — freeze + FFR + parallel SAR + notify EOCN / MoE",
+      "Match REJECTED — false positive; document rationale",
+      "Modify recommended action — record reason",
+      "Escalate to CEO + Board Chair before action",
+    ],
+    PEP: [
+      "Accept recommendation — proceed to EDD + Board review",
+      "Decline relationship — document rationale",
+      "Escalate for policy-level decision",
+      "Override to Standard CDD — record reason (rare)",
+    ],
+    AM: [
+      "Accept recommendation — submit SAR + suspend sourcing",
+      "Submit SAR with modifications — record rationale",
+      "Escalate to Board before SAR submission",
+      "Reject as false-positive — document evidence",
+    ],
+    STANDARD: [
+      "Apply Standard CDD — proceed",
+      "Apply SDD — proceed",
+      "Override to EDD — record reason",
+      "File STR via goAML",
+    ],
+  };
+  const decisionRows = DECISION_OPTIONS[recType]
+    .map(
+      (label) =>
+        `<div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">${e(label)}</div></div>`,
+    )
+    .join("");
+
+  // Extract audit fields directly from the canonical text the report
+  // module already produced. This way the PDF's audit panel can never
+  // disagree with the .txt download — both render from the same source
+  // of truth, just in different presentations.
+  const grab = (re: RegExp): string => text.match(re)?.[1]?.trim() ?? "";
+  const runId = grab(/reasoning\.run_id\s+(\S+)/);
+  const generatedAt = grab(/brain\.generated_at\s+(\S+)/);
+  const engineVersion = grab(/brain\.engine_version\s+(\S+)/);
+  const schemaVersion = grab(/report\.schema_version\s+(\S+)/);
+  const buildSha = grab(/brain\.build_sha\s+(\S+)/);
+  const dataFreshness = grab(/brain\.data_freshness\s+(.+)/);
+  const operatorRole = grab(/operator\.role\s+(.+)/);
+  const payloadSha = grab(/payload\.sha256\s+([a-f0-9]+)/);
+  const reportSha = grab(/report\.sha256\s+([a-f0-9]+)/);
+  const hmacSig = grab(/report\.signature\s+hmac-sha256:([a-f0-9]+)/);
+  const hmacFp = grab(/signing\.key_fp\s+([a-f0-9]+)/);
+  const edSig = grab(/report\.signature_ed25519\s+([a-f0-9]+)/);
+  const edFp = grab(/signing\.pubkey_fp\s+([a-f0-9]+)/);
+
+  const auditCell = (label: string, value: string): string =>
+    value
+      ? `<div class="audit-row"><span class="audit-label">${e(label)}</span><span class="audit-value">${e(value)}</span></div>`
+      : "";
+  const auditGridRows = [
+    auditCell("Run ID", runId),
+    auditCell("Brain generated", generatedAt),
+    auditCell("Engine version", engineVersion),
+    auditCell("Schema version", schemaVersion),
+    auditCell("Build SHA", buildSha),
+    auditCell("Operator", operatorRole),
+    auditCell("Data freshness", dataFreshness),
+    auditCell("Payload SHA-256", payloadSha),
+    auditCell("Report SHA-256", reportSha),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  const signatureBlock =
+    hmacSig || edSig
+      ? `<div class="audit-signatures">
+          <div class="audit-sig-title">Signatures</div>
+          ${
+            hmacSig
+              ? `<div class="audit-sig"><span class="audit-sig-label">HMAC-SHA256</span><span class="audit-sig-fp">key fp ${e(hmacFp)}</span><code class="audit-sig-hex">${e(hmacSig)}</code></div>`
+              : ""
+          }
+          ${
+            edSig
+              ? `<div class="audit-sig"><span class="audit-sig-label">Ed25519</span><span class="audit-sig-fp">pubkey fp ${e(edFp)}</span><code class="audit-sig-hex">${e(edSig)}</code></div>`
+              : ""
+          }
+        </div>`
+      : "";
+
+  const integrityNote = `${
+    hmacSig || edSig
+      ? "Both signatures cover report.sha256. Verify externally with the matching key — recipes in the .txt export."
+      : "Report is hash-protected (SHA-256) but unsigned. Set REPORT_SIGNING_KEY and/or REPORT_ED25519_PRIVATE_KEY to enable authenticity proof."
+  } All timestamps are UTC unless otherwise noted.`;
 
   const regFramework = [
     "Federal Decree-Law No. (10) of 2025 — UAE AML/CFT/CPF primary law",
@@ -189,143 +395,205 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       --amber-dim: rgba(245,158,11,.12);
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{background:var(--bg);color:var(--ink1);font-family:"Courier New",ui-monospace,monospace;font-size:12px;line-height:1.6}
-    body{padding:32px 40px;max-width:900px;margin:0 auto}
+    html,body{background:var(--bg);color:var(--ink1);font-family:"Inter","Helvetica Neue",-apple-system,BlinkMacSystemFont,Arial,sans-serif;font-size:11px;line-height:1.5}
+    body{padding:18px 24px;max-width:900px;margin:0 auto}
 
     /* toolbar */
-    .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:28px}
-    .toolbar button{font:inherit;padding:7px 16px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--ink1);cursor:pointer;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+    .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:14px}
+    .toolbar button{font:inherit;padding:6px 14px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--ink1);cursor:pointer;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase}
     .toolbar button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
     .toolbar button:hover{opacity:.85}
 
-    /* header */
-    .report-header{border:1px solid var(--border);border-top:3px solid var(--brand);border-radius:6px;background:var(--card);padding:24px 28px;margin-bottom:20px}
-    .report-header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-    .logo{font-size:18px;font-weight:700;color:var(--ink0);letter-spacing:.06em}
-    .logo span{color:var(--brand)}
-    .report-id{font-size:10px;color:var(--ink3);text-align:right;line-height:1.8}
-    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 32px}
-    .meta-row{display:flex;gap:8px}
-    .meta-label{color:var(--ink3);min-width:140px;flex-shrink:0}
+    /* header — compact, premium */
+    .report-header{border:1px solid var(--border);border-top:2px solid var(--brand);border-radius:5px;background:var(--card);padding:14px 18px;margin-bottom:12px}
+    .report-header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .logo{font-size:15px;font-weight:700;color:var(--ink0);letter-spacing:.08em}
+    .logo span{color:var(--brand);font-weight:300;font-style:italic}
+    .report-id{font-size:9.5px;color:var(--ink3);text-align:right;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 24px}
+    .meta-row{display:flex;gap:8px;font-size:10.5px}
+    .meta-label{color:var(--ink3);min-width:110px;flex-shrink:0;text-transform:uppercase;letter-spacing:.05em;font-size:9.5px}
     .meta-value{color:var(--ink1)}
 
-    /* subject */
-    .subject-block{background:var(--brand-dim);border:1px solid var(--brand);border-radius:6px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start}
-    .subject-name{font-size:18px;font-weight:700;color:var(--ink0);letter-spacing:.02em;margin-bottom:4px}
-    .subject-meta{color:var(--ink2);font-size:11px}
-    .sev-badge{padding:6px 14px;border-radius:4px;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid;align-self:flex-start}
+    /* subject — compact card with composite as the hero */
+    .subject-block{background:linear-gradient(180deg,var(--brand-dim) 0%,transparent 100%);border:1px solid var(--brand);border-radius:5px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+    .subject-name{font-size:17px;font-weight:700;color:var(--ink0);letter-spacing:.01em;margin-bottom:2px}
+    .subject-meta{color:var(--ink2);font-size:10.5px}
+    .sev-badge{padding:4px 11px;border-radius:3px;font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;border:1px solid;align-self:flex-start}
 
-    /* sections */
-    .section{margin-bottom:20px}
-    .section-title{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--brand);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+    /* findings summary — at-a-glance card just under the subject */
+    .summary{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+      margin-bottom:14px;
+    }
+    .summary-card{
+      border:1px solid var(--border);border-radius:5px;background:var(--card);
+      padding:8px 11px;
+    }
+    .summary-card.alert{border-color:var(--red);background:var(--red-dim)}
+    .summary-card.warn{border-color:var(--amber);background:var(--amber-dim)}
+    .summary-label{font-size:8.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:3px;font-weight:600}
+    .summary-value{font-size:14px;font-weight:700;color:var(--ink0);line-height:1.2}
+    .summary-card.alert .summary-value{color:var(--red)}
+    .summary-card.warn .summary-value{color:var(--amber)}
+    .summary-detail{font-size:9.5px;color:var(--ink2);margin-top:2px}
+    .summary-bullets{
+      grid-column:1/-1;
+      border:1px solid var(--border);border-left:3px solid var(--brand);
+      background:var(--card);border-radius:4px;
+      padding:9px 14px;font-size:10.5px;color:var(--ink1);line-height:1.6;
+      margin-top:2px;
+    }
+    .summary-bullets strong{color:var(--ink0)}
 
-    /* screening matrix table */
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    th{text-align:left;color:var(--ink3);font-weight:600;letter-spacing:.08em;font-size:9px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border)}
-    td{padding:7px 10px;border-bottom:1px solid var(--border)}
+    /* sections — tighter spacing */
+    .section{margin-bottom:12px}
+    .section-title{font-size:8.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--brand);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+    /* screening matrix table — denser */
+    table{width:100%;border-collapse:collapse;font-size:10.5px}
+    th{text-align:left;color:var(--ink3);font-weight:600;letter-spacing:.08em;font-size:8.5px;text-transform:uppercase;padding:4px 8px;border-bottom:1px solid var(--border)}
+    td{padding:4px 8px;border-bottom:1px solid var(--border)}
     tr:last-child td{border-bottom:none}
     tr:hover td{background:rgba(255,255,255,.02)}
     .muted{color:var(--ink3)}
-    .mono{font-family:"Courier New",monospace}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px}
 
     /* risk bar */
-    .risk-bar-wrap{background:var(--border);border-radius:2px;height:6px;margin-top:8px;overflow:hidden}
+    .risk-bar-wrap{background:var(--border);border-radius:2px;height:5px;margin-top:5px;overflow:hidden}
     .risk-bar{height:100%;border-radius:2px;transition:width .3s}
 
     /* jurisdiction */
-    .jur-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px}
+    .jur-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:10.5px}
 
     /* chips */
-    .chip{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+    .chip{display:inline-block;padding:1.5px 7px;border-radius:3px;font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
     .chip-red{background:var(--red-dim);color:var(--red)}
     .chip-amber{background:var(--amber-dim);color:var(--amber)}
     .chip-green{background:var(--green-dim);color:var(--green)}
     .chip-brand{background:var(--brand-dim);color:var(--brand)}
 
-    /* adverse media list */
-    .am-list{list-style:none;display:flex;flex-direction:column;gap:5px}
-    .am-list li{display:flex;align-items:center;gap:8px}
+    /* adverse media list — compact */
+    .am-list{list-style:none;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:10.5px}
+    .am-list li{display:flex;align-items:center;gap:6px}
+
+    /* news evidence — clickable article cards */
+    .news-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    .news-item{
+      border:1px solid var(--border);border-left:2px solid var(--brand);
+      border-radius:4px;background:var(--card);
+      padding:7px 10px;
+    }
+    .news-meta{display:flex;gap:8px;align-items:center;font-size:9.5px;color:var(--ink3);margin-bottom:2px}
+    .news-source{font-weight:600;color:var(--ink2)}
+    .news-title{font-size:11px;font-weight:600;color:var(--ink0);line-height:1.4;margin-bottom:2px}
+    .news-snippet{font-size:10px;color:var(--ink2);line-height:1.45;margin-top:3px}
+    .news-link{font-size:9.5px;color:var(--brand);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-decoration:none;word-break:break-all}
+    .news-link:hover{text-decoration:underline}
+    .news-overflow{font-size:9.5px;color:var(--ink3);font-style:italic;padding:4px 0}
 
     /* recommendation */
-    .rec-line{padding:5px 0;border-bottom:1px solid var(--border);color:var(--ink0);font-size:11px}
+    .rec-line{padding:4px 0;border-bottom:1px solid var(--border);color:var(--ink0);font-size:10.5px;line-height:1.5}
     .rec-line:last-child{border-bottom:none}
 
-    /* decision checkboxes */
-    .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .checkbox-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:4px;background:var(--card)}
-    .checkbox-box{width:14px;height:14px;border:1.5px solid var(--ink3);border-radius:2px;flex-shrink:0}
-    .checkbox-label{font-size:11px;color:var(--ink1)}
+    /* decision checkboxes — denser */
+    .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .checkbox-item{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:4px;background:var(--card)}
+    .checkbox-box{width:12px;height:12px;border:1.5px solid var(--ink3);border-radius:2px;flex-shrink:0}
+    .checkbox-label{font-size:10.5px;color:var(--ink1);line-height:1.4}
 
     /* signature */
-    .sig-block{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .sig-line{border-bottom:1px solid var(--ink3);margin-top:24px;margin-bottom:4px}
-    .sig-label{font-size:10px;color:var(--ink3)}
+    .sig-block{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+    .sig-line{border-bottom:1px solid var(--ink3);margin-top:18px;margin-bottom:3px}
+    .sig-label{font-size:9.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
 
-    /* legal list */
-    .reg-list{list-style:none;display:flex;flex-direction:column;gap:4px}
-    .reg-list li{font-size:10.5px;color:var(--ink2);padding-left:12px;position:relative}
+    /* legal list — denser */
+    .reg-list{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:2px 18px}
+    .reg-list li{font-size:9.5px;color:var(--ink2);padding-left:10px;position:relative;line-height:1.5}
     .reg-list li::before{content:"—";position:absolute;left:0;color:var(--ink3)}
 
     /* footer */
-    .footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--ink3)}
+    .footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:9px;color:var(--ink3)}
 
-    /* canonical body — full text report, byte-identical to .txt
-       output. Carries the audit trail and SHA hashes so the PDF
-       and the .txt are interchangeable for regulator filing. */
-    .canonical{
-      margin-top:24px;
-      padding:14px 16px;
+    /* audit panel — hashes / signatures / provenance, rendered
+       visually in the PDF. Same fields the .txt export carries
+       in monospace, but laid out so the PDF stays presentable
+       and the .txt remains the canonical / hash-covered form. */
+    .audit-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:6px 18px;
+      padding:12px 14px;
       background:var(--card);
       border:1px solid var(--border);
       border-radius:5px;
+      margin-bottom:10px;
+    }
+    .audit-row{display:flex;justify-content:space-between;gap:12px;font-size:10.5px;line-height:1.5}
+    .audit-label{color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;font-size:9.5px;flex-shrink:0}
+    .audit-value{
+      color:var(--ink1);
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
       font-size:10px;
-      line-height:1.45;
-      color:var(--ink1);
-      white-space:pre-wrap;
-      word-break:break-word;
-      page-break-inside:auto;
+      text-align:right;
+      word-break:break-all;
+      max-width:60%;
     }
-    .canonical-title{
-      font-size:9px;text-transform:uppercase;letter-spacing:.08em;
-      color:var(--ink3);margin:18px 0 4px;
+    .audit-signatures{
+      padding:12px 14px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:5px;
+      margin-bottom:10px;
     }
-    .canonical a{color:var(--brand);text-decoration:none}
-    .canonical a:hover{text-decoration:underline}
+    .audit-sig-title{
+      font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;
+      color:var(--ink3);margin-bottom:6px;
+    }
+    .audit-sig{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border)}
+    .audit-sig:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+    .audit-sig-label{font-size:10.5px;font-weight:600;color:var(--brand)}
+    .audit-sig-fp{font-size:9.5px;color:var(--ink3);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .audit-sig-hex{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:9px;color:var(--ink1);word-break:break-all;
+    }
+    .audit-note{font-size:10px;color:var(--ink3);line-height:1.5;margin-top:6px}
 
     /* print overrides — white background for paper, page numbers,
        running brand header so every page carries the report id. */
     @media print {
-      :root{--bg:#fff;--card:#f8f8f8;--border:#ddd;--ink0:#000;--ink1:#222;--ink2:#555;--ink3:#888;--brand:#c0156a;--brand-dim:rgba(192,21,106,.08)}
-      body{background:#fff;color:#222;padding:16px 20px}
+      :root{--bg:#fff;--card:#fafafa;--border:#e2e2e6;--ink0:#0c0c0e;--ink1:#1f1f24;--ink2:#525258;--ink3:#8a8a92;--brand:#c0156a;--brand-dim:rgba(192,21,106,.05);--green:#1f9d52;--green-dim:rgba(31,157,82,.06);--red:#c0392b;--red-dim:rgba(192,57,43,.06);--amber:#b76f00;--amber-dim:rgba(183,111,0,.06)}
+      body{background:#fff;color:#1f1f24;padding:6px 8px}
       .toolbar{display:none}
-      .canonical{font-size:9.5px;background:#fff;border-color:#ddd}
-      .canonical a{color:#222;text-decoration:underline}
+      .news-link{color:var(--brand)}
+      .summary-card.alert{background:var(--red-dim)}
+      .summary-card.warn{background:var(--amber-dim)}
       @page{
-        margin:18mm 16mm;
+        margin:10mm 11mm 12mm 11mm;
         @top-left{
           content:"HAWKEYE STERLING — confidential";
           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          font-size:8px;color:#888;
         }
         @top-right{
           content:"${e(reportId)}";
           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          font-size:8px;color:#888;
         }
         @bottom-right{
           content:"page " counter(page) " of " counter(pages);
           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          font-size:8px;color:#888;
         }
         @bottom-left{
           content:"10-year retention · FDL 10/2025";
           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          font-size:8px;color:#888;
         }
       }
       /* avoid splitting key blocks across pages */
-      .section,.subject-block,.report-header{page-break-inside:avoid}
+      .section,.subject-block,.report-header,.summary,.news-item{page-break-inside:avoid}
     }
   </style>
 </head>
@@ -376,6 +644,32 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     </div>
   </div>
 
+  <!-- FINDINGS SUMMARY -->
+  <div class="summary">
+    <div class="summary-card ${dispositionTone}">
+      <div class="summary-label">Disposition</div>
+      <div class="summary-value" style="font-size:11.5px">${e(dispositionLabel)}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Composite</div>
+      <div class="summary-value">${composite}/100</div>
+      <div class="summary-detail">${e(sev.toUpperCase())} band</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Sanctions</div>
+      <div class="summary-value">${r.hits.length === 0 ? "CLEAR" : `${r.hits.length} hit${r.hits.length === 1 ? "" : "s"}`}</div>
+      <div class="summary-detail">top ${r.topScore}/100</div>
+    </div>
+    <div class="summary-card${amCount > 0 ? " warn" : ""}">
+      <div class="summary-label">Adverse media</div>
+      <div class="summary-value">${amCount === 0 ? "CLEAR" : amCount + " cat" + (amCount === 1 ? "" : "s")}</div>
+      <div class="summary-detail">${newsArticles.length > 0 ? `${newsArticles.length} article${newsArticles.length === 1 ? "" : "s"}` : "no news dossier"}</div>
+    </div>
+    <div class="summary-bullets">
+      ${summaryBullets.map((b) => `• ${b}`).join("<br/>")}
+    </div>
+  </div>
+
   <!-- SCREENING MATRIX -->
   <div class="section">
     <div class="section-title">Screening Result Matrix</div>
@@ -422,17 +716,18 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <!-- ADVERSE MEDIA -->
   ${amRows.length > 0 ? `
   <div class="section">
-    <div class="section-title">Adverse Media Overlay</div>
+    <div class="section-title">Adverse Media — Findings &amp; Evidence</div>
     <ul class="am-list">${amRows.join("")}</ul>
+    ${newsRows ? `<div style="margin-top:10px"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:5px;font-weight:600">News dossier ${newsArticles.length} article(s)${sb?.newsDossier?.source ? ` · ${e(sb.newsDossier.source)}` : ""}${sb?.newsDossier?.languages?.length ? ` · ${e(sb.newsDossier.languages.join(", "))}` : ""}</div><div class="news-list">${newsRows}</div>${newsOverflow}</div>` : ""}
   </div>` : ""}
 
   <!-- FACTS -->
   <div class="section">
     <div class="section-title">1. Facts</div>
-    <p style="color:var(--ink1);font-size:11.5px;line-height:1.7">
+    <p style="color:var(--ink1);font-size:10.5px;line-height:1.6">
       On ${e(now.toUTCString().replace(" GMT", " UTC"))}, Hawkeye Sterling screened the ${e(s.entityType)} <strong style="color:var(--ink0)">${e(s.name)}</strong>${s.nationality ? ` (${e(s.nationality)} national)` : ""}${s.caseId ? ` under case ${e(s.caseId)}` : ""}, returning a composite risk score of <strong style="color:${sevColor}">${composite}/100</strong> (band: ${e(sev.toUpperCase())}).
       The sanctions vector ${r.hits.length === 0 ? `returned <strong>CLEAR</strong> (0 hits across the screened corpora)` : `returned <strong>${r.hits.length}</strong> possible match(es) at top match strength ${r.topScore}/100 — a name-similarity result does not constitute a confirmed designation`}.
-      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"} — see canonical body below for full findings.` : ""}
+      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"} — see findings section above for evidence.` : ""}
       ${pepTier ? `Subject classified as possible PEP (${e(pepTier)}) — requires independent verification.` : ""}
     </p>
   </div>
@@ -440,7 +735,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <!-- ANALYSIS -->
   <div class="section">
     <div class="section-title">2. Analysis</div>
-    <p style="color:var(--ink1);font-size:11.5px;line-height:1.7">
+    <p style="color:var(--ink1);font-size:10.5px;line-height:1.6">
       The composite score sits in the <strong style="color:${sevColor}">${e(sev)}</strong> band.
       ${r.hits.length > 0 ? `Possible matches concentrate on ${Array.from(new Set(r.hits.map(h => h.listId))).map(l => `<span class="chip chip-red">${e(l)}</span>`).join(" ")}.` : "The subject does not appear on any monitored sanctions regime."}
       ${sb?.jurisdiction ? `Jurisdictional risk for ${e(sb.jurisdiction.name)} is assessed as ${sb.jurisdiction.cahra ? '<span class="chip chip-red">CAHRA</span>' : "non-CAHRA"}.` : ""}
@@ -460,10 +755,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <div class="section">
     <div class="section-title">MLRO Decision</div>
     <div class="decision-grid">
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">Apply Standard CDD — proceed</div></div>
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">Apply SDD — proceed</div></div>
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">Override to EDD — record reason</div></div>
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">File STR via goAML</div></div>
+      ${decisionRows}
     </div>
     <div class="sig-block">
       <div>
@@ -483,9 +775,15 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     <ul class="reg-list">${regFramework}</ul>
   </div>
 
-  <!-- CANONICAL TEXT BODY -->
-  <div class="canonical-title">Canonical report body (text-identical to .txt export — covered by report.sha256)</div>
-  <pre class="canonical">${autolinkUrls(escapeHtml(text))}</pre>
+  <!-- AUDIT TRAIL & INTEGRITY -->
+  <div class="section">
+    <div class="section-title">Audit trail &amp; integrity</div>
+    <div class="audit-grid">
+      ${auditGridRows}
+    </div>
+    ${signatureBlock}
+    <div class="audit-note">${e(integrityNote)}</div>
+  </div>
 
   <!-- FOOTER -->
   <div class="footer">
