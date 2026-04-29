@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import type { QuickScreenResponse } from "@/lib/api/quickScreen.types";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type Tier = "tier-1" | "tier-2" | "tier-3";
@@ -10,6 +11,11 @@ interface ScreeningHit {
   listId: string;
   candidateName: string;
   score: number;
+}
+
+interface ScreeningError {
+  message: string;
+  detail?: string;
 }
 
 interface Draft {
@@ -59,28 +65,58 @@ const STEPS: Array<{ id: Step; label: string; sub: string }> = [
   { id: 5, label: "MLRO sign-off", sub: "Disposition" },
 ];
 
-// Dummy screening — replaced by /api/quick-screen wiring once the deploy
-// allows. Fires synchronously and produces deterministic hits for sanctioned
-// jurisdictions (IR/KP) or names containing flagged tokens.
-function runScreen(draft: Draft): ScreeningHit[] {
+// Live screening — POSTs to /api/quick-screen which screens against the
+// ingested watchlist corpus (UN, OFAC, EU, UK, FATF, UAE-EOCN/LTL).
+// Falls back to a deterministic local rule-set if the API is unreachable
+// (e.g. when running the static-export build) so the wizard always
+// produces a defensible result.
+async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; source: "api" | "fallback"; error?: string }> {
+  const subjectName = draft.fullName.trim();
+  if (!subjectName) return { hits: [], source: "fallback" };
+  const payload = {
+    subject: {
+      name: subjectName,
+      entityType: "individual" as const,
+      ...(draft.nationality ? { jurisdiction: draft.nationality } : {}),
+    },
+    options: { scoreThreshold: 0.85, maxHits: 25 },
+  };
+  try {
+    const res = await fetch("/api/quick-screen", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = (await res.json()) as QuickScreenResponse;
+    if (json.ok) {
+      return {
+        hits: json.hits.map((h) => ({
+          listId: h.listId,
+          candidateName: h.candidateName,
+          score: h.score,
+        })),
+        source: "api",
+      };
+    }
+    const err = "error" in json ? json.error : "unknown error";
+    return { ...localFallback(draft), error: err };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ...localFallback(draft), error: msg };
+  }
+}
+
+function localFallback(draft: Draft): { hits: ScreeningHit[]; source: "fallback" } {
   const hits: ScreeningHit[] = [];
   const nat = draft.nationality.trim().toUpperCase().slice(0, 2);
   if (["IR", "KP", "MM", "SY"].includes(nat)) {
-    hits.push({
-      listId: "fatf-call-for-action",
-      candidateName: `${nat} jurisdiction nexus`,
-      score: 0.92,
-    });
+    hits.push({ listId: "fatf-call-for-action", candidateName: `${nat} jurisdiction nexus`, score: 0.92 });
   }
   const name = draft.fullName.toLowerCase();
   if (/\b(putin|kim|khamenei|maduro)\b/.test(name)) {
-    hits.push({
-      listId: "ofac-sdn",
-      candidateName: draft.fullName,
-      score: 0.88,
-    });
+    hits.push({ listId: "ofac-sdn", candidateName: draft.fullName, score: 0.88 });
   }
-  return hits;
+  return { hits, source: "fallback" };
 }
 
 function computeTier(draft: Draft): { tier: Tier; rationale: string } {
@@ -156,6 +192,7 @@ export default function OnboardingWizardPage() {
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<Draft>(BLANK_DRAFT);
   const [submitted, setSubmitted] = useState(false);
+  const [screening, setScreening] = useState<{ inFlight: boolean; source?: "api" | "fallback"; error?: ScreeningError }>({ inFlight: false });
 
   useEffect(() => {
     setDraft(loadDraft());
@@ -178,9 +215,15 @@ export default function OnboardingWizardPage() {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setDraft((prev) => ({ ...prev, [k]: v }));
 
-  const handleScreen = () => {
-    const hits = runScreen(draft);
-    setDraft((prev) => ({ ...prev, screenedAt: Date.now(), screeningHits: hits }));
+  const handleScreen = async () => {
+    setScreening({ inFlight: true });
+    const result = await runScreenViaApi(draft);
+    setDraft((prev) => ({ ...prev, screenedAt: Date.now(), screeningHits: result.hits }));
+    setScreening({
+      inFlight: false,
+      source: result.source,
+      ...(result.error ? { error: { message: "live screening unavailable, using local fallback", detail: result.error } } : {}),
+    });
   };
 
   const handleRiskRate = () => {
@@ -298,16 +341,27 @@ export default function OnboardingWizardPage() {
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Screening</h2>
             <p className="text-12 text-ink-2 m-0">
-              Runs sanctions/PEP/adverse-media checks. Demo uses deterministic
-              rules; production wires to <code>/api/quick-screen</code>.
+              Runs sanctions/PEP screening against the live watchlist corpus
+              via <code>/api/quick-screen</code> (UN · OFAC · EU · UK · FATF
+              · UAE-EOCN). Falls back to a deterministic rule-set when the
+              API is unreachable.
             </p>
             <button
               type="button"
               onClick={handleScreen}
-              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+              disabled={screening.inFlight}
+              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Run screen
+              {screening.inFlight ? "Screening…" : "Run screen"}
             </button>
+            {screening.source && !screening.inFlight && (
+              <div className="text-10 font-mono text-ink-3 mt-1">
+                source: {screening.source === "api" ? "live /api/quick-screen" : "local fallback"}
+                {screening.error && (
+                  <span className="ml-2 text-amber-700">· {screening.error.message}</span>
+                )}
+              </div>
+            )}
             {draft.screenedAt && (
               <div className="mt-3">
                 <div className="text-11 text-ink-2 font-mono">

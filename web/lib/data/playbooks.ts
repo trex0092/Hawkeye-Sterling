@@ -1,6 +1,7 @@
 // Frontend mirror of src/brain/playbooks.ts. Keep IDs byte-identical.
 
 import { slugifyTaxonomyName } from "@/lib/data/taxonomy";
+import { inferAnchorIds } from "@/lib/data/playbook-anchors";
 
 export interface Playbook {
   id: string;
@@ -23,7 +24,10 @@ const S = (name: string) => taxId("skills", name);
 const R = (name: string) => taxId("reasoning", name);
 const A = (name: string) => taxId("analysis", name);
 
-export const PLAYBOOKS: readonly Playbook[] = Object.freeze([
+// Raw playbook seed. The exported `PLAYBOOKS` below hydrates each entry
+// with an inferred regulatory-anchor set so coverage scoring is meaningful
+// even for the auto-generated entries that ship with `requiredAnchors: []`.
+const PLAYBOOK_SEEDS: readonly Playbook[] = Object.freeze([
   {
     id: "playbook-tbml",
     name: "Trade-Based Money Laundering (TBML)",
@@ -5139,6 +5143,16 @@ export const PLAYBOOKS: readonly Playbook[] = Object.freeze([
     charterArticles: ["P1", "P2"],
   },
 ]);
+
+// Hydrate each seed with inferred regulatory anchors. We freeze the result
+// so downstream callers can rely on the array being immutable, matching
+// the previous shape of the export.
+export const PLAYBOOKS: readonly Playbook[] = Object.freeze(
+  PLAYBOOK_SEEDS.map((p) => {
+    if (p.requiredAnchors.length > 0) return p;
+    return { ...p, requiredAnchors: inferAnchorIds(p) };
+  }),
+);
 
 export function playbookById(id: string): Playbook | undefined {
   return PLAYBOOKS.find((p) => p.id === id);
