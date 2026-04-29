@@ -6,7 +6,7 @@
 // classification · adverse-media overlay · recommendation · goAML package
 // · MLRO decision · regulatory framework.
 
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 
 export type ReportType = "PEP" | "SANCTIONS" | "AM" | "STANDARD" | "SOE";
 
@@ -209,6 +209,34 @@ function canonicalJson(value: unknown): string {
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+// HMAC-SHA256 signature of the report hash, keyed by an env-held secret.
+// Lets a regulator who has the same secret prove the artefact came from
+// this specific Hawkeye deployment — not someone who copied the report
+// format. Returns null when REPORT_SIGNING_KEY isn't configured (e.g.
+// local dev) so the audit trail simply omits the signature line rather
+// than emitting a fake / unsigned-marked stub.
+function hmacSign(reportHash: string): string | null {
+  const key =
+    process.env["REPORT_SIGNING_KEY"] ??
+    process.env["HAWKEYE_SIGNING_KEY"] ??
+    "";
+  if (!key || key.length < 16) return null;
+  return createHmac("sha256", key).update(reportHash, "utf8").digest("hex");
+}
+
+// Short fingerprint of the signing key so a regulator can confirm which
+// key version produced the signature (without ever exposing the key
+// itself). Same fingerprint across deployments using the same key;
+// changes the moment the key is rotated.
+function signingKeyFingerprint(): string | null {
+  const key =
+    process.env["REPORT_SIGNING_KEY"] ??
+    process.env["HAWKEYE_SIGNING_KEY"] ??
+    "";
+  if (!key || key.length < 16) return null;
+  return sha256(key).slice(0, 12);
 }
 
 // Top-of-report disposition banner — the first thing a regulator should
@@ -1157,6 +1185,20 @@ export function buildComplianceReport(input: ReportInput): string {
   const bodySoFar = out.filter((l) => l != null).join("\n");
   const reportHash = sha256(bodySoFar);
   out.push(`report.sha256         ${reportHash}`);
+
+  // HMAC signature — keyed by REPORT_SIGNING_KEY (server env). Proves
+  // the artefact came from this specific Hawkeye deployment. The line
+  // is omitted entirely when no key is configured so the audit trail
+  // never carries a false sense of authenticity.
+  const signature = hmacSign(reportHash);
+  const keyFp = signingKeyFingerprint();
+  if (signature && keyFp) {
+    out.push(`report.signature      hmac-sha256:${signature}`);
+    out.push(`signing.key_fp        ${keyFp}`);
+    out.push(
+      `verify.recipe         openssl dgst -sha256 -hmac "$KEY" <<< "${reportHash}"`,
+    );
+  }
 
   out.push(SEP);
   out.push("END OF REPORT");
