@@ -16,6 +16,7 @@ import {
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
+import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const HAIKU_TIMEOUT_MS = 18_000;
@@ -51,7 +52,7 @@ function buildHaikuPrompt(question: string, contextPairs: HaikuPair[]): string {
   if (analysis.jurisdictions.length) lines.push(`Jurisdictions: ${analysis.jurisdictions.join(", ")}`);
   if (analysis.regimes.length) lines.push(`Sanctions regimes: ${analysis.regimes.slice(0, 6).join(", ")}`);
   if (analysis.fatfRecDetails.length) {
-    lines.push(`FATF Recommendations anchored: ${analysis.fatfRecDetails.slice(0, 6).map((f) => `R.${f.num} (${f.title})`).join("; ")}`);
+    lines.push(`FATF Recommendations anchored: ${analysis.fatfRecDetails.slice(0, 6).map((f: { num: number; title: string }) => `R.${f.num} (${f.title})`).join("; ")}`);
   }
   if (analysis.doctrineHints.length) lines.push(`Doctrines: ${analysis.doctrineHints.slice(0, 8).join(", ")}`);
   if (analysis.playbookHints.length) lines.push(`Relevant playbooks: ${analysis.playbookHints.slice(0, 6).join(", ")}`);
@@ -215,9 +216,26 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  if (!body.query?.trim()) {
-    return NextResponse.json({ ok: false, error: "query is required" }, { status: 400, headers: CORS });
+  // Shared input gate — Regulatory Q&A is broader than the MLRO
+  // Advisor (FATF / Wolfsberg / OECD generic questions are legitimate),
+  // so we set allowGeneral=true. Empty / oversize / prompt-injection
+  // are still refused.
+  const gateResult = gateMlroQuestion(body.query ?? "", {
+    maxChars: 2000,
+    allowGeneral: true,
+  });
+  if (!gateResult.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: gateResult.message,
+        reason: gateResult.reason,
+        ...(gateResult.hint ? { hint: gateResult.hint } : {}),
+      },
+      { status: gateResult.status, headers: CORS },
+    );
   }
+  body.query = gateResult.question;
 
   // FAST PATH — Balanced depth (the default) routes through the same
   // Haiku 4.5 single-pass path that the MLRO Advisor "Quick" mode uses.

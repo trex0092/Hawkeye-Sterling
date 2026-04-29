@@ -6,7 +6,7 @@ import {
   type ReasoningMode,
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
 import { askComplianceQuestion } from "../../../../dist/src/integrations/complianceRag.js";
-import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
+import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,12 +82,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  if (!body?.question?.trim()) {
-    return NextResponse.json(
-      { ok: false, error: "question is required" },
-      { status: 400, headers: gateHeaders },
-    );
-  }
   if (!body?.subjectName?.trim()) {
     return NextResponse.json(
       { ok: false, error: "subjectName is required" },
@@ -95,12 +89,29 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Pre-classify the question with the rule-based MLRO classifier so we can
-  // inject doctrine / playbook / FATF / typology / common-sense anchors into
-  // the advisor user prompt. The classifier is pure-TS, runs in <1 ms, and
-  // makes the advisor cite verifiable anchors instead of relying on model
-  // recall (charter P9: no opaque scoring).
-  const analysis = classifyMlroQuestion(body.question);
+  // Shared input gate — refuses empty / oversize / prompt-injection /
+  // out-of-scope questions before they hit Claude. Saves a slow round
+  // trip and stops the advisor producing compliance-flavoured non-
+  // answers to non-compliance prompts.
+  const gateResult = gateMlroQuestion(body.question, {
+    maxChars: 2000,
+    allowGeneral: false,
+  });
+  if (!gateResult.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: gateResult.message,
+        reason: gateResult.reason,
+        ...(gateResult.hint ? { hint: gateResult.hint } : {}),
+      },
+      { status: gateResult.status, headers: gateHeaders },
+    );
+  }
+  const analysis = gateResult.analysis;
+  // Use the sanitised, gate-approved text downstream so injection
+  // payloads can't reach the model via the original body.question.
+  body.question = gateResult.question;
 
   // Enrich the question with conversation context + classifier pre-brief.
   const preamble = buildContextPreamble(body.context ?? []);
@@ -116,12 +127,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(body.evidenceIds ?? []),
       ...(body.typologyIds ?? []),
       ...(body.adverseGroups ?? []).map((g) => `adverse:${g}`),
-      ...analysis.typologies.map((t) => `typology:${t}`),
-      ...analysis.doctrineHints.map((d) => `doctrine:${d}`),
-      ...analysis.playbookHints.map((p) => `playbook:${p}`),
-      ...analysis.redFlagHints.map((r) => `redflag:${r}`),
-      ...analysis.fatfRecHints.map((f) => `fatf:${f}`),
-      ...analysis.urgencyFlags.map((u) => `urgency:${u}`),
+      ...analysis.typologies.map((t: string) => `typology:${t}`),
+      ...analysis.doctrineHints.map((d: string) => `doctrine:${d}`),
+      ...analysis.playbookHints.map((p: string) => `playbook:${p}`),
+      ...analysis.redFlagHints.map((r: string) => `redflag:${r}`),
+      ...analysis.fatfRecHints.map((f: string) => `fatf:${f}`),
+      ...analysis.urgencyFlags.map((u: string) => `urgency:${u}`),
       ...(detectedJurisdiction ? [`jurisdiction:${detectedJurisdiction}`] : []),
     ]),
   );
