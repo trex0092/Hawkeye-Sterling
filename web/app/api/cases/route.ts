@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   loadAllCases,
   mergeCases,
@@ -31,13 +32,18 @@ export const maxDuration = 30;
 async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const cases = await loadAllCases();
-  return NextResponse.json({ ok: true, cases }, { headers: gate.headers });
+  const tenant = tenantIdFromGate(gate);
+  const cases = await loadAllCases(tenant);
+  return NextResponse.json(
+    { ok: true, tenant, cases },
+    { headers: gate.headers },
+  );
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: { cases?: CaseRecord[] };
   try {
     body = (await req.json()) as { cases?: CaseRecord[] };
@@ -53,9 +59,9 @@ async function handlePost(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
-  const merged = await mergeCases(body.cases);
+  const merged = await mergeCases(tenant, body.cases);
   return NextResponse.json(
-    { ok: true, cases: merged },
+    { ok: true, tenant, cases: merged },
     { headers: gate.headers },
   );
 }
@@ -63,6 +69,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
 async function handlePut(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: { cases?: CaseRecord[] };
   try {
     body = (await req.json()) as { cases?: CaseRecord[] };
@@ -78,9 +85,9 @@ async function handlePut(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
-  await saveAllCases(body.cases);
+  await saveAllCases(tenant, body.cases);
   return NextResponse.json(
-    { ok: true, cases: body.cases },
+    { ok: true, tenant, cases: body.cases },
     { headers: gate.headers },
   );
 }

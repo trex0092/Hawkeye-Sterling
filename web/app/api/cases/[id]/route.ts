@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   deleteCaseById,
-  loadAllCases,
+  loadCase,
 } from "@/lib/server/case-vault";
 
 export const runtime = "nodejs";
@@ -17,9 +18,9 @@ async function handleGet(
 ): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   const { id } = await ctx.params;
-  const cases = await loadAllCases();
-  const found = cases.find((c) => c.id === id);
+  const found = await loadCase(tenant, id);
   if (!found) {
     return NextResponse.json(
       { ok: false, error: "not found" },
@@ -27,7 +28,7 @@ async function handleGet(
     );
   }
   return NextResponse.json(
-    { ok: true, case: found },
+    { ok: true, tenant, case: found },
     { headers: gate.headers },
   );
 }
@@ -38,10 +39,11 @@ async function handleDelete(
 ): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   const { id } = await ctx.params;
-  const cases = await deleteCaseById(id);
+  const cases = await deleteCaseById(tenant, id);
   return NextResponse.json(
-    { ok: true, cases },
+    { ok: true, tenant, cases },
     { headers: gate.headers },
   );
 }
