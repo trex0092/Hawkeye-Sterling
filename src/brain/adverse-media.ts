@@ -3,6 +3,7 @@
 // boolean OR query for news / RSS / search-API ingestion.
 
 import type { AdverseMediaCategory } from './types.js';
+import { classifyI18n } from './adverse-media-i18n.js';
 
 // Multilingual keyword packs keyed by ISO-639-1.
 // Extend the English base with Arabic (ar), French (fr), Spanish (es),
@@ -492,5 +493,38 @@ export function classifyAdverseMedia(text: string): AdverseMediaHit[] {
       if (idx >= 0) hits.push({ categoryId: cat.id, keyword: kw, offset: idx });
     }
   }
+  // Multi-script tokeniser pass — Arabic/French/Russian/Chinese hits are
+  // bucketed under ml_financial_crime / corruption_organised_crime / sanctions
+  // depending on the matched keyword. The naive substring loop above
+  // misses CJK (no spaces) and over-matches Arabic (prefixed articles).
+  for (const i18n of classifyI18n(text)) {
+    const bucket = i18nBucket(i18n.keyword);
+    hits.push({ categoryId: bucket, keyword: `${i18n.lang}:${i18n.keyword}`, offset: -1 });
+  }
   return hits;
+}
+
+const SANCTIONS_FRAGMENTS = [
+  "عقوبات", "خرق العقوبات", "تجميد", "قائمة",
+  "sanctions", "embargo", "gel", "виола", "санк", "OFAC",
+  "制裁", "禁运", "冻结",
+];
+const TF_FRAGMENTS = [
+  "إرهاب", "تمويل الإرهاب", "تمويل إرهاب",
+  "terror", "финансирование терр", "терр",
+  "恐怖", "资助恐怖",
+];
+const CORRUPTION_FRAGMENTS = [
+  "رشوة", "فساد", "اختلاس",
+  "corruption", "pot-de-vin", "détournement",
+  "коррупц", "взятк", "хищение",
+  "腐败", "贪污", "贿赂", "受贿", "行贿",
+];
+
+function i18nBucket(keyword: string): string {
+  const k = keyword;
+  for (const f of SANCTIONS_FRAGMENTS) if (k.includes(f)) return "sanctions_violations";
+  for (const f of TF_FRAGMENTS) if (k.includes(f)) return "terrorist_financing";
+  for (const f of CORRUPTION_FRAGMENTS) if (k.includes(f)) return "corruption_organised_crime";
+  return "ml_financial_crime";
 }

@@ -55,6 +55,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
       { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
+      { label: "goAML Export", href: "/goaml-export", hint: "STR/SAR XML wizard" },
       { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
     ],
   },

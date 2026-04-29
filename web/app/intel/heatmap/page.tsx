@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { WorldTileMap } from "@/components/intel/WorldTileMap";
 import {
   JURISDICTION_RISK,
   type BaselTier,
@@ -135,6 +136,19 @@ export default function HeatmapPage() {
         <span className="ml-auto text-ink-3">source: {sourceLabel}</span>
       </div>
 
+      <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-4">
+        <div className="font-mono text-10 uppercase tracking-wide-3 text-ink-2 mb-2">
+          Choropleth · tile cartogram
+        </div>
+        <WorldTileMap exposure={exposure} risk={JURISDICTION_RISK} />
+        <div className="text-10 text-ink-3 font-mono mt-2 leading-snug">
+          Tile fill = Basel AML Index tier (red high → green low). Tile opacity
+          scales with screening exposure. Border colour marks FATF status:
+          maroon = call-for-action, dark-orange = increased monitoring. Hover a
+          tile for the full breakdown.
+        </div>
+      </div>
+
       <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
         <table className="w-full text-12 border-collapse">
           <thead className="bg-bg-1 text-ink-2 font-mono text-10 uppercase tracking-wide-3">
@@ -199,8 +213,9 @@ export default function HeatmapPage() {
       </div>
 
       <div className="mt-4 text-11 text-ink-3 font-mono">
-        v1: list-card layout. SVG choropleth tracked for follow-up. Source:
-        web/lib/data/jurisdictions.ts (mirror of src/brain/jurisdictions.ts).
+        SVG tile-grid choropleth (cartogram) above; ranked exposure table
+        below. Source: web/lib/data/jurisdictions.ts (mirror of
+        src/brain/jurisdictions.ts).
       </div>
     </ModuleLayout>
   );

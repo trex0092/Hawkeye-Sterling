@@ -5,6 +5,7 @@ export * from './ftm-mapper.js';   // FollowTheMoney entity mapper (alephdata/ft
 
 import type { SourceAdapter } from './types.js';
 import { euFsfAdapter } from './sources/eu-fsf.js';
+import { fatfAdapter } from './sources/fatf.js';
 import { ofacConsAdapter } from './sources/ofac-cons.js';
 import { ofacSdnAdapter } from './sources/ofac-sdn.js';
 import { uaeEocnAdapter, uaeLtlAdapter } from './sources/uae-seed.js';
@@ -19,6 +20,7 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   ofacConsAdapter,
   euFsfAdapter,
   ukOfsiAdapter,
+  fatfAdapter,
   uaeEocnAdapter,
   uaeLtlAdapter,
 ];
