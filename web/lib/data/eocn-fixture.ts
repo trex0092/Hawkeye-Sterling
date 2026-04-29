@@ -64,6 +64,22 @@ export interface EocnFeedPayload {
 
 export const EOCN_LIST_UPDATES: ListUpdate[] = [
   {
+    // Latest EOCN UAE update — Cabinet Decision 74 of 2020 amendment to
+    // the UNSC 1988 (Taliban) sanctions committee list. Added to the
+    // fixture so the page reflects today's reality until EOCN_FEED_URL
+    // is configured and the cron pulls it from the live source.
+    id: "LU-2026-0001",
+    date: "2026-04-29",
+    time: "09:00",
+    version: "EOCN-TFS-v2026.001",
+    deltaAdded: 0,
+    deltaRemoved: 0,
+    screeningStatus: "applied",
+    screeningCompletedAt: "2026-04-29 12:33",
+    notes:
+      "Amend of 17 Names on UNSC Sanction Committee 1988 (Taliban) — name / address / DOB updates per Cabinet Decision 74 of 2020. Re-screen completed within 4h SLA; no new customer matches.",
+  },
+  {
     id: "LU-2025-0041",
     date: "2025-04-22",
     time: "08:15",

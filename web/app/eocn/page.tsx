@@ -8,10 +8,8 @@ import {
   type EocnFeedPayload,
   type ListUpdate as SharedListUpdate,
   type EocnMatch as SharedEocnMatch,
-  type AnnualDeclaration as SharedAnnualDeclaration,
   type ListUpdateStatus,
   type MatchDisposition,
-  type DeclarationStatus,
 } from "@/lib/data/eocn-fixture";
 
 // EOCN — Executive Office for Control & Non-Proliferation (UAE).
@@ -21,7 +19,6 @@ import {
 
 type ListUpdate = SharedListUpdate;
 type EocnMatch = SharedEocnMatch;
-type AnnualDeclaration = SharedAnnualDeclaration;
 
 
 const UPDATE_STATUS_TONE: Record<ListUpdateStatus, string> = {
@@ -44,14 +41,9 @@ const DISPOSITION_LABEL: Record<MatchDisposition, string> = {
   escalated: "Escalated",
 };
 
-const DECL_TONE: Record<DeclarationStatus, string> = {
-  filed: "bg-green-dim text-green",
-  overdue: "bg-red-dim text-red",
-  "in-progress": "bg-amber-dim text-amber",
-  "not-due": "bg-bg-2 text-ink-2",
-};
-
-type Tab = "list-updates" | "matches" | "declarations";
+// Annual declarations tab removed — the operator already files them
+// directly to EOCN out-of-band; the tab was a static placeholder.
+type Tab = "list-updates" | "matches";
 
 const EOCN_DELETED_KEY = "hawkeye.eocn.matches.deleted.v1";
 const EOCN_CUSTOM_KEY = "hawkeye.eocn.matches.custom.v1";
@@ -211,7 +203,6 @@ export default function EocnPage() {
         {([
           { key: "list-updates" as Tab, label: "List updates" },
           { key: "matches" as Tab, label: "Matches & dispositions" },
-          { key: "declarations" as Tab, label: "Annual declarations" },
         ]).map((t) => (
           <button
             key={t.key}
@@ -446,57 +437,6 @@ export default function EocnPage() {
         </div>
       )}
 
-      {/* DECLARATIONS TAB */}
-      {tab === "declarations" && (
-        <div className="flex flex-col gap-4">
-          <div className="bg-bg-1 border border-hair-2 rounded-lg px-4 py-3 text-12 text-ink-1">
-            <strong>EOCN Annual Responsible-Sourcing Declaration</strong> — Required by 31 March each year.
-            Must cover all upstream smelters and refiners. Declaration must be supported by LBMA / RJC
-            Chain-of-Custody certificates. Failure to file is a reportable compliance breach.
-          </div>
-
-          {DECLARATIONS.sort((a, b) => b.year - a.year).map((d) => (
-            <div key={d.year} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-14 font-semibold text-ink-0">
-                    {d.year} Responsible-Sourcing Declaration
-                  </div>
-                  <div className="text-11 text-ink-2 mt-0.5">Period: {d.period}</div>
-                </div>
-                <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${DECL_TONE[d.status]}`}>
-                  {d.status === "in-progress" ? "In progress" : d.status}
-                </span>
-              </div>
-
-              {(d.filedDate || d.refNumber) && (
-                <div className="mt-3 grid grid-cols-2 gap-3 text-12">
-                  {d.filedDate && (
-                    <div className="bg-bg-1 rounded p-2">
-                      <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-0.5">Filed date</div>
-                      <div className="font-mono text-10 text-ink-0">{d.filedDate}</div>
-                    </div>
-                  )}
-                  {d.refNumber && (
-                    <div className="bg-bg-1 rounded p-2">
-                      <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-0.5">Reference</div>
-                      <div className="font-mono text-10 text-ink-0">{d.refNumber}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-3 text-12 text-ink-2 border-l-2 border-hair-2 pl-3">{d.notes}</div>
-
-              {d.status === "in-progress" && (
-                <button type="button" className="mt-3 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">
-                  Upload declaration
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
     </ModuleLayout>
   );
 }
