@@ -9,19 +9,14 @@ import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
 import { combineDS, type BeliefMass } from './dempster-shafer.js';
+import { defaultApply } from './modes/default-apply.js';
 
-const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
-  async (_ctx: BrainContext): Promise<Finding> => ({
-    modeId,
-    category,
-    faculties,
-    score: 0,
-    confidence: 0,
-    verdict: 'inconclusive',
-    rationale: `[stub] ${modeId} — implementation pending (Phase 7).`,
-    evidence: [],
-    producedAt: Date.now(),
-  });
+const stubApply = (
+  modeId: string,
+  category: ReasoningCategory,
+  faculties: FacultyId[],
+  description: string,
+) => defaultApply(modeId, category, faculties, description);
 
 const m = (
   id: string,
@@ -32,7 +27,7 @@ const m = (
   apply?: (ctx: BrainContext) => Promise<Finding>,
 ): ReasoningMode => ({
   id, name, category, faculties, wave: 3, description,
-  apply: apply ?? stubApply(id, category, faculties),
+  apply: apply ?? stubApply(id, category, faculties, description),
 });
 
 // ─── REAL IMPLEMENTATIONS ──────────────────────────────────────────────

@@ -2,21 +2,9 @@
 // formal reasoning. 40 modes. Stub-apply pending Phase 11.
 
 import type {
-  BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
+  FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
-
-const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
-  async (_ctx: BrainContext): Promise<Finding> => ({
-    modeId,
-    category,
-    faculties,
-    score: 0,
-    confidence: 0,
-    verdict: 'inconclusive',
-    rationale: `[stub] ${modeId} — implementation pending (Phase 11).`,
-    evidence: [],
-    producedAt: Date.now(),
-  });
+import { defaultApply } from './modes/default-apply.js';
 
 const m = (
   id: string,
@@ -26,7 +14,7 @@ const m = (
   description: string,
 ): ReasoningMode => ({
   id, name, category, faculties, wave: 11, description,
-  apply: stubApply(id, category, faculties),
+  apply: defaultApply(id, category, faculties, description),
 });
 
 // ── common_sense (10) ─────────────────────────────────────────────────────────
