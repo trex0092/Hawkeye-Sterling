@@ -82,6 +82,18 @@ export interface SuperBrainResult {
     score: number;
     breakdown: Record<string, number>;
   };
+  // Audit trail — emitted by /api/super-brain alongside every result so
+  // the compliance report can carry a defensible record of which run,
+  // which weights, and which data sources produced the composite score.
+  audit?: {
+    runId: string;
+    generatedAt: string;
+    engineVersion?: string;
+    schemaVersion?: string;
+    buildSha?: string;
+    dataFreshness: Record<string, string>;
+    moduleWeights: Record<string, string | number>;
+  };
 }
 
 export type SuperBrainState =

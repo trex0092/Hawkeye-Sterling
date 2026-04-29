@@ -530,6 +530,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       jurisdiction: subject.jurisdiction,
       ...(subject.aliases ? { aliases: subject.aliases } : {}),
     },
+    operator: { role },
     result:
       screening.status === "success"
         ? {
@@ -549,12 +550,36 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       superBrain.status === "success"
         ? {
             pep: superBrain.result.pep,
+            pepAssessment: superBrain.result.pepAssessment ?? null,
             jurisdiction: superBrain.result.jurisdiction,
+            jurisdictionRich: superBrain.result.jurisdictionRich ?? null,
             adverseMedia: superBrain.result.adverseMedia,
             adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
+            adverseMediaScored: superBrain.result.adverseMediaScored ?? null,
+            typologies: superBrain.result.typologies ?? null,
             esg: superBrain.result.esg,
             redlines: superBrain.result.redlines,
             composite: superBrain.result.composite,
+            ...(news.status === "success"
+              ? {
+                  newsDossier: {
+                    articleCount: news.result.articleCount,
+                    topSeverity: news.result.topSeverity,
+                    source: news.result.source,
+                    languages: news.result.languages,
+                    articles: news.result.articles.slice(0, 25).map((a) => ({
+                      title: a.title,
+                      link: a.link,
+                      pubDate: a.pubDate,
+                      source: a.source,
+                      snippet: a.snippet,
+                      severity: a.severity,
+                      keywordGroups: a.keywordGroups,
+                    })),
+                  },
+                }
+              : {}),
+            ...(superBrain.result.audit ? { audit: superBrain.result.audit } : {}),
           }
         : null,
   });
@@ -576,6 +601,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         jurisdiction: subject.jurisdiction,
         ...(subject.aliases ? { aliases: subject.aliases } : {}),
       },
+      operator: { role },
       result: {
         topScore: screening.result.topScore,
         severity: screening.result.severity,
@@ -592,12 +618,36 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         superBrain.status === "success"
           ? {
               pep: superBrain.result.pep,
+              pepAssessment: superBrain.result.pepAssessment ?? null,
               jurisdiction: superBrain.result.jurisdiction,
+              jurisdictionRich: superBrain.result.jurisdictionRich ?? null,
               adverseMedia: superBrain.result.adverseMedia,
               adverseKeywordGroups: superBrain.result.adverseKeywordGroups,
+              adverseMediaScored: superBrain.result.adverseMediaScored ?? null,
+              typologies: superBrain.result.typologies ?? null,
               esg: superBrain.result.esg,
               redlines: superBrain.result.redlines,
               composite: superBrain.result.composite,
+              ...(news.status === "success"
+                ? {
+                    newsDossier: {
+                      articleCount: news.result.articleCount,
+                      topSeverity: news.result.topSeverity,
+                      source: news.result.source,
+                      languages: news.result.languages,
+                      articles: news.result.articles.slice(0, 25).map((a) => ({
+                        title: a.title,
+                        link: a.link,
+                        pubDate: a.pubDate,
+                        source: a.source,
+                        snippet: a.snippet,
+                        severity: a.severity,
+                        keywordGroups: a.keywordGroups,
+                      })),
+                    },
+                  }
+                : {}),
+              ...(superBrain.result.audit ? { audit: superBrain.result.audit } : {}),
             }
           : null,
     };

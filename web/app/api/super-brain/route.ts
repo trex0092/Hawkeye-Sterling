@@ -84,6 +84,56 @@ interface Body {
   adverseMediaText?: string;
 }
 
+// Audit-trail constants — surfaced in the response so the compliance
+// report can carry a defensible record of which weights produced the
+// composite score. If any of these are tuned the report's audit trail
+// must reflect the new values for in-flight cases (no silent drift).
+const MODULE_WEIGHTS = {
+  quickScreen: "pass-through (sanctions top score)",
+  jurisdictionCAHRA: 15,
+  regimesCap: 12,
+  redlinesPerHit: 10,
+  adverseMediaPerHit: 8,
+  adverseMediaCap: 30,
+  adverseMediaScoredCap: 40,
+  adverseMediaScoredFloorHighSeverity: 8,
+  pepMaxFromSalience: 20,
+} as const;
+
+// Static data sources — what the brain consulted to produce its
+// answer. Lists are bundled at build, news is live per-request, PEP
+// fixtures are bundled. Surfaces in the audit trail so a regulator
+// can replay exactly what the brain saw on disposition day.
+const DATA_FRESHNESS = {
+  watchlists: "bundled-at-build",
+  pep: "bundled-at-build",
+  jurisdictions: "bundled-at-build",
+  typologies: "bundled-at-build",
+  news: "per-request (live RSS)",
+} as const;
+
+// Versioning — tune one of these whenever the composite formula or the
+// audit-trail schema changes. Old reports keep their version stamp so a
+// regulator inspecting a historical filing knows which rules were in
+// force when the disposition was recorded.
+const BRAIN_ENGINE_VERSION = "1.0.0";
+const REPORT_SCHEMA_VERSION = "2.0.0";
+// Build SHA — wired through Netlify's COMMIT_REF env var when deployed,
+// undefined locally. We surface whichever provider env var is present so
+// the audit trail still works on Vercel / GitHub Actions / a plain
+// `next start`.
+const BUILD_SHA =
+  process.env["COMMIT_REF"] ??
+  process.env["VERCEL_GIT_COMMIT_SHA"] ??
+  process.env["GITHUB_SHA"] ??
+  "local";
+
+function makeRunId(): string {
+  // 8 hex chars is enough collision-resistance for an audit-trail id;
+  // we don't need crypto-strong uniqueness.
+  return `sb_${Math.random().toString(16).slice(2, 10)}`;
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   // Gate + rate-limit BEFORE parsing the JSON body so an attacker can't
   // blast megabytes of junk into a free-tier endpoint. gateHeaders is
@@ -385,8 +435,19 @@ export async function POST(req: Request): Promise<NextResponse> {
         })()
       : null;
 
+    const audit = {
+      runId: makeRunId(),
+      generatedAt: new Date().toISOString(),
+      engineVersion: BRAIN_ENGINE_VERSION,
+      schemaVersion: REPORT_SCHEMA_VERSION,
+      buildSha: BUILD_SHA.slice(0, 12),
+      dataFreshness: DATA_FRESHNESS,
+      moduleWeights: MODULE_WEIGHTS,
+    };
+
     return NextResponse.json({
       ok: true,
+      audit,
       screen,
       pep,
       adverseMedia,

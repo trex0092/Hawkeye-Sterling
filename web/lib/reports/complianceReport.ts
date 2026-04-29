@@ -6,6 +6,8 @@
 // classification · adverse-media overlay · recommendation · goAML package
 // · MLRO decision · regulatory framework.
 
+import { createHash, createHmac } from "node:crypto";
+
 export type ReportType = "PEP" | "SANCTIONS" | "AM" | "STANDARD" | "SOE";
 
 export interface ReportSubject {
@@ -41,6 +43,21 @@ export interface ReportSuperBrain {
     type: string;
     salience: number;
     rationale?: string;
+    matchedRule?: string;
+  } | null;
+  // Detailed PEP assessment — the role-match evidence behind the
+  // classification (which database rule fired, which roles matched,
+  // what snippet supports each). Without this the PEP block reports
+  // a verdict without showing its work.
+  pepAssessment?: {
+    isLikelyPEP?: boolean;
+    highestTier?: string;
+    riskScore?: number;
+    matchedRoles?: Array<{
+      tier: string;
+      label: string;
+      snippet?: string;
+    }>;
   } | null;
   jurisdiction?: {
     iso2: string;
@@ -49,11 +66,68 @@ export interface ReportSuperBrain {
     cahra: boolean;
     regimes: string[];
   } | null;
-  adverseMedia?: Array<{ categoryId: string; keyword: string }>;
+  jurisdictionRich?: {
+    code?: string;
+    name?: string;
+    tiers?: string[];
+    riskScore?: number;
+    notes?: string[];
+  } | null;
+  adverseMedia?: Array<{ categoryId: string; keyword: string; offset?: number }>;
   adverseKeywordGroups?: Array<{ group: string; label: string; count: number }>;
+  // Detailed adverse-media scoring — when present we emit a findings
+  // section even if the simple `adverseMedia` / `adverseKeywordGroups`
+  // arrays are short, so the report reflects everything the brain saw.
+  adverseMediaScored?: {
+    byCategory?: Record<string, number>;
+    total?: number;
+    distinctKeywords?: number;
+    topKeywords?: Array<{ keyword: string; categoryId: string; count: number }>;
+    categoriesTripped?: string[];
+    compositeScore?: number;
+  } | null;
+  typologies?: {
+    hits?: Array<{ id: string; name: string; family: string; weight: number; snippet?: string }>;
+    compositeScore?: number;
+  } | null;
   esg?: Array<{ categoryId: string; domain: string; label: string }>;
-  redlines?: { fired: Array<{ label?: string; id?: string }>; action: string | null };
-  composite?: { score: number };
+  redlines?: { fired: Array<{ label?: string; id?: string; why?: string }>; action: string | null };
+  composite?: { score: number; breakdown?: Record<string, number> };
+  // News evidence — when adverse media is positive, the actual articles
+  // that drove the keyword findings are carried into the report so the
+  // file is self-contained for an MLRO defence.
+  newsDossier?: {
+    articleCount: number;
+    topSeverity?: "clear" | "low" | "medium" | "high" | "critical";
+    source?: string;
+    languages?: string[];
+    articles: Array<{
+      title: string;
+      link: string;
+      pubDate: string;
+      source: string;
+      snippet?: string;
+      severity?: "clear" | "low" | "medium" | "high" | "critical";
+      keywordGroups?: string[];
+    }>;
+  } | null;
+  // Audit trail — run id, when the brain was fired, what data sources
+  // it consulted, and what module weights were in force. A regulator
+  // can replay the disposition with this footer alone.
+  audit?: {
+    runId?: string;
+    generatedAt?: string;
+    engineVersion?: string;
+    schemaVersion?: string;
+    buildSha?: string;
+    dataFreshness?: Record<string, string>;
+    moduleWeights?: Record<string, string | number>;
+  } | null;
+}
+
+export interface ReportOperator {
+  role?: string;
+  id?: string;
 }
 
 export interface ReportInput {
@@ -62,6 +136,7 @@ export interface ReportInput {
   superBrain?: ReportSuperBrain | null;
   reportingEntity?: string;
   mlro?: string;
+  operator?: ReportOperator | null;
   now?: Date;
 }
 
@@ -103,6 +178,124 @@ function buildId(type: ReportType, d: Date): string {
   const h = String(d.getUTCHours()).padStart(2, "0");
   const mm = String(d.getUTCMinutes()).padStart(2, "0");
   return `HWK-SCR-${y}${m}${day}-${type}-${h}${mm}`;
+}
+
+// Canonical, deterministic JSON for hashing — sorts object keys
+// recursively so two equal payloads always produce the same SHA. Without
+// this two reports built from the same facts would have different
+// payload hashes purely because of key-ordering, which would be
+// catastrophic for replay-defence.
+function canonicalJson(value: unknown): string {
+  if (value === null || value === undefined) return "null";
+  if (typeof value === "number" || typeof value === "boolean")
+    return JSON.stringify(value);
+  if (typeof value === "string") return JSON.stringify(value);
+  if (Array.isArray(value))
+    return `[${value.map((v) => canonicalJson(v)).join(",")}]`;
+  if (typeof value === "object") {
+    const keys = Object.keys(value as Record<string, unknown>).sort();
+    const body = keys
+      .map(
+        (k) =>
+          `${JSON.stringify(k)}:${canonicalJson(
+            (value as Record<string, unknown>)[k],
+          )}`,
+      )
+      .join(",");
+    return `{${body}}`;
+  }
+  return "null";
+}
+
+function sha256(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+// HMAC-SHA256 signature of the report hash, keyed by an env-held secret.
+// Lets a regulator who has the same secret prove the artefact came from
+// this specific Hawkeye deployment — not someone who copied the report
+// format. Returns null when REPORT_SIGNING_KEY isn't configured (e.g.
+// local dev) so the audit trail simply omits the signature line rather
+// than emitting a fake / unsigned-marked stub.
+function hmacSign(reportHash: string): string | null {
+  const key =
+    process.env["REPORT_SIGNING_KEY"] ??
+    process.env["HAWKEYE_SIGNING_KEY"] ??
+    "";
+  if (!key || key.length < 16) return null;
+  return createHmac("sha256", key).update(reportHash, "utf8").digest("hex");
+}
+
+// Short fingerprint of the signing key so a regulator can confirm which
+// key version produced the signature (without ever exposing the key
+// itself). Same fingerprint across deployments using the same key;
+// changes the moment the key is rotated.
+function signingKeyFingerprint(): string | null {
+  const key =
+    process.env["REPORT_SIGNING_KEY"] ??
+    process.env["HAWKEYE_SIGNING_KEY"] ??
+    "";
+  if (!key || key.length < 16) return null;
+  return sha256(key).slice(0, 12);
+}
+
+// Top-of-report disposition banner — the first thing a regulator should
+// see. Tipping-off prohibition repeated in bold above the fold for
+// SANCTIONS / AM types so it can never be missed.
+function formatBanner(type: ReportType, disposition: string): string[] {
+  const lines: string[] = [];
+  if (type === "SANCTIONS") {
+    lines.push("╔" + "═".repeat(77) + "╗");
+    lines.push(
+      "║   ⚠  POSSIBLE SANCTIONS MATCH — MLRO REVIEW REQUIRED BEFORE ANY ACTION  ⚠ ║",
+    );
+    lines.push(
+      "║   DO NOT FREEZE OR FILE until MLRO has verified match identity            ║",
+    );
+    lines.push(
+      "║   TIPPING-OFF PROHIBITION ABSOLUTE — do not alert the subject             ║",
+    );
+    lines.push("╚" + "═".repeat(77) + "╝");
+  } else if (type === "AM") {
+    lines.push("╔" + "═".repeat(77) + "╗");
+    lines.push(
+      "║   POSITIVE ADVERSE-MEDIA SIGNAL — MLRO ESCALATION REQUIRED              ║",
+    );
+    lines.push(
+      "║   TIPPING-OFF PROHIBITION ABSOLUTE — do not alert the subject           ║",
+    );
+    lines.push("╚" + "═".repeat(77) + "╝");
+  }
+  lines.push(`DISPOSITION         : ${disposition}`);
+  return lines;
+}
+
+// Sanctions-hit detail — when r.hits.length > 0 the MLRO must see every
+// candidate considered, the list it came from, the match score, the
+// matching method, and any associated programs. Without this block the
+// report tells the operator "POSSIBLE MATCH" but doesn't say against
+// what — which is precisely the question an audit asks first.
+function formatSanctionsHits(r: ReportScreeningResult): string[] {
+  if (r.hits.length === 0) return [];
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} SANCTIONS HITS — DETAIL ${"─".repeat(50)}`);
+  const visible = r.hits.slice(0, 10);
+  visible.forEach((h, i) => {
+    const score100 = Math.round(h.score * 100);
+    lines.push(`Hit ${i + 1}`);
+    lines.push(`  list_id              ${h.listId}`);
+    lines.push(`  list_ref             ${h.listRef}`);
+    lines.push(`  candidate            ${h.candidateName}`);
+    lines.push(`  score                ${h.score.toFixed(3)}  (${score100}/100)`);
+    lines.push(`  method               ${h.method}`);
+    if (h.programs && h.programs.length > 0) {
+      lines.push(`  programs             ${h.programs.join(", ")}`);
+    }
+  });
+  if (r.hits.length > 10) {
+    lines.push(`…and ${r.hits.length - 10} more hit(s) — see attached evidence pack.`);
+  }
+  return lines;
 }
 
 function formatHeader(
@@ -156,6 +349,183 @@ const SCREEN_VECTORS: Array<{ vector: string; engine: string; listIdMatch: RegEx
   { vector: "Sanctions (AUS)    ", engine: "Hawkeye native    ", listIdMatch: /\bDFAT\b|^AU[-_]/i },
 ];
 
+// Risk posture — the canonical headline of the report. Avoids the old
+// trap of putting `topScore` (sanctions only) under a /100 figure that
+// the UI shows as the composite SuperBrain score. Here every contributing
+// number is labelled, the composite drives the headline, and "CLEAR" is
+// scoped to the sanctions vector instead of being mistaken for the
+// subject-level disposition.
+function bandFor(score: number): string {
+  if (score >= 80) return "critical";
+  if (score >= 60) return "high";
+  if (score >= 40) return "medium";
+  if (score >= 20) return "low";
+  return "clear";
+}
+
+function dispositionFor(
+  r: ReportScreeningResult,
+  sb?: ReportSuperBrain | null,
+): string {
+  if (sb?.redlines?.action) return sb.redlines.action;
+  if (r.hits.length > 0) return "ESCALATE — possible sanctions match";
+  if (sb?.pep && sb.pep.salience > 0) return "EDD — PEP classification";
+  const amCount =
+    (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
+  if (amCount >= 4) return "ESCALATE — extensive adverse media";
+  if (amCount >= 1) return "EDD — adverse-media signal";
+  return "CDD posture — periodic review";
+}
+
+function formatPosture(
+  r: ReportScreeningResult,
+  sb?: ReportSuperBrain | null,
+): string[] {
+  const composite = sb?.composite?.score ?? null;
+  const headline = composite ?? r.topScore;
+  const band = bandFor(headline);
+  const disp = dispositionFor(r, sb);
+
+  const sanctionsScore = r.hits.length > 0
+    ? Math.max(...r.hits.map((h) => Math.round(h.score * 100)))
+    : 0;
+  const sanctionsLabel =
+    r.hits.length === 0
+      ? "CLEAR (0 hits)"
+      : `POSSIBLE MATCH — ${r.hits.length} hit(s) across ${new Set(r.hits.map((h) => h.listId)).size} list(s)`;
+
+  const pepScore =
+    sb?.pep && sb.pep.salience > 0 ? Math.round(sb.pep.salience * 100) : 0;
+  const pepLabel =
+    sb?.pep && sb.pep.salience > 0
+      ? `${pep(sb.pep.tier)} · ${sb.pep.type.replace(/_/g, " ")}`
+      : "not classified";
+
+  const amTotal =
+    sb?.adverseMediaScored?.total ??
+    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+      (sb?.adverseMedia?.length ?? 0);
+  const amCategories =
+    sb?.adverseMediaScored?.categoriesTripped?.length ??
+    (sb?.adverseKeywordGroups?.length ?? 0);
+  const amScore =
+    sb?.adverseMediaScored?.compositeScore != null
+      ? Math.round(sb.adverseMediaScored.compositeScore)
+      : amCategories >= 4
+        ? 70
+        : amCategories >= 1
+          ? 35
+          : 0;
+  const amLabel =
+    amTotal === 0
+      ? "no categories tripped"
+      : `${amTotal} keyword hit(s) across ${amCategories} categor${amCategories === 1 ? "y" : "ies"}`;
+
+  const jurisScore = sb?.jurisdiction?.cahra
+    ? 80
+    : (sb?.jurisdiction?.regimes?.length ?? 0) > 0
+      ? 28
+      : 0;
+  const jurisLabel = sb?.jurisdiction
+    ? `${sb.jurisdiction.name} (${sb.jurisdiction.iso2}) · ${sb.jurisdiction.cahra ? "CAHRA" : "non-CAHRA"} · ${sb.jurisdiction.regimes.length} regime(s)`
+    : "—";
+
+  const redlinesFired = sb?.redlines?.fired?.length ?? 0;
+  const redlinesScore = redlinesFired > 0 ? Math.min(100, redlinesFired * 25) : 0;
+  const redlinesLabel =
+    redlinesFired === 0
+      ? "none triggered"
+      : `${redlinesFired} fired${sb?.redlines?.action ? ` → ${sb.redlines.action}` : ""}`;
+
+  const typHits = sb?.typologies?.hits?.length ?? 0;
+  const typScore =
+    sb?.typologies?.compositeScore != null
+      ? Math.round(sb.typologies.compositeScore)
+      : Math.min(100, typHits * 20);
+  const typLabel =
+    typHits === 0
+      ? "no doctrines in scope"
+      : `${typHits} doctrine(s): ${(sb?.typologies?.hits ?? [])
+          .slice(0, 3)
+          .map((h) => h.name)
+          .join(", ")}${typHits > 3 ? "…" : ""}`;
+
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} RISK POSTURE ${"─".repeat(62)}`);
+  lines.push(
+    `COMPOSITE             ${pad(`${headline}/100`, 10)}    BAND: ${band.toUpperCase()}`,
+  );
+  lines.push(`Disposition           ${disp}`);
+  lines.push("");
+  lines.push(
+    `Vector                Score        Note`,
+  );
+  lines.push(
+    `${"─".repeat(20)}  ${"─".repeat(11)}  ${"─".repeat(40)}`,
+  );
+  lines.push(`Sanctions match       ${pad(`${sanctionsScore}/100`, 11)}  ${sanctionsLabel}`);
+  lines.push(`PEP salience          ${pad(`${pepScore}/100`, 11)}  ${pepLabel}`);
+  lines.push(`Adverse media         ${pad(`${amScore}/100`, 11)}  ${amLabel}`);
+  lines.push(`Jurisdictional        ${pad(`${jurisScore}/100`, 11)}  ${jurisLabel}`);
+  lines.push(`Redlines              ${pad(`${redlinesScore}/100`, 11)}  ${redlinesLabel}`);
+  lines.push(`Typology fingerprints ${pad(`${typScore}/100`, 11)}  ${typLabel}`);
+  // Redlines fired — names, not just counts. When zero we omit the
+  // sub-block so an empty-redlines report stays compact.
+  if (redlinesFired > 0) {
+    lines.push("");
+    lines.push("Redlines fired:");
+    for (const f of (sb?.redlines?.fired ?? []).slice(0, 8)) {
+      const id = f.id ? `[${f.id}] ` : "";
+      const label = f.label ?? f.id ?? "(unnamed redline)";
+      const why = f.why ? ` — ${f.why}` : "";
+      lines.push(`  • ${id}${label}${why}`);
+    }
+    if (redlinesFired > 8) {
+      lines.push(`  …and ${redlinesFired - 8} more.`);
+    }
+  }
+
+  // Typology fingerprints — same treatment. Doctrine name + family +
+  // weight is the regulator-facing signature; snippet (when present)
+  // gives the human-readable hook.
+  if (typHits > 0) {
+    lines.push("");
+    lines.push("Typology fingerprints:");
+    for (const t of (sb?.typologies?.hits ?? []).slice(0, 8)) {
+      const w =
+        typeof t.weight === "number" ? ` · w=${t.weight.toFixed(2)}` : "";
+      const snip = t.snippet ? ` — "${t.snippet}"` : "";
+      lines.push(`  • [${t.id}] ${t.name} (${t.family})${w}${snip}`);
+    }
+    if (typHits > 8) {
+      lines.push(`  …and ${typHits - 8} more.`);
+    }
+  }
+
+  // Composite breakdown — full audit math in one line. Lets a regulator
+  // verify how the headline number was assembled without re-running the
+  // brain. Only emitted when the breakdown is present in the payload.
+  const breakdown = sb?.composite?.breakdown;
+  if (breakdown && Object.keys(breakdown).length > 0) {
+    const parts = Object.entries(breakdown)
+      .map(([k, v]) => `${k}=${Math.round(v as number)}`)
+      .join(" · ");
+    lines.push("");
+    lines.push(`Composite breakdown   ${parts}`);
+  }
+
+  if (composite != null && r.topScore !== composite) {
+    lines.push("");
+    lines.push(
+      `Note: legacy "screening top score" is ${r.topScore}/100 (sanctions vector only).`,
+    );
+    lines.push(
+      `Headline above is the SuperBrain composite — same number rendered in the UI.`,
+    );
+  }
+  return lines;
+}
+
 function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): string[] {
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} SCREENING RESULT MATRIX ${"─".repeat(51)}`);
@@ -181,54 +551,268 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
       5,
     )}    ${pepScore != null ? "POSSIBLE PEP — VERIFY" : "NEGATIVE"}`,
   );
-  // Adverse media
-  const amCount =
-    (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
-  const amLabel = amCount >= 4 ? "HIGH " : amCount >= 1 ? "LOW  " : "—    ";
+  // Adverse media — uses the same scoring source as the posture block
+  // so the matrix never disagrees with the findings section.
+  const amTotal =
+    sb?.adverseMediaScored?.total ??
+    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+      (sb?.adverseMedia?.length ?? 0);
+  const amScore =
+    sb?.adverseMediaScored?.compositeScore != null
+      ? Math.round(sb.adverseMediaScored.compositeScore)
+      : amTotal >= 6
+        ? 70
+        : amTotal >= 1
+          ? 35
+          : 0;
+  const amLabel =
+    amScore >= 60 ? "HIGH " : amScore >= 20 ? "LOW  " : amTotal > 0 ? "LOW  " : "—    ";
   const amResult =
-    amCount >= 4 ? "POSITIVE — extensive" : amCount >= 1 ? "Limited" : "NEGATIVE";
+    amScore >= 60
+      ? "POSITIVE — extensive"
+      : amTotal > 0
+        ? "POSITIVE — limited"
+        : "NEGATIVE";
   lines.push(`Adverse media       Multi-source      ${amLabel}   ${amResult}`);
   return lines;
 }
 
+// PEP CLASSIFICATION + EVIDENCE. Emits when *either* the primary
+// classifier fires (sb.pep) or the secondary assessment marks the
+// subject as likely PEP (sb.pepAssessment.isLikelyPEP). matchedRoles
+// is the evidence backing the verdict — every role that triggered
+// the classifier with the supporting snippet, so an MLRO can audit
+// the call without re-firing the brain.
 function formatPepBlock(sb: ReportSuperBrain): string[] {
-  const pep = sb.pep;
-  if (!pep) return [];
+  const pep = sb.pep && sb.pep.salience > 0 ? sb.pep : null;
+  const assessment =
+    sb.pepAssessment && sb.pepAssessment.isLikelyPEP ? sb.pepAssessment : null;
+  if (!pep && !assessment) return [];
   const lines: string[] = [];
-  lines.push(`${SUB.slice(0, 3)} PEP CLASSIFICATION ${"─".repeat(56)}`);
-  lines.push(`Flag              : PEP (primary)`);
-  lines.push(`PEP class         : ${pep.type.replace(/_/g, " ").toUpperCase()}`);
-  lines.push(`PEP tier          : ${pep.tier}`);
-  lines.push(`Salience          : ${Math.round(pep.salience * 100)}%`);
-  if (pep.rationale) lines.push(`Rationale         : ${pep.rationale}`);
+  lines.push(`${SUB.slice(0, 3)} PEP CLASSIFICATION & EVIDENCE ${"─".repeat(45)}`);
+  lines.push(`Flag              : PEP${pep ? " (primary classifier)" : " (assessment-only)"}`);
+  if (pep) {
+    lines.push(`PEP class         : ${pep.type.replace(/_/g, " ").toUpperCase()}`);
+    lines.push(`PEP tier          : ${pep.tier.replace(/^tier_/, "tier ").replace(/_/g, " ")}`);
+    lines.push(`Salience          : ${Math.round(pep.salience * 100)}%`);
+    if (pep.matchedRule) lines.push(`Matched rule      : ${pep.matchedRule}`);
+    if (pep.rationale) lines.push(`Rationale         : ${pep.rationale}`);
+  }
+  if (assessment) {
+    if (assessment.highestTier) {
+      lines.push(
+        `Assessment tier   : ${assessment.highestTier.replace(/^tier_/, "tier ").replace(/_/g, " ")}`,
+      );
+    }
+    if (typeof assessment.riskScore === "number") {
+      lines.push(`Assessment score  : ${Math.round(assessment.riskScore)}/100`);
+    }
+  }
+
+  // Role-match evidence — the actual rows in the PEP rule book that
+  // tripped, with the supporting snippet (when the classifier surfaced
+  // it). Cap at 8 to keep the block readable; surplus is referenced.
+  const roles = assessment?.matchedRoles ?? [];
+  if (roles.length > 0) {
+    lines.push("");
+    lines.push("Matched roles (evidence):");
+    for (const r of roles.slice(0, 8)) {
+      const tierLabel = r.tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
+      lines.push(`  • [${tierLabel}] ${r.label}`);
+      if (r.snippet) {
+        const trimmed =
+          r.snippet.length > 160 ? `${r.snippet.slice(0, 160)}…` : r.snippet;
+        lines.push(`        "${trimmed}"`);
+      }
+    }
+    if (roles.length > 8) {
+      lines.push(`  …and ${roles.length - 8} more matched role(s).`);
+    }
+  }
+
+  // Source posture — PEP classification is bundled-fixture / rule-
+  // based and doesn't constitute a sanctions finding. State the limit
+  // so a reader doesn't read tier_1 as a freezing trigger.
+  lines.push("");
+  lines.push(
+    "Source posture    : rule-based / bundled PEP classifier. Tier alone does",
+  );
+  lines.push(
+    "                    not constitute a sanctions match; invokes EDD and",
+  );
+  lines.push(
+    "                    senior-management approval under FATF R.12 / FDL",
+  );
+  lines.push("                    10/2025 Art.17.");
   return lines;
 }
 
+// Adverse-media findings — when the subject is positive in adverse
+// media, the report MUST carry the findings (groups, categories,
+// top keywords, scoring). Empty-state returns an empty list so the
+// section is omitted cleanly when there's nothing to report.
 function formatAdverseMedia(sb: ReportSuperBrain): string[] {
   const kw = sb.adverseKeywordGroups ?? [];
   const am = sb.adverseMedia ?? [];
-  if (kw.length === 0 && am.length === 0) return [];
+  const scored = sb.adverseMediaScored ?? null;
+  const hasScored =
+    !!scored &&
+    ((scored.total ?? 0) > 0 ||
+      (scored.distinctKeywords ?? 0) > 0 ||
+      (scored.topKeywords?.length ?? 0) > 0 ||
+      (scored.categoriesTripped?.length ?? 0) > 0);
+  if (kw.length === 0 && am.length === 0 && !hasScored) return [];
+
   const lines: string[] = [];
-  lines.push(`${SUB.slice(0, 3)} ADVERSE MEDIA OVERLAY ${"─".repeat(53)}`);
+  lines.push(`${SUB.slice(0, 3)} ADVERSE MEDIA — FINDINGS ${"─".repeat(50)}`);
+
+  // Headline metrics
+  const totalHits =
+    scored?.total ??
+    kw.reduce((s, g) => s + g.count, 0) + am.length;
+  const distinctKw = scored?.distinctKeywords ?? am.length;
+  const cats =
+    scored?.categoriesTripped?.length ?? new Set(am.map((a) => a.categoryId)).size;
+  const score =
+    scored?.compositeScore != null ? Math.round(scored.compositeScore) : null;
+  lines.push(
+    `Hit volume        : ${totalHits} keyword hit(s) · ${distinctKw} distinct term(s) · ${cats} categor${cats === 1 ? "y" : "ies"}`,
+  );
+  if (score != null) {
+    lines.push(`Vector score      : ${score}/100`);
+  }
+
+  // Categories tripped (typology of the news signal)
+  const categoriesTripped =
+    scored?.categoriesTripped && scored.categoriesTripped.length > 0
+      ? scored.categoriesTripped
+      : Array.from(new Set(am.map((a) => a.categoryId)));
+  if (categoriesTripped.length > 0) {
+    lines.push("");
+    lines.push("Categories tripped:");
+    for (const c of categoriesTripped) {
+      const count = scored?.byCategory?.[c];
+      lines.push(`  • ${c}${count != null ? `  (${count} hit${count === 1 ? "" : "s"})` : ""}`);
+    }
+  }
+
+  // Keyword groups (operator-friendly grouping by AML doctrine)
   if (kw.length > 0) {
+    lines.push("");
     lines.push("Keyword groups fired:");
-    for (const g of kw) lines.push(`  • ${g.label} (${g.count})`);
+    for (const g of kw) lines.push(`  • ${g.label} — ${g.count} hit${g.count === 1 ? "" : "s"}  [${g.group}]`);
   }
+
+  // Top keywords (the actual evidence — what words tripped the engine)
+  const topKw = scored?.topKeywords ?? [];
+  if (topKw.length > 0) {
+    lines.push("");
+    lines.push("Top keywords:");
+    for (const t of topKw.slice(0, 10)) {
+      lines.push(
+        `  • "${t.keyword}"  →  ${t.categoryId}  (${t.count} occurrence${t.count === 1 ? "" : "s"})`,
+      );
+    }
+  }
+
+  // Per-hit evidence — keyword + offset for the first 15 hits, so a
+  // reviewer can locate the exact term in the source narrative without
+  // having to refire the brain.
   if (am.length > 0) {
-    lines.push("Classifier categories:");
-    for (const a of am) lines.push(`  • ${a.categoryId}  —  keyword "${a.keyword}"`);
+    lines.push("");
+    lines.push("Per-hit evidence (first 15):");
+    for (const a of am.slice(0, 15)) {
+      const off = a.offset != null ? ` @${a.offset}` : "";
+      lines.push(`  • [${a.categoryId}]  "${a.keyword}"${off}`);
+    }
+    if (am.length > 15) {
+      lines.push(`  …and ${am.length - 15} more — see attached evidence pack.`);
+    }
   }
+
+  // News evidence — the actual articles that produced the keyword
+  // findings. Carried into the report so the file is self-contained
+  // for MLRO defence and goAML attachment, not just a list of words
+  // that matched.
+  const dossier = sb.newsDossier;
+  if (dossier && dossier.articles.length > 0) {
+    lines.push("");
+    lines.push(
+      `News dossier      : ${dossier.articleCount} article(s) screened${
+        dossier.topSeverity ? ` · top severity ${dossier.topSeverity.toUpperCase()}` : ""
+      }${dossier.source ? ` · source ${dossier.source}` : ""}${
+        dossier.languages && dossier.languages.length > 0
+          ? ` · languages ${dossier.languages.join(", ")}`
+          : ""
+      }`,
+    );
+    lines.push("");
+    lines.push("Articles (first 10):");
+    for (const a of dossier.articles.slice(0, 10)) {
+      const sev = a.severity ? ` [${a.severity.toUpperCase()}]` : "";
+      const date = a.pubDate ? ` (${a.pubDate})` : "";
+      lines.push(`  • ${a.source}${sev}${date}`);
+      lines.push(`    ${a.title}`);
+      if (a.link) lines.push(`    ${a.link}`);
+      if (a.snippet) {
+        const trimmed =
+          a.snippet.length > 140 ? `${a.snippet.slice(0, 140)}…` : a.snippet;
+        lines.push(`    "${trimmed}"`);
+      }
+      if (a.keywordGroups && a.keywordGroups.length > 0) {
+        lines.push(`    matched groups: ${a.keywordGroups.join(", ")}`);
+      }
+    }
+    if (dossier.articles.length > 10) {
+      lines.push(
+        `  …and ${dossier.articles.length - 10} more — full dossier in evidence pack.`,
+      );
+    }
+  }
+
+  // Reviewer guidance — adverse-media is open-source signal, never
+  // constructive knowledge by itself. State the limit so an MLRO doesn't
+  // misread the section as a confirmed finding.
+  lines.push("");
+  lines.push(
+    "Source posture    : open-source / classifier-derived. Constructive-knowledge",
+  );
+  lines.push(
+    "                    threshold (FDL 10/2025 Art.2(3)) requires analyst review",
+  );
+  lines.push(
+    "                    and live-news corroboration before SAR / EDD action.",
+  );
   return lines;
 }
 
 function formatJurisdiction(sb: ReportSuperBrain): string[] {
   const j = sb.jurisdiction;
   if (!j) return [];
+  const rich = sb.jurisdictionRich ?? null;
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} JURISDICTION RISK ${"─".repeat(57)}`);
   lines.push(`Jurisdiction      : ${j.name} (${j.iso2}) · ${j.region}`);
   lines.push(`CAHRA             : ${j.cahra ? "YES" : "no"}`);
   if (j.regimes.length) lines.push(`Active regimes    : ${j.regimes.join(", ")}`);
+  if (rich) {
+    if (typeof rich.riskScore === "number") {
+      lines.push(`Jurisdiction risk : ${Math.round(rich.riskScore)}/100`);
+    }
+    if (rich.tiers && rich.tiers.length > 0) {
+      lines.push(`Tier(s)           : ${rich.tiers.join(", ")}`);
+    }
+    if (rich.notes && rich.notes.length > 0) {
+      lines.push("");
+      lines.push("Notes (evidence):");
+      for (const n of rich.notes.slice(0, 6)) {
+        lines.push(`  • ${n}`);
+      }
+      if (rich.notes.length > 6) {
+        lines.push(`  …and ${rich.notes.length - 6} more.`);
+      }
+    }
+  }
   return lines;
 }
 
@@ -256,17 +840,28 @@ function formatFacts(
           s.jurisdiction ? ` (registered in ${s.jurisdiction})` : ""
         }`;
   const caseBit = s.caseId ? ` under case ${s.caseId}` : "";
-  const topScoreBit = `a composite risk score of ${r.topScore}/100 (severity: ${r.severity.toUpperCase()})`;
-  const hitsBit =
+  // Composite (full SuperBrain fusion) is the headline number — same one
+  // the operator sees in the UI gauge. Sanctions top score is reported
+  // separately so a 0/CLEAR sanctions vector doesn't get confused with
+  // a low overall composite (or vice versa).
+  const composite = sb?.composite?.score ?? null;
+  const headline = composite ?? r.topScore;
+  const band = bandFor(headline).toUpperCase();
+  const compositeBit =
+    composite != null
+      ? `a composite risk score of ${composite}/100 (band: ${band})`
+      : `a screening top score of ${r.topScore}/100 (band: ${band}) — composite not available`;
+  const sanctionsBit =
     r.hits.length === 0
-      ? "Zero sanctions-list hits were returned across the screened corpora."
-      : `The screening engine returned ${r.hits.length} hit(s) across ${
+      ? `The sanctions vector returned CLEAR (0 hits across the screened corpora; severity ${r.severity.toUpperCase()}).`
+      : `The sanctions vector returned ${r.hits.length} hit(s) across ${
           new Set(r.hits.map((h) => h.listId)).size
-        } list(s).`;
+        } list(s) at top match strength ${r.topScore}/100 (severity ${r.severity.toUpperCase()}).`;
   lines.push(
     `On ${when}, Hawkeye Sterling screened ${subjectDescriptor}${caseBit},`,
   );
-  lines.push(`returning ${topScoreBit}. ${hitsBit}`);
+  lines.push(`returning ${compositeBit}.`);
+  lines.push(sanctionsBit);
   if (sb?.pep && sb.pep.salience > 0) {
     lines.push(
       `Subject classified as PEP (${pep(sb.pep.tier)} · salience ${Math.round(
@@ -274,11 +869,20 @@ function formatFacts(
       )}%).`,
     );
   }
-  const amCount =
-    (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
-  if (amCount > 0) {
+  // Use the same hit counter as the posture / findings sections so the
+  // FACTS narrative never quotes a different number than the matrix
+  // beneath it. Falls back to keyword-group counts only when the scored
+  // payload is absent.
+  const amTotal =
+    sb?.adverseMediaScored?.total ??
+    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+      (sb?.adverseMedia?.length ?? 0);
+  if (amTotal > 0) {
+    const distinctCats =
+      sb?.adverseMediaScored?.categoriesTripped?.length ??
+      new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)).size;
     lines.push(
-      `Adverse-media overlay fired ${amCount} category/categories — see matrix.`,
+      `Adverse-media overlay returned POSITIVE — ${amTotal} keyword hit(s) across ${distinctCats} categor${distinctCats === 1 ? "y" : "ies"}; see findings section for evidence.`,
     );
   }
   void type;
@@ -294,16 +898,10 @@ function formatAnalysis(type: ReportType, input: ReportInput): string[] {
   lines.push(`${SUB.slice(0, 3)} 2. ANALYSIS ${"─".repeat(63)}`);
   const r = input.result;
   const sb = input.superBrain;
-  const band =
-    r.severity === "critical"
-      ? "critical"
-      : r.severity === "high"
-        ? "high"
-        : r.severity === "medium"
-          ? "medium"
-          : r.severity === "low"
-            ? "low"
-            : "clear";
+  // Composite drives the band; sanctions severity is just the sanctions
+  // vector. Reporting "clear" here when composite is 42 was the old bug.
+  const headlineScore = sb?.composite?.score ?? r.topScore;
+  const band = bandFor(headlineScore);
   lines.push(
     `The composite score sits in the **${band}** band. ${
       r.hits.length > 0
@@ -461,6 +1059,71 @@ function formatDecision(type: ReportType): string[] {
   return lines;
 }
 
+// Audit trail — printed at the very bottom of the report so a regulator
+// can verify which brain run produced the disposition, which module
+// weights were in force, and which data sources were consulted. Empty
+// when the super-brain payload didn't include an audit block (older
+// clients) — the report stays valid but loses replay-ability.
+function formatAuditTrail(
+  input: ReportInput,
+  payloadHash: string,
+): string[] {
+  const a = input.superBrain?.audit;
+  const op = input.operator;
+  const lines: string[] = [];
+  lines.push(`${SUB.slice(0, 3)} AUDIT TRAIL ${"─".repeat(63)}`);
+  // Schema + engine + build — pinned to whichever versions were in
+  // force when the brain ran. A regulator inspecting a 2-year-old
+  // filing knows immediately which scoring rules to replay against.
+  if (a?.schemaVersion) lines.push(`report.schema_version ${a.schemaVersion}`);
+  if (a?.engineVersion) lines.push(`brain.engine_version  ${a.engineVersion}`);
+  if (a?.buildSha) lines.push(`brain.build_sha       ${a.buildSha}`);
+  if (a?.runId) lines.push(`reasoning.run_id      ${a.runId}`);
+  if (a?.generatedAt) lines.push(`brain.generated_at    ${a.generatedAt}`);
+  if (a?.dataFreshness && Object.keys(a.dataFreshness).length > 0) {
+    const parts = Object.entries(a.dataFreshness)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(" · ");
+    lines.push(`brain.data_freshness  ${parts}`);
+  }
+  if (a?.moduleWeights && Object.keys(a.moduleWeights).length > 0) {
+    lines.push(`brain.module_weights:`);
+    for (const [k, v] of Object.entries(a.moduleWeights)) {
+      lines.push(`  ${pad(k, 36)} ${v}`);
+    }
+  }
+  if (op?.role) {
+    lines.push(`operator.role         ${op.role}${op.id ? ` (${op.id})` : ""}`);
+  }
+  lines.push(
+    `report.generated_at   ${(input.now ?? new Date()).toISOString()}`,
+  );
+  lines.push(`payload.sha256        ${payloadHash}`);
+  lines.push("timestamps            UTC unless otherwise noted");
+  if (a?.runId) {
+    lines.push("");
+    lines.push(
+      "Reproducibility       : this report can be replayed by re-firing",
+    );
+    lines.push(
+      `                        /api/super-brain with run id ${a.runId} against`,
+    );
+    lines.push(
+      "                        the data versions listed above. If any source",
+    );
+    lines.push(
+      "                        has been updated since brain.generated_at, the",
+    );
+    lines.push(
+      "                        recomputed composite may differ — that is the",
+    );
+    lines.push(
+      "                        expected behaviour, not a defect.",
+    );
+  }
+  return lines;
+}
+
 function formatFramework(): string[] {
   const lines: string[] = [];
   lines.push("Regulatory framework applied:");
@@ -469,27 +1132,116 @@ function formatFramework(): string[] {
   return lines;
 }
 
+// Structured report for machine consumers (regulator portals, Asana
+// automation, MAS bridges) — same provenance and hashes as the text
+// version so a JSON sidecar and a .txt download can be cross-verified.
+// `text` carries the canonical report verbatim; `hashes` covers it.
+export interface StructuredReport {
+  reportId: string;
+  reportType: ReportType;
+  schemaVersion: string;
+  generatedAt: string;
+  disposition: string;
+  composite: { score: number; band: string; breakdown?: Record<string, number> };
+  sanctions: { topScore: number; severity: string; hits: ReportScreeningResult["hits"] };
+  pep: ReportSuperBrain["pep"] | null;
+  pepAssessment?: ReportSuperBrain["pepAssessment"] | null;
+  jurisdiction: ReportSuperBrain["jurisdiction"] | null;
+  jurisdictionRich?: ReportSuperBrain["jurisdictionRich"] | null;
+  adverseMedia?: ReportSuperBrain["adverseMedia"];
+  adverseKeywordGroups?: ReportSuperBrain["adverseKeywordGroups"];
+  adverseMediaScored?: ReportSuperBrain["adverseMediaScored"] | null;
+  typologies?: ReportSuperBrain["typologies"] | null;
+  redlines?: ReportSuperBrain["redlines"];
+  newsDossier?: ReportSuperBrain["newsDossier"] | null;
+  audit?: ReportSuperBrain["audit"] | null;
+  operator?: ReportOperator | null;
+  hashes: {
+    payloadSha256: string;
+    reportSha256: string;
+    signature?: string;
+    signingKeyFp?: string;
+  };
+  text: string;
+}
+
+export function buildComplianceReportStructured(input: ReportInput): StructuredReport {
+  const text = buildComplianceReport(input);
+  const payloadSha = sha256(canonicalJson(input));
+  // Re-derive the report hash by extracting it from the text — the
+  // builder already computed it; this avoids recomputing the body
+  // and risking drift between the two paths.
+  const reportShaMatch = text.match(/report\.sha256\s+([a-f0-9]{64})/);
+  const reportSha = reportShaMatch ? reportShaMatch[1]! : "";
+  const sigMatch = text.match(/report\.signature\s+hmac-sha256:([a-f0-9]{64})/);
+  const fpMatch = text.match(/signing\.key_fp\s+([a-f0-9]{12})/);
+  const sb = input.superBrain;
+  const composite = sb?.composite?.score ?? input.result.topScore;
+  const reportType = inferReportType(input.result, sb);
+  const disposition = dispositionFor(input.result, sb);
+  const generatedAt = (input.now ?? new Date()).toISOString();
+  const idDate = generatedAt.slice(0, 10).replace(/-/g, "");
+  const idTime = generatedAt.slice(11, 16).replace(":", "");
+  const reportId = `HWK-SCR-${idDate}-${reportType}-${idTime}`;
+  return {
+    reportId,
+    reportType,
+    schemaVersion: sb?.audit?.schemaVersion ?? "2.0.0",
+    generatedAt,
+    disposition,
+    composite: {
+      score: composite,
+      band: bandFor(composite),
+      ...(sb?.composite?.breakdown ? { breakdown: sb.composite.breakdown } : {}),
+    },
+    sanctions: {
+      topScore: input.result.topScore,
+      severity: input.result.severity,
+      hits: input.result.hits,
+    },
+    pep: sb?.pep ?? null,
+    pepAssessment: sb?.pepAssessment ?? null,
+    jurisdiction: sb?.jurisdiction ?? null,
+    jurisdictionRich: sb?.jurisdictionRich ?? null,
+    adverseMedia: sb?.adverseMedia,
+    adverseKeywordGroups: sb?.adverseKeywordGroups,
+    adverseMediaScored: sb?.adverseMediaScored ?? null,
+    typologies: sb?.typologies ?? null,
+    redlines: sb?.redlines,
+    newsDossier: sb?.newsDossier ?? null,
+    audit: sb?.audit ?? null,
+    operator: input.operator ?? null,
+    hashes: {
+      payloadSha256: payloadSha,
+      reportSha256: reportSha,
+      ...(sigMatch ? { signature: `hmac-sha256:${sigMatch[1]}` } : {}),
+      ...(fpMatch ? { signingKeyFp: fpMatch[1] } : {}),
+    },
+    text,
+  };
+}
+
 export function buildComplianceReport(input: ReportInput): string {
   const now = input.now ?? new Date();
   const type = inferReportType(input.result, input.superBrain);
+  const disposition = dispositionFor(input.result, input.superBrain);
   const out: string[] = [];
 
   out.push(SEP);
   out.push(...formatHeader(type, input, now));
-
-  if (type === "SANCTIONS") {
-    out.push("╔" + "═".repeat(77) + "╗");
-    out.push(
-      "║   ⚠  POSSIBLE SANCTIONS MATCH — MLRO REVIEW REQUIRED BEFORE ANY ACTION  ⚠ ║",
-    );
-    out.push(
-      "║   DO NOT FREEZE OR FILE until MLRO has verified match identity            ║",
-    );
-    out.push("╚" + "═".repeat(77) + "╝");
-  }
+  out.push(...formatBanner(type, disposition));
 
   out.push(...formatSubject(input.subject));
+  out.push("");
+  out.push(...formatPosture(input.result, input.superBrain));
   out.push(...formatMatrix(input.result, input.superBrain));
+  // Sanctions hit detail goes immediately after the matrix so a reviewer
+  // following "POSSIBLE MATCH — VERIFY" lands on per-hit data without
+  // scrolling.
+  const sanctionsDetail = formatSanctionsHits(input.result);
+  if (sanctionsDetail.length > 0) {
+    out.push(...sanctionsDetail);
+  }
   if (input.superBrain) {
     out.push(...formatPepBlock(input.superBrain));
     out.push(...formatJurisdiction(input.superBrain));
@@ -504,6 +1256,39 @@ export function buildComplianceReport(input: ReportInput): string {
   out.push(...formatGoaml(type, input, now));
   out.push(...formatDecision(type));
   out.push(...formatFramework());
+
+  // Hash the canonical payload (key-sorted) so two reports built from
+  // semantically-equal inputs always produce the same payload.sha256
+  // even if the JSON came over the wire with different key ordering.
+  const payloadHash = sha256(canonicalJson(input));
+  const audit = formatAuditTrail(input, payloadHash);
+  if (audit.length > 0) {
+    out.push("");
+    out.push(...audit);
+  }
+
+  // Hash the report content itself so a reviewer can detect tampering
+  // in the .txt / PDF artifact. The hash covers everything ABOVE the
+  // line on which it appears (the line itself and the END OF REPORT
+  // sentinel are excluded so they can never affect the hash).
+  const bodySoFar = out.filter((l) => l != null).join("\n");
+  const reportHash = sha256(bodySoFar);
+  out.push(`report.sha256         ${reportHash}`);
+
+  // HMAC signature — keyed by REPORT_SIGNING_KEY (server env). Proves
+  // the artefact came from this specific Hawkeye deployment. The line
+  // is omitted entirely when no key is configured so the audit trail
+  // never carries a false sense of authenticity.
+  const signature = hmacSign(reportHash);
+  const keyFp = signingKeyFingerprint();
+  if (signature && keyFp) {
+    out.push(`report.signature      hmac-sha256:${signature}`);
+    out.push(`signing.key_fp        ${keyFp}`);
+    out.push(
+      `verify.recipe         openssl dgst -sha256 -hmac "$KEY" <<< "${reportHash}"`,
+    );
+  }
+
   out.push(SEP);
   out.push("END OF REPORT");
   out.push(SEP);

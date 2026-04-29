@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import {
   buildComplianceReport,
+  buildComplianceReportStructured,
   type ReportInput,
 } from "@/lib/reports/complianceReport";
 
@@ -53,12 +54,38 @@ const SCREEN_VECTORS = [
   { label: "Sanctions (AUS)",     engine: "Hawkeye native", rx: /\bDFAT\b|^AU[-_]/i },
 ];
 
-function renderHtmlReport(_text: string, input: ReportInput): string {
+// Severity band derived from the headline composite — same lookup used
+// by the canonical text report so the HTML cover never disagrees with
+// the canonical body it embeds.
+function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "critical" {
+  if (score >= 80) return "critical";
+  if (score >= 60) return "high";
+  if (score >= 40) return "medium";
+  if (score >= 20) return "low";
+  return "clear";
+}
+
+// Auto-hyperlink raw URLs so the news-dossier links in the embedded
+// canonical body are clickable in the HTML / PDF render. Operates on
+// already-escaped HTML — input is the post-escapeHtml string.
+function autolinkUrls(escaped: string): string {
+  return escaped.replace(
+    /(https?:\/\/[^\s<>"]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>',
+  );
+}
+
+function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
   const s = input.subject;
   const r = input.result;
   const sb = input.superBrain;
-  const sev = r.severity.toLowerCase();
+  // Composite drives the headline — same number rendered in the UI
+  // gauge. r.topScore (sanctions vector only) was the source of the
+  // 0/100-CLEAR-vs-42/100 discrepancy in earlier exports.
+  const composite = sb?.composite?.score ?? r.topScore;
+  const headlineBand = bandForScore(composite);
+  const sev = headlineBand;
   const sevColor = SEV_COLOR[sev] ?? "#888";
   const safeTitle = escapeHtml(`Hawkeye Sterling — ${s.name}`);
 
@@ -242,12 +269,63 @@ function renderHtmlReport(_text: string, input: ReportInput): string {
     /* footer */
     .footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--ink3)}
 
-    /* print overrides — white background for paper */
+    /* canonical body — full text report, byte-identical to .txt
+       output. Carries the audit trail and SHA hashes so the PDF
+       and the .txt are interchangeable for regulator filing. */
+    .canonical{
+      margin-top:24px;
+      padding:14px 16px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:5px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:10px;
+      line-height:1.45;
+      color:var(--ink1);
+      white-space:pre-wrap;
+      word-break:break-word;
+      page-break-inside:auto;
+    }
+    .canonical-title{
+      font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+      color:var(--ink3);margin:18px 0 4px;
+    }
+    .canonical a{color:var(--brand);text-decoration:none}
+    .canonical a:hover{text-decoration:underline}
+
+    /* print overrides — white background for paper, page numbers,
+       running brand header so every page carries the report id. */
     @media print {
       :root{--bg:#fff;--card:#f8f8f8;--border:#ddd;--ink0:#000;--ink1:#222;--ink2:#555;--ink3:#888;--brand:#c0156a;--brand-dim:rgba(192,21,106,.08)}
       body{background:#fff;color:#222;padding:16px 20px}
       .toolbar{display:none}
-      @page{margin:14mm 16mm}
+      .canonical{font-size:9.5px;background:#fff;border-color:#ddd}
+      .canonical a{color:#222;text-decoration:underline}
+      @page{
+        margin:18mm 16mm;
+        @top-left{
+          content:"HAWKEYE STERLING — confidential";
+          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+          font-size:9px;color:#888;
+        }
+        @top-right{
+          content:"${e(reportId)}";
+          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+          font-size:9px;color:#888;
+        }
+        @bottom-right{
+          content:"page " counter(page) " of " counter(pages);
+          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+          font-size:9px;color:#888;
+        }
+        @bottom-left{
+          content:"10-year retention · FDL 10/2025";
+          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+          font-size:9px;color:#888;
+        }
+      }
+      /* avoid splitting key blocks across pages */
+      .section,.subject-block,.report-header{page-break-inside:avoid}
     }
   </style>
 </head>
@@ -293,7 +371,8 @@ function renderHtmlReport(_text: string, input: ReportInput): string {
       <div class="sev-badge" style="color:${sevColor};border-color:${sevColor};background:${sevColor}1a">
         ${e(sev.toUpperCase())}
       </div>
-      <div style="text-align:right;margin-top:6px;font-size:20px;font-weight:700;color:${sevColor}">${r.topScore}<span style="font-size:11px;color:var(--ink3)">/100</span></div>
+      <div style="text-align:right;margin-top:6px;font-size:20px;font-weight:700;color:${sevColor}">${composite}<span style="font-size:11px;color:var(--ink3)">/100</span></div>
+      <div style="text-align:right;margin-top:2px;font-size:9px;color:var(--ink3)">composite (sanctions: ${r.topScore})</div>
     </div>
   </div>
 
@@ -321,10 +400,10 @@ function renderHtmlReport(_text: string, input: ReportInput): string {
     <div style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
         <span style="font-size:10px;color:var(--ink3)">Composite risk score</span>
-        <span style="font-size:10px;color:${sevColor};font-weight:600">${r.topScore}/100 · ${e(sev.toUpperCase())}</span>
+        <span style="font-size:10px;color:${sevColor};font-weight:600">${composite}/100 · ${e(sev.toUpperCase())}</span>
       </div>
       <div class="risk-bar-wrap">
-        <div class="risk-bar" style="width:${Math.min(r.topScore, 100)}%;background:${sevColor}"></div>
+        <div class="risk-bar" style="width:${Math.min(composite, 100)}%;background:${sevColor}"></div>
       </div>
     </div>
   </div>
@@ -351,9 +430,9 @@ function renderHtmlReport(_text: string, input: ReportInput): string {
   <div class="section">
     <div class="section-title">1. Facts</div>
     <p style="color:var(--ink1);font-size:11.5px;line-height:1.7">
-      On ${e(now.toUTCString().replace(" GMT", " UTC"))}, Hawkeye Sterling screened the ${e(s.entityType)} <strong style="color:var(--ink0)">${e(s.name)}</strong>${s.nationality ? ` (${e(s.nationality)} national)` : ""}${s.caseId ? ` under case ${e(s.caseId)}` : ""}, returning a composite risk score of <strong style="color:${sevColor}">${r.topScore}/100</strong> (severity: ${e(sev.toUpperCase())}).
-      ${r.hits.length === 0 ? "Zero sanctions-list hits were returned across the screened corpora." : `The screening engine returned <strong>${r.hits.length}</strong> possible match(es) requiring MLRO verification — a name-similarity result does not constitute a confirmed designation.`}
-      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"}.` : ""}
+      On ${e(now.toUTCString().replace(" GMT", " UTC"))}, Hawkeye Sterling screened the ${e(s.entityType)} <strong style="color:var(--ink0)">${e(s.name)}</strong>${s.nationality ? ` (${e(s.nationality)} national)` : ""}${s.caseId ? ` under case ${e(s.caseId)}` : ""}, returning a composite risk score of <strong style="color:${sevColor}">${composite}/100</strong> (band: ${e(sev.toUpperCase())}).
+      The sanctions vector ${r.hits.length === 0 ? `returned <strong>CLEAR</strong> (0 hits across the screened corpora)` : `returned <strong>${r.hits.length}</strong> possible match(es) at top match strength ${r.topScore}/100 — a name-similarity result does not constitute a confirmed designation`}.
+      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"} — see canonical body below for full findings.` : ""}
       ${pepTier ? `Subject classified as possible PEP (${e(pepTier)}) — requires independent verification.` : ""}
     </p>
   </div>
@@ -404,6 +483,10 @@ function renderHtmlReport(_text: string, input: ReportInput): string {
     <ul class="reg-list">${regFramework}</ul>
   </div>
 
+  <!-- CANONICAL TEXT BODY -->
+  <div class="canonical-title">Canonical report body (text-identical to .txt export — covered by report.sha256)</div>
+  <pre class="canonical">${autolinkUrls(escapeHtml(text))}</pre>
+
   <!-- FOOTER -->
   <div class="footer">
     <span>Hawkeye Sterling · hawkeye-sterling.netlify.app</span>
@@ -453,6 +536,21 @@ async function handleComplianceReport(req: Request): Promise<Response> {
       { ok: false, error: "report generation failed" },
       { status: 500, headers: gateHeaders },
     );
+  }
+
+  // Structured JSON sidecar — same provenance and hashes as the text
+  // version. Lets machine consumers (Asana automation, MAS bridges,
+  // regulator portals) consume the report without parsing the prose.
+  if (format === "json") {
+    const structured = buildComplianceReportStructured(body);
+    return NextResponse.json(structured, {
+      status: 200,
+      headers: {
+        ...gateHeaders,
+        "content-disposition": `attachment; filename="hawkeye-report-${safeFilenameSegment(body.subject.id)}.json"`,
+        "cache-control": "no-store",
+      },
+    });
   }
 
   if (format === "html" || format === "pdf") {
