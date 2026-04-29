@@ -51,6 +51,24 @@ interface Body {
   /** Slug of the reporting entity from HAWKEYE_ENTITIES. When omitted,
    *  resolves to HAWKEYE_DEFAULT_ENTITY_ID, then to the first entity. */
   entityId?: string;
+  /** Optional screening provenance — when present, the goAML envelope
+   *  carries an XML-comment header tying this filing to the specific
+   *  screening disposition that produced it (run id + dual SHA-256 +
+   *  optional HMAC signature). Lets a regulator verify the goAML XML
+   *  and the .txt / PDF / JSON sidecar all came from the same brain
+   *  run. Omitting it falls back to today's behaviour (charter hash
+   *  placeholder; no provenance comment). */
+  screeningProvenance?: {
+    runId?: string;
+    payloadSha256?: string;
+    reportSha256?: string;
+    signature?: string;
+    signingKeyFp?: string;
+    engineVersion?: string;
+    schemaVersion?: string;
+    buildSha?: string;
+    generatedAt?: string;
+  };
 }
 
 const VALID_REPORT_CODES = new Set<GoAmlReportCode>([
@@ -198,6 +216,41 @@ async function handleGoaml(req: Request): Promise<Response> {
       { ok: false, error: "goaml serialise failed" },
       { status: 500, headers: gateHeaders },
     );
+  }
+
+  // Prepend a screening-provenance XML comment block so the goAML
+  // filing carries the same hashes as the .txt / PDF / JSON sidecar
+  // that produced its narrative. XML comments are ignored by goAML
+  // schema parsers but visible to a human reviewer or grep, which is
+  // exactly the audit affordance we want — schema-safe linkage from
+  // the FIU artefact back to the brain run.
+  const prov = body.screeningProvenance;
+  if (prov && (prov.runId || prov.payloadSha256 || prov.reportSha256)) {
+    const lines: string[] = [];
+    lines.push("<!--");
+    lines.push("  Hawkeye Sterling — goAML envelope provenance");
+    if (prov.runId) lines.push(`  screening.run_id          : ${prov.runId}`);
+    if (prov.engineVersion) lines.push(`  brain.engine_version      : ${prov.engineVersion}`);
+    if (prov.schemaVersion) lines.push(`  report.schema_version     : ${prov.schemaVersion}`);
+    if (prov.buildSha) lines.push(`  brain.build_sha           : ${prov.buildSha}`);
+    if (prov.generatedAt) lines.push(`  brain.generated_at        : ${prov.generatedAt}`);
+    if (prov.payloadSha256) lines.push(`  screening.payload.sha256  : ${prov.payloadSha256}`);
+    if (prov.reportSha256) lines.push(`  screening.report.sha256   : ${prov.reportSha256}`);
+    if (prov.signature) lines.push(`  screening.report.signature: ${prov.signature}`);
+    if (prov.signingKeyFp) lines.push(`  signing.key_fp            : ${prov.signingKeyFp}`);
+    lines.push(`  goaml.envelope.generated  : ${iso}`);
+    lines.push(`  goaml.internal_reference  : ${reportRef}`);
+    lines.push("-->");
+    const comment = lines.join("\n");
+    // Insert after the <?xml ... ?> declaration so the comment is
+    // schema-legal even with strict parsers. If serialiseGoamlXml
+    // didn't emit a declaration, prepend.
+    if (xml.startsWith("<?xml")) {
+      const declEnd = xml.indexOf("?>") + 2;
+      xml = xml.slice(0, declEnd) + "\n" + comment + xml.slice(declEnd);
+    } else {
+      xml = comment + "\n" + xml;
+    }
   }
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
