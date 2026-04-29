@@ -51,6 +51,24 @@ export type {
 } from './refusal-router.js';
 
 export { AuditLogStore, persistedSourceFromChunk } from './audit-log.js';
+
+export { classifyDpmsTypologies, DPMS_TYPOLOGIES } from './dpms-typologies.js';
+export type { DpmsTypologyId, DpmsTypology, TypologyHit } from './dpms-typologies.js';
+
+export {
+  extractCountries,
+  lookupCountry,
+  resolveJurisdictionalLookups,
+  LIST_SNAPSHOTS,
+} from './jurisdictional-lookup.js';
+export type { ListId, ListSnapshot, JurisdictionLookup } from './jurisdictional-lookup.js';
+
+export {
+  PROBE_PROMPTS,
+  parseProbeOutcomes,
+  applyProbeOverride,
+} from './adversarial-probe.js';
+export type { ProbeKind, ProbePrompt, ProbeOutcome } from './adversarial-probe.js';
 export type {
   AuditEntryV1,
   AuditEntryInput,
