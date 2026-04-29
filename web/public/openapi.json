@@ -353,32 +353,6 @@
         "responses": { "200": { "description": "Service health, brain-soul status, and cognitive grade" } }
       }
     },
-    "/api/payment-screen": {
-      "post": {
-        "summary": "Wire-transfer compliance — parse a SWIFT MT103 and screen ordering + beneficiary parties",
-        "tags": ["Screening"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["message"],
-                "properties": {
-                  "message": { "type": "string", "maxLength": 50000, "description": "Raw SWIFT MT103 message text (≤ 50KB)" }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Parsed envelope plus per-party screening result. UI surfaces the worse of the two severities as the payment verdict." },
-          "400": { "$ref": "#/components/responses/Error" },
-          "413": { "description": "Message exceeds 50KB cap" },
-          "503": { "description": "Watchlist corpus unavailable" }
-        }
-      }
-    },
     "/api/gleif": {
       "post": {
         "summary": "GLEIF LEI lookup — entity record and ownership chain (KYB enrichment)",
@@ -484,76 +458,6 @@
           "200": { "description": "Per-digit breakdown, MAD, chi-squared, p-value, and risk tier" },
           "400": { "$ref": "#/components/responses/Error" },
           "422": { "description": "Insufficient data — fewer samples than required for a stable test" }
-        }
-      }
-    },
-    "/api/cases": {
-      "get": {
-        "summary": "List cases from the tenant case vault",
-        "tags": ["Records"],
-        "responses": {
-          "200": {
-            "description": "Tenant-scoped case list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": { "type": "boolean" },
-                    "tenant": { "type": "string" },
-                    "cases": { "type": "array", "items": { "type": "object" } }
-                  }
-                }
-              }
-            }
-          },
-          "401": { "description": "Authentication required" }
-        }
-      }
-    },
-    "/api/goaml": {
-      "post": {
-        "summary": "goAML XML envelope generator — FIU-ready submission package",
-        "tags": ["Compliance"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["reportCode", "subject", "narrative"],
-                "properties": {
-                  "reportCode": { "type": "string", "enum": ["STR", "SAR", "FFR", "PNMR", "CTR", "AIF", "EFT", "HRC", "RFI"] },
-                  "subject": {
-                    "type": "object",
-                    "required": ["name", "entityType"],
-                    "properties": {
-                      "name": { "type": "string" },
-                      "entityType": { "type": "string", "enum": ["individual", "organisation", "vessel", "aircraft", "other"] },
-                      "jurisdiction": { "type": "string" },
-                      "dob": { "type": "string", "format": "date" },
-                      "aliases": { "type": "array", "items": { "type": "string" } },
-                      "idNumber": { "type": "string" },
-                      "caseId": { "type": "string" }
-                    }
-                  },
-                  "narrative": { "type": "string" },
-                  "amountAed": { "type": "number" },
-                  "counterparty": { "type": "string" },
-                  "entityId": { "type": "string", "description": "Reporting entity slug; defaults to HAWKEYE_DEFAULT_ENTITY_ID" }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "goAML XML envelope ready for FIU upload",
-            "content": {
-              "application/xml": { "schema": { "type": "string" } }
-            }
-          },
-          "400": { "$ref": "#/components/responses/Error" }
         }
       }
     }
