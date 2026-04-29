@@ -68,6 +68,8 @@ export const REASONING_MODES: ReasoningMode[] = [
   m('framing_check', 'Framing-Effect Check', 'cognitive_science', ['introspection','smartness'], 1, 'Detect decision flips under equivalent rephrasings.'),
   m('overconfidence_check', 'Overconfidence Check', 'cognitive_science', ['introspection'], 1, 'Flag narrow confidence intervals on weak evidence.'),
   m('anchoring_avoidance', 'Anchoring Avoidance', 'cognitive_science', ['introspection','smartness'], 1, 'Neutralise first-seen numeric reference effects.'),
+  m('hallucination_check', 'Hallucination Check', 'epistemic_quality', ['reasoning','introspection'], 2, 'Charter P1+P3 enforcement: every cite-required claim in a rationale must trace to a supplied evidence id; dangling claims are flagged as potential hallucinations.'),
+  m('disparate_impact', 'Disparate Impact Audit', 'epistemic_quality', ['reasoning','introspection'], 2, 'Anti-bias: four-fifths-rule audit across protected attributes (nationality / gender / age / etc); ratio < 0.8 is a flag.'),
 
   // ── DECISION THEORY ───────────────────────────────────────────────────
   m('monte_carlo', 'Monte Carlo Simulation', 'decision_theory', ['data_analysis','deep_thinking'], 1, 'Sample-based estimation under uncertainty.'),
