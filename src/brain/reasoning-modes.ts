@@ -5,28 +5,16 @@
 // inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8/11.
 
 import type {
-  BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
+  FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
 import { MODE_OVERRIDES } from './modes/registry.js';
+import { defaultApply } from './modes/default-apply.js';
 import { WAVE3_MODES, WAVE3_OVERRIDES } from './reasoning-modes-wave3.js';
 import { WAVE4_MODES, WAVE4_OVERRIDES } from './reasoning-modes-wave4.js';
 import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
 import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
 import { WAVE11_MODES, WAVE11_OVERRIDES } from './reasoning-modes-wave11.js';
 import { WAVE12_MODES, WAVE12_OVERRIDES } from './reasoning-modes-wave12.js';
-
-const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
-  async (_ctx: BrainContext): Promise<Finding> => ({
-    modeId,
-    category,
-    faculties,
-    score: 0,
-    confidence: 0,
-    verdict: 'inconclusive',
-    rationale: `[stub] ${modeId} — implementation pending (Phase 7).`,
-    evidence: [],
-    producedAt: Date.now(),
-  });
 
 const m = (
   id: string,
@@ -37,7 +25,7 @@ const m = (
   description: string,
 ): ReasoningMode => ({
   id, name, category, faculties, wave, description,
-  apply: stubApply(id, category, faculties),
+  apply: defaultApply(id, category, faculties, description),
 });
 
 export const REASONING_MODES: ReasoningMode[] = [

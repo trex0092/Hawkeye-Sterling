@@ -9,19 +9,14 @@ import type {
   BrainContext, Finding, FacultyId, ReasoningCategory, ReasoningMode,
 } from './types.js';
 import { combineDS, type BeliefMass } from './dempster-shafer.js';
+import { defaultApply } from './modes/default-apply.js';
 
-const stubApply = (modeId: string, category: ReasoningCategory, faculties: FacultyId[]) =>
-  async (_ctx: BrainContext): Promise<Finding> => ({
-    modeId,
-    category,
-    faculties,
-    score: 0,
-    confidence: 0,
-    verdict: 'inconclusive',
-    rationale: `[stub] ${modeId} — implementation pending (Phase 7).`,
-    evidence: [],
-    producedAt: Date.now(),
-  });
+const stubApply = (
+  modeId: string,
+  category: ReasoningCategory,
+  faculties: FacultyId[],
+  description: string,
+) => defaultApply(modeId, category, faculties, description);
 
 const m = (
   id: string,
@@ -32,7 +27,7 @@ const m = (
   apply?: (ctx: BrainContext) => Promise<Finding>,
 ): ReasoningMode => ({
   id, name, category, faculties, wave: 3, description,
-  apply: apply ?? stubApply(id, category, faculties),
+  apply: apply ?? stubApply(id, category, faculties, description),
 });
 
 // ─── REAL IMPLEMENTATIONS ──────────────────────────────────────────────
@@ -266,6 +261,548 @@ async function completenessAuditApply(ctx: BrainContext): Promise<Finding> {
   };
 }
 
+// ─── PROBABILISTIC AGGREGATION ─────────────────────────────────────────
+
+async function dempsterShaferApply(ctx: BrainContext): Promise<Finding> {
+  // Project each prior contributor finding into a belief-mass over the
+  // hypothesis frame {ml, tf, sanctioned, fraud, clean}. score ↔ mass on
+  // the hypothesis singleton (or, when no hypothesis is named, on the
+  // 2-set {ml, fraud}); (1 − confidence) goes to Θ as ignorance.
+  const frame = ['ml', 'tf', 'sanctioned', 'fraud', 'clean'] as const;
+  const hypMap: Record<string, string> = {
+    illicit_risk: 'ml',
+    sanctioned: 'sanctioned',
+    pep: 'fraud',
+    material_concern: 'ml',
+    adverse_media_linked: 'fraud',
+    ubo_opaque: 'ml',
+  };
+  const masses: BeliefMass[] = [];
+  const usable = ctx.priorFindings.filter(
+    (f) => !f.rationale.startsWith('[stub]') && (f.score > 0 || f.confidence > 0),
+  );
+  for (const f of usable) {
+    const target = f.hypothesis ? hypMap[f.hypothesis] ?? 'ml' : 'ml';
+    const onHyp = Math.max(0, Math.min(1, f.score * f.confidence));
+    const ignorance = Math.max(0, 1 - onHyp);
+    masses.push({
+      sourceId: f.modeId,
+      mass: { [target]: onHyp, [frame.join('|')]: ignorance },
+    });
+  }
+  if (masses.length < 2) {
+    return {
+      modeId: 'dempster_shafer',
+      category: 'statistical',
+      faculties: ['inference', 'deep_thinking'],
+      score: 0,
+      confidence: 0.3,
+      verdict: 'inconclusive',
+      rationale: `Dempster-Shafer: need ≥2 prior contributing findings (got ${masses.length}).`,
+      evidence: [`prior_count=${masses.length}`],
+      producedAt: Date.now(),
+    };
+  }
+  const ds = combineDS([...frame], masses, { rule: 'auto' });
+  const top = (Object.entries(ds.pignistic) as Array<[string, number]>).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  const topHyp = top?.[0] ?? 'clean';
+  const topPig = top?.[1] ?? 0;
+  const cleanPig = ds.pignistic['clean'] ?? 0;
+  const illicit = 1 - cleanPig;
+  return {
+    modeId: 'dempster_shafer',
+    category: 'statistical',
+    faculties: ['inference', 'deep_thinking'],
+    score: illicit,
+    confidence: Math.max(0.4, 1 - ds.conflict),
+    verdict: illicit >= 0.7 ? 'escalate' : illicit >= 0.4 ? 'flag' : 'clear',
+    rationale: `DS combination over ${masses.length} masses (${ds.rule} rule, conflict K=${ds.conflict.toFixed(3)}). Top hypothesis: ${topHyp} (BetP=${topPig.toFixed(3)}); P(illicit)=${illicit.toFixed(3)}.`,
+    evidence: [
+      `rule=${ds.rule}`,
+      `conflict=${ds.conflict.toFixed(3)}`,
+      ...Object.entries(ds.pignistic).map(([h, p]) => `BetP(${h})=${(p as number).toFixed(3)}`),
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+async function bayesianUpdateCascadeApply(ctx: BrainContext): Promise<Finding> {
+  // Run a sequential Bayesian update over prior findings whose score and
+  // confidence imply directional likelihood ratios. Same maths as
+  // fusion.ts but emitted as its own auditable finding so an MLRO can
+  // see the cascade in isolation from the global fusion.
+  const usable = ctx.priorFindings.filter(
+    (f) => !f.rationale.startsWith('[stub]') && f.confidence > 0.2,
+  );
+  if (usable.length < 2) {
+    return {
+      modeId: 'bayesian_update_cascade',
+      category: 'statistical',
+      faculties: ['inference', 'deep_thinking'],
+      score: 0,
+      confidence: 0.3,
+      verdict: 'inconclusive',
+      rationale: `Bayesian cascade: need ≥2 confident priors (got ${usable.length}).`,
+      evidence: [`prior_count=${usable.length}`],
+      producedAt: Date.now(),
+    };
+  }
+  let p = 0.10; // base rate prior
+  const trace: string[] = [`prior=${p.toFixed(3)}`];
+  for (const f of usable) {
+    const lr = Math.exp(4 * f.confidence * (f.score - 0.5));
+    const odds = (p / (1 - p)) * lr;
+    p = odds / (1 + odds);
+    trace.push(`${f.modeId}: lr=${lr.toFixed(2)} → p=${p.toFixed(3)}`);
+  }
+  return {
+    modeId: 'bayesian_update_cascade',
+    category: 'statistical',
+    faculties: ['inference', 'deep_thinking'],
+    score: p,
+    confidence: 0.85,
+    verdict: p >= 0.7 ? 'escalate' : p >= 0.4 ? 'flag' : 'clear',
+    rationale: `Bayesian cascade over ${usable.length} priors → posterior P(illicit)=${p.toFixed(3)}.`,
+    evidence: trace,
+    producedAt: Date.now(),
+  };
+}
+
+async function multiSourceConsistencyApply(ctx: BrainContext): Promise<Finding> {
+  const ev = ctx.evidence;
+  const channels: Array<{ name: string; signal: number }> = [];
+  const sancN = Array.isArray(ev.sanctionsHits) ? ev.sanctionsHits.length : 0;
+  const pepN = Array.isArray(ev.pepHits) ? ev.pepHits.length : 0;
+  const advN = Array.isArray(ev.adverseMedia) ? ev.adverseMedia.length : 0;
+  const uboN = Array.isArray(ev.uboChain) ? ev.uboChain.length : 0;
+  const txN = Array.isArray(ev.transactions) ? ev.transactions.length : 0;
+  if (sancN > 0) channels.push({ name: 'sanctions', signal: 1 });
+  if (pepN > 0) channels.push({ name: 'pep', signal: 1 });
+  if (advN > 0) channels.push({ name: 'adverse_media', signal: 1 });
+  if (uboN > 0) channels.push({ name: 'ubo', signal: uboN >= 3 ? 1 : 0.5 });
+  if (txN > 0) channels.push({ name: 'transactions', signal: txN >= 10 ? 1 : 0.5 });
+  if (channels.length < 2) {
+    return {
+      modeId: 'multi_source_consistency',
+      category: 'statistical',
+      faculties: ['data_analysis', 'reasoning'],
+      score: 0,
+      confidence: 0.4,
+      verdict: 'inconclusive',
+      rationale: `Multi-source consistency: only ${channels.length} channel(s) populated.`,
+      evidence: channels.map((c) => `channel=${c.name}`),
+      producedAt: Date.now(),
+    };
+  }
+  const sumSig = channels.reduce((acc, c) => acc + c.signal, 0);
+  const agreement = sumSig / channels.length;
+  // Disagreement if some channels signal strongly while others are silent.
+  const variance =
+    channels.reduce((acc, c) => acc + (c.signal - agreement) ** 2, 0) / channels.length;
+  const consistent = variance < 0.1 && agreement > 0.5;
+  return {
+    modeId: 'multi_source_consistency',
+    category: 'statistical',
+    faculties: ['data_analysis', 'reasoning'],
+    score: agreement * (1 - variance),
+    confidence: Math.min(0.95, 0.5 + channels.length * 0.1),
+    verdict: consistent ? (agreement >= 0.8 ? 'escalate' : 'flag') : 'flag',
+    rationale: `Multi-source: ${channels.length} channels, agreement=${agreement.toFixed(2)}, variance=${variance.toFixed(3)}. ${consistent ? 'Channels concur.' : 'Channels diverge — investigate which is wrong.'}`,
+    evidence: channels.map((c) => `${c.name}=${c.signal.toFixed(2)}`),
+    producedAt: Date.now(),
+  };
+}
+
+// ─── FORENSIC ACCOUNTING ───────────────────────────────────────────────
+
+const STRUCTURING_THRESHOLDS = [
+  { regime: 'AED-DPMS', value: 55_000, label: 'UAE precious-metals 55k AED CTR' },
+  { regime: 'USD', value: 10_000, label: 'US BSA 10k USD CTR' },
+  { regime: 'EUR', value: 10_000, label: 'EU 6AMLD 10k EUR' },
+  { regime: 'GBP', value: 9_000, label: 'UK MLR 2017 9k GBP' },
+];
+
+async function splitPaymentApply(ctx: BrainContext): Promise<Finding> {
+  const amounts = extractAmounts(ctx);
+  if (amounts.length < 5) {
+    return stubFinding('split_payment_detection', 'forensic', ['smartness'],
+      `Need ≥5 amounts to detect structuring (got ${amounts.length}).`);
+  }
+  const justBelow: Array<{ regime: string; amount: number; pct: number }> = [];
+  for (const t of STRUCTURING_THRESHOLDS) {
+    for (const a of amounts) {
+      const pct = (t.value - a) / t.value;
+      if (pct > 0 && pct < 0.05) justBelow.push({ regime: t.regime, amount: a, pct });
+    }
+  }
+  const ratio = justBelow.length / amounts.length;
+  const flagged = ratio >= 0.10; // ≥10% of payments cluster just below a threshold
+  return {
+    modeId: 'split_payment_detection',
+    category: 'forensic',
+    faculties: ['smartness'],
+    score: flagged ? Math.min(1, ratio * 4) : ratio,
+    confidence: 0.85,
+    verdict: flagged ? 'escalate' : ratio > 0.03 ? 'flag' : 'clear',
+    rationale: `Split-payment: ${justBelow.length}/${amounts.length} amounts (${(ratio * 100).toFixed(1)}%) within 5% below CTR thresholds. ${flagged ? 'Structuring typology likely.' : 'No clustering detected.'}`,
+    evidence: [
+      `cluster_count=${justBelow.length}`,
+      `total=${amounts.length}`,
+      ...justBelow.slice(0, 5).map((x) => `${x.regime}@${x.amount}(−${(x.pct * 100).toFixed(1)}%)`),
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+async function roundTripApply(ctx: BrainContext): Promise<Finding> {
+  const txs = (ctx.evidence.transactions ?? []) as Array<Record<string, unknown>>;
+  if (!Array.isArray(txs) || txs.length < 4) {
+    return stubFinding('round_trip_transaction', 'forensic', ['smartness'],
+      `Need ≥4 transactions for round-trip detection (got ${Array.isArray(txs) ? txs.length : 0}).`);
+  }
+  // Build a directed ledger from from→to. A round-trip exists when ≥80%
+  // of an outflow returns within ≤14 days through any path of length 2-4.
+  type Edge = { from: string; to: string; amount: number; ts: number };
+  const edges: Edge[] = [];
+  for (const t of txs) {
+    const from = String(t['from'] ?? t['source'] ?? '').toLowerCase();
+    const to = String(t['to'] ?? t['destination'] ?? '').toLowerCase();
+    const amount = typeof t['amount'] === 'number' ? (t['amount'] as number) : Number(t['amount']);
+    const tsRaw = t['timestamp'] ?? t['date'];
+    const ts = typeof tsRaw === 'number' ? tsRaw : Date.parse(String(tsRaw ?? ''));
+    if (from && to && Number.isFinite(amount) && Number.isFinite(ts)) {
+      edges.push({ from, to, amount, ts });
+    }
+  }
+  if (edges.length < 4) {
+    return stubFinding('round_trip_transaction', 'forensic', ['smartness'],
+      `Round-trip: only ${edges.length} parseable edges with from/to/amount/timestamp.`);
+  }
+  // Find return-flows: same node appears as `to` in one edge and `from`
+  // in a later edge; check if value loops back to the first source.
+  const matches: Array<{ origin: string; loop: number; ratio: number; days: number }> = [];
+  for (const e1 of edges) {
+    for (const e2 of edges) {
+      if (e2.ts <= e1.ts) continue;
+      if (e2.to !== e1.from) continue;
+      const days = (e2.ts - e1.ts) / 86_400_000;
+      if (days > 30) continue;
+      const ratio = Math.min(e1.amount, e2.amount) / Math.max(e1.amount, e2.amount);
+      if (ratio < 0.8) continue;
+      matches.push({ origin: e1.from, loop: e1.amount, ratio, days });
+    }
+  }
+  const flagged = matches.length > 0;
+  return {
+    modeId: 'round_trip_transaction',
+    category: 'forensic',
+    faculties: ['smartness'],
+    score: flagged ? Math.min(1, matches.length / 5) : 0,
+    confidence: 0.8,
+    verdict: matches.length >= 2 ? 'escalate' : flagged ? 'flag' : 'clear',
+    rationale: `Round-trip: ${matches.length} round-trip pattern${matches.length === 1 ? '' : 's'} detected over ${edges.length} edges. ${flagged ? 'Funds return to origin within ≤30 days at ≥80% value preservation.' : 'No round-trip detected.'}`,
+    evidence: matches.slice(0, 5).map((m) => `origin=${m.origin} amt=${m.loop} ratio=${m.ratio.toFixed(2)} days=${m.days.toFixed(1)}`),
+    producedAt: Date.now(),
+  };
+}
+
+async function shellTriangulationApply(ctx: BrainContext): Promise<Finding> {
+  const ubo = (ctx.evidence.uboChain ?? []) as Array<Record<string, unknown>>;
+  if (!Array.isArray(ubo) || ubo.length < 3) {
+    return stubFinding('shell_triangulation', 'forensic', ['intelligence', 'ratiocination'],
+      `Shell triangulation: need ≥3 UBO entities (got ${Array.isArray(ubo) ? ubo.length : 0}).`);
+  }
+  const byAgent = new Map<string, number>();
+  const byDirector = new Map<string, number>();
+  const byAddress = new Map<string, number>();
+  for (const e of ubo) {
+    const agent = String(e['registeredAgent'] ?? e['agent'] ?? '').toLowerCase();
+    const director = String(e['director'] ?? '').toLowerCase();
+    const address = String(e['address'] ?? '').toLowerCase();
+    if (agent) byAgent.set(agent, (byAgent.get(agent) ?? 0) + 1);
+    if (director) byDirector.set(director, (byDirector.get(director) ?? 0) + 1);
+    if (address) byAddress.set(address, (byAddress.get(address) ?? 0) + 1);
+  }
+  const collisions: string[] = [];
+  for (const [k, n] of byAgent) if (n >= 3) collisions.push(`agent:${k}×${n}`);
+  for (const [k, n] of byDirector) if (n >= 3) collisions.push(`director:${k}×${n}`);
+  for (const [k, n] of byAddress) if (n >= 3) collisions.push(`address:${k}×${n}`);
+  const flagged = collisions.length > 0;
+  return {
+    modeId: 'shell_triangulation',
+    category: 'forensic',
+    faculties: ['intelligence', 'ratiocination'],
+    score: flagged ? Math.min(1, collisions.length / 3) : 0,
+    confidence: 0.85,
+    verdict: collisions.length >= 2 ? 'escalate' : flagged ? 'flag' : 'clear',
+    rationale: `Shell triangulation: ${collisions.length} ≥3-way collision${collisions.length === 1 ? '' : 's'} across ${ubo.length} UBO entities.`,
+    evidence: collisions.length > 0 ? collisions.slice(0, 6) : ['no_collisions'],
+    producedAt: Date.now(),
+  };
+}
+
+async function vendorMasterAnomalyApply(ctx: BrainContext): Promise<Finding> {
+  const txs = (ctx.evidence.transactions ?? []) as Array<Record<string, unknown>>;
+  if (!Array.isArray(txs) || txs.length < 10) {
+    return stubFinding('vendor_master_anomaly', 'forensic', ['data_analysis'],
+      `Vendor master: need ≥10 transactions (got ${Array.isArray(txs) ? txs.length : 0}).`);
+  }
+  const bankByVendor = new Map<string, Set<string>>();
+  const firstSeen = new Map<string, number>();
+  for (const t of txs) {
+    const vendor = String(t['vendor'] ?? t['counterparty'] ?? '').toLowerCase();
+    const bank = String(t['vendorBank'] ?? t['bankAccount'] ?? '').toLowerCase();
+    const tsRaw = t['timestamp'] ?? t['date'];
+    const ts = typeof tsRaw === 'number' ? tsRaw : Date.parse(String(tsRaw ?? ''));
+    if (!vendor) continue;
+    if (bank) {
+      if (!bankByVendor.has(vendor)) bankByVendor.set(vendor, new Set());
+      bankByVendor.get(vendor)!.add(bank);
+    }
+    if (Number.isFinite(ts)) {
+      const prev = firstSeen.get(vendor);
+      if (prev === undefined || ts < prev) firstSeen.set(vendor, ts);
+    }
+  }
+  const churned = [...bankByVendor.entries()].filter(([, banks]) => banks.size >= 3);
+  const newCutoff = Date.now() - 90 * 86_400_000;
+  const newVendors = [...firstSeen.entries()].filter(([, ts]) => ts >= newCutoff);
+  const newVendorRatio = newVendors.length / Math.max(firstSeen.size, 1);
+  const score =
+    Math.min(1, churned.length / 3) * 0.6 + Math.min(1, newVendorRatio * 2) * 0.4;
+  const flagged = churned.length >= 1 || newVendorRatio > 0.4;
+  return {
+    modeId: 'vendor_master_anomaly',
+    category: 'forensic',
+    faculties: ['data_analysis'],
+    score,
+    confidence: 0.75,
+    verdict: churned.length >= 2 || newVendorRatio > 0.6 ? 'escalate' : flagged ? 'flag' : 'clear',
+    rationale: `Vendor master: ${churned.length} vendor${churned.length === 1 ? '' : 's'} with ≥3 bank-detail changes; ${newVendors.length}/${firstSeen.size} vendors new in last 90 days (${(newVendorRatio * 100).toFixed(1)}%).`,
+    evidence: [
+      ...churned.slice(0, 3).map(([v, banks]) => `churn:${v}(${banks.size} banks)`),
+      `new_vendors=${newVendors.length}`,
+      `new_ratio=${newVendorRatio.toFixed(2)}`,
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+async function journalEntryAnomalyApply(ctx: BrainContext): Promise<Finding> {
+  const amounts = extractAmounts(ctx);
+  const txs = (ctx.evidence.transactions ?? []) as Array<Record<string, unknown>>;
+  if (amounts.length < 10) {
+    return stubFinding('journal_entry_anomaly', 'forensic', ['data_analysis'],
+      `Journal-entry: need ≥10 amounts (got ${amounts.length}).`);
+  }
+  const roundCount = amounts.filter((a) => a >= 1000 && a % 1000 === 0).length;
+  const roundRatio = roundCount / amounts.length;
+  let weekendCount = 0;
+  let totalDated = 0;
+  for (const t of txs) {
+    const tsRaw = t['timestamp'] ?? t['date'];
+    const ts = typeof tsRaw === 'number' ? tsRaw : Date.parse(String(tsRaw ?? ''));
+    if (Number.isFinite(ts)) {
+      totalDated += 1;
+      const day = new Date(ts).getUTCDay();
+      if (day === 0 || day === 6) weekendCount += 1;
+    }
+  }
+  const weekendRatio = totalDated > 0 ? weekendCount / totalDated : 0;
+  const flags: string[] = [];
+  if (roundRatio > 0.25) flags.push(`round_amounts=${(roundRatio * 100).toFixed(1)}%`);
+  if (weekendRatio > 0.15) flags.push(`weekend_postings=${(weekendRatio * 100).toFixed(1)}%`);
+  const score = Math.min(1, roundRatio * 1.5) * 0.6 + Math.min(1, weekendRatio * 3) * 0.4;
+  return {
+    modeId: 'journal_entry_anomaly',
+    category: 'forensic',
+    faculties: ['data_analysis'],
+    score,
+    confidence: 0.8,
+    verdict: flags.length >= 2 ? 'escalate' : flags.length === 1 ? 'flag' : 'clear',
+    rationale: `Journal-entry: ${roundCount}/${amounts.length} round amounts (${(roundRatio * 100).toFixed(1)}%); ${weekendCount}/${totalDated} weekend postings (${(weekendRatio * 100).toFixed(1)}%).`,
+    evidence: flags.length > 0 ? flags : ['no_anomaly'],
+    producedAt: Date.now(),
+  };
+}
+
+// ─── SANCTIONS / GEOPOLITICAL ──────────────────────────────────────────
+
+const FATF_HIGH_RISK = new Set(['IR', 'KP', 'MM']);                    // Call for Action
+const FATF_INC_MONITORING = new Set([                                  // Increased Monitoring (rolling)
+  'AF', 'CD', 'NG', 'SD', 'YE', 'BG', 'BF', 'KH', 'CM', 'HR', 'HT', 'KE',
+  'LA', 'LB', 'MY', 'ML', 'MZ', 'NA', 'NE', 'NG', 'SN', 'SS', 'SY', 'TZ',
+  'TR', 'VE', 'VN',
+]);
+const SECRECY_JURISDICTIONS = new Set([
+  'KY', 'BS', 'BM', 'VG', 'VI', 'CW', 'PA', 'LU', 'LI', 'AD', 'MC', 'JE',
+  'GG', 'IM', 'MT', 'CY', 'SC', 'MU', 'MH', 'CK', 'WS', 'VU', 'AI', 'TC',
+]);
+const DPRK_PROXY_INDICATORS = ['lazarus', 'reconnaissance general bureau', 'rgb', 'kp ship', 'magnolia', 'wisdom sea'];
+const IRAN_PROXY_INDICATORS = ['irgc', 'sepah', 'mahan air', 'nitc', 'islamic republic of iran shipping', 'irisl', 'gold-for-oil'];
+
+function jurisdictionsFromSubject(ctx: BrainContext): string[] {
+  const out: string[] = [];
+  if (ctx.subject.jurisdiction) out.push(ctx.subject.jurisdiction.toUpperCase());
+  if (ctx.subject.nationality) out.push(ctx.subject.nationality.toUpperCase());
+  const ubo = (ctx.evidence.uboChain ?? []) as Array<Record<string, unknown>>;
+  if (Array.isArray(ubo)) {
+    for (const e of ubo) {
+      const j = String(e['jurisdiction'] ?? e['country'] ?? '').toUpperCase();
+      if (j) out.push(j);
+    }
+  }
+  return out;
+}
+
+async function sanctionsArbitrageApply(ctx: BrainContext): Promise<Finding> {
+  const js = jurisdictionsFromSubject(ctx);
+  if (js.length < 2) {
+    return stubFinding('sanctions_arbitrage', 'compliance_framework', ['intelligence'],
+      `Sanctions arbitrage: need ≥2 jurisdictions in chain (got ${js.length}).`);
+  }
+  // Detect a chain that mixes a sanctions-target proximate jurisdiction
+  // with a secrecy hop and a low-friction fiat exit.
+  const hits = {
+    targetProximate: js.filter((j) => FATF_HIGH_RISK.has(j) || FATF_INC_MONITORING.has(j)),
+    secrecy: js.filter((j) => SECRECY_JURISDICTIONS.has(j)),
+    eu_us_uk: js.filter((j) => ['DE', 'FR', 'NL', 'IE', 'GB', 'US'].includes(j)),
+  };
+  const chainHasArbitrage =
+    hits.targetProximate.length > 0 && hits.secrecy.length > 0 && hits.eu_us_uk.length > 0;
+  const score = chainHasArbitrage
+    ? 0.85
+    : hits.targetProximate.length + hits.secrecy.length > 1
+      ? 0.5
+      : 0.1;
+  return {
+    modeId: 'sanctions_arbitrage',
+    category: 'compliance_framework',
+    faculties: ['intelligence'],
+    score,
+    confidence: 0.8,
+    verdict: chainHasArbitrage ? 'escalate' : score > 0.3 ? 'flag' : 'clear',
+    rationale: `Sanctions arbitrage: ${js.length} jurisdictions in chain — target-proximate=${hits.targetProximate.length}, secrecy=${hits.secrecy.length}, eu/us/uk=${hits.eu_us_uk.length}. ${chainHasArbitrage ? 'Classic 3-leg arbitrage signature.' : 'No 3-leg arbitrage signature.'}`,
+    evidence: [
+      `chain=${js.join('→')}`,
+      ...hits.targetProximate.map((j) => `target_proximate=${j}`),
+      ...hits.secrecy.map((j) => `secrecy=${j}`),
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+async function fatfGreyListDynamicsApply(ctx: BrainContext): Promise<Finding> {
+  const js = jurisdictionsFromSubject(ctx);
+  if (js.length === 0) {
+    return stubFinding('fatf_grey_list_dynamics', 'compliance_framework', ['intelligence'],
+      'FATF dynamics: subject has no jurisdiction declared.');
+  }
+  const calls: string[] = [];
+  const grey: string[] = [];
+  for (const j of js) {
+    if (FATF_HIGH_RISK.has(j)) calls.push(j);
+    else if (FATF_INC_MONITORING.has(j)) grey.push(j);
+  }
+  const score = calls.length > 0 ? 0.95 : grey.length > 0 ? 0.55 : 0.05;
+  const verdict = calls.length > 0 ? 'block' : grey.length > 0 ? 'escalate' : 'clear';
+  return {
+    modeId: 'fatf_grey_list_dynamics',
+    category: 'compliance_framework',
+    faculties: ['intelligence'],
+    score,
+    confidence: 0.95,
+    verdict,
+    rationale: `FATF dynamics: chain has ${calls.length} Call-for-Action and ${grey.length} Increased-Monitoring jurisdiction${grey.length === 1 ? '' : 's'}. ${calls.length ? 'Hard block — FATF R.19 EDD mandatory.' : grey.length ? 'EDD required.' : 'No FATF-listed jurisdiction in chain.'}`,
+    evidence: [
+      ...calls.map((j) => `FATF_call_for_action=${j}`),
+      ...grey.map((j) => `FATF_increased_monitoring=${j}`),
+      `chain=${js.join('→')}`,
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+function freeTextOf(ctx: BrainContext): string {
+  const parts: string[] = [];
+  if (typeof ctx.evidence.freeText === 'string') parts.push(ctx.evidence.freeText);
+  for (const f of ctx.priorFindings) parts.push(f.rationale);
+  return parts.join(' ').toLowerCase();
+}
+
+function patternHits(text: string, patterns: string[]): string[] {
+  return patterns.filter((p) => text.includes(p.toLowerCase()));
+}
+
+async function dprkEvasionApply(ctx: BrainContext): Promise<Finding> {
+  const js = jurisdictionsFromSubject(ctx);
+  const text = freeTextOf(ctx);
+  const hits = patternHits(text, DPRK_PROXY_INDICATORS);
+  const kpProximate = js.includes('KP') || js.includes('CN') || js.includes('RU');
+  const score = (hits.length > 0 ? 0.4 : 0) + (kpProximate ? 0.3 : 0) + (js.includes('KP') ? 0.3 : 0);
+  const flagged = score >= 0.4;
+  return {
+    modeId: 'dprk_evasion_pattern',
+    category: 'compliance_framework',
+    faculties: ['intelligence', 'smartness'],
+    score: Math.min(1, score),
+    confidence: 0.75,
+    verdict: js.includes('KP') ? 'block' : flagged ? 'escalate' : 'clear',
+    rationale: `DPRK evasion: ${hits.length} proxy indicator${hits.length === 1 ? '' : 's'} in narrative; jurisdiction proximity=${kpProximate}; direct KP=${js.includes('KP')}.`,
+    evidence: [
+      ...hits.map((h) => `indicator=${h}`),
+      `kp_proximate=${kpProximate}`,
+      `chain=${js.join('→') || 'unknown'}`,
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+async function iranEvasionApply(ctx: BrainContext): Promise<Finding> {
+  const js = jurisdictionsFromSubject(ctx);
+  const text = freeTextOf(ctx);
+  const hits = patternHits(text, IRAN_PROXY_INDICATORS);
+  const irProximate = js.some((j) => ['IQ', 'AE', 'TR', 'OM', 'AF', 'PK'].includes(j));
+  const score = (hits.length > 0 ? 0.4 : 0) + (irProximate ? 0.2 : 0) + (js.includes('IR') ? 0.4 : 0);
+  const flagged = score >= 0.4;
+  return {
+    modeId: 'iran_evasion_pattern',
+    category: 'compliance_framework',
+    faculties: ['intelligence', 'smartness'],
+    score: Math.min(1, score),
+    confidence: 0.75,
+    verdict: js.includes('IR') ? 'block' : flagged ? 'escalate' : 'clear',
+    rationale: `Iran evasion: ${hits.length} proxy indicator${hits.length === 1 ? '' : 's'} in narrative; regional proximity=${irProximate}; direct IR=${js.includes('IR')}.`,
+    evidence: [
+      ...hits.map((h) => `indicator=${h}`),
+      `ir_proximate=${irProximate}`,
+      `chain=${js.join('→') || 'unknown'}`,
+    ],
+    producedAt: Date.now(),
+  };
+}
+
+function stubFinding(
+  modeId: string,
+  category: ReasoningCategory,
+  faculties: FacultyId[],
+  reason: string,
+): Finding {
+  return {
+    modeId,
+    category,
+    faculties,
+    score: 0,
+    confidence: 0.3,
+    verdict: 'inconclusive',
+    rationale: reason,
+    evidence: [],
+    producedAt: Date.now(),
+  };
+}
+
 // ─── WAVE 3 REGISTRY ───────────────────────────────────────────────────
 
 export const WAVE3_MODES: ReasoningMode[] = [
@@ -287,25 +824,25 @@ export const WAVE3_MODES: ReasoningMode[] = [
   m('legend_verification', 'Legend Verification', 'threat_modeling', ['intelligence','ratiocination'], 'Independently corroborate claimed biography end to end.'),
 
   // ─── GEOPOLITICAL & SANCTIONS REGIMES ─────────────────────────────
-  m('sanctions_arbitrage', 'Sanctions Arbitrage', 'compliance_framework', ['intelligence'], 'Routing flows to exploit regime differentials (EU vs OFAC vs UK).'),
+  m('sanctions_arbitrage', 'Sanctions Arbitrage', 'compliance_framework', ['intelligence'], 'Routing flows to exploit regime differentials (EU vs OFAC vs UK).', sanctionsArbitrageApply),
   m('offshore_secrecy_index', 'Offshore Secrecy Index', 'compliance_framework', ['intelligence','data_analysis'], 'TJN FSI / secrecy-jurisdiction scoring applied to the chain.'),
-  m('fatf_grey_list_dynamics', 'FATF Grey-List Dynamics', 'compliance_framework', ['intelligence'], 'Jurisdiction trajectory: grey / black / released, and what changed.'),
+  m('fatf_grey_list_dynamics', 'FATF Grey-List Dynamics', 'compliance_framework', ['intelligence'], 'Jurisdiction trajectory: grey / black / released, and what changed.', fatfGreyListDynamicsApply),
   m('secrecy_jurisdiction_scoring', 'Secrecy-Jurisdiction Scoring', 'compliance_framework', ['intelligence'], 'Composite opacity score per hop in the ownership chain.'),
   m('russian_oil_price_cap', 'Russian Oil Price-Cap', 'compliance_framework', ['intelligence'], 'G7 price-cap regime — attestation chain, STS, dark-fleet links.'),
   m('eu_14_package', 'EU Sanctions 14th Package', 'compliance_framework', ['intelligence'], 'EU 14th-package walk — best-efforts clauses, no-Russia, anti-circumvention.'),
   m('us_secondary_sanctions', 'US Secondary Sanctions', 'compliance_framework', ['intelligence'], 'Extra-territorial exposure: OFAC 50% rule, CAATSA, NDAA.'),
   m('chip_export_controls', 'Semiconductor Export Controls', 'compliance_framework', ['intelligence'], 'BIS / FDPR rules — advanced-node chips, AI compute, end-use screening.'),
-  m('iran_evasion_pattern', 'Iran-Evasion Pattern', 'compliance_framework', ['intelligence','smartness'], 'Front companies, front banks, STS, gold-for-oil typologies.'),
-  m('dprk_evasion_pattern', 'DPRK-Evasion Pattern', 'compliance_framework', ['intelligence','smartness'], 'Ship-to-ship coal, lazarus crypto heists, front-company cascades.'),
+  m('iran_evasion_pattern', 'Iran-Evasion Pattern', 'compliance_framework', ['intelligence','smartness'], 'Front companies, front banks, STS, gold-for-oil typologies.', iranEvasionApply),
+  m('dprk_evasion_pattern', 'DPRK-Evasion Pattern', 'compliance_framework', ['intelligence','smartness'], 'Ship-to-ship coal, lazarus crypto heists, front-company cascades.', dprkEvasionApply),
 
   // ─── FORENSIC ACCOUNTING ──────────────────────────────────────────
   m('benford_law', "Benford's Law", 'forensic', ['data_analysis','smartness'], 'Leading-digit distribution test on amounts.', benfordApply),
-  m('split_payment_detection', 'Split-Payment Detection', 'forensic', ['smartness'], 'Invoices split just below thresholds — structuring typology.'),
-  m('round_trip_transaction', 'Round-Trip Transaction', 'forensic', ['smartness'], 'Funds return to origin through intermediaries.'),
-  m('shell_triangulation', 'Shell Triangulation', 'forensic', ['intelligence','ratiocination'], 'Three or more linked shells share agents, directors, or addresses.'),
+  m('split_payment_detection', 'Split-Payment Detection', 'forensic', ['smartness'], 'Invoices split just below thresholds — structuring typology.', splitPaymentApply),
+  m('round_trip_transaction', 'Round-Trip Transaction', 'forensic', ['smartness'], 'Funds return to origin through intermediaries.', roundTripApply),
+  m('shell_triangulation', 'Shell Triangulation', 'forensic', ['intelligence','ratiocination'], 'Three or more linked shells share agents, directors, or addresses.', shellTriangulationApply),
   m('po_fraud_pattern', 'Purchase-Order Fraud', 'forensic', ['smartness'], 'Phantom vendors, back-dated POs, split-invoice below approval.'),
-  m('vendor_master_anomaly', 'Vendor Master Anomaly', 'forensic', ['data_analysis'], 'New vendor spikes, bank-detail churn, name-address collisions.'),
-  m('journal_entry_anomaly', 'Journal-Entry Anomaly', 'forensic', ['data_analysis'], 'Round numbers, weekend/holiday postings, manual overrides at period close.'),
+  m('vendor_master_anomaly', 'Vendor Master Anomaly', 'forensic', ['data_analysis'], 'New vendor spikes, bank-detail churn, name-address collisions.', vendorMasterAnomalyApply),
+  m('journal_entry_anomaly', 'Journal-Entry Anomaly', 'forensic', ['data_analysis'], 'Round numbers, weekend/holiday postings, manual overrides at period close.', journalEntryAnomalyApply),
   m('revenue_recognition_stretch', 'Revenue-Recognition Stretch', 'forensic', ['intelligence'], 'Channel-stuffing, bill-and-hold, cut-off manipulation patterns.'),
 
   // ─── BEHAVIORAL ECONOMICS ─────────────────────────────────────────
@@ -359,9 +896,9 @@ export const WAVE3_MODES: ReasoningMode[] = [
   m('carbon_fraud_pattern', 'Carbon-Credit Fraud', 'esg', ['intelligence','smartness'], 'VAT carousel, phantom offsets, double-counting of credits.'),
 
   // ─── PROBABILISTIC AGGREGATION ────────────────────────────────────
-  m('dempster_shafer', 'Dempster-Shafer Combination', 'statistical', ['inference','deep_thinking'], 'Belief combination across partial evidence masses.'),
-  m('bayesian_update_cascade', 'Bayesian Update Cascade', 'statistical', ['inference','deep_thinking'], 'Sequential posterior update across heterogeneous evidence.'),
-  m('multi_source_consistency', 'Multi-Source Consistency', 'statistical', ['data_analysis','reasoning'], 'Agreement / contradiction measure across independent sources.'),
+  m('dempster_shafer', 'Dempster-Shafer Combination', 'statistical', ['inference','deep_thinking'], 'Belief combination across partial evidence masses.', dempsterShaferApply),
+  m('bayesian_update_cascade', 'Bayesian Update Cascade', 'statistical', ['inference','deep_thinking'], 'Sequential posterior update across heterogeneous evidence.', bayesianUpdateCascadeApply),
+  m('multi_source_consistency', 'Multi-Source Consistency', 'statistical', ['data_analysis','reasoning'], 'Agreement / contradiction measure across independent sources.', multiSourceConsistencyApply),
   m('counter_evidence_weighting', 'Counter-Evidence Weighting', 'statistical', ['introspection','argumentation'], 'Up-weight disconfirming evidence to resist confirmation bias.'),
 
   // ─── DATA-QUALITY REAL IMPLEMENTATIONS ────────────────────────────
