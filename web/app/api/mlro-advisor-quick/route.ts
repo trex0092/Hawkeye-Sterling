@@ -30,6 +30,10 @@ import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-c
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
 import { verifyCitations, type CitationReport } from "@/lib/server/citation-verifier";
+import {
+  appendProbeInstructions,
+  extractAndStripProbe,
+} from "@/lib/server/mlro-probe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -292,7 +296,7 @@ export async function POST(req: Request): Promise<Response> {
         // accumulate it inside the Lambda and return JSON.
         stream: true,
         system: [
-          { type: "text", text: SYSTEM_PROMPT_BASE, cache_control: { type: "ephemeral" } },
+          { type: "text", text: appendProbeInstructions(SYSTEM_PROMPT_BASE), cache_control: { type: "ephemeral" } },
         ],
         messages: [{ role: "user", content: userMessage }],
       }),
@@ -396,6 +400,14 @@ export async function POST(req: Request): Promise<Response> {
       }
     }
 
+    // Layer 6.3 — extract the adversarial-probe markers the model
+    // emitted and strip them from the user-visible answer. The clean
+    // body is what the operator sees; the structured outcome is
+    // returned alongside as `probeOutcome` (and persisted in the
+    // audit log when this route is wired with one).
+    const probeWrap = extractAndStripProbe(answer, "escalate");
+    answer = probeWrap.cleanAnswer;
+
     // Confidence + citations + follow-ups — same intelligence pack the
     // deep advisor returns. AdvisorScore reflects whichever draft we
     // ultimately chose.
@@ -426,6 +438,17 @@ export async function POST(req: Request): Promise<Response> {
           fatfRecs: analysis.fatfRecDetails.slice(0, 6).map((r: { num: number; title: string }) => ({ num: r.num, title: r.title })),
           confidence: analysis.confidence,
           coverageScore: analysis.intelligenceProfile?.coverageScore ?? 0,
+        },
+        // Layer 6.3 — adversarial probe outcome. Surfaced so the UI
+        // can render an "innocent / adversarial" chip pair if it
+        // wants to. `bothEmitted=false` means the model didn't
+        // follow the probe instruction; treat as informational.
+        probeOutcome: {
+          innocent: probeWrap.outcome.innocent,
+          adversarial: probeWrap.outcome.adversarial,
+          survived: probeWrap.outcome.survived,
+          ...(probeWrap.outcome.disagreement ? { disagreement: probeWrap.outcome.disagreement } : {}),
+          bothEmitted: probeWrap.bothEmitted,
         },
       },
       { status: 200, headers: CORS },
