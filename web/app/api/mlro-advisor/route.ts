@@ -7,6 +7,8 @@ import {
 } from "../../../../dist/src/integrations/mlroAdvisor.js";
 import { askComplianceQuestion } from "../../../../dist/src/integrations/complianceRag.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
+import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
+import { verifyCitations } from "@/lib/server/citation-verifier";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +29,64 @@ interface Body {
   mode?: ReasoningMode;
   audience?: "regulator" | "mlro" | "board";
   context?: ContextPair[];  // prior Q&A pairs from the session
+  /** Optional super-brain snapshot from the screening panel. When
+   *  present, the advisor is briefed with the subject's actual
+   *  composite/sanctions/PEP/AM/redlines/typology posture so the
+   *  answer addresses *this* subject rather than generic guidance. */
+  superBrain?: {
+    composite?: { score?: number; breakdown?: Record<string, number> };
+    pep?: { tier?: string; type?: string; salience?: number; rationale?: string } | null;
+    jurisdiction?: { iso2?: string; name?: string; cahra?: boolean; regimes?: string[] } | null;
+    adverseMediaScored?: { total?: number; categoriesTripped?: string[]; compositeScore?: number } | null;
+    adverseKeywordGroups?: Array<{ label?: string; count?: number }>;
+    redlines?: { fired?: Array<{ id?: string; label?: string }>; action?: string | null };
+    typologies?: { hits?: Array<{ id?: string; name?: string; family?: string; weight?: number }>; compositeScore?: number } | null;
+  };
+}
+
+// Subject-aware preamble — when the operator passes a superBrain
+// snapshot we describe the subject's posture in 4-8 lines so the
+// advisor's answer reasons against THIS subject's actual signals
+// (composite / sanctions / PEP / AM / redlines / typologies) rather
+// than producing textbook guidance. Empty string when no snapshot.
+function buildSubjectPreamble(sb?: Body["superBrain"]): string {
+  if (!sb) return "";
+  const lines: string[] = [];
+  lines.push("SUBJECT POSTURE (what the brain has computed about THIS subject — reason against these signals, not generic guidance):");
+  if (sb.composite?.score != null) {
+    lines.push(`  · Composite risk: ${sb.composite.score}/100`);
+  }
+  if (sb.jurisdiction) {
+    lines.push(
+      `  · Jurisdiction: ${sb.jurisdiction.name ?? "?"} (${sb.jurisdiction.iso2 ?? "?"})${sb.jurisdiction.cahra ? " · CAHRA" : ""}${sb.jurisdiction.regimes?.length ? ` · regimes: ${sb.jurisdiction.regimes.slice(0, 4).join(", ")}` : ""}`,
+    );
+  }
+  if (sb.pep?.salience && sb.pep.salience > 0) {
+    lines.push(`  · PEP: ${(sb.pep.tier ?? "").replace(/^tier_/, "tier ").replace(/_/g, " ")} (${sb.pep.type?.replace(/_/g, " ") ?? "?"}, salience ${Math.round(sb.pep.salience * 100)}%)`);
+  } else {
+    lines.push(`  · PEP: not classified`);
+  }
+  const amTotal = sb.adverseMediaScored?.total ?? 0;
+  const amCats = sb.adverseMediaScored?.categoriesTripped ?? [];
+  if (amTotal > 0 || (sb.adverseKeywordGroups?.length ?? 0) > 0) {
+    lines.push(
+      `  · Adverse media: ${amTotal} hit(s)${amCats.length ? ` across ${amCats.join(", ")}` : ""}${sb.adverseMediaScored?.compositeScore != null ? ` · vector score ${Math.round(sb.adverseMediaScored.compositeScore)}/100` : ""}`,
+    );
+  } else {
+    lines.push(`  · Adverse media: clear`);
+  }
+  const redlinesFired = sb.redlines?.fired ?? [];
+  if (redlinesFired.length > 0) {
+    const labels = redlinesFired.slice(0, 5).map((r) => r.label ?? r.id ?? "redline").join(", ");
+    lines.push(`  · Redlines fired: ${labels}${sb.redlines?.action ? ` → ${sb.redlines.action}` : ""}`);
+  }
+  const typHits = sb.typologies?.hits ?? [];
+  if (typHits.length > 0) {
+    const t = typHits.slice(0, 4).map((h) => h.name ?? h.id ?? "doctrine").join(", ");
+    lines.push(`  · Typology fingerprints: ${t}${typHits.length > 4 ? "…" : ""}`);
+  }
+  lines.push("");
+  return lines.join("\n");
 }
 
 // Lightweight jurisdiction signal extraction — no LLM needed.
@@ -115,7 +175,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Enrich the question with conversation context + classifier pre-brief.
   const preamble = buildContextPreamble(body.context ?? []);
-  const enrichedQuestion = `${preamble}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 3500);
+  const subjectPreamble = buildSubjectPreamble(body.superBrain);
+  // Order matters: prior session context → subject posture → classifier
+  // anchors → question. Subject posture sits between session continuity
+  // and topic anchors so the advisor knows "this subject's facts"
+  // before "here's the framework"; question is last so the model's
+  // attention is freshest on what to actually answer.
+  const enrichedQuestion = `${preamble}${subjectPreamble}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 3500);
 
   const detectedJurisdiction = body.jurisdiction
     ?? detectJurisdiction(body.question)
@@ -216,6 +282,38 @@ export async function POST(req: Request): Promise<NextResponse> {
       jurisdiction: ragResult.jurisdiction,
     } : null;
 
+    // Confidence + consistency score over the rendered narrative.
+    // Surfaced to the UI so the operator sees a numeric strength
+    // tag (STRONG / MEDIUM / WEAK) instead of just trusting the
+    // model's tone.
+    // scoreAdvisorAnswer takes the advisor's verdict from the
+    // pipeline, not the reasoning mode. Map result.complianceReview's
+    // verdict; default to "approved" when the pipeline didn't supply one.
+    const verdict = (result.complianceReview as { verdict?: string } | undefined)?.verdict;
+    const safeVerdict =
+      verdict === "approved" ||
+      verdict === "returned_for_revision" ||
+      verdict === "blocked" ||
+      verdict === "incomplete"
+        ? verdict
+        : "approved";
+    const advisorScore = result.narrative
+      ? scoreAdvisorAnswer(result.narrative, safeVerdict)
+      : null;
+
+    // Citation verifier — flags FATF Recs / FDL articles / Cabinet
+    // Resolutions / etc. that don't exist in the bundled regulatory
+    // catalogue. The model occasionally hallucinates plausible-looking
+    // citations; the UI surfaces unknown ones as warning chips.
+    const citationReport = result.narrative
+      ? verifyCitations(result.narrative)
+      : null;
+
+    // Suggested follow-ups — the classifier returns 0-N per topic.
+    // The UI renders the first three as one-click chips so the
+    // operator can keep drilling without retyping.
+    const suggestedFollowUps = analysis.suggestedFollowUps?.slice(0, 3) ?? [];
+
     return NextResponse.json(
       {
         ...result,
@@ -223,6 +321,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         regulatoryContext,
         detectedJurisdiction: detectedJurisdiction ?? null,
         questionAnalysis: analysis,
+        advisorScore,
+        citationReport,
+        suggestedFollowUps,
       },
       { headers: gateHeaders },
     );

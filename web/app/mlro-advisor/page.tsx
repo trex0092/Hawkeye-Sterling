@@ -63,6 +63,32 @@ interface AdvisorResult {
   };
   charterIntegrityHash?: string;
   questionAnalysis?: QuestionAnalysis;
+  /** Numeric quality-gate score over the rendered narrative, computed
+   *  server-side after invocation. Drives the STRONG/MEDIUM/WEAK
+   *  confidence chip in the answer header. */
+  advisorScore?: {
+    confidenceScore: number;
+    consistencyScore: number;
+    passedQualityGate: boolean;
+    failures: string[];
+  };
+  /** Citation verifier output — flags unknown FATF/FDL/Cabinet/etc.
+   *  citations the model produced that don't match our bundled
+   *  regulatory catalogue. Surfaced as a warning chip per cite. */
+  citationReport?: {
+    citations: Array<{
+      raw: string;
+      category: string;
+      verified: boolean;
+      note?: string;
+    }>;
+    verifiedCount: number;
+    unknownCount: number;
+    allVerified: boolean;
+  };
+  /** One-click follow-up questions derived from the rule-based
+   *  classifier's per-topic suggestion list. */
+  suggestedFollowUps?: string[];
   error?: string;
 }
 
@@ -862,10 +888,48 @@ export default function MlroAdvisorPage() {
                         )}
                         {(entry.result.narrative || streamingEntryId === entry.id) && (
                           <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
-                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1 flex items-center gap-2">
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1 flex items-center gap-2 flex-wrap">
                               <span>{entry.mode === "quick" ? "Answer" : "Regulator-facing narrative"}</span>
                               {streamingEntryId === entry.id && (
                                 <span className="font-mono text-brand animate-pulse">● working ~5 s</span>
+                              )}
+                              {entry.result.advisorScore && (
+                                (() => {
+                                  const s = entry.result.advisorScore.confidenceScore;
+                                  const tier = s >= 75 ? "STRONG" : s >= 45 ? "MEDIUM" : "WEAK";
+                                  const cls =
+                                    tier === "STRONG"
+                                      ? "bg-green-dim text-green border-green/40"
+                                      : tier === "MEDIUM"
+                                        ? "bg-amber-dim text-amber border-amber/40"
+                                        : "bg-red-dim text-red border-red/40";
+                                  return (
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${cls}`}
+                                      title={`Confidence ${s}/100 · Consistency ${(entry.result.advisorScore.consistencyScore * 100).toFixed(0)}/100${entry.result.advisorScore.failures.length ? `\nFailures: ${entry.result.advisorScore.failures.join(", ")}` : ""}`}
+                                    >
+                                      {tier} · {s}/100
+                                    </span>
+                                  );
+                                })()
+                              )}
+                              {entry.result.citationReport && (
+                                <span
+                                  className={`inline-flex items-center gap-1 px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${
+                                    entry.result.citationReport.allVerified
+                                      ? "bg-green-dim text-green border-green/40"
+                                      : "bg-amber-dim text-amber border-amber/40"
+                                  }`}
+                                  title={
+                                    entry.result.citationReport.allVerified
+                                      ? `All ${entry.result.citationReport.verifiedCount} citations verified against the bundled regulatory catalogue.`
+                                      : `${entry.result.citationReport.unknownCount} of ${entry.result.citationReport.verifiedCount + entry.result.citationReport.unknownCount} citations could not be verified — double-check before relying.\n\n${entry.result.citationReport.citations.filter((c) => !c.verified).map((c) => `${c.raw}: ${c.note ?? "not in catalogue"}`).join("\n")}`
+                                  }
+                                >
+                                  {entry.result.citationReport.allVerified
+                                    ? `✓ ${entry.result.citationReport.verifiedCount} cites`
+                                    : `⚠ ${entry.result.citationReport.unknownCount} unknown cite${entry.result.citationReport.unknownCount === 1 ? "" : "s"}`}
+                                </span>
                               )}
                             </div>
                             <div className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">
@@ -874,6 +938,35 @@ export default function MlroAdvisorPage() {
                                 <span className="inline-block w-1.5 h-4 bg-brand ml-0.5 animate-pulse align-middle" />
                               )}
                             </div>
+                            {entry.result.citationReport && entry.result.citationReport.unknownCount > 0 && (
+                              <div className="mt-2 pt-2 border-t border-hair text-10 text-amber leading-snug">
+                                <strong>Unknown citations:</strong>{" "}
+                                {entry.result.citationReport.citations
+                                  .filter((c) => !c.verified)
+                                  .map((c) => c.raw)
+                                  .join(" · ")}
+                              </div>
+                            )}
+                            {entry.result.suggestedFollowUps && entry.result.suggestedFollowUps.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-hair">
+                                <div className="text-9 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
+                                  Suggested follow-ups
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {entry.result.suggestedFollowUps.map((q) => (
+                                    <button
+                                      key={q}
+                                      type="button"
+                                      onClick={() => setQuestion(q)}
+                                      className="inline-flex items-center px-2 py-1 rounded border border-hair-2 bg-bg-1 hover:bg-bg-2 hover:border-brand/40 text-11 text-ink-1 hover:text-ink-0 transition-colors text-left"
+                                      title="Click to fill the question box with this follow-up"
+                                    >
+                                      {q}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                         {entry.challengeError && (
