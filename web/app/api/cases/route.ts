@@ -1,0 +1,90 @@
+import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
+import {
+  loadAllCases,
+  mergeCases,
+  saveAllCases,
+} from "@/lib/server/case-vault";
+import type { CaseRecord } from "@/lib/types";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
+// GET  /api/cases
+//   → { cases: CaseRecord[] } from the server vault. Empty array on a
+//     fresh deployment (no migration; the client's localStorage is the
+//     bootstrap source).
+//
+// POST /api/cases
+//   Body: { cases: CaseRecord[] } — the client's current localStorage
+//                                    state.
+//   → { cases: merged CaseRecord[] } — server merges by id with
+//     last-write-wins on lastActivity. Returned merged state is what
+//     the client should now mirror locally.
+//
+// PUT  /api/cases
+//   Body: { cases: CaseRecord[] } — REPLACE server state outright.
+//   Used when the client wants to authoritatively reset the register
+//   (e.g. after a bulk import). Gated identically to POST.
+
+async function handleGet(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  const cases = await loadAllCases();
+  return NextResponse.json({ ok: true, cases }, { headers: gate.headers });
+}
+
+async function handlePost(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  let body: { cases?: CaseRecord[] };
+  try {
+    body = (await req.json()) as { cases?: CaseRecord[] };
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  if (!Array.isArray(body.cases)) {
+    return NextResponse.json(
+      { ok: false, error: "body.cases must be an array" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  const merged = await mergeCases(body.cases);
+  return NextResponse.json(
+    { ok: true, cases: merged },
+    { headers: gate.headers },
+  );
+}
+
+async function handlePut(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  let body: { cases?: CaseRecord[] };
+  try {
+    body = (await req.json()) as { cases?: CaseRecord[] };
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "invalid JSON" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  if (!Array.isArray(body.cases)) {
+    return NextResponse.json(
+      { ok: false, error: "body.cases must be an array" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  await saveAllCases(body.cases);
+  return NextResponse.json(
+    { ok: true, cases: body.cases },
+    { headers: gate.headers },
+  );
+}
+
+export const GET = handleGet;
+export const POST = handlePost;
+export const PUT = handlePut;
