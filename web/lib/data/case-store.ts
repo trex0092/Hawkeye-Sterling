@@ -259,6 +259,12 @@ export interface NewCaseInput {
   statusDetail: string;
   goAMLReference?: string;
   mlroDisposition?: string;
+  /** Optional screening + super-brain snapshot captured at case-open.
+   *  When present, persisted on the CaseRecord and consumed by the
+   *  case-page compliance report so the case-page render reproduces
+   *  the screening panel's report verbatim, with real composite
+   *  scores / typologies / signatures rather than invented placeholders. */
+  screeningSnapshot?: import("@/lib/types").CaseRecord["screeningSnapshot"];
 }
 
 // Build a CaseRecord from the minimal STR-filing inputs. Fills the
@@ -289,5 +295,8 @@ export function buildCaseRecord(input: NewCaseInput): CaseRecord {
     timeline: [
       { timestamp: now.toISOString(), event: `Case opened via ${input.reportKind}` },
     ],
+    ...(input.screeningSnapshot
+      ? { screeningSnapshot: input.screeningSnapshot }
+      : {}),
   };
 }

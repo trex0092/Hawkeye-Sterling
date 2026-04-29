@@ -251,4 +251,43 @@ export interface CaseRecord {
    *  Persisted so detail panels can render the green "Reported to Asana"
    *  pill across reloads, not just for the lifetime of the report POST. */
   asanaTaskUrl?: string;
+  /** Snapshot of the screening + super-brain context captured when the
+   *  case was opened. Lets the case-page compliance report render the
+   *  exact same dossier the screening panel produced — without it the
+   *  case page falls back to invented numbers because the localStorage
+   *  CaseRecord is otherwise display-only. Optional so older cases
+   *  predating this field still load. Shape mirrors the
+   *  /api/compliance-report request body. */
+  screeningSnapshot?: {
+    subject: {
+      id: string;
+      name: string;
+      entityType:
+        | "individual"
+        | "organisation"
+        | "vessel"
+        | "aircraft"
+        | "other";
+      jurisdiction?: string;
+      aliases?: string[];
+    };
+    result: {
+      topScore: number;
+      severity: "clear" | "low" | "medium" | "high" | "critical";
+      hits: Array<{
+        listId: string;
+        listRef: string;
+        candidateName: string;
+        score: number;
+        method: string;
+        programs?: string[];
+      }>;
+    };
+    /** Same shape as ReportSuperBrain on the server side. Kept loose
+     *  here so this types file doesn't have to import the report
+     *  module. Persisted as-is from the screening panel's
+     *  buildReportPayload(). */
+    superBrain?: Record<string, unknown> | null;
+    capturedAt: string;
+  };
 }
