@@ -357,7 +357,8 @@ export default function EocnPage() {
                               </div>
                               <div className="text-12 text-ink-0 leading-relaxed">{u.notes}</div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <DesignatedNamesPanel update={u} />
+                            <div className="flex items-center gap-2 flex-wrap">
                               {u.sourceUrl ? (
                                 <a
                                   href={u.sourceUrl}
@@ -523,6 +524,98 @@ export default function EocnPage() {
       )}
 
     </ModuleLayout>
+  );
+}
+
+// Designated-names panel — operator can review the names embedded in
+// an EOCN announcement and screen them against the customer base in
+// one click. Names are seeded from the announcement's
+// `designatedNames` field (when the parser extracted them) and stored
+// in localStorage keyed by update id, so manual entries persist
+// across page reloads without round-tripping through the server.
+function DesignatedNamesPanel({ update }: { update: ListUpdate }): JSX.Element {
+  const STORAGE_KEY = `hawkeye.eocn.names.v1.${update.id}`;
+  const seedNames = useMemo(
+    () => update.designatedNames ?? [],
+    [update.designatedNames],
+  );
+  const [text, setText] = useState<string>(() => {
+    if (typeof window === "undefined") return seedNames.join("\n");
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored != null) return stored;
+    } catch { /* ignore */ }
+    return seedNames.join("\n");
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, text);
+    } catch { /* ignore quota / disabled */ }
+  }, [text, STORAGE_KEY]);
+
+  const names = useMemo(
+    () =>
+      text
+        .split(/[\n;|,]+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0),
+    [text],
+  );
+
+  const handleScreen = useCallback(() => {
+    if (names.length === 0) return;
+    const namesParam = encodeURIComponent(names.join("\n"));
+    const sourceParam = encodeURIComponent(`EOCN-${update.id}`);
+    window.location.href = `/batch?names=${namesParam}&source=${sourceParam}`;
+  }, [names, update.id]);
+
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded p-3 mb-3">
+      <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
+        <div className="text-9 font-semibold uppercase tracking-wide-3 text-ink-3">
+          Designated names ({names.length})
+        </div>
+        {names.length > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleScreen();
+            }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-brand/50 bg-brand text-white hover:bg-brand-hover text-10 font-semibold uppercase tracking-wide-2 transition-colors"
+            title={`Run a batch screening of ${names.length} name(s) against the live customer base. Any coincidence (fuzzy or exact) will surface in the results.`}
+          >
+            ⚡ Screen vs customers
+          </button>
+        )}
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        placeholder="Paste one name per line (or separate with comma / semicolon). Names persist locally per update."
+        rows={Math.min(8, Math.max(3, names.length + 1))}
+        className="w-full rounded border border-hair-2 bg-bg-1 px-2 py-1.5 text-11 text-ink-0 placeholder:text-ink-3 font-mono leading-relaxed resize-y"
+      />
+      {names.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {names.slice(0, 30).map((n) => (
+            <span
+              key={n}
+              className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet"
+            >
+              {n}
+            </span>
+          ))}
+          {names.length > 30 && (
+            <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 text-ink-3">
+              …+{names.length - 30} more
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

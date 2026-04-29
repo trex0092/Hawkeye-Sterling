@@ -27,6 +27,13 @@ export interface ListUpdate {
    *  parser extracts the announcement <a href>. Drives the
    *  "View on EOCN" button in the row's expanded detail panel. */
   sourceUrl?: string;
+  /** Individual designated names referenced by this announcement
+   *  (e.g. the 17 names amended on UNSC 1988). Populated by the
+   *  HTML parser when names are inline in the announcement; can
+   *  also be entered manually via the row detail panel so the
+   *  operator can "screen these names" against the customer base
+   *  in one click. */
+  designatedNames?: string[];
 }
 
 export interface EocnMatch {
@@ -83,6 +90,31 @@ export const EOCN_LIST_UPDATES: ListUpdate[] = [
     notes:
       "Amend of 17 Names on UNSC Sanction Committee 1988 (Taliban) — name / address / DOB updates per Cabinet Decision 74 of 2020. Re-screen completed within 4h SLA; no new customer matches.",
     sourceUrl: "https://www.uaeiec.gov.ae/en-us/un-page",
+    // Seed names — operator can edit / paste-replace via the
+    // detail-panel textarea. These are placeholders pending the
+    // EOCN HTML parser harvesting names directly from the
+    // announcement page; until then this gives the "Screen vs
+    // customers" button something to fire against the customer
+    // base on day one.
+    designatedNames: [
+      "Mohammad Omar",
+      "Akhtar Mohammad Mansour",
+      "Sirajuddin Haqqani",
+      "Mohammad Yaqoob",
+      "Abdul Latif Mansoor",
+      "Khairullah Khairkhwa",
+      "Mullah Mohammad Hassan Akhund",
+      "Mohammad Nabi Omari",
+      "Abdul Haq Wasiq",
+      "Norullah Noori",
+      "Mohammad Fazl Mazloom",
+      "Mohammad Ibrahim Sadr",
+      "Sher Mohammad Abbas Stanekzai",
+      "Abdul Hakim Haqqani",
+      "Abdul Salam Hanafi",
+      "Abdul Ghani Baradar",
+      "Hibatullah Akhundzada",
+    ],
   },
   {
     id: "LU-2025-0041",
