@@ -352,6 +352,114 @@
         },
         "responses": { "200": { "description": "Service health, brain-soul status, and cognitive grade" } }
       }
+    },
+    "/api/gleif": {
+      "post": {
+        "summary": "GLEIF LEI lookup — entity record and ownership chain (KYB enrichment)",
+        "tags": ["Enrichment"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Either { lei } for direct lookup or { query } for name search",
+                "properties": {
+                  "lei": { "type": "string", "description": "20-character LEI for direct lookup" },
+                  "maxDepth": { "type": "integer", "default": 3, "description": "Ownership chain traversal depth" },
+                  "query": { "type": "string", "description": "Entity name (search mode)" },
+                  "limit": { "type": "integer", "default": 20, "description": "Max results in search mode" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "LEI record / ownership chain, or search results" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "502": { "description": "Upstream GLEIF error" },
+          "503": { "description": "GLEIF integration not configured" }
+        }
+      }
+    },
+    "/api/crypto-risk": {
+      "post": {
+        "summary": "Wallet AML risk scoring — taint analysis for ETH / BTC / TRX (VASP screening)",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["address"],
+                "properties": {
+                  "address": { "type": "string", "description": "Wallet address" },
+                  "chain": { "type": "string", "enum": ["ethereum", "bitcoin", "tron"], "description": "Defaults to inferred chain" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Wallet risk score + taint exposure breakdown" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "502": { "description": "Upstream provider error" },
+          "503": { "description": "Crypto-risk provider not configured" }
+        }
+      }
+    },
+    "/api/vessel-check": {
+      "post": {
+        "summary": "IMO vessel sanctions screening — ownership, flag state, and list hits",
+        "tags": ["Screening"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Single mode { imoNumber } or batch mode { imoNumbers } (max 50)",
+                "properties": {
+                  "imoNumber": { "type": "string", "description": "7-digit IMO number" },
+                  "imoNumbers": { "type": "array", "items": { "type": "string" }, "maxItems": 50, "description": "Batch of IMO numbers (≤ 50)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Vessel record(s) with sanction-list hits and ownership chain" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "503": { "description": "Vessel-check provider not configured" }
+        }
+      }
+    },
+    "/api/benford": {
+      "post": {
+        "summary": "Benford's Law forensic accounting — MAD, chi-squared, p-value, risk tier",
+        "tags": ["Forensics"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amounts"],
+                "properties": {
+                  "amounts": { "type": "array", "items": { "type": "number" }, "description": "Transaction amounts to test" },
+                  "label": { "type": "string", "description": "Optional label echoed in the result" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Per-digit breakdown, MAD, chi-squared, p-value, and risk tier" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "422": { "description": "Insufficient data — fewer samples than required for a stable test" }
+        }
+      }
     }
   },
   "components": {
