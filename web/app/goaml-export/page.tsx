@@ -36,7 +36,13 @@ function loadDraft(): DraftEnvelope {
   if (typeof window === "undefined") return BLANK;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...BLANK, ...(JSON.parse(raw) as Partial<DraftEnvelope>), subject: { ...BLANK.subject, ...(JSON.parse(raw)?.subject ?? {}) } } : BLANK;
+    if (!raw) return BLANK;
+    const parsed = JSON.parse(raw) as Partial<DraftEnvelope>;
+    return {
+      ...BLANK,
+      ...parsed,
+      subject: { ...BLANK.subject, ...(parsed.subject ?? {}) },
+    };
   } catch {
     return BLANK;
   }
