@@ -473,6 +473,81 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
       `MLRO to review before goAML submission.`;
     const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
+    // Pre-fetch the JSON sidecar so the goAML envelope carries the
+    // same payload + report SHA-256 (and signature, if signing is on)
+    // as the .txt / PDF the operator just downloaded. Lets a regulator
+    // verify the FIU artefact and the dispositions came from the same
+    // brain run. Best-effort — if the sidecar request fails we still
+    // post the goAML XML, just without provenance.
+    let provenance:
+      | {
+          runId?: string;
+          payloadSha256?: string;
+          reportSha256?: string;
+          signature?: string;
+          signingKeyFp?: string;
+          engineVersion?: string;
+          schemaVersion?: string;
+          buildSha?: string;
+          generatedAt?: string;
+        }
+      | undefined;
+    try {
+      const sidecarPayload = buildReportPayload();
+      const sidecarRes = await fetch("/api/compliance-report?format=json", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+        },
+        body: JSON.stringify(sidecarPayload),
+      });
+      if (sidecarRes.ok) {
+        const sidecar = (await sidecarRes.json()) as {
+          hashes?: {
+            payloadSha256?: string;
+            reportSha256?: string;
+            signature?: string;
+            signingKeyFp?: string;
+          };
+          audit?: {
+            runId?: string;
+            generatedAt?: string;
+            engineVersion?: string;
+            schemaVersion?: string;
+            buildSha?: string;
+          };
+        };
+        provenance = {
+          ...(sidecar.audit?.runId ? { runId: sidecar.audit.runId } : {}),
+          ...(sidecar.audit?.generatedAt
+            ? { generatedAt: sidecar.audit.generatedAt }
+            : {}),
+          ...(sidecar.audit?.engineVersion
+            ? { engineVersion: sidecar.audit.engineVersion }
+            : {}),
+          ...(sidecar.audit?.schemaVersion
+            ? { schemaVersion: sidecar.audit.schemaVersion }
+            : {}),
+          ...(sidecar.audit?.buildSha ? { buildSha: sidecar.audit.buildSha } : {}),
+          ...(sidecar.hashes?.payloadSha256
+            ? { payloadSha256: sidecar.hashes.payloadSha256 }
+            : {}),
+          ...(sidecar.hashes?.reportSha256
+            ? { reportSha256: sidecar.hashes.reportSha256 }
+            : {}),
+          ...(sidecar.hashes?.signature
+            ? { signature: sidecar.hashes.signature }
+            : {}),
+          ...(sidecar.hashes?.signingKeyFp
+            ? { signingKeyFp: sidecar.hashes.signingKeyFp }
+            : {}),
+        };
+      }
+    } catch {
+      /* provenance prefetch is best-effort; goAML still proceeds */
+    }
     try {
       const res = await fetch("/api/goaml", {
         method: "POST",
@@ -495,6 +570,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             ...(subject.aliases ? { aliases: subject.aliases } : {}),
           },
           narrative,
+          ...(provenance ? { screeningProvenance: provenance } : {}),
         }),
       });
       if (!res.ok) {

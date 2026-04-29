@@ -6,7 +6,14 @@
 // classification · adverse-media overlay · recommendation · goAML package
 // · MLRO decision · regulatory framework.
 
-import { createHash, createHmac } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  createPrivateKey,
+  createPublicKey,
+  sign as nodeSign,
+  type KeyObject,
+} from "node:crypto";
 
 export type ReportType = "PEP" | "SANCTIONS" | "AM" | "STANDARD" | "SOE";
 
@@ -237,6 +244,56 @@ function signingKeyFingerprint(): string | null {
     "";
   if (!key || key.length < 16) return null;
   return sha256(key).slice(0, 12);
+}
+
+// Ed25519 asymmetric signing — alternative to HMAC for verifiers who
+// can't share a secret. The server holds the private key in env (PEM
+// format, base64-encoded for env-var safety). Regulators verify with
+// the public key, distributed out-of-band or fetched from a /.well-
+// known endpoint. Signature line emits only when REPORT_ED25519_PRIVATE_KEY
+// is set and parses to a valid Ed25519 key; otherwise omitted entirely.
+//
+// Generate a keypair locally with:
+//   openssl genpkey -algorithm ed25519 -out priv.pem
+//   openssl pkey -in priv.pem -pubout -out pub.pem
+//   base64 -w0 priv.pem  → REPORT_ED25519_PRIVATE_KEY
+function loadEd25519PrivateKey(): KeyObject | null {
+  const raw = process.env["REPORT_ED25519_PRIVATE_KEY"];
+  if (!raw) return null;
+  try {
+    // Accept either raw PEM (multi-line) or base64-encoded PEM (single
+    // line — friendlier for Netlify's env-var UI which strips newlines).
+    const pem = raw.includes("BEGIN")
+      ? raw
+      : Buffer.from(raw, "base64").toString("utf8");
+    const key = createPrivateKey({ key: pem, format: "pem" });
+    if (key.asymmetricKeyType !== "ed25519") return null;
+    return key;
+  } catch {
+    return null;
+  }
+}
+
+function ed25519Sign(reportHash: string): string | null {
+  const priv = loadEd25519PrivateKey();
+  if (!priv) return null;
+  // Ed25519 in Node: pass null for the algorithm; the curve dictates
+  // SHA-512 internally. Sign the hex digest as bytes; verifiers replay
+  // the same.
+  const sig = nodeSign(null, new Uint8Array(Buffer.from(reportHash, "utf8")), priv);
+  return Buffer.from(sig).toString("hex");
+}
+
+function ed25519PublicKeyFingerprint(): string | null {
+  const priv = loadEd25519PrivateKey();
+  if (!priv) return null;
+  try {
+    const pub = createPublicKey(priv);
+    const der = pub.export({ format: "der", type: "spki" });
+    return sha256(der.toString("hex")).slice(0, 12);
+  } catch {
+    return null;
+  }
 }
 
 // Top-of-report disposition banner — the first thing a regulator should
@@ -1161,6 +1218,8 @@ export interface StructuredReport {
     reportSha256: string;
     signature?: string;
     signingKeyFp?: string;
+    signatureEd25519?: string;
+    signingPubkeyFp?: string;
   };
   text: string;
 }
@@ -1175,6 +1234,8 @@ export function buildComplianceReportStructured(input: ReportInput): StructuredR
   const reportSha = reportShaMatch ? reportShaMatch[1]! : "";
   const sigMatch = text.match(/report\.signature\s+hmac-sha256:([a-f0-9]{64})/);
   const fpMatch = text.match(/signing\.key_fp\s+([a-f0-9]{12})/);
+  const sigEdMatch = text.match(/report\.signature_ed25519\s+([a-f0-9]+)/);
+  const fpEdMatch = text.match(/signing\.pubkey_fp\s+([a-f0-9]{12})/);
   const sb = input.superBrain;
   const composite = sb?.composite?.score ?? input.result.topScore;
   const reportType = inferReportType(input.result, sb);
@@ -1216,6 +1277,8 @@ export function buildComplianceReportStructured(input: ReportInput): StructuredR
       reportSha256: reportSha,
       ...(sigMatch ? { signature: `hmac-sha256:${sigMatch[1]}` } : {}),
       ...(fpMatch ? { signingKeyFp: fpMatch[1] } : {}),
+      ...(sigEdMatch ? { signatureEd25519: sigEdMatch[1] } : {}),
+      ...(fpEdMatch ? { signingPubkeyFp: fpEdMatch[1] } : {}),
     },
     text,
   };
@@ -1286,6 +1349,20 @@ export function buildComplianceReport(input: ReportInput): string {
     out.push(`signing.key_fp        ${keyFp}`);
     out.push(
       `verify.recipe         openssl dgst -sha256 -hmac "$KEY" <<< "${reportHash}"`,
+    );
+  }
+
+  // Ed25519 asymmetric signature — keyed by REPORT_ED25519_PRIVATE_KEY.
+  // Lets verifiers confirm authenticity using only the public key (no
+  // shared secret to distribute). Co-emits with HMAC when both keys are
+  // configured; either alone is fine. Both omitted when neither is set.
+  const sigEd = ed25519Sign(reportHash);
+  const fpEd = ed25519PublicKeyFingerprint();
+  if (sigEd && fpEd) {
+    out.push(`report.signature_ed25519  ${sigEd}`);
+    out.push(`signing.pubkey_fp         ${fpEd}`);
+    out.push(
+      `verify.recipe_ed25519     printf "%s" "${reportHash}" | openssl pkeyutl -verify -pubin -inkey pub.pem -sigfile <(xxd -r -p <<< "${sigEd}")`,
     );
   }
 

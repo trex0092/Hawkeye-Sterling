@@ -11,7 +11,16 @@
 //   - HMAC signature only emits when REPORT_SIGNING_KEY is set
 
 import assert from "node:assert/strict";
-import { buildComplianceReport, type ReportInput } from "../lib/reports/complianceReport";
+import {
+  generateKeyPairSync,
+  createPublicKey,
+  verify as nodeVerify,
+} from "node:crypto";
+import {
+  buildComplianceReport,
+  buildComplianceReportStructured,
+  type ReportInput,
+} from "../lib/reports/complianceReport";
 
 let failed = 0;
 function check(name: string, fn: () => void): void {
@@ -225,6 +234,45 @@ check("news dossier emits with article evidence", () => {
 check("AM banner appears at top with tipping-off prohibition", () => {
   assert.match(amTxt, /POSITIVE ADVERSE-MEDIA SIGNAL/);
   assert.match(amTxt, /TIPPING-OFF PROHIBITION ABSOLUTE/);
+});
+
+console.log("\n[Ed25519 signing]");
+check("no Ed25519 signature when REPORT_ED25519_PRIVATE_KEY unset", () => {
+  delete process.env.REPORT_ED25519_PRIVATE_KEY;
+  const t = buildComplianceReport(clearFixture());
+  assert.ok(!t.includes("report.signature_ed25519"), "ed25519 line should be omitted");
+});
+check("Ed25519 signature emits + verifies with the matching public key", () => {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const privPem = privateKey.export({ format: "pem", type: "pkcs8" }).toString();
+  process.env.REPORT_ED25519_PRIVATE_KEY = Buffer.from(privPem).toString("base64");
+  const t = buildComplianceReport(clearFixture());
+  const sigMatch = t.match(/report\.signature_ed25519\s+([a-f0-9]+)/);
+  const reportHashMatch = t.match(/report\.sha256\s+([a-f0-9]{64})/);
+  assert.ok(sigMatch, "expected ed25519 signature line");
+  assert.ok(reportHashMatch, "expected report.sha256 line");
+  const sig = new Uint8Array(Buffer.from(sigMatch![1]!, "hex"));
+  const data = new Uint8Array(Buffer.from(reportHashMatch![1]!, "utf8"));
+  const ok = nodeVerify(null, data, publicKey, sig);
+  assert.ok(ok, "ed25519 signature did not verify against the matching public key");
+  // pubkey fingerprint should also surface
+  assert.match(t, /signing\.pubkey_fp\s+[a-f0-9]{12}/);
+  delete process.env.REPORT_ED25519_PRIVATE_KEY;
+});
+check("structured report carries ed25519 fields when signing is on", () => {
+  const { privateKey } = generateKeyPairSync("ed25519");
+  const privPem = privateKey.export({ format: "pem", type: "pkcs8" }).toString();
+  process.env.REPORT_ED25519_PRIVATE_KEY = Buffer.from(privPem).toString("base64");
+  const s = buildComplianceReportStructured(clearFixture());
+  assert.match(s.hashes.signatureEd25519 ?? "", /^[a-f0-9]+$/);
+  assert.match(s.hashes.signingPubkeyFp ?? "", /^[a-f0-9]{12}$/);
+  delete process.env.REPORT_ED25519_PRIVATE_KEY;
+});
+check("invalid Ed25519 key in env is silently ignored (no fake signature)", () => {
+  process.env.REPORT_ED25519_PRIVATE_KEY = Buffer.from("not a real key").toString("base64");
+  const t = buildComplianceReport(clearFixture());
+  assert.ok(!t.includes("report.signature_ed25519"), "should fail-closed on bad key");
+  delete process.env.REPORT_ED25519_PRIVATE_KEY;
 });
 
 console.log(`\n${failed === 0 ? "PASS" : "FAIL"}: ${failed} failure(s)\n`);
