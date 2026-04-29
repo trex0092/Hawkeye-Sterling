@@ -1,16 +1,27 @@
 "use client";
 
-// Client-side case register, backed by localStorage so an STR filing or
-// a screening-panel escalation shows up on the /cases page (and persists
-// across page reloads). Mirrors the pattern used by transaction-monitor
-// — no server round-trip, no blob store, no SSR shenanigans.
+// Client-side case register. localStorage is the primary source of
+// truth for instant render and cross-reload persistence; an optional
+// server-side mirror at /api/cases (Netlify Blobs) provides:
+//   - cross-device durability (same operator on a different browser
+//     sees the same cases)
+//   - regulator audit (the deployment can produce its case register
+//     server-side, not just from a browser the operator happens to be
+//     on)
+//   - localStorage-clear resistance
 //
-// This replaces the hardcoded-empty `CASES = []` array so the Cases page
-// actually reflects filings the operator has made.
+// The sync layer is fire-and-forget: synchronous read/write APIs stay
+// unchanged, and an async POST mirrors the latest localStorage state
+// to the server after every mutation. On boot, syncFromServer() pulls
+// the merged state once and writes it back to localStorage so other
+// devices' work shows up. Failures are silent — localStorage stays
+// authoritative when the network or backend is unavailable.
 
 import type { CaseRecord, CaseStatus, EvidenceCategory } from "@/lib/types";
 
 const STORAGE_KEY = "hawkeye.cases.v1";
+const SYNC_FLAG_KEY = "hawkeye.cases.serverSyncedOnce";
+const SYNC_DEBOUNCE_MS = 600;
 
 export function isBrowser(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -29,12 +40,94 @@ export function loadCases(): CaseRecord[] {
   }
 }
 
+// Debounced async push of the latest localStorage state to /api/cases.
+// Coalesces rapid mutations (multi-step STR flow that calls appendCase
+// then attachEvidenceToSubject) into a single POST.
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleServerSync(): void {
+  if (!isBrowser()) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    void pushToServer();
+  }, SYNC_DEBOUNCE_MS);
+}
+
+async function pushToServer(): Promise<void> {
+  if (!isBrowser()) return;
+  try {
+    const cases = loadCases();
+    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
+    const r = await fetch("/api/cases", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+      },
+      body: JSON.stringify({ cases }),
+    });
+    if (!r.ok) return;
+    const body = (await r.json()) as { ok?: boolean; cases?: CaseRecord[] };
+    if (body.ok && Array.isArray(body.cases)) {
+      // Server returned merged state (it may include cases written by
+      // another device since our last sync). Mirror it locally without
+      // re-triggering scheduleServerSync — that would loop forever.
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(body.cases));
+        window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
+      } catch {
+        /* quota / disabled */
+      }
+    }
+  } catch {
+    /* offline / 4xx — localStorage stays authoritative */
+  }
+}
+
+// One-shot pull on app boot so cases written from another device or
+// the server-side seed show up. Idempotent — re-running just rewrites
+// localStorage with the latest merged state.
+export async function syncFromServer(): Promise<void> {
+  if (!isBrowser()) return;
+  try {
+    const local = loadCases();
+    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
+    // POST not GET so the server merges what we have with what it
+    // has and returns the combined state in one round-trip.
+    const r = await fetch("/api/cases", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+      },
+      body: JSON.stringify({ cases: local }),
+    });
+    if (!r.ok) return;
+    const body = (await r.json()) as { ok?: boolean; cases?: CaseRecord[] };
+    if (body.ok && Array.isArray(body.cases)) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(body.cases));
+        window.localStorage.setItem(SYNC_FLAG_KEY, "1");
+        window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
+      } catch {
+        /* quota / disabled */
+      }
+    }
+  } catch {
+    /* offline — localStorage is fine */
+  }
+}
+
 export function saveCases(cases: CaseRecord[]): void {
   if (!isBrowser()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
     // Notify other tabs / components listening on this key.
     window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
+    // Mirror to server (debounced, fire-and-forget).
+    scheduleServerSync();
   } catch {
     /* storage quota exhausted or disabled — no-op */
   }
@@ -51,6 +144,29 @@ export function appendCase(record: CaseRecord): void {
 export function deleteCase(id: string): void {
   const existing = loadCases();
   saveCases(existing.filter((c) => c.id !== id));
+  // Server-side merge would resurrect the deleted case (it preserves
+  // records on either side), so the delete needs an explicit call.
+  // Fire-and-forget — the localStorage write is the authoritative
+  // source for this client; the server hits eventual consistency on
+  // success and stays converged on failure.
+  if (isBrowser()) {
+    void deleteCaseOnServer(id);
+  }
+}
+
+async function deleteCaseOnServer(id: string): Promise<void> {
+  try {
+    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
+    await fetch(`/api/cases/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: {
+        accept: "application/json",
+        ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+      },
+    });
+  } catch {
+    /* offline — server will pick up the deletion on the next merge */
+  }
 }
 
 /**
