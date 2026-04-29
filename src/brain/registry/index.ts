@@ -69,6 +69,15 @@ export {
   applyProbeOverride,
 } from './adversarial-probe.js';
 export type { ProbeKind, ProbePrompt, ProbeOutcome } from './adversarial-probe.js';
+
+export { EvalHarness, SEED_SCENARIOS } from './eval-harness.js';
+export type {
+  ScenarioCluster,
+  RegressionScenario,
+  ScenarioRunResult,
+  KpiSnapshot,
+  KpiBreach,
+} from './eval-harness.js';
 export type {
   AuditEntryV1,
   AuditEntryInput,
