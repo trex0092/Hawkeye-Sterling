@@ -361,6 +361,9 @@ export default function StrCasesPage() {
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 05
+      </div>
       <ModuleHeader
             title="STR Case"
             titleEm="Management"

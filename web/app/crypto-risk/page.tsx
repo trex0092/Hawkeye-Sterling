@@ -102,6 +102,7 @@ export default function CryptoRiskPage() {
   return (
     <ModuleLayout asanaModule="crypto-risk" asanaLabel="Crypto Risk" engineLabel="Crypto Risk">
       <ModuleHero
+        moduleNumber={37}
         eyebrow="Module · Crypto AML"
         title="Crypto wallet"
         titleEm="risk."

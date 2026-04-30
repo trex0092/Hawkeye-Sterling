@@ -69,6 +69,7 @@ export default function CorrectionsPage() {
     <ModuleLayout asanaModule="corrections" asanaLabel="Corrections">
       <div>
         <ModuleHero
+          moduleNumber={19}
           eyebrow="Public-facing form"
           title="Record correction"
           titleEm="request."

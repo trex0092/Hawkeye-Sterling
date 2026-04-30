@@ -556,7 +556,7 @@ export default function OnboardingWizardPage() {
   if (submitted) {
     return (
       <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
-        <ModuleHero eyebrow="Module · Onboarding Wizard" title="Subject" titleEm="onboarded." />
+        <ModuleHero moduleNumber={11} eyebrow="Module · Onboarding Wizard" title="Subject" titleEm="onboarded." />
         <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-6 text-center">
           <div className="text-14 font-semibold text-emerald-700 mb-2">
             ✓ Onboarding complete and signed off by MLRO
@@ -580,6 +580,7 @@ export default function OnboardingWizardPage() {
   return (
     <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
       <ModuleHero
+        moduleNumber={11}
         eyebrow="Module · Onboarding Wizard"
         title="Guided new-customer"
         titleEm="onboarding."

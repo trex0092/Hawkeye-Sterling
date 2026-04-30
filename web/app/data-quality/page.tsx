@@ -114,6 +114,7 @@ export default function DataQualityPage() {
   return (
     <ModuleLayout asanaModule="data-quality" asanaLabel="Data Quality">
         <ModuleHero
+          moduleNumber={16}
           eyebrow="Module 19 · Per-subject completeness"
           title="Data"
           titleEm="quality."

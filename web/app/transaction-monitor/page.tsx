@@ -250,6 +250,9 @@ export default function TransactionMonitorPage() {
 
   return (
     <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 04
+      </div>
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"

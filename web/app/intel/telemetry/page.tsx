@@ -114,6 +114,7 @@ export default function ModeTelemetryPage() {
   return (
     <ModuleLayout asanaModule="telemetry" asanaLabel="Mode Telemetry">
       <ModuleHero
+        moduleNumber={44}
         eyebrow="Module · Mode Telemetry"
         title="Brain"
         titleEm="telemetry."
