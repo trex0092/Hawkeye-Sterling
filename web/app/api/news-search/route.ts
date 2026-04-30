@@ -15,6 +15,18 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+// Module-level safety net — see /api/compliance-qa for rationale.
+const REJECTION_GUARD_KEY = "__hsNewsSearchRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) return;
+    console.error("[news-search] unhandled rejection", msg);
+  });
+}
+
 // Free, no-key news crawl via Google News RSS.
 // Optional upgrade path: set NEWSAPI_KEY for higher-quality coverage.
 
