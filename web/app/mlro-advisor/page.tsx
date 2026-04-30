@@ -322,6 +322,65 @@ interface SanctionsNexus {
   regulatoryBasis: string;
 }
 
+interface StrNarrativeResult {
+  narrative: string;
+  wordCount: number;
+  qualityScore: number;
+  fatfR20Coverage: string[];
+  missingElements: string[];
+  goAmlFields: { reportType: string; suspiciousActivityType: string; filingBasis: string; deadlineDate: string };
+  regulatoryBasis: string;
+}
+
+interface WireR16Result {
+  r16Compliant: boolean;
+  complianceLevel: "fully_compliant" | "partially_compliant" | "non_compliant";
+  verdict: "stp" | "hold_and_request" | "return_to_sender" | "freeze_and_report";
+  verdictRationale: string;
+  originatorCheck: { namePresent: boolean; accountPresent: boolean; addressOrIdPresent: boolean; missing: string[] };
+  beneficiaryCheck: { namePresent: boolean; accountPresent: boolean; missing: string[] };
+  thresholdApplicable: boolean;
+  thresholdAnalysis: string;
+  requiredActions: string[];
+  timeLimit: string;
+  regulatoryBasis: string;
+}
+
+interface PfRisk {
+  category: "dprk" | "iran" | "dual_use" | "unscr" | "proliferator_network" | "other";
+  description: string;
+  severity: "critical" | "high" | "medium" | "low";
+  unscr?: string;
+  mandatoryFreeze: boolean;
+  detail: string;
+}
+
+interface PfScreenerResult {
+  pfRisk: "critical" | "high" | "medium" | "low" | "clear";
+  dprkNexus: "confirmed" | "possible" | "unlikely" | "none";
+  iranNexus: "confirmed" | "possible" | "unlikely" | "none";
+  dualUseRisk: "high" | "medium" | "low" | "none";
+  mandatoryFreezeRequired: boolean;
+  freezeBasis?: string;
+  risks: PfRisk[];
+  recommendedAction: "freeze_and_report" | "escalate_mlro" | "enhanced_dd" | "monitor" | "clear";
+  actionRationale: string;
+  applicableUnscrs: string[];
+  requiredChecks: string[];
+  regulatoryBasis: string;
+}
+
+interface MlroMemoResult {
+  memoRef: string;
+  memo: string;
+  decision: "file_str" | "escalate_senior" | "enhanced_cdd" | "monitor_and_review" | "close_no_action";
+  decisionBasis: string;
+  riskRating: "critical" | "high" | "medium" | "low";
+  auditElements: { subjectIdentified: boolean; activityDocumented: boolean; redFlagsListed: boolean; regulatoryBasisCited: boolean; decisionRationalePresent: boolean; deadlineNoted: boolean };
+  qualityScore: number;
+  regulatoryBasis: string;
+}
+
 interface TransactionAnalysis {
   typology: string;
   typologyFatfRef: string;
@@ -733,7 +792,18 @@ export default function MlroAdvisorPage() {
   const [mode, setMode] = useState<ReasoningMode>("quick");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>([]);
+  const ADVISOR_STORAGE = "hawkeye.mlro.advisor.v1";
+  const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem("hawkeye.mlro.advisor.v1");
+      return raw ? (JSON.parse(raw) as AdvisorHistoryEntry[]) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); } catch { /* quota */ }
+  }, [advisorHistory, ADVISOR_STORAGE]);
+
   /** ID of the entry currently being streamed (Quick mode). null when idle. */
   const [streamingEntryId, setStreamingEntryId] = useState<string | null>(null);
   /** Advisor entry currently open in the goAML draft modal (null = closed). */
@@ -1131,7 +1201,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1290,6 +1360,73 @@ export default function MlroAdvisorPage() {
       if (data.ok) setTbmlResult(data);
     } catch { /* silent */ }
     finally { setTbmlLoading(false); }
+  };
+
+  // STR Narrative Drafter
+  const [strNarrInput, setStrNarrInput] = useState({ subjectName: "", subjectType: "", subjectNationality: "", activityDescription: "", amounts: "", dates: "", counterparty: "", jurisdiction: "", redFlags: "", actionsTaken: "", additionalFacts: "" });
+  const [strNarrResult, setStrNarrResult] = useState<StrNarrativeResult | null>(null);
+  const [strNarrLoading, setStrNarrLoading] = useState(false);
+
+  const runStrNarrative = async () => {
+    if (!strNarrInput.subjectName.trim() || !strNarrInput.activityDescription.trim()) return;
+    setStrNarrLoading(true); setStrNarrResult(null);
+    try {
+      const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...strNarrInput, redFlags: strNarrInput.redFlags ? strNarrInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & StrNarrativeResult;
+      if (data.ok) setStrNarrResult(data);
+    } catch { /* silent */ }
+    finally { setStrNarrLoading(false); }
+  };
+
+  // Wire Transfer R.16 Checker
+  const [wireInput, setWireInput] = useState({ originatorName: "", originatorAccount: "", originatorAddress: "", originatorId: "", originatorCountry: "", beneficiaryName: "", beneficiaryAccount: "", beneficiaryCountry: "", amount: "", currency: "", purpose: "", swiftRef: "" });
+  const [wireResult, setWireResult] = useState<WireR16Result | null>(null);
+  const [wireLoading, setWireLoading] = useState(false);
+
+  const runWireR16 = async () => {
+    setWireLoading(true); setWireResult(null);
+    try {
+      const res = await fetch("/api/wire-r16", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(wireInput) });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & WireR16Result;
+      if (data.ok) setWireResult(data);
+    } catch { /* silent */ }
+    finally { setWireLoading(false); }
+  };
+
+  // Proliferation Financing Screener
+  const [pfInput, setPfInput] = useState({ subject: "", subjectCountry: "", counterparty: "", counterpartyCountry: "", goods: "", transactionType: "", amount: "", context: "" });
+  const [pfResult, setPfResult] = useState<PfScreenerResult | null>(null);
+  const [pfLoading, setPfLoading] = useState(false);
+
+  const runPfScreener = async () => {
+    if (!pfInput.subject.trim()) return;
+    setPfLoading(true); setPfResult(null);
+    try {
+      const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pfInput) });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & PfScreenerResult;
+      if (data.ok) setPfResult(data);
+    } catch { /* silent */ }
+    finally { setPfLoading(false); }
+  };
+
+  // MLRO Decision Memo
+  const [memoInput, setMemoInput] = useState({ subjectName: "", subjectType: "", caseRef: "", activitySummary: "", redFlags: "", investigationSteps: "", proposedDecision: "", mlroName: "", date: "" });
+  const [memoResult, setMemoResult] = useState<MlroMemoResult | null>(null);
+  const [memoLoading, setMemoLoading] = useState(false);
+
+  const runMlroMemo = async () => {
+    if (!memoInput.subjectName.trim() || !memoInput.activitySummary.trim()) return;
+    setMemoLoading(true); setMemoResult(null);
+    try {
+      const res = await fetch("/api/mlro-memo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...memoInput, redFlags: memoInput.redFlags ? memoInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & MlroMemoResult;
+      if (data.ok) setMemoResult(data);
+    } catch { /* silent */ }
+    finally { setMemoLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -2169,10 +2306,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match", "txn-narrative", "edd-questionnaire", "tbml"] as const).map((t) => (
+              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match", "txn-narrative", "edd-questionnaire", "tbml", "str-narrative", "wire-r16", "pf-screener", "mlro-memo"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : t === "typology-match" ? "Typology Match" : t === "txn-narrative" ? "Transaction Analyzer" : t === "edd-questionnaire" ? "EDD Generator" : "TBML Analyzer"}
+                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : t === "typology-match" ? "Typology Match" : t === "txn-narrative" ? "Transaction Analyzer" : t === "edd-questionnaire" ? "EDD Generator" : t === "tbml" ? "TBML Analyzer" : t === "str-narrative" ? "STR Drafter" : t === "wire-r16" ? "Wire R.16 Check" : t === "pf-screener" ? "PF Screener" : "MLRO Memo"}
                 </button>
               ))}
             </div>
@@ -3099,6 +3236,432 @@ export default function MlroAdvisorPage() {
                         <span>{tb.oecdStep}</span>
                         <span>{tb.regulatoryBasis}</span>
                       </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── STR Narrative Drafter ─────────────────────────────────────────── */}
+            {superToolsTab === "str-narrative" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">STR Narrative Drafter</div>
+                  <p className="text-11 text-ink-3 mb-3">Input key case facts. AI drafts a complete, goAML-ready STR narrative covering all FATF R.20 mandatory elements: WHO / WHAT / WHEN / WHERE / WHY. Includes quality score and missing element check before you file.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject Name <span className="text-red">*</span></label>
+                      <input value={strNarrInput.subjectName} onChange={(e) => setStrNarrInput((p) => ({ ...p, subjectName: e.target.value }))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject Type</label>
+                      <input value={strNarrInput.subjectType} onChange={(e) => setStrNarrInput((p) => ({ ...p, subjectType: e.target.value }))} placeholder="e.g. Individual, LLC, DPMS dealer" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Nationality / Jurisdiction</label>
+                      <input value={strNarrInput.subjectNationality} onChange={(e) => setStrNarrInput((p) => ({ ...p, subjectNationality: e.target.value }))} placeholder="e.g. UAE national, Nigerian entity" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Jurisdiction</label>
+                      <input value={strNarrInput.jurisdiction} onChange={(e) => setStrNarrInput((p) => ({ ...p, jurisdiction: e.target.value }))} placeholder="Countries involved" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Activity Description <span className="text-red">*</span></label>
+                      <textarea value={strNarrInput.activityDescription} onChange={(e) => setStrNarrInput((p) => ({ ...p, activityDescription: e.target.value }))} rows={3} placeholder="Describe the suspicious activity — transaction pattern, behaviour, what triggered the alert…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Amounts</label>
+                      <input value={strNarrInput.amounts} onChange={(e) => setStrNarrInput((p) => ({ ...p, amounts: e.target.value }))} placeholder="e.g. AED 638,000 across 12 txns" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Key Dates</label>
+                      <input value={strNarrInput.dates} onChange={(e) => setStrNarrInput((p) => ({ ...p, dates: e.target.value }))} placeholder="e.g. 01/03/2026 – 14/03/2026" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Counterparty</label>
+                      <input value={strNarrInput.counterparty} onChange={(e) => setStrNarrInput((p) => ({ ...p, counterparty: e.target.value }))} placeholder="Name and country" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Actions Taken</label>
+                      <input value={strNarrInput.actionsTaken} onChange={(e) => setStrNarrInput((p) => ({ ...p, actionsTaken: e.target.value }))} placeholder="EDD requested, freeze considered…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Red Flags (one per line)</label>
+                      <textarea value={strNarrInput.redFlags} onChange={(e) => setStrNarrInput((p) => ({ ...p, redFlags: e.target.value }))} rows={3} placeholder={"Structuring below AED 55,000 threshold\nCross-border wire to CAHRA jurisdiction\nNo source of funds documentation"} className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Additional Facts</label>
+                      <input value={strNarrInput.additionalFacts} onChange={(e) => setStrNarrInput((p) => ({ ...p, additionalFacts: e.target.value }))} placeholder="Any other relevant context" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runStrNarrative()} disabled={strNarrLoading || !strNarrInput.subjectName.trim() || !strNarrInput.activityDescription.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {strNarrLoading ? "Drafting…" : "Draft STR Narrative"}
+                </button>
+                {strNarrResult && (() => {
+                  const s = strNarrResult;
+                  const qScore = s.qualityScore;
+                  const qCls = qScore >= 80 ? "bg-green-dim text-green" : qScore >= 55 ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-10 px-2 py-px rounded font-bold ${qCls}`}>Quality {qScore}/100</span>
+                        <span className="font-mono text-10 text-ink-3">{s.wordCount} words</span>
+                        <span className="font-mono text-10 px-2 py-px rounded bg-brand-dim text-brand-deep">{s.goAmlFields.suspiciousActivityType}</span>
+                        <button type="button" onClick={() => void navigator.clipboard.writeText(s.narrative)} className="ml-auto text-10 font-mono text-brand hover:text-brand-deep border border-brand/30 px-2 py-px rounded">Copy</button>
+                      </div>
+                      <div className="bg-bg-0 rounded-lg p-4 border border-hair-2">
+                        <pre className="text-11 text-ink-0 whitespace-pre-wrap leading-relaxed font-mono">{s.narrative}</pre>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {s.fatfR20Coverage.length > 0 && (
+                          <div>
+                            <div className="text-10 uppercase tracking-wide-3 text-green mb-1">FATF R.20 Coverage</div>
+                            <ul className="text-10 text-ink-1 space-y-0.5 list-disc list-inside">
+                              {s.fatfR20Coverage.map((c, i) => <li key={i}>{c}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                        {s.missingElements.length > 0 && (
+                          <div>
+                            <div className="text-10 uppercase tracking-wide-3 text-amber mb-1">Add Before Filing</div>
+                            <ul className="text-10 text-ink-1 space-y-0.5 list-disc list-inside">
+                              {s.missingElements.map((m, i) => <li key={i}>{m}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-10 font-mono text-ink-3">
+                        <span>Filing: {s.goAmlFields.filingBasis}</span>
+                        <span>Deadline: {s.goAmlFields.deadlineDate}</span>
+                      </div>
+                      <div className="text-10 font-mono text-ink-3">{s.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── Wire Transfer R.16 Checker ────────────────────────────────────── */}
+            {superToolsTab === "wire-r16" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">Wire Transfer R.16 Checker</div>
+                  <p className="text-11 text-ink-3 mb-3">Input originator and beneficiary details from a wire transfer. AI determines FATF R.16 compliance — whether mandatory information is present, what's missing, and whether to STP, hold, return, or freeze and report.</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-3 text-10 font-semibold uppercase tracking-wide-3 text-ink-2 pt-1">Originator</div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Name</label>
+                      <input value={wireInput.originatorName} onChange={(e) => setWireInput((p) => ({ ...p, originatorName: e.target.value }))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Account / IBAN</label>
+                      <input value={wireInput.originatorAccount} onChange={(e) => setWireInput((p) => ({ ...p, originatorAccount: e.target.value }))} placeholder="Account number or IBAN" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Country (ISO-2)</label>
+                      <input value={wireInput.originatorCountry} onChange={(e) => setWireInput((p) => ({ ...p, originatorCountry: e.target.value }))} placeholder="e.g. AE, NG" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Address</label>
+                      <input value={wireInput.originatorAddress} onChange={(e) => setWireInput((p) => ({ ...p, originatorAddress: e.target.value }))} placeholder="Street address or city/country" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">National ID / Passport</label>
+                      <input value={wireInput.originatorId} onChange={(e) => setWireInput((p) => ({ ...p, originatorId: e.target.value }))} placeholder="ID or passport number" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-3 text-10 font-semibold uppercase tracking-wide-3 text-ink-2 pt-2 border-t border-hair-2">Beneficiary</div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Name</label>
+                      <input value={wireInput.beneficiaryName} onChange={(e) => setWireInput((p) => ({ ...p, beneficiaryName: e.target.value }))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Account / IBAN</label>
+                      <input value={wireInput.beneficiaryAccount} onChange={(e) => setWireInput((p) => ({ ...p, beneficiaryAccount: e.target.value }))} placeholder="Account number or IBAN" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Country (ISO-2)</label>
+                      <input value={wireInput.beneficiaryCountry} onChange={(e) => setWireInput((p) => ({ ...p, beneficiaryCountry: e.target.value }))} placeholder="e.g. CH, GB" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-3 text-10 font-semibold uppercase tracking-wide-3 text-ink-2 pt-2 border-t border-hair-2">Transaction</div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Amount</label>
+                      <input value={wireInput.amount} onChange={(e) => setWireInput((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. 250,000" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Currency</label>
+                      <input value={wireInput.currency} onChange={(e) => setWireInput((p) => ({ ...p, currency: e.target.value }))} placeholder="AED / USD / EUR" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">SWIFT Reference</label>
+                      <input value={wireInput.swiftRef} onChange={(e) => setWireInput((p) => ({ ...p, swiftRef: e.target.value }))} placeholder="MT103 reference" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-3">
+                      <label className="block text-10 text-ink-3 mb-1">Purpose of Payment</label>
+                      <input value={wireInput.purpose} onChange={(e) => setWireInput((p) => ({ ...p, purpose: e.target.value }))} placeholder="e.g. Gold bullion purchase, trade invoice settlement" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runWireR16()} disabled={wireLoading}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {wireLoading ? "Checking…" : "Check R.16 Compliance"}
+                </button>
+                {wireResult && (() => {
+                  const w = wireResult;
+                  const verdictCfg = {
+                    stp: { cls: "bg-green text-white", label: "STP — Straight Through Processing" },
+                    hold_and_request: { cls: "bg-amber-dim text-amber border border-amber/40", label: "Hold & Request Missing Information" },
+                    return_to_sender: { cls: "bg-red-dim text-red border border-red/40", label: "Return to Sender" },
+                    freeze_and_report: { cls: "bg-red text-white", label: "Freeze & File STR" },
+                  };
+                  const vc = verdictCfg[w.verdict];
+                  const complianceCls = w.complianceLevel === "fully_compliant" ? "bg-green-dim text-green" : w.complianceLevel === "partially_compliant" ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
+                  const checkIcon = (v: boolean) => v ? <span className="text-green font-bold">✓</span> : <span className="text-red font-bold">✗</span>;
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-11 px-3 py-1 rounded font-bold ${vc.cls}`}>{vc.label}</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${complianceCls}`}>{w.complianceLevel.replace(/_/g, " ")}</span>
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{w.verdictRationale}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="border border-hair-2 rounded p-3 bg-bg-0">
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-2 mb-2 font-semibold">Originator Fields</div>
+                          <div className="space-y-1 text-11">
+                            <div className="flex items-center gap-2">{checkIcon(w.originatorCheck.namePresent)} <span>Name</span></div>
+                            <div className="flex items-center gap-2">{checkIcon(w.originatorCheck.accountPresent)} <span>Account number</span></div>
+                            <div className="flex items-center gap-2">{checkIcon(w.originatorCheck.addressOrIdPresent)} <span>Address or national ID</span></div>
+                          </div>
+                          {w.originatorCheck.missing.length > 0 && <div className="mt-2 text-10 text-red">{w.originatorCheck.missing.join(", ")}</div>}
+                        </div>
+                        <div className="border border-hair-2 rounded p-3 bg-bg-0">
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-2 mb-2 font-semibold">Beneficiary Fields</div>
+                          <div className="space-y-1 text-11">
+                            <div className="flex items-center gap-2">{checkIcon(w.beneficiaryCheck.namePresent)} <span>Name</span></div>
+                            <div className="flex items-center gap-2">{checkIcon(w.beneficiaryCheck.accountPresent)} <span>Account number</span></div>
+                          </div>
+                          {w.beneficiaryCheck.missing.length > 0 && <div className="mt-2 text-10 text-red">{w.beneficiaryCheck.missing.join(", ")}</div>}
+                        </div>
+                      </div>
+                      <div className="text-11 text-ink-2">{w.thresholdAnalysis}</div>
+                      {w.requiredActions.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Actions</div>
+                          <ol className="text-11 text-ink-1 space-y-0.5 list-decimal list-inside">
+                            {w.requiredActions.map((a, i) => <li key={i}>{a}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      <div className="flex gap-4 text-10 font-mono text-ink-3 flex-wrap">
+                        <span>Time limit: {w.timeLimit}</span>
+                        <span>{w.regulatoryBasis}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── Proliferation Financing Screener ─────────────────────────────── */}
+            {superToolsTab === "pf-screener" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">Proliferation Financing Screener</div>
+                  <p className="text-11 text-ink-3 mb-3">Dedicated PF risk assessment beyond standard sanctions screening. Evaluates DPRK nexus (UNSCR 1718/2375), Iran nexus (UNSCR 2231), dual-use goods, and proliferator network exposure. Mandatory freeze obligations flagged automatically.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject <span className="text-red">*</span></label>
+                      <input value={pfInput.subject} onChange={(e) => setPfInput((p) => ({ ...p, subject: e.target.value }))} placeholder="Person or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject Country</label>
+                      <input value={pfInput.subjectCountry} onChange={(e) => setPfInput((p) => ({ ...p, subjectCountry: e.target.value }))} placeholder="ISO-2" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Counterparty</label>
+                      <input value={pfInput.counterparty} onChange={(e) => setPfInput((p) => ({ ...p, counterparty: e.target.value }))} placeholder="Name of counterparty" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Counterparty Country</label>
+                      <input value={pfInput.counterpartyCountry} onChange={(e) => setPfInput((p) => ({ ...p, counterpartyCountry: e.target.value }))} placeholder="ISO-2" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Goods / Services</label>
+                      <input value={pfInput.goods} onChange={(e) => setPfInput((p) => ({ ...p, goods: e.target.value }))} placeholder="e.g. gold, industrial chemicals, electronics" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Transaction Type</label>
+                      <input value={pfInput.transactionType} onChange={(e) => setPfInput((p) => ({ ...p, transactionType: e.target.value }))} placeholder="Wire, trade finance, crypto" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Amount</label>
+                      <input value={pfInput.amount} onChange={(e) => setPfInput((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. USD 4,200,000" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Additional Context</label>
+                      <textarea value={pfInput.context} onChange={(e) => setPfInput((p) => ({ ...p, context: e.target.value }))} rows={2} placeholder="Ownership chain, shipping routes, intermediaries, prior intelligence…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runPfScreener()} disabled={pfLoading || !pfInput.subject.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {pfLoading ? "Screening…" : "Screen for Proliferation Financing Risk"}
+                </button>
+                {pfResult && (() => {
+                  const pf = pfResult;
+                  const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-red-dim text-red" : pf.pfRisk === "medium" ? "bg-amber-dim text-amber" : pf.pfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
+                  const nexusCls = (v: string) => v === "confirmed" ? "bg-red text-white" : v === "possible" ? "bg-red-dim text-red" : v === "unlikely" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const actionCls = (pf.recommendedAction === "freeze_and_report") ? "bg-red text-white" : (pf.recommendedAction === "escalate_mlro") ? "bg-red-dim text-red" : (pf.recommendedAction === "enhanced_dd") ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase font-bold ${riskCls}`}>{pf.pfRisk} PF risk</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${actionCls}`}>{pf.recommendedAction.replace(/_/g, " ")}</span>
+                        {pf.mandatoryFreezeRequired && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white uppercase font-bold animate-pulse">MANDATORY FREEZE</span>}
+                      </div>
+                      {pf.mandatoryFreezeRequired && pf.freezeBasis && (
+                        <div className="rounded p-3 bg-red border-red text-white text-11 font-semibold">
+                          IMMEDIATE ACTION REQUIRED: Asset freeze mandatory under {pf.freezeBasis}. Do not process. Notify senior management and MLRO immediately.
+                        </div>
+                      )}
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: "DPRK Nexus", val: pf.dprkNexus },
+                          { label: "Iran Nexus", val: pf.iranNexus },
+                          { label: "Dual-Use Risk", val: pf.dualUseRisk },
+                        ].map(({ label, val }) => (
+                          <div key={label} className="border border-hair-2 rounded p-2 text-center bg-bg-0">
+                            <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-1">{label}</div>
+                            <span className={`font-mono text-10 px-2 py-px rounded uppercase font-semibold ${nexusCls(val)}`}>{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{pf.actionRationale}</p>
+                      {pf.risks.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">PF Risk Indicators</div>
+                          <div className="space-y-2">
+                            {pf.risks.map((r, i) => {
+                              const sevCls = r.severity === "critical" ? "bg-red text-white" : r.severity === "high" ? "bg-red-dim text-red" : r.severity === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
+                              const catCls = "bg-brand-dim text-brand-deep";
+                              return (
+                                <div key={i} className="border border-hair-2 rounded p-2.5 bg-bg-0 flex items-start gap-2">
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${sevCls}`}>{r.severity}</span>
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${catCls}`}>{r.category.replace(/_/g, " ")}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-11 font-medium text-ink-0">{r.description}</div>
+                                    <div className="text-10 text-ink-2 mt-0.5">{r.detail}</div>
+                                    {r.unscr && <div className="text-10 font-mono text-ink-3">{r.unscr}</div>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {pf.applicableUnscrs.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Applicable UNSCRs</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {pf.applicableUnscrs.map((u, i) => <span key={i} className="font-mono text-10 px-2 py-px rounded bg-violet-dim text-violet border border-violet/30">{u}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {pf.requiredChecks.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Checks</div>
+                          <ol className="text-11 text-ink-1 space-y-0.5 list-decimal list-inside">
+                            {pf.requiredChecks.map((c, i) => <li key={i}>{c}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      <div className="text-10 font-mono text-ink-3">{pf.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── MLRO Decision Memo ───────────────────────────────────────────── */}
+            {superToolsTab === "mlro-memo" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">MLRO Decision Memo Generator</div>
+                  <p className="text-11 text-ink-3 mb-3">Generate a formal, regulator-grade MLRO Decision Memorandum for your audit trail. Structured for MoE / CBUAE / FIU inspection — includes subject identification, facts, red flags, investigation record, legal analysis, and sign-off block.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject Name <span className="text-red">*</span></label>
+                      <input value={memoInput.subjectName} onChange={(e) => setMemoInput((p) => ({ ...p, subjectName: e.target.value }))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject Type</label>
+                      <input value={memoInput.subjectType} onChange={(e) => setMemoInput((p) => ({ ...p, subjectType: e.target.value }))} placeholder="Individual / LLC / Foreign entity" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Case Reference</label>
+                      <input value={memoInput.caseRef} onChange={(e) => setMemoInput((p) => ({ ...p, caseRef: e.target.value }))} placeholder="e.g. TM-2026-0042" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">MLRO Name</label>
+                      <input value={memoInput.mlroName} onChange={(e) => setMemoInput((p) => ({ ...p, mlroName: e.target.value }))} placeholder="Your name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Activity Summary <span className="text-red">*</span></label>
+                      <textarea value={memoInput.activitySummary} onChange={(e) => setMemoInput((p) => ({ ...p, activitySummary: e.target.value }))} rows={3} placeholder="Describe the suspicious activity — transactions, pattern, timeline, counterparties, amounts…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Red Flags (one per line)</label>
+                      <textarea value={memoInput.redFlags} onChange={(e) => setMemoInput((p) => ({ ...p, redFlags: e.target.value }))} rows={3} placeholder={"Structuring below threshold\nCross-border wire with no business purpose\nCustomer refused to provide SOF documentation"} className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Investigation Steps Taken</label>
+                      <textarea value={memoInput.investigationSteps} onChange={(e) => setMemoInput((p) => ({ ...p, investigationSteps: e.target.value }))} rows={2} placeholder="e.g. EDD questionnaire sent on 01/04, customer did not respond; sanctions screens run on 02/04 — no matches; alert escalated to MLRO 03/04…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Proposed Decision</label>
+                      <input value={memoInput.proposedDecision} onChange={(e) => setMemoInput((p) => ({ ...p, proposedDecision: e.target.value }))} placeholder="File STR / Enhance CDD / Close…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Date</label>
+                      <input value={memoInput.date} onChange={(e) => setMemoInput((p) => ({ ...p, date: e.target.value }))} placeholder="dd/mm/yyyy" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runMlroMemo()} disabled={memoLoading || !memoInput.subjectName.trim() || !memoInput.activitySummary.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {memoLoading ? "Drafting Memo…" : "Generate MLRO Decision Memo"}
+                </button>
+                {memoResult && (() => {
+                  const m = memoResult;
+                  const riskCls = m.riskRating === "critical" ? "bg-red text-white" : m.riskRating === "high" ? "bg-red-dim text-red" : m.riskRating === "medium" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand";
+                  const decisionCls = (m.decision === "file_str" || m.decision === "escalate_senior") ? "bg-red text-white" : m.decision === "enhanced_cdd" ? "bg-amber-dim text-amber" : m.decision === "monitor_and_review" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
+                  const qScore = m.qualityScore;
+                  const qCls = qScore >= 80 ? "bg-green-dim text-green" : qScore >= 55 ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
+                  const auditPassed = Object.values(m.auditElements).filter(Boolean).length;
+                  const auditTotal = Object.values(m.auditElements).length;
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="font-mono text-10 text-ink-3">{m.memoRef}</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase font-bold ${riskCls}`}>{m.riskRating} risk</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${decisionCls}`}>{m.decision.replace(/_/g, " ")}</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded ${qCls}`}>Quality {qScore}/100</span>
+                        <span className="font-mono text-10 text-ink-3">Audit elements: {auditPassed}/{auditTotal}</span>
+                        <button type="button" onClick={() => void navigator.clipboard.writeText(m.memo)} className="ml-auto text-10 font-mono text-brand hover:text-brand-deep border border-brand/30 px-2 py-px rounded">Copy</button>
+                      </div>
+                      <div className="bg-bg-0 rounded-lg p-4 border border-hair-2">
+                        <pre className="text-11 text-ink-0 whitespace-pre-wrap leading-relaxed font-mono">{m.memo}</pre>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-10">
+                        {Object.entries(m.auditElements).map(([k, v]) => (
+                          <div key={k} className={`flex items-center gap-1.5 px-2 py-1 rounded border ${v ? "border-green/30 bg-green-dim text-green" : "border-red/30 bg-red-dim text-red"}`}>
+                            <span className="font-bold">{v ? "✓" : "✗"}</span>
+                            <span className="font-mono">{k.replace(/([A-Z])/g, " $1").trim()}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-10 font-mono text-ink-3">{m.regulatoryBasis}</div>
                     </div>
                   );
                 })()}
