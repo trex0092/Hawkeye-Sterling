@@ -46,6 +46,22 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+// Module-level safety net — see /api/mlro-advisor and /api/compliance-qa
+// for the rationale. Orphaned upstream-fetch rejections crash the Lambda
+// with `Runtime.UnhandledPromiseRejection: AbortError` and return raw
+// 502s; this swallows the expected aborts so the route can return clean
+// JSON. Registered once per Lambda warm instance.
+const REJECTION_GUARD_KEY = "__hsMlroAdvisorQuickRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) return;
+    console.error("[mlro-advisor-quick] unhandled rejection", msg);
+  });
+}
+
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 700;
 // Hard cap inside the Lambda. Netlify's edge inactivity timeout is ~26 s,
