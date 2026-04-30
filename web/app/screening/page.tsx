@@ -131,6 +131,44 @@ interface FalsePositiveResult {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Smart Hit Disambiguator types ─────────────────────────────────────────────
+
+interface DisambiguationHitInput {
+  hitId: string;
+  hitName: string;
+  hitCategory: string;
+  hitCountry?: string;
+  hitDob?: string;
+  hitRole?: string;
+  matchScore?: number;
+}
+
+interface DisambiguatedHit {
+  hitId: string;
+  verdict: "confirmed_false_positive" | "likely_false_positive" | "possible_match" | "likely_true_match";
+  confidenceScore: number;
+  primaryDifferentiator: string;
+  canAutoDispose: boolean;
+  dispositionText: string;
+  requiresClientClarification: boolean;
+  clarificationQuestion?: string;
+}
+
+interface DisambiguationResult {
+  ok: boolean;
+  overallAssessment: string;
+  clientRiskProfile: string;
+  disambiguationStrategy: string;
+  hits: DisambiguatedHit[];
+  clarificationQuestions: string[];
+  bulkDispositionText: string;
+  escalationItems: string[];
+  regulatoryNote: string;
+  processingTime: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CRITICAL_THRESHOLD = 85;
 const SLA_BREACH_THRESHOLD_H = 24;
 
@@ -586,6 +624,17 @@ export default function ScreeningPage() {
   const [fpHitCountry, setFpHitCountry] = useState("");
   const [fpPanelOpen, setFpPanelOpen] = useState(false);
 
+  // Smart Hit Disambiguator state
+  const [disambigResult, setDisambigResult] = useState<DisambiguationResult | null>(null);
+  const [disambigLoading, setDisambigLoading] = useState(false);
+  const [disambigPanelOpen, setDisambigPanelOpen] = useState(false);
+  const [disambigClient, setDisambigClient] = useState({
+    name: "", nationality: "", dob: "", gender: "", occupation: "", context: "",
+  });
+  const [disambigHits, setDisambigHits] = useState<DisambiguationHitInput[]>([
+    { hitId: "hit-001", hitName: "", hitCategory: "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
+  ]);
+
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -833,6 +882,34 @@ export default function ScreeningPage() {
     },
     [],
   );
+
+  // Smart Hit Disambiguator helpers
+  const addHit = () => setDisambigHits((prev) => [
+    ...prev,
+    { hitId: `hit-${String(prev.length + 1).padStart(3, "0")}`, hitName: "", hitCategory: "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
+  ]);
+  const removeHit = (idx: number) => setDisambigHits((prev) => prev.filter((_, i) => i !== idx));
+  const updateHit = (idx: number, patch: Partial<DisambiguationHitInput>) =>
+    setDisambigHits((prev) => prev.map((h, i) => i === idx ? { ...h, ...patch } : h));
+
+  const runDisambiguation = async () => {
+    const namedHits = disambigHits.filter((h) => h.hitName.trim());
+    if (!disambigClient.name.trim() || namedHits.length === 0) return;
+    setDisambigLoading(true);
+    try {
+      const res = await fetch("/api/smart-disambiguate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ client: disambigClient, hits: namedHits }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as DisambiguationResult;
+      if (data.ok) {
+        setDisambigResult(data);
+      }
+    } catch { /* silent */ }
+    finally { setDisambigLoading(false); }
+  };
 
   // Export the filtered queue as a CSV the user downloads. Lets the
   // weekly MLRO pack go out without a server round-trip.
