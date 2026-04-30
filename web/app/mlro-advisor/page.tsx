@@ -322,6 +322,36 @@ interface SanctionsNexus {
   regulatoryBasis: string;
 }
 
+interface TfIndicator {
+  indicator: string;
+  severity: "critical" | "high" | "medium" | "low";
+  typology: "structured_transfers" | "npo_abuse" | "hawala_ivts" | "crypto_tf" | "crowdfunding" | "foreign_fighter" | "lone_actor" | "cash_courier" | "trade_based" | "other";
+  fatfRef: string;
+  detail: string;
+}
+
+interface TfScreenerResult {
+  tfRisk: "critical" | "high" | "medium" | "low" | "clear";
+  designatedEntityHit: boolean;
+  unscr1267Hit: boolean;
+  unscr1373Nexus: "confirmed" | "possible" | "unlikely" | "none";
+  npOAbuseRisk: "high" | "medium" | "low" | "none";
+  hawalaNexus: "high" | "medium" | "low" | "none";
+  cryptoTfRisk: "high" | "medium" | "low" | "none";
+  indicators: TfIndicator[];
+  primaryTypology: string;
+  primaryTypologyRef: string;
+  recommendedAction: "freeze_and_report_immediately" | "file_str" | "escalate_mlro" | "enhanced_dd" | "monitor" | "clear";
+  actionRationale: string;
+  mandatoryFreeze: boolean;
+  freezeBasis?: string;
+  freezeTimeline?: string;
+  requiredActions: string[];
+  applicableRegime: string[];
+  regulatoryBasis: string;
+  ctfObligations: string[];
+}
+
 interface StrNarrativeResult {
   narrative: string;
   wordCount: number;
@@ -583,6 +613,102 @@ const SUGGESTED_GROUPS = [
       "What does UNSCR 1373 require on terrorist financing?",
       "What does UNSCR 1540 require on WMD non-proliferation financing?",
       "What does the UN Global Compact require on anti-corruption (Principle 10)?",
+    ],
+  },
+  {
+    label: "Terrorism Financing",
+    questions: [
+      "What are the FATF R.5 elements for the TF criminal offence?",
+      "What is the UAE CTF Law No. 7/2014 freeze obligation for UNSCR 1267 designations?",
+      "What TF red flags must DPMS dealers monitor under FATF guidance?",
+      "How does hawala/IVTS create TF exposure under FATF R.14?",
+      "When does a UNSCR 1267/1988 hit require immediate freeze without court order?",
+      "What does UNSCR 2178 require on foreign terrorist fighter financing?",
+    ],
+  },
+  {
+    label: "Proliferation Financing",
+    questions: [
+      "What does FATF R.7 require on targeted financial sanctions for proliferation?",
+      "What DPRK transactions are prohibited under UNSCR 1718 and 2375?",
+      "What dual-use goods trigger UAE Cabinet Decision 57/2020 export controls?",
+      "How does UNSCR 2231 restrict Iran-related financial transactions?",
+      "What are the 50% rule implications for DPRK-owned entities?",
+      "What does FATF's 2018 Guidance on Proliferation Financing Risk Assessment require?",
+    ],
+  },
+  {
+    label: "Virtual Assets / VASP",
+    questions: [
+      "What AML/CFT obligations apply to UAE-licensed VASPs under CBUAE guidance?",
+      "What does FATF R.15 require of virtual asset service providers?",
+      "What is the travel rule requirement for virtual asset transfers?",
+      "How do we apply the FATF 'sunrise problem' guidance for crypto travel rule?",
+      "What red flags indicate crypto-TF or crypto-ML in gold/DPMS transactions?",
+      "What VASP due diligence is required before accepting crypto payments for gold?",
+    ],
+  },
+  {
+    label: "PEP — Enhanced Scrutiny",
+    questions: [
+      "What is the FATF R.12 definition of a domestic PEP vs foreign PEP?",
+      "What enhanced measures are required for a Tier-1 PEP client under UAE rules?",
+      "When can a PEP be stepped down from enhanced monitoring?",
+      "What family members and close associates must be screened under FATF R.12?",
+      "What senior management approval is required before onboarding a foreign PEP?",
+      "How frequently must PEP clients be re-screened against sanctions lists?",
+    ],
+  },
+  {
+    label: "Cash & Physical Currency",
+    questions: [
+      "What is the UAE cash declaration threshold at entry/exit points?",
+      "What reporting obligation applies to cash transactions above AED 55,000?",
+      "What red flags indicate cash structuring below the AED 55,000 threshold?",
+      "What records must be kept for cash transactions under FDL 10/2025?",
+      "What due diligence applies when a DPMS client pays in physical gold rather than cash?",
+      "How does FATF R.32 apply to cross-border transportation of cash and BNIs?",
+    ],
+  },
+  {
+    label: "Correspondent Banking",
+    questions: [
+      "What FATF R.13 obligations apply before establishing a correspondent relationship?",
+      "What nested correspondent account risks must DPMS dealers monitor?",
+      "What is the UAE position on shell bank correspondent relationships?",
+      "How does FATF R.13 apply to payable-through accounts in the UAE context?",
+    ],
+  },
+  {
+    label: "Beneficial Ownership",
+    questions: [
+      "What is the UAE ultimate beneficial owner disclosure threshold under FDL 10/2025?",
+      "What are the penalties for providing false UBO information under UAE law?",
+      "How do we verify UBO claims for a BVI or Cayman holding structure?",
+      "What does FATF R.24 require on legal persons' beneficial ownership transparency?",
+      "When must UBO information be re-verified during the customer lifecycle?",
+    ],
+  },
+  {
+    label: "Sanctions — Advanced",
+    questions: [
+      "What is the OFAC 50% rule and how does it apply to UAE-based entities?",
+      "How does the EU 'ownership and control' test differ from the OFAC 50% rule?",
+      "What is the difference between primary and secondary sanctions exposure?",
+      "When does a UAE entity face US secondary sanctions risk on gold transactions?",
+      "What is OFAC's general licence framework and when does it apply to gold trade?",
+      "What is the blocking statute implication of EU Regulation 2271/96 for UAE entities?",
+    ],
+  },
+  {
+    label: "goAML & FIU Reporting",
+    questions: [
+      "What is the difference between an STR and an SAR under UAE goAML rules?",
+      "What is an Additional Information File (AIF) and when must it be filed?",
+      "What are the goAML XML schema mandatory fields for a gold-sector STR?",
+      "What is the UAE FIU feedback mechanism after an STR is filed?",
+      "Can the UAE FIU request additional information after an STR is submitted?",
+      "What is the goAML 'continuing suspicious activity' reporting obligation?",
     ],
   },
 ];
@@ -1201,7 +1327,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1427,6 +1553,23 @@ export default function MlroAdvisorPage() {
       if (data.ok) setMemoResult(data);
     } catch { /* silent */ }
     finally { setMemoLoading(false); }
+  };
+
+  // Terrorism Financing Screener
+  const [tfInput, setTfInput] = useState({ subject: "", subjectCountry: "", counterparty: "", counterpartyCountry: "", transactionType: "", amount: "", currency: "", destinationJurisdiction: "", goods: "", customerType: "", existingRedFlags: "", context: "" });
+  const [tfResult, setTfResult] = useState<TfScreenerResult | null>(null);
+  const [tfLoading, setTfLoading] = useState(false);
+
+  const runTfScreener = async () => {
+    if (!tfInput.subject.trim()) return;
+    setTfLoading(true); setTfResult(null);
+    try {
+      const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & TfScreenerResult;
+      if (data.ok) setTfResult(data);
+    } catch { /* silent */ }
+    finally { setTfLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -2306,10 +2449,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match", "txn-narrative", "edd-questionnaire", "tbml", "str-narrative", "wire-r16", "pf-screener", "mlro-memo"] as const).map((t) => (
+              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match", "txn-narrative", "edd-questionnaire", "tbml", "str-narrative", "wire-r16", "pf-screener", "mlro-memo", "tf-screener"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : t === "typology-match" ? "Typology Match" : t === "txn-narrative" ? "Transaction Analyzer" : t === "edd-questionnaire" ? "EDD Generator" : t === "tbml" ? "TBML Analyzer" : t === "str-narrative" ? "STR Drafter" : t === "wire-r16" ? "Wire R.16 Check" : t === "pf-screener" ? "PF Screener" : "MLRO Memo"}
+                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : t === "typology-match" ? "Typology Match" : t === "txn-narrative" ? "Transaction Analyzer" : t === "edd-questionnaire" ? "EDD Generator" : t === "tbml" ? "TBML Analyzer" : t === "str-narrative" ? "STR Drafter" : t === "wire-r16" ? "Wire R.16 Check" : t === "pf-screener" ? "PF Screener" : t === "mlro-memo" ? "MLRO Memo" : "TF Screener"}
                 </button>
               ))}
             </div>
@@ -3662,6 +3805,153 @@ export default function MlroAdvisorPage() {
                         ))}
                       </div>
                       <div className="text-10 font-mono text-ink-3">{m.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── Terrorism Financing Screener ──────────────────────────────────── */}
+            {superToolsTab === "tf-screener" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">Terrorism Financing Screener</div>
+                  <p className="text-11 text-ink-3 mb-3">
+                    <strong className="text-red">Distinct from PF Screener</strong> — this tool focuses on terrorist organisations, foreign fighters, and TF typologies (hawala, NPO abuse, crypto-TF, crowdfunding). Covers FATF R.5/R.6/R.8/R.14, UNSCR 1267/1373/2178, UAE CTF Law No. 7/2014. <strong>No monetary threshold applies to TF — suspicion alone triggers reporting.</strong>
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject <span className="text-red">*</span></label>
+                      <input value={tfInput.subject} onChange={(e) => setTfInput((p) => ({ ...p, subject: e.target.value }))} placeholder="Person or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject Country</label>
+                      <input value={tfInput.subjectCountry} onChange={(e) => setTfInput((p) => ({ ...p, subjectCountry: e.target.value }))} placeholder="ISO-2" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Counterparty</label>
+                      <input value={tfInput.counterparty} onChange={(e) => setTfInput((p) => ({ ...p, counterparty: e.target.value }))} placeholder="Beneficiary or payee" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Counterparty Country</label>
+                      <input value={tfInput.counterpartyCountry} onChange={(e) => setTfInput((p) => ({ ...p, counterpartyCountry: e.target.value }))} placeholder="ISO-2 — especially conflict zones" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Destination Jurisdiction</label>
+                      <input value={tfInput.destinationJurisdiction} onChange={(e) => setTfInput((p) => ({ ...p, destinationJurisdiction: e.target.value }))} placeholder="e.g. SY, IQ, YE, AF, ML, SO" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Transaction Type</label>
+                      <input value={tfInput.transactionType} onChange={(e) => setTfInput((p) => ({ ...p, transactionType: e.target.value }))} placeholder="Hawala, wire, crypto, cash, gold" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Amount</label>
+                      <input value={tfInput.amount} onChange={(e) => setTfInput((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. USD 1,200 (TF often small)" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Customer Type</label>
+                      <input value={tfInput.customerType} onChange={(e) => setTfInput((p) => ({ ...p, customerType: e.target.value }))} placeholder="e.g. Individual, NPO/charity, gold trader" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Goods / Purpose</label>
+                      <input value={tfInput.goods} onChange={(e) => setTfInput((p) => ({ ...p, goods: e.target.value }))} placeholder="e.g. charitable donation, gold purchase, living expenses" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Existing Red Flags (one per line)</label>
+                      <textarea value={tfInput.existingRedFlags} onChange={(e) => setTfInput((p) => ({ ...p, existingRedFlags: e.target.value }))} rows={2} placeholder={"Customer travelled to Syria recently\nTransfers match foreign fighter financing pattern\nAssociated with NPO flagged on social media"} className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Additional Context</label>
+                      <textarea value={tfInput.context} onChange={(e) => setTfInput((p) => ({ ...p, context: e.target.value }))} rows={2} placeholder="Social media associations, travel history, prior STRs, network links…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runTfScreener()} disabled={tfLoading || !tfInput.subject.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-red text-white hover:bg-red/90 disabled:opacity-40">
+                  {tfLoading ? "Screening…" : "Screen for Terrorism Financing Risk"}
+                </button>
+                {tfResult && (() => {
+                  const tf = tfResult;
+                  const riskCls = tf.tfRisk === "critical" ? "bg-red text-white" : tf.tfRisk === "high" ? "bg-red-dim text-red" : tf.tfRisk === "medium" ? "bg-amber-dim text-amber" : tf.tfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
+                  const actionCls = (tf.recommendedAction === "freeze_and_report_immediately" || tf.recommendedAction === "file_str") ? "bg-red text-white" : (tf.recommendedAction === "escalate_mlro") ? "bg-red-dim text-red" : (tf.recommendedAction === "enhanced_dd") ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const nexusCls = (v: string) => v === "confirmed" ? "bg-red text-white" : v === "possible" ? "bg-red-dim text-red" : v === "unlikely" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const riskLvlCls = (v: string) => v === "high" ? "text-red font-semibold" : v === "medium" ? "text-amber font-semibold" : v === "low" ? "text-ink-2" : v === "clear" || v === "none" ? "text-green" : "text-ink-3";
+                  const typoCls: Record<string, string> = { structured_transfers: "bg-red-dim text-red", npo_abuse: "bg-violet-dim text-violet", hawala_ivts: "bg-amber-dim text-amber", crypto_tf: "bg-brand-dim text-brand", crowdfunding: "bg-violet-dim text-violet", foreign_fighter: "bg-red-dim text-red", lone_actor: "bg-red text-white", cash_courier: "bg-amber-dim text-amber", trade_based: "bg-amber-dim text-amber", other: "bg-bg-2 text-ink-2" };
+                  return (
+                    <div className="space-y-4 border border-red/30 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase font-bold ${riskCls}`}>{tf.tfRisk} TF risk</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${actionCls}`}>{tf.recommendedAction.replace(/_/g, " ")}</span>
+                        {tf.mandatoryFreeze && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white uppercase font-bold animate-pulse">IMMEDIATE FREEZE</span>}
+                        {tf.designatedEntityHit && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white uppercase font-bold">DESIGNATED ENTITY HIT</span>}
+                        {tf.unscr1267Hit && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white uppercase font-bold">UNSCR 1267</span>}
+                      </div>
+                      {tf.mandatoryFreeze && (
+                        <div className="rounded p-3 bg-red text-white text-12 font-semibold">
+                          IMMEDIATE ACTION — FREEZE REQUIRED: {tf.freezeBasis}. {tf.freezeTimeline}. Do not process any transaction. Notify MLRO and senior management immediately. No court order required.
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Primary TF Typology</div>
+                        <div className="text-12 font-semibold text-ink-0">{tf.primaryTypology}</div>
+                        <div className="text-10 font-mono text-ink-3">{tf.primaryTypologyRef}</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: "UNSCR 1373 Nexus", val: tf.unscr1373Nexus },
+                          { label: "NPO Abuse Risk", val: tf.npOAbuseRisk },
+                          { label: "Hawala Nexus", val: tf.hawalaNexus },
+                        ].map(({ label, val }) => (
+                          <div key={label} className="border border-hair-2 rounded p-2 text-center bg-bg-0">
+                            <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-1">{label}</div>
+                            <span className={`font-mono text-10 px-2 py-px rounded uppercase font-semibold ${nexusCls(val)}`}>{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{tf.actionRationale}</p>
+                      {tf.indicators.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">TF Indicators ({tf.indicators.length})</div>
+                          <div className="space-y-2">
+                            {tf.indicators.map((ind, i) => {
+                              const sevCls = ind.severity === "critical" ? "bg-red text-white" : ind.severity === "high" ? "bg-red-dim text-red" : ind.severity === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
+                              return (
+                                <div key={i} className="border border-hair-2 rounded p-2.5 bg-bg-0 flex items-start gap-2">
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${sevCls}`}>{ind.severity}</span>
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${typoCls[ind.typology] ?? "bg-bg-2 text-ink-2"}`}>{ind.typology.replace(/_/g, " ")}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-11 font-medium text-ink-0">{ind.indicator}</div>
+                                    <div className="text-10 text-ink-2 mt-0.5">{ind.detail}</div>
+                                    <div className="text-10 font-mono text-ink-3">{ind.fatfRef}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {tf.ctfObligations.length > 0 && (
+                        <div className="rounded p-3 border border-red/30 bg-red-dim">
+                          <div className="text-10 uppercase tracking-wide-3 text-red mb-2 font-semibold">UAE CTF Obligations Triggered</div>
+                          <ul className="text-11 text-ink-0 space-y-1 list-disc list-inside">
+                            {tf.ctfObligations.map((o, i) => <li key={i}>{o}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {tf.requiredActions.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Actions</div>
+                          <ol className="text-11 text-ink-1 space-y-0.5 list-decimal list-inside">
+                            {tf.requiredActions.map((a, i) => <li key={i}>{a}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      {tf.applicableRegime.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {tf.applicableRegime.map((r, i) => <span key={i} className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red border border-red/30">{r}</span>)}
+                        </div>
+                      )}
+                      <div className="text-10 font-mono text-ink-3">{tf.regulatoryBasis}</div>
                     </div>
                   );
                 })()}
