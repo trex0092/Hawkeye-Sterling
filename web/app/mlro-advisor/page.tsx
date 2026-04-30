@@ -212,6 +212,65 @@ interface ChallengeResult {
   challengedAt: string;
 }
 
+interface EscalationResult {
+  decision: "FILE_STR" | "ESCALATE_INTERNAL" | "ENHANCE_CDD" | "MONITOR" | "CLEAR";
+  confidence: number;
+  urgency: "immediate" | "24h" | "72h" | "routine";
+  primaryTrigger: string;
+  regulatoryBasis: string;
+  rationale: string;
+  requiredActions: string[];
+  deadlines: string[];
+}
+
+interface ExtractedFlag {
+  indicator: string;
+  category: string;
+  severity: "critical" | "high" | "medium" | "low";
+  fatfReference: string;
+  uaeReference: string;
+  actionRequired: string;
+}
+
+interface FlagResult {
+  flags: ExtractedFlag[];
+  overallRisk: "critical" | "high" | "medium" | "low";
+  recommendedDisposition: string;
+  summary: string;
+}
+
+interface CasePattern {
+  type: string;
+  severity: "critical" | "high" | "medium";
+  caseIds: string[];
+  description: string;
+  regulatoryImplication: string;
+  recommendedAction: string;
+}
+
+interface PatternResult {
+  patterns: CasePattern[];
+  portfolioRisk: "critical" | "high" | "medium" | "low";
+  consolidationRequired: boolean;
+  immediateEscalations: string[];
+  summary: string;
+}
+
+interface SubjectBrief {
+  riskProfile: {
+    nameRisk: "high" | "medium" | "low";
+    jurisdictionRisk: "high" | "medium" | "low";
+    entityTypeRisk: "high" | "medium" | "low";
+    compositeRisk: "high" | "medium" | "low";
+    rationale: string;
+  };
+  likelyTypologies: string[];
+  sanctionsExposure: string;
+  keyQuestions: string[];
+  dueDiligenceChecklist: string[];
+  regulatoryContext: string;
+}
+
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
 // repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
@@ -513,7 +572,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
-  const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa">("advisor");
+  const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa" | "super-tools">("advisor");
 
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
@@ -917,6 +976,114 @@ export default function MlroAdvisorPage() {
     }
   }, [qaQuery, qaDepth, qaUseTools]);
 
+  // ── Super Tools state ────────────────────────────────────────────────────────
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief">("escalation");
+
+  // Escalation engine
+  const [escSubject, setEscSubject] = useState("");
+  const [escScore, setEscScore] = useState("");
+  const [escSanctions, setEscSanctions] = useState("");
+  const [escPepTier, setEscPepTier] = useState("");
+  const [escTypologies, setEscTypologies] = useState("");
+  const [escJurisdictions, setEscJurisdictions] = useState("");
+  const [escNotes, setEscNotes] = useState("");
+  const [escResult, setEscResult] = useState<EscalationResult | null>(null);
+  const [escLoading, setEscLoading] = useState(false);
+
+  // Red flag extractor
+  const [flagText, setFlagText] = useState("");
+  const [flagResult, setFlagResult] = useState<FlagResult | null>(null);
+  const [flagLoading, setFlagLoading] = useState(false);
+
+  // Case patterns
+  const [patternResult, setPatternResult] = useState<PatternResult | null>(null);
+  const [patternLoading, setPatternLoading] = useState(false);
+
+  // Subject brief
+  const [briefSubject, setBriefSubject] = useState("");
+  const [briefJurisdiction, setBriefJurisdiction] = useState("");
+  const [briefEntityType, setBriefEntityType] = useState("");
+  const [briefResult, setBriefResult] = useState<SubjectBrief | null>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
+
+  const runEscalation = async () => {
+    if (!escSubject.trim()) return;
+    setEscLoading(true);
+    setEscResult(null);
+    try {
+      const res = await fetch("/api/mlro-advisor/escalation", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subjectName: escSubject,
+          riskScore: escScore ? Number(escScore) : undefined,
+          sanctionsHits: escSanctions ? escSanctions.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          pepTier: escPepTier || undefined,
+          typologies: escTypologies ? escTypologies.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          jurisdictions: escJurisdictions ? escJurisdictions.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          notes: escNotes || undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & EscalationResult;
+      if (data.ok) setEscResult(data);
+    } catch { /* silent */ }
+    finally { setEscLoading(false); }
+  };
+
+  const runFlagExtraction = async () => {
+    if (!flagText.trim()) return;
+    setFlagLoading(true);
+    setFlagResult(null);
+    try {
+      const res = await fetch("/api/mlro-advisor/extract-flags", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: flagText }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & FlagResult;
+      if (data.ok) setFlagResult(data);
+    } catch { /* silent */ }
+    finally { setFlagLoading(false); }
+  };
+
+  const runCasePatterns = async () => {
+    setPatternLoading(true);
+    setPatternResult(null);
+    try {
+      // Load cases from localStorage
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem("hawkeye.case-store.v1") : null;
+      const cases = raw ? JSON.parse(raw) as Array<{ id: string; subject: string; meta: string; status: string; opened: string }> : [];
+      const res = await fetch("/api/mlro-advisor/case-patterns", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cases: cases.map((c) => ({ id: c.id, subject: c.subject, meta: c.meta, status: c.status, openedAt: c.opened })) }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & PatternResult;
+      if (data.ok) setPatternResult(data);
+    } catch { /* silent */ }
+    finally { setPatternLoading(false); }
+  };
+
+  const runSubjectBrief = async () => {
+    if (!briefSubject.trim()) return;
+    setBriefLoading(true);
+    setBriefResult(null);
+    try {
+      const res = await fetch("/api/mlro-advisor/subject-brief", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: briefSubject, jurisdiction: briefJurisdiction || undefined, entityType: briefEntityType || undefined }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & SubjectBrief;
+      if (data.ok) setBriefResult(data);
+    } catch { /* silent */ }
+    finally { setBriefLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
       <ModuleHero
@@ -944,6 +1111,9 @@ export default function MlroAdvisorPage() {
           </button>
           <button type="button" onClick={() => setPageTab("regulatory-qa")} className={tabCls(pageTab === "regulatory-qa")}>
             Regulatory Q&A
+          </button>
+          <button type="button" onClick={() => setPageTab("super-tools")} className={tabCls(pageTab === "super-tools")}>
+            Super Tools
           </button>
         </div>
 
@@ -1654,6 +1824,244 @@ export default function MlroAdvisorPage() {
               </div>
             </div>
           </>
+        )}
+
+        {/* ── Super Tools tab ───────────────────────────────────────────────── */}
+        {pageTab === "super-tools" && (
+          <div className="mt-6 space-y-4">
+            {/* Sub-tab bar */}
+            <div className="flex gap-2 flex-wrap">
+              {(["escalation", "flags", "patterns", "brief"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
+                  className={tabCls(superToolsTab === t)}>
+                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : "Subject Brief"}
+                </button>
+              ))}
+            </div>
+
+            {/* Escalation Engine */}
+            {superToolsTab === "escalation" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Escalation Decision Engine</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Subject name *</label>
+                    <input value={escSubject} onChange={(e) => setEscSubject(e.target.value)} placeholder="Full subject name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Risk score (0-100)</label>
+                    <input value={escScore} onChange={(e) => setEscScore(e.target.value)} placeholder="e.g. 87" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Sanctions hits (comma-separated)</label>
+                    <input value={escSanctions} onChange={(e) => setEscSanctions(e.target.value)} placeholder="OFAC, UN, EU" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">PEP tier</label>
+                    <input value={escPepTier} onChange={(e) => setEscPepTier(e.target.value)} placeholder="national, ministerial, local…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Typologies (comma-separated)</label>
+                    <input value={escTypologies} onChange={(e) => setEscTypologies(e.target.value)} placeholder="structuring, layering, tbml" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Jurisdictions (comma-separated)</label>
+                    <input value={escJurisdictions} onChange={(e) => setEscJurisdictions(e.target.value)} placeholder="RU, IR, AE" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Additional notes</label>
+                    <textarea value={escNotes} onChange={(e) => setEscNotes(e.target.value)} rows={2} placeholder="Any additional context…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runEscalation()} disabled={escLoading || !escSubject.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {escLoading ? "Deciding…" : "Get Escalation Decision"}
+                </button>
+                {escResult && (() => {
+                  const r = escResult;
+                  const decisionCls = r.decision === "FILE_STR" ? "bg-red text-white" : r.decision === "ESCALATE_INTERNAL" ? "bg-red-dim text-red" : r.decision === "ENHANCE_CDD" ? "bg-amber-dim text-amber" : r.decision === "MONITOR" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
+                  const urgencyCls = r.urgency === "immediate" ? "bg-red text-white" : r.urgency === "24h" ? "bg-red-dim text-red" : r.urgency === "72h" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${decisionCls}`}>{r.decision.replace(/_/g, " ")}</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${urgencyCls}`}>{r.urgency}</span>
+                        <span className="font-mono text-10 text-ink-3">{(r.confidence * 100).toFixed(0)}% confident</span>
+                      </div>
+                      <div className="text-12 font-semibold text-red">{r.primaryTrigger}</div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{r.rationale}</p>
+                      <div className="text-10 font-mono text-ink-3">{r.regulatoryBasis}</div>
+                      {r.requiredActions.length > 0 && (
+                        <ul className="text-11 text-ink-1 space-y-1 list-disc list-inside">
+                          {r.requiredActions.map((a, i) => <li key={i}>{a}</li>)}
+                        </ul>
+                      )}
+                      {r.deadlines.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {r.deadlines.map((d, i) => <span key={i} className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red">{d}</span>)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Red Flag Extractor */}
+            {superToolsTab === "flags" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Red Flag Extractor</div>
+                <p className="text-11 text-ink-3">Paste raw analyst notes → Claude extracts structured FATF red flags with regulatory references.</p>
+                <textarea value={flagText} onChange={(e) => setFlagText(e.target.value)} rows={6}
+                  placeholder="Paste case notes, transaction descriptions, or any free-text compliance content…"
+                  className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" />
+                <button type="button" onClick={() => void runFlagExtraction()} disabled={flagLoading || !flagText.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {flagLoading ? "Extracting…" : "Extract Red Flags"}
+                </button>
+                {flagResult && (() => {
+                  const f = flagResult;
+                  const riskCls = f.overallRisk === "critical" ? "bg-red text-white" : f.overallRisk === "high" ? "bg-red-dim text-red" : f.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`font-mono text-11 font-bold px-2 py-px rounded uppercase ${riskCls}`}>{f.overallRisk} risk</span>
+                        <span className="font-mono text-11 px-2 py-px rounded bg-brand-dim text-brand-deep">{f.recommendedDisposition.replace(/_/g, " ")}</span>
+                        <span className="text-11 text-ink-2 italic">{f.summary}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {f.flags.map((flag, i) => {
+                          const sevCls = flag.severity === "critical" ? "bg-red text-white" : flag.severity === "high" ? "bg-red-dim text-red" : flag.severity === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                          return (
+                            <div key={i} className="border border-hair-2 rounded-lg p-3 bg-bg-1">
+                              <div className="flex items-start gap-2 mb-1">
+                                <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${sevCls}`}>{flag.severity}</span>
+                                <span className="text-12 font-medium text-ink-0">{flag.indicator}</span>
+                              </div>
+                              <div className="text-10 font-mono text-ink-3 mb-1">{flag.fatfReference} · {flag.uaeReference}</div>
+                              <div className="text-11 text-amber italic">{flag.actionRequired}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Case Patterns */}
+            {superToolsTab === "patterns" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Cross-Case Pattern Detector</div>
+                <p className="text-11 text-ink-3">Analyzes all open cases in your register for coordinated structuring, shared counterparties, typology clusters, and consolidation candidates.</p>
+                <button type="button" onClick={() => void runCasePatterns()} disabled={patternLoading}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {patternLoading ? "Analyzing…" : "Detect Patterns Across Cases"}
+                </button>
+                {patternResult && (() => {
+                  const p = patternResult;
+                  const prCls = p.portfolioRisk === "critical" ? "bg-red text-white" : p.portfolioRisk === "high" ? "bg-red-dim text-red" : p.portfolioRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-11 font-bold px-2 py-px rounded uppercase ${prCls}`}>{p.portfolioRisk} portfolio risk</span>
+                        {p.consolidationRequired && <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red">Consolidation required</span>}
+                        <span className="text-11 text-ink-2 italic">{p.summary}</span>
+                      </div>
+                      {p.immediateEscalations.length > 0 && (
+                        <div className="text-11 font-semibold text-red">Immediate escalation: {p.immediateEscalations.join(", ")}</div>
+                      )}
+                      <div className="space-y-2">
+                        {p.patterns.map((pat, i) => {
+                          const sevCls = pat.severity === "critical" ? "bg-red text-white" : pat.severity === "high" ? "bg-red-dim text-red" : "bg-amber-dim text-amber";
+                          return (
+                            <div key={i} className="border border-hair-2 rounded-lg p-3 bg-bg-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`font-mono text-9 px-1.5 py-px rounded uppercase ${sevCls}`}>{pat.severity}</span>
+                                <span className="font-mono text-10 text-ink-3">{pat.type.replace(/_/g, " ")}</span>
+                                <span className="text-10 text-ink-3">{pat.caseIds.join(", ")}</span>
+                              </div>
+                              <div className="text-12 text-ink-0 mb-0.5">{pat.description}</div>
+                              <div className="text-10 text-ink-3 italic">{pat.regulatoryImplication}</div>
+                              <div className="text-11 text-amber mt-1">{pat.recommendedAction}</div>
+                            </div>
+                          );
+                        })}
+                        {p.patterns.length === 0 && <div className="text-12 text-ink-3 text-center py-4">No patterns detected across current cases.</div>}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Subject Brief */}
+            {superToolsTab === "brief" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Subject Intelligence Brief</div>
+                <p className="text-11 text-ink-3">Pre-screening intelligence brief — risk profile, likely typologies, key compliance questions to ask, and document checklist.</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Subject name *</label>
+                    <input value={briefSubject} onChange={(e) => setBriefSubject(e.target.value)} placeholder="Full name or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Entity type</label>
+                    <select value={briefEntityType} onChange={(e) => setBriefEntityType(e.target.value)} className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0">
+                      <option value="">— select —</option>
+                      <option value="individual">Individual</option>
+                      <option value="organisation">Organisation</option>
+                      <option value="vessel">Vessel</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Jurisdiction (ISO-2)</label>
+                    <input value={briefJurisdiction} onChange={(e) => setBriefJurisdiction(e.target.value)} placeholder="AE, RU, IR…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runSubjectBrief()} disabled={briefLoading || !briefSubject.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {briefLoading ? "Briefing…" : "Generate Intelligence Brief"}
+                </button>
+                {briefResult && (() => {
+                  const b = briefResult;
+                  const compCls = b.riskProfile.compositeRisk === "high" ? "bg-red-dim text-red" : b.riskProfile.compositeRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="space-y-3 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-11 font-bold px-2 py-px rounded uppercase ${compCls}`}>{b.riskProfile.compositeRisk} risk</span>
+                        <span className="text-11 text-ink-2">{b.riskProfile.rationale}</span>
+                      </div>
+                      {b.likelyTypologies.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {b.likelyTypologies.map((t, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{t}</span>)}
+                        </div>
+                      )}
+                      <div className="text-11 text-ink-2">{b.sanctionsExposure}</div>
+                      {b.keyQuestions.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Key questions to ask</div>
+                          <ol className="text-12 text-ink-0 space-y-1 list-decimal list-inside">
+                            {b.keyQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      {b.dueDiligenceChecklist.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document checklist</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {b.dueDiligenceChecklist.map((d, i) => <li key={i}>{d}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="text-10 font-mono text-ink-3">{b.regulatoryContext}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

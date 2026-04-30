@@ -1,0 +1,155 @@
+import { NextResponse } from "next/server";
+import { writeAuditEvent } from "@/lib/audit";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+interface CaseInput {
+  id: string;
+  subject: string;
+  meta: string;
+  status: string;
+  openedAt: string;
+  reportKind?: string;
+}
+
+interface Body {
+  cases: CaseInput[];
+}
+
+interface Pattern {
+  type:
+    | "coordinated_structuring"
+    | "shared_counterparty"
+    | "typology_cluster"
+    | "jurisdiction_concentration"
+    | "escalating_trend"
+    | "consolidation_candidate"
+    | "other";
+  severity: "critical" | "high" | "medium";
+  caseIds: string[];
+  description: string;
+  regulatoryImplication: string;
+  recommendedAction: string;
+}
+
+interface CasePatternsResult {
+  patterns: Pattern[];
+  portfolioRisk: "critical" | "high" | "medium" | "low";
+  consolidationRequired: boolean;
+  immediateEscalations: string[];
+  summary: string;
+}
+
+const FALLBACK: CasePatternsResult = {
+  patterns: [],
+  portfolioRisk: "low",
+  consolidationRequired: false,
+  immediateEscalations: [],
+  summary: "Insufficient cases for pattern analysis",
+};
+
+export async function POST(req: Request): Promise<NextResponse> {
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+
+  let body: Body;
+  try {
+    body = (await req.json()) as Body;
+  } catch {
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+  }
+
+  const cases = body?.cases ?? [];
+
+  if (!apiKey || cases.length < 2) {
+    return NextResponse.json({ ok: true, ...FALLBACK });
+  }
+
+  const casesSummary = cases
+    .map((c) =>
+      [
+        `Case ID: ${c.id}`,
+        `Subject: ${c.subject}`,
+        `Meta: ${c.meta}`,
+        `Status: ${c.status}`,
+        `Opened: ${c.openedAt}`,
+        ...(c.reportKind ? [`Report Kind: ${c.reportKind}`] : []),
+      ].join(" | "),
+    )
+    .join("\n");
+
+  const userContent = `Analyze the following ${cases.length} compliance cases for cross-case patterns and output the structured JSON:\n\n${casesSummary}`;
+
+  const systemPrompt = [
+    "You are a UAE MLRO analyzing a portfolio of compliance cases for cross-case patterns. Look for: coordinated structuring (multiple cases with similar amounts/timing), shared counterparties or beneficial owners, typology clusters (same ML method across cases), jurisdictional concentration, escalating risk trends, cases that should be consolidated into a single SAR.",
+    "",
+    "Output ONLY valid JSON in this exact shape:",
+    `{
+  "patterns": [
+    {
+      "type": "coordinated_structuring" | "shared_counterparty" | "typology_cluster" | "jurisdiction_concentration" | "escalating_trend" | "consolidation_candidate" | "other",
+      "severity": "critical" | "high" | "medium",
+      "caseIds": ["string array of case IDs involved"],
+      "description": "string — specific pattern description",
+      "regulatoryImplication": "string — what this pattern means under UAE/FATF rules",
+      "recommendedAction": "string"
+    }
+  ],
+  "portfolioRisk": "critical" | "high" | "medium" | "low",
+  "consolidationRequired": boolean,
+  "immediateEscalations": ["string array of case IDs needing immediate escalation"],
+  "summary": "string — 2-sentence portfolio risk summary for the MLRO"
+}`,
+  ].join("\n");
+
+  let result: CasePatternsResult;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 700,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userContent }],
+      }),
+    });
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { ok: false, error: `Anthropic API error ${res.status}` },
+        { status: 502 },
+      );
+    }
+
+    const data = (await res.json()) as {
+      content?: { type: string; text: string }[];
+    };
+    const raw = data?.content?.[0]?.text ?? "";
+    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    result = JSON.parse(cleaned) as CasePatternsResult;
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : "Failed to analyze case patterns",
+      },
+      { status: 502 },
+    );
+  }
+
+  try {
+    writeAuditEvent(
+      "mlro",
+      "advisor.case-patterns",
+      `${cases.length} case(s) analyzed → ${result.patterns.length} pattern(s), portfolioRisk: ${result.portfolioRisk}, consolidation: ${result.consolidationRequired}`,
+    );
+  } catch { /* non-blocking */ }
+
+  return NextResponse.json({ ok: true, ...result });
+}
