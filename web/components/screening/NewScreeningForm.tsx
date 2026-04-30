@@ -33,6 +33,10 @@ export interface ScreeningFormData {
   countryLocation?: string;
   citizenship?: string;
   registeredCountry?: string;
+  /** License / register identifier for organisations — trade licence,
+   *  IMO, LEI, registration #, etc. Required on the organisation tab,
+   *  unused on the individual tab. */
+  licenseRegister?: string;
   identification?: {
     number?: string;
     issuerCountry?: string;
@@ -227,42 +231,57 @@ export function NewScreeningForm({
           </Field>
         </div>
 
-        <Field label="Alternate name(s)">
-          <div className="flex gap-2">
-            <input
-              value={altInput}
-              onChange={(e) => setAltInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === ";") {
-                  e.preventDefault();
-                  addAlias();
-                }
-              }}
-              placeholder="Press Enter or ; to add"
-              className={inputCls}
-            />
-          </div>
-          {form.alternateNames.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {form.alternateNames.map((a, i) => (
-                <span
-                  key={`${a}-${i}`}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-bg-2 text-ink-1 text-11"
-                >
-                  {a}
-                  <button
-                    type="button"
-                    onClick={() => removeAlias(i)}
-                    className="text-ink-3 hover:text-ink-0"
-                    aria-label={`Remove ${a}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
+        {/* Alternate names + License/Register share a row on the
+            organisation tab; on the individual tab Alternate names
+            spans full width as before. */}
+        <div className={form.entityType === "organisation" ? "grid grid-cols-2 gap-4" : ""}>
+          <Field label="Alternate name(s)">
+            <div className="flex gap-2">
+              <input
+                value={altInput}
+                onChange={(e) => setAltInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ";") {
+                    e.preventDefault();
+                    addAlias();
+                  }
+                }}
+                placeholder="Press Enter or ; to add"
+                className={inputCls}
+              />
             </div>
+            {form.alternateNames.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {form.alternateNames.map((a, i) => (
+                  <span
+                    key={`${a}-${i}`}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-bg-2 text-ink-1 text-11"
+                  >
+                    {a}
+                    <button
+                      type="button"
+                      onClick={() => removeAlias(i)}
+                      className="text-ink-3 hover:text-ink-0"
+                      aria-label={`Remove ${a}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </Field>
+          {form.entityType === "organisation" && (
+            <Field label="License / Register *">
+              <input
+                value={form.licenseRegister ?? ""}
+                onChange={(e) => patch({ licenseRegister: e.target.value })}
+                placeholder="Trade licence / IMO / LEI / registration #"
+                className={inputCls}
+              />
+            </Field>
           )}
-        </Field>
+        </div>
 
         {form.entityType === "individual" && (
           <label className="flex items-center gap-2 mb-4 text-12 text-ink-1 cursor-pointer">
@@ -293,18 +312,33 @@ export function NewScreeningForm({
               className={inputCls}
             />
           </Field>
-          <Field label="Risk category">
-            <select
-              value={form.riskCategory ?? ""}
-              onChange={(e) => { if (e.target.value) patch({ riskCategory: e.target.value }); else patch({}); }}
-              className={inputCls}
-            >
-              <option value="">None</option>
-              {RISK_CATEGORIES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </Field>
+          {/* Last cell of the Case-ID row swaps based on entity type:
+              · Individual → Risk category dropdown (legacy field)
+              · Organisation → Registered country (was a standalone
+                row below; consolidated up here for compactness) */}
+          {form.entityType === "individual" ? (
+            <Field label="Risk category">
+              <select
+                value={form.riskCategory ?? ""}
+                onChange={(e) => { if (e.target.value) patch({ riskCategory: e.target.value }); else patch({}); }}
+                className={inputCls}
+              >
+                <option value="">None</option>
+                {RISK_CATEGORIES.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </Field>
+          ) : (
+            <Field label="Registered country *">
+              <input
+                value={form.registeredCountry ?? ""}
+                onChange={(e) => patch({ registeredCountry: e.target.value })}
+                placeholder="Country of registration"
+                className={inputCls}
+              />
+            </Field>
+          )}
         </div>
 
         {form.entityType === "individual" ? (
@@ -372,17 +406,13 @@ export function NewScreeningForm({
               </Field>
             </div>
           </>
-        ) : (
-          <Field label="Registered country">
-            <input
-              value={form.registeredCountry ?? ""}
-              onChange={(e) => patch({ registeredCountry: e.target.value })}
-              placeholder="Country of registration"
-              className={inputCls}
-            />
-          </Field>
-        )}
+        ) : null /* organisation has Registered country in the Case-ID row above */}
 
+        {/* Identification document + Notes are individual-only inputs.
+            Organisations use License / Register (in the Alternate
+            names row) and skip free-text notes. */}
+        {form.entityType === "individual" && (
+        <>
         <details className="border border-hair-2 rounded mb-4">
           <summary className="px-3 py-2 text-12 font-semibold cursor-pointer select-none">
             Identification document
@@ -435,6 +465,8 @@ export function NewScreeningForm({
             className={`${inputCls} resize-none`}
           />
         </Field>
+        </>
+        )}
 
         <div className="flex items-center justify-between pt-4 border-t border-hair-2">
           <div className="flex gap-2">

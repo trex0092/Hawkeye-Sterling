@@ -139,6 +139,75 @@ function buildPanels(): Panel[] {
   ];
 }
 
+// Per-panel +/✎/× action buttons.
+//   · +  → opens the source module on a fresh "create" intent
+//          (?action=add — the source module can choose to honour or
+//          ignore; failure is graceful, the destination just renders
+//          its normal page)
+//   · ✎  → opens the source module on its standard view
+//   · ×  → confirms with the operator, then clears the localStorage
+//          keys that back this panel and refreshes the page state.
+//          Disabled with a tooltip on the audit-chain panel since
+//          Layer-4 spec says append-only / ten-year retention.
+function PanelActions({ panel, onChanged }: { panel: Panel; onChanged: () => void }) {
+  const baseBtn =
+    "inline-flex items-center justify-center w-7 h-7 rounded border font-mono text-12 leading-none transition";
+  const addEditCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-brand hover:border-brand bg-bg-1`;
+  const deleteCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-red-700 hover:border-red-300 bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-2 disabled:hover:border-hair-2`;
+  const handleClear = () => {
+    if (panel.appendOnly) return;
+    if (panel.storageKeys.length === 0) return;
+    const ok = window.confirm(
+      `Clear all "${panel.title}" entries from this browser?\n\n` +
+        `This removes localStorage keys: ${panel.storageKeys.join(", ")}.\n\n` +
+        `Server-persisted records (Netlify Blobs / case vault) are unaffected.`,
+    );
+    if (!ok) return;
+    for (const key of panel.storageKeys) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        /* localStorage unavailable / quota — silent */
+      }
+    }
+    onChanged();
+  };
+  return (
+    <div className="flex items-center gap-1">
+      <Link
+        href={`${panel.href}?action=add`}
+        aria-label={`Add ${panel.title}`}
+        title={panel.appendOnly ? "Audit chain entries are appended automatically" : `Add to ${panel.title}`}
+        className={addEditCls}
+      >
+        +
+      </Link>
+      <Link
+        href={panel.href}
+        aria-label={`Edit ${panel.title}`}
+        title={`Edit ${panel.title}`}
+        className={addEditCls}
+      >
+        ✎
+      </Link>
+      <button
+        type="button"
+        onClick={handleClear}
+        disabled={panel.appendOnly}
+        aria-label={`Clear ${panel.title}`}
+        title={
+          panel.appendOnly
+            ? "Append-only — Layer-4 audit chain has 10-year retention by FDL 10/2025 Art.20"
+            : `Clear ${panel.title} from this browser (local data only)`
+        }
+        className={deleteCls}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 export default function InspectionRoomPage() {
   const [panels, setPanels] = useState<Panel[]>([]);
   const [generatedAt, setGeneratedAt] = useState<string>("");
@@ -216,13 +285,16 @@ export default function InspectionRoomPage() {
             key={p.key}
             className="bg-bg-panel border border-hair-2 rounded-lg p-5"
           >
-            <div className="flex items-baseline justify-between mb-2">
+            <div className="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
               <h2 className="text-14 font-semibold text-ink-0 m-0">{p.title}</h2>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 uppercase tracking-wide-3 border ${STATUS_BADGE[p.status].cls}`}
-              >
-                {STATUS_BADGE[p.status].label}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 uppercase tracking-wide-3 border ${STATUS_BADGE[p.status].cls}`}
+                >
+                  {STATUS_BADGE[p.status].label}
+                </span>
+                <PanelActions panel={p} onChanged={refresh} />
+              </div>
             </div>
             <p className="text-12 text-ink-2 m-0 mb-3">{p.description}</p>
             <div className="flex items-baseline justify-between text-11 text-ink-2 font-mono">
