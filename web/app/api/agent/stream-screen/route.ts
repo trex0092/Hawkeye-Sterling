@@ -10,10 +10,10 @@
 //
 // Uses the deterministic in-process pipeline; not LLM-streaming.
 
-import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
-import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
-import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../dist/src/brain/cross-regime-conflict.js";
-import { classifyPepRole } from "../../../../dist/src/brain/pep-classifier.js";
+import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../dist/src/brain/cross-regime-conflict.js";
+import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 
 export const runtime = "nodejs";
