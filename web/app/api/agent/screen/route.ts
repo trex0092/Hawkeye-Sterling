@@ -45,14 +45,14 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { weaponizedSystemPrompt } from "../../../../dist/src/brain/weaponized.js";
-import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
-import { classifyPepRole } from "../../../../dist/src/brain/pep-classifier.js";
-import { resolveEntities } from "../../../../dist/src/brain/entity-resolution.js";
-import { corroborate } from "../../../../dist/src/brain/evidence-corroboration.js";
-import { detectCrossRegimeConflict } from "../../../../dist/src/brain/cross-regime-conflict.js";
-import { computeSanctionDelta } from "../../../../dist/src/brain/sanction-delta.js";
-import { analyseAdverseMediaItems } from "../../../../dist/src/brain/adverse-media-analyser.js";
+import { weaponizedSystemPrompt } from "../../../../../dist/src/brain/weaponized.js";
+import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
+import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
+import { resolveEntities } from "../../../../../dist/src/brain/entity-resolution.js";
+import { corroborate } from "../../../../../dist/src/brain/evidence-corroboration.js";
+import { detectCrossRegimeConflict } from "../../../../../dist/src/brain/cross-regime-conflict.js";
+import { computeSanctionDelta } from "../../../../../dist/src/brain/sanction-delta.js";
+import { analyseAdverseMediaItems } from "../../../../../dist/src/brain/adverse-media-analyser.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
