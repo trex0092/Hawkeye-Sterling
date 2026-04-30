@@ -1,6 +1,8 @@
 "use client";
 
-import type { SortKey, Subject } from "@/lib/types";
+import { forwardRef } from "react";
+import type { SortKey, Subject, TableColumnKey } from "@/lib/types";
+import { ColumnChooser } from "@/components/screening/ColumnChooser";
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "riskScore", label: "Risk score" },
@@ -26,9 +28,16 @@ interface ScreeningToolbarProps {
   onSortChange: (key: SortKey) => void;
   statusFilter: Subject["status"] | "all";
   onStatusFilterChange: (v: Subject["status"] | "all") => void;
+  /** Column visibility — passed through to ColumnChooser. */
+  columns: Record<TableColumnKey, boolean>;
+  onColumnsChange: (next: Record<TableColumnKey, boolean>) => void;
+  /** Open the bulk-import dialog. */
+  onBulkImport: () => void;
+  /** Export current filtered queue. */
+  onExport: () => void;
 }
 
-export function ScreeningToolbar({
+export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarProps>(function ScreeningToolbar({
   query,
   onQueryChange,
   onNewScreening,
@@ -37,7 +46,11 @@ export function ScreeningToolbar({
   onSortChange,
   statusFilter,
   onStatusFilterChange,
-}: ScreeningToolbarProps) {
+  columns,
+  onColumnsChange,
+  onBulkImport,
+  onExport,
+}: ScreeningToolbarProps, ref) {
   const activeSortLabel =
     SORT_OPTIONS.find((o) => o.key === sortKey)?.label ?? "Risk score";
 
@@ -49,10 +62,11 @@ export function ScreeningToolbar({
             ⌕
           </span>
           <input
+            ref={ref}
             type="search"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search subjects — name, ID, country…"
+            placeholder="Search subjects — name, ID, country (press / to focus)…"
             className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
           />
         </div>
@@ -86,6 +100,16 @@ export function ScreeningToolbar({
             </div>
           </div>
 
+          <ColumnChooser visible={columns} onChange={onColumnsChange} />
+
+          <ToolbarButton small onClick={onExport} title="Export filtered queue as CSV">
+            Export
+          </ToolbarButton>
+
+          <ToolbarButton small onClick={onBulkImport} title="Import a CSV of subjects">
+            Bulk import
+          </ToolbarButton>
+
           <ToolbarButton small primary onClick={onNewScreening}>
             <span>+</span>
             <span className="font-semibold">New screening</span>
@@ -113,18 +137,20 @@ export function ScreeningToolbar({
       </div>
     </div>
   );
-}
+});
 
 function ToolbarButton({
   children,
   small,
   primary,
   onClick,
+  title,
 }: {
   children: React.ReactNode;
   small?: boolean;
   primary?: boolean;
   onClick?: () => void;
+  title?: string;
 }) {
   const base =
     "inline-flex items-center gap-1.5 rounded font-sans border transition-colors cursor-pointer";
@@ -133,7 +159,7 @@ function ToolbarButton({
     ? "bg-brand text-white border-brand font-semibold hover:bg-brand-hover hover:border-brand-hover"
     : "bg-bg-panel text-ink-0 border-hair-2 hover:border-hair-3 hover:bg-bg-2";
   return (
-    <button type="button" onClick={onClick} className={`${base} ${size} ${variant}`}>
+    <button type="button" onClick={onClick} title={title} className={`${base} ${size} ${variant}`}>
       {children}
     </button>
   );

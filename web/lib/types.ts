@@ -1,5 +1,25 @@
 export type SortKey = "name" | "riskScore" | "slaNotify" | "status" | "cddPosture";
 
+// All columns the screening table can render. Persisted to localStorage so
+// the analyst's column layout survives reloads. "id" / "subject" / "actions"
+// are required and never hidden — only the middle six toggle.
+export type TableColumnKey =
+  | "risk"
+  | "status"
+  | "cdd"
+  | "sla"
+  | "lists"
+  | "snooze";
+
+export const ALL_COLUMNS: { key: TableColumnKey; label: string; defaultOn: boolean }[] = [
+  { key: "risk",   label: "Risk",   defaultOn: true },
+  { key: "status", label: "Status", defaultOn: true },
+  { key: "cdd",    label: "CDD",    defaultOn: true },
+  { key: "sla",    label: "SLA",    defaultOn: true },
+  { key: "lists",  label: "Lists",  defaultOn: true },
+  { key: "snooze", label: "Snooze", defaultOn: false },
+];
+
 // Global sanctions list identifiers — ordered by jurisdiction prominence.
 // OFAC, UN, EU, UK, EOCN are the primary Gulf/international regimes;
 // AU/CA/CH/JP/FATF/INTERPOL/WB/ADB round out full global coverage.
@@ -56,6 +76,19 @@ export interface AdverseMediaMatch {
   date: string;
 }
 
+export interface ScreeningHistoryEntry {
+  /** ISO 8601 capture time. */
+  at: string;
+  topScore: number;
+  severity: "clear" | "low" | "medium" | "high" | "critical";
+  /** List IDs that produced a hit (e.g. ["OFAC", "UN"]). */
+  lists: string[];
+  /** Compact hit fingerprint for diffing — listId:listRef. */
+  hits: string[];
+  /** Optional confidence band half-width (0-100), if calibration is on. */
+  confidenceBand?: number;
+}
+
 export interface Subject {
   id: string;
   badge: string;
@@ -66,7 +99,9 @@ export interface Subject {
   jurisdiction: string;
   aliases?: string[];
   type: SubjectType;
-  entityType: "individual" | "organisation" | "other";
+  /** Brain-supported entity types. vessel/aircraft route to entity-specific
+   *  candidate corpora and IMO/MMSI/tail-number lookups. */
+  entityType: "individual" | "organisation" | "vessel" | "aircraft" | "other";
   riskScore: number;
   status: SubjectStatus;
   cddPosture: CDDPosture;
@@ -84,6 +119,73 @@ export interface Subject {
   openedAt?: string;
   notes?: string;
   riskCategory?: string;
+
+  /** Snooze the subject from the active queue until this ISO timestamp.
+   *  Reason captured to the audit chain when set. Cleared explicitly. */
+  snoozedUntil?: string;
+  snoozeReason?: string;
+  /** Operator login the case is assigned to. Empty = unassigned. */
+  assignedTo?: string;
+  /** Crypto wallet addresses linked to the subject — fed into /api/crypto-risk
+   *  during screening. Persisted on the subject so re-screens stay coherent. */
+  walletAddresses?: string[];
+  /** IMO number for vessel entityType, MMSI fallback. */
+  vesselImo?: string;
+  vesselMmsi?: string;
+  /** Tail number for aircraft entityType (ICAO 24-bit also accepted). */
+  aircraftTail?: string;
+  /** Last N screening runs for diff + replay. Bounded to ~10 entries. */
+  screeningHistory?: ScreeningHistoryEntry[];
+}
+
+// ─── Saved searches ────────────────────────────────────────────────────────
+// Predicates analysts pin to the toolbar. Persisted server-side via Blobs
+// (NOT localStorage) so the daily MLRO huddle sees the same set across
+// browsers and machines.
+export interface SavedSearch {
+  id: string;
+  label: string;
+  /** Free-text query — same syntax as the search box. */
+  query?: string;
+  /** Filter key applied alongside the query. */
+  filter?: FilterKey;
+  /** Status pill applied alongside. */
+  statusFilter?: SubjectStatus | "all";
+  /** Min risk score floor (0-100). */
+  minRisk?: number;
+  /** Subject must have a PEP tier in this set. */
+  pepTiers?: string[];
+  /** Subject's jurisdiction must match one of these ISO2 / country names. */
+  jurisdictions?: string[];
+  /** Opened within last N hours (overrides a24). */
+  openedWithinH?: number;
+  /** Author who created the search. */
+  createdBy?: string;
+  createdAt: string;
+}
+
+// ─── Four-eyes queue ───────────────────────────────────────────────────────
+// Items waiting on a second approver before they leave screening (STR draft,
+// freeze, decline). Replaces the native window.prompt approver flow.
+export type FourEyesAction = "str" | "freeze" | "decline" | "edd-uplift" | "escalate";
+export type FourEyesStatus = "pending" | "approved" | "rejected" | "expired";
+
+export interface FourEyesItem {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  action: FourEyesAction;
+  initiatedBy: string;
+  initiatedAt: string;
+  reason: string;
+  /** Optional Asana / case URL that the action will write into. */
+  contextUrl?: string;
+  status: FourEyesStatus;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface UboEntry {

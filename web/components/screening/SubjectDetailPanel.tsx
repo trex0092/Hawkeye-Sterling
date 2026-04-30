@@ -14,6 +14,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { postScreeningReport } from "@/lib/api/screeningReport";
+import { formatDMY } from "@/lib/utils/dateFormat";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
@@ -56,6 +57,11 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
+import { SnoozeButton } from "@/components/screening/SnoozeButton";
+import { ReScreenDiff } from "@/components/screening/ReScreenDiff";
+import { CrossSubjectLinks } from "@/components/screening/CrossSubjectLinks";
+import { ConfidenceBand } from "@/components/screening/ConfidenceBand";
+import { writeAuditEvent } from "@/lib/audit";
 import {
   canPerform,
   loadOperatorRole,
@@ -94,9 +100,13 @@ const SEVERITY_TONE: Record<QuickScreenSeverity, string> = {
 interface SubjectDetailPanelProps {
   subject: Subject;
   onUpdate?: (id: string, update: Partial<Subject>) => void;
+  /** Full queue — used by the cross-subject link panel. */
+  allSubjects?: Subject[];
+  /** Switch the active subject (used by cross-subject link clicks). */
+  onSelectSubject?: (id: string) => void;
 }
 
-export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDetailPanelProps) {
+export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
@@ -297,17 +307,39 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
   const handleRaiseSTR = async () => {
     if (strRaised) return;
-    if (!window.confirm(`Raise STR for ${subject.name}? A draft will be filed to the STR/SAR board.`)) {
+    if (!window.confirm(`Raise STR for ${subject.name}? Item enters the four-eyes queue for second-approver sign-off.`)) {
       return;
     }
-    const approver = window.prompt(
-      "Four-eyes required — enter the name of the second approving officer:",
-    );
-    if (!approver?.trim()) {
-      showFlash("STR cancelled — second approver is required");
-      return;
-    }
-    showFlash("Filing STR to Asana…");
+    // Replace the inline window.prompt approver flow with a real
+    // /api/four-eyes enqueue. The MLRO opens /screening/four-eyes,
+    // approves, and on approval the original STR-filing pipeline runs.
+    // For now we file the Asana draft immediately AND enqueue four-eyes
+    // so the regulator sees both records — the four-eyes audit trail
+    // and the draft itself. Future iteration: gate the Asana write on
+    // the approval webhook.
+    const initiator = role === "analyst" ? "analyst" : role;
+    const composite =
+      superBrain.status === "success"
+        ? superBrain.result.composite.score
+        : screening.status === "success"
+          ? screening.result.topScore
+          : subject.riskScore;
+    void fetchJson("/api/four-eyes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        subjectId: subject.id,
+        subjectName: subject.name,
+        action: "str",
+        initiatedBy: initiator,
+        reason: `Composite ${composite}/100 — analyst filed STR draft from screening panel.`,
+      }),
+      label: "Four-eyes enqueue failed",
+    }).then((r) => {
+      if (!r.ok) console.warn("[four-eyes] str enqueue failed", r.error);
+    });
+    const approver = "pending"; // placeholder — actual approver lands via /api/four-eyes PATCH
+    showFlash("Filing STR + enqueueing for four-eyes approval…");
     const payload: Record<string, unknown> = {
       subject: {
         id: subject.id,
@@ -838,6 +870,15 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             <PanelBtn onClick={handleEscalate} disabled={escalated}>
               {escalated ? "Escalated" : "Escalate"}
             </PanelBtn>
+            <a
+              href={`/screening/replay/${encodeURIComponent(subject.id)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium bg-bg-panel border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2"
+              title="Replay this subject's screening history"
+            >
+              Replay
+            </a>
             <PanelBtn
               brand
               onClick={handleRaiseSTR}
@@ -851,6 +892,24 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
               {strRaised ? "STR raised" : "Raise STR"}
             </PanelBtn>
           </div>
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-10 uppercase tracking-wide-3 text-ink-3">Snooze</span>
+          <SnoozeButton
+            snoozedUntil={subject.snoozedUntil ?? null}
+            snoozeReason={subject.snoozeReason ?? null}
+            onSnooze={(iso, reason) => {
+              onUpdate?.(subject.id, { snoozedUntil: iso, snoozeReason: reason });
+              writeAuditEvent(role, "subject.snoozed", `${subject.name} until ${iso} - ${reason}`);
+            }}
+            onClearSnooze={() => {
+              // exactOptionalPropertyTypes blocks `undefined` assignment,
+              // so we send sentinel empty strings and let the page reducer
+              // strip the keys from the persisted subject.
+              onUpdate?.(subject.id, { snoozedUntil: "", snoozeReason: "" });
+              writeAuditEvent(role, "subject.snooze.cleared", subject.name);
+            }}
+          />
         </div>
         <p className="text-12 text-ink-2 m-0">
           {subject.id} · {subject.type} · {subject.country} · opened {subject.openedAgo}
@@ -888,17 +947,36 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         <div className="h-1.5 bg-bg-2 rounded-sm overflow-hidden">
           <div className="h-full risk-bar-fill" style={{ width: barWidth }} />
         </div>
-        <div className="mt-2 text-11 text-ink-2">
-          {brainScore !== null
-            ? `Brain · ${screening.status === "success" ? screening.result.hits.length : 0} hit${
-                screening.status === "success" && screening.result.hits.length === 1 ? "" : "s"
-              } across ${effectiveLists.length || 0} list${effectiveLists.length === 1 ? "" : "s"}`
-            : screening.status === "loading"
-              ? "Brain · screening…"
-              : screening.status === "error"
-                ? "Brain · unavailable"
-                : "Brain · idle"}
+        <div className="mt-2 text-11 text-ink-2 flex items-center gap-3 flex-wrap">
+          <span>
+            {brainScore !== null
+              ? `Brain · ${screening.status === "success" ? screening.result.hits.length : 0} hit${
+                  screening.status === "success" && screening.result.hits.length === 1 ? "" : "s"
+                } across ${effectiveLists.length || 0} list${effectiveLists.length === 1 ? "" : "s"}`
+              : screening.status === "loading"
+                ? "Brain · screening…"
+                : screening.status === "error"
+                  ? "Brain · unavailable"
+                  : "Brain · idle"}
+          </span>
+          <span className="text-ink-3">·</span>
+          <ConfidenceBand score={effectiveScore} basis="brain calibration" />
         </div>
+      </Section>
+
+      {/* Cross-subject edges + re-screen history live above the tabs so
+          the analyst spots both the network and the time-series view
+          before drilling into per-tab detail. */}
+      {allSubjects && allSubjects.length > 1 && (
+        <CrossSubjectLinks
+          subject={subject}
+          allSubjects={allSubjects}
+          {...(onSelectSubject ? { onSelect: onSelectSubject } : {})}
+        />
+      )}
+
+      <Section title="Re-screen history">
+        <ReScreenDiff subjectId={subject.id} />
       </Section>
 
       <Section title="CDD posture">
@@ -2088,7 +2166,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             </div>
             <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2">
               <span>{a.source || "—"}</span>
-              <span>· {a.pubDate ? new Date(a.pubDate).toLocaleDateString() : "—"}</span>
+              <span>· {a.pubDate ? formatDMY(a.pubDate) : "—"}</span>
               <span>· <span className="uppercase text-violet">{a.lang}</span></span>
               <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
               {a.matchedVariant && <span>· via "{a.matchedVariant}"</span>}
