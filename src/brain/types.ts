@@ -5,8 +5,6 @@
 
 export type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
 import type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
-export type { CrossRegimeConflictReport, RegimeStatus, RegimeHit } from './cross-regime-conflict.js';
-import type { CrossRegimeConflictReport } from './cross-regime-conflict.js';
 
 export type FacultyId =
   | 'reasoning'
@@ -234,29 +232,6 @@ export interface FindingConflict {
   note: string;
 }
 
-export interface EvidenceCorroborationSummary {
-  /** Cross-evidence corroboration score in [0,1]. Penalises shared
-   *  publishers / stale dates / low credibility / training-data citations;
-   *  rewards kind+publisher diversity, recency, primary sources. */
-  score: number;
-  /** Total cited EvidenceItems pooled across non-meta contributors. */
-  items: number;
-  /** Distinct publisher count — the diversity dimension. */
-  independentSources: number;
-  /** Distinct EvidenceKind values observed. */
-  kinds: string[];
-  /** Median observation-age in days, or -1 if no parseable dates. */
-  medianAgeDays: number;
-  /** Fraction of items older than the staleness cutoff. */
-  stalePenalty: number;
-  /** 1.0 iff any cited item is `kind: 'training_data'` (Charter P8). */
-  trainingDataPenalty: number;
-  /** Mean source-credibility score in [0,1]. */
-  credibilityAverage: number;
-  /** Plain-text reasons explaining how the score was derived. */
-  reasons: string[];
-}
-
 export interface FusionResult {
   outcome: Verdict;
   score: number;                       // final severity 0..1
@@ -272,8 +247,6 @@ export interface FusionResult {
   contributorCount: number;
   methodology: string;                 // plain-text description per charter P9
   firepower: CognitiveFirepower;       // per-faculty activation + composite firepower score
-  /** Cross-evidence corroboration over the union of cited EvidenceItems. */
-  evidenceCorroboration?: EvidenceCorroborationSummary;
 }
 
 export interface IntrospectionReport {
@@ -328,19 +301,6 @@ export interface BrainVerdict {
   // evidenceIndex was supplied to the engine. The base FusionResult fields above
   // (prior/posterior/bayesTrace) remain unchanged so auditors can compare both.
   evidenceWeighted?: EvidenceWeightedSummary;
-  // Cross-evidence corroboration over the union of cited EvidenceItems —
-  // diversity (independent publishers + kinds), median age, stale and
-  // training-data penalties. A *separate* signal from the per-LR weighting
-  // already applied inside the Bayesian update; surfaces "how well-
-  // corroborated is the evidence stack" so an MLRO can demand additional
-  // sources when the score is low even though the posterior is high.
-  evidenceCorroboration?: EvidenceCorroborationSummary;
-  // Cross-regime sanctions conflict report. Populated when the caller
-  // supplied `regimeStatuses` to engine.run(). Auto-escalates a fusion
-  // outcome of `clear` to `flag` when regimes split (one designates,
-  // another doesn't) — fixes the audit gap where split-regime cases
-  // never auto-escalated.
-  crossRegimeConflict?: CrossRegimeConflictReport;
 }
 
 export interface ReasoningChainNode {

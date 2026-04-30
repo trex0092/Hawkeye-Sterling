@@ -35,7 +35,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 // Module-level safety net — see /api/compliance-qa for rationale.
-// Orphaned upstream-fetch rejections crash the Lambda with raw 502s.
 const REJECTION_GUARD_KEY = "__hsMlroChallengerRejectionGuard";
 const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
 if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {

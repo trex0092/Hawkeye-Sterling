@@ -39,6 +39,27 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
+// Module-level safety net. Orphaned promises inside the executor → advisor
+// → challenger pipeline (e.g. an aborted upstream fetch whose rejection
+// arrives after the awaited call already returned) escape the route's
+// local try/catch and crash the Lambda with HTTP 502 + raw runtime trace
+// (`Runtime.UnhandledPromiseRejection: AbortError`). Swallowing them here
+// keeps the function alive long enough to return a clean JSON response.
+// Registered once per Lambda warm instance via a globalThis flag.
+const REJECTION_GUARD_KEY = "__hsMlroAdvisorRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) {
+      // Expected — upstream timeouts during executor / advisor / challenger calls.
+      return;
+    }
+    console.error("[mlro-advisor] unhandled rejection", msg);
+  });
+}
+
 interface ContextPair { q: string; a: string }
 
 interface Body {

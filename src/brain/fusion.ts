@@ -9,14 +9,13 @@
 // The returned FusionResult carries a plain-text methodology string for downstream report.
 
 import type {
-  CognitiveFirepower, ConsensusLevel, EvidenceCorroborationSummary,
-  FacultyActivation, FacultyId, Finding, FindingConflict, FusionResult,
-  Hypothesis, LikelihoodRatio, Verdict,
+  CognitiveFirepower, ConsensusLevel, FacultyActivation, FacultyId,
+  Finding, FindingConflict, FusionResult, Hypothesis, LikelihoodRatio,
+  Verdict,
 } from './types.js';
 import type { EvidenceItem } from './evidence.js';
 import { credibilityScore, freshnessFactor } from './evidence.js';
 import { bayesUpdate } from './bayesian-update.js';
-import { corroborate } from './evidence-corroboration.js';
 import { FACULTIES } from './faculties.js';
 
 const EPS = 1e-9;
@@ -110,16 +109,6 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
   // 7. Firepower: per-faculty activation + composite metric over the 10 faculties.
   const firepower = computeFirepower(contributors, qualities, idx);
 
-  // 7b. Cross-evidence corroboration over the union of cited EvidenceItems.
-  //     Pools every distinct evidence ID across non-meta contributors, looks
-  //     them up in the index, and runs the conservative corroborate() scorer:
-  //     credibility × freshness × diversity (independent publishers + kinds),
-  //     with Charter P8 cap on training-data citations and a stale-fraction
-  //     penalty. Surfaced on FusionResult.evidenceCorroboration so MLROs can
-  //     see HOW well-corroborated a verdict's evidence stack is, distinct from
-  //     the per-LR weighting already applied inside the Bayesian update.
-  const evidenceCorroboration = computeEvidenceCorroboration(contributors, idx);
-
   // 8. Outcome mapping: respect block, escalate on conflict, map posterior+score otherwise.
   const outcome = computeOutcome({
     hasBlock, posterior, weightedScore, contributorCount, consensus, conflicts, findings: contributors,
@@ -155,39 +144,7 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
     firepower,
   };
   if (primaryBayesTrace !== undefined) result.bayesTrace = primaryBayesTrace;
-  if (evidenceCorroboration !== undefined) result.evidenceCorroboration = evidenceCorroboration;
   return result;
-}
-
-function computeEvidenceCorroboration(
-  contributors: Finding[],
-  idx: Map<string, EvidenceItem> | undefined,
-): EvidenceCorroborationSummary | undefined {
-  if (!idx || idx.size === 0) return undefined;
-  const seen = new Set<string>();
-  const items: EvidenceItem[] = [];
-  for (const f of contributors) {
-    for (const id of f.evidence) {
-      if (seen.has(id)) continue;
-      const ev = idx.get(id);
-      if (!ev) continue;
-      seen.add(id);
-      items.push(ev);
-    }
-  }
-  if (items.length === 0) return undefined;
-  const r = corroborate(items);
-  return {
-    score: r.score,
-    items: r.items,
-    independentSources: r.independentSources,
-    kinds: r.kinds,
-    medianAgeDays: r.medianAgeDays,
-    stalePenalty: r.stalePenalty,
-    trainingDataPenalty: r.trainingDataPenalty,
-    credibilityAverage: r.credibilityAverage,
-    reasons: r.reasons,
-  };
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────
