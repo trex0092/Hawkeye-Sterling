@@ -401,6 +401,182 @@ function AdverseMediaPanel() {
   );
 }
 
+// ── Jurisdiction Intelligence Panel ─────────────────────────────────────────
+
+interface SanctionsExposure { uae: string; un: string; ofac: string; eu: string; uk: string; }
+interface JurisdictionIntel {
+  ok: boolean;
+  countryName: string;
+  overallRisk: "critical" | "high" | "medium" | "low";
+  fatfStatus: string;
+  fatfDetail: string;
+  sanctionsExposure: SanctionsExposure;
+  cahraStatus: string;
+  keyRisks: string[];
+  dpmsSpecificRisks: string[];
+  typologiesPrevalent: string[];
+  cddImplications: string;
+  transactionRisks: string;
+  recentDevelopments: string;
+  uaeRegulatoryRequirement: string;
+  riskMitigation: string[];
+}
+
+const JRISK_TONE: Record<string, string> = {
+  critical: "bg-red text-white",
+  high: "bg-red-dim text-red",
+  medium: "bg-amber-dim text-amber",
+  low: "bg-green-dim text-green",
+};
+
+function JurisdictionIntelPanel() {
+  const [country, setCountry] = useState("");
+  const [context, setContext] = useState("");
+  const [intel, setIntel] = useState<JurisdictionIntel | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const run = async () => {
+    if (!country.trim()) return;
+    setLoading(true);
+    setIntel(null);
+    try {
+      const res = await fetch("/api/jurisdiction-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ country: country.trim(), context: context.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json() as JurisdictionIntel;
+        if (data.ok) setIntel(data);
+      }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  };
+
+  const inputCls = "text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand";
+
+  return (
+    <div className="border border-hair-2 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-bg-panel border-b border-hair">
+        <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Jurisdiction Intelligence</span>
+        <span className="text-10 text-ink-3 font-mono">Beats World-Check 3-tier ratings</span>
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Country</label>
+            <input value={country} onChange={(e) => setCountry(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void run()}
+              placeholder="e.g. Iran, Sudan, DRC, Russia…" className={`${inputCls} w-full`} />
+          </div>
+          <div className="flex-1">
+            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Context (optional)</label>
+            <input value={context} onChange={(e) => setContext(e.target.value)}
+              placeholder="e.g. gold supplier, client nationality, wire destination"
+              className={`${inputCls} w-full`} />
+          </div>
+          <button type="button" onClick={() => void run()} disabled={loading || !country.trim()}
+            className="text-11 font-semibold px-4 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 whitespace-nowrap">
+            {loading ? "Analyzing…" : "Analyze Jurisdiction"}
+          </button>
+        </div>
+
+        {intel && (
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-15 font-bold text-ink-0">{intel.countryName}</span>
+              <span className={`font-mono text-10 font-bold px-2 py-px rounded uppercase ${JRISK_TONE[intel.overallRisk] ?? ""}`}>
+                {intel.overallRisk} risk
+              </span>
+              <span className={`font-mono text-10 px-2 py-px rounded ${
+                intel.fatfStatus.toLowerCase().includes("grey") ? "bg-amber-dim text-amber" :
+                intel.fatfStatus.toLowerCase().includes("black") ? "bg-red text-white" : "bg-green-dim text-green"
+              }`}>{intel.fatfStatus}</span>
+            </div>
+
+            {intel.fatfDetail && <p className="text-12 text-ink-1">{intel.fatfDetail}</p>}
+
+            {intel.cahraStatus && (
+              <div className="flex items-center gap-2">
+                <span className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">CAHRA:</span>
+                <span className={`text-11 font-mono ${intel.cahraStatus.toLowerCase().includes("conflict") || intel.cahraStatus.toLowerCase().includes("high") ? "text-red" : "text-ink-1"}`}>{intel.cahraStatus}</span>
+              </div>
+            )}
+
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-2">Sanctions Exposure</div>
+              <div className="grid grid-cols-5 gap-2">
+                {(["uae", "un", "ofac", "eu", "uk"] as const).map((regime) => (
+                  <div key={regime} className="bg-bg-1 rounded p-2">
+                    <div className="text-9 font-mono font-bold uppercase text-ink-3 mb-1">{regime.toUpperCase()}</div>
+                    <div className="text-10 text-ink-1">{intel.sanctionsExposure[regime] || "—"}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {intel.keyRisks.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">Key Risks</div>
+                <div className="flex flex-wrap gap-1">
+                  {intel.keyRisks.map((r, i) => <span key={i} className="text-10 px-2 py-px rounded bg-red-dim text-red">{r}</span>)}
+                </div>
+              </div>
+            )}
+
+            {intel.dpmsSpecificRisks.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">DPMS-Specific Risks</div>
+                <div className="flex flex-wrap gap-1">
+                  {intel.dpmsSpecificRisks.map((r, i) => <span key={i} className="text-10 px-2 py-px rounded bg-amber-dim text-amber">{r}</span>)}
+                </div>
+              </div>
+            )}
+
+            {intel.typologiesPrevalent.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">Prevalent Typologies</div>
+                <div className="flex flex-wrap gap-1">
+                  {intel.typologiesPrevalent.map((t, i) => <span key={i} className="text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{t}</span>)}
+                </div>
+              </div>
+            )}
+
+            {intel.cddImplications && (
+              <div className="border border-brand/30 rounded-lg p-3 bg-bg-panel">
+                <div className="text-10 uppercase tracking-wide-3 text-brand-deep font-semibold mb-1">CDD Implications</div>
+                <p className="text-12 text-ink-0">{intel.cddImplications}</p>
+              </div>
+            )}
+
+            {intel.uaeRegulatoryRequirement && (
+              <div className="border-l-2 border-red/50 pl-3">
+                <div className="text-10 uppercase tracking-wide-3 text-red font-semibold mb-1">UAE Regulatory Requirement</div>
+                <p className="text-12 font-semibold text-ink-0">{intel.uaeRegulatoryRequirement}</p>
+              </div>
+            )}
+
+            {intel.transactionRisks && <p className="text-11 text-ink-2 italic">{intel.transactionRisks}</p>}
+
+            {intel.recentDevelopments && (
+              <p className="text-11 text-ink-1 border-t border-hair pt-2"><strong>Recent developments:</strong> {intel.recentDevelopments}</p>
+            )}
+
+            {intel.riskMitigation.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-green font-semibold mb-1">Risk Mitigation</div>
+                <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                  {intel.riskMitigation.map((m, i) => <li key={i}>{m}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function IntelPage() {
@@ -412,11 +588,13 @@ export default function IntelPage() {
         titleEm="feed."
         intro={
           <>
-            <strong>Two live panels.</strong> The UAE Regulatory Feed polls
+            <strong>Three live panels.</strong> The UAE Regulatory Feed polls
             MoET, UAE IEC, CBUAE, UAEFIU, FATF and Google News every 30 minutes
             for circulars, enforcement actions and guidance updates.
             The adverse-media panel sweeps any named subject across 7 language
             feeds and surfaces HIGH / CRITICAL items first.
+            Jurisdiction Intelligence delivers deep FATF/sanctions/CAHRA briefs
+            that go far beyond World-Check 3-tier country ratings.
           </>
         }
         kpis={[
@@ -430,6 +608,7 @@ export default function IntelPage() {
       <div className="mt-6 space-y-6">
         <RegulatoryFeedPanel />
         <AdverseMediaPanel />
+        <JurisdictionIntelPanel />
       </div>
     </ModuleLayout>
   );
