@@ -32,7 +32,77 @@ import { REASONING_DECISION_MODE_APPLIES } from './reasoning_decision.js';
 import { FORENSIC_STRATEGIC_MODE_APPLIES } from './forensic_strategic.js';
 import { GOVERNANCE_CRYPTO_MODE_APPLIES } from './governance_crypto.js';
 
+import { artProvenanceGapApply } from './wave3-art-provenance-gap.js';
+import { bridgeCrossingTraceApply } from './wave3-bridge-crossing-trace.js';
+import { dpmsStructuringApply } from './wave3-dpms-structuring.js';
+import { familyOfficeTrustApply } from './wave3-family-office-trust.js';
+import { hawalaIvtsApply } from './wave3-hawala-ivts.js';
+import { mixerForensicsApply } from './wave3-mixer-forensics.js';
+import { muleClusterApply } from './wave3-mule-cluster.js';
+import { professionalEnablerApply } from './wave3-professional-enabler.js';
+import { tbmlInvoiceApply } from './wave3-tbml-invoice.js';
+import { utxoClusteringApply } from './wave3-utxo-clustering.js';
+import { vesselAisGapApply } from './wave3-vessel-ais-gap.js';
+import { cashCourierThresholdApply } from './wave3-cash-courier-threshold.js';
+import { shellCompanyApply } from './wave3-shell-company.js';
+import { pepProximityApply } from './wave3-pep-proximity.js';
+import { dualUseRoutingApply } from './wave3-dual-use-routing.js';
+import { wireStrippingApply } from './wave3-wire-stripping.js';
+import { correspondentNestingApply } from './wave3-correspondent-nesting.js';
+import { ftzLayeredOwnershipApply } from './wave3-ftz-layered-ownership.js';
+import { npoHighRiskApply } from './wave3-npo-high-risk.js';
+import { casinoChipDumpingApply } from './wave3-casino-chip-dumping.js';
+import { cryptoChainHopApply } from './wave3-crypto-chain-hop.js';
+import { nftWashTradingApply } from './wave3-nft-wash-trading.js';
+import { realEstateUnderpricingApply } from './wave3-real-estate-underpricing.js';
+import { legalPooledAccountApply } from './wave3-legal-pooled-account.js';
+import { nonFaceToFaceKycApply } from './wave3-non-face-to-face-kyc.js';
+import { nestedDesignationApply } from './wave3-nested-designation-match.js';
+import { SANCTIONS_BATCH_APPLIES } from './wave3-sanctions-batch.js';
+import { TBML_BATCH_APPLIES } from './wave3-tbml-batch.js';
+import { CRYPTO_BATCH_APPLIES } from './wave3-crypto-batch.js';
+import { IDENTITY_BATCH_APPLIES } from './wave3-identity-batch.js';
+import { BEHAVIORAL_BATCH_APPLIES } from './wave3-behavioral-batch.js';
+import { PEP_PREDICATE_BATCH_APPLIES } from './wave3-pep-predicate-batch.js';
+import { SECURITIES_DPMS_OPS_BATCH_APPLIES } from './wave3-securities-dpms-ops-batch.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
+
+const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
+  art_auction_provenance_gap: artProvenanceGapApply,
+  bridge_crossing_trace: bridgeCrossingTraceApply,
+  dpms_cash_structuring_split: dpmsStructuringApply,
+  family_office_trust_transparency: familyOfficeTrustApply,
+  hawala_ivts_pattern: hawalaIvtsApply,
+  mixer_forensics: mixerForensicsApply,
+  mule_cluster_detection: muleClusterApply,
+  professional_enabler_pattern: professionalEnablerApply,
+  tbml_invoice_manipulation: tbmlInvoiceApply,
+  utxo_clustering: utxoClusteringApply,
+  vessel_ais_gap: vesselAisGapApply,
+  cash_courier_threshold: cashCourierThresholdApply,
+  shell_company_indicator: shellCompanyApply,
+  pep_proximity_chain: pepProximityApply,
+  dual_use_goods_routing: dualUseRoutingApply,
+  wire_stripping_indicator: wireStrippingApply,
+  correspondent_banking_nesting: correspondentNestingApply,
+  ftz_layered_ownership: ftzLayeredOwnershipApply,
+  npo_high_risk_outflow: npoHighRiskApply,
+  casino_chip_dumping: casinoChipDumpingApply,
+  crypto_chain_hop_layering: cryptoChainHopApply,
+  nft_wash_trading: nftWashTradingApply,
+  real_estate_underpricing: realEstateUnderpricingApply,
+  legal_pooled_account_abuse: legalPooledAccountApply,
+  non_face_to_face_kyc_anomaly: nonFaceToFaceKycApply,
+  nested_designation_match: nestedDesignationApply,
+  ...SANCTIONS_BATCH_APPLIES,
+  ...TBML_BATCH_APPLIES,
+  ...CRYPTO_BATCH_APPLIES,
+  ...IDENTITY_BATCH_APPLIES,
+  ...BEHAVIORAL_BATCH_APPLIES,
+  ...PEP_PREDICATE_BATCH_APPLIES,
+  ...SECURITIES_DPMS_OPS_BATCH_APPLIES,
+};
 
 // Spread order matters: later bundles override earlier for shared IDs.
 // COGNITIVE_GUARDS_MODE_APPLIES is spread LAST so its PR #224 anti-bias /
@@ -60,6 +130,7 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...REASONING_DECISION_MODE_APPLIES,
   ...FORENSIC_STRATEGIC_MODE_APPLIES,
   ...GOVERNANCE_CRYPTO_MODE_APPLIES,
+  ...WAVE3_MODE_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */

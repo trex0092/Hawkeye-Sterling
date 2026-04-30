@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs";
 
-export const BILLING_STORE = "hawkeye-billing";
+const BILLING_STORE = "hawkeye-billing";
 
 export type BillingMetric =
   | "screensRun"
@@ -50,3 +50,5 @@ export async function incrementUsage(
     // best-effort — billing IO must not break the calling route.
   }
 }
+
+export { BILLING_STORE };
