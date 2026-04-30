@@ -385,6 +385,7 @@ export default function OngoingMonitorPage() {
   return (
     <ModuleLayout asanaModule="ongoing-monitor" asanaLabel="Ongoing Monitor">
       <ModuleHero
+        moduleNumber={9}
         eyebrow="Module 24 · Continuous Monitoring"
         title="Ongoing"
         titleEm="monitoring."
