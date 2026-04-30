@@ -15,9 +15,9 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
-import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
-import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../dist/src/brain/cross-regime-conflict.js";
+import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../dist/src/brain/cross-regime-conflict.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 
 export const runtime = "nodejs";
