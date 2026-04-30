@@ -141,6 +141,9 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
   };
   if (fusion.bayesTrace !== undefined) verdict.bayesTrace = fusion.bayesTrace;
   if (evidenceWeighted !== undefined) verdict.evidenceWeighted = evidenceWeighted;
+  if (fusion.evidenceCorroboration !== undefined) {
+    verdict.evidenceCorroboration = fusion.evidenceCorroboration;
+  }
   return verdict;
 }
 
