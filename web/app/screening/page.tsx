@@ -806,6 +806,51 @@ export default function ScreeningPage() {
       })();
     }
 
+    // Adverse-media auto-run on intake. Fires when the operator left the
+    // OPTIONAL CHECKS toggle on (default). Result lands in the subject's
+    // local state under `adverseMedia` so the queue badge picks it up
+    // without forcing the analyst to click into the dossier panel.
+    if (data.checkTypes.adverseMedia) {
+      void fetchJson<{ ok: boolean; verdict?: { riskTier?: string; sarRecommended?: boolean } }>(
+        "/api/adverse-media",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ subject: subject.name, limit: 25 }),
+          label: "Adverse-media auto-run failed",
+          timeoutMs: 45_000,
+        },
+      ).then((res) => {
+        if (!res.ok || !res.data?.ok) return;
+        const v = res.data.verdict;
+        const tier = v?.riskTier;
+        if (!tier) return;
+        const sar = v?.sarRecommended === true;
+        const score = sar ? 95 : tier === "critical" ? 90 : tier === "high" ? 75 : 50;
+        setSubjects((prev) =>
+          prev.map((s) =>
+            s.id === subject.id
+              ? {
+                  ...s,
+                  adverseMedia: {
+                    source: "Taranis AI",
+                    score,
+                    name: subject.name,
+                    reference: tier,
+                    date: new Date().toISOString().slice(0, 10),
+                  },
+                }
+              : s,
+          ),
+        );
+        writeAuditEvent(
+          "system",
+          "adverse-media.auto-run",
+          `${subject.name} - ${tier}${sar ? " (SAR R.20)" : ""}`,
+        );
+      });
+    }
+
     if (data.ongoingScreening) {
       void fetchJson("/api/ongoing", {
         method: "POST",

@@ -62,6 +62,33 @@ export function WatchlistHealthBadges() {
 
   const lists = data?.sanctions?.lists ?? [];
   const note = data?.sanctions?.note;
+  // Deploy previews + freshly-deployed environments don't run the
+  // refresh-lists cron, so every list reports ageH:null and the strip
+  // ends up as 7 identical "pending" badges. Collapse those into a
+  // single status line so the operator isn't tricked into thinking
+  // every feed is stale. Once even one list has ticked, fall back to
+  // the per-list grid.
+  const allPending = lists.length > 0 && lists.every((l) => l.ageH == null);
+
+  if (allPending) {
+    return (
+      <div className="mt-5 border border-hair-2 rounded-lg p-3 bg-bg-panel">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-ink-3 shrink-0" />
+          <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+            Watchlist freshness
+          </span>
+          <span className="text-11 text-ink-3">
+            awaiting first refresh tick (cron-only, populates on production main)
+          </span>
+        </div>
+        <div className="text-10.5 text-ink-3 mt-1 font-mono">
+          Lists tracked: {lists.map((l) => LIST_LABEL[l.id] ?? l.id).join(" · ")}
+          {note ? ` · ${note}` : ""}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mt-5">
