@@ -16,7 +16,7 @@ import {
 const NAV_TABS = [
   { key: "nav.screening", label: "Screening", href: "/screening" },
   { key: "nav.batch", label: "Batch", href: "/batch" },
-  { key: "nav.intel", label: "Intel", href: "/intel" },
+  { key: "nav.intel", label: "Live Intel", href: "/intel" },
   { key: "nav.cases", label: "Cases", href: "/cases" },
   { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
@@ -25,67 +25,73 @@ const NAV_TABS = [
 ] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
-// stays readable. Column order: Operations · Governance · Enrichment ·
-// Intelligence (operator-first → analyst-last).
+// stays readable.
+// Groups: Onboarding & CDD · Risk & AML Ops · Governance & Audit · Enrichment · Intelligence
 const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: string; hint: string }> }> = [
   {
-    title: "Operations",
+    // Client lifecycle: intake → KYC → ongoing CDD → data quality
+    title: "Onboarding & CDD",
     items: [
-      { label: "Client portal", href: "/client-portal", hint: "External KYC" },
-      { label: "UBO declaration", href: "/ubo-declaration", hint: "Public UBO form" },
-      { label: "Supplier DD", href: "/vendor-dd", hint: "Supplier onboarding" },
-      { label: "Employees", href: "/employees", hint: "HR registry & doc expiry" },
-      { label: "Training", href: "/training", hint: "Staff certification" },
-      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC tracker" },
-      { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
-      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
       { label: "Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
-      { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
-      { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
+      { label: "Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
+      { label: "UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
+      { label: "Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
+      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
+      { label: "Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
+      { label: "Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
+      { label: "Training", href: "/training", hint: "Staff AML certification tracker" },
+      { label: "Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
     ],
   },
   {
-    title: "Governance",
+    // AML/CFT operational modules: risk assessment, STR workflow, supply chain, oversight
+    title: "Risk & AML Ops",
     items: [
-      { label: "Audit", href: "/audit-trail", hint: "Immutable audit chain" },
-      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
-      { label: "Regulatory", href: "/regulatory", hint: "Searchable library" },
-      { label: "Policies", href: "/policies", hint: "Charter / SOPs" },
-      { label: "Playbook", href: "/playbook", hint: "Typology guides" },
-      { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
-      { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
-      { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
-      { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
-      // goAML export is now reachable from a row action on /str-cases
-      // (the case register), so we drop it from the global nav. The
-      // standalone /goaml-export page still exists for any saved
-      // bookmarks but is no longer surfaced.
-      { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
+      { label: "EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
+      { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes STR/SAR quality review" },
+      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
+      { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals + AI supply chain assessment" },
+      { label: "EOCN", href: "/eocn", hint: "UAE targeted financial sanctions list" },
+      { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
+      { label: "Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
     ],
   },
   {
+    // Regulatory record-keeping, audit trail, reference library
+    title: "Governance & Audit",
+    items: [
+      { label: "Audit Trail", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan" },
+      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year adverse media archive · FDL Art.19" },
+      { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
+      { label: "Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
+      { label: "Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
+      { label: "Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
+    ],
+  },
+  {
+    // Subject & entity enrichment: external data lookups, forensic tools, OSINT
     title: "Enrichment",
     items: [
-      { label: "GLEIF / LEI", href: "/gleif", hint: "Beneficial ownership chain" },
-      { label: "Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security" },
-      { label: "Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint analysis" },
-      { label: "Vessel Check", href: "/vessel-check", hint: "IMO sanctions & ownership" },
-      { label: "Benford Analysis", href: "/benford", hint: "Forensic accounting digit test" },
+      { label: "OSINT", href: "/osint", hint: "Subject enrichment · SpiderFoot · AI threat synthesis" },
+      { label: "GLEIF / LEI", href: "/gleif", hint: "Global LEI · beneficial ownership chain" },
+      { label: "Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security analysis" },
+      { label: "Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
+      { label: "Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
+      { label: "Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
     ],
   },
   {
+    // Analytics, AI brain internals, investigation tools, system health
     title: "Intelligence",
     items: [
-      { label: "Workbench Brain", href: "/workbench", hint: "Screening · live reasoning · manifest" },
-      { label: "Analytics", href: "/analytics", hint: "MLRO performance digest" },
-      { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas" },
-      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
-      { label: "OSINT", href: "/osint", hint: "Subject enrichment & SpiderFoot" },
-      { label: "Data quality", href: "/data-quality", hint: "Data-subject completeness" },
-      { label: "Status", href: "/status", hint: "Live endpoint health" },
-      { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain · firing counts · drift" },
-      { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country exposure · FATF lists" },
+      { label: "Analytics", href: "/analytics", hint: "MLRO KPI digest + AI board insights" },
+      { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
+      { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
+      { label: "Workbench Brain", href: "/workbench", hint: "Brain inspector · live reasoning · manifest" },
+      { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
+      { label: "Status", href: "/status", hint: "Live endpoint & watchlist health" },
+      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
   },
 ];
@@ -207,7 +213,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[740px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-4 gap-4"
+                  className="fixed z-50 w-[900px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-5 gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (
