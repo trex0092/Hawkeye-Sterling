@@ -469,6 +469,114 @@ export default function EmployeesPage() {
           </div>
         )}
 
+        {/* AI Risk Panel */}
+        {empRisk && (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5 mb-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">AI Employee Risk Scan</span>
+              <button type="button" onClick={() => setEmpRisk(null)} className="text-ink-3 hover:text-ink-1 text-11">✕ Dismiss</button>
+            </div>
+
+            {/* Portfolio status + summary */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${PORTFOLIO_BADGE[empRisk.portfolioStatus] ?? "bg-bg-2 text-ink-2"}`}>
+                {PORTFOLIO_LABEL[empRisk.portfolioStatus] ?? empRisk.portfolioStatus}
+              </span>
+              {empRisk.summary && (
+                <span className="text-12 text-ink-1 leading-snug">{empRisk.summary}</span>
+              )}
+            </div>
+
+            {/* Immediate actions */}
+            {empRisk.immediateActions.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-1">Immediate Actions</div>
+                <ul className="space-y-1">
+                  {empRisk.immediateActions.map((a) => (
+                    <li key={a} className="flex items-start gap-2 text-12 text-red">
+                      <span className="shrink-0">•</span>
+                      {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Critical expiries */}
+            {empRisk.criticalExpiries.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Critical Expiries</div>
+                <div className="space-y-2">
+                  {empRisk.criticalExpiries.map((item) => (
+                    <div key={`${item.name}-${item.issue}`} className="flex items-start gap-2 bg-bg-1 rounded p-2">
+                      <div className="flex-1 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-12 font-semibold text-ink-0">{item.name}</span>
+                          <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${URGENCY_BADGE[item.urgency] ?? "bg-bg-2 text-ink-2"}`}>
+                            {item.urgency.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="text-11 text-ink-2">{item.issue}</div>
+                        <div className="text-11 text-ink-3 italic">{item.action}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Screening alerts */}
+            {empRisk.screeningAlerts.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Screening Alerts</div>
+                <div className="space-y-2">
+                  {empRisk.screeningAlerts.map((alert) => (
+                    <div key={`${alert.name}-${alert.reason}`} className="flex items-start gap-2 bg-amber-dim rounded p-2">
+                      <div className="flex-1 space-y-0.5">
+                        <div className="text-12 font-semibold text-ink-0">{alert.name}</div>
+                        <div className="text-11 text-amber">{alert.reason}</div>
+                        <div className="text-11 text-ink-3 italic">{alert.action}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* High risk nationalities */}
+            {empRisk.highRiskNationalities.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">High-Risk Nationalities</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {empRisk.highRiskNationalities.map((n) => (
+                    <span key={n} className="px-2 py-0.5 rounded bg-amber-dim text-amber text-11 font-mono">{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Multi-entity risk */}
+            {empRisk.multiEntityRisk.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Multi-Entity Risk</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {empRisk.multiEntityRisk.map((n) => (
+                    <span key={n} className="px-2 py-0.5 rounded bg-amber-dim text-amber text-11 font-mono">{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Regulatory note */}
+            {empRisk.regulatoryNote && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Regulatory Note</div>
+                <p className="font-mono text-11 text-ink-2 leading-relaxed">{empRisk.regulatoryNote}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
           <table className="w-full text-12">
