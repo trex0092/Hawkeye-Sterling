@@ -310,6 +310,29 @@ export default function GoAmlExportPage() {
             <div className="text-10 font-mono text-ink-3">
               {draft.narrative.length} / 4000 characters
             </div>
+            <div className="mt-3">
+              <button type="button" onClick={() => void validateNarrativeAI()} disabled={aiValidating || !draft.narrative.trim()}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+                {aiValidating ? "Validating…" : "AI Validate Narrative"}
+              </button>
+              {aiValidation && (
+                <div className="mt-3 border border-hair-2 rounded-lg p-3 space-y-2 bg-bg-1">
+                  <div className="flex items-center gap-3">
+                    <span className={`font-mono text-11 font-bold px-2 py-px rounded ${aiValidation.grade === "PASS" ? "bg-green-dim text-green" : aiValidation.grade === "CONDITIONAL_PASS" ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>{aiValidation.grade.replace(/_/g," ")}</span>
+                    <span className="font-mono text-11 text-ink-2">{aiValidation.score}/100</span>
+                    <span className="text-11 text-ink-3 italic">{aiValidation.fiuReadiness}</span>
+                  </div>
+                  {aiValidation.fatalIssues.length > 0 && <div className="text-11 text-red font-semibold">Fatal: {aiValidation.fatalIssues.join(" · ")}</div>}
+                  {aiValidation.tippingOffRisk && <div className="text-11 text-red">Tipping-off risk detected: {aiValidation.tippingOffFlags.join(", ")}</div>}
+                  {aiValidation.missingElements.length > 0 && <div className="text-10 text-amber">Missing: {aiValidation.missingElements.join(" · ")}</div>}
+                  {aiValidation.suggestions.length > 0 && (
+                    <ul className="text-10 text-ink-2 list-disc list-inside space-y-0.5">
+                      {aiValidation.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <FieldNumber
                 label="Amount (AED, optional)"

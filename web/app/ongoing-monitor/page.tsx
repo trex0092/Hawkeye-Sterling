@@ -161,6 +161,31 @@ interface ScreenResult {
   topScore: number;
 }
 
+interface MonitorAlert {
+  subjectId: string;
+  subjectName: string;
+  alertType: "overdue_escalation" | "cadence_mismatch" | "pattern_detected" | "tier_upgrade_recommended" | "immediate_review_required";
+  severity: "critical" | "high" | "medium";
+  description: string;
+  recommendedAction: string;
+  regulatoryBasis: string;
+}
+
+interface CadenceRecommendation {
+  subjectId: string;
+  currentCadence: string;
+  recommendedCadence: string;
+  reason: string;
+}
+
+interface MonitorAlertsResult {
+  alerts: MonitorAlert[];
+  portfolioHealth: "healthy" | "attention_required" | "critical";
+  immediateEscalations: string[];
+  cadenceRecommendations: CadenceRecommendation[];
+  summary: string;
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function OngoingMonitorPage() {
@@ -173,6 +198,10 @@ export default function OngoingMonitorPage() {
   const [lastResults, setLastResults] = useState<Record<string, ScreenResult>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<{ name: string; caseId: string; tier: MonitoredSubject["tier"]; cadence: Cadence; enrolledBy: string; notes: string }>(BLANK);
+
+  // AI pattern scan state
+  const [monitorAlerts, setMonitorAlerts] = useState<MonitorAlertsResult | null>(null);
+  const [monitorAlertsLoading, setMonitorAlertsLoading] = useState(false);
 
   // Enrichment state
   const [enrichName, setEnrichName] = useState("");
