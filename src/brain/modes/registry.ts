@@ -57,6 +57,14 @@ import { nftWashTradingApply } from './wave3-nft-wash-trading.js';
 import { realEstateUnderpricingApply } from './wave3-real-estate-underpricing.js';
 import { legalPooledAccountApply } from './wave3-legal-pooled-account.js';
 import { nonFaceToFaceKycApply } from './wave3-non-face-to-face-kyc.js';
+import { nestedDesignationApply } from './wave3-nested-designation-match.js';
+import { SANCTIONS_BATCH_APPLIES } from './wave3-sanctions-batch.js';
+import { TBML_BATCH_APPLIES } from './wave3-tbml-batch.js';
+import { CRYPTO_BATCH_APPLIES } from './wave3-crypto-batch.js';
+import { IDENTITY_BATCH_APPLIES } from './wave3-identity-batch.js';
+import { BEHAVIORAL_BATCH_APPLIES } from './wave3-behavioral-batch.js';
+import { PEP_PREDICATE_BATCH_APPLIES } from './wave3-pep-predicate-batch.js';
+import { SECURITIES_DPMS_OPS_BATCH_APPLIES } from './wave3-securities-dpms-ops-batch.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
@@ -86,6 +94,14 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   real_estate_underpricing: realEstateUnderpricingApply,
   legal_pooled_account_abuse: legalPooledAccountApply,
   non_face_to_face_kyc_anomaly: nonFaceToFaceKycApply,
+  nested_designation_match: nestedDesignationApply,
+  ...SANCTIONS_BATCH_APPLIES,
+  ...TBML_BATCH_APPLIES,
+  ...CRYPTO_BATCH_APPLIES,
+  ...IDENTITY_BATCH_APPLIES,
+  ...BEHAVIORAL_BATCH_APPLIES,
+  ...PEP_PREDICATE_BATCH_APPLIES,
+  ...SECURITIES_DPMS_OPS_BATCH_APPLIES,
 };
 
 // Spread order matters: later bundles override earlier for shared IDs.

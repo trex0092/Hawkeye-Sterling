@@ -31,7 +31,7 @@ surface area; none are abandoned.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 7 | Wave-3 mode implementations | 🟡 | **23** of ~100 shipped + wired into `MODE_OVERRIDES`. Crypto: `mixer_forensics`, `utxo_clustering`, `bridge_crossing_trace`, `crypto_chain_hop_layering`, `nft_wash_trading`. Trade/cargo: `vessel_ais_gap`, `tbml_invoice_manipulation`, `dual_use_goods_routing`. Sectoral: `dpms_cash_structuring_split`, `art_auction_provenance_gap`, `casino_chip_dumping`, `real_estate_underpricing`. Cash/IVT: `hawala_ivts_pattern`, `cash_courier_threshold`. Network: `mule_cluster_detection`, `professional_enabler_pattern`, `legal_pooled_account_abuse`. Banking: `wire_stripping_indicator`, `correspondent_banking_nesting`. UBO: `shell_company_indicator`, `ftz_layered_ownership`, `family_office_trust_transparency`. PEP/TF/KYC: `pep_proximity_chain`, `npo_high_risk_outflow`, `non_face_to_face_kyc_anomaly`. |
+| 7 | Wave-3 mode implementations | ✅ | **100** of ~100 shipped + wired into `MODE_OVERRIDES`. Sanctions/proliferation (10): `nested_designation_match`, `dual_use_chemical_routing`, `proliferation_finance_unscr1540`, `ransomware_payment_indicator`, `iran_oil_sts_transfer`, `russia_oil_price_cap_evasion`, `dprk_it_worker_payment`, `vessel_callsign_manipulation`, `sanctioned_jurisdiction_layering`, `fronting_company_indicator`. TBML (9): `tbml_invoice_manipulation`, `phantom_shipment_detection`, `carousel_vat_fraud`, `circular_trade_pattern`, `multi_invoicing_anomaly`, `mis_described_goods`, `transfer_pricing_manipulation`, `round_tripping_pattern`, `import_export_ratio_anomaly`. Crypto (17): `mixer_forensics`, `utxo_clustering`, `bridge_crossing_trace`, `crypto_chain_hop_layering`, `nft_wash_trading`, `travel_rule_compliance_gap`, `unhosted_wallet_high_volume`, `peeling_chain_pattern`, `coinjoin_participation`, `tornado_cash_proximity`, `lazarus_address_match`, `ofac_sdn_address_match`, `defi_recursive_loan`, `smart_contract_drain`, `flash_loan_attack_pattern`, `rugpull_indicator`, `stablecoin_arbitrage_anomaly`. Trade/cargo (3): `vessel_ais_gap`, `dual_use_goods_routing`, `gold_smuggling_corridor`. DPMS/sectoral (10): `dpms_cash_structuring_split`, `dpms_fictitious_supplier`, `precious_stones_provenance_gap`, `bullion_warehouse_anomaly`, `assay_certificate_inconsistency`, `art_auction_provenance_gap`, `casino_chip_dumping`, `real_estate_underpricing`, `hawala_ivts_pattern`, `cash_courier_threshold`. Network/professional (3): `mule_cluster_detection`, `professional_enabler_pattern`, `legal_pooled_account_abuse`. Banking (2): `wire_stripping_indicator`, `correspondent_banking_nesting`. UBO/structures (8): `shell_company_indicator`, `ftz_layered_ownership`, `family_office_trust_transparency`, `dormant_company_reactivation`, `director_resignation_cluster`, `registered_agent_concentration`, `mass_filing_same_day`, `nested_designation_match`. PEP/corruption (6): `pep_proximity_chain`, `domestic_pep_concentration`, `soe_executive_payout`, `electoral_window_anomaly`, `judicial_payment_correlation`, `procurement_kickback_pattern`, `extractive_payment_opacity`. Predicate offences (8): `human_trafficking_pattern`, `wildlife_trafficking_indicator`, `drug_proceeds_indicator`, `illegal_logging_payment`, `tax_evasion_offshore`, `fraud_419_pattern`, `counterfeit_supply_chain`, `smuggling_corridor_uae`. TF/NPO (1): `npo_high_risk_outflow`. KYC/identity (9): `non_face_to_face_kyc_anomaly`, `synthetic_identity_indicator`, `id_document_deepfake`, `address_aggregation_red_flag`, `multi_account_same_device`, `disposable_email_signal`, `voip_phone_anomaly`, `sim_swap_indicator`, `velocity_account_creation`. Behavioral (10): `rapid_layering_pattern`, `funnel_account_indicator`, `circular_payment_loop`, `dormant_to_active_anomaly`, `round_amount_clustering`, `midnight_burst_pattern`, `salary_account_misuse`, `atm_density_anomaly`, `impossible_geo_velocity`, `chargeback_ring_pattern`. Securities/insurance (6): `insurance_premium_dump`, `life_policy_third_party_assignment`, `securities_swap_layering`, `wash_trading_securities`, `spoofing_layering`, `pump_and_dump_indicator`. |
 | 8 | Probabilistic regulatory ontology | ✅ | `src/brain/regulatory-ontology.ts`. |
 | 9 | Typology-prior calibration from real cases | ✅ | `src/brain/typology-prior-calibration.ts`. |
 | 10 | Sectoral overlays | ✅ | `src/brain/sectoral-overlays.ts` — 14 sectors. |
@@ -138,18 +138,14 @@ surface area; none are abandoned.
 | 56 | End-to-end SOC2-ready audit log export | ✅ | `GET /api/compliance/soc2-export`. |
 | 57 | GDPR / right-to-erasure handling | ✅ | `POST /api/compliance/gdpr-erasure`. |
 
-## Items shipped: 55 of 57 (catalogue) + 23 of ~100 wave-3 modes
+## Items shipped: 56 of 57 (catalogue) + 100 of ~100 wave-3 modes
 
-17+ commits, ~9,000+ LoC of real working code (not stubs). All
-wave-3 modes are wired into `MODE_OVERRIDES` so they take effect
+18+ commits, ~13,000+ LoC of real working code (not stubs). All
+100 wave-3 modes wired into `MODE_OVERRIDES` so they take effect
 when the brain runs.
 
-## 2 items still open + 1 partial
+## 1 item still open
 
-- **#7** — 77 of ~100 wave-3 modes still pending. 23 shipped
-  end-to-end (registered, typed, anchored). The remaining ~77 are
-  sector-specific typology detectors that follow the same pattern
-  (~70-80 LoC each).
 - **#38** — FDL 20/2018 → FDL 10/2025 article cross-walk. **BLOCKED
   on user** — needs verified article-number mapping from legal
   counsel before bulk citation rewrite is safe.
