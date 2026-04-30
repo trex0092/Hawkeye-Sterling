@@ -7,6 +7,27 @@ import type { QuickScreenResponse } from "@/lib/api/quickScreen.types";
 type Step = 1 | 2 | 3 | 4 | 5;
 type Tier = "tier-1" | "tier-2" | "tier-3";
 
+// Per the entity-only refactor: the wizard onboards ENTITIES (legal
+// persons / organisations / vessels), not natural persons. Relationship
+// type is multi-select so a counterparty can be both Supplier AND
+// Refiner, etc.
+type RelationshipType =
+  | "supplier"
+  | "customer"
+  | "correspondent"
+  | "intermediary"
+  | "counterparty"
+  | "refiner";
+
+const RELATIONSHIP_OPTIONS: Array<{ id: RelationshipType; label: string }> = [
+  { id: "supplier",      label: "Supplier" },
+  { id: "customer",      label: "Customer" },
+  { id: "correspondent", label: "Correspondent" },
+  { id: "intermediary",  label: "Intermediary" },
+  { id: "counterparty",  label: "Counterparty" },
+  { id: "refiner",       label: "Refiner" },
+];
+
 interface ScreeningHit {
   listId: string;
   candidateName: string;
@@ -63,15 +84,13 @@ interface AdvisorResponseV1 {
 }
 
 interface Draft {
-  // Step 1: Identity
-  fullName: string;
-  dob: string;
-  nationality: string;
-  idType: string;
-  idNumber: string;
-  address: string;
+  // Step 1: Entity (legal person / organisation / vessel — never natural)
+  fullName: string;          // Entity legal name
+  registeredCountry: string; // ISO-2 of country of registration
+  idNumber: string;          // Trade-licence / registration / IMO
+  relationshipTypes: RelationshipType[]; // multi-select; >= 1 required
   // Step 2: CDD
-  occupation: string;
+  occupation: string;        // Sector / business activity
   sourceOfFunds: string;
   expectedProfile: string;
   // Step 3: Screening
@@ -91,11 +110,9 @@ interface Draft {
 
 const BLANK_DRAFT: Draft = {
   fullName: "",
-  dob: "",
-  nationality: "",
-  idType: "passport",
+  registeredCountry: "",
   idNumber: "",
-  address: "",
+  relationshipTypes: [],
   occupation: "",
   sourceOfFunds: "",
   expectedProfile: "",
@@ -106,10 +123,10 @@ const STORAGE_DRAFT = "hawkeye.onboarding.draft.v1";
 const STORAGE_RECORDS = "hawkeye.onboarding.v1";
 
 const STEPS: Array<{ id: Step; label: string; sub: string }> = [
-  { id: 1, label: "Identity",   sub: "Name · DOB · ID" },
-  { id: 2, label: "CDD",        sub: "Occupation · SoF" },
-  { id: 3, label: "Screening",  sub: "Sanctions · PEP · adverse" },
-  { id: 4, label: "Risk-rate",  sub: "Tier 1 / 2 / 3" },
+  { id: 1, label: "Entity",        sub: "Name · Country · Reg #" },
+  { id: 2, label: "CDD",           sub: "Sector · SoF" },
+  { id: 3, label: "Screening",     sub: "Sanctions · PEP · adverse" },
+  { id: 4, label: "Risk-rate",     sub: "Tier 1 / 2 / 3" },
   { id: 5, label: "MLRO sign-off", sub: "Disposition" },
 ];
 
@@ -124,8 +141,8 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
   const payload = {
     subject: {
       name: subjectName,
-      entityType: "individual" as const,
-      ...(draft.nationality ? { jurisdiction: draft.nationality } : {}),
+      entityType: "organisation" as const,
+      ...(draft.registeredCountry ? { jurisdiction: draft.registeredCountry } : {}),
     },
     options: { scoreThreshold: 0.85, maxHits: 25 },
   };
@@ -156,13 +173,15 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
 
 function localFallback(draft: Draft): { hits: ScreeningHit[]; source: "fallback" } {
   const hits: ScreeningHit[] = [];
-  const nat = draft.nationality.trim().toUpperCase().slice(0, 2);
+  const nat = draft.registeredCountry.trim().toUpperCase().slice(0, 2);
   if (["IR", "KP", "MM", "SY"].includes(nat)) {
     hits.push({ listId: "fatf-call-for-action", candidateName: `${nat} jurisdiction nexus`, score: 0.92 });
   }
+  // Entity-shape name signals — keeps the offline path defensible when
+  // the live API is unreachable.
   const name = draft.fullName.toLowerCase();
-  if (/\b(putin|kim|khamenei|maduro)\b/.test(name)) {
-    hits.push({ listId: "ofac-sdn", candidateName: draft.fullName, score: 0.88 });
+  if (/\b(?:rosneft|gazprom|sberbank|huawei|zte|kaspersky|vtb)\b/.test(name)) {
+    hits.push({ listId: "sectoral-sanctions", candidateName: draft.fullName, score: 0.88 });
   }
   return { hits, source: "fallback" };
 }
@@ -179,12 +198,12 @@ async function computeTier(draft: Draft): Promise<RiskTierResult | null> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         fullName: draft.fullName,
-        nationalityIso2: draft.nationality.trim().toUpperCase().slice(0, 2),
-        dob: draft.dob,
+        nationalityIso2: draft.registeredCountry.trim().toUpperCase().slice(0, 2),
+        // dob omitted — entities don't have one; the scorer's age axis
+        // is dormant on entity flows.
         occupation: draft.occupation,
         sourceOfFunds: draft.sourceOfFunds,
         expectedProfile: draft.expectedProfile,
-        address: draft.address,
         screeningHits: draft.screeningHits ?? [],
       }),
     });
@@ -208,7 +227,7 @@ function localTierFallback(draft: Draft): RiskTierResult {
   if (hits.length > 0) {
     factors.push({ id: "screening_hit", label: `${hits.length} screening hit(s)`, points: 50 });
   }
-  const nat = draft.nationality.trim().toUpperCase().slice(0, 2);
+  const nat = draft.registeredCountry.trim().toUpperCase().slice(0, 2);
   const FATF_LISTED = new Set(["IR", "KP", "MM", "AF", "CD", "NG", "SD", "YE"]);
   if (FATF_LISTED.has(nat)) {
     factors.push({ id: "jurisdiction", label: "FATF-listed jurisdiction", points: 30 });
@@ -223,7 +242,7 @@ function localTierFallback(draft: Draft): RiskTierResult {
     tier,
     score,
     factors,
-    rationale: factors.length === 0 ? "Standard customer — no elevated indicators (local fallback)." : factors.map((f) => f.label).join("; "),
+    rationale: factors.length === 0 ? "Standard entity — no elevated indicators (local fallback)." : factors.map((f) => f.label).join("; "),
     jurisdictionHits: [],
   };
 }
@@ -231,10 +250,10 @@ function localTierFallback(draft: Draft): RiskTierResult {
 // Per-step audit log — appends to the Layer-4 audit log via
 // /api/onboarding-audit. Fire-and-forget; never blocks the UI.
 function recordStepTransition(fromStep: Step, toStep: Step, draft: Draft): void {
-  // Only the safe fields — no document binaries, no full address text.
+  // Only the safe fields — no document binaries, no full text PII.
   const draftSnapshot = {
-    nationality: draft.nationality,
-    idType: draft.idType,
+    registeredCountry: draft.registeredCountry,
+    relationshipTypes: draft.relationshipTypes,
     occupation: draft.occupation.slice(0, 80),
     screened: !!draft.screenedAt,
     hits: (draft.screeningHits ?? []).length,
@@ -253,9 +272,11 @@ function recordStepTransition(fromStep: Step, toStep: Step, draft: Draft): void 
 // AdvisorResponseV1 on success; null if the model fell back to the
 // legacy free-form narrative path.
 async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1 | null> {
+  const relationships = draft.relationshipTypes.join(", ") || "(no relationship type)";
   const question =
-    `Onboarding decision narrative for ${draft.fullName} (nationality ${draft.nationality.toUpperCase()}). ` +
-    `Occupation: ${draft.occupation}. ` +
+    `Onboarding decision narrative for ENTITY ${draft.fullName} (registered ${draft.registeredCountry.toUpperCase()}, registration # ${draft.idNumber}). ` +
+    `Relationship type(s): ${relationships}. ` +
+    `Sector / business activity: ${draft.occupation}. ` +
     `Source of funds: ${draft.sourceOfFunds}. ` +
     `Expected profile: ${draft.expectedProfile}. ` +
     `Risk tier: ${draft.riskTier} (${draft.riskRationale}). ` +
@@ -268,8 +289,8 @@ async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1
       body: JSON.stringify({
         question,
         subjectName: draft.fullName,
-        entityType: "individual",
-        jurisdiction: draft.nationality,
+        entityType: "organisation",
+        jurisdiction: draft.registeredCountry,
         mode: "balanced",
         audience: "regulator",
         structured: true,
@@ -357,18 +378,21 @@ export default function OnboardingWizardPage() {
       cancelled = true;
     };
   }, [
-    draft.nationality,
-    draft.dob,
+    draft.registeredCountry,
     draft.occupation,
     draft.sourceOfFunds,
     draft.expectedProfile,
-    draft.address,
     draft.fullName,
     draft.screeningHits,
+    draft.relationshipTypes,
   ]);
 
   const can: Record<Step, boolean> = {
-    1: draft.fullName.trim().length > 1 && draft.dob.length === 10 && draft.nationality.length >= 2 && draft.idNumber.trim().length > 0,
+    1:
+      draft.fullName.trim().length > 1 &&
+      draft.registeredCountry.trim().length >= 2 &&
+      draft.idNumber.trim().length > 0 &&
+      draft.relationshipTypes.length > 0,
     2: draft.occupation.trim().length > 0 && draft.sourceOfFunds.trim().length > 0,
     3: !!draft.screenedAt,
     4: !!draft.riskTier,
@@ -512,15 +536,57 @@ export default function OnboardingWizardPage() {
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6">
         {step === 1 && (
           <div className="space-y-3">
-            <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Identity</h2>
-            <Field label="Full name" value={draft.fullName} onChange={(v) => set("fullName", v)} />
-            <Field label="Date of birth (YYYY-MM-DD)" value={draft.dob} onChange={(v) => set("dob", v)} placeholder="1985-04-12" />
-            <Field label="Nationality (ISO-2)" value={draft.nationality} onChange={(v) => set("nationality", v.toUpperCase().slice(0, 2))} placeholder="AE" />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="ID type" value={draft.idType} onChange={(v) => set("idType", v)} />
-              <Field label="ID number" value={draft.idNumber} onChange={(v) => set("idNumber", v)} />
+            <h2 className="text-14 font-semibold text-ink-0 m-0 mb-1">Entity</h2>
+            <p className="text-11 text-ink-3 m-0 mb-2">
+              The wizard onboards entities only — legal persons, organisations,
+              vessels, refiners. Not natural persons.
+            </p>
+            <Field label="Name *" value={draft.fullName} onChange={(v) => set("fullName", v)} placeholder="Entity legal name" />
+            <div>
+              <span className="block text-11 font-mono uppercase tracking-wide-3 text-ink-2 mb-1">
+                Relationship type * (multi-select)
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {RELATIONSHIP_OPTIONS.map((opt) => {
+                  const selected = draft.relationshipTypes.includes(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setDraft((prev) => ({
+                          ...prev,
+                          relationshipTypes: selected
+                            ? prev.relationshipTypes.filter((t) => t !== opt.id)
+                            : [...prev.relationshipTypes, opt.id],
+                        }));
+                      }}
+                      className={`text-11 font-mono uppercase tracking-wide-3 px-2 py-1 rounded border transition ${
+                        selected
+                          ? "bg-brand text-white border-brand"
+                          : "bg-bg-1 text-ink-2 border-hair-2 hover:text-brand hover:border-brand"
+                      }`}
+                    >
+                      {selected ? "✓ " : ""}{opt.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <Field label="Address" value={draft.address} onChange={(v) => set("address", v)} multiline />
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Registered country (ISO-2) *"
+                value={draft.registeredCountry}
+                onChange={(v) => set("registeredCountry", v.toUpperCase().slice(0, 2))}
+                placeholder="AE"
+              />
+              <Field
+                label="ID number *"
+                value={draft.idNumber}
+                onChange={(v) => set("idNumber", v)}
+                placeholder="Trade-licence / registration / IMO"
+              />
+            </div>
           </div>
         )}
 
@@ -686,8 +752,14 @@ export default function OnboardingWizardPage() {
             <div className="bg-bg-1 border border-hair-2 rounded p-3 mb-2">
               <div className="text-11 font-mono text-ink-2 uppercase mb-1">Summary</div>
               <div className="text-12 text-ink-0">
-                <strong>{draft.fullName || "—"}</strong> · {draft.nationality || "??"} · {draft.idType} {draft.idNumber} · tier{" "}
-                <strong>{draft.riskTier ?? "?"}</strong> · {draft.screeningHits?.length ?? 0} screening hit(s)
+                <strong>{draft.fullName || "—"}</strong>
+                {" · "}{draft.registeredCountry || "??"}
+                {" · reg # "}{draft.idNumber || "?"}
+                {draft.relationshipTypes.length > 0 && (
+                  <>{" · "}{draft.relationshipTypes.join("/")}</>
+                )}
+                {" · tier "}<strong>{draft.riskTier ?? "?"}</strong>
+                {" · "}{draft.screeningHits?.length ?? 0} screening hit(s)
               </div>
             </div>
 
