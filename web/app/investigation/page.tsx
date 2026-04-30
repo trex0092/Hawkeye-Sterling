@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
@@ -84,6 +84,14 @@ function buildGraph(
 
 type SearchKind = "entity" | "individual";
 
+interface BrainAnalysis {
+  narrative: string;
+  typologies: string[];
+  keyRelationships: string[];
+  nextSteps: string[];
+  riskLevel: "critical" | "high" | "medium" | "low";
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 export default function InvestigationPage() {
   const [focus, setFocus] = useState<string | null>(null);
@@ -94,6 +102,11 @@ export default function InvestigationPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [allCases, setAllCases] = useState<CaseRecord[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Brain Analysis state
+  const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
+  const [brainLoading, setBrainLoading] = useState(false);
+  const [brainError, setBrainError] = useState<string | null>(null);
 
   // Load cases from localStorage on mount
   useEffect(() => {
@@ -142,8 +155,158 @@ export default function InvestigationPage() {
     setQuery("");
     setFocus(null);
     setShowSuggestions(false);
+    setBrainAnalysis(null);
+    setBrainError(null);
     inputRef.current?.focus();
   }
+
+  // Derive matched cases for the committed subject
+  const matchedCases = useMemo(() => {
+    if (!committed) return [];
+    return allCases.filter(
+      (c) => c.subject.toLowerCase() === committed.toLowerCase(),
+    );
+  }, [committed, allCases]);
+
+  const analyzeSubject = useCallback(async () => {
+    if (!committed) return;
+
+    setBrainLoading(true);
+    setBrainError(null);
+    setBrainAnalysis(null);
+
+    try {
+      const caseList = matchedCases.map((c) => c.id).join(", ") || "none on record";
+      const question = `Generate a link-analysis investigation brief for subject ${committed}. Connected cases: ${caseList}. What typologies are indicated? What relationships should be investigated next? What is the overall risk level?`;
+
+      // Call MLRO Advisor for investigation narrative
+      const advisorRes = await fetch("/api/mlro-advisor", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          question,
+          subjectName: committed,
+          entityType: committedKind === "entity" ? "organisation" : "individual",
+          mode: "forensic",
+          audience: "mlro",
+        }),
+      });
+
+      let advisorNarrative = "";
+      if (advisorRes.ok) {
+        const advisorData = (await advisorRes.json()) as { narrative?: string };
+        advisorNarrative = advisorData.narrative ?? "";
+      }
+
+      // Call triage endpoint with slim case data
+      const slimCases = matchedCases.map((c) => ({
+        id: c.id,
+        subject: c.subject,
+        meta: c.meta,
+        status: c.status,
+        screeningHits: c.screeningSnapshot?.result?.hits?.map((h) => ({
+          listId: h.listId ?? "unknown",
+          score: h.score ?? 0,
+        })),
+      }));
+
+      let triageTypologies: string[] = [];
+      let triageSimilarityGroups: string[] = [];
+
+      if (slimCases.length > 0) {
+        const triageRes = await fetch("/api/cases/triage", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ cases: slimCases }),
+        });
+
+        if (triageRes.ok) {
+          const triageData = (await triageRes.json()) as {
+            triaged?: Array<{
+              typologies: string[];
+              similarityGroup: string;
+              escalation: string;
+            }>;
+          };
+
+          // Aggregate unique typologies and similarity groups from all triaged cases
+          const typSet = new Set<string>();
+          const groupSet = new Set<string>();
+          for (const t of triageData.triaged ?? []) {
+            for (const typ of t.typologies) typSet.add(typ);
+            groupSet.add(t.similarityGroup);
+          }
+          triageTypologies = Array.from(typSet);
+          triageSimilarityGroups = Array.from(groupSet);
+        }
+      }
+
+      // Derive risk level from narrative keywords + triage signals
+      const narrativeLower = advisorNarrative.toLowerCase();
+      let riskLevel: BrainAnalysis["riskLevel"] = "medium";
+      if (
+        narrativeLower.includes("critical") ||
+        narrativeLower.includes("immediate") ||
+        narrativeLower.includes("sanctions")
+      ) {
+        riskLevel = "critical";
+      } else if (
+        narrativeLower.includes("high risk") ||
+        narrativeLower.includes("significant") ||
+        narrativeLower.includes("pep")
+      ) {
+        riskLevel = "high";
+      } else if (
+        narrativeLower.includes("low risk") ||
+        narrativeLower.includes("minimal") ||
+        narrativeLower.includes("no concern")
+      ) {
+        riskLevel = "low";
+      }
+
+      // Extract key relationships from narrative — sentences containing "investigate" or named entities
+      const keyRelationships: string[] = [];
+      if (triageSimilarityGroups.length > 0) {
+        keyRelationships.push(
+          ...triageSimilarityGroups.map((g) => `Similarity cluster: ${g}`),
+        );
+      }
+      if (matchedCases.length > 0) {
+        keyRelationships.push(
+          `${matchedCases.length} case${matchedCases.length !== 1 ? "s" : ""} linked to subject`,
+        );
+      }
+      if (keyRelationships.length === 0) {
+        keyRelationships.push("No linked cases on record — verify subject identity");
+      }
+
+      // Extract next steps — last 1-2 sentences of the narrative or fallback
+      const sentences = advisorNarrative
+        .split(/(?<=[.!?])\s+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 20);
+      const nextSteps =
+        sentences.length >= 2
+          ? sentences.slice(-2)
+          : sentences.length === 1
+            ? sentences
+            : ["Review all connected cases and escalate if typology signals confirm."];
+
+      setBrainAnalysis({
+        narrative: advisorNarrative || "No narrative generated. Check MLRO Advisor configuration.",
+        typologies: triageTypologies.length > 0 ? triageTypologies : ["No typologies identified"],
+        keyRelationships,
+        nextSteps,
+        riskLevel,
+      });
+    } catch (err) {
+      setBrainError(
+        err instanceof Error ? err.message : "Brain analysis failed",
+      );
+    } finally {
+      setBrainLoading(false);
+    }
+  }, [committed, committedKind, matchedCases]);
 
   return (
     <ModuleLayout asanaModule="investigation" asanaLabel="Investigation">
@@ -368,6 +531,104 @@ export default function InvestigationPage() {
             ))}
           </div>
         </div>
+
+        {/* ── Brain Analysis panel ─────────────────────────────────────── */}
+        {committed && (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-mono text-11 font-semibold text-ink-1 uppercase tracking-wide-3">
+                Brain Analysis
+              </h3>
+              <button
+                type="button"
+                onClick={() => void analyzeSubject()}
+                disabled={brainLoading}
+                className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-1.5 rounded border cursor-pointer bg-brand text-white border-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {brainLoading ? "Analyzing…" : "Generate Brain Analysis"}
+              </button>
+            </div>
+
+            {brainLoading && (
+              <p className="font-mono text-11 text-ink-3 animate-pulse">
+                Analyzing <span className="text-ink-1 font-semibold">{committed}</span> via brain…
+              </p>
+            )}
+
+            {brainError && !brainLoading && (
+              <p className="font-mono text-11 text-amber-600">{brainError}</p>
+            )}
+
+            {brainAnalysis && !brainLoading && (
+              <div className="space-y-3">
+                {/* Risk level badge */}
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-10.5 text-ink-3 uppercase tracking-wide-3">Risk level:</span>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10.5 font-bold uppercase tracking-wide-3 ${
+                      brainAnalysis.riskLevel === "critical"
+                        ? "bg-red-100 text-red-700 border border-red-300"
+                        : brainAnalysis.riskLevel === "high"
+                          ? "bg-amber-100 text-amber-700 border border-amber-300"
+                          : brainAnalysis.riskLevel === "medium"
+                            ? "bg-yellow-100 text-yellow-700 border border-yellow-300"
+                            : "bg-green-100 text-green-700 border border-green-300"
+                    }`}
+                  >
+                    {brainAnalysis.riskLevel}
+                  </span>
+                </div>
+
+                {/* Typologies */}
+                <div>
+                  <p className="font-mono text-10.5 text-ink-3 uppercase tracking-wide-3 mb-1">Typologies:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {brainAnalysis.typologies.map((t) => (
+                      <span
+                        key={t}
+                        className="font-mono text-10 text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-px"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Narrative */}
+                <div>
+                  <p className="font-mono text-10.5 text-ink-3 uppercase tracking-wide-3 mb-1">Investigation narrative:</p>
+                  <p className="font-mono text-11 text-ink-1 leading-relaxed">{brainAnalysis.narrative}</p>
+                </div>
+
+                {/* Key relationships */}
+                <div>
+                  <p className="font-mono text-10.5 text-ink-3 uppercase tracking-wide-3 mb-1">Key relationships to investigate:</p>
+                  <ul className="space-y-0.5">
+                    {brainAnalysis.keyRelationships.map((r, i) => (
+                      <li key={i} className="font-mono text-11 text-ink-2 flex gap-2">
+                        <span className="text-ink-4">·</span>
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Next steps */}
+                <div>
+                  <p className="font-mono text-10.5 text-ink-3 uppercase tracking-wide-3 mb-1">Recommended next steps:</p>
+                  <ul className="space-y-0.5">
+                    {brainAnalysis.nextSteps.map((s, i) => (
+                      <li key={i} className="font-mono text-11 text-ink-2 flex gap-2">
+                        <span className="text-ink-4">·</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <p className="text-11 text-ink-3 mt-3 leading-relaxed">
           {committed
