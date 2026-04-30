@@ -2240,6 +2240,169 @@ export default function MlroAdvisorPage() {
                 })()}
               </div>
             )}
+
+            {/* Typology Match */}
+            {superToolsTab === "typology-match" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">FATF Typology Fingerprinter</div>
+                <p className="text-11 text-ink-3">Describe transaction facts or entity behavior — AI maps them to precise FATF ML/TF/PF typologies with case references and investigative priorities.</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Facts *</label>
+                    <textarea
+                      value={typoInput.facts}
+                      onChange={(e) => setTypoInput((prev) => ({ ...prev, facts: e.target.value }))}
+                      rows={5}
+                      placeholder="Describe the transaction, entity behavior, or scenario in detail…"
+                      className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Subject type</label>
+                      <input
+                        value={typoInput.subjectType}
+                        onChange={(e) => setTypoInput((prev) => ({ ...prev, subjectType: e.target.value }))}
+                        placeholder="individual, corporate, VASP, DPMS…"
+                        className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Transaction types (comma-separated)</label>
+                      <input
+                        value={typoInput.transactionTypes}
+                        onChange={(e) => setTypoInput((prev) => ({ ...prev, transactionTypes: e.target.value }))}
+                        placeholder="wire transfer, cash, crypto, trade finance…"
+                        className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Jurisdictions (comma-separated)</label>
+                      <input
+                        value={typoInput.jurisdictions}
+                        onChange={(e) => setTypoInput((prev) => ({ ...prev, jurisdictions: e.target.value }))}
+                        placeholder="AE, RU, IR, CN…"
+                        className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Red flags already identified (comma-separated)</label>
+                      <input
+                        value={typoInput.redFlags}
+                        onChange={(e) => setTypoInput((prev) => ({ ...prev, redFlags: e.target.value }))}
+                        placeholder="unusual cash volumes, no business rationale…"
+                        className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void runTypologyMatch()}
+                  disabled={typoMatchLoading || !typoInput.facts.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                >
+                  {typoMatchLoading ? "Matching…" : "Match Typologies"}
+                </button>
+                {typoMatch && (() => {
+                  const tm = typoMatch;
+                  const strengthCls = (s: string) => s === "strong" ? "bg-red text-white" : s === "moderate" ? "bg-amber-dim text-amber" : "bg-blue-dim text-blue";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      {/* Primary typology */}
+                      <div className="border border-hair-2 rounded-lg p-3 bg-bg-panel">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-12 font-bold text-ink-0">{tm.primaryTypology.name}</span>
+                          <span className={`font-mono text-9 px-1.5 py-px rounded uppercase font-semibold ${strengthCls(tm.primaryTypology.matchStrength)}`}>{tm.primaryTypology.matchStrength}</span>
+                        </div>
+                        <div className="text-10 font-mono text-ink-3 mb-1">{tm.primaryTypology.fatfReference}</div>
+                        <div className="text-11 text-ink-1">{tm.primaryTypology.matchRationale}</div>
+                      </div>
+                      {/* Secondary typologies */}
+                      {tm.secondaryTypologies.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Secondary typologies</div>
+                          <div className="space-y-2">
+                            {tm.secondaryTypologies.map((s, i) => (
+                              <div key={i} className="border border-hair rounded-lg p-2.5 bg-bg-panel">
+                                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                  <span className="text-11 font-medium text-ink-0">{s.name}</span>
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase font-semibold ${strengthCls(s.matchStrength)}`}>{s.matchStrength}</span>
+                                </div>
+                                <div className="text-9 font-mono text-ink-3 mb-0.5">{s.fatfReference}</div>
+                                <div className="text-10 text-ink-3 italic">{s.overlap}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Key indicators */}
+                      {tm.keyIndicators.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Key indicators triggered</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {tm.keyIndicators.map((ind, i) => (
+                              <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red font-medium">{ind}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Missing indicators */}
+                      {tm.missingIndicators.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Investigate these (missing indicators)</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {tm.missingIndicators.map((ind, i) => (
+                              <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-amber-dim text-amber font-medium">{ind}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Investigative priorities */}
+                      {tm.investigativePriorities.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Investigative priorities</div>
+                          <ol className="space-y-2">
+                            {tm.investigativePriorities.map((p, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="font-mono text-10 px-1.5 py-px rounded bg-bg-2 text-ink-2 shrink-0 mt-0.5">{p.step}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                    <span className="text-12 font-bold text-ink-0">{p.action}</span>
+                                    <span className="font-mono text-9 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{p.tool}</span>
+                                  </div>
+                                  <div className="text-11 text-ink-3">{p.rationale}</div>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+                      {/* STR threshold */}
+                      <div className="border border-hair-2 rounded p-3 bg-bg-panel">
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">STR Threshold Assessment</div>
+                        <div className="text-12 text-ink-0">{tm.strThreshold}</div>
+                      </div>
+                      {/* Predicate offence */}
+                      {tm.predicate && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-10 uppercase tracking-wide-3 text-ink-3">Predicate offence:</span>
+                          <span className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red font-semibold">{tm.predicate}</span>
+                        </div>
+                      )}
+                      {/* UAE case context */}
+                      {tm.uaeCaseContext && (
+                        <div className="text-11 text-ink-1">{tm.uaeCaseContext}</div>
+                      )}
+                      {/* Regulatory basis */}
+                      {tm.regulatoryBasis && (
+                        <div className="font-mono text-10 text-ink-3">{tm.regulatoryBasis}</div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         )}
       </div>
