@@ -28,6 +28,7 @@ import {
   saveCases,
 } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
+import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
   saveOperatorRole,
@@ -141,6 +142,8 @@ export default function StrCasesPage() {
   // reload erased every filing, and the /cases module never saw them.
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
+  // goAML export modal — prefilled from the row clicked.
+  const [goamlPrefill, setGoamlPrefill] = useState<CasePrefill | null>(null);
   const [editCaseDraft, setEditCaseDraft] = useState({ title: "", subject: "", status: "" });
   useEffect(() => {
     if (!canPerform(role, "str_read")) return;
@@ -583,18 +586,34 @@ export default function StrCasesPage() {
                         })()}
                       </td>
                       <td className="px-2 py-2 text-right">
-                        <RowActions
-                          label={`case ${c.id}`}
-                          onEdit={() => {
-                            setEditingCaseId(c.id);
-                            setEditCaseDraft({ title: c.title, subject: c.subject, status: c.status });
-                          }}
-                          onDelete={() => {
-                            deleteCase(c.id);
-                            setCases((prev) => prev.filter((x) => x.id !== c.id));
-                          }}
-                          deleteConfirmMessage={`Delete case ${c.id}? Audit-trail entries remain in the sealed chain; only the register row is removed.`}
-                        />
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setGoamlPrefill({
+                              id: c.id,
+                              subject: c.subject,
+                              reportKind: c.reportKind,
+                              amountAed: c.amountAed,
+                            })}
+                            aria-label={`Export case ${c.id} to goAML`}
+                            title="Export to goAML"
+                            className="w-[18px] h-[18px] rounded-sm flex items-center justify-center text-11 leading-none text-ink-3/60 hover:bg-brand-dim hover:text-brand-deep transition-all hover:scale-110 font-mono"
+                          >
+                            ⇪
+                          </button>
+                          <RowActions
+                            label={`case ${c.id}`}
+                            onEdit={() => {
+                              setEditingCaseId(c.id);
+                              setEditCaseDraft({ title: c.title, subject: c.subject, status: c.status });
+                            }}
+                            onDelete={() => {
+                              deleteCase(c.id);
+                              setCases((prev) => prev.filter((x) => x.id !== c.id));
+                            }}
+                            deleteConfirmMessage={`Delete case ${c.id}? Audit-trail entries remain in the sealed chain; only the register row is removed.`}
+                          />
+                        </div>
                       </td>
                     </tr>
                     )
@@ -603,6 +622,11 @@ export default function StrCasesPage() {
               </table>
             </div>
       )}
+      <GoamlExportModal
+        open={goamlPrefill != null}
+        onClose={() => setGoamlPrefill(null)}
+        prefill={goamlPrefill ?? undefined}
+      />
     </ModuleLayout>
   );
 }
