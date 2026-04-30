@@ -250,6 +250,7 @@ export default function RmiPage() {
   const [edits, setEdits] = useState<Record<string, SmelterEdit>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<SmelterEdit>({});
+  const [addedSmelters, setAddedSmelters] = useState<Smelter[]>([]);
 
   useEffect(() => {
     try {
@@ -307,10 +308,10 @@ export default function RmiPage() {
   };
 
   const liveSmelters = useMemo(
-    () => SMELTERS
+    () => [...addedSmelters, ...SMELTERS]
       .filter((s) => !deletedIds.includes(s.id))
       .map((s) => ({ ...s, ...(edits[s.id] ?? {}) }) as Smelter),
-    [deletedIds, edits],
+    [deletedIds, edits, addedSmelters],
   );
   const visible = mineralFilter === "all" ? liveSmelters : liveSmelters.filter((s) => s.mineral === mineralFilter);
 
@@ -531,6 +532,27 @@ export default function RmiPage() {
           <button type="button" onClick={restoreAll} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
         </div>
       )}
+
+      {/* Add smelter button */}
+      <div className="flex justify-end mb-3">
+        <button
+          type="button"
+          onClick={() => {
+            const id = `custom-${Date.now()}`;
+            const blank: Smelter = {
+              id, name: "New Smelter", country: "", countryCode: "", mineral: "gold",
+              rmapStatus: "not-enrolled", rmapId: "", cahraRisk: "low",
+              lastAuditDate: "", nextAuditDue: "", activeSupplier: true,
+              flags: [], notes: "",
+            };
+            setAddedSmelters((prev) => [blank, ...prev]);
+            startEdit(blank);
+          }}
+          className="px-3 py-1.5 border border-brand/40 rounded text-11 font-semibold text-brand bg-brand-dim hover:bg-brand/20 transition-colors"
+        >
+          + Add smelter
+        </button>
+      </div>
 
       {/* Mineral filter tabs */}
       <div className="flex gap-1 mb-4 border-b border-hair-2">
