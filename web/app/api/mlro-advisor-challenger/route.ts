@@ -34,6 +34,18 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+// Module-level safety net — see /api/compliance-qa for rationale.
+const REJECTION_GUARD_KEY = "__hsMlroChallengerRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) return;
+    console.error("[mlro-advisor-challenger] unhandled rejection", msg);
+  });
+}
+
 // Sonnet 4.6 — same model the existing Deep-mode challenger uses
 // (src/integrations/mlroAdvisor.ts). Critiquing requires strong reasoning;
 // Haiku is too shallow to spot weak citations reliably.
