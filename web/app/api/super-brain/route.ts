@@ -12,6 +12,7 @@ import { jurisdictionByName } from "../../../../dist/src/brain/jurisdictions-ful
 import { isCahra } from "../../../../dist/src/brain/cahra.js";
 import { regimesForJurisdiction } from "../../../../dist/src/brain/sanction-regimes.js";
 import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../dist/src/brain/cross-regime-conflict.js";
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
 import { expandAliases } from "../../../../dist/src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../dist/src/brain/matching.js";
@@ -229,6 +230,51 @@ export async function POST(req: Request): Promise<NextResponse> {
       .split(/\W+/)
       .filter((t) => t.length >= 3);
     const redlines = evaluateRedlines(redlineKeywords);
+
+    // 5b · Cross-regime conflict detection. Builds per-regime designation
+    // status from the quickScreen hits across the six core authoritative
+    // lists, then runs the dedicated detector. Surfaces split-regime cases
+    // (e.g. UN designates, OFAC clean — apply most-restrictive-regime rule)
+    // that the composite formula alone could not auto-escalate. The
+    // recommendedAction is informational here; super-brain doesn't
+    // override its own composite outcome based on it (the MLRO Advisor +
+    // disposition flow consume `crossRegimeConflict` to escalate).
+    const REGIME_LIST_IDS = [
+      "un_1267",
+      "ofac_sdn",
+      "eu_consolidated",
+      "uk_ofsi",
+      "uae_eocn",
+      "uae_local_terrorist",
+    ] as const;
+    const hitsByList = new Map<string, typeof screen.hits>();
+    for (const h of screen.hits) {
+      const arr = hitsByList.get(h.listId);
+      if (arr) arr.push(h);
+      else hitsByList.set(h.listId, [h]);
+    }
+    const regimeStatuses: RegimeStatus[] = REGIME_LIST_IDS.map((listId) => {
+      const hits = hitsByList.get(listId);
+      let hitState: RegimeStatus["hit"];
+      let sourceRef: string | undefined;
+      if (!hits || hits.length === 0) {
+        hitState = "not_designated";
+      } else {
+        const best = hits.reduce((a, b) => (b.score > a.score ? b : a));
+        if (best.score >= 0.85) hitState = "designated";
+        else if (best.score >= 0.5) hitState = "partial_match";
+        else hitState = "partial_match";
+        sourceRef = best.listRef;
+      }
+      const status: RegimeStatus = {
+        regimeId: listId,
+        hit: hitState,
+        asOf: screen.generatedAt,
+      };
+      if (sourceRef !== undefined) status.sourceRef = sourceRef;
+      return status;
+    });
+    const crossRegimeConflict = detectCrossRegimeConflict(regimeStatuses);
 
     // 6 · Name variants — transliteration / phonetic / alias expansion
     //     surfaces the phonetic tokens the matching engine uses under the hood.
@@ -463,6 +509,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       adverseMediaScored,
       pepAssessment,
       stylometry,
+      crossRegimeConflict,
       composite: {
         score: composite,
         breakdown: {
