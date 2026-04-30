@@ -294,6 +294,59 @@ function saveOversightOverlay(o: OversightOverlay): void {
 
 type Tab = "approvals" | "minutes" | "circulars";
 
+// ── Gap Analysis ─────────────────────────────────────────────────────────────
+
+interface GapAnalysisResult {
+  gaps: string[];
+  overdueItems: string[];
+  breachRisks: string[];
+  deadlines: string[];
+  recommendation: string;
+}
+
+async function fetchGapAnalysis(
+  approvals: Approval[],
+  circulars: Circular[],
+  minutes: Minute[],
+): Promise<GapAnalysisResult> {
+  const pendingEscalated = approvals.filter((a) => a.status === "pending" || a.status === "escalated").map((a) => ({
+    id: a.id,
+    title: a.title,
+    category: a.category,
+    elapsedHours: a.elapsedHours,
+    slaHours: a.slaHours,
+    notes: a.notes,
+  }));
+
+  const openCirculars = circulars.filter((c) => c.disposition !== "implemented").map((c) => ({
+    ref: c.ref,
+    title: c.title,
+    dueDate: c.dueDate,
+    issuer: c.issuer,
+    notes: c.notes,
+  }));
+
+  const openActions = minutes.flatMap((m) =>
+    m.actionItems.filter((ai) => !ai.closed).map((ai) => ({
+      action: ai.action,
+      owner: ai.owner,
+      due: ai.due,
+      minute: m.title,
+    })),
+  );
+
+  const res = await fetch("/api/oversight-gap-analysis", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ pendingEscalatedApprovals: pendingEscalated, openCirculars, openActionItems: openActions }),
+  });
+
+  if (!res.ok) throw new Error(`Gap analysis API error: ${res.status}`);
+  const data = await res.json() as { ok: boolean; result: GapAnalysisResult; error?: string };
+  if (!data.ok) throw new Error(data.error ?? "Unknown error");
+  return data.result;
+}
+
 function SlaBar({ elapsed, sla }: { elapsed: number; sla: number }) {
   const pct = Math.min((elapsed / sla) * 100, 100);
   const over = elapsed > sla;
@@ -598,6 +651,9 @@ export default function OversightPage() {
   const [showAddCircular, setShowAddCircular] = useState(false);
   const [showAddApproval, setShowAddApproval] = useState(false);
   const [showAddMinute, setShowAddMinute] = useState(false);
+  const [gapAnalysis, setGapAnalysis] = useState<GapAnalysisResult | null>(null);
+  const [gapLoading, setGapLoading] = useState(false);
+  const [gapTimestamp, setGapTimestamp] = useState<string>("");
 
   // Inline edit state
   const [editingApprovalId, setEditingApprovalId] = useState<string | null>(null);
@@ -664,6 +720,19 @@ export default function OversightPage() {
   const liveMinutes = useMemo(() => [...MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), ...overlay.customMinutes], [overlay]);
   const liveCirculars = useMemo(() => [...CIRCULARS.filter((c) => !overlay.deletedCircularIds.includes(c.id)), ...overlay.customCirculars], [overlay]);
 
+  const runGapAnalysis = async () => {
+    setGapLoading(true);
+    try {
+      const result = await fetchGapAnalysis(liveApprovals, liveCirculars, liveMinutes);
+      setGapAnalysis(result);
+      setGapTimestamp(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    } catch (err) {
+      console.error("Gap analysis failed:", err);
+    } finally {
+      setGapLoading(false);
+    }
+  };
+
   const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
 
   const pendingApprovals = liveApprovals.filter((a) => a.status === "pending").length;
@@ -692,6 +761,120 @@ export default function OversightPage() {
           { value: String(liveCirculars.filter((c) => c.disposition === "implemented").length), label: "circulars closed" },
         ]}
       />
+
+      {/* ── AI Compliance Gap Analysis Banner ───────────────────────────── */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void runGapAnalysis()}
+            disabled={gapLoading}
+            className="text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-50 transition-colors"
+          >
+            {gapLoading ? "Analyzing compliance posture…" : "Run AI Gap Analysis"}
+          </button>
+          {gapAnalysis && !gapLoading && (
+            <span className="text-10 font-mono text-ink-3">Last run {gapTimestamp}</span>
+          )}
+        </div>
+
+        {gapAnalysis && (
+          <div className="mt-3 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-hair-2 bg-bg-1">
+              <div className="flex items-center gap-2">
+                <span className="text-12 font-semibold text-ink-0">AI Compliance Gap Analysis</span>
+                <span className="text-10 font-mono text-ink-3">{gapTimestamp}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGapAnalysis(null)}
+                className="text-12 text-ink-3 hover:text-ink-0 px-1 py-px rounded hover:bg-bg-2 leading-none"
+                aria-label="Dismiss gap analysis"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Recommendation box */}
+            <div className="px-4 py-3 border-b border-hair-2 bg-brand-dim/40">
+              <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-2 mb-1">MLRO Priority Recommendation</div>
+              <p className="text-12 font-semibold text-ink-0 leading-snug">{gapAnalysis.recommendation}</p>
+            </div>
+
+            {/* 4-section grid */}
+            <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-hair-2">
+              {/* Breach Risks */}
+              <div className="px-4 py-3">
+                <div className="text-10 font-mono uppercase tracking-wide-3 text-red mb-1.5 font-semibold">Regulatory Breach Risks</div>
+                {gapAnalysis.breachRisks.length === 0 ? (
+                  <p className="text-11 text-ink-3 italic">None identified</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {gapAnalysis.breachRisks.map((item, i) => (
+                      <li key={i} className="flex gap-1.5 text-11 text-ink-1 leading-snug">
+                        <span className="text-red font-mono shrink-0 mt-px">▪</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Overdue Items */}
+              <div className="px-4 py-3">
+                <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1.5 font-semibold">Overdue Items</div>
+                {gapAnalysis.overdueItems.length === 0 ? (
+                  <p className="text-11 text-ink-3 italic">None identified</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {gapAnalysis.overdueItems.map((item, i) => (
+                      <li key={i} className="flex gap-1.5 text-11 text-ink-1 leading-snug">
+                        <span className="text-amber font-mono shrink-0 mt-px">▪</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Compliance Gaps */}
+              <div className="px-4 py-3">
+                <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1.5 font-semibold">Compliance Gaps</div>
+                {gapAnalysis.gaps.length === 0 ? (
+                  <p className="text-11 text-ink-3 italic">None identified</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {gapAnalysis.gaps.map((item, i) => (
+                      <li key={i} className="flex gap-1.5 text-11 text-ink-1 leading-snug">
+                        <span className="text-amber font-mono shrink-0 mt-px">▪</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Critical Deadlines */}
+              <div className="px-4 py-3">
+                <div className="text-10 font-mono uppercase tracking-wide-3 text-blue mb-1.5 font-semibold">Critical Deadlines</div>
+                {gapAnalysis.deadlines.length === 0 ? (
+                  <p className="text-11 text-ink-3 italic">None identified</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {gapAnalysis.deadlines.map((item, i) => (
+                      <li key={i} className="flex gap-1.5 text-11 text-ink-1 leading-snug">
+                        <span className="text-blue font-mono shrink-0 mt-px">▪</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-hair-2">

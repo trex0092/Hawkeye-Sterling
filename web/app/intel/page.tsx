@@ -66,6 +66,43 @@ function sourceBadgeClass(source: string): string {
 
 // ── Regulatory Feed Panel ────────────────────────────────────────────────────
 
+interface TriageEntry {
+  relevance: number;
+  impact: "high" | "medium" | "low";
+  actionRequired: string;
+  deadline?: string;
+}
+
+async function fetchTriage(items: RegulatoryItem[]): Promise<Record<string, TriageEntry>> {
+  const compact = items.slice(0, 20).map((i) => ({
+    id: i.id,
+    title: i.title,
+    summary: i.snippet ?? "",
+    tone: i.tone,
+    source: i.source,
+  }));
+
+  const res = await fetch("/api/regulatory-triage", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ items: compact }),
+  });
+
+  if (!res.ok) throw new Error(`Triage API error: ${res.status}`);
+  const data = await res.json() as {
+    ok: boolean;
+    results: Array<{ id: string; relevance: number; impact: "high" | "medium" | "low"; actionRequired: string; deadline: string }>;
+    error?: string;
+  };
+  if (!data.ok) throw new Error(data.error ?? "Unknown error");
+
+  const map: Record<string, TriageEntry> = {};
+  for (const r of data.results ?? []) {
+    map[r.id] = { relevance: r.relevance, impact: r.impact, actionRequired: r.actionRequired, deadline: r.deadline || undefined };
+  }
+  return map;
+}
+
 function RegulatoryFeedPanel() {
   const [items, setItems] = useState<RegulatoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +110,21 @@ function RegulatoryFeedPanel() {
   const [sources, setSources] = useState<string[]>([]);
   const [filterCat, setFilterCat] = useState<string>("all");
   const [filterTone, setFilterTone] = useState<string>("all");
+  const [triageMap, setTriageMap] = useState<Record<string, TriageEntry>>({});
+  const [triageLoading, setTriageLoading] = useState(false);
+
+  const runTriage = async (feedItems: RegulatoryItem[]) => {
+    if (feedItems.length === 0) return;
+    setTriageLoading(true);
+    try {
+      const map = await fetchTriage(feedItems);
+      setTriageMap(map);
+    } catch (err) {
+      console.error("Triage failed:", err);
+    } finally {
+      setTriageLoading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,9 +133,11 @@ function RegulatoryFeedPanel() {
       if (!res.ok) return;
       const data = await res.json() as { ok: boolean; items: RegulatoryItem[]; sources: string[]; fetchedAt: string };
       if (!data.ok) return;
-      setItems(data.items ?? []);
+      const loadedItems = data.items ?? [];
+      setItems(loadedItems);
       setSources(data.sources ?? []);
       setFetchedAt(data.fetchedAt ?? "");
+      void runTriage(loadedItems);
     } catch { /* silently ignore */ }
     finally { setLoading(false); }
   }, []);
@@ -122,6 +176,14 @@ function RegulatoryFeedPanel() {
               synced {new Date(fetchedAt).toLocaleTimeString("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => void runTriage(items)}
+            disabled={triageLoading || items.length === 0}
+            className="text-10 font-mono px-2 py-0.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand-dim/70 disabled:opacity-40"
+          >
+            {triageLoading ? "Triaging…" : "Triage with AI"}
+          </button>
           <button
             type="button"
             onClick={() => void load()}
@@ -184,6 +246,22 @@ function RegulatoryFeedPanel() {
                 <div className="flex flex-wrap items-baseline gap-2 mb-0.5">
                   <span className="text-12 font-medium text-ink-0 group-hover:text-brand leading-snug">{item.title}</span>
                 </div>
+                {/* Triage chips */}
+                {triageMap[item.id] && (() => {
+                  const t = triageMap[item.id] as TriageEntry;
+                  const relevanceCls = t.relevance >= 70 ? "bg-green-dim text-green" : t.relevance >= 40 ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
+                  const impactCls = t.impact === "high" ? "bg-red-dim text-red" : t.impact === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                      <span className={`font-mono text-9 px-1.5 py-px rounded-sm font-semibold ${relevanceCls}`}>rel: {t.relevance}</span>
+                      <span className={`font-mono text-9 px-1.5 py-px rounded-sm font-semibold uppercase ${impactCls}`}>{t.impact}</span>
+                      <span className="text-10 text-ink-3 italic leading-snug">{t.actionRequired}</span>
+                      {t.deadline && (
+                        <span className="font-mono text-9 px-1.5 py-px rounded-sm bg-bg-2 text-ink-2">{t.deadline}</span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {item.snippet && (
                   <div className="text-10.5 text-ink-3 leading-snug mb-1">{item.snippet}</div>
                 )}
