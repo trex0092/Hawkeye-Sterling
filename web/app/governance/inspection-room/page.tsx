@@ -15,6 +15,14 @@ interface Panel {
   detail: string;
   count?: number;
   lastUpdatedAt?: number;
+  /** localStorage keys backing this panel — cleared by the × button.
+   *  Empty list means the panel has no clearable client-side store
+   *  (e.g. EWRA which is server-rendered or audit-chain which is
+   *  append-only by spec). */
+  storageKeys: string[];
+  /** True iff this panel's data is append-only by regulatory design
+   *  (audit chain). Disables the × delete button with a tooltip. */
+  appendOnly: boolean;
 }
 
 const STATUS_BADGE: Record<Status, { label: string; cls: string }> = {
@@ -70,6 +78,8 @@ function buildPanels(): Panel[] {
       status: policyCount >= 50 ? "ready" : policyCount > 0 ? "partial" : "missing",
       detail: `${policyCount} policies across ${policySections} sections`,
       count: policyCount,
+      storageKeys: ["hawkeye.policies.v1"],
+      appendOnly: false,
     },
     {
       key: "ewra",
@@ -79,6 +89,8 @@ function buildPanels(): Panel[] {
       status: ewra?.generatedAt ? "ready" : "missing",
       detail: ewra?.generatedAt ? `Last generated ${fmtDate(ewra.generatedAt)}` : "Not yet generated — run /ewra to produce",
       ...(ewra?.generatedAt !== undefined ? { lastUpdatedAt: ewra.generatedAt } : {}),
+      storageKeys: ["hawkeye.ewra.v1"],
+      appendOnly: false,
     },
     {
       key: "cases",
@@ -88,6 +100,8 @@ function buildPanels(): Panel[] {
       status: caseCount >= 10 ? "ready" : caseCount > 0 ? "partial" : "missing",
       detail: `${caseCount} cases on file`,
       count: caseCount,
+      storageKeys: ["hawkeye.cases.v"],
+      appendOnly: false,
     },
     {
       key: "audit-chain",
@@ -97,6 +111,8 @@ function buildPanels(): Panel[] {
       status: auditCount >= 100 ? "ready" : auditCount > 0 ? "partial" : "missing",
       detail: `${auditCount} entries`,
       count: auditCount,
+      storageKeys: ["hawkeye.audit"],
+      appendOnly: true, // Layer-4 spec — append-only, ten-year retention
     },
     {
       key: "training",
@@ -106,6 +122,8 @@ function buildPanels(): Panel[] {
       status: trainingCount >= 5 ? "ready" : trainingCount > 0 ? "partial" : "missing",
       detail: `${trainingCount} training records`,
       count: trainingCount,
+      storageKeys: ["hawkeye.training"],
+      appendOnly: false,
     },
     {
       key: "onboarding",
@@ -115,6 +133,8 @@ function buildPanels(): Panel[] {
       status: onboardingCount >= 5 ? "ready" : onboardingCount > 0 ? "partial" : "missing",
       detail: `${onboardingCount} onboarded subjects`,
       count: onboardingCount,
+      storageKeys: ["hawkeye.onboarding.v1"],
+      appendOnly: false,
     },
   ];
 }

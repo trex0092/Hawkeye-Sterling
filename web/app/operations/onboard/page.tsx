@@ -87,8 +87,7 @@ interface Draft {
   // Step 1: Entity (legal person / organisation / vessel — never natural)
   fullName: string;          // Entity legal name
   registeredCountry: string; // Country of registration (ISO-2)
-  idType: string;            // Trade licence / registration / IMO / DUNS
-  idNumber: string;          // The actual identifier
+  idNumber: string;          // License / register: trade licence, IMO, LEI, etc.
   relationshipTypes: RelationshipType[]; // multi-select; >= 1 required
   // Step 2: CDD
   occupation: string;        // Sector / business activity
@@ -112,7 +111,6 @@ interface Draft {
 const BLANK_DRAFT: Draft = {
   fullName: "",
   registeredCountry: "",
-  idType: "trade-licence",
   idNumber: "",
   relationshipTypes: [],
   occupation: "",
@@ -120,15 +118,6 @@ const BLANK_DRAFT: Draft = {
   expectedProfile: "",
   mlroNote: "",
 };
-
-const ID_TYPE_OPTIONS: Array<{ id: string; label: string }> = [
-  { id: "trade-licence",   label: "Trade licence" },
-  { id: "registration",    label: "Registration #" },
-  { id: "imo",             label: "IMO" },
-  { id: "duns",            label: "DUNS" },
-  { id: "lei",             label: "LEI" },
-  { id: "tax-id",          label: "Tax ID" },
-];
 
 const STORAGE_DRAFT = "hawkeye.onboarding.draft.v1";
 const STORAGE_RECORDS = "hawkeye.onboarding.v1";
@@ -548,54 +537,34 @@ export default function OnboardingWizardPage() {
         {step === 1 && (
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-1">Entity</h2>
-            <p className="text-11 text-ink-3 m-0 mb-2">
+            <p className="text-11 text-ink-3 m-0 mb-3">
               The wizard onboards entities only — legal persons, organisations,
               vessels, refiners. Not natural persons.
             </p>
-            <Field label="Name *" value={draft.fullName} onChange={(v) => set("fullName", v)} placeholder="Entity legal name" />
-            <div>
-              <span className="block text-11 font-mono uppercase tracking-wide-3 text-ink-2 mb-1">
-                Relationship type * (multi-select)
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {RELATIONSHIP_OPTIONS.map((opt) => {
-                  const selected = draft.relationshipTypes.includes(opt.id);
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => {
-                        setDraft((prev) => ({
-                          ...prev,
-                          relationshipTypes: selected
-                            ? prev.relationshipTypes.filter((t) => t !== opt.id)
-                            : [...prev.relationshipTypes, opt.id],
-                        }));
-                      }}
-                      className={`text-11 font-mono uppercase tracking-wide-3 px-2 py-1 rounded border transition ${
-                        selected
-                          ? "bg-brand text-white border-brand"
-                          : "bg-bg-1 text-ink-2 border-hair-2 hover:text-brand hover:border-brand"
-                      }`}
-                    >
-                      {selected ? "✓ " : ""}{opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field
-                label="Registered country (ISO-2) *"
+                label="Name *"
+                value={draft.fullName}
+                onChange={(v) => set("fullName", v)}
+                placeholder="Registered entity name"
+              />
+              <RelationshipMultiSelect
+                value={draft.relationshipTypes}
+                onChange={(next) => setDraft((prev) => ({ ...prev, relationshipTypes: next }))}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field
+                label="Registered country *"
                 value={draft.registeredCountry}
                 onChange={(v) => set("registeredCountry", v.toUpperCase().slice(0, 2))}
-                placeholder="AE"
+                placeholder="Country of registration (ISO-2)"
               />
               <Field
-                label="ID number *"
+                label="License / Register *"
                 value={draft.idNumber}
                 onChange={(v) => set("idNumber", v)}
-                placeholder="Trade-licence / registration / IMO"
+                placeholder="Trade licence / IMO / LEI / registration #"
               />
             </div>
           </div>
@@ -901,6 +870,119 @@ function AdvisorNarrativePanel({ response }: { response: AdvisorResponseV1 }) {
         <div>Next action: {response.escalationPath.nextAction}</div>
       </div>
     </div>
+  );
+}
+
+// Dropdown-style multi-select for the entity relationship type. Closed
+// state shows selected items as chips inside the trigger; open state
+// drops a panel of checkable rows below. ESC and outside-click both
+// close the panel.
+interface RelationshipMultiSelectProps {
+  value: RelationshipType[];
+  onChange: (next: RelationshipType[]) => void;
+}
+
+function RelationshipMultiSelect({ value, onChange }: RelationshipMultiSelectProps) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const toggleOption = (id: RelationshipType) => {
+    onChange(value.includes(id) ? value.filter((t) => t !== id) : [...value, id]);
+  };
+
+  const removeChip = (id: RelationshipType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(value.filter((t) => t !== id));
+  };
+
+  return (
+    <label className="block">
+      <span className="block text-11 font-mono uppercase tracking-wide-3 text-ink-2 mb-1">
+        Relationship type * (multi)
+      </span>
+      <div className="relative" ref={wrapRef}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className="w-full text-left text-12 border border-hair-2 bg-bg-panel text-ink-0 rounded px-2 py-1.5 focus:border-brand focus:outline-none flex items-center gap-1 flex-wrap min-h-[34px]"
+        >
+          {value.length === 0 ? (
+            <span className="text-ink-3">Select…</span>
+          ) : (
+            value.map((id) => {
+              const opt = RELATIONSHIP_OPTIONS.find((o) => o.id === id);
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 px-1.5 py-px rounded border bg-brand-dim text-brand-deep border-brand/40 font-mono text-10 uppercase tracking-wide-2"
+                >
+                  {opt?.label ?? id}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Remove ${opt?.label ?? id}`}
+                    onClick={(e) => removeChip(id, e)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        removeChip(id, e as unknown as React.MouseEvent);
+                      }
+                    }}
+                    className="text-brand-deep hover:text-red-700 cursor-pointer leading-none"
+                  >
+                    ×
+                  </span>
+                </span>
+              );
+            })
+          )}
+          <span className="ml-auto text-ink-3 font-mono text-10">{open ? "▲" : "▼"}</span>
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            className="absolute z-10 left-0 right-0 mt-1 border border-hair-2 bg-bg-panel rounded shadow-lg max-h-60 overflow-auto"
+          >
+            {RELATIONSHIP_OPTIONS.map((opt) => {
+              const selected = value.includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => toggleOption(opt.id)}
+                  className={`w-full text-left px-2 py-1.5 text-12 flex items-center gap-2 hover:bg-bg-1 ${
+                    selected ? "text-ink-0" : "text-ink-1"
+                  }`}
+                >
+                  <span className="font-mono text-12 w-4 text-center">{selected ? "☑" : "☐"}</span>
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </label>
   );
 }
 
