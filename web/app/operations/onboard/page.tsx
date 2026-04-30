@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { QuickScreenResponse } from "@/lib/api/quickScreen.types";
 
@@ -16,6 +16,50 @@ interface ScreeningHit {
 interface ScreeningError {
   message: string;
   detail?: string;
+}
+
+interface ScoredFactor {
+  id: string;
+  label: string;
+  points: number;
+  anchor?: string;
+}
+
+interface JurisdictionHit {
+  list: string;
+  label: string;
+  stale: boolean;
+  classification?: "grey" | "black";
+}
+
+interface RiskTierResult {
+  tier: Tier;
+  score: number;
+  factors: ScoredFactor[];
+  rationale: string;
+  jurisdictionHits: JurisdictionHit[];
+}
+
+// Layer 3 — 8-section AdvisorResponseV1 the structured renderer consumes.
+interface AdvisorResponseV1 {
+  schemaVersion: 1;
+  facts: { bullets: string[] };
+  redFlags: { flags: Array<{ indicator: string; typology: string }> };
+  frameworkCitations: { byClass: Partial<Record<"A" | "B" | "C" | "D" | "E", string[]>> };
+  decision: { verdict: "proceed" | "decline" | "escalate" | "file_str" | "freeze"; oneLineRationale: string };
+  confidence: { score: 1 | 2 | 3 | 4 | 5; reason?: string };
+  counterArgument: { inspectorChallenge: string; rebuttal: string };
+  auditTrail: {
+    charterVersionHash: string;
+    directivesInvoked: string[];
+    doctrinesApplied: string[];
+    retrievedSources: Array<{ class: string; classLabel: string; sourceId: string; articleRef: string }>;
+    timestamp: string;
+    userId: string;
+    mode: string;
+    modelVersions: Record<string, string>;
+  };
+  escalationPath: { responsible: string; accountable: string; consulted: string[]; informed: string[]; nextAction: string };
 }
 
 interface Draft {
@@ -36,9 +80,13 @@ interface Draft {
   // Step 4: Risk-rate
   riskTier?: Tier;
   riskRationale?: string;
+  riskFactors?: ScoredFactor[];
+  riskScore?: number;
+  manualOverride?: boolean;
   // Step 5: Sign-off
   mlroNote: string;
   signedOffAt?: number;
+  advisorNarrative?: AdvisorResponseV1 | null;
 }
 
 const BLANK_DRAFT: Draft = {
@@ -119,41 +167,119 @@ function localFallback(draft: Draft): { hits: ScreeningHit[]; source: "fallback"
   return { hits, source: "fallback" };
 }
 
-function computeTier(draft: Draft): { tier: Tier; rationale: string } {
-  let score = 0;
-  const reasons: string[] = [];
+// Calls /api/onboarding-risk-tier which wraps the deterministic
+// scorer in src/brain/onboarding-risk-tier.ts. The scorer combines
+// screening hits, the Layer-6 five-list jurisdictional lookup, PEP
+// signal, source-of-funds depth, occupation-based sector hints, and
+// demographic flags into a tier + ranked factor list.
+async function computeTier(draft: Draft): Promise<RiskTierResult | null> {
+  try {
+    const res = await fetch("/api/onboarding-risk-tier", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fullName: draft.fullName,
+        nationalityIso2: draft.nationality.trim().toUpperCase().slice(0, 2),
+        dob: draft.dob,
+        occupation: draft.occupation,
+        sourceOfFunds: draft.sourceOfFunds,
+        expectedProfile: draft.expectedProfile,
+        address: draft.address,
+        screeningHits: draft.screeningHits ?? [],
+      }),
+    });
+    const json = (await res.json()) as { ok: boolean } & RiskTierResult;
+    if (json.ok) {
+      const { tier, score, factors, rationale, jurisdictionHits } = json;
+      return { tier, score, factors, rationale, jurisdictionHits };
+    }
+  } catch {
+    /* fall through to local fallback below */
+  }
+  // Local fallback — deterministic, lightweight, no external deps.
+  // Mirrors the historical onboarding behaviour so the wizard always
+  // produces a defensible result even when the API is unreachable.
+  return localTierFallback(draft);
+}
 
+function localTierFallback(draft: Draft): RiskTierResult {
+  const factors: ScoredFactor[] = [];
   const hits = draft.screeningHits ?? [];
   if (hits.length > 0) {
-    score += 50 * hits.length;
-    reasons.push(`${hits.length} screening hit(s) at >=85%`);
+    factors.push({ id: "screening_hit", label: `${hits.length} screening hit(s)`, points: 50 });
   }
-
   const nat = draft.nationality.trim().toUpperCase().slice(0, 2);
-  const FATF_LISTED = new Set(["IR", "KP", "MM", "AF", "CD", "NG", "SD", "YE", "ZA"]);
+  const FATF_LISTED = new Set(["IR", "KP", "MM", "AF", "CD", "NG", "SD", "YE"]);
   if (FATF_LISTED.has(nat)) {
-    score += 30;
-    reasons.push("FATF-listed jurisdiction");
+    factors.push({ id: "jurisdiction", label: "FATF-listed jurisdiction", points: 30 });
   }
-
   const sofWords = draft.sourceOfFunds.trim().split(/\s+/).filter(Boolean).length;
   if (sofWords < 10) {
-    score += 15;
-    reasons.push("source-of-funds narrative thin (<10 words)");
+    factors.push({ id: "sof_thin", label: `Source-of-funds thin (${sofWords} word(s))`, points: 15 });
   }
-
-  const dobYear = parseInt(draft.dob.slice(0, 4), 10);
-  if (Number.isFinite(dobYear) && dobYear < 1945) {
-    score += 5;
-    reasons.push("subject age >80 (potential proxy)");
-  }
-
+  const score = Math.min(100, factors.reduce((s, f) => s + f.points, 0));
   const tier: Tier = score >= 50 ? "tier-1" : score >= 20 ? "tier-2" : "tier-3";
-  const rationale =
-    reasons.length === 0
-      ? "Standard customer — no elevated indicators."
-      : reasons.join("; ");
-  return { tier, rationale };
+  return {
+    tier,
+    score,
+    factors,
+    rationale: factors.length === 0 ? "Standard customer — no elevated indicators (local fallback)." : factors.map((f) => f.label).join("; "),
+    jurisdictionHits: [],
+  };
+}
+
+// Per-step audit log — appends to the Layer-4 audit log via
+// /api/onboarding-audit. Fire-and-forget; never blocks the UI.
+function recordStepTransition(fromStep: Step, toStep: Step, draft: Draft): void {
+  // Only the safe fields — no document binaries, no full address text.
+  const draftSnapshot = {
+    nationality: draft.nationality,
+    idType: draft.idType,
+    occupation: draft.occupation.slice(0, 80),
+    screened: !!draft.screenedAt,
+    hits: (draft.screeningHits ?? []).length,
+    riskTier: draft.riskTier ?? null,
+    manualOverride: !!draft.manualOverride,
+  };
+  void fetch("/api/onboarding-audit", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fromStep, toStep, draftSnapshot }),
+  }).catch(() => {});
+}
+
+// Step 5 — generate a regulator-grade onboarding-decision narrative
+// via /api/mlro-advisor with structured:true. Returns the parsed
+// AdvisorResponseV1 on success; null if the model fell back to the
+// legacy free-form narrative path.
+async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1 | null> {
+  const question =
+    `Onboarding decision narrative for ${draft.fullName} (nationality ${draft.nationality.toUpperCase()}). ` +
+    `Occupation: ${draft.occupation}. ` +
+    `Source of funds: ${draft.sourceOfFunds}. ` +
+    `Expected profile: ${draft.expectedProfile}. ` +
+    `Risk tier: ${draft.riskTier} (${draft.riskRationale}). ` +
+    `Screening: ${(draft.screeningHits ?? []).length} hit(s). ` +
+    `Justify the proposed tier against FDL 10/2025 Art.16-19, Cabinet Decision 134/2025 Art.3-7, and FATF R.10/12/19.`;
+  try {
+    const res = await fetch("/api/mlro-advisor", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        question,
+        subjectName: draft.fullName,
+        entityType: "individual",
+        jurisdiction: draft.nationality,
+        mode: "balanced",
+        audience: "regulator",
+        structured: true,
+      }),
+    });
+    const json = (await res.json()) as { ok: boolean; structured?: AdvisorResponseV1 | null };
+    return json.ok && json.structured ? json.structured : null;
+  } catch {
+    return null;
+  }
 }
 
 function loadDraft(): Draft {
@@ -189,10 +315,25 @@ function persistRecord(d: Draft): void {
 }
 
 export default function OnboardingWizardPage() {
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStepInternal] = useState<Step>(1);
   const [draft, setDraft] = useState<Draft>(BLANK_DRAFT);
   const [submitted, setSubmitted] = useState(false);
   const [screening, setScreening] = useState<{ inFlight: boolean; source?: "api" | "fallback"; error?: ScreeningError }>({ inFlight: false });
+  const [tierInfo, setTierInfo] = useState<RiskTierResult | null>(null);
+  const [tierLoading, setTierLoading] = useState(false);
+  const [advisor, setAdvisor] = useState<{ inFlight: boolean; error?: string }>({ inFlight: false });
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  // Layer 4 audit-log every step transition (option F). Fire-and-forget
+  // — the wizard's UX never waits on the audit write.
+  const setStep = useCallback((next: Step | ((prev: Step) => Step)) => {
+    setStepInternal((prev) => {
+      const resolved = typeof next === "function" ? (next as (p: Step) => Step)(prev) : next;
+      if (resolved !== prev) recordStepTransition(prev, resolved, draftRef.current);
+      return resolved;
+    });
+  }, []);
 
   useEffect(() => {
     setDraft(loadDraft());
@@ -202,7 +343,29 @@ export default function OnboardingWizardPage() {
     saveDraft(draft);
   }, [draft]);
 
-  const tierInfo = useMemo(() => computeTier(draft), [draft]);
+  // Recompute tier on relevant draft changes — debounced through the
+  // dependency list so we don't fire while the operator is typing.
+  useEffect(() => {
+    let cancelled = false;
+    setTierLoading(true);
+    void computeTier(draft).then((res) => {
+      if (cancelled) return;
+      setTierInfo(res);
+      setTierLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    draft.nationality,
+    draft.dob,
+    draft.occupation,
+    draft.sourceOfFunds,
+    draft.expectedProfile,
+    draft.address,
+    draft.fullName,
+    draft.screeningHits,
+  ]);
 
   const can: Record<Step, boolean> = {
     1: draft.fullName.trim().length > 1 && draft.dob.length === 10 && draft.nationality.length >= 2 && draft.idNumber.trim().length > 0,
@@ -227,12 +390,45 @@ export default function OnboardingWizardPage() {
   };
 
   const handleRiskRate = () => {
-    setDraft((prev) => ({ ...prev, riskTier: tierInfo.tier, riskRationale: tierInfo.rationale }));
+    if (!tierInfo) return;
+    setDraft((prev) => ({
+      ...prev,
+      riskTier: tierInfo.tier,
+      riskRationale: tierInfo.rationale,
+      riskFactors: tierInfo.factors,
+      riskScore: tierInfo.score,
+      manualOverride: false,
+    }));
+  };
+
+  const handleManualOverride = (tier: Tier) => {
+    setDraft((prev) => ({
+      ...prev,
+      riskTier: tier,
+      riskRationale: `${prev.riskRationale ?? ""} [MANUAL OVERRIDE — operator selected ${tier}]`,
+      manualOverride: true,
+    }));
+  };
+
+  const handleGenerateAdvisorNarrative = async () => {
+    setAdvisor({ inFlight: true });
+    const narrative = await generateAdvisorNarrative(draft);
+    if (narrative) {
+      setDraft((prev) => ({ ...prev, advisorNarrative: narrative }));
+      setAdvisor({ inFlight: false });
+    } else {
+      setAdvisor({
+        inFlight: false,
+        error: "Advisor returned a free-form narrative; structured 8-section output not available for this case. Inspect /api/mlro-advisor logs.",
+      });
+    }
   };
 
   const handleSignOff = () => {
     const final: Draft = { ...draft, signedOffAt: Date.now() };
     persistRecord(final);
+    // Audit log the final sign-off as a synthetic step transition.
+    recordStepTransition(5, 5, final);
     setDraft(BLANK_DRAFT);
     setSubmitted(true);
     setStep(1);
@@ -391,35 +587,94 @@ export default function OnboardingWizardPage() {
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Risk Rate</h2>
             <p className="text-12 text-ink-2 m-0">
-              Deterministic scoring across screening hits, jurisdiction, source-of-funds depth, and demographics.
+              Deterministic scoring — screening hits + 5-list jurisdictional lookup
+              (FATF / EU / UNSC / OFAC / OECD CAHRA) + PEP signal + source-of-funds
+              depth + sector hints + demographics. Suggested tier appears below;
+              the operator can override with rationale.
             </p>
-            <div className="bg-bg-1 border border-hair-2 rounded p-3">
-              <div className="flex items-baseline gap-3">
-                <span className="font-mono text-10 uppercase text-ink-2">Computed tier</span>
-                <span
-                  className={`font-mono text-12 font-semibold ${
-                    tierInfo.tier === "tier-1"
-                      ? "text-red-700"
-                      : tierInfo.tier === "tier-2"
-                        ? "text-orange-700"
-                        : "text-emerald-700"
-                  }`}
-                >
-                  {tierInfo.tier.toUpperCase()}
-                </span>
-              </div>
-              <div className="text-11 text-ink-2 mt-1">{tierInfo.rationale}</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleRiskRate}
-              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
-            >
-              Accept tier
-            </button>
+            {tierLoading || !tierInfo ? (
+              <div className="text-12 text-ink-2 italic">Computing tier…</div>
+            ) : (
+              <>
+                <div className="bg-bg-1 border border-hair-2 rounded p-3">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="font-mono text-10 uppercase text-ink-2">Computed tier</span>
+                    <span
+                      className={`font-mono text-13 font-semibold ${
+                        tierInfo.tier === "tier-1"
+                          ? "text-red-700"
+                          : tierInfo.tier === "tier-2"
+                            ? "text-orange-700"
+                            : "text-emerald-700"
+                      }`}
+                    >
+                      {tierInfo.tier.toUpperCase()}
+                    </span>
+                    <span className="font-mono text-10 text-ink-3">score {tierInfo.score}/100</span>
+                  </div>
+                  <div className="text-11 text-ink-2 mt-1">{tierInfo.rationale}</div>
+                  {tierInfo.factors.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {tierInfo.factors.map((f) => (
+                        <span
+                          key={f.id}
+                          className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-50 text-amber-700 border-amber-300"
+                          title={f.anchor ? `Anchor: ${f.anchor}` : undefined}
+                        >
+                          +{f.points} · {f.id.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {tierInfo.jurisdictionHits.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-hair">
+                      <div className="text-10 font-mono uppercase text-ink-3 mb-1">Jurisdictional list hits ({tierInfo.jurisdictionHits.length})</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {tierInfo.jurisdictionHits.map((h) => (
+                          <span
+                            key={h.list}
+                            className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${
+                              h.classification === "black"
+                                ? "bg-red-100 text-red-700 border-red-300"
+                                : h.classification === "grey"
+                                  ? "bg-amber-50 text-amber-700 border-amber-300"
+                                  : "bg-bg-2 text-ink-1 border-hair-2"
+                            }`}
+                            title={`${h.label}${h.stale ? " — list snapshot is stale; refresh feed" : ""}`}
+                          >
+                            {h.list.replace(/_/g, " ")}{h.classification ? ` · ${h.classification}` : ""}{h.stale ? " ⚠" : ""}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRiskRate}
+                    className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+                  >
+                    Accept suggested tier
+                  </button>
+                  <span className="text-10 font-mono text-ink-3 self-center">— or override:</span>
+                  {(["tier-1", "tier-2", "tier-3"] as Tier[]).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => handleManualOverride(t)}
+                      disabled={tierInfo.tier === t && !draft.manualOverride}
+                      className="text-11 font-mono uppercase tracking-wide-3 px-2 py-1 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             {draft.riskTier && (
               <div className="mt-2 text-11 text-emerald-700 font-mono">
-                ✓ Tier accepted — proceed to MLRO sign-off
+                ✓ Tier {draft.riskTier} {draft.manualOverride ? "(manual override)" : "accepted"} — proceed to MLRO sign-off
               </div>
             )}
           </div>
@@ -435,6 +690,39 @@ export default function OnboardingWizardPage() {
                 <strong>{draft.riskTier ?? "?"}</strong> · {draft.screeningHits?.length ?? 0} screening hit(s)
               </div>
             </div>
+
+            {/* Layer 3 advisor narrative — calls /api/mlro-advisor with
+                structured:true and renders the 8-section regulator-grade
+                response when available. */}
+            <div className="bg-bg-1 border border-hair-2 rounded p-3">
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                <div className="text-11 font-mono text-ink-2 uppercase">Regulator-grade advisor narrative</div>
+                <button
+                  type="button"
+                  onClick={handleGenerateAdvisorNarrative}
+                  disabled={advisor.inFlight || !draft.riskTier}
+                  className="text-10 font-mono uppercase tracking-wide-3 px-2 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {advisor.inFlight ? "Generating…" : draft.advisorNarrative ? "Regenerate" : "Generate"}
+                </button>
+              </div>
+              {advisor.error && (
+                <div className="text-11 text-amber-700 mb-1">{advisor.error}</div>
+              )}
+              {!draft.advisorNarrative && !advisor.inFlight && (
+                <div className="text-11 text-ink-3">
+                  Optional but recommended for regulator audits. Calls{" "}
+                  <code className="font-mono">/api/mlro-advisor</code> with{" "}
+                  <code className="font-mono">structured: true</code> and the case
+                  context built from steps 1-4. The 8-section response below
+                  becomes part of the persisted record.
+                </div>
+              )}
+              {draft.advisorNarrative && (
+                <AdvisorNarrativePanel response={draft.advisorNarrative} />
+              )}
+            </div>
+
             <Field label="MLRO note (rationale, conditions, ongoing-monitoring frequency)" value={draft.mlroNote} onChange={(v) => set("mlroNote", v)} multiline />
             <button
               type="button"
@@ -475,6 +763,61 @@ export default function OnboardingWizardPage() {
         change. Final record persists to localStorage["hawkeye.onboarding.v1"].
       </div>
     </ModuleLayout>
+  );
+}
+
+// Compact 8-section advisor narrative panel for the onboarding wizard.
+// Mirrors the StructuredAdvisorView from /mlro-advisor but tighter
+// to fit inside the wizard's step 5 panel.
+function AdvisorNarrativePanel({ response }: { response: AdvisorResponseV1 }) {
+  return (
+    <div className="mt-2 space-y-2 text-12 text-ink-0">
+      <div className="font-mono text-10 uppercase text-ink-3">1 · Facts</div>
+      <ul className="list-disc list-inside ml-2">
+        {response.facts.bullets.map((b, i) => (<li key={i}>{b}</li>))}
+      </ul>
+      {response.redFlags.flags.length > 0 && (
+        <>
+          <div className="font-mono text-10 uppercase text-ink-3">2 · Red flags</div>
+          <ul className="list-disc list-inside ml-2">
+            {response.redFlags.flags.map((f, i) => (
+              <li key={i}>{f.indicator} <span className="text-ink-3">→ {f.typology.replace(/_/g, " ")}</span></li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div className="font-mono text-10 uppercase text-ink-3">3 · Citations</div>
+      <div className="ml-2">
+        {Object.entries(response.frameworkCitations.byClass)
+          .filter(([, list]) => (list?.length ?? 0) > 0)
+          .map(([cls, list]) => (
+            <div key={cls}><span className="font-mono text-10 text-ink-3">Class {cls}:</span> {(list ?? []).join(" · ")}</div>
+          ))}
+      </div>
+      <div className="font-mono text-10 uppercase text-ink-3">4 · Decision</div>
+      <div className="ml-2">
+        <strong>{response.decision.verdict.replace(/_/g, " ").toUpperCase()}</strong> — {response.decision.oneLineRationale}
+      </div>
+      <div className="font-mono text-10 uppercase text-ink-3">5 · Confidence</div>
+      <div className="ml-2">{response.confidence.score}/5{response.confidence.reason ? ` — ${response.confidence.reason}` : ""}</div>
+      <div className="font-mono text-10 uppercase text-ink-3">6 · Inspector challenge</div>
+      <div className="ml-2">
+        <em>{response.counterArgument.inspectorChallenge}</em>
+        {response.counterArgument.rebuttal && <div className="mt-1">Rebuttal: {response.counterArgument.rebuttal}</div>}
+      </div>
+      <div className="font-mono text-10 uppercase text-ink-3">7 · Audit trail</div>
+      <div className="ml-2 font-mono text-10 text-ink-2">
+        charter {response.auditTrail.charterVersionHash} · ts {response.auditTrail.timestamp}
+        {response.auditTrail.retrievedSources.length > 0 && (
+          <> · sources {response.auditTrail.retrievedSources.map((s) => `[${s.class}] ${s.sourceId} ${s.articleRef}`).join(" · ")}</>
+        )}
+      </div>
+      <div className="font-mono text-10 uppercase text-ink-3">8 · Escalation</div>
+      <div className="ml-2">
+        Responsible: {response.escalationPath.responsible} · Accountable: {response.escalationPath.accountable}
+        <div>Next action: {response.escalationPath.nextAction}</div>
+      </div>
+    </div>
   );
 }
 
