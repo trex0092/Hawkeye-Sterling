@@ -9,6 +9,26 @@ import { RowActions } from "@/components/shared/RowActions";
 // and High-Risk Areas) must align with RMI/OECD Due Diligence Guidance (DDG).
 // Covers 3TG (tantalum, tin, tungsten, gold) and cobalt supply chains.
 
+interface RmiRecommendedAction {
+  smelter: string;
+  action: string;
+  urgency: "immediate" | "3months" | "annual";
+  oecdStep: number;
+}
+
+interface RmiAssessment {
+  ok: boolean;
+  portfolioRisk: "critical" | "high" | "medium" | "low";
+  portfolioNarrative: string;
+  criticalSmelters: string[];
+  oecdGaps: string[];
+  cahraExposure: string;
+  lbmaAlignmentIssues: string[];
+  recommendedActions: RmiRecommendedAction[];
+  regulatoryExposure: string;
+  auditPriority: string[];
+}
+
 type MineralType = "gold" | "tantalum" | "tin" | "tungsten" | "cobalt";
 type RmapStatus = "conformant" | "active" | "expired" | "not-enrolled" | "suspended";
 type CahraRisk = "high" | "medium" | "low";
@@ -224,6 +244,8 @@ type SmelterEdit = Partial<Pick<Smelter, "name" | "country" | "countryCode" | "m
 export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
   const [showAuditLog, setShowAuditLog] = useState(false);
+  const [rmiAssess, setRmiAssess] = useState<RmiAssessment | null>(null);
+  const [rmiAssessLoading, setRmiAssessLoading] = useState(false);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [edits, setEdits] = useState<Record<string, SmelterEdit>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -292,6 +314,36 @@ export default function RmiPage() {
   );
   const visible = mineralFilter === "all" ? liveSmelters : liveSmelters.filter((s) => s.mineral === mineralFilter);
 
+  const runRmiAssessment = async () => {
+    setRmiAssessLoading(true);
+    try {
+      const payload = liveSmelters.map((s) => ({
+        name: s.name,
+        country: s.country,
+        mineral: s.mineral,
+        rmapStatus: s.rmapStatus,
+        cahraRisk: s.cahraRisk,
+        activeSupplier: s.activeSupplier,
+        annualVolumeKg: s.annualVolumeKg,
+        flags: s.flags,
+        lastAuditDate: s.lastAuditDate,
+        nextAuditDue: s.nextAuditDue,
+        notes: s.notes,
+      }));
+      const res = await fetch("/api/rmi-assess", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ smelters: payload }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as RmiAssessment;
+        setRmiAssess(data);
+      }
+    } catch { /* non-fatal */ } finally {
+      setRmiAssessLoading(false);
+    }
+  };
+
   const conformant = liveSmelters.filter((s) => s.rmapStatus === "conformant" && s.activeSupplier).length;
   const nonConformant = liveSmelters.filter((s) => s.rmapStatus === "not-enrolled" || s.rmapStatus === "expired" || s.rmapStatus === "suspended").length;
   const cahraHigh = liveSmelters.filter((s) => s.cahraRisk === "high").length;
@@ -340,6 +392,137 @@ export default function RmiPage() {
           ))}
         </div>
       </div>
+
+      {/* AI Supply Chain Assessment button */}
+      <div className="mb-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={runRmiAssessment}
+          disabled={rmiAssessLoading}
+          className="px-4 py-2 text-12 font-semibold rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
+        >
+          {rmiAssessLoading ? "Assessing…" : "AI Supply Chain Assessment"}
+        </button>
+        {rmiAssess && (
+          <button
+            type="button"
+            onClick={() => setRmiAssess(null)}
+            className="text-11 text-ink-3 hover:text-ink-1 underline"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* AI Assessment panel */}
+      {rmiAssess && (
+        <div className="mb-6 bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2">Portfolio Risk</span>
+            <span className={`px-2 py-0.5 rounded font-mono text-11 font-bold uppercase ${
+              rmiAssess.portfolioRisk === "critical" || rmiAssess.portfolioRisk === "high"
+                ? "bg-red-dim text-red"
+                : rmiAssess.portfolioRisk === "medium"
+                ? "bg-amber-dim text-amber"
+                : "bg-green-dim text-green"
+            }`}>
+              {rmiAssess.portfolioRisk}
+            </span>
+          </div>
+          <p className="text-13 text-ink-1 leading-relaxed">{rmiAssess.portfolioNarrative}</p>
+
+          {rmiAssess.criticalSmelters.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1.5">Critical Smelters</div>
+              <div className="flex flex-wrap gap-1.5">
+                {rmiAssess.criticalSmelters.map((name) => (
+                  <span key={name} className="px-2 py-0.5 bg-red-dim text-red font-mono text-10 font-semibold rounded-sm">{name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {rmiAssess.oecdGaps.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1.5">OECD DDG Gaps</div>
+              <ul className="list-disc list-inside space-y-0.5">
+                {rmiAssess.oecdGaps.map((gap) => (
+                  <li key={gap} className="text-12 text-ink-1">{gap}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {rmiAssess.cahraExposure && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">CAHRA Exposure</div>
+              <p className="text-12 text-ink-1">{rmiAssess.cahraExposure}</p>
+            </div>
+          )}
+
+          {rmiAssess.lbmaAlignmentIssues.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1.5">LBMA RGG v9 Issues</div>
+              <ul className="list-disc list-inside space-y-0.5">
+                {rmiAssess.lbmaAlignmentIssues.map((issue) => (
+                  <li key={issue} className="text-12 text-ink-1">{issue}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {rmiAssess.recommendedActions.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1.5">Recommended Actions</div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-12 border border-hair-2 rounded">
+                  <thead className="bg-bg-1">
+                    <tr>
+                      {["Smelter", "Action", "Urgency", "OECD Step"].map((h) => (
+                        <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rmiAssess.recommendedActions.map((a, i) => (
+                      <tr key={i} className={i < rmiAssess.recommendedActions.length - 1 ? "border-b border-hair" : ""}>
+                        <td className="px-3 py-2 font-medium text-ink-0">{a.smelter}</td>
+                        <td className="px-3 py-2 text-ink-1">{a.action}</td>
+                        <td className="px-3 py-2">
+                          <span className={`px-1.5 py-px rounded font-mono text-10 font-semibold uppercase ${
+                            a.urgency === "immediate" ? "bg-red-dim text-red"
+                            : a.urgency === "3months" ? "bg-amber-dim text-amber"
+                            : "bg-green-dim text-green"
+                          }`}>{a.urgency}</span>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-10 text-ink-2">Step {a.oecdStep}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {rmiAssess.regulatoryExposure && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">Regulatory Exposure</div>
+              <pre className="text-11 font-mono text-ink-1 bg-bg-1 border border-hair-2 rounded p-2.5 whitespace-pre-wrap leading-relaxed">{rmiAssess.regulatoryExposure}</pre>
+            </div>
+          )}
+
+          {rmiAssess.auditPriority.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1.5">Audit Priority</div>
+              <ol className="list-decimal list-inside space-y-0.5">
+                {rmiAssess.auditPriority.map((name) => (
+                  <li key={name} className="text-12 text-ink-1">{name}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
 
       {deletedIds.length > 0 && (
         <div className="mb-4 px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">

@@ -5,6 +5,28 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { DateParts } from "@/components/ui/DateParts";
 import { RowActions } from "@/components/shared/RowActions";
 
+// ── UBO AI Risk types ─────────────────────────────────────────────────────────
+interface UboRisk {
+  ok: boolean;
+  overallRisk: "critical" | "high" | "medium" | "low";
+  riskNarrative: string;
+  ownershipStructureRisk: string;
+  pepRiskFlags: string[];
+  nationalityRisks: string[];
+  cddGaps: string[];
+  recommendedActions: string[];
+  regulatoryBasis: string;
+  eddRequired: boolean;
+  sanctionsScreeningRequired: boolean;
+}
+
+const UBO_RISK_TONE: Record<string, string> = {
+  critical: "bg-red-dim text-red border-red/30",
+  high:     "bg-red-dim text-red border-red/30",
+  medium:   "bg-amber-dim text-amber border-amber/30",
+  low:      "bg-green-dim text-green border-green/30",
+};
+
 // Beneficial Owner Declaration — public-facing form. Your tenants send
 // a link to their customers, who fill in UBO info that auto-populates
 // the Ownership tab on the subject panel.
@@ -32,6 +54,8 @@ export default function UboDeclarationPage() {
   const [registered, setRegistered] = useState("");
   const [ubos, setUbos] = useState<UboEntry[]>([{ ...EMPTY_UBO }]);
   const [submitted, setSubmitted] = useState(false);
+  const [uboRisk, setUboRisk] = useState<UboRisk | null>(null);
+  const [uboRiskLoading, setUboRiskLoading] = useState(false);
 
   const inputCls =
     "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
@@ -51,15 +75,35 @@ export default function UboDeclarationPage() {
     0,
   );
 
+  const assessUboRisk = async (entityName: string, registeredIn: string, uboList: UboEntry[]) => {
+    setUboRiskLoading(true);
+    try {
+      const res = await fetch("/api/ubo-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ entity: entityName, registered: registeredIn, ubos: uboList }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as UboRisk;
+        setUboRisk(data);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setUboRiskLoading(false);
+    }
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    void assessUboRisk(entity, registered, ubos);
   };
 
   if (submitted) {
     return (
       <ModuleLayout asanaModule="ubo-declaration" asanaLabel="UBO Declaration">
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center min-h-[60vh] gap-6 pt-10">
           <div className="max-w-md w-full bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
             <h1 className="font-display text-24 text-ink-0 m-0 mb-3">
@@ -74,6 +118,97 @@ export default function UboDeclarationPage() {
             <div className="mt-4 font-mono text-10 text-ink-3">
               Reference: UBO-{Date.now().toString().slice(-6)}
             </div>
+          </div>
+
+          {/* AI Risk Assessment panel */}
+          <div className="max-w-2xl w-full">
+            {uboRiskLoading && !uboRisk && (
+              <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 flex items-center justify-center gap-3">
+                <div className="w-4 h-4 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+                <span className="text-12 text-ink-2">Running AI risk assessment…</span>
+              </div>
+            )}
+
+            {uboRisk && (
+              <div className="bg-bg-panel border border-amber/30 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-amber">AI UBO Risk Assessment</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase border ${UBO_RISK_TONE[uboRisk.overallRisk] ?? "bg-bg-2 text-ink-3 border-hair-2"}`}>
+                    {uboRisk.overallRisk}
+                  </span>
+                  {uboRisk.eddRequired && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase bg-red-dim text-red border border-red/40">
+                      EDD Required
+                    </span>
+                  )}
+                  {uboRisk.sanctionsScreeningRequired && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase bg-amber-dim text-amber border border-amber/40">
+                      Sanctions Screening Required
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-12 text-ink-1">{uboRisk.riskNarrative}</p>
+
+                {uboRisk.ownershipStructureRisk && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Ownership structure</div>
+                    <p className="text-12 text-ink-1">{uboRisk.ownershipStructureRisk}</p>
+                  </div>
+                )}
+
+                {uboRisk.cddGaps.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">CDD gaps</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {uboRisk.cddGaps.map((g, i) => (
+                        <li key={i} className="text-12 text-ink-1">{g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {uboRisk.pepRiskFlags.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-1">PEP risk flags</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {uboRisk.pepRiskFlags.map((f, i) => (
+                        <li key={i} className="text-12 text-red">{f}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {uboRisk.nationalityRisks.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Nationality risks</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {uboRisk.nationalityRisks.map((r, i) => (
+                        <li key={i} className="text-12 text-ink-1">{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {uboRisk.recommendedActions.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Recommended actions</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {uboRisk.recommendedActions.map((a, i) => (
+                        <li key={i} className="text-12 text-ink-1">{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {uboRisk.regulatoryBasis && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Regulatory basis</div>
+                    <code className="font-mono text-10 text-ink-1 break-all">{uboRisk.regulatoryBasis}</code>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </ModuleLayout>

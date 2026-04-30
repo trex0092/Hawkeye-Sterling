@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 
+interface AmAssessment {
+  ok: boolean;
+  overallRisk: "critical" | "high" | "medium" | "low" | "clear";
+  threatNarrative: string;
+  topConcerns: string[];
+  fatfTypologies: string[];
+  regulatoryLinks: string;
+  recommendedAction: "file_str" | "edd_required" | "exit_relationship" | "enhanced_monitoring" | "standard_monitoring" | "clear";
+  actionRationale: string;
+  uaeSpecificRisks: string[];
+}
+
 // Adverse Media 10-Year Lookback — FDL 10/2025 Art.19 requires adverse
 // media analysis to cover a 10-year window. This module provides a
 // structured log of manually verified adverse media findings per subject,
@@ -165,14 +177,60 @@ const BLANK = {
 
 const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
 
+const RISK_TONE: Record<AmAssessment["overallRisk"], string> = {
+  critical: "bg-red-dim text-red",
+  high: "bg-red-dim text-red",
+  medium: "bg-amber-dim text-amber",
+  low: "bg-green-dim text-green",
+  clear: "bg-green-dim text-green",
+};
+
+const ACTION_TONE: Record<AmAssessment["recommendedAction"], string> = {
+  file_str: "bg-red-dim text-red",
+  edd_required: "bg-red-dim text-red",
+  exit_relationship: "bg-red-dim text-red",
+  enhanced_monitoring: "bg-amber-dim text-amber",
+  standard_monitoring: "bg-blue-dim text-blue",
+  clear: "bg-green-dim text-green",
+};
+
 export default function AdverseMediaLookbackPage() {
   const [entries, setEntries] = useState<AmEntry[]>([]);
   const [draft, setDraft] = useState(BLANK);
   const [filterSubject, setFilterSubject] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState(BLANK);
+  const [assessment, setAssessment] = useState<Record<string, AmAssessment>>({});
+  const [assessing, setAssessing] = useState<Record<string, boolean>>({});
 
   useEffect(() => { setEntries(load()); }, []);
+
+  const assessSubject = async (subject: string) => {
+    if (assessing[subject]) return;
+    setAssessing((prev) => ({ ...prev, [subject]: true }));
+    try {
+      const subjectEntries = entries
+        .filter((e) => e.subject === subject)
+        .map((e) => ({
+          headline: e.headline,
+          category: CAT_LABELS[e.category] ?? e.category,
+          severity: e.severity,
+          source: e.source,
+          articleDate: e.articleDate,
+        }));
+      const res = await fetch("/api/adverse-media-assess", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subject, entries: subjectEntries }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as AmAssessment;
+        setAssessment((prev) => ({ ...prev, [subject]: data }));
+      }
+    } catch { /* non-fatal */ } finally {
+      setAssessing((prev) => ({ ...prev, [subject]: false }));
+    }
+  };
 
   const set = (k: keyof typeof BLANK) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -331,6 +389,92 @@ export default function AdverseMediaLookbackPage() {
           )}
           <span className="text-11 text-ink-3 ml-auto">{visible.length} finding{visible.length !== 1 ? "s" : ""}</span>
         </div>
+
+        {/* Per-subject AI Assessment */}
+        {subjects.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">
+              AI threat assessment per subject
+            </div>
+            {subjects.map((subject) => {
+              const a = assessment[subject];
+              const isAssessing = assessing[subject] === true;
+              const subjectCount = entries.filter((e) => e.subject === subject).length;
+              return (
+                <div key={subject} className="bg-bg-panel border border-hair-2 rounded-lg p-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-12 font-semibold text-ink-0">{subject}</span>
+                    <span className="text-10 text-ink-3 font-mono">{subjectCount} finding{subjectCount !== 1 ? "s" : ""}</span>
+                    <button
+                      type="button"
+                      disabled={isAssessing}
+                      onClick={() => void assessSubject(subject)}
+                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 ml-auto"
+                    >
+                      {isAssessing ? "Assessing…" : "AI Assess"}
+                    </button>
+                  </div>
+                  {a && (
+                    <div className="mt-3 space-y-2">
+                      {/* Risk + Action badges */}
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${RISK_TONE[a.overallRisk]}`}>
+                          {a.overallRisk} risk
+                        </span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${ACTION_TONE[a.recommendedAction]}`}>
+                          {a.recommendedAction.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      {/* Threat narrative */}
+                      <p className="text-12 text-ink-1">{a.threatNarrative}</p>
+                      {/* Top concerns */}
+                      {a.topConcerns.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Top concerns</div>
+                          <ul className="list-disc list-inside space-y-0.5">
+                            {a.topConcerns.map((c, idx) => (
+                              <li key={idx} className="text-11 text-ink-1">{c}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {/* FATF typologies */}
+                      {a.fatfTypologies.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">FATF typologies</div>
+                          <div className="flex flex-wrap gap-1">
+                            {a.fatfTypologies.map((t, idx) => (
+                              <span key={idx} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-bg-2 text-ink-1">{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Regulatory links */}
+                      {a.regulatoryLinks && (
+                        <p className="text-10 font-mono text-ink-2">{a.regulatoryLinks}</p>
+                      )}
+                      {/* Action rationale */}
+                      {a.actionRationale && (
+                        <p className="text-11 italic text-ink-2">{a.actionRationale}</p>
+                      )}
+                      {/* UAE-specific risks */}
+                      {a.uaeSpecificRisks.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">UAE-specific risks</div>
+                          <ul className="list-disc list-inside space-y-0.5">
+                            {a.uaeSpecificRisks.map((r, idx) => (
+                              <li key={idx} className="text-11 text-ink-1">{r}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Entries table */}
         {visible.length > 0 && (

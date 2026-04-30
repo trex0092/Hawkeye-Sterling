@@ -4,6 +4,49 @@ import React, { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 
+interface CriticalExpiry {
+  name: string;
+  issue: string;
+  urgency: "immediate" | "this_week" | "this_month";
+  action: string;
+}
+
+interface ScreeningAlert {
+  name: string;
+  reason: string;
+  action: string;
+}
+
+interface EmployeeRisk {
+  ok: boolean;
+  portfolioStatus: "critical" | "attention_required" | "compliant";
+  summary: string;
+  criticalExpiries: CriticalExpiry[];
+  screeningAlerts: ScreeningAlert[];
+  highRiskNationalities: string[];
+  multiEntityRisk: string[];
+  immediateActions: string[];
+  regulatoryNote: string;
+}
+
+const PORTFOLIO_BADGE: Record<string, string> = {
+  critical: "bg-red-dim text-red",
+  attention_required: "bg-amber-dim text-amber",
+  compliant: "bg-green-dim text-green",
+};
+
+const PORTFOLIO_LABEL: Record<string, string> = {
+  critical: "Critical",
+  attention_required: "Attention Required",
+  compliant: "Compliant",
+};
+
+const URGENCY_BADGE: Record<string, string> = {
+  immediate: "bg-red-dim text-red",
+  this_week: "bg-amber-dim text-amber",
+  this_month: "bg-brand-dim text-brand",
+};
+
 const BUSINESS_UNITS = [
   "ZOE Precious Metals and Jewelery FZE",
   "Naples Jewellery Trading L.L.C",
@@ -123,6 +166,38 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(BLANK_FORM);
+  const [empRisk, setEmpRisk] = useState<EmployeeRisk | null>(null);
+  const [empRiskLoading, setEmpRiskLoading] = useState(false);
+
+  async function runEmployeeRiskScan() {
+    if (employees.length === 0 || empRiskLoading) return;
+    setEmpRiskLoading(true);
+    try {
+      const mapped = employees.map((e) => ({
+        name: e.name,
+        designation: e.designation,
+        nationality: e.nationality,
+        emiratesIdExpiry: e.emiratesIdExpiry,
+        passportExpiry: e.passportExpiry,
+        dateOfJoining: e.dateOfJoining,
+        businessUnits: e.businessUnits as string[],
+        email: e.email,
+      }));
+      const res = await fetch("/api/employee-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ employees: mapped, today: new Date().toISOString().slice(0, 10) }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as EmployeeRisk;
+        setEmpRisk(data);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setEmpRiskLoading(false);
+    }
+  }
 
   useEffect(() => {
     setEmployees(load());
@@ -266,6 +341,14 @@ export default function EmployeesPage() {
             placeholder="Search employees…"
             className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 w-56"
           />
+          <button
+            type="button"
+            onClick={runEmployeeRiskScan}
+            disabled={employees.length === 0 || empRiskLoading}
+            className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors"
+          >
+            {empRiskLoading ? "Scanning…" : "AI Risk Scan"}
+          </button>
           <button
             type="button"
             onClick={() => setAdding((v) => !v)}
