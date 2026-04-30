@@ -322,6 +322,69 @@ interface SanctionsNexus {
   regulatoryBasis: string;
 }
 
+interface TransactionAnalysis {
+  typology: string;
+  typologyFatfRef: string;
+  strRequired: boolean;
+  strBasis: string;
+  strDeadline: string;
+  riskVerdict: "critical" | "high" | "medium" | "low" | "clear";
+  redFlags: Array<{ indicator: string; severity: "critical" | "high" | "medium"; fatfRef: string }>;
+  recommendedAction: "file_str" | "escalate_mlro" | "enhanced_dd" | "monitor" | "clear";
+  actionRationale: string;
+  regulatoryBasis: string;
+  missingInformation: string[];
+  investigativeQuestions: string[];
+}
+
+interface EddQuestion {
+  id: string;
+  category: string;
+  question: string;
+  rationale: string;
+  regulatoryBasis: string;
+  mandatory: boolean;
+  followUp?: string;
+}
+
+interface EddQuestionnaire {
+  eddLevel: "standard" | "enhanced" | "intensive";
+  eddBasis: string;
+  totalQuestions: number;
+  mandatoryCount: number;
+  categories: string[];
+  questions: EddQuestion[];
+  documentationRequired: string[];
+  seniorApprovalRequired: boolean;
+  reviewFrequency: string;
+  regulatoryBasis: string;
+}
+
+interface TbmlIndicator {
+  indicator: string;
+  severity: "critical" | "high" | "medium" | "low";
+  category: "pricing" | "documentation" | "routing" | "counterparty" | "quantity" | "pattern";
+  fatfRef: string;
+  detail: string;
+}
+
+interface TbmlAnalysis {
+  tbmlRisk: "critical" | "high" | "medium" | "low" | "clear";
+  tbmlTypology: string;
+  tbmlTypologyRef: string;
+  overInvoicingRisk: "high" | "medium" | "low" | "none";
+  underInvoicingRisk: "high" | "medium" | "low" | "none";
+  phantomShipmentRisk: "high" | "medium" | "low" | "none";
+  multipleInvoicingRisk: "high" | "medium" | "low" | "none";
+  indicators: TbmlIndicator[];
+  recommendedAction: "block" | "escalate_mlro" | "file_str" | "enhanced_dd" | "request_docs" | "clear";
+  actionRationale: string;
+  documentationGaps: string[];
+  investigativeSteps: string[];
+  regulatoryBasis: string;
+  oecdStep: string;
+}
+
 interface TypologyMatchPrimary {
   name: string;
   fatfReference: string;
@@ -1068,7 +1131,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1139,6 +1202,94 @@ export default function MlroAdvisorPage() {
       if (data.ok) setTypoMatch(data);
     } catch { /* silent */ }
     finally { setTypoMatchLoading(false); }
+  };
+
+  // Transaction Narrative Analyzer
+  const [txnNarrative, setTxnNarrative] = useState("");
+  const [txnCustomerType, setTxnCustomerType] = useState("");
+  const [txnJurisdiction, setTxnJurisdiction] = useState("");
+  const [txnAmounts, setTxnAmounts] = useState("");
+  const [txnResult, setTxnResult] = useState<TransactionAnalysis | null>(null);
+  const [txnLoading, setTxnLoading] = useState(false);
+
+  const runTxnNarrative = async () => {
+    if (!txnNarrative.trim()) return;
+    setTxnLoading(true);
+    setTxnResult(null);
+    try {
+      const res = await fetch("/api/transaction-narrative", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ narrative: txnNarrative, customerType: txnCustomerType || undefined, jurisdiction: txnJurisdiction || undefined, amounts: txnAmounts || undefined }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & TransactionAnalysis;
+      if (data.ok) setTxnResult(data);
+    } catch { /* silent */ }
+    finally { setTxnLoading(false); }
+  };
+
+  // EDD Questionnaire Generator
+  const [eddCustomerType, setEddCustomerType] = useState("");
+  const [eddRiskFactors, setEddRiskFactors] = useState("");
+  const [eddJurisdiction, setEddJurisdiction] = useState("");
+  const [eddProducts, setEddProducts] = useState("");
+  const [eddContext, setEddContext] = useState("");
+  const [eddResult, setEddResult] = useState<EddQuestionnaire | null>(null);
+  const [eddLoading, setEddLoading] = useState(false);
+  const [eddExpandedQ, setEddExpandedQ] = useState<string | null>(null);
+
+  const runEddQuestionnaire = async () => {
+    if (!eddCustomerType.trim()) return;
+    setEddLoading(true);
+    setEddResult(null);
+    try {
+      const res = await fetch("/api/edd-questionnaire", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          customerType: eddCustomerType,
+          riskFactors: eddRiskFactors ? eddRiskFactors.split(",").map((s) => s.trim()).filter(Boolean) : [],
+          jurisdiction: eddJurisdiction || undefined,
+          productTypes: eddProducts ? eddProducts.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          context: eddContext || undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & EddQuestionnaire;
+      if (data.ok) setEddResult(data);
+    } catch { /* silent */ }
+    finally { setEddLoading(false); }
+  };
+
+  // TBML Trade Document Analyzer
+  const [tbmlInput, setTbmlInput] = useState({ invoiceDescription: "", supplierCountry: "", buyerCountry: "", declaredValue: "", commodity: "", paymentRoute: "", additionalContext: "" });
+  const [tbmlResult, setTbmlResult] = useState<TbmlAnalysis | null>(null);
+  const [tbmlLoading, setTbmlLoading] = useState(false);
+
+  const runTbml = async () => {
+    if (!tbmlInput.invoiceDescription.trim()) return;
+    setTbmlLoading(true);
+    setTbmlResult(null);
+    try {
+      const res = await fetch("/api/tbml-analysis", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          invoiceDescription: tbmlInput.invoiceDescription,
+          supplierCountry: tbmlInput.supplierCountry || undefined,
+          buyerCountry: tbmlInput.buyerCountry || undefined,
+          declaredValue: tbmlInput.declaredValue || undefined,
+          commodity: tbmlInput.commodity || undefined,
+          paymentRoute: tbmlInput.paymentRoute || undefined,
+          additionalContext: tbmlInput.additionalContext || undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & TbmlAnalysis;
+      if (data.ok) setTbmlResult(data);
+    } catch { /* silent */ }
+    finally { setTbmlLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -2018,10 +2169,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match"] as const).map((t) => (
+              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match", "txn-narrative", "edd-questionnaire", "tbml"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : "Typology Match"}
+                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : t === "typology-match" ? "Typology Match" : t === "txn-narrative" ? "Transaction Analyzer" : t === "edd-questionnaire" ? "EDD Generator" : "TBML Analyzer"}
                 </button>
               ))}
             </div>
@@ -2645,6 +2796,309 @@ export default function MlroAdvisorPage() {
                         </div>
                       )}
                       {s.regulatoryBasis && <div className="text-10 font-mono text-ink-3">{s.regulatoryBasis}</div>}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── Transaction Narrative Analyzer ─────────────────────────────── */}
+            {superToolsTab === "txn-narrative" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">Transaction Narrative Analyzer</div>
+                  <p className="text-11 text-ink-3 mb-3">Paste a raw transaction narrative, TM alert, or case note. AI determines the AML typology, red flags, STR threshold, and recommended action — grounded in UAE FDL 10/2025 and FATF recommendations.</p>
+                  <textarea
+                    value={txnNarrative}
+                    onChange={(e) => setTxnNarrative(e.target.value)}
+                    rows={5}
+                    placeholder="Paste transaction narrative or monitoring alert text here — e.g. 'Customer conducted 12 cash deposits across 3 branches over 2 weeks, each just below AED 55,000, followed by a same-day international wire to a UAE-listed counterparty in DRC…'"
+                    className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none"
+                  />
+                  <div className="grid grid-cols-3 gap-3 mt-2">
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Customer Type</label>
+                      <input value={txnCustomerType} onChange={(e) => setTxnCustomerType(e.target.value)} placeholder="e.g. Gold trader, VASP, PEP" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Jurisdiction</label>
+                      <input value={txnJurisdiction} onChange={(e) => setTxnJurisdiction(e.target.value)} placeholder="e.g. UAE, NG, AE→CH" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Amount Details</label>
+                      <input value={txnAmounts} onChange={(e) => setTxnAmounts(e.target.value)} placeholder="e.g. AED 52,000 × 12" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runTxnNarrative()} disabled={txnLoading || !txnNarrative.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {txnLoading ? "Analyzing…" : "Analyze Transaction"}
+                </button>
+                {txnResult && (() => {
+                  const t = txnResult;
+                  const riskCls = t.riskVerdict === "critical" ? "bg-red text-white" : t.riskVerdict === "high" ? "bg-red-dim text-red" : t.riskVerdict === "medium" ? "bg-amber-dim text-amber" : t.riskVerdict === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
+                  const actionCls = (t.recommendedAction === "file_str") ? "bg-red text-white" : (t.recommendedAction === "escalate_mlro") ? "bg-red-dim text-red" : (t.recommendedAction === "enhanced_dd") ? "bg-amber-dim text-amber" : (t.recommendedAction === "monitor") ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase font-bold ${riskCls}`}>{t.riskVerdict} risk</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${actionCls}`}>{t.recommendedAction.replace(/_/g, " ")}</span>
+                        {t.strRequired && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white uppercase font-bold">STR required</span>}
+                      </div>
+                      <div>
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Typology</div>
+                        <div className="text-12 font-semibold text-ink-0">{t.typology}</div>
+                        <div className="text-10 font-mono text-ink-3">{t.typologyFatfRef}</div>
+                      </div>
+                      {t.strRequired && (
+                        <div className="rounded p-3 bg-red-dim border border-red/40">
+                          <div className="text-10 uppercase tracking-wide-3 text-red mb-1 font-semibold">STR Filing Obligation</div>
+                          <p className="text-11 text-ink-0 mb-1">{t.strBasis}</p>
+                          <div className="text-10 font-mono text-red">{t.strDeadline}</div>
+                        </div>
+                      )}
+                      <p className="text-12 text-ink-1 leading-relaxed">{t.actionRationale}</p>
+                      {t.redFlags.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Red Flags ({t.redFlags.length})</div>
+                          <div className="space-y-1.5">
+                            {t.redFlags.map((f, i) => {
+                              const sevCls = f.severity === "critical" ? "bg-red text-white" : f.severity === "high" ? "bg-red-dim text-red" : "bg-amber-dim text-amber";
+                              return (
+                                <div key={i} className="flex items-start gap-2 border border-hair-2 rounded p-2 bg-bg-0">
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${sevCls}`}>{f.severity}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-11 text-ink-0">{f.indicator}</div>
+                                    <div className="text-10 font-mono text-ink-3">{f.fatfRef}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {t.missingInformation.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-amber mb-1">Missing Information</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {t.missingInformation.map((m, i) => <li key={i}>{m}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {t.investigativeQuestions.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investigative Questions</div>
+                          <ol className="text-11 text-ink-1 space-y-0.5 list-decimal list-inside">
+                            {t.investigativeQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      {t.regulatoryBasis && <div className="text-10 font-mono text-ink-3">{t.regulatoryBasis}</div>}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── EDD Questionnaire Generator ──────────────────────────────────── */}
+            {superToolsTab === "edd-questionnaire" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">EDD Questionnaire Generator</div>
+                  <p className="text-11 text-ink-3 mb-3">Input a customer profile and risk factors. AI generates a complete, tailored Enhanced Due Diligence questionnaire — with per-question regulatory basis, mandatory/optional classification, and documentation requirements.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Customer Type <span className="text-red">*</span></label>
+                      <input value={eddCustomerType} onChange={(e) => setEddCustomerType(e.target.value)} placeholder="e.g. UAE gold refinery, Foreign DPMS dealer, VASP, PEP-owned LLC" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Risk Factors (comma-separated)</label>
+                      <input value={eddRiskFactors} onChange={(e) => setEddRiskFactors(e.target.value)} placeholder="PEP, CAHRA sourcing, cash-intensive, BVI holding" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Jurisdiction</label>
+                      <input value={eddJurisdiction} onChange={(e) => setEddJurisdiction(e.target.value)} placeholder="e.g. UAE, NG, RU" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Products / Services</label>
+                      <input value={eddProducts} onChange={(e) => setEddProducts(e.target.value)} placeholder="gold bullion, refining, wire transfers" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Additional Context</label>
+                      <input value={eddContext} onChange={(e) => setEddContext(e.target.value)} placeholder="Any other context relevant to EDD scope" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runEddQuestionnaire()} disabled={eddLoading || !eddCustomerType.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {eddLoading ? "Generating…" : "Generate EDD Questionnaire"}
+                </button>
+                {eddResult && (() => {
+                  const e = eddResult;
+                  const lvlCls = e.eddLevel === "intensive" ? "bg-red text-white" : e.eddLevel === "enhanced" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase font-bold ${lvlCls}`}>{e.eddLevel} EDD</span>
+                        <span className="font-mono text-10 text-ink-3">{e.mandatoryCount} mandatory · {e.totalQuestions - e.mandatoryCount} optional · {e.totalQuestions} total</span>
+                        {e.seniorApprovalRequired && <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red uppercase">Senior approval required</span>}
+                      </div>
+                      <p className="text-11 text-ink-2 italic">{e.eddBasis}</p>
+                      <div className="space-y-2">
+                        {e.questions.map((q) => (
+                          <div key={q.id} className={`border rounded-lg overflow-hidden ${q.mandatory ? "border-red/30" : "border-hair-2"}`}>
+                            <button type="button" onClick={() => setEddExpandedQ(eddExpandedQ === q.id ? null : q.id)}
+                              className="w-full text-left px-3 py-2.5 flex items-start gap-2 hover:bg-bg-panel transition-colors">
+                              <span className={`shrink-0 mt-0.5 font-mono text-9 px-1.5 py-px rounded uppercase ${q.mandatory ? "bg-red-dim text-red" : "bg-bg-2 text-ink-3"}`}>
+                                {q.mandatory ? "mandatory" : "optional"}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-10 font-mono text-ink-3 mb-0.5">{q.category}</div>
+                                <div className="text-12 text-ink-0 leading-snug">{q.question}</div>
+                              </div>
+                              <span className="text-ink-3 text-11 shrink-0">{eddExpandedQ === q.id ? "▲" : "▼"}</span>
+                            </button>
+                            {eddExpandedQ === q.id && (
+                              <div className="border-t border-hair-2 px-3 pb-3 pt-2 space-y-1.5 bg-bg-0">
+                                <div className="text-10 text-ink-2"><strong className="text-ink-3">Rationale:</strong> {q.rationale}</div>
+                                <div className="text-10 font-mono text-ink-3"><strong>Basis:</strong> {q.regulatoryBasis}</div>
+                                {q.followUp && <div className="text-10 text-brand-deep italic">Follow-up: {q.followUp}</div>}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {e.documentationRequired.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Documentation Required</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {e.documentationRequired.map((d, i) => <li key={i}>{d}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="flex gap-4 text-10 font-mono text-ink-3">
+                        <span>Review: {e.reviewFrequency}</span>
+                        <span>{e.regulatoryBasis}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── TBML Trade Document Analyzer ─────────────────────────────────── */}
+            {superToolsTab === "tbml" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-12 font-semibold text-ink-0 mb-1">TBML Trade Document Analyzer</div>
+                  <p className="text-11 text-ink-3 mb-3">Input trade document details (invoice, bill of lading, shipment). AI identifies over/under-invoicing, phantom shipment risk, CAHRA routing anomalies, and counterparty exposure — grounded in FATF TBML typologies and OECD CAHRA 5-step guidance.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Invoice / Document Description <span className="text-red">*</span></label>
+                      <textarea value={tbmlInput.invoiceDescription} onChange={(e) => setTbmlInput((p) => ({ ...p, invoiceDescription: e.target.value }))} rows={4} placeholder="Describe the trade document — invoice number, goods described, weight/quantity, unit price, total value, payment terms, parties, any anomalies noted…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Commodity</label>
+                      <input value={tbmlInput.commodity} onChange={(e) => setTbmlInput((p) => ({ ...p, commodity: e.target.value }))} placeholder="e.g. Gold bullion 999.9, silver, copper" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Declared Value</label>
+                      <input value={tbmlInput.declaredValue} onChange={(e) => setTbmlInput((p) => ({ ...p, declaredValue: e.target.value }))} placeholder="e.g. USD 2,150,000" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Supplier Country</label>
+                      <input value={tbmlInput.supplierCountry} onChange={(e) => setTbmlInput((p) => ({ ...p, supplierCountry: e.target.value }))} placeholder="ISO-2 e.g. CD, GH, SD" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div>
+                      <label className="block text-10 text-ink-3 mb-1">Buyer Country</label>
+                      <input value={tbmlInput.buyerCountry} onChange={(e) => setTbmlInput((p) => ({ ...p, buyerCountry: e.target.value }))} placeholder="ISO-2 e.g. AE, CH, SG" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Payment Route</label>
+                      <input value={tbmlInput.paymentRoute} onChange={(e) => setTbmlInput((p) => ({ ...p, paymentRoute: e.target.value }))} placeholder="e.g. Wire via Sharjah → Dubai → Geneva, SWIFT MT103" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-10 text-ink-3 mb-1">Additional Context</label>
+                      <textarea value={tbmlInput.additionalContext} onChange={(e) => setTbmlInput((p) => ({ ...p, additionalContext: e.target.value }))} rows={2} placeholder="Any other context — e.g. customer history, prior alerts, ownership chain, discrepancies noted…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runTbml()} disabled={tbmlLoading || !tbmlInput.invoiceDescription.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {tbmlLoading ? "Analyzing…" : "Analyze for TBML Risk"}
+                </button>
+                {tbmlResult && (() => {
+                  const tb = tbmlResult;
+                  const riskCls = tb.tbmlRisk === "critical" ? "bg-red text-white" : tb.tbmlRisk === "high" ? "bg-red-dim text-red" : tb.tbmlRisk === "medium" ? "bg-amber-dim text-amber" : tb.tbmlRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
+                  const actionCls = (tb.recommendedAction === "block" || tb.recommendedAction === "file_str") ? "bg-red text-white" : (tb.recommendedAction === "escalate_mlro") ? "bg-red-dim text-red" : (tb.recommendedAction === "enhanced_dd" || tb.recommendedAction === "request_docs") ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const subRisk = (r: string) => r === "high" ? "text-red font-semibold" : r === "medium" ? "text-amber font-semibold" : r === "low" ? "text-ink-2" : "text-green";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase font-bold ${riskCls}`}>{tb.tbmlRisk} TBML risk</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${actionCls}`}>{tb.recommendedAction.replace(/_/g, " ")}</span>
+                      </div>
+                      <div>
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Typology</div>
+                        <div className="text-12 font-semibold text-ink-0">{tb.tbmlTypology}</div>
+                        <div className="text-10 font-mono text-ink-3">{tb.tbmlTypologyRef}</div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                          { label: "Over-invoicing", val: tb.overInvoicingRisk },
+                          { label: "Under-invoicing", val: tb.underInvoicingRisk },
+                          { label: "Phantom shipment", val: tb.phantomShipmentRisk },
+                          { label: "Multi-invoicing", val: tb.multipleInvoicingRisk },
+                        ].map(({ label, val }) => (
+                          <div key={label} className="border border-hair-2 rounded p-2 bg-bg-0">
+                            <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-1">{label}</div>
+                            <div className={`text-12 font-semibold uppercase ${subRisk(val)}`}>{val}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{tb.actionRationale}</p>
+                      {tb.indicators.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">TBML Indicators ({tb.indicators.length})</div>
+                          <div className="space-y-1.5">
+                            {tb.indicators.map((ind, i) => {
+                              const sevCls = ind.severity === "critical" ? "bg-red text-white" : ind.severity === "high" ? "bg-red-dim text-red" : ind.severity === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
+                              const catCls = "bg-brand-dim text-brand-deep";
+                              return (
+                                <div key={i} className="border border-hair-2 rounded p-2.5 bg-bg-0 flex items-start gap-2">
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${sevCls}`}>{ind.severity}</span>
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${catCls}`}>{ind.category}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-11 font-medium text-ink-0">{ind.indicator}</div>
+                                    <div className="text-10 text-ink-2 mt-0.5">{ind.detail}</div>
+                                    <div className="text-10 font-mono text-ink-3">{ind.fatfRef}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {tb.documentationGaps.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-amber mb-1">Documentation Gaps</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {tb.documentationGaps.map((d, i) => <li key={i}>{d}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {tb.investigativeSteps.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investigative Steps</div>
+                          <ol className="text-11 text-ink-1 space-y-0.5 list-decimal list-inside">
+                            {tb.investigativeSteps.map((s, i) => <li key={i}>{s}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      <div className="flex gap-3 text-10 font-mono text-ink-3 flex-wrap">
+                        <span>{tb.oecdStep}</span>
+                        <span>{tb.regulatoryBasis}</span>
+                      </div>
                     </div>
                   );
                 })()}
