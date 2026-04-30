@@ -259,6 +259,22 @@ export interface IntrospectionReport {
   producedAt: number;
 }
 
+export interface EvidenceWeightedSummary {
+  evidenceScore: number;
+  posterior: number;
+  score: number;
+  confidence: number;
+  cited: Array<{
+    evidenceId: string;
+    credibility: number;
+    freshness: number;
+    kind: string;
+    contribution: number;
+  }>;
+  methodology: string;
+  notes: string[];
+}
+
 export interface BrainVerdict {
   runId: string;
   subject: Subject;
@@ -280,6 +296,11 @@ export interface BrainVerdict {
   introspection?: IntrospectionReport;
   methodology?: string;
   firepower?: CognitiveFirepower;
+  // Evidence-weighted post-fusion adjunct (credibility×freshness blend, P8 caps,
+  // posterior pull toward prior on weak/stale stacks). Populated only when an
+  // evidenceIndex was supplied to the engine. The base FusionResult fields above
+  // (prior/posterior/bayesTrace) remain unchanged so auditors can compare both.
+  evidenceWeighted?: EvidenceWeightedSummary;
 }
 
 export interface ReasoningChainNode {

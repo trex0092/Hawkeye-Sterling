@@ -47,6 +47,45 @@ export function isStale(ev: EvidenceItem, maxDays: number): boolean {
   return freshnessDays(ev.observedAt) > maxDays;
 }
 
+// Per-EvidenceKind half-life in days. A piece of evidence's freshness factor
+// halves every `halfLife` days. Numbers reflect operational reality:
+// sanctions lists update constantly; court filings are durable; training data
+// is treated as instantly stale per Charter P8.
+export const FRESHNESS_HALF_LIFE_DAYS: Record<EvidenceKind, number> = {
+  sanctions_list: 30,
+  regulator_press_release: 90,
+  court_filing: 1825,        // 5 years
+  news_article: 180,
+  rss_feed: 60,
+  corporate_registry: 365,
+  customer_document: 90,
+  internal_system: 30,
+  social_media: 30,
+  training_data: 0,          // sentinel: handled as 0 freshness below
+};
+
+export interface FreshnessOptions {
+  /** Override the per-kind half-life table. */
+  halfLifeDays?: Partial<Record<EvidenceKind, number>>;
+  /** Reference time for "now". Defaults to Date.now(). */
+  now?: Date;
+}
+
+/** Continuous freshness factor in [0, 1] using exponential half-life decay
+ *  per source kind: f(days) = 2^(-days / halfLife). Charter P8: training_data
+ *  is always 0. Used by fusion.ts to weight likelihood ratios. */
+export function freshnessFactor(ev: EvidenceItem, opts: FreshnessOptions = {}): number {
+  if (ev.kind === 'training_data') return 0;
+  const halfLife = opts.halfLifeDays?.[ev.kind] ?? FRESHNESS_HALF_LIFE_DAYS[ev.kind];
+  if (halfLife <= 0) return 0;
+  const days = freshnessDays(ev.observedAt, opts.now ?? new Date());
+  if (!Number.isFinite(days)) return 0;
+  // 2^(-days / halfLife). Clamp to [0,1] for safety.
+  const f = Math.pow(2, -days / halfLife);
+  if (!Number.isFinite(f)) return 0;
+  return Math.max(0, Math.min(1, f));
+}
+
 export function annotateStaleWarnings<T extends EvidenceItem>(items: T[]): T[] {
   return items.map((e) => {
     if (e.kind !== 'training_data' || e.staleWarning) return e;
