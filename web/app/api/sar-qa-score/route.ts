@@ -75,7 +75,12 @@ Respond ONLY with valid JSON (no markdown fences) in this exact format:
 }`;
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const body = (await req.json()) as RequestBody;
+  let body: RequestBody;
+  try {
+    body = (await req.json()) as RequestBody;
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+  }
   const { cases } = body;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

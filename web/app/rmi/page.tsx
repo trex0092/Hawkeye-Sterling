@@ -370,7 +370,7 @@ export default function RmiPage() {
           { value: String(conformant), label: "RMAP conformant" },
           { value: String(nonConformant), label: "non-conformant", tone: nonConformant > 0 ? "red" : undefined },
           { value: String(cahraHigh), label: "CAHRA high-risk", tone: cahraHigh > 0 ? "red" : undefined },
-          { value: String(SMELTERS.length), label: "smelters tracked" },
+          { value: String(liveSmelters.length), label: "smelters tracked" },
         ]}
       />
 
@@ -558,7 +558,7 @@ export default function RmiPage() {
       <div className="flex gap-1 mb-4 border-b border-hair-2">
         {MINERAL_TABS.map((t) => {
           const active = mineralFilter === t.key;
-          const count = t.key === "all" ? SMELTERS.length : SMELTERS.filter((s) => s.mineral === t.key).length;
+          const count = t.key === "all" ? liveSmelters.length : liveSmelters.filter((s) => s.mineral === t.key).length;
           return (
             <button
               key={t.key}

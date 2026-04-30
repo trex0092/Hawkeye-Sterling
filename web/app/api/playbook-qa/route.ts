@@ -19,7 +19,12 @@ const EMPTY_ANSWER: QaAnswer = {
 };
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as { question?: string; playbookIds?: string[] };
+  let body: { question?: string; playbookIds?: string[] };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+  }
   const question = body.question ?? "";
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

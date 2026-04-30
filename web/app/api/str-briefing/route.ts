@@ -32,7 +32,12 @@ const EMPTY_BRIEFING: MlroBriefing = {
 };
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as { cases?: CaseInput[] };
+  let body: { cases?: CaseInput[] };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+  }
   const cases = body.cases ?? [];
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
