@@ -192,13 +192,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Shared input gate — refuses empty / oversize / prompt-injection /
-  // out-of-scope questions before they hit Claude. Saves a slow round
-  // trip and stops the advisor producing compliance-flavoured non-
-  // answers to non-compliance prompts.
+  // Shared input gate — refuses empty / oversize / prompt-injection
+  // inputs before they hit Claude. Topic-scope filtering is off; the
+  // Advisor must answer every compliance question, even when the
+  // keyword classifier doesn't recognise specific terms.
   const gateResult = gateMlroQuestion(body.question, {
     maxChars: 2000,
-    allowGeneral: false,
   });
   if (!gateResult.ok) {
     return NextResponse.json(

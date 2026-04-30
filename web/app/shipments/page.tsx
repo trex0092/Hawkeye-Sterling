@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
+import { formatDMY } from "@/lib/utils/dateFormat";
 
 // Operator-saved deletes persist to localStorage so the working register
 // survives reload. The seed CONSIGNMENTS array stays the system-of-record;
@@ -739,7 +740,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
 
   const submit = () => {
     if (!reference.trim() || !refinery.trim()) { setErr("Reference and Supplier are required."); return; }
-    const today = new Date().toLocaleDateString("en-GB");
+    const today = formatDMY(new Date());
     const kg = parseFloat(grossWeightKg) || 0;
     const netKg = parseFloat(netWeightKg) || kg;
     const c: Consignment = {

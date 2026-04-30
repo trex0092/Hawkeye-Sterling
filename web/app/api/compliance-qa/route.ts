@@ -219,13 +219,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  // Shared input gate — Regulatory Q&A is broader than the MLRO
-  // Advisor (FATF / Wolfsberg / OECD generic questions are legitimate),
-  // so we set allowGeneral=true. Empty / oversize / prompt-injection
-  // are still refused.
+  // Shared input gate — refuses empty / oversize / prompt-injection
+  // inputs. Topic-scope filtering is off across all advisor surfaces.
   const gateResult = gateMlroQuestion(body.query ?? "", {
     maxChars: 2000,
-    allowGeneral: true,
   });
   if (!gateResult.ok) {
     return NextResponse.json(

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en-GB">
       <head>
         {/* Runs synchronously before paint — prevents flash of light theme on dark-mode reload */}
         <script

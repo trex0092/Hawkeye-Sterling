@@ -18,6 +18,7 @@
 // authoritative when the network or backend is unavailable.
 
 import type { CaseRecord, CaseStatus, EvidenceCategory } from "@/lib/types";
+import { formatDMY } from "@/lib/utils/dateFormat";
 
 const STORAGE_KEY = "hawkeye.cases.v1";
 const SYNC_FLAG_KEY = "hawkeye.cases.serverSyncedOnce";
@@ -273,7 +274,7 @@ export interface NewCaseInput {
 export function buildCaseRecord(input: NewCaseInput): CaseRecord {
   const now = new Date();
   const id = `CASE-${now.getFullYear()}-${String(now.getTime()).slice(-6)}`;
-  const opened = now.toLocaleDateString("en-GB");
+  const opened = formatDMY(now);
   return {
     id,
     badge: id.split("-").pop() ?? "00",

@@ -6,6 +6,7 @@ import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { RowActions } from "@/components/shared/RowActions";
+import { formatDMY as fmtDate, formatDMYTime as fmtDateTime } from "@/lib/utils/dateFormat";
 
 type Cadence = "daily" | "twice-daily" | "weekly" | "monthly";
 type MonitorStatus = "active" | "paused" | "overdue";
@@ -99,20 +100,6 @@ const TIER_TONE: Record<string, string> = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtDateTime(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-function fmtDate(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
 
 function computeNextDue(lastRun: string, cadence: Cadence): string {
   if (!lastRun) return "—";
