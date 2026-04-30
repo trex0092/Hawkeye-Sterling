@@ -86,8 +86,9 @@ interface AdvisorResponseV1 {
 interface Draft {
   // Step 1: Entity (legal person / organisation / vessel — never natural)
   fullName: string;          // Entity legal name
-  registeredCountry: string; // ISO-2 of country of registration
-  idNumber: string;          // Trade-licence / registration / IMO
+  registeredCountry: string; // Country of registration (ISO-2)
+  idType: string;            // Trade licence / registration / IMO / DUNS
+  idNumber: string;          // The actual identifier
   relationshipTypes: RelationshipType[]; // multi-select; >= 1 required
   // Step 2: CDD
   occupation: string;        // Sector / business activity
@@ -111,6 +112,7 @@ interface Draft {
 const BLANK_DRAFT: Draft = {
   fullName: "",
   registeredCountry: "",
+  idType: "trade-licence",
   idNumber: "",
   relationshipTypes: [],
   occupation: "",
@@ -118,6 +120,15 @@ const BLANK_DRAFT: Draft = {
   expectedProfile: "",
   mlroNote: "",
 };
+
+const ID_TYPE_OPTIONS: Array<{ id: string; label: string }> = [
+  { id: "trade-licence",   label: "Trade licence" },
+  { id: "registration",    label: "Registration #" },
+  { id: "imo",             label: "IMO" },
+  { id: "duns",            label: "DUNS" },
+  { id: "lei",             label: "LEI" },
+  { id: "tax-id",          label: "Tax ID" },
+];
 
 const STORAGE_DRAFT = "hawkeye.onboarding.draft.v1";
 const STORAGE_RECORDS = "hawkeye.onboarding.v1";
