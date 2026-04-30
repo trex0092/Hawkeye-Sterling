@@ -1433,6 +1433,302 @@ export default function ScreeningPage() {
             )}
           </div>
 
+          {/* Smart Hit Disambiguator Panel */}
+          {(() => {
+            const verdictBadge: Record<string, string> = {
+              confirmed_false_positive: "bg-green-dim text-green border border-green/30",
+              likely_false_positive: "bg-green-dim text-green border border-green/30 opacity-70",
+              possible_match: "bg-amber-dim text-amber border border-amber/30",
+              likely_true_match: "bg-red text-white",
+            };
+            return (
+              <div className="mb-6 bg-bg-panel border border-violet/20 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-bg-1 transition-colors"
+                  onClick={() => setDisambigPanelOpen((o) => !o)}
+                >
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-violet-400">Smart Hit Disambiguator</span>
+                  <span className="text-10 text-ink-3 font-mono px-1.5 py-px bg-bg-1 rounded border border-hair-2">Resolve hundreds of hits in seconds</span>
+                  <span className="ml-auto text-ink-3 text-12">{disambigPanelOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {disambigPanelOpen && (
+                  <div className="px-4 pb-4 border-t border-hair-2">
+                    <p className="text-11 text-ink-2 mt-3 mb-4">
+                      Enter your client profile and the screening hits. The AI applies systematic multi-factor analysis (DOB, gender, nationality, role, geography) under FDL 10/2025 and FATF R.10 to resolve each hit in bulk.
+                    </p>
+
+                    {/* Client profile inputs */}
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Client Profile</div>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <div>
+                        <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Full Name *</label>
+                        <input
+                          className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                          placeholder="Client full name"
+                          value={disambigClient.name}
+                          onChange={(e) => setDisambigClient((p) => ({ ...p, name: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Nationality</label>
+                        <input
+                          className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                          placeholder="e.g. Pakistani"
+                          value={disambigClient.nationality}
+                          onChange={(e) => setDisambigClient((p) => ({ ...p, nationality: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Date of Birth</label>
+                        <input
+                          className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                          placeholder="dd/mm/yyyy or yyyy-mm-dd"
+                          value={disambigClient.dob}
+                          onChange={(e) => setDisambigClient((p) => ({ ...p, dob: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Gender</label>
+                        <select
+                          className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                          value={disambigClient.gender}
+                          onChange={(e) => setDisambigClient((p) => ({ ...p, gender: e.target.value }))}
+                        >
+                          <option value="">— select —</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Occupation</label>
+                        <input
+                          className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                          placeholder="e.g. Gold trader, Importer"
+                          value={disambigClient.occupation}
+                          onChange={(e) => setDisambigClient((p) => ({ ...p, occupation: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Client Context</label>
+                        <input
+                          className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                          placeholder="e.g. gold buyer, UAE-based, opened 2024"
+                          value={disambigClient.context}
+                          onChange={(e) => setDisambigClient((p) => ({ ...p, context: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hits table */}
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Screening Hits</div>
+                    <div className="space-y-2 mb-3">
+                      {disambigHits.map((hit, idx) => (
+                        <div key={hit.hitId} className="grid gap-1.5 p-2 bg-bg-1 border border-hair-2 rounded" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px 32px" }}>
+                          <input
+                            className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                            placeholder="Hit name"
+                            value={hit.hitName}
+                            onChange={(e) => updateHit(idx, { hitName: e.target.value })}
+                          />
+                          <select
+                            className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                            value={hit.hitCategory}
+                            onChange={(e) => updateHit(idx, { hitCategory: e.target.value })}
+                          >
+                            {["Sanctions", "PEP", "Adverse Media", "SIP", "RCA"].map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                          <input
+                            className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                            placeholder="Country"
+                            value={hit.hitCountry ?? ""}
+                            onChange={(e) => updateHit(idx, { hitCountry: e.target.value })}
+                          />
+                          <input
+                            className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                            placeholder="Hit DOB"
+                            value={hit.hitDob ?? ""}
+                            onChange={(e) => updateHit(idx, { hitDob: e.target.value })}
+                          />
+                          <input
+                            className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                            placeholder="Role/title"
+                            value={hit.hitRole ?? ""}
+                            onChange={(e) => updateHit(idx, { hitRole: e.target.value })}
+                          />
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                            placeholder="Score"
+                            value={hit.matchScore ?? ""}
+                            onChange={(e) => updateHit(idx, { matchScore: e.target.value ? Number(e.target.value) : undefined })}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeHit(idx)}
+                            disabled={disambigHits.length <= 1}
+                            className="flex items-center justify-center text-ink-3 hover:text-red disabled:opacity-30 text-14"
+                            title="Remove hit"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-10 text-ink-3 mb-3 font-mono">Columns: Hit Name · Category · Country · DOB · Role · Match Score</div>
+
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={addHit}
+                        className="px-3 py-1.5 border border-hair-2 rounded text-11 text-ink-2 hover:text-ink-0 hover:border-brand/40 transition-colors"
+                      >
+                        + Add Hit
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!disambigClient.name.trim() || disambigHits.every((h) => !h.hitName.trim()) || disambigLoading}
+                        onClick={() => { void runDisambiguation(); }}
+                        className="px-4 py-1.5 bg-violet-600 text-white rounded text-12 font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                      >
+                        {disambigLoading ? "Running AI disambiguation…" : "Run Disambiguation"}
+                      </button>
+                    </div>
+
+                    {/* Results */}
+                    {disambigResult && (
+                      <div className="space-y-4 pt-4 border-t border-hair-2">
+                        {/* Top banner */}
+                        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-bg-1 border border-hair-2 rounded-lg">
+                          <p className="text-12 font-bold text-ink-0 flex-1">{disambigResult.overallAssessment}</p>
+                          {disambigResult.processingTime && (
+                            <span className="text-10 font-mono px-2 py-0.5 bg-green-dim text-green border border-green/30 rounded">
+                              {disambigResult.processingTime}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Strategy + risk profile */}
+                        {(disambigResult.disambiguationStrategy || disambigResult.clientRiskProfile) && (
+                          <div className="grid grid-cols-2 gap-3">
+                            {disambigResult.disambiguationStrategy && (
+                              <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
+                                <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disambiguation Strategy</div>
+                                <p className="text-11 text-ink-1">{disambigResult.disambiguationStrategy}</p>
+                              </div>
+                            )}
+                            {disambigResult.clientRiskProfile && (
+                              <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
+                                <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Risk Profile</div>
+                                <p className="text-11 text-ink-1">{disambigResult.clientRiskProfile}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Escalation alert */}
+                        {disambigResult.escalationItems.length > 0 && (
+                          <div className="flex items-start gap-2 px-4 py-3 bg-red-dim border border-red/40 rounded-lg">
+                            <span className="text-red font-bold text-13">!</span>
+                            <div>
+                              <div className="text-12 font-bold text-red mb-1">MLRO Escalation Required</div>
+                              <p className="text-11 text-ink-1">The following hits MUST be escalated to the MLRO: <span className="font-mono font-semibold text-red">{disambigResult.escalationItems.join(", ")}</span></p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Hits results grid */}
+                        {disambigResult.hits.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-10 uppercase tracking-wide-3 text-ink-3">Hit Assessments</div>
+                            {disambigResult.hits.map((h) => (
+                              <div key={h.hitId} className="px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg">
+                                <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                                  <span className="text-11 font-mono text-ink-3">{h.hitId}</span>
+                                  <span className={`text-10 font-bold px-2 py-0.5 rounded uppercase ${verdictBadge[h.verdict] ?? "bg-bg-2 text-ink-2"}`}>
+                                    {h.verdict.replace(/_/g, " ")}
+                                  </span>
+                                  <span className="text-11 font-mono text-ink-2">{h.confidenceScore}% confidence</span>
+                                  {h.canAutoDispose && (
+                                    <span className="text-10 px-2 py-0.5 bg-green-dim text-green border border-green/30 rounded">Auto-disposable</span>
+                                  )}
+                                </div>
+                                <p className="text-11 text-ink-2 italic mb-1.5">{h.primaryDifferentiator}</p>
+                                {h.canAutoDispose && h.dispositionText && (
+                                  <button
+                                    type="button"
+                                    className="w-full text-left px-2 py-1.5 bg-green-dim/50 border border-green/20 rounded text-10 text-ink-1 font-mono whitespace-pre-wrap hover:border-green/40 transition-colors mb-1.5"
+                                    onClick={() => void navigator.clipboard.writeText(h.dispositionText)}
+                                    title="Click to copy"
+                                  >
+                                    {h.dispositionText}
+                                  </button>
+                                )}
+                                {h.requiresClientClarification && h.clarificationQuestion && (
+                                  <div className="mt-1 px-2 py-1.5 bg-amber-dim border border-amber/30 rounded text-11 text-amber">
+                                    <span className="font-semibold">Ask client:</span> {h.clarificationQuestion}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Clarification questions */}
+                        {disambigResult.clarificationQuestions.length > 0 && (
+                          <div className="px-3 py-2.5 bg-amber-dim/40 border border-amber/20 rounded-lg">
+                            <div className="text-10 uppercase tracking-wide-3 text-amber mb-2">Questions to Ask Client</div>
+                            <ul className="space-y-1">
+                              {disambigResult.clarificationQuestions.map((q, i) => (
+                                <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+                                  <span className="text-amber">●</span>{q}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Bulk disposition */}
+                        {disambigResult.bulkDispositionText && (
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="text-10 uppercase tracking-wide-3 text-ink-3">Bulk Disposition Text</div>
+                              <button
+                                type="button"
+                                onClick={() => void navigator.clipboard.writeText(disambigResult.bulkDispositionText)}
+                                className="text-10 px-2 py-0.5 border border-hair-2 rounded text-ink-2 hover:text-ink-0 hover:border-brand/40 transition-colors"
+                              >
+                                Copy All Dispositions
+                              </button>
+                            </div>
+                            <textarea
+                              readOnly
+                              rows={5}
+                              className="w-full px-3 py-2 bg-bg-1 border border-hair-2 rounded text-11 font-mono text-ink-1 resize-y"
+                              value={disambigResult.bulkDispositionText}
+                            />
+                          </div>
+                        )}
+
+                        {/* Regulatory note */}
+                        {disambigResult.regulatoryNote && (
+                          <p className="text-11 font-mono text-ink-3 border-l-2 border-violet/30 pl-3 italic">
+                            {disambigResult.regulatoryNote}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           <ScreeningHero
             inQueue={subjects.filter((s) => s.status !== "cleared").length}
             critical={criticalCount}
