@@ -15,6 +15,14 @@ interface Panel {
   detail: string;
   count?: number;
   lastUpdatedAt?: number;
+  /** localStorage keys backing this panel — cleared by the × button.
+   *  Empty list means the panel has no clearable client-side store
+   *  (e.g. EWRA which is server-rendered or audit-chain which is
+   *  append-only by spec). */
+  storageKeys: string[];
+  /** True iff this panel's data is append-only by regulatory design
+   *  (audit chain). Disables the × delete button with a tooltip. */
+  appendOnly: boolean;
 }
 
 const STATUS_BADGE: Record<Status, { label: string; cls: string }> = {
@@ -70,6 +78,8 @@ function buildPanels(): Panel[] {
       status: policyCount >= 50 ? "ready" : policyCount > 0 ? "partial" : "missing",
       detail: `${policyCount} policies across ${policySections} sections`,
       count: policyCount,
+      storageKeys: ["hawkeye.policies.v1"],
+      appendOnly: false,
     },
     {
       key: "ewra",
@@ -79,6 +89,8 @@ function buildPanels(): Panel[] {
       status: ewra?.generatedAt ? "ready" : "missing",
       detail: ewra?.generatedAt ? `Last generated ${fmtDate(ewra.generatedAt)}` : "Not yet generated — run /ewra to produce",
       ...(ewra?.generatedAt !== undefined ? { lastUpdatedAt: ewra.generatedAt } : {}),
+      storageKeys: ["hawkeye.ewra.v1"],
+      appendOnly: false,
     },
     {
       key: "cases",
@@ -88,6 +100,8 @@ function buildPanels(): Panel[] {
       status: caseCount >= 10 ? "ready" : caseCount > 0 ? "partial" : "missing",
       detail: `${caseCount} cases on file`,
       count: caseCount,
+      storageKeys: ["hawkeye.cases.v"],
+      appendOnly: false,
     },
     {
       key: "audit-chain",
@@ -97,6 +111,8 @@ function buildPanels(): Panel[] {
       status: auditCount >= 100 ? "ready" : auditCount > 0 ? "partial" : "missing",
       detail: `${auditCount} entries`,
       count: auditCount,
+      storageKeys: ["hawkeye.audit"],
+      appendOnly: true, // Layer-4 spec — append-only, ten-year retention
     },
     {
       key: "training",
@@ -106,6 +122,8 @@ function buildPanels(): Panel[] {
       status: trainingCount >= 5 ? "ready" : trainingCount > 0 ? "partial" : "missing",
       detail: `${trainingCount} training records`,
       count: trainingCount,
+      storageKeys: ["hawkeye.training"],
+      appendOnly: false,
     },
     {
       key: "onboarding",
@@ -115,8 +133,79 @@ function buildPanels(): Panel[] {
       status: onboardingCount >= 5 ? "ready" : onboardingCount > 0 ? "partial" : "missing",
       detail: `${onboardingCount} onboarded subjects`,
       count: onboardingCount,
+      storageKeys: ["hawkeye.onboarding.v1"],
+      appendOnly: false,
     },
   ];
+}
+
+// Per-panel +/✎/× action buttons.
+//   · +  → opens the source module on a fresh "create" intent
+//          (?action=add — the source module can choose to honour or
+//          ignore; failure is graceful, the destination just renders
+//          its normal page)
+//   · ✎  → opens the source module on its standard view
+//   · ×  → confirms with the operator, then clears the localStorage
+//          keys that back this panel and refreshes the page state.
+//          Disabled with a tooltip on the audit-chain panel since
+//          Layer-4 spec says append-only / ten-year retention.
+function PanelActions({ panel, onChanged }: { panel: Panel; onChanged: () => void }) {
+  const baseBtn =
+    "inline-flex items-center justify-center w-7 h-7 rounded border font-mono text-12 leading-none transition";
+  const addEditCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-brand hover:border-brand bg-bg-1`;
+  const deleteCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-red-700 hover:border-red-300 bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-2 disabled:hover:border-hair-2`;
+  const handleClear = () => {
+    if (panel.appendOnly) return;
+    if (panel.storageKeys.length === 0) return;
+    const ok = window.confirm(
+      `Clear all "${panel.title}" entries from this browser?\n\n` +
+        `This removes localStorage keys: ${panel.storageKeys.join(", ")}.\n\n` +
+        `Server-persisted records (Netlify Blobs / case vault) are unaffected.`,
+    );
+    if (!ok) return;
+    for (const key of panel.storageKeys) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        /* localStorage unavailable / quota — silent */
+      }
+    }
+    onChanged();
+  };
+  return (
+    <div className="flex items-center gap-1">
+      <Link
+        href={`${panel.href}?action=add`}
+        aria-label={`Add ${panel.title}`}
+        title={panel.appendOnly ? "Audit chain entries are appended automatically" : `Add to ${panel.title}`}
+        className={addEditCls}
+      >
+        +
+      </Link>
+      <Link
+        href={panel.href}
+        aria-label={`Edit ${panel.title}`}
+        title={`Edit ${panel.title}`}
+        className={addEditCls}
+      >
+        ✎
+      </Link>
+      <button
+        type="button"
+        onClick={handleClear}
+        disabled={panel.appendOnly}
+        aria-label={`Clear ${panel.title}`}
+        title={
+          panel.appendOnly
+            ? "Append-only — Layer-4 audit chain has 10-year retention by FDL 10/2025 Art.20"
+            : `Clear ${panel.title} from this browser (local data only)`
+        }
+        className={deleteCls}
+      >
+        ×
+      </button>
+    </div>
+  );
 }
 
 export default function InspectionRoomPage() {
@@ -196,13 +285,16 @@ export default function InspectionRoomPage() {
             key={p.key}
             className="bg-bg-panel border border-hair-2 rounded-lg p-5"
           >
-            <div className="flex items-baseline justify-between mb-2">
+            <div className="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
               <h2 className="text-14 font-semibold text-ink-0 m-0">{p.title}</h2>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 uppercase tracking-wide-3 border ${STATUS_BADGE[p.status].cls}`}
-              >
-                {STATUS_BADGE[p.status].label}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 uppercase tracking-wide-3 border ${STATUS_BADGE[p.status].cls}`}
+                >
+                  {STATUS_BADGE[p.status].label}
+                </span>
+                <PanelActions panel={p} onChanged={refresh} />
+              </div>
             </div>
             <p className="text-12 text-ink-2 m-0 mb-3">{p.description}</p>
             <div className="flex items-baseline justify-between text-11 text-ink-2 font-mono">

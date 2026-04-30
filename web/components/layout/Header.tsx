@@ -55,7 +55,10 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
       { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
-      { label: "goAML Export", href: "/goaml-export", hint: "STR/SAR XML wizard" },
+      // goAML export is now reachable from a row action on /str-cases
+      // (the case register), so we drop it from the global nav. The
+      // standalone /goaml-export page still exists for any saved
+      // bookmarks but is no longer surfaced.
       { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
     ],
   },
