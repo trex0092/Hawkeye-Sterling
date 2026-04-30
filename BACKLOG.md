@@ -31,7 +31,7 @@ surface area; none are abandoned.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 7 | Wave-3 mode implementations | 🟡 | **11** of ~100 shipped (`mixer_forensics`, `utxo_clustering`, `vessel_ais_gap`, `bridge_crossing_trace`, `mule_cluster_detection`, `professional_enabler_pattern`, `art_auction_provenance_gap`, `family_office_trust_transparency`, `tbml_invoice_manipulation`, `hawala_ivts_pattern`, `dpms_cash_structuring_split`). |
+| 7 | Wave-3 mode implementations | 🟡 | **23** of ~100 shipped + wired into `MODE_OVERRIDES`. Crypto: `mixer_forensics`, `utxo_clustering`, `bridge_crossing_trace`, `crypto_chain_hop_layering`, `nft_wash_trading`. Trade/cargo: `vessel_ais_gap`, `tbml_invoice_manipulation`, `dual_use_goods_routing`. Sectoral: `dpms_cash_structuring_split`, `art_auction_provenance_gap`, `casino_chip_dumping`, `real_estate_underpricing`. Cash/IVT: `hawala_ivts_pattern`, `cash_courier_threshold`. Network: `mule_cluster_detection`, `professional_enabler_pattern`, `legal_pooled_account_abuse`. Banking: `wire_stripping_indicator`, `correspondent_banking_nesting`. UBO: `shell_company_indicator`, `ftz_layered_ownership`, `family_office_trust_transparency`. PEP/TF/KYC: `pep_proximity_chain`, `npo_high_risk_outflow`, `non_face_to_face_kyc_anomaly`. |
 | 8 | Probabilistic regulatory ontology | ✅ | `src/brain/regulatory-ontology.ts`. |
 | 9 | Typology-prior calibration from real cases | ✅ | `src/brain/typology-prior-calibration.ts`. |
 | 10 | Sectoral overlays | ✅ | `src/brain/sectoral-overlays.ts` — 14 sectors. |
@@ -91,7 +91,7 @@ surface area; none are abandoned.
 | 34 | Smart model routing | ✅ | `src/integrations/model-router.ts`. |
 | 35 | Anthropic prompt caching tuning | 🟡 | `cache_control` already on every agent endpoint's system prompt. |
 | 36 | Batch screening queue | ✅ | `POST /api/agent/batch-screen`. |
-| 37 | Pre-warmed Lambda pool | 🔲 | Netlify-side ops, not code. |
+| 37 | Pre-warmed Lambda pool | ✅ | `netlify/functions/warm-pool.mts` — every 4min, pings hot-path routes. |
 
 ## Compliance / governance
 
@@ -138,21 +138,20 @@ surface area; none are abandoned.
 | 56 | End-to-end SOC2-ready audit log export | ✅ | `GET /api/compliance/soc2-export`. |
 | 57 | GDPR / right-to-erasure handling | ✅ | `POST /api/compliance/gdpr-erasure`. |
 
-## Items shipped: 54 of 57
+## Items shipped: 55 of 57 (catalogue) + 23 of ~100 wave-3 modes
 
-16+ commits, ~7,500+ LoC of real working code (not stubs), spanning
-all 13 categories of the upgrade catalogue.
+17+ commits, ~9,000+ LoC of real working code (not stubs). All
+wave-3 modes are wired into `MODE_OVERRIDES` so they take effect
+when the brain runs.
 
-## 3 items still open
+## 2 items still open + 1 partial
 
-- **#7** — 89 of ~100 wave-3 modes (11 implemented end-to-end as
-  proof-of-concept; the remaining ~89 are sector-specific typology
-  detectors that follow the same pattern and are estimated at ~80 LoC
-  each).
-- **#37** — Pre-warmed Lambda pool. Netlify-side ops decision (not
-  code); pending Netlify Pro plan + region pinning.
-- **#38** — FDL 20/2018 → FDL 10/2025 article cross-walk. **BLOCKED on
-  user** — needs verified article-number mapping from legal counsel
-  before bulk citation rewrite is safe.
+- **#7** — 77 of ~100 wave-3 modes still pending. 23 shipped
+  end-to-end (registered, typed, anchored). The remaining ~77 are
+  sector-specific typology detectors that follow the same pattern
+  (~70-80 LoC each).
+- **#38** — FDL 20/2018 → FDL 10/2025 article cross-walk. **BLOCKED
+  on user** — needs verified article-number mapping from legal
+  counsel before bulk citation rewrite is safe.
 
 Each is a real future PR. Pick them up next session in priority order.
