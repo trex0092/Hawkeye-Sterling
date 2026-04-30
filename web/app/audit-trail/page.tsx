@@ -132,8 +132,11 @@ export default function AuditTrailPage() {
     <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
       <div>
         <div className="mb-8">
+          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+            MODULE 28
+          </div>
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
-            MODULE 05 · IMMUTABLE RECORD
+            IMMUTABLE RECORD
           </div>
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
             Audit <em className="italic text-brand">trail.</em>
