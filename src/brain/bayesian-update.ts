@@ -9,16 +9,25 @@ export interface LikelihoodRatio {
   positiveGivenNot: number;        // P(E | ¬H), 0..1
 }
 
+export interface BayesTraceStep {
+  evidenceId: string;
+  lr: number;                  // effective LR actually applied (post-weighting)
+  priorOdds: number;
+  posteriorOdds: number;
+  posterior: number;
+  // Charter P6 (transparent scoring): when fusion attenuates an LR by evidence
+  // credibility×freshness it MUST surface what the raw LR was, the weight that
+  // was applied, and the weighted LR. Optional so callers that bypass the
+  // weighting layer (or write traces by hand) need not populate them.
+  rawLR?: number;
+  effectiveWeight?: number;    // 0..1 credibility × freshness applied to raw LR
+  weightedLR?: number;         // pow(rawLR, effectiveWeight); equals `lr` when set
+}
+
 export interface BayesTrace {
   prior: number;
   posterior: number;
-  steps: Array<{
-    evidenceId: string;
-    lr: number;
-    priorOdds: number;
-    posteriorOdds: number;
-    posterior: number;
-  }>;
+  steps: BayesTraceStep[];
 }
 
 const EPS = 1e-9;

@@ -15,14 +15,15 @@
 //   7. Apply the adjustment, build the verdict, return it.
 
 import type { EvidenceItem } from './evidence.js';
+import { adjustForEvidence } from './evidence-weighted-fusion.js';
 import { FACULTY_BY_ID } from './faculties.js';
 import { fuseFindings } from './fusion.js';
 import { introspect } from './introspection.js';
 import { REASONING_MODE_BY_ID, REASONING_MODES } from './reasoning-modes.js';
 import { QUESTION_TEMPLATES } from './question-templates.js';
 import type {
-  BrainContext, BrainVerdict, Evidence, FacultyId, Finding, Hypothesis,
-  ReasoningChainNode, Subject, Verdict,
+  BrainContext, BrainVerdict, Evidence, EvidenceWeightedSummary, FacultyId, Finding,
+  Hypothesis, ReasoningChainNode, Subject, Verdict,
 } from './types.js';
 
 const META_MODE_IDS: readonly string[] = [
@@ -93,29 +94,53 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
     conflicts: fusion.conflicts,
     firepower: fusion.firepower,
   });
-  const adjustedConfidence = clamp01(fusion.confidence + introspection.confidenceAdjustment);
+
+  // Evidence-weighted adjunct: credibility×freshness blend, Charter P8 cap on
+  // training-data citations, posterior pull toward prior on weak/stale stacks.
+  // Only runs when caller supplied an evidenceIndex AND at least one finding
+  // cited a resolvable EvidenceItem; otherwise the adjunct is a no-op.
+  let evidenceWeighted: EvidenceWeightedSummary | undefined;
+  if (evidenceIndex && evidenceIndex.size > 0) {
+    const adj = adjustForEvidence(fusion, findings, evidenceIndex);
+    if (adj.cited.length > 0) {
+      evidenceWeighted = {
+        evidenceScore: adj.evidenceScore,
+        posterior: adj.posterior,
+        score: adj.score,
+        confidence: adj.confidence,
+        cited: adj.cited,
+        methodology: adj.methodology,
+        notes: adj.notes,
+      };
+    }
+  }
+
+  const baseScore = evidenceWeighted?.score ?? fusion.score;
+  const baseConfidence = evidenceWeighted?.confidence ?? fusion.confidence;
+  const adjustedConfidence = clamp01(baseConfidence + introspection.confidenceAdjustment);
 
   const verdict: BrainVerdict = {
     runId,
     subject,
     outcome: fusion.outcome,
-    aggregateScore: fusion.score,
+    aggregateScore: baseScore,
     aggregateConfidence: adjustedConfidence,
     findings,
     chain,
     recommendedActions: recommend(fusion.outcome, fusion.conflicts.length > 0, introspection.coverageGaps),
     generatedAt: Date.now(),
     prior: fusion.prior,
-    posterior: fusion.posterior,
+    posterior: evidenceWeighted?.posterior ?? fusion.posterior,
     primaryHypothesis: fusion.primaryHypothesis,
     posteriorsByHypothesis: fusion.posteriorsByHypothesis,
     conflicts: fusion.conflicts,
     consensus: fusion.consensus,
     introspection,
-    methodology: fusion.methodology,
+    methodology: evidenceWeighted ? evidenceWeighted.methodology : fusion.methodology,
     firepower: fusion.firepower,
   };
   if (fusion.bayesTrace !== undefined) verdict.bayesTrace = fusion.bayesTrace;
+  if (evidenceWeighted !== undefined) verdict.evidenceWeighted = evidenceWeighted;
   return verdict;
 }
 

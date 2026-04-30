@@ -14,7 +14,7 @@ import type {
   Verdict,
 } from './types.js';
 import type { EvidenceItem } from './evidence.js';
-import { credibilityScore, isStale } from './evidence.js';
+import { credibilityScore, freshnessFactor } from './evidence.js';
 import { bayesUpdate } from './bayesian-update.js';
 import { FACULTIES } from './faculties.js';
 
@@ -80,9 +80,19 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
   const posteriorsByHypothesis: Partial<Record<Hypothesis, number>> = {};
   let primaryBayesTrace: ReturnType<typeof bayesUpdate> | undefined;
   for (const [h, arr] of byH.entries()) {
-    const lrs = buildLRs(arr, qualities);
-    if (lrs.length === 0) continue;
-    const trace = bayesUpdate(prior, lrs);
+    const built = buildLRs(arr, qualities, idx);
+    if (built.lrs.length === 0) continue;
+    const trace = bayesUpdate(prior, built.lrs);
+    // Charter P6 — surface raw vs weighted LR per step so MLROs can audit
+    // exactly why a piece of evidence was discounted.
+    for (let i = 0; i < trace.steps.length; i++) {
+      const step = trace.steps[i];
+      const m = built.meta[i];
+      if (!step || !m) continue;
+      step.rawLR = m.rawLR;
+      step.effectiveWeight = m.weight;
+      step.weightedLR = m.weightedLR;
+    }
     posteriorsByHypothesis[h] = trace.posterior;
     if (h === primary) primaryBayesTrace = trace;
   }
@@ -105,14 +115,17 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
 
   const methodology =
     'Fusion methodology (charter P9): each contributing finding is weighted by ' +
-    'confidence × evidence credibility × freshness. Likelihood ratios — either emitted ' +
-    'by the mode or derived from score × confidence as lr = exp(' + IMPLICIT_LR_ALPHA +
-    '·c·(s−0.5)) — are attenuated by evidence quality then composed via Bayesian update ' +
-    `from a stated prior P(${primary}) = ${prior.toFixed(3)}. Conflicts between ` +
-    `contributors whose |Δscore| exceeds ${conflictDelta} with divergent non-inconclusive ` +
-    'verdicts are surfaced and escalate the outcome rather than being averaged. Per-faculty ' +
-    'activation scores across the ten declared faculties are aggregated to compute the ' +
-    'composite cognitive-firepower metric.';
+    'confidence × evidence credibility × continuous freshness (per-source half-life ' +
+    'decay). Likelihood ratios — either emitted by the mode or derived from score × ' +
+    'confidence as lr = exp(' + IMPLICIT_LR_ALPHA + '·c·(s−0.5)) — are combined via ' +
+    'log-linear pooling (Bordley/Genest): LR_eff = LR_raw ^ q, where q ∈ [0,1] is the ' +
+    'evidence-specific credibility×freshness weight. The pooled LRs then update a stated ' +
+    `prior P(${primary}) = ${prior.toFixed(3)} via Bayesian update of the prior odds. Per Charter ` +
+    'P6 every BayesTrace step records rawLR, effectiveWeight and weightedLR for full ' +
+    `auditability. Conflicts between contributors whose |Δscore| exceeds ${conflictDelta} ` +
+    'with divergent non-inconclusive verdicts are surfaced and escalate the outcome rather ' +
+    'than being averaged. Per-faculty activation scores across the ten declared faculties ' +
+    'are aggregated to compute the composite cognitive-firepower metric.';
 
   const result: FusionResult = {
     outcome,
@@ -142,40 +155,63 @@ function isContributor(f: Finding): boolean {
   return true;
 }
 
+function evidenceItemQuality(ev: EvidenceItem): number {
+  // Continuous freshness × credibility. Per-source half-life lives in evidence.ts.
+  return credibilityScore(ev.credibility) * freshnessFactor(ev);
+}
+
 function evidenceQuality(
   f: Finding,
   idx: Map<string, EvidenceItem> | undefined,
-  maxStale: number,
+  _maxStale: number,
 ): number {
   if (!idx || f.evidence.length === 0) return NO_EVIDENCE_QUALITY;
   const qs: number[] = [];
   for (const id of f.evidence) {
     const ev = idx.get(id);
     if (!ev) continue;
-    const cred = credibilityScore(ev.credibility);
-    const fresh = isStale(ev, maxStale) ? 0.5 : 1;
-    qs.push(cred * fresh);
+    qs.push(evidenceItemQuality(ev));
   }
   if (qs.length === 0) return NO_EVIDENCE_QUALITY;
   return qs.reduce((a, b) => a + b, 0) / qs.length;
 }
 
-function buildLRs(findings: Finding[], qualities: Map<Finding, number>): LikelihoodRatio[] {
+interface LRMeta {
+  rawLR: number;
+  weight: number;
+  weightedLR: number;
+}
+
+function buildLRs(
+  findings: Finding[],
+  qualities: Map<Finding, number>,
+  idx: Map<string, EvidenceItem> | undefined,
+): { lrs: LikelihoodRatio[]; meta: LRMeta[] } {
   const out: LikelihoodRatio[] = [];
+  const meta: LRMeta[] = [];
   for (const f of findings) {
-    const q = qualities.get(f) ?? NO_EVIDENCE_QUALITY;
+    const findingQ = qualities.get(f) ?? NO_EVIDENCE_QUALITY;
     if (f.likelihoodRatios && f.likelihoodRatios.length > 0) {
       for (const lr of f.likelihoodRatios) {
         const raw = safeRatio(lr.positiveGivenHypothesis, lr.positiveGivenNot);
-        out.push(effectiveLR(`${f.modeId}:${lr.evidenceId}`, attenuateLR(raw, q)));
+        // Per-LR weight: prefer the specific cited evidence's quality when the
+        // LR.evidenceId resolves against the index; fall back to the
+        // finding-level average otherwise.
+        const specific = idx?.get(lr.evidenceId);
+        const w = specific !== undefined ? evidenceItemQuality(specific) : findingQ;
+        const weighted = attenuateLR(raw, w);
+        out.push(effectiveLR(`${f.modeId}:${lr.evidenceId}`, weighted));
+        meta.push({ rawLR: raw, weight: w, weightedLR: weighted });
       }
     } else {
       // Derive implicit LR from score × confidence when mode declined to emit explicit LRs.
       const implied = Math.exp(IMPLICIT_LR_ALPHA * f.confidence * (f.score - 0.5));
-      out.push(effectiveLR(`${f.modeId}:implicit`, attenuateLR(implied, q)));
+      const weighted = attenuateLR(implied, findingQ);
+      out.push(effectiveLR(`${f.modeId}:implicit`, weighted));
+      meta.push({ rawLR: implied, weight: findingQ, weightedLR: weighted });
     }
   }
-  return out;
+  return { lrs: out, meta };
 }
 
 function safeRatio(num: number, den: number): number {
@@ -185,9 +221,17 @@ function safeRatio(num: number, den: number): number {
 }
 
 function attenuateLR(lr: number, q: number): number {
-  // Shrink LR toward 1.0 (neutral) as evidence quality drops.
+  // Log-linear pooling (Bordley 1982 / Genest 1986): weighted Bayesian
+  // combination is multiplicative in log-odds, i.e. log(LR_eff) = q · log(LR).
+  // Equivalently LR_eff = LR^q. q ∈ [0,1]. q=0 → neutral (1.0); q=1 → raw LR.
+  // This is the principled form for evidence-quality-weighted LR composition;
+  // the previous linear-toward-neutral form (1 + q·(lr-1)) under-damped weak
+  // evidence and is replaced here.
   const qc = Math.min(1, Math.max(0, q));
-  return 1 + qc * (lr - 1);
+  if (qc === 0) return 1;
+  const safe = Math.max(EPS, lr);
+  const out = Math.pow(safe, qc);
+  return Number.isFinite(out) ? out : 1;
 }
 
 function effectiveLR(evidenceId: string, a: number): LikelihoodRatio {
