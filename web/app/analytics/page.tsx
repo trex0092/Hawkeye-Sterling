@@ -7,6 +7,21 @@ import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 import { loadAuditEntries } from "@/lib/audit";
 
+interface InsightItem {
+  finding: string;
+  implication: string;
+  action: string;
+  urgency: "immediate" | "this_month" | "quarterly";
+}
+interface AnalyticsInsights {
+  headline: string;
+  riskTrend: "deteriorating" | "stable" | "improving";
+  insights: InsightItem[];
+  regulatoryExposure: string;
+  boardTalkingPoints: string[];
+  benchmarkComment: string;
+}
+
 interface Analytics {
   ok: true;
   generatedAt: string;
@@ -85,6 +100,8 @@ export default function AnalyticsPage() {
   const [auditCount, setAuditCount] = useState(0);
   const [fourEyesCount, setFourEyesCount] = useState(0);
   const [fourEyesTotal, setFourEyesTotal] = useState(0);
+  const [aiInsights, setAiInsights] = useState<AnalyticsInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -188,6 +205,35 @@ export default function AnalyticsPage() {
 
   const weekly = useMemo(() => weeklySeries(screeningsTotal, 12), [screeningsTotal]);
 
+  const generateInsights = async () => {
+    setInsightsLoading(true);
+    setAiInsights(null);
+    try {
+      const pepCount = cases.filter((c) => /PEP/i.test(c.meta)).length;
+      const res = await fetch("/api/analytics-insights", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          kpis: {
+            totalScreenings: screeningsTotal,
+            criticalHits: data?.quality.trueMatchCount ?? 0,
+            strFiled: strsThisMonth,
+            pepCount,
+            sanctionsHits: data?.quality.trueMatchCount ?? 0,
+            avgRiskScore: undefined,
+            eddCount: criticalClearances,
+            overdueReviews: 0,
+          },
+          period: formatPeriod(now),
+        }),
+      });
+      if (!res.ok) return;
+      const result = await res.json() as { ok: boolean } & AnalyticsInsights;
+      if (result.ok) setAiInsights(result);
+    } catch { /* silent */ }
+    finally { setInsightsLoading(false); }
+  };
+
   const handleExportPdf = () => {
     if (typeof window === "undefined") return;
     window.print();
@@ -215,18 +261,89 @@ export default function AnalyticsPage() {
                 )}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 print:hidden"
-            >
-              Export PDF
-            </button>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                type="button"
+                onClick={() => void generateInsights()}
+                disabled={insightsLoading}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
+              >
+                {insightsLoading ? "Generating…" : "Generate AI Insights"}
+              </button>
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+              >
+                Export PDF
+              </button>
+            </div>
           </div>
 
           {err && (
             <div className="mb-4 bg-red-dim text-red rounded px-3 py-2 text-12">
               {err}
+            </div>
+          )}
+
+          {aiInsights && (
+            <div className="mb-6 bg-bg-panel border border-brand/20 rounded-xl p-5 space-y-4 print:hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">AI Insights</span>
+                  {aiInsights.riskTrend === "improving" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-green-dim text-green font-semibold">improving</span>
+                  )}
+                  {aiInsights.riskTrend === "stable" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-amber-dim text-amber font-semibold">stable</span>
+                  )}
+                  {aiInsights.riskTrend === "deteriorating" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">deteriorating</span>
+                  )}
+                </div>
+                <button type="button" onClick={() => setAiInsights(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+              </div>
+              <p className="text-14 font-semibold text-ink-0 leading-snug">{aiInsights.headline}</p>
+              {aiInsights.insights.length > 0 && (
+                <div className="space-y-2">
+                  {aiInsights.insights.map((ins, i) => {
+                    const urgCls = ins.urgency === "immediate"
+                      ? "bg-red text-white"
+                      : ins.urgency === "this_month"
+                        ? "bg-amber-dim text-amber"
+                        : "bg-bg-2 text-ink-2";
+                    return (
+                      <div key={i} className="bg-bg-1 rounded-lg p-3 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${urgCls}`}>{ins.urgency.replace("_", " ")}</span>
+                          <span className="text-12 font-semibold text-ink-0">{ins.finding}</span>
+                        </div>
+                        <p className="text-11 text-ink-2">{ins.implication}</p>
+                        <p className="text-11 text-brand-deep font-medium">{ins.action}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {aiInsights.boardTalkingPoints.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Board Talking Points</div>
+                  <ul className="space-y-1">
+                    {aiInsights.boardTalkingPoints.map((pt, i) => (
+                      <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                        <span className="text-brand mt-0.5 shrink-0">•</span>
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {aiInsights.benchmarkComment && (
+                <p className="text-11 text-ink-3 italic">{aiInsights.benchmarkComment}</p>
+              )}
+              {aiInsights.regulatoryExposure && (
+                <p className="font-mono text-10 text-ink-3">{aiInsights.regulatoryExposure}</p>
+              )}
             </div>
           )}
 

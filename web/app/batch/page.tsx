@@ -14,6 +14,21 @@ import {
   Cell,
 } from "recharts";
 
+interface RankedResult {
+  name: string;
+  priority: number;
+  priorityLabel: "immediate" | "urgent" | "review" | "monitor" | "clear";
+  reason: string;
+  actionRequired: string;
+}
+interface BatchRanking {
+  ranked: RankedResult[];
+  immediateCount: number;
+  urgentCount: number;
+  topThreats: string[];
+  batchSummary: string;
+}
+
 interface RowResult {
   name: string;
   entityType?: string;
@@ -252,6 +267,8 @@ export default function BatchPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [filterSev, setFilterSev] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [ranking, setRanking] = useState<BatchRanking | null>(null);
+  const [rankLoading, setRankLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   // Pre-populate the row set when ?names=foo,bar,baz is in the URL —
@@ -428,6 +445,34 @@ export default function BatchPage() {
     await exportPdf(results, summary);
   };
 
+  const runPriorityRanking = async (rows: RowResult[]) => {
+    if (rows.length === 0) return;
+    setRankLoading(true);
+    setRanking(null);
+    try {
+      const res = await fetch("/api/batch-rank", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          results: rows.slice(0, 50).map((r) => ({
+            name: r.name,
+            topScore: r.topScore,
+            severity: r.severity,
+            hitCount: r.hitCount,
+            listCoverage: r.listCoverage,
+            keywordGroups: r.keywordGroups,
+            jurisdiction: r.jurisdiction,
+            error: r.error,
+          })),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & BatchRanking;
+      if (data.ok) setRanking(data);
+    } catch { /* silent */ }
+    finally { setRankLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
       <div>
@@ -578,6 +623,42 @@ export default function BatchPage() {
             <span className="ml-auto text-11 text-ink-3">
               {sortedFiltered.length} row{sortedFiltered.length === 1 ? "" : "s"}
             </span>
+            <button type="button" onClick={() => void runPriorityRanking(results)} disabled={rankLoading || results.length === 0}
+              className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+              {rankLoading ? "Ranking…" : "AI Priority Ranking"}
+            </button>
+          </div>
+        )}
+
+        {/* AI Priority Ranking banner */}
+        {ranking && (
+          <div className="mb-4 bg-bg-panel border border-brand/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">AI Priority Ranking</span>
+                {ranking.immediateCount > 0 && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white">{ranking.immediateCount} immediate</span>}
+                {ranking.urgentCount > 0 && <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red">{ranking.urgentCount} urgent</span>}
+              </div>
+              <button type="button" onClick={() => setRanking(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+            </div>
+            <p className="text-11 text-ink-2">{ranking.batchSummary}</p>
+            {ranking.topThreats.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {ranking.topThreats.map((n, i) => <span key={i} className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">{n}</span>)}
+              </div>
+            )}
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {ranking.ranked.filter((r) => r.priorityLabel === "immediate" || r.priorityLabel === "urgent").map((r, i) => {
+                const lCls = r.priorityLabel === "immediate" ? "bg-red text-white" : "bg-red-dim text-red";
+                return (
+                  <div key={i} className="flex items-start gap-2 text-11">
+                    <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${lCls}`}>{r.priorityLabel}</span>
+                    <span className="font-semibold text-ink-0 shrink-0">{r.name}</span>
+                    <span className="text-ink-3">— {r.reason}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -611,6 +692,12 @@ export default function BatchPage() {
                       {r.isDuplicate && (
                         <span className="ml-1.5 px-1 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber">dup</span>
                       )}
+                      {ranking && (() => {
+                        const ranked = ranking.ranked.find((x) => x.name === r.name);
+                        if (!ranked || ranked.priorityLabel === "clear" || ranked.priorityLabel === "monitor") return null;
+                        const lCls = ranked.priorityLabel === "immediate" ? "bg-red text-white" : ranked.priorityLabel === "urgent" ? "bg-red-dim text-red" : "bg-amber-dim text-amber";
+                        return <span className={`ml-1 font-mono text-9 px-1 py-px rounded uppercase ${lCls}`}>{ranked.priorityLabel}</span>;
+                      })()}
                     </td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 ${SEVERITY_CLS[r.severity] ?? "bg-bg-2 text-ink-1"}`}>

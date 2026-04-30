@@ -9,6 +9,19 @@ interface SherlockResult { ok: boolean; username: string; profiles: SherlockProf
 interface SocialProfile { platform: string; url: string; score: number }
 interface SocialResult { ok: boolean; person: string; profiles: SocialProfile[]; error?: string }
 
+interface OsintSynthesis {
+  threatScore: number;
+  threatLevel: "critical" | "high" | "medium" | "low" | "clear";
+  subjectType: string;
+  keyFindings: string[];
+  redFlags: string[];
+  jurisdictionExposure: string[];
+  sanctionsRelevance: string;
+  adverseMediaIndicators: string[];
+  recommendedNextSteps: string[];
+  complianceNarrative: string;
+}
+
 type Mode = "domain" | "username";
 
 const MODE_HINT: Record<Mode, string> = {
@@ -27,6 +40,8 @@ export default function OsintPage() {
   const [socialResult, setSocialResult] = useState<SocialResult | null>(null);
   const [error, setError] = useState("");
   const [scannedAt, setScannedAt] = useState("");
+  const [synthesis, setSynthesis] = useState<OsintSynthesis | null>(null);
+  const [synthLoading, setSynthLoading] = useState(false);
 
   const run = async () => {
     const t = target.trim();
@@ -71,6 +86,28 @@ export default function OsintPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const runSynthesis = async () => {
+    setSynthLoading(true);
+    setSynthesis(null);
+    try {
+      const res = await fetch("/api/osint-synthesis", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          target,
+          mode,
+          ...(domainResult ? { domain: { emails: domainResult.emails, hosts: domainResult.hosts, ips: domainResult.ips } } : {}),
+          ...(sherlockResult ? { sherlock: { username: sherlockResult.username, profiles: sherlockResult.profiles, totalFound: sherlockResult.totalFound } } : {}),
+          ...(socialResult ? { social: { person: socialResult.person, profiles: socialResult.profiles } } : {}),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & OsintSynthesis;
+      if (data.ok) setSynthesis(data);
+    } catch { /* silent */ }
+    finally { setSynthLoading(false); }
   };
 
   const hasResults = domainResult || sherlockResult || socialResult;
@@ -183,6 +220,45 @@ export default function OsintPage() {
           {sherlockResult && !sherlockResult.profiles.filter((p) => p.exists).length && !socialResult?.profiles.length && (
             <p className="text-13 text-ink-3">No profiles found for this username.</p>
           )}
+        </div>
+      )}
+
+      {hasResults && (
+        <div className="mt-4">
+          <button type="button" onClick={() => void runSynthesis()} disabled={synthLoading}
+            className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+            {synthLoading ? "Synthesizing…" : "AI Threat Synthesis"}
+          </button>
+          {synthesis && (() => {
+            const lvlCls = synthesis.threatLevel === "critical" ? "bg-red text-white" : synthesis.threatLevel === "high" ? "bg-red-dim text-red" : synthesis.threatLevel === "medium" ? "bg-amber-dim text-amber" : synthesis.threatLevel === "low" ? "bg-blue-dim text-blue" : "bg-green-dim text-green";
+            return (
+              <div className="mt-3 bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${lvlCls}`}>{synthesis.threatLevel}</span>
+                  <span className="font-mono text-11 text-ink-2">Threat score: {synthesis.threatScore}/100</span>
+                </div>
+                <p className="text-12 text-ink-0 leading-relaxed">{synthesis.complianceNarrative}</p>
+                {synthesis.redFlags.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-red mb-1">Red flags</div>
+                    <ul className="text-11 text-ink-1 list-disc list-inside space-y-0.5">{synthesis.redFlags.map((f, i) => <li key={i}>{f}</li>)}</ul>
+                  </div>
+                )}
+                {synthesis.keyFindings.length > 0 && (
+                  <ul className="text-11 text-ink-2 list-disc list-inside space-y-0.5">{synthesis.keyFindings.map((f, i) => <li key={i}>{f}</li>)}</ul>
+                )}
+                {synthesis.jurisdictionExposure.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">{synthesis.jurisdictionExposure.map((j, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{j}</span>)}</div>
+                )}
+                {synthesis.recommendedNextSteps.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Next steps</div>
+                    <ol className="text-11 text-ink-1 list-decimal list-inside space-y-0.5">{synthesis.recommendedNextSteps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
     </ModuleLayout>
