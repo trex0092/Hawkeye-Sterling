@@ -16,9 +16,14 @@
     "server:brain-reason": "tsc && node server/brain-reason.mjs",
     "registry:ingest": "tsc && node scripts/registry-ingest.mjs",
     "registry:audit": "tsc && node --input-type=module -e \"import('./dist/src/brain/registry/index.js').then(({buildSeedRegistry})=>{const s=buildSeedRegistry();const snap=s.snapshot();console.log(JSON.stringify({chunks:s.size(),pending:snap.chunks.filter(c=>c.metadata.pending).length,registryHash:snap.registryHash},null,2))})\"",
-    "brain:nightly-eval": "tsc && node scripts/registry-nightly-eval.mjs"
+    "brain:nightly-eval": "tsc && node scripts/registry-nightly-eval.mjs",
+    "mcp:serve": "tsc && node dist/src/mcp/server.js"
+  },
+  "bin": {
+    "hawkeye-mcp": "dist/src/mcp/server.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "@netlify/blobs": "^8.0.0"
   },
   "devDependencies": {
