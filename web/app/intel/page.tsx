@@ -58,6 +58,7 @@ const SOURCE_BADGE: Record<string, string> = {
   "UAE PDPL": "bg-violet-dim text-violet",
   "UAE Digital": "bg-blue-dim text-blue",
   "MoET / DPMS": "bg-violet-dim text-violet",
+  "Mining":      "bg-amber-dim text-amber",
 };
 
 function sourceBadgeClass(source: string): string {
@@ -144,9 +145,9 @@ function RegulatoryFeedPanel() {
 
   useEffect(() => { void load(); }, [load]);
 
-  // Auto-refresh every 30 minutes
+  // Auto-refresh every 5 minutes
   useEffect(() => {
-    const id = setInterval(() => { void load(); }, 30 * 60_000);
+    const id = setInterval(() => { void load(); }, 5 * 60_000);
     return () => clearInterval(id);
   }, [load]);
 
@@ -599,9 +600,9 @@ export default function IntelPage() {
         }
         kpis={[
           { value: "4", label: "live government sources" },
-          { value: "14", label: "Google News queries" },
+          { value: "30", label: "live news queries" },
           { value: "7", label: "adverse-media languages" },
-          { value: "30m", label: "regulatory refresh cadence" },
+          { value: "5m", label: "live refresh cadence" },
         ]}
       />
 
