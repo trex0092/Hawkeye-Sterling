@@ -33,7 +33,9 @@ export interface FuseOptions {
   prior?: number | undefined;
   /** Primary hypothesis whose posterior drives the outcome. Defaults to 'illicit_risk'. */
   primaryHypothesis?: Hypothesis | undefined;
-  /** Evidence older than this is treated as stale and its contribution is halved. */
+  /** @deprecated No longer consulted. Freshness now decays continuously per
+   *  source via `FRESHNESS_HALF_LIFE_DAYS` in evidence.ts. Field kept for
+   *  backwards compatibility with callers that previously passed it. */
   maxStalenessDays?: number | undefined;
   /** |Δscore| threshold between contributing findings to register as a conflict. */
   conflictScoreThreshold?: number | undefined;
@@ -44,7 +46,6 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
   const prior = clamp01(opts.prior ?? DEFAULT_PRIOR);
   const conflictDelta = opts.conflictScoreThreshold ?? CONFLICT_DELTA;
   const idx = opts.evidenceIndex;
-  const maxStale = opts.maxStalenessDays ?? 365;
 
   // 1. Contributors: non-stub, non-meta findings actually about the subject.
   const contributors = findings.filter(isContributor);
@@ -59,7 +60,7 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
   let sumConfW = 0;
   const qualities = new Map<Finding, number>();
   for (const f of contributors) {
-    const q = evidenceQuality(f, idx, maxStale);
+    const q = evidenceQuality(f, idx);
     qualities.set(f, q);
     const w = Math.max(0, (f.weight ?? f.confidence) * q);
     sumWeight += w;
@@ -163,7 +164,6 @@ function evidenceItemQuality(ev: EvidenceItem): number {
 function evidenceQuality(
   f: Finding,
   idx: Map<string, EvidenceItem> | undefined,
-  _maxStale: number,
 ): number {
   if (!idx || f.evidence.length === 0) return NO_EVIDENCE_QUALITY;
   const qs: number[] = [];
