@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { freshnessFactor, FRESHNESS_HALF_LIFE_DAYS, type EvidenceItem } from '../evidence.js';
+import { freshnessFactor, FRESHNESS_HALF_LIFE_DAYS } from '../evidence.js';
+import type { EvidenceItem } from '../evidence.js';
 
 function ev(kind: EvidenceItem['kind'], observedAt: string): EvidenceItem {
   return {
