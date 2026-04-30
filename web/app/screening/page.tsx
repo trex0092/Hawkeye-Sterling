@@ -540,6 +540,8 @@ export default function ScreeningPage() {
   const [nlSearchLoading, setNlSearchLoading] = useState(false);
   const [nlMatchIds, setNlMatchIds] = useState<ReadonlySet<string> | null>(null);
   const [nlInterpretation, setNlInterpretation] = useState<string>("");
+  const [nlConfidence, setNlConfidence] = useState<number>(0);
+  const [nlReasoning, setNlReasoning] = useState<string>("");
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -734,10 +736,12 @@ export default function ScreeningPage() {
         body: JSON.stringify({ query: q, subjects: slim }),
       });
       if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; matchIds?: string[]; interpretation?: string };
+        const data = (await res.json()) as { ok: boolean; matchIds?: string[]; interpretation?: string; confidence?: number; reasoning?: string };
         if (data.ok && data.matchIds) {
           setNlMatchIds(new Set(data.matchIds));
           setNlInterpretation(data.interpretation ?? q);
+          setNlConfidence(typeof data.confidence === "number" ? data.confidence : 0);
+          setNlReasoning(data.reasoning ?? "");
           setNlSearchActive(true);
         }
       }
@@ -749,6 +753,8 @@ export default function ScreeningPage() {
     setNlSearchActive(false);
     setNlMatchIds(null);
     setNlInterpretation("");
+    setNlConfidence(0);
+    setNlReasoning("");
   }, []);
 
   // Export the filtered queue as a CSV the user downloads. Lets the
@@ -1183,9 +1189,13 @@ export default function ScreeningPage() {
 
           {/* NL search result banner */}
           {nlSearchActive && (
-            <div className="mb-3 flex items-center gap-3 px-4 py-2.5 bg-amber-dim border border-amber/30 rounded-lg text-12">
+            <div className="mb-3 flex flex-wrap items-center gap-2 px-4 py-2.5 bg-amber-dim border border-amber/30 rounded-lg text-12">
               <span className="text-amber font-semibold">✦ AI search</span>
+              <span className={`text-11 font-mono px-1.5 rounded ${nlConfidence >= 0.8 ? "bg-green-dim text-green" : nlConfidence >= 0.5 ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>
+                {(nlConfidence * 100).toFixed(0)}% confident
+              </span>
               <span className="text-ink-1 flex-1">{nlInterpretation}</span>
+              {nlReasoning && <span className="text-10 text-ink-3 font-mono w-full">{nlReasoning}</span>}
               <span className="text-ink-2">{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
               <button type="button" onClick={clearNLSearch} className="text-ink-3 hover:text-ink-0 text-12">✕ clear</button>
             </div>
