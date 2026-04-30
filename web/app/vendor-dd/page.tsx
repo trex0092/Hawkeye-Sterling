@@ -350,6 +350,10 @@ export default function SupplierDdPage() {
                     }`}>
                       {v.tier}
                     </span>
+                    <button type="button" onClick={() => void runVendorRisk(v)} disabled={riskLoading[v.id] === true}
+                      className="text-9 font-mono px-1.5 py-px rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+                      {riskLoading[v.id] === true ? "…" : "AI Risk"}
+                    </button>
                     <RowActions
                       label={v.name}
                       onEdit={() => startEdit(v)}
@@ -372,6 +376,22 @@ export default function SupplierDdPage() {
                     ))}
                   </div>
                 )}
+                {riskMap[v.id] && (() => {
+                  const r = riskMap[v.id] as VendorRisk;
+                  const lvlCls = r.riskLevel === "critical" ? "bg-red text-white" : r.riskLevel === "high" ? "bg-red-dim text-red" : r.riskLevel === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="mt-3 p-3 rounded-lg border border-hair-2 bg-bg-1 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-mono text-10 font-bold px-2 py-px rounded uppercase ${lvlCls}`}>{r.riskLevel}</span>
+                        <span className="font-mono text-10 text-ink-2">{r.riskScore}/100</span>
+                        {r.eddRequired && <span className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red font-semibold">EDD REQUIRED</span>}
+                      </div>
+                      {r.redFlags.length > 0 && <div className="text-10 text-red">Red flags: {r.redFlags.join(" · ")}</div>}
+                      <div className="text-11 text-ink-1 italic">{r.recommendation}</div>
+                      {r.regulatoryBasis && <div className="text-9 font-mono text-ink-3">{r.regulatoryBasis}</div>}
+                    </div>
+                  );
+                })()}
               </>
             )}
           </div>
