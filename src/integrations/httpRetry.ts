@@ -110,7 +110,13 @@ async function readBodyWithIdleTimeout(
       settled = true;
       outerSignal.removeEventListener('abort', onOuterAbort);
       if (idleTimer) clearTimeout(idleTimer);
-      try { void reader.cancel(); } catch { /* ignore */ }
+      // reader.cancel() returns a Promise that may reject if the
+      // underlying stream is already in an error state (typical on
+      // AbortError abort). The synchronous try/catch only catches
+      // sync throws — without attaching .catch() to the returned
+      // Promise, the async rejection escapes and crashes the Lambda
+      // with Runtime.UnhandledPromiseRejection.
+      try { reader.cancel().catch(() => {}); } catch { /* ignore */ }
       if (value instanceof Error) reject(value);
       else resolve(value);
     };
@@ -187,7 +193,13 @@ async function readAnthropicSSEBody(
       settled = true;
       outerSignal.removeEventListener('abort', onOuterAbort);
       if (idleTimer) clearTimeout(idleTimer);
-      try { void reader.cancel(); } catch { /* ignore */ }
+      // reader.cancel() returns a Promise that may reject if the
+      // underlying stream is already in an error state (typical on
+      // AbortError abort). The synchronous try/catch only catches
+      // sync throws — without attaching .catch() to the returned
+      // Promise, the async rejection escapes and crashes the Lambda
+      // with Runtime.UnhandledPromiseRejection.
+      try { reader.cancel().catch(() => {}); } catch { /* ignore */ }
       if (value instanceof Error) reject(value);
       else resolve(value);
     };
