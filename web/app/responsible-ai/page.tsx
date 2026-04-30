@@ -211,6 +211,7 @@ export default function ResponsibleAiPage() {
   return (
     <ModuleLayout asanaModule="responsible-ai" asanaLabel="Responsible AI Governance">
       <ModuleHero
+        moduleNumber={27}
         eyebrow="Responsible AI · UNESCO Framework"
         title="Responsible AI"
         titleEm="governance."

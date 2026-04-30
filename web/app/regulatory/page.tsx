@@ -504,6 +504,7 @@ export default function RegulatoryPage() {
   return (
     <ModuleLayout asanaModule="regulatory" asanaLabel="Regulatory">
         <ModuleHero
+          moduleNumber={31}
           eyebrow="Module 11 · Regulatory Reference"
           title="Regulatory"
           titleEm="library."

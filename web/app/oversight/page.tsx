@@ -743,6 +743,7 @@ export default function OversightPage() {
   return (
     <ModuleLayout asanaModule="oversight" asanaLabel="Oversight" engineLabel="Governance engine">
       <ModuleHero
+        moduleNumber={26}
         eyebrow="Module 25 · Governance"
         title="Management"
         titleEm="oversight."

@@ -747,6 +747,7 @@ export default function EnforcementPage() {
   return (
     <ModuleLayout asanaModule="enforcement" asanaLabel="Enforcement">
         <ModuleHero
+          moduleNumber={25}
           eyebrow="Module 18 · Regulatory calendar"
           title="Enforcement"
           titleEm="tracker."
