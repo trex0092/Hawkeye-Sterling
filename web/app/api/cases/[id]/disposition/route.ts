@@ -22,14 +22,20 @@
 //
 // Response: { ok: true, tenant, caseId, recorded: true }
 //
-// Persistence: the journal is in-memory only — Lambda cold starts wipe
-// it. A future patch should snapshot getJournal().list() to Netlify
-// Blobs on append and rehydrate via hydrateJournal() on warm-up.
+// Persistence: the journal is hydrated from Netlify Blobs on first call
+// per warm Lambda instance, and snapshotted back after every successful
+// append. Persistence is best-effort — Blobs failures (e.g. local dev
+// without NETLIFY_BLOBS_TOKEN) are logged and swallowed; the in-memory
+// journal still works without them.
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { recordCaseDisposition } from "../../../../../../dist/src/brain/feedback-journal-instance.js";
+import {
+  snapshotJournalToBlobs,
+  hydrateJournalFromBlobs,
+} from "../../../../../../dist/src/brain/feedback-journal-blobs.js";
 import type { OutcomeRecord } from "../../../../../../dist/src/brain/outcome-feedback.js";
 import type { DispositionCode } from "../../../../../../dist/src/brain/dispositions.js";
 
@@ -55,6 +61,11 @@ async function handlePost(
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
   const { id } = await ctx.params;
+
+  // Cold-start hydration — only does network on the first call per Lambda
+  // instance, idempotent thereafter via the module-level guard. Awaited
+  // so the recorded outcome doesn't get appended to a half-empty journal.
+  await hydrateJournalFromBlobs();
 
   let body: Body;
   try {
@@ -113,8 +124,21 @@ async function handlePost(
     );
   }
 
+  // Best-effort snapshot to Netlify Blobs so the journal survives the
+  // next Lambda cold start. Awaited so we surface the result on the
+  // response (the route is per-disposition, not high-throughput).
+  const snapshot = await snapshotJournalToBlobs();
+
   return NextResponse.json(
-    { ok: true, tenant, caseId: id, recorded: true, overridden },
+    {
+      ok: true,
+      tenant,
+      caseId: id,
+      recorded: true,
+      overridden,
+      persisted: snapshot.ok,
+      ...(snapshot.error ? { persistError: snapshot.error } : {}),
+    },
     { headers: gate.headers },
   );
 }
