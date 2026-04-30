@@ -69,7 +69,9 @@ async function pushSalesforce(payload: CrmFlagPayload): Promise<CrmOutcome> {
       return { ok: false, provider: 'salesforce', error: `HTTP ${res.status}: ${text.slice(0, 200)}`, durationMs: Date.now() - startedAt };
     }
     const data = (await res.json()) as { id?: string };
-    return { ok: true, provider: 'salesforce', recordId: data.id, durationMs: Date.now() - startedAt };
+    const sfResult: CrmOutcome = { ok: true, provider: 'salesforce', durationMs: Date.now() - startedAt };
+    if (data.id !== undefined) sfResult.recordId = data.id;
+    return sfResult;
   } catch (err) {
     return { ok: false, provider: 'salesforce', error: err instanceof Error ? err.message : String(err), durationMs: Date.now() - startedAt };
   }

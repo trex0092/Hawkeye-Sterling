@@ -99,7 +99,6 @@ async function dispatch(name: string, args: Record<string, unknown>): Promise<un
       if (args['evidenceIndex'] && typeof args['evidenceIndex'] === 'object') {
         opts.evidenceIndex = new Map(Object.entries(args['evidenceIndex'] as Record<string, EvidenceItem>));
       }
-      if (Array.isArray(args['regimeStatuses'])) opts.regimeStatuses = args['regimeStatuses'] as never;
       if (typeof args['primaryHypothesis'] === 'string') opts.primaryHypothesis = args['primaryHypothesis'] as Hypothesis;
       return await engineRun(opts);
     }
@@ -119,6 +118,8 @@ async function dispatch(name: string, args: Record<string, unknown>): Promise<un
   }
 }
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
-process.stderr.write(`[${PRODUCT_NAME}] connected (v${PRODUCT_VERSION})\n`);
+void (async () => {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  process.stderr.write(`[${PRODUCT_NAME}] connected (v${PRODUCT_VERSION})\n`);
+})();

@@ -64,7 +64,7 @@ async function newsApi(q: OsintQuery): Promise<OsintOutcome> {
       url: String(a['url'] ?? ''),
       title: String(a['title'] ?? ''),
       content: String(a['description'] ?? a['content'] ?? ''),
-      publishedAt: typeof a['publishedAt'] === 'string' ? (a['publishedAt'] as string) : undefined,
+      ...(typeof a['publishedAt'] === 'string' ? { publishedAt: a['publishedAt'] as string } : {}),
       language: 'en',
       source: typeof a['source'] === 'object' && a['source'] !== null ? String((a['source'] as Record<string, unknown>)['name'] ?? '') : '',
     }));
@@ -92,7 +92,7 @@ async function gdelt(q: OsintQuery): Promise<OsintOutcome> {
       url: String(a['url'] ?? ''),
       title: String(a['title'] ?? ''),
       content: String(a['title'] ?? ''),
-      publishedAt: typeof a['seendate'] === 'string' ? (a['seendate'] as string) : undefined,
+      ...(typeof a['seendate'] === 'string' ? { publishedAt: a['seendate'] as string } : {}),
       language: typeof a['language'] === 'string' ? (a['language'] as string) : 'en',
       source: typeof a['domain'] === 'string' ? (a['domain'] as string) : '',
     }));
