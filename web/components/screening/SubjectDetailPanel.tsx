@@ -82,8 +82,21 @@ import {
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics"] as const;
 type Tab = (typeof TABS)[number];
+
+interface EthicalImpact {
+  impactLevel: "high" | "medium" | "low";
+  impactNarrative: string;
+  rightsImpacted: string[];
+  proportionalityAssessment: string;
+  humanOversightStatus: string;
+  mitigationMeasures: string[];
+  subjectRights: string[];
+  documentationRequired: string[];
+  unescoAlignment: string;
+  reviewRecommendation: string;
+}
 
 const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
   clear: "Clear",
@@ -175,10 +188,35 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // records.
   const [roleOverride, setRoleOverride] = useState("");
   const [narrativeOverride, setNarrativeOverride] = useState("");
+  const [eiaResult, setEiaResult] = useState<EthicalImpact | null>(null);
+  const [eiaLoading, setEiaLoading] = useState(false);
   useEffect(() => {
     setRoleOverride("");
     setNarrativeOverride("");
+    setEiaResult(null);
   }, [subject.id]);
+
+  const runEIA = async () => {
+    setEiaLoading(true);
+    setEiaResult(null);
+    try {
+      const res = await fetch("/api/ethical-impact", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subjectName: subject.name,
+          riskScore: subject.riskScore,
+          cddPosture: subject.cddPosture,
+          nationality: subject.country,
+          aiDecisions: [],
+        }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { ok: boolean } & EthicalImpact;
+      if (data.ok) setEiaResult(data);
+    } catch { /* silent */ }
+    finally { setEiaLoading(false); }
+  };
   const effectiveAdverseMediaText =
     narrativeOverride.trim() || adverseMediaText;
   const superBrain = useSuperBrain(qsSubjectForBrain, {
@@ -1084,6 +1122,15 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
 
         {activeTab === "Evidence" && (
           <EvidenceTab superBrain={superBrain} subject={subject} />
+        )}
+
+        {activeTab === "AI Ethics" && (
+          <EthicsTab
+            subject={subject}
+            eiaResult={eiaResult}
+            eiaLoading={eiaLoading}
+            onRun={() => void runEIA()}
+          />
         )}
       </div>
 
@@ -2328,5 +2375,164 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         ))}
       </ul>
     </Section>
+  );
+}
+
+function EthicsTab({
+  subject,
+  eiaResult,
+  eiaLoading,
+  onRun,
+}: {
+  subject: Subject;
+  eiaResult: EthicalImpact | null;
+  eiaLoading: boolean;
+  onRun: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyRights = async () => {
+    if (!eiaResult) return;
+    try {
+      await navigator.clipboard.writeText(eiaResult.subjectRights.join("\n"));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch { /* silent */ }
+  };
+
+  const impactColour =
+    eiaResult?.impactLevel === "high"
+      ? "bg-red-dim text-red"
+      : eiaResult?.impactLevel === "medium"
+        ? "bg-amber-dim text-amber"
+        : "bg-green-dim text-green";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2 mb-0.5">
+            Ethical Impact Assessment
+          </div>
+          <div className="text-10 text-ink-3 font-mono">
+            UNESCO AI Ethics 2021 · UAE PDPL FDL 45/2021 · FDL 10/2025
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={eiaLoading}
+          className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+        >
+          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run Ethical Impact Assessment"}
+        </button>
+      </div>
+
+      {eiaLoading && (
+        <div className="text-12 text-ink-2 animate-pulse">Running assessment for {subject.name}…</div>
+      )}
+
+      {eiaResult && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={`font-mono text-10 px-2 py-1 rounded font-semibold ${impactColour}`}>
+              {eiaResult.impactLevel} impact
+            </span>
+          </div>
+
+          <div>
+            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Impact Assessment</div>
+            <p className="text-12 text-ink-1 leading-relaxed">{eiaResult.impactNarrative}</p>
+          </div>
+
+          {eiaResult.rightsImpacted.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Rights Potentially Affected</div>
+              <div className="flex flex-wrap gap-1.5">
+                {eiaResult.rightsImpacted.map((r, i) => (
+                  <span key={i} className="text-10 px-2 py-1 rounded bg-red-dim text-red font-medium">{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {eiaResult.proportionalityAssessment && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Proportionality</div>
+              <p className="text-12 text-ink-1">{eiaResult.proportionalityAssessment}</p>
+            </div>
+          )}
+
+          {eiaResult.humanOversightStatus && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Human Oversight Status</div>
+              <p className="text-12 text-ink-1">{eiaResult.humanOversightStatus}</p>
+            </div>
+          )}
+
+          {eiaResult.mitigationMeasures.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Mitigation Measures</div>
+              <ul className="space-y-1">
+                {eiaResult.mitigationMeasures.map((m, i) => (
+                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                    <span className="text-violet mt-0.5 shrink-0">•</span>
+                    <span>{m}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.subjectRights.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Subject Rights</div>
+                <button
+                  type="button"
+                  onClick={() => void copyRights()}
+                  className="text-10 px-2 py-px rounded bg-bg-2 text-ink-2 hover:text-ink-0 font-mono"
+                >
+                  {copied ? "Copied ✓" : "Copy"}
+                </button>
+              </div>
+              <ul className="space-y-1">
+                {eiaResult.subjectRights.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                    <span className="text-green mt-0.5 shrink-0">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.documentationRequired.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Documentation Required</div>
+              <ul className="space-y-1">
+                {eiaResult.documentationRequired.map((d, i) => (
+                  <li key={i} className="flex items-start gap-2 text-11 font-mono text-ink-2">
+                    <span className="text-brand mt-0.5 shrink-0">→</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.unescoAlignment && (
+            <p className="font-mono text-10 text-ink-3 bg-bg-1 rounded px-3 py-2 leading-relaxed">{eiaResult.unescoAlignment}</p>
+          )}
+
+          {eiaResult.reviewRecommendation && (
+            <div className="flex items-center gap-2">
+              <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Review:</span>
+              <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{eiaResult.reviewRecommendation}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

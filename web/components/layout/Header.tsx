@@ -60,6 +60,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Regulatory record-keeping, audit trail, reference library
     title: "Governance & Audit",
     items: [
+      { label: "Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
       { label: "Audit Trail", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year adverse media archive · FDL Art.19" },
       { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },

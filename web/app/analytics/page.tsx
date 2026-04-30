@@ -13,6 +13,25 @@ interface InsightItem {
   action: string;
   urgency: "immediate" | "this_month" | "quarterly";
 }
+
+interface NationalityDistributionEntry {
+  nationality: string;
+  count: number;
+  avgRiskScore: number;
+  flag: string;
+}
+
+interface BiasMonitor {
+  biasRisk: "elevated" | "moderate" | "low";
+  biasNarrative: string;
+  nationalityDistribution: NationalityDistributionEntry[];
+  potentialBiasIndicators: string[];
+  falsePositiveRisk: string;
+  recommendedActions: string[];
+  unescoAlignment: string;
+  monitoringFrequency: string;
+}
+
 interface AnalyticsInsights {
   headline: string;
   riskTrend: "deteriorating" | "stable" | "improving";
@@ -102,6 +121,8 @@ export default function AnalyticsPage() {
   const [fourEyesTotal, setFourEyesTotal] = useState(0);
   const [aiInsights, setAiInsights] = useState<AnalyticsInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [biasMonitor, setBiasMonitor] = useState<BiasMonitor | null>(null);
+  const [biasLoading, setBiasLoading] = useState(false);
   const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -234,6 +255,27 @@ export default function AnalyticsPage() {
     finally { setInsightsLoading(false); }
   };
 
+  const runBiasMonitor = async () => {
+    setBiasLoading(true);
+    setBiasMonitor(null);
+    try {
+      const subjects = cases.map((c) => ({
+        name: c.subject,
+        riskScore: 0,
+        status: c.status,
+      }));
+      const res = await fetch("/api/ai-bias-monitor", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjects }),
+      });
+      if (!res.ok) return;
+      const result = (await res.json()) as { ok: boolean } & BiasMonitor;
+      if (result.ok) setBiasMonitor(result);
+    } catch { /* silent */ }
+    finally { setBiasLoading(false); }
+  };
+
   const handleExportPdf = () => {
     if (typeof window === "undefined") return;
     window.print();
@@ -269,6 +311,14 @@ export default function AnalyticsPage() {
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
               >
                 {insightsLoading ? "Generating…" : "Generate AI Insights"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void runBiasMonitor()}
+                disabled={biasLoading}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+              >
+                {biasLoading ? "Analysing…" : "AI Bias Monitor"}
               </button>
               <button
                 type="button"
@@ -344,6 +394,97 @@ export default function AnalyticsPage() {
               {aiInsights.regulatoryExposure && (
                 <p className="font-mono text-10 text-ink-3">{aiInsights.regulatoryExposure}</p>
               )}
+            </div>
+          )}
+
+          {biasMonitor && (
+            <div className="mb-6 bg-bg-panel border border-violet/20 rounded-xl p-5 space-y-4 print:hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-violet">AI Bias Monitor</span>
+                  <span className="text-10 font-mono text-ink-3">UNESCO Principle 3 · Fairness &amp; Non-Discrimination</span>
+                  {biasMonitor.biasRisk === "elevated" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">elevated risk</span>
+                  )}
+                  {biasMonitor.biasRisk === "moderate" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-amber-dim text-amber font-semibold">moderate risk</span>
+                  )}
+                  {biasMonitor.biasRisk === "low" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-green-dim text-green font-semibold">low risk</span>
+                  )}
+                </div>
+                <button type="button" onClick={() => setBiasMonitor(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+              </div>
+              <p className="text-13 text-ink-1 leading-snug">{biasMonitor.biasNarrative}</p>
+
+              {biasMonitor.nationalityDistribution.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Nationality Distribution</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-11 font-mono border-collapse">
+                      <thead>
+                        <tr className="text-left text-ink-3 border-b border-hair">
+                          <th className="pb-1 pr-4 font-medium">Nationality</th>
+                          <th className="pb-1 pr-4 font-medium text-right">Count</th>
+                          <th className="pb-1 pr-4 font-medium text-right">Avg Risk</th>
+                          <th className="pb-1 font-medium">Assessment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {biasMonitor.nationalityDistribution.map((row, i) => (
+                          <tr key={i} className="border-b border-hair/50">
+                            <td className="py-1 pr-4 text-ink-0">{row.nationality}</td>
+                            <td className="py-1 pr-4 text-right text-ink-1">{row.count}</td>
+                            <td className="py-1 pr-4 text-right text-ink-1">{row.avgRiskScore.toFixed(0)}</td>
+                            <td className="py-1 text-ink-2 text-10">{row.flag}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {biasMonitor.potentialBiasIndicators.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Potential Bias Indicators</div>
+                  <div className="flex flex-wrap gap-2">
+                    {biasMonitor.potentialBiasIndicators.map((ind, i) => (
+                      <span key={i} className="text-10 px-2 py-1 rounded bg-amber-dim text-amber font-medium">{ind}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {biasMonitor.falsePositiveRisk && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">False Positive Risk</div>
+                  <p className="text-12 text-ink-1">{biasMonitor.falsePositiveRisk}</p>
+                </div>
+              )}
+
+              {biasMonitor.recommendedActions.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Recommended Actions</div>
+                  <ul className="space-y-1">
+                    {biasMonitor.recommendedActions.map((action, i) => (
+                      <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                        <span className="text-violet mt-0.5 shrink-0">•</span>
+                        <span>{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {biasMonitor.unescoAlignment && (
+                <p className="font-mono text-10 text-ink-3 bg-bg-1 rounded px-3 py-2">{biasMonitor.unescoAlignment}</p>
+              )}
+
+              <div className="flex items-center gap-2">
+                <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Monitoring Frequency:</span>
+                <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{biasMonitor.monitoringFrequency}</span>
+              </div>
             </div>
           )}
 
