@@ -2403,6 +2403,245 @@ export default function MlroAdvisorPage() {
                 })()}
               </div>
             )}
+
+            {/* PEP Network Intelligence */}
+            {superToolsTab === "pep-network" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP Network Intelligence</div>
+                <p className="text-11 text-ink-3">Full network enumeration of persons and entities requiring screening — beyond static PEP profiles. Powered by FATF R.12 and FDL 10/2025 Art.12.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">PEP name *</label>
+                    <input value={pepInput.name} onChange={(e) => setPepInput((p) => ({ ...p, name: e.target.value }))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Role *</label>
+                    <input value={pepInput.role} onChange={(e) => setPepInput((p) => ({ ...p, role: e.target.value }))} placeholder="e.g. Minister of Finance, President" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Country *</label>
+                    <input value={pepInput.country} onChange={(e) => setPepInput((p) => ({ ...p, country: e.target.value }))} placeholder="e.g. AE, NG, RU" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Party/Affiliation (optional)</label>
+                    <input value={pepInput.party} onChange={(e) => setPepInput((p) => ({ ...p, party: e.target.value }))} placeholder="e.g. ruling party name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Tenure (optional)</label>
+                    <input value={pepInput.tenure} onChange={(e) => setPepInput((p) => ({ ...p, tenure: e.target.value }))} placeholder="e.g. 2019-present" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runPepNetwork()} disabled={pepNetLoading || !pepInput.name.trim() || !pepInput.role.trim() || !pepInput.country.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {pepNetLoading ? "Generating…" : "Generate PEP Network Intelligence"}
+                </button>
+                {pepNet && (() => {
+                  const n = pepNet;
+                  const ratingCls = n.riskRating === "critical" || n.riskRating === "high" ? "bg-red text-white" : "bg-amber-dim text-amber";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${ratingCls}`}>{n.riskRating} risk</span>
+                        <span className="font-mono text-11 text-ink-2">{n.pepCategory}</span>
+                        {n.seniorManagementApprovalRequired && (
+                          <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red uppercase">Senior Mgmt Approval Required</span>
+                        )}
+                        <span className="font-mono text-10 px-2 py-px rounded bg-brand-dim text-brand-deep uppercase">Monitor: {n.ongoingMonitoringFrequency}</span>
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{n.riskNarrative}</p>
+                      {n.personsToScreen.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Persons to Screen</div>
+                          <div className="space-y-2">
+                            {n.personsToScreen.map((person, i) => {
+                              const priCls = person.screeningPriority === "mandatory" ? "bg-red text-white" : person.screeningPriority === "high" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand-deep";
+                              return (
+                                <div key={i} className="border border-hair-2 rounded p-3 bg-bg-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${priCls}`}>{person.screeningPriority}</span>
+                                    <span className="text-12 font-medium text-ink-0">{person.relationship}</span>
+                                  </div>
+                                  <div className="text-11 text-ink-2 mb-0.5">{person.rationale}</div>
+                                  <div className="text-10 font-mono text-ink-3">{person.fatfBasis}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {n.entitiesToScreen.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Entities to Screen</div>
+                          <div className="space-y-2">
+                            {n.entitiesToScreen.map((ent, i) => {
+                              const priCls = ent.screeningPriority === "mandatory" ? "bg-red text-white" : ent.screeningPriority === "high" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand-deep";
+                              return (
+                                <div key={i} className="border border-hair-2 rounded p-3 bg-bg-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${priCls}`}>{ent.screeningPriority}</span>
+                                    <span className="text-12 font-medium text-ink-0">{ent.entityType}</span>
+                                  </div>
+                                  <div className="text-11 text-ink-2">{ent.rationale}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {n.typicalMlRisks.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Typical ML Risks</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {n.typicalMlRisks.map((r, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red">{r}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {n.eddRequirements.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">EDD Requirements</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {n.eddRequirements.map((r, i) => <li key={i}>{r}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {n.exitTriggers.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exit Triggers</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {n.exitTriggers.map((t, i) => <li key={i}>{t}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {n.regulatoryBasis && <div className="text-10 font-mono text-ink-3">{n.regulatoryBasis}</div>}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Sanctions Nexus */}
+            {superToolsTab === "sanctions-nexus" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AI Indirect Sanctions Exposure Analyzer</div>
+                <p className="text-11 text-ink-3">Reasons about indirect sanctions exposure through ownership chains, jurisdictions, and financial intermediaries — beyond direct SDN name hits.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Subject *</label>
+                    <input value={sanctionsNexusInput.subject} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, subject: e.target.value }))} placeholder="Person or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Country *</label>
+                    <input value={sanctionsNexusInput.country} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, country: e.target.value }))} placeholder="Subject country (ISO-2)" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Counterparty name</label>
+                    <input value={sanctionsNexusInput.counterpartyName} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, counterpartyName: e.target.value }))} placeholder="Counterparty entity/person" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Counterparty country</label>
+                    <input value={sanctionsNexusInput.counterpartyCountry} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, counterpartyCountry: e.target.value }))} placeholder="ISO-2" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Transaction type</label>
+                    <input value={sanctionsNexusInput.transactionType} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, transactionType: e.target.value }))} placeholder="e.g. wire transfer, gold purchase" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-10 text-ink-3 mb-1">Amount</label>
+                      <input value={sanctionsNexusInput.amount} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, amount: e.target.value }))} placeholder="0" type="number" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                    <div className="w-24">
+                      <label className="block text-10 text-ink-3 mb-1">Currency</label>
+                      <input value={sanctionsNexusInput.currency} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, currency: e.target.value }))} placeholder="AED" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Ownership chain</label>
+                    <textarea value={sanctionsNexusInput.ownershipChain} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, ownershipChain: e.target.value }))} rows={2} placeholder="Describe the ownership/corporate structure…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Banking relationships</label>
+                    <textarea value={sanctionsNexusInput.bankingRelationships} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, bankingRelationships: e.target.value }))} rows={2} placeholder="Correspondent banks, payment processors, intermediaries…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Additional context</label>
+                    <textarea value={sanctionsNexusInput.context} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, context: e.target.value }))} rows={2} placeholder="Any further context relevant to the sanctions assessment…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" />
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runSanctionsNexus()} disabled={sanctionsNexusLoading || !sanctionsNexusInput.subject.trim() || !sanctionsNexusInput.country.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  {sanctionsNexusLoading ? "Analyzing…" : "Analyze Sanctions Exposure"}
+                </button>
+                {sanctionsNexus && (() => {
+                  const s = sanctionsNexus;
+                  const overallCls = s.overallSanctionsRisk === "critical" || s.overallSanctionsRisk === "high" ? "text-red font-bold" : s.overallSanctionsRisk === "medium" ? "text-amber font-bold" : "text-green font-bold";
+                  const actionCls = s.recommendedAction === "block" || s.recommendedAction === "file_str" ? "bg-red text-white" : s.recommendedAction === "escalate_to_mlro" || s.recommendedAction === "enhanced_dd" ? "bg-amber-dim text-amber" : s.recommendedAction === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
+                  const exposureBadge = (val: string) => val === "confirmed" ? "bg-red text-white" : val === "likely" ? "bg-red-dim text-red" : val === "possible" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 uppercase ${overallCls}`}>{s.overallSanctionsRisk} sanctions risk</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${exposureBadge(s.directExposure)}`}>Direct: {s.directExposure}</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${exposureBadge(s.indirectExposure)}`}>Indirect: {s.indirectExposure}</span>
+                        <span className={`font-mono text-10 px-2 py-px rounded uppercase ${actionCls}`}>{s.recommendedAction.replace(/_/g, " ")}</span>
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{s.exposureNarrative}</p>
+                      {s.fiftyPercentRuleApplicable && (
+                        <div className="rounded p-3 bg-amber-dim border border-amber text-amber text-11">
+                          <span className="font-semibold">50% Ownership Rule applies: </span>{s.fiftyPercentAnalysis}
+                        </div>
+                      )}
+                      {s.directRisks.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Direct Risks</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {s.directRisks.map((r, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-red text-white">{r}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {s.indirectRisks.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Indirect Risks</div>
+                          <div className="space-y-2">
+                            {s.indirectRisks.map((r, i) => {
+                              const sevCls = r.severity === "critical" ? "bg-red text-white" : r.severity === "high" ? "bg-red-dim text-red" : r.severity === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                              return (
+                                <div key={i} className="border border-hair-2 rounded p-3 bg-bg-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${sevCls}`}>{r.severity}</span>
+                                    <span className="text-12 font-medium text-ink-0">{r.riskType}</span>
+                                    <span className="font-mono text-10 text-ink-3">{r.sanctionsRegime}</span>
+                                  </div>
+                                  <div className="text-11 text-ink-2 mb-0.5">{r.description}</div>
+                                  <div className="text-10 font-mono text-ink-3">{r.regulatoryBasis}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {s.jurisdictionalExposure.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictional Exposure</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {s.jurisdictionalExposure.map((j, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-red text-white">{j}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {s.requiredChecks.length > 0 && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Checks</div>
+                          <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                            {s.requiredChecks.map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {s.regulatoryBasis && <div className="text-10 font-mono text-ink-3">{s.regulatoryBasis}</div>}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         )}
       </div>
