@@ -17,6 +17,16 @@ interface Supplier {
   flags: string[];
 }
 
+interface VendorRisk {
+  riskScore: number;
+  riskLevel: "critical" | "high" | "medium" | "low";
+  eddRequired: boolean;
+  findings: string[];
+  redFlags: string[];
+  recommendation: string;
+  regulatoryBasis: string;
+}
+
 const STORAGE_KEY = "hawkeye.vendor-dd.v1";
 
 function today(): string {
@@ -87,10 +97,29 @@ export default function SupplierDdPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<FormState>(EMPTY_FORM);
+  const [riskMap, setRiskMap] = useState<Record<string, VendorRisk>>({});
+  const [riskLoading, setRiskLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setSuppliers(load());
   }, []);
+
+  const runVendorRisk = async (v: Supplier) => {
+    setRiskLoading((prev) => ({ ...prev, [v.id]: true }));
+    try {
+      const res = await fetch("/api/vendor-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ supplier: v }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { ok: boolean; result: VendorRisk };
+        setRiskMap((prev) => ({ ...prev, [v.id]: data.result }));
+      }
+    } finally {
+      setRiskLoading((prev) => ({ ...prev, [v.id]: false }));
+    }
+  };
 
   const update = (next: Supplier[]) => { setSuppliers(next); save(next); };
   const remove = (id: string) => update(suppliers.filter((v) => v.id !== id));
