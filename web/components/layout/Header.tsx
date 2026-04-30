@@ -39,6 +39,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Corrections", href: "/corrections", hint: "Data-subject corrections" },
       { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody" },
       { label: "Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
+      { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
+      { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
     ],
   },
   {
@@ -51,8 +53,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Playbook", href: "/playbook", hint: "Typology guides" },
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes review" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines" },
-      { label: "EWRA / BWRA", href: "/ewra", hint: "Risk assessment dashboard" },
-      { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
       { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
       // goAML export is now reachable from a row action on /str-cases
