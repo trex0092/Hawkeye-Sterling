@@ -84,8 +84,8 @@ export function deriveTypologyPriors(
     if (!typology) continue;
     out.push({
       typology,
-      sector: sector === '*' ? undefined : sector,
-      jurisdiction: jurisdiction === '*' ? undefined : jurisdiction,
+      ...(sector !== '*' && sector !== undefined && { sector }),
+      ...(jurisdiction !== '*' && jurisdiction !== undefined && { jurisdiction }),
       alpha: c.alpha,
       beta: c.beta,
       meanPrior: c.alpha / (c.alpha + c.beta),
