@@ -57,6 +57,10 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
+import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
+import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
+import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
+import { DispositionButton } from "@/components/cases/DispositionButton";
 import { SnoozeButton } from "@/components/screening/SnoozeButton";
 import { ReScreenDiff } from "@/components/screening/ReScreenDiff";
 import { CrossSubjectLinks } from "@/components/screening/CrossSubjectLinks";
@@ -1074,10 +1078,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           />
         )}
 
-        {activeTab !== "Screening" && activeTab !== "Ownership" && activeTab !== "Live reasoning" && (
-          <div className="text-11 text-ink-2 py-6">
-            {activeTab} data will populate here once the module is wired to the engine.
-          </div>
+        {activeTab === "CDD/EDD" && (
+          <CddTab superBrain={superBrain} subject={subject} />
+        )}
+
+        {activeTab === "Evidence" && (
+          <EvidenceTab superBrain={superBrain} subject={subject} />
         )}
       </div>
 
@@ -1530,6 +1536,127 @@ function formatDoubleMetaphone(
   return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
 }
 
+function CddTab({
+  superBrain,
+  subject,
+}: {
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subject: Subject;
+}) {
+  const r = superBrain.status === "success" ? superBrain.result : null;
+  const runId = r?.audit?.runId ?? `run-${subject.id}`;
+  const modeIds = r?.typologies?.hits?.map((h) => h.id) ?? [];
+  const autoProposed = r?.redlines?.action ?? "D02_cleared_proceed";
+  const autoConfidence = r?.composite?.score != null ? r.composite.score / 100 : 0;
+
+  const pepList = r?.pep && r.pep.salience > 0
+    ? [{
+        role: r.pep.role,
+        tier: r.pep.tier as "national" | "supra_national" | "sub_national" | "regional_org" | "international_org" | null,
+        type: r.pep.type,
+        salience: r.pep.salience,
+        ...(r.pep.matchedRule ? { matchedRule: r.pep.matchedRule } : {}),
+        rationale: r.pep.rationale ?? "",
+      }]
+    : [];
+
+  return (
+    <div className="space-y-3">
+      <p className="text-11 text-ink-2">
+        Customer Due Diligence profile. PEP status and MLRO disposition are
+        drawn from the live brain result — no manual re-entry required.
+      </p>
+      {superBrain.status === "loading" && (
+        <div className="text-11 text-ink-2">Loading CDD data…</div>
+      )}
+      {pepList.length > 0 && <PepClassificationsList data={pepList} />}
+      {r?.pepAssessment?.isLikelyPEP && (
+        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs">
+          <div className="text-zinc-500 uppercase tracking-wide mb-1">PEP assessment</div>
+          <div className="flex flex-wrap gap-1">
+            {r.pepAssessment.matchedRoles.map((m, i) => (
+              <span
+                key={`${m.label}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-100 text-violet-800 border border-violet-200"
+              >
+                {m.label} · {m.tier}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {r && (
+        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2">MLRO disposition</div>
+          <DispositionButton
+            caseId={subject.id}
+            runId={runId}
+            modeIds={modeIds}
+            autoProposed={autoProposed}
+            autoConfidence={autoConfidence}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EvidenceTab({
+  superBrain,
+  subject,
+}: {
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subject: Subject;
+}) {
+  const r = superBrain.status === "success" ? superBrain.result : null;
+
+  if (superBrain.status === "loading") {
+    return <div className="text-11 text-ink-2 py-6">Loading evidence…</div>;
+  }
+  if (!r) {
+    return (
+      <div className="text-11 text-ink-2 py-6">
+        Run a screening to generate an STR draft preview.
+      </div>
+    );
+  }
+
+  const runId = r.audit?.runId ?? `run-${subject.id}`;
+  const findings = r.typologies?.hits?.map((h) => ({
+    modeId: h.id,
+    score: h.weight,
+    rationale: h.snippet,
+  })) ?? [];
+
+  const source = {
+    caseId: subject.id,
+    runId,
+    subject: {
+      name: subject.name,
+      type: subject.entityType ?? undefined,
+      jurisdiction: subject.jurisdiction ?? undefined,
+    },
+    outcome: r.redlines.action ?? "pending",
+    aggregateScore: r.composite.score / 100,
+    findings,
+    redlines: r.redlines,
+    crossRegimeConflict: r.crossRegimeConflict ?? undefined,
+    jurisdiction: r.jurisdiction
+      ? { iso2: r.jurisdiction.iso2, name: r.jurisdiction.name, cahra: r.jurisdiction.cahra }
+      : undefined,
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-11 text-ink-2">
+        STR draft auto-generated from the brain result. Review before filing.
+        Submission to goAML requires MLRO + second-authoriser sign-off.
+      </p>
+      <StrDraftPreview source={source} />
+    </div>
+  );
+}
+
 function LiveReasoningTab({
   superBrain,
   subjectName,
@@ -1840,18 +1967,18 @@ function SuperBrainPanel({
       )}
 
       {r.pep && r.pep.salience > 0 && (
-        <Field label="PEP classification">
-          <div className="text-12 text-ink-0">
-            <span className="font-semibold">{r.pep.type.replace(/_/g, " ")}</span>{" "}
-            <span className="text-ink-2">· tier {r.pep.tier}</span>{" "}
-            <span className="font-mono text-ink-3">
-              salience {Math.round(r.pep.salience * 100)}%
-            </span>
-          </div>
-          {r.pep.rationale && (
-            <div className="text-10.5 text-ink-2 mt-0.5">{r.pep.rationale}</div>
-          )}
-        </Field>
+        <div className="mb-2">
+          <PepClassificationsList
+            data={[{
+              role: r.pep.role,
+              tier: r.pep.tier as "national" | "supra_national" | "sub_national" | "regional_org" | "international_org" | null,
+              type: r.pep.type,
+              salience: r.pep.salience,
+              ...(r.pep.matchedRule ? { matchedRule: r.pep.matchedRule } : {}),
+              rationale: r.pep.rationale ?? "",
+            }]}
+          />
+        </div>
       )}
 
       {r.adverseMedia.length > 0 && (
@@ -1929,6 +2056,12 @@ function SuperBrainPanel({
             <div className="text-10.5 text-red mt-1">Action: {r.redlines.action}</div>
           )}
         </Field>
+      )}
+
+      {r.crossRegimeConflict && (
+        <div className="mb-2">
+          <CrossRegimeConflictCard data={r.crossRegimeConflict as Parameters<typeof CrossRegimeConflictCard>[0]["data"]} />
+        </div>
       )}
 
       {(r.typologies?.hits?.length ?? 0) > 0 && r.typologies && (

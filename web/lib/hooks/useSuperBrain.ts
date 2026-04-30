@@ -94,6 +94,20 @@ export interface SuperBrainResult {
     dataFreshness: Record<string, string>;
     moduleWeights: Record<string, string | number>;
   };
+  crossRegimeConflict?: {
+    anyDesignated: boolean;
+    unanimousDesignated: boolean;
+    unanimousNotDesignated: boolean;
+    split: boolean;
+    mostRestrictive?: { regimeId: string; hit: string; asOf: string; sourceRef?: string; note?: string } | null;
+    leastRestrictive?: { regimeId: string; hit: string; asOf: string; sourceRef?: string; note?: string } | null;
+    conflicts: Array<{ regimeA: string; regimeB: string; detail: string; severity: "low" | "medium" | "high" }>;
+    partialMatchRegimes: string[];
+    unknownRegimes: string[];
+    staleRegimes: string[];
+    recommendedAction: "block" | "freeze" | "escalate" | "review" | "proceed_with_scope_declaration";
+    rationale: string[];
+  } | null;
 }
 
 export type SuperBrainState =
