@@ -29,7 +29,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { weaponizedSystemPrompt } from "../../../../dist/src/brain/weaponized.js";
+import { weaponizedSystemPrompt } from "../../../../../dist/src/brain/weaponized.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
