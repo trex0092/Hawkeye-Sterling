@@ -232,32 +232,15 @@ export function preGenerationRouter(input: PreGenerationInput): RouterOutcome {
     };
   }
 
-  // Path 6: low retrieval confidence.
-  if (input.retrieved) {
-    const threshold = input.retrievalConfidenceThreshold ?? 0.7;
-    const confidence = retrievalConfidence(input.retrieved);
-    if (confidence < threshold) {
-      return {
-        refused: true,
-        reason: 'low_retrieval_confidence',
-        message:
-          `Insufficient grounded evidence to answer (retrieval confidence ` +
-          `${confidence.toFixed(2)} < ${threshold.toFixed(2)} threshold). ` +
-          `Most likely causes: (a) the question covers a topic the registry has ` +
-          `not yet ingested in body-text form (only metadata-only shells were ` +
-          `surfaced); (b) the question is too broad and the retriever could not ` +
-          `pin down a class-specific anchor. Escalate to the human MLRO with the ` +
-          `original question for direct review.`,
-        escalation: {
-          to: 'Human MLRO',
-          nextAction:
-            'Forward the question + this refusal record to the MLRO. Either ingest ' +
-            'the controlling source document into the registry or have the MLRO ' +
-            'answer directly from the underlying authority.',
-        },
-      };
-    }
-  }
+  // Path 6 (low retrieval confidence) — DISABLED. Previously this
+  // refused any compliance question whose registry-retrieval confidence
+  // fell below 0.70, but the registry's body-text coverage is not yet
+  // dense enough for that floor: legitimate, well-formed compliance
+  // questions were being routed to "escalate to human MLRO" instead of
+  // being answered. The Advisor must answer every compliance question;
+  // the model is still required by the system prompt to cite anchors
+  // and refuse fabrication, so removing this hard gate does not lift
+  // the no-fabrication guarantee.
 
   return { refused: false };
 }

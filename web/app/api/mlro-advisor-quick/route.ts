@@ -202,8 +202,10 @@ function verifyAnswer(
       axis: "refusal",
       detail:
         "Answer refuses a legitimate compliance question. The MLRO Advisor " +
-        "answers all in-scope AML/CFT/sanctions/PEP/adverse-media questions; " +
-        "only refuse when the input gate explicitly flags out-of-scope.",
+        "must answer every compliance question; only refuse when the input " +
+        "gate flags an injection attempt or the refusal-router fires for a " +
+        "charter-protected reason (legal/tax advice, named-individual " +
+        "speculation, definitive sanctions verdict, unsigned filing draft).",
     });
   }
 
@@ -255,11 +257,11 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  // Shared input gate — refuses out-of-scope / oversize / prompt-
-  // injection / empty inputs before we burn a Haiku call.
+  // Shared input gate — refuses empty / oversize / prompt-injection
+  // inputs before we burn a Haiku call. Topic-scope filtering is off;
+  // the Advisor must answer every compliance question.
   const gateResult = gateMlroQuestion(body.question ?? "", {
     maxChars: 2000,
-    allowGeneral: false,
   });
   if (!gateResult.ok) {
     return NextResponse.json(
@@ -280,10 +282,12 @@ export async function POST(req: Request): Promise<Response> {
   // against this exact retrieval set.
   const retrieval: RetrievalContext = retrieveForQuestion(question, 12);
 
-  // Layer 5 pre-generation refusal router — six paths (out-of-scope
-  // legal/tax, named individuals, sanctions verdicts, unsigned filing
-  // drafts, low retrieval confidence). Short-circuits before we burn
-  // an API call. The audit log records the refusal so refusal
+  // Layer 5 pre-generation refusal router — five active paths
+  // (out-of-scope legal/tax advice, named-individual speculation,
+  // definitive sanctions verdicts, unsigned filing drafts). The
+  // sixth path (low retrieval confidence) is disabled — the Advisor
+  // must answer every compliance question. Short-circuits before
+  // we burn an API call; the audit log records refusals so refusal
   // precision can be graded by Layer 7.
   const preGen = runPreGenerationRouter({ question, retrieval });
   if (preGen.refused) {

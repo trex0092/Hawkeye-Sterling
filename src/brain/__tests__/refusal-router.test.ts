@@ -61,23 +61,22 @@ describe('refusal router: pre-generation paths', () => {
     expect(r.refused).toBe(false);
   });
 
-  it('path 6: low retrieval confidence triggers escalate', () => {
-    // Empty retrieval set → confidence 0 → refusal.
+  // Path 6 (low retrieval confidence) was disabled because it was
+  // refusing legitimate compliance questions when the registry's
+  // body-text coverage was thin. The Advisor must answer every
+  // compliance question. Retained as documentation of the prior
+  // contract.
+  it('path 6 (disabled): low retrieval confidence is NO LONGER refused', () => {
     const r = preGenerationRouter({
       question: 'A reasonable AML question',
       retrieved: { chunks: [], hasPendingChunks: false },
     });
-    const ref = expectRefusal(r, 'low_retrieval_confidence');
-    expect(ref.message).toMatch(/insufficient grounded evidence/i);
+    expect(r.refused).toBe(false);
   });
 
-  it('path 6: high retrieval confidence is NOT refused', () => {
+  it('path 6 (disabled): high retrieval confidence is NOT refused either', () => {
     const store = buildSeedRegistry();
     const result = retrieve(store, { text: 'STR filing obligation under FDL 10/2025', topK: 30 });
-    // Even though shells are pending, the catalogue is well-classified
-    // and Class A+B+C all surface — the test is whether the threshold
-    // adjusts. Use a relaxed threshold for this test (the retrieval
-    // confidence on shells is intentionally lower).
     const r = preGenerationRouter({
       question: 'STR filing obligation under FDL 10/2025',
       retrieved: { chunks: result.chunks, hasPendingChunks: result.hasPendingChunks },

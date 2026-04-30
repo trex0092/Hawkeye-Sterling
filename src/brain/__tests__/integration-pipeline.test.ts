@@ -70,15 +70,16 @@ describe('integration pipeline: retrieval → pre-gen → validate → post-gen 
     expect(log.verify().ok).toBe(true);
   });
 
-  it('low retrieval confidence triggers Layer-5 refusal before model call', () => {
-    const question = 'Some unrelated query';
+  it('low retrieval confidence is NO LONGER refused (Path 6 disabled)', () => {
+    // Path 6 was disabled because it refused legitimate compliance
+    // questions when registry coverage was thin. The Advisor must
+    // answer every compliance question; the retrievalConfidence
+    // helper is still exported for telemetry / scoring.
     const preGen = preGenerationRouter({
-      question,
+      question: 'A reasonable AML question',
       retrieved: { chunks: [], hasPendingChunks: false },
     });
-    expect(preGen.refused).toBe(true);
-    if (!preGen.refused) throw new Error('expected refusal');
-    expect(preGen.reason).toBe('low_retrieval_confidence');
+    expect(preGen.refused).toBe(false);
   });
 
   it('out-of-scope legal advice short-circuits before retrieval (cheaper path)', () => {
