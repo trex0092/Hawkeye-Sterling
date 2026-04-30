@@ -14,6 +14,20 @@ import {
   Cell,
 } from "recharts";
 
+interface NameVariants {
+  ok: boolean;
+  canonicalName: string;
+  variants: string[];
+  transliterations: string[];
+  patronymics: string[];
+  maidenNames: string[];
+  aliases: string[];
+  entityVariants: string[];
+  screeningStrings: string[];
+  scriptVariants: string[];
+  notes: string;
+}
+
 interface RankedResult {
   name: string;
   priority: number;
@@ -271,6 +285,28 @@ export default function BatchPage() {
   const [rankLoading, setRankLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
+  // Name Variant Generator state
+  const [nameVars, setNameVars] = useState<NameVariants | null>(null);
+  const [nameVarsLoading, setNameVarsLoading] = useState(false);
+  const [nameVarsInput, setNameVarsInput] = useState("");
+
+  const generateVariants = async () => {
+    if (!nameVarsInput.trim() || nameVarsLoading) return;
+    setNameVarsLoading(true);
+    setNameVars(null);
+    try {
+      const res = await fetch("/api/name-variants", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: nameVarsInput }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as NameVariants;
+      if (data.ok) setNameVars(data);
+    } catch { /* silent */ }
+    finally { setNameVarsLoading(false); }
+  };
+
   // Pre-populate the row set when ?names=foo,bar,baz is in the URL —
   // EOCN announcement detail panels link into /batch with the
   // designated names already in hand. ?source=eocn-announcement-id
@@ -488,6 +524,114 @@ export default function BatchPage() {
             streaming progress, severity chart, sortable/filterable results table.
             Export as CSV or jsPDF audit report.
           </p>
+        </div>
+
+        {/* Name Variant Generator */}
+        <div className="bg-bg-panel border border-brand/20 rounded-xl p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">Name Variant Generator</span>
+            <span className="text-10 text-ink-3 font-mono px-1.5 py-px bg-bg-1 rounded border border-hair-2">Beats World-Check static aliases</span>
+          </div>
+          <p className="text-11 text-ink-2 mb-3">Generate transliterations, patronymics, maiden names and aliases dynamically for any name in any script.</p>
+          <div className="flex gap-2 mb-3">
+            <input
+              className="flex-1 min-w-48 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+              placeholder="Enter name — Arabic, Cyrillic, Chinese, Latin…"
+              value={nameVarsInput}
+              onChange={(e) => setNameVarsInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void generateVariants()}
+            />
+            <button
+              type="button"
+              onClick={() => void generateVariants()}
+              disabled={nameVarsLoading || !nameVarsInput.trim()}
+              className="px-4 py-2 bg-brand text-white rounded text-12.5 font-semibold hover:bg-brand-hover disabled:opacity-50"
+            >
+              {nameVarsLoading ? "Generating…" : "Generate Variants"}
+            </button>
+          </div>
+
+          {nameVars && (
+            <div className="space-y-3">
+              <div className="font-semibold text-14 text-ink-0">
+                Canonical: <span className="text-brand">{nameVars.canonicalName}</span>
+              </div>
+
+              {nameVars.screeningStrings.length > 0 && (
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Screening Strings (click to copy)</div>
+                  <div className="flex flex-wrap gap-1.5 mb-1">
+                    {nameVars.screeningStrings.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => void navigator.clipboard.writeText(s)}
+                        className="px-2 py-0.5 bg-brand-dim text-brand border border-brand/30 rounded font-mono text-11 hover:bg-brand/20 cursor-pointer"
+                        title="Click to copy"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void navigator.clipboard.writeText(nameVars.screeningStrings.join("\n"))}
+                    className="text-10 text-ink-3 hover:text-ink-1 underline"
+                  >
+                    Copy all to clipboard
+                  </button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {nameVars.variants.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Variants</div>
+                    <div className="space-y-0.5">
+                      {nameVars.variants.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+                {nameVars.transliterations.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transliterations</div>
+                    <div className="space-y-0.5">
+                      {nameVars.transliterations.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+                {nameVars.aliases.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Aliases</div>
+                    <div className="space-y-0.5">
+                      {nameVars.aliases.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+                {nameVars.patronymics.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Patronymics</div>
+                    <div className="space-y-0.5">
+                      {nameVars.patronymics.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {nameVars.scriptVariants.length > 0 && (
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Script Variants</div>
+                  <pre className="font-mono text-13 text-ink-0 bg-bg-1 px-3 py-2 rounded border border-hair-2 whitespace-pre-wrap">
+                    {nameVars.scriptVariants.join("\n")}
+                  </pre>
+                </div>
+              )}
+
+              {nameVars.notes && (
+                <p className="text-11 text-ink-2 italic border-l-2 border-brand/30 pl-2">{nameVars.notes}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Drop zone */}

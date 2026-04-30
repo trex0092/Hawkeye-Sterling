@@ -271,6 +271,90 @@ interface SubjectBrief {
   regulatoryContext: string;
 }
 
+interface PepPersonToScreen {
+  relationship: string;
+  screeningPriority: "mandatory" | "high" | "recommended";
+  rationale: string;
+  fatfBasis: string;
+}
+
+interface PepEntityToScreen {
+  entityType: string;
+  screeningPriority: "mandatory" | "high" | "recommended";
+  rationale: string;
+}
+
+interface PepNetwork {
+  pepCategory: string;
+  riskRating: "critical" | "high" | "medium";
+  riskNarrative: string;
+  personsToScreen: PepPersonToScreen[];
+  entitiesToScreen: PepEntityToScreen[];
+  typicalMlRisks: string[];
+  jurisdictionalRisks: string[];
+  eddRequirements: string[];
+  seniorManagementApprovalRequired: boolean;
+  ongoingMonitoringFrequency: "monthly" | "quarterly" | "annually";
+  exitTriggers: string[];
+  regulatoryBasis: string;
+}
+
+interface SanctionsIndirectRisk {
+  riskType: string;
+  description: string;
+  severity: "critical" | "high" | "medium" | "low";
+  sanctionsRegime: string;
+  regulatoryBasis: string;
+}
+
+interface SanctionsNexus {
+  directExposure: "none" | "possible" | "likely" | "confirmed";
+  indirectExposure: "none" | "possible" | "likely" | "confirmed";
+  overallSanctionsRisk: "critical" | "high" | "medium" | "low" | "clear";
+  exposureNarrative: string;
+  directRisks: string[];
+  indirectRisks: SanctionsIndirectRisk[];
+  jurisdictionalExposure: string[];
+  fiftyPercentRuleApplicable: boolean;
+  fiftyPercentAnalysis: string;
+  recommendedAction: "block" | "escalate_to_mlro" | "enhanced_dd" | "file_str" | "monitor" | "clear";
+  requiredChecks: string[];
+  regulatoryBasis: string;
+}
+
+interface TypologyMatchPrimary {
+  name: string;
+  fatfReference: string;
+  matchStrength: "strong" | "moderate" | "weak";
+  matchRationale: string;
+}
+
+interface TypologyMatchSecondary {
+  name: string;
+  fatfReference: string;
+  matchStrength: "strong" | "moderate" | "weak";
+  overlap: string;
+}
+
+interface TypologyMatchPriority {
+  step: number;
+  action: string;
+  rationale: string;
+  tool: string;
+}
+
+interface TypologyMatch {
+  primaryTypology: TypologyMatchPrimary;
+  secondaryTypologies: TypologyMatchSecondary[];
+  keyIndicators: string[];
+  missingIndicators: string[];
+  investigativePriorities: TypologyMatchPriority[];
+  strThreshold: string;
+  predicate: string;
+  uaeCaseContext: string;
+  regulatoryBasis: string;
+}
+
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
 // repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
@@ -977,7 +1061,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1005,6 +1089,50 @@ export default function MlroAdvisorPage() {
   const [briefEntityType, setBriefEntityType] = useState("");
   const [briefResult, setBriefResult] = useState<SubjectBrief | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
+
+  // PEP Network
+  const [pepNet, setPepNet] = useState<PepNetwork | null>(null);
+  const [pepNetLoading, setPepNetLoading] = useState(false);
+  const [pepInput, setPepInput] = useState({ name: "", role: "", country: "", party: "", tenure: "" });
+
+  // Sanctions Nexus
+  const [sanctionsNexus, setSanctionsNexus] = useState<SanctionsNexus | null>(null);
+  const [sanctionsNexusLoading, setSanctionsNexusLoading] = useState(false);
+  const [sanctionsNexusInput, setSanctionsNexusInput] = useState({
+    subject: "", country: "", counterpartyName: "", counterpartyCountry: "",
+    transactionType: "", amount: "", currency: "", ownershipChain: "",
+    bankingRelationships: "", context: "",
+  });
+
+  // Typology Match
+  const [typoMatch, setTypoMatch] = useState<TypologyMatch | null>(null);
+  const [typoMatchLoading, setTypoMatchLoading] = useState(false);
+  const [typoInput, setTypoInput] = useState({
+    facts: "", subjectType: "", transactionTypes: "", jurisdictions: "", redFlags: "",
+  });
+
+  const runTypologyMatch = async () => {
+    if (!typoInput.facts.trim()) return;
+    setTypoMatchLoading(true);
+    setTypoMatch(null);
+    try {
+      const res = await fetch("/api/typology-match", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          facts: typoInput.facts,
+          subjectType: typoInput.subjectType || undefined,
+          transactionTypes: typoInput.transactionTypes ? typoInput.transactionTypes.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          jurisdictions: typoInput.jurisdictions ? typoInput.jurisdictions.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+          redFlags: typoInput.redFlags ? typoInput.redFlags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & TypologyMatch;
+      if (data.ok) setTypoMatch(data);
+    } catch { /* silent */ }
+    finally { setTypoMatchLoading(false); }
+  };
 
   const runEscalation = async () => {
     if (!escSubject.trim()) return;
@@ -1082,6 +1210,57 @@ export default function MlroAdvisorPage() {
       if (data.ok) setBriefResult(data);
     } catch { /* silent */ }
     finally { setBriefLoading(false); }
+  };
+
+  const runPepNetwork = async () => {
+    if (!pepInput.name.trim()) return;
+    setPepNetLoading(true);
+    setPepNet(null);
+    try {
+      const res = await fetch("/api/pep-network", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          pepName: pepInput.name,
+          role: pepInput.role,
+          country: pepInput.country,
+          party: pepInput.party || undefined,
+          tenure: pepInput.tenure || undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & PepNetwork;
+      if (data.ok) setPepNet(data);
+    } catch { /* silent */ }
+    finally { setPepNetLoading(false); }
+  };
+
+  const runSanctionsNexus = async () => {
+    if (!sanctionsNexusInput.subject.trim()) return;
+    setSanctionsNexusLoading(true);
+    setSanctionsNexus(null);
+    try {
+      const res = await fetch("/api/sanctions-indirect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: sanctionsNexusInput.subject,
+          country: sanctionsNexusInput.country,
+          counterpartyName: sanctionsNexusInput.counterpartyName || undefined,
+          counterpartyCountry: sanctionsNexusInput.counterpartyCountry || undefined,
+          transactionType: sanctionsNexusInput.transactionType || undefined,
+          amount: sanctionsNexusInput.amount ? Number(sanctionsNexusInput.amount) : undefined,
+          currency: sanctionsNexusInput.currency || undefined,
+          ownershipChain: sanctionsNexusInput.ownershipChain || undefined,
+          bankingRelationships: sanctionsNexusInput.bankingRelationships || undefined,
+          context: sanctionsNexusInput.context || undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & SanctionsNexus;
+      if (data.ok) setSanctionsNexus(data);
+    } catch { /* silent */ }
+    finally { setSanctionsNexusLoading(false); }
   };
 
   return (
@@ -1831,10 +2010,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation", "flags", "patterns", "brief"] as const).map((t) => (
+              {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={tabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : "Subject Brief"}
+                  {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : "Typology Match"}
                 </button>
               ))}
             </div>

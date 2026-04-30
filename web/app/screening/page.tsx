@@ -98,6 +98,39 @@ const ADVERSE_SEV_STYLE: Record<string, string> = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── False Positive Disambiguator types ───────────────────────────────────────
+
+type FPVerdict =
+  | "likely_true_match"
+  | "possible_match"
+  | "likely_false_positive"
+  | "confirmed_false_positive";
+
+type FPConfidence = "high" | "medium" | "low";
+
+type FPRecommendedAction =
+  | "escalate_to_mlro"
+  | "request_client_clarification"
+  | "document_and_clear"
+  | "enhanced_dd"
+  | "reject_onboarding";
+
+interface FalsePositiveResult {
+  ok: boolean;
+  verdict: FPVerdict;
+  confidence: FPConfidence;
+  confidenceScore: number;
+  reasoning: string;
+  matchingFactors: string[];
+  differentiatingFactors: string[];
+  additionalChecksRequired: string[];
+  recommendedAction: FPRecommendedAction;
+  regulatoryNote: string;
+  dispositionText: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CRITICAL_THRESHOLD = 85;
 const SLA_BREACH_THRESHOLD_H = 24;
 
@@ -543,6 +576,16 @@ export default function ScreeningPage() {
   const [nlConfidence, setNlConfidence] = useState<number>(0);
   const [nlReasoning, setNlReasoning] = useState<string>("");
 
+  // False Positive Disambiguator state
+  const [fpResults, setFpResults] = useState<Record<string, FalsePositiveResult>>({});
+  const [fpLoading, setFpLoading] = useState<Record<string, boolean>>({});
+  // Standalone assessor panel inputs
+  const [fpScreenedName, setFpScreenedName] = useState("");
+  const [fpHitName, setFpHitName] = useState("");
+  const [fpHitCategory, setFpHitCategory] = useState("Sanctions");
+  const [fpHitCountry, setFpHitCountry] = useState("");
+  const [fpPanelOpen, setFpPanelOpen] = useState(false);
+
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -756,6 +799,40 @@ export default function ScreeningPage() {
     setNlConfidence(0);
     setNlReasoning("");
   }, []);
+
+  const assessFalsePositive = useCallback(
+    async (key: string, payload: {
+      screenedName: string;
+      hitName: string;
+      hitCategory: string;
+      hitCountry: string;
+      hitDob?: string;
+      hitRole?: string;
+      clientNationality?: string;
+      clientDob?: string;
+      clientRole?: string;
+      clientContext?: string;
+      matchScore?: number;
+    }) => {
+      setFpLoading((prev) => ({ ...prev, [key]: true }));
+      try {
+        const res = await fetch("/api/false-positive", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as FalsePositiveResult;
+        if (data.ok) {
+          setFpResults((prev) => ({ ...prev, [key]: data }));
+        }
+      } catch { /* silent */ }
+      finally {
+        setFpLoading((prev) => ({ ...prev, [key]: false }));
+      }
+    },
+    [],
+  );
 
   // Export the filtered queue as a CSV the user downloads. Lets the
   // weekly MLRO pack go out without a server round-trip.
@@ -1132,6 +1209,153 @@ export default function ScreeningPage() {
         />
 
         <main className="px-10 py-8 overflow-y-auto">
+          {/* False Positive Disambiguator Panel */}
+          <div className="mb-6 bg-bg-panel border border-brand/20 rounded-xl overflow-hidden">
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-bg-1 transition-colors"
+              onClick={() => setFpPanelOpen((o) => !o)}
+            >
+              <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">False Positive Disambiguator</span>
+              <span className="text-10 text-ink-3 font-mono px-1.5 py-px bg-bg-1 rounded border border-hair-2">Beats World-Check match %</span>
+              <span className="ml-auto text-ink-3 text-12">{fpPanelOpen ? "▲" : "▼"}</span>
+            </button>
+            {fpPanelOpen && (
+              <div className="px-4 pb-4 border-t border-hair-2">
+                <p className="text-11 text-ink-2 mt-3 mb-3">AI reasons whether a hit is the same person as your client — not just a match %, but a legal-grade disposition.</p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div>
+                    <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Screened Name</label>
+                    <input
+                      className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Client / subject name"
+                      value={fpScreenedName}
+                      onChange={(e) => setFpScreenedName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Hit Name (from list)</label>
+                    <input
+                      className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Name on sanctions/PEP list"
+                      value={fpHitName}
+                      onChange={(e) => setFpHitName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Hit Category</label>
+                    <select
+                      className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                      value={fpHitCategory}
+                      onChange={(e) => setFpHitCategory(e.target.value)}
+                    >
+                      {["Sanctions", "PEP", "Adverse Media", "OFAC SDN", "UN Consolidated", "EU Consolidated", "EOCN", "Other"].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Hit Country</label>
+                    <input
+                      className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Country of the list entry"
+                      value={fpHitCountry}
+                      onChange={(e) => setFpHitCountry(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={
+                    !fpScreenedName.trim() || !fpHitName.trim() || !fpHitCountry.trim() ||
+                    (fpLoading["standalone"] === true)
+                  }
+                  onClick={() =>
+                    void assessFalsePositive("standalone", {
+                      screenedName: fpScreenedName,
+                      hitName: fpHitName,
+                      hitCategory: fpHitCategory,
+                      hitCountry: fpHitCountry,
+                    })
+                  }
+                  className="px-4 py-1.5 bg-brand text-white rounded text-12 font-semibold hover:bg-brand-hover disabled:opacity-50"
+                >
+                  {fpLoading["standalone"] === true ? "Assessing…" : "Assess Match"}
+                </button>
+
+                {fpResults["standalone"] && (() => {
+                  const r = fpResults["standalone"]!;
+                  const verdictStyle: Record<string, string> = {
+                    likely_true_match: "bg-red text-white",
+                    possible_match: "bg-amber-dim text-amber border border-amber/30",
+                    likely_false_positive: "bg-green-dim text-green border border-green/30 opacity-80",
+                    confirmed_false_positive: "bg-green-dim text-green border border-green/30",
+                  };
+                  const actionStyle: Record<string, string> = {
+                    escalate_to_mlro: "bg-red-dim text-red border border-red/30",
+                    request_client_clarification: "bg-amber-dim text-amber border border-amber/30",
+                    document_and_clear: "bg-green-dim text-green border border-green/30",
+                    enhanced_dd: "bg-orange-dim text-orange border border-orange/30",
+                    reject_onboarding: "bg-red text-white",
+                  };
+                  return (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${verdictStyle[r.verdict] ?? "bg-bg-2 text-ink-2"}`}>
+                          {r.verdict.replace(/_/g, " ")}
+                        </span>
+                        <span className="text-11 font-mono text-ink-2">
+                          {r.confidenceScore}% confidence ({r.confidence})
+                        </span>
+                        <span className={`text-10 font-semibold px-2 py-0.5 rounded uppercase ${actionStyle[r.recommendedAction] ?? "bg-bg-2 text-ink-2"}`}>
+                          {r.recommendedAction.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <p className="text-12 text-ink-1 leading-relaxed">{r.reasoning}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {r.matchingFactors.length > 0 && (
+                          <div>
+                            <div className="text-10 uppercase tracking-wide-3 text-red mb-1">Matching Factors</div>
+                            <ul className="space-y-0.5">
+                              {r.matchingFactors.map((f, i) => (
+                                <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-red">●</span>{f}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {r.differentiatingFactors.length > 0 && (
+                          <div>
+                            <div className="text-10 uppercase tracking-wide-3 text-green mb-1">Differentiating Factors</div>
+                            <ul className="space-y-0.5">
+                              {r.differentiatingFactors.map((f, i) => (
+                                <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-green">●</span>{f}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      {r.dispositionText && (
+                        <div>
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disposition Text (click to copy)</div>
+                          <button
+                            type="button"
+                            className="w-full text-left px-3 py-2 bg-bg-1 border border-hair-2 rounded text-11 text-ink-1 font-mono whitespace-pre-wrap hover:border-brand/40 transition-colors"
+                            onClick={() => void navigator.clipboard.writeText(r.dispositionText)}
+                          >
+                            {r.dispositionText}
+                          </button>
+                        </div>
+                      )}
+                      {r.regulatoryNote && (
+                        <p className="text-11 text-ink-3 italic border-l-2 border-brand/30 pl-2">{r.regulatoryNote}</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+
           <ScreeningHero
             inQueue={subjects.filter((s) => s.status !== "cleared").length}
             critical={criticalCount}
