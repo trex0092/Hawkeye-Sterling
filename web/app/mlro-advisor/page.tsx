@@ -474,6 +474,13 @@ const tabCls = (active: boolean) =>
       : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
   }`;
 
+const superTabCls = (active: boolean) =>
+  `px-2.5 py-1 rounded text-11 font-medium border transition-colors ${
+    active
+      ? "bg-brand text-white border-brand"
+      : "bg-brand/10 text-brand border-brand/40 hover:bg-brand/20 hover:border-brand"
+  }`;
+
 const verdictCls = (v: string) => {
   if (v === "approved") return "bg-emerald-50 text-emerald-700 border-emerald-300";
   if (v === "blocked") return "bg-red-100 text-red-700 border-red-300";
@@ -2013,7 +2020,7 @@ export default function MlroAdvisorPage() {
             <div className="flex gap-2 flex-wrap">
               {(["escalation", "flags", "patterns", "brief", "pep-network", "sanctions-nexus", "typology-match"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
-                  className={tabCls(superToolsTab === t)}>
+                  className={superTabCls(superToolsTab === t)}>
                   {t === "escalation" ? "Escalation Engine" : t === "flags" ? "Red Flag Extractor" : t === "patterns" ? "Case Patterns" : t === "brief" ? "Subject Brief" : t === "pep-network" ? "PEP Network" : t === "sanctions-nexus" ? "Sanctions Nexus" : "Typology Match"}
                 </button>
               ))}
