@@ -3,6 +3,21 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
+interface EwraReport {
+  executiveSummary: string;
+  overallRiskVerdict: "critical" | "high" | "medium" | "low";
+  topControlGaps: Array<{
+    dimension: string;
+    gap: string;
+    recommendation: string;
+    urgency: "immediate" | "3months" | "annual";
+  }>;
+  immediateActions: string[];
+  regulatoryExposure: string;
+  boardNarrative: string;
+  nextReviewDate: string;
+}
+
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
 // Required annually under FDL 10/2025 Art.4 and FATF R.1.
 // Five risk dimensions scored 1–5 for inherent risk; controls effectiveness
@@ -131,10 +146,28 @@ function ScoreSelector({ value, onChange }: { value: number; onChange: (n: numbe
 
 export default function EwraPage() {
   const [state, setState] = useState<EwraState>(DEFAULT_STATE);
+  const [report, setReport] = useState<EwraReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => { setState(load()); }, []);
 
   const update = (updated: EwraState) => { setState(updated); save(updated); };
+
+  const generateReport = async () => {
+    setReportLoading(true);
+    setReport(null);
+    try {
+      const res = await fetch("/api/ewra-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ dimensions: state.dimensions, overallInherent, overallResidual, approvedBy: state.approvedBy, lastApproved: state.lastApproved }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & EwraReport;
+      if (data.ok) setReport(data);
+    } catch { /* silent */ }
+    finally { setReportLoading(false); }
+  };
 
   const updateDim = (id: string, patch: Partial<RiskDimension>) => {
     update({
@@ -183,6 +216,59 @@ export default function EwraPage() {
             },
           ]}
         />
+
+        <div className="flex justify-end mb-2">
+          <button type="button" onClick={() => void generateReport()} disabled={reportLoading}
+            className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+            {reportLoading ? "Generating Board Report…" : "Generate AI Board Report"}
+          </button>
+        </div>
+
+        {report && (
+          <div className="mb-4 bg-bg-panel border border-brand/30 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">AI Board Report</span>
+                <span className={`font-mono text-10 font-bold px-2 py-px rounded uppercase ${report.overallRiskVerdict === "critical" ? "bg-red text-white" : report.overallRiskVerdict === "high" ? "bg-red-dim text-red" : report.overallRiskVerdict === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
+                  {report.overallRiskVerdict} overall risk
+                </span>
+              </div>
+              <button type="button" onClick={() => setReport(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+            </div>
+            <p className="text-13 text-ink-0 leading-relaxed font-medium">{report.executiveSummary}</p>
+            {report.immediateActions.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-red mb-1">Immediate actions required</div>
+                <ul className="text-12 text-ink-0 space-y-1 list-disc list-inside">
+                  {report.immediateActions.map((a, i) => <li key={i}>{a}</li>)}
+                </ul>
+              </div>
+            )}
+            {report.topControlGaps.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Top control gaps</div>
+                <div className="space-y-2">
+                  {report.topControlGaps.map((g, i) => {
+                    const urgCls = g.urgency === "immediate" ? "bg-red-dim text-red" : g.urgency === "3months" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
+                    return (
+                      <div key={i} className="border border-hair-2 rounded-lg p-3 bg-bg-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-12 font-semibold text-ink-0">{g.dimension}</span>
+                          <span className={`font-mono text-9 px-1.5 py-px rounded uppercase ${urgCls}`}>{g.urgency}</span>
+                        </div>
+                        <div className="text-11 text-red mb-1">{g.gap}</div>
+                        <div className="text-11 text-ink-2 italic">{g.recommendation}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="text-12 text-ink-1 leading-relaxed border-l-2 border-brand/40 pl-3">{report.boardNarrative}</div>
+            {report.regulatoryExposure && <div className="text-10 font-mono text-ink-3">{report.regulatoryExposure}</div>}
+            {report.nextReviewDate && <div className="text-10 font-mono text-ink-3">Recommended next review: {report.nextReviewDate}</div>}
+          </div>
+        )}
 
         {/* Approval metadata */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">

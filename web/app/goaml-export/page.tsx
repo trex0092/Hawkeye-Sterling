@@ -68,6 +68,8 @@ export default function GoAmlExportPage() {
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<DraftEnvelope>(BLANK);
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });
+  const [aiValidation, setAiValidation] = useState<{ score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string } | null>(null);
+  const [aiValidating, setAiValidating] = useState(false);
 
   useEffect(() => { setDraft(loadDraft()); }, []);
   useEffect(() => { saveDraft(draft); }, [draft]);
@@ -88,6 +90,23 @@ export default function GoAmlExportPage() {
     setDraft((prev) => ({ ...prev, ...patch }));
   const updateSubject = (patch: Partial<DraftEnvelope["subject"]>) =>
     setDraft((prev) => ({ ...prev, subject: { ...prev.subject, ...patch } }));
+
+  const validateNarrativeAI = async () => {
+    if (!draft.narrative.trim()) return;
+    setAiValidating(true);
+    setAiValidation(null);
+    try {
+      const res = await fetch("/api/goaml-validate-ai", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ narrative: draft.narrative, reportCode: draft.reportCode, subjectName: draft.subject.name, subjectEntityType: draft.subject.entityType, amountAed: draft.amountAed }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
+      if (data.ok) setAiValidation(data);
+    } catch { /* silent */ }
+    finally { setAiValidating(false); }
+  };
 
   const handleGenerate = async () => {
     setSubmission({ status: "fetching" });
