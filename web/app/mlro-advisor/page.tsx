@@ -49,6 +49,27 @@ interface QuestionAnalysis {
   };
 }
 
+interface AdvisorResponseV1 {
+  schemaVersion: 1;
+  facts: { bullets: string[] };
+  redFlags: { flags: Array<{ indicator: string; typology: string }> };
+  frameworkCitations: { byClass: Partial<Record<"A" | "B" | "C" | "D" | "E", string[]>> };
+  decision: { verdict: "proceed" | "decline" | "escalate" | "file_str" | "freeze"; oneLineRationale: string };
+  confidence: { score: 1 | 2 | 3 | 4 | 5; reason?: string };
+  counterArgument: { inspectorChallenge: string; rebuttal: string };
+  auditTrail: {
+    charterVersionHash: string;
+    directivesInvoked: string[];
+    doctrinesApplied: string[];
+    retrievedSources: Array<{ class: string; classLabel: string; sourceId: string; articleRef: string }>;
+    timestamp: string;
+    userId: string;
+    mode: string;
+    modelVersions: Record<string, string>;
+  };
+  escalationPath: { responsible: string; accountable: string; consulted: string[]; informed: string[]; nextAction: string };
+}
+
 interface AdvisorResult {
   ok: boolean;
   mode: string;
@@ -57,6 +78,20 @@ interface AdvisorResult {
   guidance?: string;
   reasoningTrail: ReasoningStep[];
   narrative?: string;
+  /** Layer 3 — 8-section structured response. Present iff the request
+   *  opted into structured output AND the model emitted parseable JSON
+   *  AND the completion gate passed. UI renders this when present and
+   *  falls back to `narrative` otherwise. */
+  structured?: AdvisorResponseV1 | null;
+  structuredFallback?: { reason: "parse_failed" | "gate_tripped"; defects?: unknown } | null;
+  /** Layer 6.3 — adversarial probe outcome. */
+  probeOutcome?: {
+    innocent: string | null;
+    adversarial: string | null;
+    survived: boolean;
+    disagreement?: string;
+    bothEmitted: boolean;
+  };
   complianceReview: {
     advisorVerdict: "approved" | "returned_for_revision" | "blocked" | "incomplete";
     issues: string[];
@@ -345,6 +380,136 @@ function exportAdvisorSession(history: AdvisorHistoryEntry[]) {
   URL.revokeObjectURL(url);
 }
 
+// ── Layer 3: 8-section structured-response renderer ──────────────────────────
+
+const VERDICT_TONE: Record<string, string> = {
+  proceed: "bg-emerald-50 text-emerald-700 border-emerald-300",
+  decline: "bg-red-100 text-red-700 border-red-300",
+  escalate: "bg-amber-50 text-amber-700 border-amber-300",
+  file_str: "bg-violet-50 text-violet-700 border-violet-300",
+  freeze: "bg-red-100 text-red-700 border-red-300",
+};
+
+function StructuredAdvisorView({ response }: { response: AdvisorResponseV1 }) {
+  const tone = VERDICT_TONE[response.decision.verdict] ?? "bg-gray-100 text-gray-700 border-gray-300";
+  const citationGroups = Object.entries(response.frameworkCitations.byClass).filter(([, list]) => (list?.length ?? 0) > 0);
+  return (
+    <div className="bg-bg-panel border border-brand/40 rounded-lg p-4 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand">
+          Regulator-grade response · 8-section schema
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${tone}`}>
+            verdict · {response.decision.verdict.replace(/_/g, " ")}
+          </span>
+          <span className="inline-flex items-center px-1.5 py-px rounded border border-hair-2 bg-bg-1 font-mono text-9 font-semibold uppercase tracking-wide-2 text-ink-1">
+            confidence · {response.confidence.score}/5
+          </span>
+        </div>
+      </div>
+
+      <Section label="1 · Facts as understood">
+        <ul className="list-disc list-inside text-13 text-ink-0 space-y-0.5">
+          {response.facts.bullets.map((b, i) => (<li key={i}>{b}</li>))}
+        </ul>
+      </Section>
+
+      {response.redFlags.flags.length > 0 ? (
+        <Section label="2 · Red flags triggered">
+          <ul className="space-y-1">
+            {response.redFlags.flags.map((f, i) => (
+              <li key={i} className="text-13 text-ink-0">
+                <span className="font-medium">{f.indicator}</span>
+                <span className="text-11 text-ink-3 ml-2">→ {f.typology.replace(/_/g, " ")}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
+
+      {citationGroups.length > 0 ? (
+        <Section label="3 · Applicable framework citations">
+          <div className="space-y-1.5">
+            {citationGroups.map(([cls, list]) => (
+              <div key={cls} className="text-13 text-ink-0">
+                <span className="text-10 font-mono text-ink-3 mr-2">Class {cls}</span>
+                {(list ?? []).join(" · ")}
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      <Section label="4 · Decision">
+        <div className="text-13 text-ink-0 leading-relaxed">
+          <span className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 mr-2 ${tone}`}>
+            {response.decision.verdict.replace(/_/g, " ")}
+          </span>
+          {response.decision.oneLineRationale}
+        </div>
+      </Section>
+
+      <Section label="5 · Confidence">
+        <div className="text-13 text-ink-0">
+          <span className="font-mono mr-2">{response.confidence.score}/5</span>
+          {response.confidence.reason ? (
+            <span className="text-ink-2">— {response.confidence.reason}</span>
+          ) : null}
+        </div>
+      </Section>
+
+      <Section label="6 · Regulator-perspective counter-argument">
+        <div className="text-13 text-ink-0 leading-relaxed">
+          <div className="mb-1.5"><strong className="text-ink-2">Inspector challenge:</strong> {response.counterArgument.inspectorChallenge}</div>
+          {response.counterArgument.rebuttal ? (
+            <div><strong className="text-ink-2">Rebuttal:</strong> {response.counterArgument.rebuttal}</div>
+          ) : null}
+        </div>
+      </Section>
+
+      <Section label="7 · Audit trail">
+        <div className="text-12 text-ink-1 space-y-0.5 font-mono">
+          <div>charter: {response.auditTrail.charterVersionHash}</div>
+          <div>mode: {response.auditTrail.mode} · ts: {response.auditTrail.timestamp}</div>
+          {response.auditTrail.directivesInvoked.length > 0 ? (
+            <div>directives: {response.auditTrail.directivesInvoked.join(", ")}</div>
+          ) : null}
+          {response.auditTrail.retrievedSources.length > 0 ? (
+            <div>
+              sources:{" "}
+              {response.auditTrail.retrievedSources.map((s) => `[${s.class}] ${s.sourceId} ${s.articleRef}`).join(" · ")}
+            </div>
+          ) : null}
+        </div>
+      </Section>
+
+      <Section label="8 · Escalation path">
+        <div className="text-13 text-ink-0 space-y-0.5">
+          <div><strong className="text-ink-2">Responsible:</strong> {response.escalationPath.responsible}</div>
+          <div><strong className="text-ink-2">Accountable:</strong> {response.escalationPath.accountable}</div>
+          {response.escalationPath.consulted.length > 0 ? (
+            <div><strong className="text-ink-2">Consulted:</strong> {response.escalationPath.consulted.join(", ")}</div>
+          ) : null}
+          {response.escalationPath.informed.length > 0 ? (
+            <div><strong className="text-ink-2">Informed:</strong> {response.escalationPath.informed.join(", ")}</div>
+          ) : null}
+          <div className="mt-1"><strong className="text-ink-2">Next action:</strong> {response.escalationPath.nextAction}</div>
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="border-l-2 border-brand/40 pl-3">
+      <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">{label}</div>
+      {children}
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
@@ -538,7 +703,18 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/mlro-advisor", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: q, subjectName: "Regulatory Query", mode: m, audience: "regulator" }),
+        // Layer 3 — request the 8-section structured response when
+        // running Balanced or Multi-perspective. Speed mode skips
+        // structured (it's the latency-tightest mode and the fallback
+        // legacy narrative is fine there). Quick mode goes through
+        // /api/mlro-advisor-quick, not this branch.
+        body: JSON.stringify({
+          question: q,
+          subjectName: "Regulatory Query",
+          mode: m,
+          audience: "regulator",
+          structured: m !== "speed",
+        }),
         signal: ctl.signal,
       });
       const rawText = await res.text();
@@ -944,6 +1120,21 @@ export default function MlroAdvisorPage() {
                             <p className="text-13 text-ink-0 leading-relaxed whitespace-pre-wrap">{entry.result.guidance}</p>
                           </div>
                         )}
+                        {/* Layer 3 — 8-section structured response. Renders
+                            ABOVE the narrative when the model returned a
+                            valid AdvisorResponseV1; otherwise the legacy
+                            narrative panel below is what the operator sees. */}
+                        {entry.result.structured ? (
+                          <StructuredAdvisorView response={entry.result.structured} />
+                        ) : null}
+                        {entry.result.structuredFallback ? (
+                          <div className="bg-amber-50/30 border border-amber-300 rounded-lg p-3 text-12 text-amber-700">
+                            <strong>Structured-output fallback fired.</strong>{" "}
+                            {entry.result.structuredFallback.reason === "parse_failed"
+                              ? "The model emitted text instead of JSON; the legacy narrative below is what's shown."
+                              : "The 8-section completion gate tripped on the model's draft; the legacy narrative below is shown alongside the gate-trip event in the audit log."}
+                          </div>
+                        ) : null}
                         {(entry.result.narrative || streamingEntryId === entry.id) && (
                           <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
                             <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1 flex items-center gap-2 flex-wrap">

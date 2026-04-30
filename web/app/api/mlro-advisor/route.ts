@@ -18,6 +18,16 @@ import {
   type RetrievalContext,
 } from "@/lib/server/mlro-integration";
 import {
+  appendStructuredInstruction,
+  tryParseStructured,
+  runStructuredGate,
+  buildStructuredFailClosed,
+} from "@/lib/server/mlro-structured";
+import {
+  appendProbeInstructions,
+  extractAndStripProbe,
+} from "@/lib/server/mlro-probe";
+import {
   buildJurisdictionComparator,
   buildCasePrecedentPreamble,
   buildRegulatoryUpdatePreamble,
@@ -43,6 +53,12 @@ interface Body {
   adverseGroups?: string[];
   mode?: ReasoningMode;
   audience?: "regulator" | "mlro" | "board";
+  /** When true, the route asks the model to emit an
+   *  `AdvisorResponseV1` JSON object matching the 8-section schema.
+   *  On parse / completion-gate failure, falls back to the legacy
+   *  free-form `narrative` field with `structuredFallback: true`
+   *  set on the response so the UI can render either form. */
+  structured?: boolean;
   context?: ContextPair[];  // prior Q&A pairs from the session (in-memory)
   /** When supplied, the advisor's persistent server-side session for
    *  this key is loaded + the turn is appended after a successful
@@ -279,7 +295,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   // (concrete) and topic anchors (general) so the model anchors on
   // operator-specific context before drifting to framework-level
   // guidance.
-  const enrichedQuestion = `${preamble}${subjectPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
+  let enrichedQuestion = `${preamble}${subjectPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
+
+  // Layer 3 — opt-in structured-output mode. Appends the 8-section
+  // schema instruction so the model emits a single JSON object instead
+  // of a free-form narrative. The route handler parses it post-gen,
+  // runs the completion gate, and either ships the parsed object or
+  // falls back to the legacy narrative field. Layer 6.3 — append the
+  // adversarial-probe instruction in the same opt-in flow.
+  if (body.structured) {
+    enrichedQuestion = appendStructuredInstruction(enrichedQuestion);
+  }
+  // The probe instruction is cheap and works alongside structured
+  // OR free-form output, so add it regardless of the structured flag.
+  enrichedQuestion = appendProbeInstructions(enrichedQuestion);
 
   const detectedJurisdiction = body.jurisdiction
     ?? detectJurisdiction(body.question)
@@ -386,6 +415,43 @@ export async function POST(req: Request): Promise<NextResponse> {
     // model's tone.
     // scoreAdvisorAnswer takes the advisor's verdict from the
     // pipeline, not the reasoning mode. Map result.complianceReview's
+    // Layer 6.3 — extract the adversarial probe markers the model
+    // emitted and strip them from the user-visible narrative. The
+    // structured outcome is surfaced on the response.
+    const probeWrap = result.narrative
+      ? extractAndStripProbe(result.narrative, "escalate")
+      : null;
+    if (probeWrap) {
+      result.narrative = probeWrap.cleanAnswer;
+    }
+
+    // Layer 3 — when the request opted into structured output, try to
+    // parse the model's narrative as the 8-section JSON schema. On
+    // parse failure OR completion-gate trip, fall back to the legacy
+    // narrative path with `structuredFallback: true` so the UI can
+    // render either form.
+    let structured: unknown = null;
+    let structuredFallback: { reason: "parse_failed" | "gate_tripped"; defects?: unknown } | null = null;
+    if (body.structured && result.narrative) {
+      const parsed = tryParseStructured(result.narrative);
+      if (parsed.ok) {
+        const gate = runStructuredGate(parsed.value);
+        if (gate.passed) {
+          structured = parsed.value;
+        } else {
+          // Build the fail-closed object the regulator-grade build
+          // spec demands when the gate trips. The route returns the
+          // legacy narrative AS WELL so the operator still has
+          // something to read while the audit log records the
+          // gate-tripped event.
+          const fc = buildStructuredFailClosed(gate.defects, [gate.defects]);
+          structuredFallback = { reason: "gate_tripped", defects: fc.defects };
+        }
+      } else {
+        structuredFallback = { reason: "parse_failed" };
+      }
+    }
+
     // verdict; default to "approved" when the pipeline didn't supply one.
     const verdict = (result.complianceReview as { verdict?: string } | undefined)?.verdict;
     const safeVerdict =
@@ -518,6 +584,26 @@ export async function POST(req: Request): Promise<NextResponse> {
                 summary: postGen.validation.summary,
                 defectCount: postGen.validation.defects.length,
                 ungroundedClaimCount: postGen.validation.ungroundedClaims.length,
+              },
+            }
+          : {}),
+        // Layer 3 — 8-section structured response. Only present when
+        // body.structured was true AND the model emitted parseable
+        // JSON AND the completion gate passed. Otherwise null and the
+        // UI falls back to rendering `narrative`.
+        structured,
+        structuredFallback,
+        // Layer 6.3 — adversarial probe outcome. Always populated when
+        // the model emitted both markers; bothEmitted=false when the
+        // model ignored the probe instruction (treat as informational).
+        ...(probeWrap
+          ? {
+              probeOutcome: {
+                innocent: probeWrap.outcome.innocent,
+                adversarial: probeWrap.outcome.adversarial,
+                survived: probeWrap.outcome.survived,
+                ...(probeWrap.outcome.disagreement ? { disagreement: probeWrap.outcome.disagreement } : {}),
+                bothEmitted: probeWrap.bothEmitted,
               },
             }
           : {}),
