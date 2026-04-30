@@ -23,6 +23,9 @@ interface ScreeningTableProps {
   selectedRowIds?: ReadonlySet<string>;
   onToggleRow?: (id: string) => void;
   onToggleAllRows?: (allOn: boolean) => void;
+  /** Up to 2 subject IDs pinned for side-by-side compare. */
+  compareIds?: ReadonlySet<string>;
+  onToggleCompare?: (id: string) => void;
 }
 
 const ALL_COLUMNS_ON: Record<TableColumnKey, boolean> = {
@@ -54,6 +57,8 @@ export function ScreeningTable({
   selectedRowIds,
   onToggleRow,
   onToggleAllRows,
+  compareIds,
+  onToggleCompare,
 }: ScreeningTableProps) {
   const [explainFor, setExplainFor] = useState<{ subject: Subject; anchor: { x: number; y: number } } | null>(null);
   const showCheckboxes = !!onToggleRow;
@@ -152,7 +157,7 @@ export function ScreeningTable({
               <tr
                 key={subject.id}
                 onClick={() => onSelect(subject.id)}
-                className={`cursor-pointer ${isSelected ? "bg-bg-1" : "hover:bg-bg-1"}`}
+                className={`group cursor-pointer ${isSelected ? "bg-bg-1" : "hover:bg-bg-1"}`}
               >
                 {showCheckboxes && (
                   <td className={`px-3 py-3 ${cellBorder}`} onClick={(e) => e.stopPropagation()}>
@@ -171,6 +176,20 @@ export function ScreeningTable({
                 <td className={`px-4 py-3 ${cellBorder}`}>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-ink-0 text-12.5">{subject.name}</span>
+                    {onToggleCompare && (
+                      <button
+                        type="button"
+                        title={compareIds?.has(subject.id) ? "Remove from compare" : "Add to compare (max 2)"}
+                        onClick={(e) => { e.stopPropagation(); onToggleCompare(subject.id); }}
+                        className={`inline-flex items-center px-1 py-px rounded text-10 font-mono border transition-colors ${
+                          compareIds?.has(subject.id)
+                            ? "bg-brand text-white border-brand"
+                            : "bg-transparent text-ink-3 border-hair-2 opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        ⇔
+                      </button>
+                    )}
                     {subject.pep && (
                       <span
                         className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-brand text-white uppercase"

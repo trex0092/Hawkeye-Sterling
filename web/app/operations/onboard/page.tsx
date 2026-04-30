@@ -83,6 +83,17 @@ interface AdvisorResponseV1 {
   escalationPath: { responsible: string; accountable: string; consulted: string[]; informed: string[]; nextAction: string };
 }
 
+interface AdaptiveAnswers {
+  sowNarrative?: string;
+  sofDocumentation?: string;
+  cryptoVaspLicence?: string;
+  cryptoTravelRule?: string;
+  eddJustification?: string;
+  eddApprover?: string;
+  cahraOriginCert?: boolean;
+  cahraChainOfCustody?: string;
+}
+
 interface Draft {
   // Step 1: Entity (legal person / organisation / vessel — never natural)
   fullName: string;          // Entity legal name
@@ -93,9 +104,10 @@ interface Draft {
   occupation: string;        // Sector / business activity
   sourceOfFunds: string;
   expectedProfile: string;
-  // Step 3: Screening
+  // Step 3: Screening + adaptive questions
   screenedAt?: number;
   screeningHits?: ScreeningHit[];
+  adaptiveAnswers?: AdaptiveAnswers;
   // Step 4: Risk-rate
   riskTier?: Tier;
   riskRationale?: string;
@@ -118,6 +130,17 @@ const BLANK_DRAFT: Draft = {
   expectedProfile: "",
   mlroNote: "",
 };
+
+// CAHRA jurisdictions per UAE Cabinet Decision 74/2020 + OECD guidance
+const CAHRA_ISO2 = new Set(["CD", "CF", "ZW", "AF", "MM", "SD", "LY", "SO", "SS", "YE", "SL", "MZ"]);
+
+function isCahraJurisdiction(iso2: string): boolean {
+  return CAHRA_ISO2.has(iso2.trim().toUpperCase().slice(0, 2));
+}
+
+function isVaspOccupation(occupation: string): boolean {
+  return /\b(vasp|crypto|bitcoin|exchange|defi|blockchain|digital asset|virtual asset|nft|staking|lending platform)\b/i.test(occupation);
+}
 
 const STORAGE_DRAFT = "hawkeye.onboarding.draft.v1";
 const STORAGE_RECORDS = "hawkeye.onboarding.v1";
@@ -626,6 +649,105 @@ export default function OnboardingWizardPage() {
                 )}
               </div>
             )}
+
+            {/* Adaptive risk-based questions — appear based on signals */}
+            {draft.screenedAt && (() => {
+              const hasHits = (draft.screeningHits ?? []).length > 0;
+              const isVasp = isVaspOccupation(draft.occupation);
+              const isCahra = isCahraJurisdiction(draft.registeredCountry);
+              const highRisk = hasHits || isCahra;
+              const showAny = hasHits || isVasp || isCahra;
+              if (!showAny) return null;
+              const aa: AdaptiveAnswers = draft.adaptiveAnswers ?? {};
+              const setAa = (patch: Partial<AdaptiveAnswers>) =>
+                setDraft((prev) => ({ ...prev, adaptiveAnswers: { ...(prev.adaptiveAnswers ?? {}), ...patch } }));
+              return (
+                <div className="mt-4 border border-amber-300 rounded-lg p-4 bg-amber-50 space-y-3">
+                  <div className="text-11 font-mono uppercase text-amber-700 font-semibold tracking-wide-2">
+                    ⚠ Enhanced Due Diligence questions — triggered by screening result
+                  </div>
+
+                  {hasHits && (
+                    <>
+                      <Field
+                        label="EDD justification — why should this entity proceed despite list hit(s)?"
+                        value={aa.eddJustification ?? ""}
+                        onChange={(v) => setAa({ eddJustification: v })}
+                        multiline
+                        placeholder="Explain basis for proceeding, legal opinion, regulator guidance, etc."
+                      />
+                      <Field
+                        label="EDD approver (name / title)"
+                        value={aa.eddApprover ?? ""}
+                        onChange={(v) => setAa({ eddApprover: v })}
+                        placeholder="Senior officer or MLRO name"
+                      />
+                    </>
+                  )}
+
+                  {(hasHits || highRisk) && (
+                    <>
+                      <Field
+                        label="Source of wealth — narrative detail (EDD depth required)"
+                        value={aa.sowNarrative ?? ""}
+                        onChange={(v) => setAa({ sowNarrative: v })}
+                        multiline
+                        placeholder="How was the entity's accumulated wealth generated? Who are the UBOs?"
+                      />
+                      <Field
+                        label="Source of funds documentation reference"
+                        value={aa.sofDocumentation ?? ""}
+                        onChange={(v) => setAa({ sofDocumentation: v })}
+                        placeholder="Invoice ref / bank cert / audited accounts / LEI etc."
+                      />
+                    </>
+                  )}
+
+                  {isVasp && (
+                    <>
+                      <div className="text-11 font-mono uppercase text-amber-700 font-semibold mt-2">VASP-specific questions (FDL 10/2025 Art.28)</div>
+                      <Field
+                        label="VASP licence number"
+                        value={aa.cryptoVaspLicence ?? ""}
+                        onChange={(v) => setAa({ cryptoVaspLicence: v })}
+                        placeholder="Regulatory licence or registration number"
+                      />
+                      <Field
+                        label="Travel Rule compliance status"
+                        value={aa.cryptoTravelRule ?? ""}
+                        onChange={(v) => setAa({ cryptoTravelRule: v })}
+                        placeholder="FATF Travel Rule compliant? Which protocol (TRUST, Sygna, OpenVASP)?"
+                      />
+                    </>
+                  )}
+
+                  {isCahra && (
+                    <>
+                      <div className="text-11 font-mono uppercase text-amber-700 font-semibold mt-2">CAHRA jurisdiction (Cabinet Decision 74/2020)</div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="cahra-cert"
+                          checked={aa.cahraOriginCert ?? false}
+                          onChange={(e) => setAa({ cahraOriginCert: e.target.checked })}
+                          className="accent-amber-600"
+                        />
+                        <label htmlFor="cahra-cert" className="text-12 text-ink-0">
+                          Chain-of-custody / origin certificate obtained
+                        </label>
+                      </div>
+                      <Field
+                        label="Supply chain description (CAHRA traceability)"
+                        value={aa.cahraChainOfCustody ?? ""}
+                        onChange={(v) => setAa({ cahraChainOfCustody: v })}
+                        multiline
+                        placeholder="Describe extraction site, smelters, couriers, intermediaries."
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -721,6 +843,28 @@ export default function OnboardingWizardPage() {
             {draft.riskTier && (
               <div className="mt-2 text-11 text-emerald-700 font-mono">
                 ✓ Tier {draft.riskTier} {draft.manualOverride ? "(manual override)" : "accepted"} — proceed to MLRO sign-off
+              </div>
+            )}
+
+            {/* Show adaptive EDD answers as read-only context */}
+            {draft.adaptiveAnswers && Object.values(draft.adaptiveAnswers).some(Boolean) && (
+              <div className="mt-3 border border-amber-200 rounded p-3 bg-amber-50 text-12">
+                <div className="text-10 font-mono uppercase text-amber-700 mb-2">EDD answers from step 3</div>
+                {draft.adaptiveAnswers.eddJustification && (
+                  <div className="mb-1"><span className="text-ink-3">EDD justification:</span> {draft.adaptiveAnswers.eddJustification}</div>
+                )}
+                {draft.adaptiveAnswers.eddApprover && (
+                  <div className="mb-1"><span className="text-ink-3">Approver:</span> {draft.adaptiveAnswers.eddApprover}</div>
+                )}
+                {draft.adaptiveAnswers.sowNarrative && (
+                  <div className="mb-1"><span className="text-ink-3">SoW:</span> {draft.adaptiveAnswers.sowNarrative.slice(0, 120)}{draft.adaptiveAnswers.sowNarrative.length > 120 ? "…" : ""}</div>
+                )}
+                {draft.adaptiveAnswers.cryptoVaspLicence && (
+                  <div className="mb-1"><span className="text-ink-3">VASP licence:</span> {draft.adaptiveAnswers.cryptoVaspLicence}</div>
+                )}
+                {draft.adaptiveAnswers.cahraOriginCert && (
+                  <div className="mb-1">✓ CAHRA origin certificate obtained</div>
+                )}
               </div>
             )}
           </div>
