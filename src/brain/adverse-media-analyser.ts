@@ -44,8 +44,14 @@ export interface AdverseMediaFinding {
   reasoningModes: string[];            // brain mode ids that apply
   doctrineIds: string[];               // doctrine ids
   narrative: string;                   // single MLRO-grade finding line
-  relevanceScore: number;              // 0–1 from Taranis (or 1 if unavailable)
+  relevanceScore: number;              // 0-1 from Taranis (or 1 if unavailable)
   isSarCandidate: boolean;             // meets R.20 reporting threshold
+  /** Sibling outlets that ran the same story (de-confliction). The lead
+   *  outlet's source field stays in `source`; the rest are listed here so
+   *  the operator can trace coverage breadth without inflating hit counts. */
+  aggregatedSources?: string[];
+  /** Number of duplicate articles folded into this finding. */
+  dedupeCount?: number;
 }
 
 export type AdverseMediaRiskTier =
@@ -60,6 +66,11 @@ export interface AdverseMediaSubjectVerdict {
   riskTier: AdverseMediaRiskTier;
   riskDetail: string;
   totalItems: number;
+  /** Items left after de-conflicting near-duplicates (canonical URL +
+   *  title-shingle Jaccard ≥ 0.6). totalItems is the raw count. */
+  uniqueItems?: number;
+  duplicatesCollapsed?: number;
+  duplicateGroups?: number;
   adverseItems: number;
   criticalCount: number;
   highCount: number;
@@ -323,15 +334,114 @@ function counterfactualAssessment(
 }
 
 // ---------------------------------------------------------------------------
+// De-confliction
+// ---------------------------------------------------------------------------
+// The same story is often republished by 3-5 outlets; counting each as an
+// independent finding makes the verdict look more dispositive than the
+// underlying evidence justifies. We collapse near-duplicates using two
+// signals:
+//   1. canonical URL (host + path with tracking params stripped) — exact match
+//   2. title shingle hash — 5-word rolling shingles + Jaccard ≥ 0.6
+// The first hit wins; sibling outlets are folded into the survivor's
+// `aggregatedSources` so the operator can still see who else carried it.
+
+function canonicalUrl(u: string | undefined): string | null {
+  if (!u) return null;
+  try {
+    const parsed = new URL(u);
+    // Drop tracking + query params that don't change the article identity.
+    parsed.search = '';
+    parsed.hash = '';
+    return `${parsed.host.replace(/^www\./, '')}${parsed.pathname.replace(/\/+$/, '')}`.toLowerCase();
+  } catch {
+    return u.toLowerCase().trim();
+  }
+}
+
+function titleShingles(title: string): Set<string> {
+  const words = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3);
+  if (words.length < 5) return new Set(words);
+  const out = new Set<string>();
+  for (let i = 0; i <= words.length - 5; i++) {
+    out.add(words.slice(i, i + 5).join(' '));
+  }
+  return out;
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const x of a) if (b.has(x)) intersection += 1;
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+interface DedupeBucket {
+  survivor: TaranisItem;
+  shingles: Set<string>;
+  alsoSeenIn: Set<string>;
+}
+
+function deconflictItems(items: TaranisItem[]): {
+  unique: TaranisItem[];
+  duplicateGroups: number;
+  totalDuplicates: number;
+  alsoSeenIn: Map<string, string[]>;
+} {
+  const buckets: DedupeBucket[] = [];
+  const urlIndex = new Map<string, DedupeBucket>();
+  let totalDuplicates = 0;
+  let duplicateGroups = 0;
+
+  for (const item of items) {
+    const url = canonicalUrl(item.url);
+    if (url) {
+      const existing = urlIndex.get(url);
+      if (existing) {
+        if (item.source) existing.alsoSeenIn.add(item.source);
+        totalDuplicates += 1;
+        continue;
+      }
+    }
+    const sh = titleShingles(item.title ?? '');
+    const dupBucket = buckets.find((b) => jaccard(b.shingles, sh) >= 0.6);
+    if (dupBucket) {
+      if (item.source) dupBucket.alsoSeenIn.add(item.source);
+      totalDuplicates += 1;
+      continue;
+    }
+    const bucket: DedupeBucket = { survivor: item, shingles: sh, alsoSeenIn: new Set() };
+    buckets.push(bucket);
+    if (url) urlIndex.set(url, bucket);
+  }
+
+  const alsoSeenIn = new Map<string, string[]>();
+  for (const b of buckets) {
+    if (b.alsoSeenIn.size > 0) {
+      duplicateGroups += 1;
+      alsoSeenIn.set(b.survivor.id, [...b.alsoSeenIn]);
+    }
+  }
+  return { unique: buckets.map((b) => b.survivor), duplicateGroups, totalDuplicates, alsoSeenIn };
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
 export function analyseAdverseMediaItems(
   subject: string,
-  items: TaranisItem[],
+  rawItems: TaranisItem[],
 ): AdverseMediaSubjectVerdict {
   const analysedAt = new Date().toISOString();
   const adverseFindings: AdverseMediaFinding[] = [];
+  // De-conflict near-duplicate articles BEFORE classification so a single
+  // story republished by 5 outlets doesn't inflate the severity counts.
+  const { unique: items, duplicateGroups, totalDuplicates, alsoSeenIn } = deconflictItems(rawItems);
 
   for (const item of items) {
     const text = `${item.title} ${item.content}`;
@@ -362,6 +472,7 @@ export function analyseAdverseMediaItems(
     // FATF R.20 — individual item SAR candidate flag
     const isSarCandidate = severity === 'critical' || severity === 'high';
 
+    const sibling = alsoSeenIn.get(item.id) ?? [];
     adverseFindings.push({
       itemId: item.id,
       title: item.title,
@@ -378,6 +489,7 @@ export function analyseAdverseMediaItems(
       narrative,
       relevanceScore: item.relevanceScore ?? 1,
       isSarCandidate,
+      ...(sibling.length > 0 ? { aggregatedSources: sibling, dedupeCount: sibling.length } : {}),
     } as AdverseMediaFinding);
   }
 
@@ -448,7 +560,12 @@ export function analyseAdverseMediaItems(
     subject,
     riskTier,
     riskDetail,
-    totalItems: items.length,
+    // totalItems reports raw count so the operator sees the universe Taranis
+    // pulled. uniqueItems lets them compare against the deduped survivors.
+    totalItems: rawItems.length,
+    uniqueItems: items.length,
+    duplicatesCollapsed: totalDuplicates,
+    duplicateGroups,
     adverseItems: adverseFindings.length,
     criticalCount,
     highCount,

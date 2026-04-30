@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { RowActions } from "@/components/shared/RowActions";
-import type { CDDPosture, SanctionSource, SortKey, Subject, SubjectStatus } from "@/lib/types";
+import { ScoreExplainPopover } from "@/components/screening/ScoreExplainPopover";
+import type { CDDPosture, SanctionSource, SortKey, Subject, SubjectStatus, TableColumnKey } from "@/lib/types";
 
 interface ScreeningTableProps {
   subjects: Subject[];
@@ -15,7 +17,22 @@ interface ScreeningTableProps {
   pendingIds?: ReadonlySet<string>;
   /** Subject IDs whose last quick-screen call returned an error. */
   errorIds?: ReadonlySet<string>;
+  /** Column visibility map from the column chooser. Defaults to all-on. */
+  columns?: Record<TableColumnKey, boolean>;
+  /** When provided, render row checkboxes for bulk-action selection. */
+  selectedRowIds?: ReadonlySet<string>;
+  onToggleRow?: (id: string) => void;
+  onToggleAllRows?: (allOn: boolean) => void;
 }
+
+const ALL_COLUMNS_ON: Record<TableColumnKey, boolean> = {
+  risk: true,
+  status: true,
+  cdd: true,
+  sla: true,
+  lists: true,
+  snooze: false,
+};
 
 function parseSlaHours(sla: string): number {
   const match = sla.match(/\+?(\d+)h\s*(\d+)?m?/);
@@ -33,12 +50,32 @@ export function ScreeningTable({
   onSortChange,
   pendingIds,
   errorIds,
+  columns = ALL_COLUMNS_ON,
+  selectedRowIds,
+  onToggleRow,
+  onToggleAllRows,
 }: ScreeningTableProps) {
+  const [explainFor, setExplainFor] = useState<{ subject: Subject; anchor: { x: number; y: number } } | null>(null);
+  const showCheckboxes = !!onToggleRow;
+  const allRowIds = subjects.map((s) => s.id);
+  const allSelected = showCheckboxes && allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds?.has(id));
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
       <table className="w-full border-collapse text-12.5">
         <thead className="bg-bg-1 border-b border-hair-2">
           <tr>
+            {showCheckboxes && (
+              <th className="text-left px-3 py-2.5 w-[36px]">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => { if (el) el.indeterminate = !allSelected && (selectedRowIds?.size ?? 0) > 0; }}
+                  onChange={(e) => onToggleAllRows?.(e.target.checked)}
+                  className="accent-brand"
+                  aria-label="Select all rows"
+                />
+              </th>
+            )}
             <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-[50px]">
               ID
             </th>
@@ -49,41 +86,56 @@ export function ScreeningTable({
               dir={sortDir}
               onSort={onSortChange}
             />
-            <SortableTh
-              label="Risk"
-              colKey="riskScore"
-              activeKey={sortKey}
-              dir={sortDir}
-              onSort={onSortChange}
-              className="w-[90px]"
-            />
-            <SortableTh
-              label="Status"
-              colKey="status"
-              activeKey={sortKey}
-              dir={sortDir}
-              onSort={onSortChange}
-              className="w-[80px]"
-            />
-            <SortableTh
-              label="CDD"
-              colKey="cddPosture"
-              activeKey={sortKey}
-              dir={sortDir}
-              onSort={onSortChange}
-              className="w-[60px]"
-            />
-            <SortableTh
-              label="SLA"
-              colKey="slaNotify"
-              activeKey={sortKey}
-              dir={sortDir}
-              onSort={onSortChange}
-              className="w-[70px]"
-            />
-            <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
-              Lists
-            </th>
+            {columns.risk && (
+              <SortableTh
+                label="Risk"
+                colKey="riskScore"
+                activeKey={sortKey}
+                dir={sortDir}
+                onSort={onSortChange}
+                className="w-[90px]"
+              />
+            )}
+            {columns.status && (
+              <SortableTh
+                label="Status"
+                colKey="status"
+                activeKey={sortKey}
+                dir={sortDir}
+                onSort={onSortChange}
+                className="w-[80px]"
+              />
+            )}
+            {columns.cdd && (
+              <SortableTh
+                label="CDD"
+                colKey="cddPosture"
+                activeKey={sortKey}
+                dir={sortDir}
+                onSort={onSortChange}
+                className="w-[60px]"
+              />
+            )}
+            {columns.sla && (
+              <SortableTh
+                label="SLA"
+                colKey="slaNotify"
+                activeKey={sortKey}
+                dir={sortDir}
+                onSort={onSortChange}
+                className="w-[70px]"
+              />
+            )}
+            {columns.lists && (
+              <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
+                Lists
+              </th>
+            )}
+            {columns.snooze && (
+              <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-[100px]">
+                Snooze
+              </th>
+            )}
             <th className="w-[60px]" aria-label="Actions" />
           </tr>
         </thead>
@@ -94,16 +146,29 @@ export function ScreeningTable({
             const slh = parseSlaHours(subject.slaNotify);
             const isScreening = pendingIds?.has(subject.id) ?? false;
             const hasError = !isScreening && (errorIds?.has(subject.id) ?? false);
+            const cellBorder = isLast ? "" : "border-b border-hair";
+            const isChecked = selectedRowIds?.has(subject.id) ?? false;
             return (
               <tr
                 key={subject.id}
                 onClick={() => onSelect(subject.id)}
                 className={`cursor-pointer ${isSelected ? "bg-bg-1" : "hover:bg-bg-1"}`}
               >
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                {showCheckboxes && (
+                  <td className={`px-3 py-3 ${cellBorder}`} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onToggleRow?.(subject.id)}
+                      className="accent-brand"
+                      aria-label={`Select ${subject.name}`}
+                    />
+                  </td>
+                )}
+                <td className={`px-4 py-3 ${cellBorder}`}>
                   <Badge tone={subject.badgeTone} label={subject.badge} />
                 </td>
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                <td className={`px-4 py-3 ${cellBorder}`}>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-ink-0 text-12.5">{subject.name}</span>
                     {subject.pep && (
@@ -112,6 +177,11 @@ export function ScreeningTable({
                         title={subject.pep.rationale ?? undefined}
                       >
                         PEP
+                      </span>
+                    )}
+                    {subject.snoozedUntil && (
+                      <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-amber-dim text-amber uppercase" title={subject.snoozeReason ?? undefined}>
+                        Snoozed
                       </span>
                     )}
                     {isScreening && (
@@ -132,26 +202,57 @@ export function ScreeningTable({
                     )}
                   </div>
                 </td>
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <RiskCell score={subject.riskScore} pending={isScreening} error={hasError} />
-                </td>
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <StatusBadge status={subject.status} />
-                </td>
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <CddBadge posture={subject.cddPosture} />
-                </td>
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <SlaBadge hours={slh} raw={subject.slaNotify} />
-                </td>
-                <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>
-                  <div className="flex flex-wrap gap-1">
-                    {subject.listCoverage.map((source) => (
-                      <SanctionTag key={source} source={source} />
-                    ))}
-                  </div>
-                </td>
-                <td className={`px-2 py-3 ${isLast ? "" : "border-b border-hair"}`}>
+                {columns.risk && (
+                  <td
+                    className={`px-4 py-3 ${cellBorder}`}
+                    onClick={(e) => {
+                      // Clicking the risk cell pops the explainer instead of
+                      // routing to the detail panel — cheaper for the analyst
+                      // who only wants to know "why this score?"
+                      e.stopPropagation();
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      setExplainFor({ subject, anchor: { x: rect.right, y: rect.bottom } });
+                    }}
+                  >
+                    <RiskCell score={subject.riskScore} pending={isScreening} error={hasError} />
+                  </td>
+                )}
+                {columns.status && (
+                  <td className={`px-4 py-3 ${cellBorder}`}>
+                    <StatusBadge status={subject.status} />
+                  </td>
+                )}
+                {columns.cdd && (
+                  <td className={`px-4 py-3 ${cellBorder}`}>
+                    <CddBadge posture={subject.cddPosture} />
+                  </td>
+                )}
+                {columns.sla && (
+                  <td className={`px-4 py-3 ${cellBorder}`}>
+                    <SlaBadge hours={slh} raw={subject.slaNotify} />
+                  </td>
+                )}
+                {columns.lists && (
+                  <td className={`px-4 py-3 ${cellBorder}`}>
+                    <div className="flex flex-wrap gap-1">
+                      {subject.listCoverage.map((source) => (
+                        <SanctionTag key={source} source={source} />
+                      ))}
+                    </div>
+                  </td>
+                )}
+                {columns.snooze && (
+                  <td className={`px-4 py-3 ${cellBorder}`}>
+                    {subject.snoozedUntil ? (
+                      <span className="text-10 font-mono text-amber">
+                        until {subject.snoozedUntil.slice(0, 10)}
+                      </span>
+                    ) : (
+                      <span className="text-10 text-ink-3">—</span>
+                    )}
+                  </td>
+                )}
+                <td className={`px-2 py-3 ${cellBorder}`}>
                   <RowActions
                     label={subject.name}
                     onEdit={() => onSelect(subject.id)}
@@ -164,7 +265,7 @@ export function ScreeningTable({
           })}
           {subjects.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-6 py-10 text-center text-12 text-ink-2">
+              <td colSpan={12} className="px-6 py-10 text-center text-12 text-ink-2">
                 No screenings yet — click{" "}
                 <span className="font-semibold text-ink-0">+ New screening</span> to add a
                 subject.
@@ -173,6 +274,13 @@ export function ScreeningTable({
           )}
         </tbody>
       </table>
+      {explainFor && (
+        <ScoreExplainPopover
+          subject={explainFor.subject}
+          anchor={explainFor.anchor}
+          onClose={() => setExplainFor(null)}
+        />
+      )}
     </div>
   );
 }

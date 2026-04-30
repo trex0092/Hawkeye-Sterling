@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState, useCallback } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ScreeningHero } from "@/components/screening/ScreeningHero";
@@ -13,12 +13,18 @@ import {
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import { lookupKnownPEP } from "@/lib/data/known-entities";
-import type { CDDPosture, FilterKey, QueueFilter, SortKey, Subject } from "@/lib/types";
+import type { CDDPosture, FilterKey, QueueFilter, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
+import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
+import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
+import { AmLanguageBreakdown } from "@/components/screening/AmLanguageBreakdown";
+import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
+import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 
 // ── Adverse Media types ───────────────────────────────────────────────────────
 
@@ -187,6 +193,10 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
   const id = nextSubjectId(existing);
   const badgeNum = id.replace(/^HS-/, "").slice(-5);
   const knownPep = data.entityType === "individual" ? lookupKnownPEP(data.name) : null;
+  // Country derivation widened to vessel + aircraft. Vessels usually carry
+  // a flag-state country recorded as registeredCountry; aircraft tail
+  // numbers carry their own country prefix but the analyst-entered value
+  // wins when present.
   const rawCountry =
     data.entityType === "individual"
       ? (data.countryLocation ?? data.citizenship ?? "")
@@ -199,9 +209,19 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     metaBits.push(`aliases: ${data.alternateNames.join(", ")}`);
   if (knownPep) metaBits.push(`PEP · ${prettyPepTier(knownPep.tier)}`);
   if (data.ongoingScreening) metaBits.push("ongoing screening ON");
+  if (data.entityType === "vessel" && data.vesselImo) metaBits.push(`IMO ${data.vesselImo}`);
+  if (data.entityType === "aircraft" && data.aircraftTail) metaBits.push(`tail ${data.aircraftTail}`);
+  if ((data.walletAddresses?.length ?? 0) > 0) {
+    metaBits.push(`${data.walletAddresses!.length} wallet${data.walletAddresses!.length === 1 ? "" : "s"}`);
+  }
 
-  const entityLabel = data.entityType === "individual" ? "Individual" : "Corporate";
-  const relationLabel = data.relationshipType || (data.entityType === "individual" ? "UBO" : "Supplier");
+  const entityLabel =
+    data.entityType === "individual" ? "Individual" :
+    data.entityType === "vessel" ? "Vessel" :
+    data.entityType === "aircraft" ? "Aircraft" :
+    data.entityType === "other" ? "Entity" :
+    "Corporate";
+  const relationLabel = data.relationshipType || (data.entityType === "individual" ? "UBO" : "Counterparty");
 
   return {
     id,
@@ -234,6 +254,12 @@ function buildSubject(data: ScreeningFormData, existing: Subject[]): Subject {
     openedAt: new Date().toISOString(),
     ...(data.notes ? { notes: data.notes } : {}),
     ...(data.riskCategory ? { riskCategory: data.riskCategory } : {}),
+    // Persist the new entity-specific fields and crypto wallets so the
+    // brain modules + ongoing-screening have what they need on re-runs.
+    ...((data.walletAddresses?.length ?? 0) > 0 ? { walletAddresses: data.walletAddresses } : {}),
+    ...(data.vesselImo ? { vesselImo: data.vesselImo } : {}),
+    ...(data.vesselMmsi ? { vesselMmsi: data.vesselMmsi } : {}),
+    ...(data.aircraftTail ? { aircraftTail: data.aircraftTail } : {}),
   };
 }
 
@@ -384,13 +410,32 @@ function formatDDMMYY(d: Date): string {
 
 const STORAGE_KEY = "hawkeye.screening-subjects.v1";
 
+function isPersistedSubject(v: unknown): v is Subject {
+  if (typeof v !== "object" || v === null) return false;
+  const r = v as Record<string, unknown>;
+  return (
+    typeof r["id"] === "string" &&
+    typeof r["name"] === "string" &&
+    typeof r["riskScore"] === "number" &&
+    typeof r["status"] === "string" &&
+    typeof r["cddPosture"] === "string" &&
+    Array.isArray(r["listCoverage"])
+  );
+}
+
 function loadSubjects(): Subject[] {
   if (typeof window === "undefined") return SUBJECTS;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return SUBJECTS;
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as Subject[]) : SUBJECTS;
+    if (!Array.isArray(parsed)) return SUBJECTS;
+    // Keep only entries that match the current Subject shape — anything
+    // older / corrupted is dropped silently rather than crashing the
+    // detail panel mid-render. If everything is stale we fall back to
+    // the seed corpus so the UI always has something to show.
+    const valid = parsed.filter(isPersistedSubject);
+    return valid.length > 0 ? valid : SUBJECTS;
   } catch {
     return SUBJECTS;
   }
@@ -475,6 +520,19 @@ export default function ScreeningPage() {
   const [amError, setAmError] = useState<string | null>(null);
   const [amExpanded, setAmExpanded] = useState<string | null>(null);
 
+  // Bulk import + saved searches + bulk actions + columns + minRisk
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [appliedSearchId, setAppliedSearchId] = useState<string | null>(null);
+  const [minRisk, setMinRisk] = useState<number>(0);
+  const [selectedRowIds, setSelectedRowIds] = useState<ReadonlySet<string>>(new Set());
+  const [columns, setColumns] = useState<Record<TableColumnKey, boolean>>({
+    risk: true, status: true, cdd: true, sla: true, lists: true, snooze: false,
+  });
+  // Hydrate column visibility from localStorage after mount.
+  useEffect(() => { setColumns(loadColumnVisibility()); }, []);
+
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
     const loaded = loadSubjects();
     setSubjects(loaded);
@@ -504,9 +562,20 @@ export default function ScreeningPage() {
   const dynamicFilters = useMemo(() => computeDynamicFilters(subjects), [subjects]);
 
   const filtered = useMemo(() => {
-    let list = applyFilter(subjects, activeFilter);
+    // Snoozed subjects drop out of the active queue until their `until`
+    // timestamp passes. Showing them under "Closed" lets the analyst
+    // still find them — that view is intentionally inclusive.
+    const now = Date.now();
+    let list = applyFilter(subjects, activeFilter).filter((s) => {
+      if (activeFilter === "closed") return true;
+      if (!s.snoozedUntil) return true;
+      return Date.parse(s.snoozedUntil) <= now;
+    });
     if (statusFilter !== "all") {
       list = list.filter((s) => s.status === statusFilter);
+    }
+    if (minRisk > 0) {
+      list = list.filter((s) => s.riskScore >= minRisk);
     }
     const q = deferredQuery.trim().toLowerCase();
     if (q) {
@@ -517,7 +586,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter]);
+  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter, minRisk]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -542,9 +611,92 @@ export default function ScreeningPage() {
 
   const handleUpdateSubject = useCallback((id: string, update: Partial<Subject>) => {
     setSubjects((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...update } : s)),
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const next: Subject = { ...s, ...update };
+        // Sentinel empty-string from SnoozeButton means "clear the field"
+        // — exactOptionalPropertyTypes blocks `undefined` assignment, so
+        // we strip the keys explicitly here.
+        if (update.snoozedUntil === "") delete (next as Partial<Subject>).snoozedUntil;
+        if (update.snoozeReason === "") delete (next as Partial<Subject>).snoozeReason;
+        return next;
+      }),
     );
   }, []);
+
+  const applySavedSearch = useCallback((s: SavedSearch) => {
+    setQuery(s.query ?? "");
+    setActiveFilter((s.filter ?? "all") as FilterKey);
+    setStatusFilter((s.statusFilter ?? "all") as Subject["status"] | "all");
+    setMinRisk(s.minRisk ?? 0);
+    setAppliedSearchId(s.id);
+  }, []);
+
+  const handleColumnsChange = useCallback((next: Record<TableColumnKey, boolean>) => {
+    setColumns(next);
+    persistColumnVisibility(next);
+  }, []);
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedRowIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAllRows = useCallback((allOn: boolean) => {
+    setSelectedRowIds(() => allOn ? new Set(filtered.map((s) => s.id)) : new Set());
+  }, [filtered]);
+
+  const bulkApplyCdd = useCallback((posture: CDDPosture) => {
+    setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, cddPosture: posture } : s));
+    writeAuditEvent("analyst", "bulk.cdd", `${selectedRowIds.size} subjects -> ${posture}`);
+  }, [selectedRowIds]);
+
+  const bulkMarkCleared = useCallback(() => {
+    setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, status: "cleared" } : s));
+    writeAuditEvent("analyst", "bulk.cleared", `${selectedRowIds.size} subjects marked cleared`);
+    setSelectedRowIds(new Set());
+  }, [selectedRowIds]);
+
+  const bulkAssign = useCallback((operator: string) => {
+    setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, assignedTo: operator } : s));
+    writeAuditEvent("analyst", "bulk.assigned", `${selectedRowIds.size} subjects -> ${operator}`);
+  }, [selectedRowIds]);
+
+  const bulkSnooze = useCallback((iso: string, reason: string) => {
+    setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, snoozedUntil: iso, snoozeReason: reason } : s));
+    writeAuditEvent("analyst", "bulk.snoozed", `${selectedRowIds.size} subjects until ${iso} - ${reason}`);
+  }, [selectedRowIds]);
+
+  const bulkDelete = useCallback(() => {
+    if (!window.confirm(`Delete ${selectedRowIds.size} subject(s)? This cannot be undone.`)) return;
+    setSubjects((prev) => prev.filter((s) => !selectedRowIds.has(s.id)));
+    writeAuditEvent("analyst", "bulk.deleted", `${selectedRowIds.size} subjects`);
+    setSelectedRowIds(new Set());
+  }, [selectedRowIds]);
+
+  // Export the filtered queue as a CSV the user downloads. Lets the
+  // weekly MLRO pack go out without a server round-trip.
+  const exportFilteredCsv = useCallback(() => {
+    const header = ["id", "name", "country", "entityType", "riskScore", "severity", "status", "cddPosture", "lists", "snoozedUntil"];
+    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = filtered.map((s) => [
+      s.id, s.name, s.country, s.entityType, s.riskScore, s.mostSerious, s.status, s.cddPosture,
+      s.listCoverage.join("|"), s.snoozedUntil ?? "",
+    ].map(escape).join(","));
+    const csv = [header.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hawkeye-screening-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    writeAuditEvent("analyst", "queue.exported", `${filtered.length} subjects`);
+  }, [filtered]);
 
   const handleSubmit = (data: ScreeningFormData, screen: boolean) => {
     const subject = buildSubject(data, subjects);
@@ -578,12 +730,32 @@ export default function ScreeningPage() {
       setPendingIds((prev) => new Set([...prev, subject.id]));
       void (async () => {
         try {
+          // Forward entityType + jurisdiction so the brain's matching
+          // layer can apply entity-specific scoring (vessel/aircraft hit
+          // distinct candidate sets) and so jurisdiction-rich modes
+          // (CAHRA, regimes, FATF tiers) actually fire. Previously only
+          // name + aliases were sent, which silently degraded accuracy.
+          const jurisdictionField =
+            data.entityType === "individual"
+              ? (data.citizenship || data.countryLocation || "")
+              : (data.registeredCountry || "");
+          const subjectPayload: {
+            name: string;
+            aliases?: string[];
+            entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
+            jurisdiction?: string;
+          } = {
+            name: subject.name,
+            entityType: data.entityType,
+          };
+          if (data.alternateNames.length > 0) subjectPayload.aliases = data.alternateNames;
+          if (jurisdictionField.trim()) subjectPayload.jurisdiction = jurisdictionField.trim();
           const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string }>(
             "/api/quick-screen",
             {
               method: "POST",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify({ subject: { name: subject.name, aliases: data.alternateNames } }),
+              body: JSON.stringify({ subject: subjectPayload }),
               label: "Auto-screen failed",
             },
           );
@@ -671,6 +843,11 @@ export default function ScreeningPage() {
   const searchAdverseMedia = async () => {
     if (!amSubject.trim()) return;
     setAmLoading(true); setAmError(null); setAmResult(null);
+    // 30s ceiling — Taranis cold-starts can stretch past 15s on Netlify
+    // Lambda but anything beyond half a minute is a dead pipeline; fail
+    // fast so the operator sees a clear error instead of a perma-spinner.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 30_000);
     try {
       const body: Record<string, unknown> = { subject: amSubject.trim(), limit: 50 };
       if (amDateFrom) body.dateFrom = amDateFrom;
@@ -678,15 +855,45 @@ export default function ScreeningPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
+        signal: ctl.signal,
       });
-      const data = await res.json() as AdverseMediaApiResponse;
-      if (!data.ok) setAmError(data.error ?? "Search failed");
-      else setAmResult(data);
-    } catch { setAmError("Request failed"); }
-    finally { setAmLoading(false); }
+      // Read as text first so a non-JSON 502 / HTML error page doesn't
+      // crash the JSON parser and mask the real status code.
+      const raw = await res.text().catch(() => "");
+      let data: AdverseMediaApiResponse | null = null;
+      if (raw) {
+        try { data = JSON.parse(raw) as AdverseMediaApiResponse; } catch { /* non-JSON */ }
+      }
+      if (!res.ok) {
+        setAmError(data?.error ?? `Search failed - server ${res.status}`);
+        return;
+      }
+      if (!data) {
+        setAmError("Search failed - empty response");
+        return;
+      }
+      if (!data.ok) {
+        setAmError(data.error ?? "Search failed");
+      } else {
+        setAmResult(data);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setAmError("Search failed - request timed out");
+      } else {
+        setAmError(err instanceof Error ? err.message : "Request failed");
+      }
+    } finally {
+      clearTimeout(timer);
+      setAmLoading(false);
+    }
   };
 
   const handleDelete = (id: string) => {
+    // Capture the subject *before* the splice so the audit entry can name
+    // it. Falling back to the bare ID lets the audit chain stay intact
+    // even if the subject was already evicted from another tab.
+    const removed = subjects.find((s) => s.id === id);
     setSubjects((prev) => prev.filter((s) => s.id !== id));
     // Update selection outside the setSubjects callback so it reads the
     // freshest selectedId state rather than a potentially-stale closure value.
@@ -704,15 +911,34 @@ export default function ScreeningPage() {
       next.delete(id);
       return next;
     });
+    // Compliance trail — every removal must land in the local + server
+    // HMAC chains so a regulator can prove the subject was screened
+    // before being removed (no quiet drops).
+    const target = removed ? `${removed.name} (${id})` : id;
+    writeAuditEvent("analyst", "subject.removed", target);
+    void fetchJson("/api/audit/sign", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "subject_removed",
+        target,
+        actor: { role: "analyst" },
+        body: { id, name: removed?.name ?? null },
+      }),
+    }).then((r) => { if (!r.ok) console.warn("[audit-sign] subject_removed failed", r.status, r.error); });
   };
 
   const criticalCount = subjects.filter((s) => s.riskScore >= CRITICAL_THRESHOLD).length;
   const slaCount = subjects.filter(
     (s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H,
   ).length;
+  // Average risk should reflect the *live* book of work — cleared
+  // subjects sit at 0 by definition and would drag the queue average
+  // down to a misleadingly safe-looking number for the analyst.
+  const queueSubjects = subjects.filter((s) => s.status !== "cleared");
   const avgRisk =
-    subjects.length > 0
-      ? Math.round(subjects.reduce((sum, s) => sum + s.riskScore, 0) / subjects.length)
+    queueSubjects.length > 0
+      ? Math.round(queueSubjects.reduce((sum, s) => sum + s.riskScore, 0) / queueSubjects.length)
       : 0;
 
   const amVerdict = amResult?.verdict;
@@ -720,6 +946,41 @@ export default function ScreeningPage() {
     `px-3 py-2 text-12 font-medium border-b-2 transition-colors ${
       active ? "border-brand text-brand" : "border-transparent text-ink-3 hover:text-ink-1"
     }`;
+
+  // Keyboard shortcuts. Compliance teams live in the keyboard.
+  useKeyboardShortcuts({
+    onNewScreening: () => setFormOpen((o) => !o),
+    onFocusSearch: () => searchInputRef.current?.focus(),
+    onEscape: () => { if (formOpen) setFormOpen(false); },
+    onNextRow: () => {
+      const idx = filtered.findIndex((s) => s.id === selectedId);
+      const next = filtered[Math.min(filtered.length - 1, idx + 1)];
+      if (next) setSelectedId(next.id);
+    },
+    onPrevRow: () => {
+      const idx = filtered.findIndex((s) => s.id === selectedId);
+      const prev = filtered[Math.max(0, idx - 1)];
+      if (prev) setSelectedId(prev.id);
+    },
+    onEscalate: () => {
+      // Routes to /api/four-eyes (escalate action) for the currently
+      // selected subject. Equivalent to clicking Escalate in the panel.
+      if (!selected) return;
+      void fetchJson("/api/four-eyes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subjectId: selected.id,
+          subjectName: selected.name,
+          action: "escalate",
+          initiatedBy: "analyst",
+          reason: `keyboard escalation - composite ${selected.riskScore}/100`,
+        }),
+        label: "Escalation enqueue failed",
+      });
+      writeAuditEvent("analyst", "subject.keyboard-escalated", `${selected.name} (${selected.id})`);
+    },
+  });
 
   return (
     <>
@@ -754,6 +1015,7 @@ export default function ScreeningPage() {
             avgRisk={avgRisk}
           />
           <ScreeningToolbar
+            ref={searchInputRef}
             query={query}
             onQueryChange={setQuery}
             onNewScreening={() => setFormOpen((o) => !o)}
@@ -762,7 +1024,30 @@ export default function ScreeningPage() {
             onSortChange={handleSortChange}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
+            columns={columns}
+            onColumnsChange={handleColumnsChange}
+            onBulkImport={() => setBulkImportOpen(true)}
+            onExport={exportFilteredCsv}
           />
+
+          <div className="mb-3">
+            <SavedSearchBar
+              active={{ query, filter: activeFilter, statusFilter, minRisk }}
+              appliedId={appliedSearchId}
+              onApply={applySavedSearch}
+            />
+          </div>
+
+          <BulkActionsBar
+            selectedIds={[...selectedRowIds]}
+            onClear={() => setSelectedRowIds(new Set())}
+            onApplyCdd={bulkApplyCdd}
+            onMarkCleared={bulkMarkCleared}
+            onAssign={bulkAssign}
+            onSnoozeUntil={bulkSnooze}
+            onDelete={bulkDelete}
+          />
+
           {formOpen && (
             <div className="mb-6">
               <NewScreeningForm
@@ -775,6 +1060,10 @@ export default function ScreeningPage() {
           )}
           <ScreeningTable
             subjects={filtered}
+            columns={columns}
+            selectedRowIds={selectedRowIds}
+            onToggleRow={toggleRow}
+            onToggleAllRows={toggleAllRows}
             selectedId={selectedId}
             onSelect={setSelectedId}
             onDelete={handleDelete}
@@ -790,6 +1079,8 @@ export default function ScreeningPage() {
           <SubjectDetailPanel
             subject={selected}
             onUpdate={handleUpdateSubject}
+            allSubjects={subjects}
+            onSelectSubject={setSelectedId}
           />
         ) : (
           <aside className="border-l border-[#ec4899] overflow-y-auto px-5 py-6">
@@ -797,6 +1088,48 @@ export default function ScreeningPage() {
           </aside>
         )}
       </div>}
+
+      <BulkImportDialog
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        onImported={(rows) => {
+          // Materialise the imported rows into local subjects so they
+          // appear in the queue immediately. The brain has already
+          // screened them server-side via /api/batch-screen — this is
+          // the local-state mirror.
+          const created: Subject[] = [];
+          let pool = subjects.slice();
+          for (const r of rows) {
+            const id = nextSubjectId(pool);
+            const subj: Subject = {
+              id,
+              badge: id.replace(/^HS-/, "").slice(-5),
+              badgeTone: "violet",
+              name: r.name,
+              ...(r.aliases && r.aliases.length > 0 ? { aliases: r.aliases } : {}),
+              meta: r.entityType === "vessel" ? "vessel" : r.entityType === "aircraft" ? "aircraft" : "bulk import",
+              country: (r.jurisdiction ?? "—").toUpperCase().slice(0, 20),
+              jurisdiction: (r.jurisdiction ?? "—").toUpperCase().slice(0, 6),
+              type: (r.entityType === "individual" ? "Individual · UBO" : "Corporate · Customer") as Subject["type"],
+              entityType: (r.entityType ?? "individual") as Subject["entityType"],
+              riskScore: 0,
+              status: "active",
+              cddPosture: "CDD",
+              listCoverage: [],
+              exposureAED: "0",
+              slaNotify: "+72h 00m",
+              mostSerious: "—",
+              openedAgo: formatDDMMYY(new Date()),
+              openedAt: new Date().toISOString(),
+            };
+            pool = [subj, ...pool];
+            created.push(subj);
+          }
+          setSubjects((prev) => [...created, ...prev]);
+          writeAuditEvent("analyst", "bulk.imported", `${created.length} subjects via CSV`);
+          setBulkImportOpen(false);
+        }}
+      />
 
       {pageTab === "adverse-media" && (
         <main className="max-w-5xl mx-auto px-10 py-8">
@@ -848,7 +1181,18 @@ export default function ScreeningPage() {
             </div>
           )}
 
-          {amVerdict && (
+          {amVerdict && (() => {
+            // Defensive defaults — the analyser can return a partial verdict
+            // when the upstream feed is degraded (e.g. Taranis returned 0
+            // items). Normalise everything so the UI doesn't crash on
+            // missing arrays / undefined counters.
+            const findings = amVerdict.findings ?? [];
+            const fatfRecs = amVerdict.fatfRecommendations ?? [];
+            const investigations = amVerdict.investigationLines ?? [];
+            const breakdown = amVerdict.categoryBreakdown ?? [];
+            const modes = amVerdict.modesCited ?? [];
+            const tierStyle = ADVERSE_TIER_STYLE[amVerdict.riskTier] ?? "bg-bg-2 text-ink-2";
+            return (
             <div className="space-y-4">
               <div className={`border-2 rounded-xl p-5 ${amVerdict.riskTier === "critical" || amVerdict.riskTier === "high" ? "border-red/40" : amVerdict.riskTier === "medium" ? "border-amber/40" : "border-hair-2"}`}>
                 <div className="flex items-start justify-between mb-3">
@@ -856,18 +1200,18 @@ export default function ScreeningPage() {
                     <h3 className="text-16 font-semibold text-ink-0">{amVerdict.subject}</h3>
                     <p className="text-12 text-ink-2 mt-0.5">{amVerdict.riskDetail}</p>
                   </div>
-                  <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${ADVERSE_TIER_STYLE[amVerdict.riskTier]}`}>
+                  <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${tierStyle}`}>
                     {amVerdict.riskTier}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-5 gap-3 mb-4">
                   {[
-                    { label: "Total", value: amVerdict.totalItems },
-                    { label: "Adverse", value: amVerdict.adverseItems },
-                    { label: "Critical", value: amVerdict.criticalCount },
-                    { label: "High", value: amVerdict.highCount },
-                    { label: "Medium", value: amVerdict.mediumCount },
+                    { label: "Total", value: amVerdict.totalItems ?? 0 },
+                    { label: "Adverse", value: amVerdict.adverseItems ?? 0 },
+                    { label: "Critical", value: amVerdict.criticalCount ?? 0 },
+                    { label: "High", value: amVerdict.highCount ?? 0 },
+                    { label: "Medium", value: amVerdict.mediumCount ?? 0 },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-bg-1 border border-hair-2 rounded p-2 text-center">
                       <div className="text-18 font-mono font-semibold text-ink-0">{value}</div>
@@ -883,24 +1227,24 @@ export default function ScreeningPage() {
                   </div>
                 )}
 
-                {amVerdict.fatfRecommendations.length > 0 && (
+                {fatfRecs.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {amVerdict.fatfRecommendations.map((r) => (
+                    {fatfRecs.map((r) => (
                       <span key={r} className="text-11 bg-brand-dim text-brand border border-brand/30 px-2 py-0.5 rounded font-mono">{r}</span>
                     ))}
                   </div>
                 )}
 
                 <p className="text-11 text-ink-3">
-                  Confidence: <span className="font-semibold text-ink-1">{amVerdict.confidenceTier.toUpperCase()}</span> — {amVerdict.confidenceBasis}
+                  Confidence: <span className="font-semibold text-ink-1">{(amVerdict.confidenceTier ?? "low").toUpperCase()}</span> {amVerdict.confidenceBasis ? `- ${amVerdict.confidenceBasis}` : ""}
                 </p>
               </div>
 
-              {amVerdict.investigationLines.length > 0 && (
+              {investigations.length > 0 && (
                 <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
                   <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Investigation Actions</div>
                   <ol className="space-y-1.5">
-                    {amVerdict.investigationLines.map((line, i) => (
+                    {investigations.map((line, i) => (
                       <li key={i} className="flex gap-2 text-12 text-ink-1">
                         <span className="text-ink-3 font-mono text-11 flex-shrink-0">{i + 1}.</span>
                         <span>{line}</span>
@@ -910,11 +1254,11 @@ export default function ScreeningPage() {
                 </div>
               )}
 
-              {amVerdict.categoryBreakdown.length > 0 && (
+              {breakdown.length > 0 && (
                 <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
                   <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Category Breakdown</div>
                   <div className="space-y-2">
-                    {amVerdict.categoryBreakdown.map((c) => (
+                    {breakdown.map((c) => (
                       <div key={c.categoryId} className="flex items-center justify-between text-12">
                         <span className="text-ink-1">{c.displayName}</span>
                         <div className="flex items-center gap-2">
@@ -927,20 +1271,28 @@ export default function ScreeningPage() {
                 </div>
               )}
 
-              <div className="bg-amber-dim border border-amber/30 rounded-xl p-4">
-                <p className="text-11 font-semibold text-amber mb-1">Counterfactual Assessment</p>
-                <p className="text-11 text-amber/80 leading-relaxed">{amVerdict.counterfactual}</p>
-              </div>
+              {amVerdict.counterfactual && (
+                <div className="bg-amber-dim border border-amber/30 rounded-xl p-4">
+                  <p className="text-11 font-semibold text-amber mb-1">Counterfactual Assessment</p>
+                  <p className="text-11 text-amber/80 leading-relaxed">{amVerdict.counterfactual}</p>
+                </div>
+              )}
 
-              {amVerdict.findings.length > 0 && (
+              {findings.length > 0 && (
                 <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
                   <div className="px-5 py-3 border-b border-hair-2">
                     <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
-                      Adverse Findings ({amVerdict.findings.length})
+                      Adverse Findings ({findings.length})
                     </div>
                   </div>
                   <div className="divide-y divide-hair">
-                    {amVerdict.findings.map((f) => (
+                    {findings.map((f) => {
+                      const fatfPredicates = f.fatfPredicates ?? [];
+                      const categories = f.categories ?? [];
+                      const fatfRecsItem = f.fatfRecommendations ?? [];
+                      const keywords = f.keywords ?? [];
+                      const sevStyle = ADVERSE_SEV_STYLE[f.severity] ?? "bg-bg-2 text-ink-2";
+                      return (
                       <div key={f.itemId} className="p-4">
                         <button
                           type="button"
@@ -950,52 +1302,54 @@ export default function ScreeningPage() {
                           <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${f.severity === "critical" || f.severity === "high" ? "bg-red" : f.severity === "medium" || f.severity === "low" ? "bg-amber" : "bg-green"}`} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className={`text-10 font-bold px-1.5 py-px rounded ${ADVERSE_SEV_STYLE[f.severity]}`}>{f.severity.toUpperCase()}</span>
+                              <span className={`text-10 font-bold px-1.5 py-px rounded ${sevStyle}`}>{(f.severity ?? "low").toUpperCase()}</span>
                               {f.isSarCandidate && <span className="text-10 bg-red-dim text-red border border-red/30 px-1.5 py-px rounded font-bold">SAR</span>}
-                              <span className="text-11 text-ink-3">{f.source} · {f.published.slice(0, 10)}</span>
+                              <span className="text-11 text-ink-3">{f.source ?? "—"} · {(f.published ?? "").slice(0, 10) || "—"}</span>
                             </div>
-                            <p className="text-12 font-medium text-ink-0 leading-snug">{f.title}</p>
-                            <p className="text-11 text-ink-2 mt-0.5 leading-relaxed">{f.narrative}</p>
+                            <p className="text-12 font-medium text-ink-0 leading-snug">{f.title ?? "(untitled)"}</p>
+                            <p className="text-11 text-ink-2 mt-0.5 leading-relaxed">{f.narrative ?? ""}</p>
                           </div>
                           <span className="text-ink-3 text-11 flex-shrink-0">{amExpanded === f.itemId ? "▲" : "▼"}</span>
                         </button>
 
                         {amExpanded === f.itemId && (
                           <div className="mt-3 pl-5 space-y-2 border-l-2 border-hair-2">
-                            {f.fatfPredicates.length > 0 && (
+                            {fatfPredicates.length > 0 && (
                               <div>
                                 <p className="text-11 text-ink-3 font-semibold mb-1">FATF Predicates</p>
                                 <ul className="space-y-0.5">
-                                  {f.fatfPredicates.map((p, i) => <li key={i} className="text-11 text-ink-2">{p}</li>)}
+                                  {fatfPredicates.map((p, i) => <li key={i} className="text-11 text-ink-2">{p}</li>)}
                                 </ul>
                               </div>
                             )}
                             <div className="flex flex-wrap gap-1">
-                              {f.categories.map((c) => <span key={c} className="text-10 bg-bg-1 text-ink-2 border border-hair-2 px-1.5 py-px rounded">{c}</span>)}
-                              {f.fatfRecommendations.map((r) => <span key={r} className="text-10 bg-brand-dim text-brand border border-brand/30 px-1.5 py-px rounded font-mono">{r}</span>)}
+                              {categories.map((c) => <span key={c} className="text-10 bg-bg-1 text-ink-2 border border-hair-2 px-1.5 py-px rounded">{c}</span>)}
+                              {fatfRecsItem.map((r) => <span key={r} className="text-10 bg-brand-dim text-brand border border-brand/30 px-1.5 py-px rounded font-mono">{r}</span>)}
                             </div>
-                            {f.keywords.length > 0 && (
-                              <p className="text-11 text-ink-3">Keywords: {f.keywords.slice(0, 6).map((k) => `"${k}"`).join(", ")}</p>
+                            {keywords.length > 0 && (
+                              <p className="text-11 text-ink-3">Keywords: {keywords.slice(0, 6).map((k) => `"${k}"`).join(", ")}</p>
                             )}
-                            {f.url && (
+                            {f.url && /^https?:\/\//i.test(f.url) && (
                               <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-11 text-brand hover:underline break-all">{f.url}</a>
                             )}
-                            <p className="text-11 text-ink-3">Relevance: {(f.relevanceScore * 100).toFixed(0)}%</p>
+                            <p className="text-11 text-ink-3">Relevance: {Math.round((f.relevanceScore ?? 0) * 100)}%</p>
                           </div>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {amVerdict.modesCited.length > 0 && (
-                <p className="text-11 text-ink-3">Modes cited: {amVerdict.modesCited.join(", ")}</p>
+              {modes.length > 0 && (
+                <p className="text-11 text-ink-3">Modes cited: {modes.join(", ")}</p>
               )}
             </div>
-          )}
+            );
+          })()}
 
-          {amResult?.ok && !amVerdict?.findings.length && !amLoading && (
+          {amResult?.ok && (amVerdict?.findings?.length ?? 0) === 0 && !amLoading && (
             <div className="border border-hair-2 rounded-xl p-8 text-center text-12 text-ink-3">
               No adverse media found for <span className="font-medium text-ink-1">{amSubject}</span>
             </div>

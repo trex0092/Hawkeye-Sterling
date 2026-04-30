@@ -115,37 +115,80 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
     setEntries(seedEntries());
   }, []);
 
+  // Live SSE connection to /api/activity-stream. EventSource auto-reconnects
+  // when the Lambda recycles a 60s segment; if the browser doesn't support
+  // EventSource (or the route 502s), we fall back to the cosmetic
+  // local-heartbeat that originally lived here so the panel never goes
+  // silent.
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    let es: EventSource | null = null;
 
-    const addSys = () => {
-      const msg = SYS_MESSAGES[counterRef.current % SYS_MESSAGES.length]!;
-      const depth = 30 + Math.floor(Math.random() * 15);
-      counterRef.current++;
-      const entry: FeedEntry = {
-        id: `sys-${Date.now()}-${counterRef.current}`,
-        time: nowHHMMSS(),
-        kind: "SYS",
-        text: msg.includes("q depth") ? `${msg} ${depth}` : msg,
-        fresh: true,
-      };
-      setEntries((prev) => [entry, ...prev].slice(0, 60));
-    };
-
-    // Re-randomise the cadence every tick so the feed never stalls in a
-    // predictable rhythm. 2.0 – 3.5 s keeps the channel visibly alive without
-    // drowning the operator in noise.
-    const tick = () => {
+    const pushEntry = (e: FeedEntry) => {
       if (cancelled) return;
-      addSys();
-      timer = setTimeout(tick, 2_000 + Math.random() * 1_500);
+      setEntries((prev) => [e, ...prev].slice(0, 60));
     };
-    timer = setTimeout(tick, 1_500);
+
+    const startFallback = () => {
+      const addSys = () => {
+        const msg = SYS_MESSAGES[counterRef.current % SYS_MESSAGES.length]!;
+        const depth = 30 + Math.floor(Math.random() * 15);
+        counterRef.current++;
+        pushEntry({
+          id: `sys-${Date.now()}-${counterRef.current}`,
+          time: nowHHMMSS(),
+          kind: "SYS",
+          text: msg.includes("q depth") ? `${msg} ${depth}` : msg,
+          fresh: true,
+        });
+      };
+      const tick = () => {
+        if (cancelled) return;
+        addSys();
+        fallbackTimer = setTimeout(tick, 2_000 + Math.random() * 1_500);
+      };
+      fallbackTimer = setTimeout(tick, 1_500);
+    };
+
+    if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
+      startFallback();
+    } else {
+      try {
+        es = new EventSource("/api/activity-stream");
+        es.addEventListener("engine-event", (raw) => {
+          try {
+            const ev = JSON.parse((raw as MessageEvent).data) as {
+              id: string; at: string; kind: FeedEntry["kind"]; text: string;
+            };
+            pushEntry({
+              id: ev.id,
+              time: fmtTime(Date.parse(ev.at)),
+              kind: ev.kind,
+              text: ev.text,
+              fresh: true,
+            });
+          } catch {
+            /* malformed event - ignore */
+          }
+        });
+        es.onerror = () => {
+          // EventSource auto-reconnects; if it stays in CONNECTING for
+          // long the SSE route is dead — drop to the cosmetic fallback so
+          // the panel still feels alive.
+          if (es && es.readyState === EventSource.CLOSED && !fallbackTimer) {
+            startFallback();
+          }
+        };
+      } catch {
+        startFallback();
+      }
+    }
 
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      if (es) es.close();
     };
   }, []);
 

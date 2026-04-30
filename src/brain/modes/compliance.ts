@@ -18,6 +18,7 @@
 import type {
   BrainContext, FacultyId, Finding, ReasoningCategory, Verdict,
 } from '../types.js';
+import { EntityGraph } from '../entity-graph.js';
 
 function clamp01(n: number): number { return Math.max(0, Math.min(1, n)); }
 
@@ -94,38 +95,88 @@ const uboTreeWalkApply = async (ctx: BrainContext): Promise<Finding> => {
       'inconclusive', 0, 0.25,
       'No ownership graph supplied. UBO traversal requires uboParties + uboEdges on the evidence bag.');
   }
-  const byTo: Record<string, UboEdge[]> = {};
-  for (const e of edges) (byTo[e.to] ||= []).push(e);
+
+  // Build the centralised typed entity graph. Nominee + bearer attributes
+  // are forwarded as edge.attrs so EntityGraph.effectiveOwnership can
+  // propagate the nominee taint via the same single source of truth used
+  // by every other consumer (was previously re-implemented inline here).
+  const graph = new EntityGraph();
+  for (const p of parties) {
+    graph.addNode({
+      id: p.id,
+      kind: p.kind === 'person' ? 'person' : 'entity',
+      label: p.name ?? p.id,
+    });
+  }
+  for (const e of edges) {
+    const attrs: Record<string, string | number | boolean> = {};
+    if (e.nominee === true) attrs.nominee = true;
+    if (e.bearerShares === true) attrs.bearer = true;
+    const edge: Parameters<typeof graph.addEdge>[0] = {
+      from: e.from,
+      to: e.to,
+      kind: 'owns',
+      attrs,
+    };
+    if (e.sharePercent !== undefined) edge.weight = e.sharePercent;
+    graph.addEdge(edge);
+  }
+
+  // Effective ownership per entity — produces { personId, percent, chain,
+  // viaNominee } sorted by descending percentage. Replaces the previous
+  // hand-rolled upward walk; nominee taint comes from EntityGraph itself.
+  let totalChains = 0;
+  let viaNomineeChainCount = 0;
+  let unresolved = 0;
+  let maxDepth = 0;
+  const topUbos: Array<{ entityId: string; personId: string; percent: number; viaNominee: boolean }> = [];
+  for (const p of parties.filter((x) => x.kind === 'entity')) {
+    const owners = graph.effectiveOwnership(p.id);
+    if (owners.length === 0) {
+      unresolved++;
+    } else {
+      for (const o of owners) {
+        totalChains++;
+        if (o.viaNominee) viaNomineeChainCount++;
+        // Chain includes both subject + ascending nodes + person; depth =
+        // hops between subject and the natural person at the top.
+        maxDepth = Math.max(maxDepth, Math.max(0, o.chain.length - 2));
+      }
+      const top = owners[0];
+      if (top !== undefined) {
+        topUbos.push({ entityId: p.id, personId: top.personId, percent: top.percent, viaNominee: top.viaNominee });
+      }
+    }
+  }
+  topUbos.sort((a, b) => b.percent - a.percent);
+
   const nomineeEdges = edges.filter((e) => e.nominee === true).length;
   const bearerEdges = edges.filter((e) => e.bearerShares === true).length;
-  // Count hops upward from each entity until a natural person is reached or unresolved.
-  let maxDepth = 0;
-  let unresolved = 0;
-  for (const p of parties.filter((p) => p.kind === 'entity')) {
-    const seen = new Set<string>([p.id]);
-    const stack: Array<{ id: string; depth: number }> = [{ id: p.id, depth: 0 }];
-    let reachedPerson = false;
-    while (stack.length) {
-      const { id, depth } = stack.pop()!;
-      maxDepth = Math.max(maxDepth, depth);
-      const ups = byTo[id] ?? [];
-      if (ups.length === 0) break;
-      for (const up of ups) {
-        if (seen.has(up.from)) continue;
-        seen.add(up.from);
-        const party = parties.find((x) => x.id === up.from);
-        if (party?.kind === 'person') { reachedPerson = true; break; }
-        stack.push({ id: up.from, depth: depth + 1 });
-      }
-      if (reachedPerson) break;
-    }
-    if (!reachedPerson) unresolved++;
-  }
-  const opacity = clamp01((nomineeEdges + bearerEdges) / Math.max(1, edges.length) * 0.6 + Math.min(1, maxDepth / 8) * 0.3 + (unresolved / Math.max(1, parties.length)) * 0.3);
+  const entityCount = Math.max(1, parties.filter((p) => p.kind === 'entity').length);
+  const nomineeTaintRatio = totalChains > 0 ? viaNomineeChainCount / totalChains : 0;
+
+  // Opacity blends structural signals (nominee/bearer edge density, depth,
+  // unresolved entities) with the centralised viaNominee taint ratio from
+  // EntityGraph. Each component is clamped before composition.
+  const opacity = clamp01(
+    (nomineeEdges + bearerEdges) / Math.max(1, edges.length) * 0.4 +
+    Math.min(1, maxDepth / 8) * 0.25 +
+    (unresolved / entityCount) * 0.2 +
+    nomineeTaintRatio * 0.25,
+  );
   const verdict: Verdict = opacity > 0.5 ? 'escalate' : opacity > 0.25 ? 'flag' : 'clear';
+
+  const topUboLine = topUbos.length === 0
+    ? 'No upstream UBO resolved.'
+    : 'Top UBO(s): ' + topUbos.slice(0, 3).map((u) =>
+        `${u.entityId}→${u.personId} ${u.percent.toFixed(1)}%${u.viaNominee ? ' (nominee-tainted)' : ''}`,
+      ).join('; ') + '.';
+
   const rationale = [
     `UBO graph: ${parties.length} parties · ${edges.length} edges.`,
     `Nominee edges: ${nomineeEdges}; bearer-share edges: ${bearerEdges}; max upward depth: ${maxDepth}; unresolved entities: ${unresolved}.`,
+    `EntityGraph effective ownership: ${totalChains} chain(s) across ${entityCount} entit(y/ies); ${viaNomineeChainCount} nominee-tainted (${(nomineeTaintRatio * 100).toFixed(0)}%).`,
+    topUboLine,
     `Opacity score: ${opacity.toFixed(2)}.`,
   ].join(' ');
   return mkFinding('ubo_tree_walk', 'compliance_framework', ['data_analysis','deep_thinking'],
