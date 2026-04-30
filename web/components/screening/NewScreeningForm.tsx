@@ -30,7 +30,10 @@ export interface ScreeningFormData {
   alternateNames: string[];
   caseId: string;
   group: string;
-  gender?: "male" | "female";
+  /** Inclusive single-select. KYC norms still expect a single chosen
+   *  identity for matching; "prefer_not_to_say" is captured for record-
+   *  keeping but doesn't affect matching. */
+  gender?: "male" | "female" | "non_binary" | "prefer_not_to_say";
   dob?: string; // "dd/mm/yyyy"
   placeOfBirth?: string;
   countryLocation?: string;
@@ -45,7 +48,7 @@ export interface ScreeningFormData {
     issuerCountry?: string;
     idType?: string;
   };
-  checkTypes: { worldCheck: boolean; passport: boolean; rca: boolean };
+  checkTypes: { worldCheck: boolean; passport: boolean; rca: boolean; adverseMedia: boolean };
   ongoingScreening: boolean;
   relationshipType?: string;
   cddPosture?: CDDPosture;
@@ -73,7 +76,7 @@ const EMPTY_FORM = (caseId: string): ScreeningFormData => ({
   alternateNames: [],
   caseId,
   group: "",
-  checkTypes: { worldCheck: true, passport: false, rca: true },
+  checkTypes: { worldCheck: true, passport: false, rca: true, adverseMedia: true },
   ongoingScreening: true,
   cddPosture: "CDD",
 });
@@ -230,6 +233,14 @@ export function NewScreeningForm({
             detail="Twice daily · audit trail logged"
             on={form.ongoingScreening}
             onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
+          />
+          <CoverageRow
+            label="Adverse media"
+            detail="Taranis AI · 38 outlets · 50+ langs"
+            on={form.checkTypes.adverseMedia}
+            onToggle={() =>
+              patch({ checkTypes: { ...form.checkTypes, adverseMedia: !form.checkTypes.adverseMedia } })
+            }
           />
         </SettingsGroup>
 
@@ -411,26 +422,8 @@ export function NewScreeningForm({
 
         {form.entityType === "individual" ? (
           <>
-            <Field label="Gender">
-              <div className="flex gap-5 py-1">
-                {(["male", "female"] as const).map((g) => (
-                  <label
-                    key={g}
-                    className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="gender"
-                      checked={form.gender === g}
-                      onChange={() => patch({ gender: g })}
-                      className="accent-brand"
-                    />
-                    {g === "male" ? "Male" : "Female"}
-                  </label>
-                ))}
-              </div>
-            </Field>
-
+            {/* DOB + Place of birth come first — sanctions-list disambig
+                relies on DOB before any other identity attribute. */}
             <div className="grid grid-cols-2 gap-4">
               <Field label="Date of birth">
                 <input
@@ -473,6 +466,35 @@ export function NewScreeningForm({
                 />
               </Field>
             </div>
+
+            {/* Inclusive gender row — single-select but four options
+                (matches FATF + UAE EOCN onboarding templates which now
+                accept non-binary + prefer-not-to-say). Goes below
+                citizenship because it's optional and rarely matched on. */}
+            <Field label="Gender">
+              <div className="flex flex-wrap gap-x-5 gap-y-2 py-1">
+                {([
+                  { value: "male", label: "Male" },
+                  { value: "female", label: "Female" },
+                  { value: "non_binary", label: "Non-binary" },
+                  { value: "prefer_not_to_say", label: "Prefer not to say" },
+                ] as const).map((g) => (
+                  <label
+                    key={g.value}
+                    className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="gender"
+                      checked={form.gender === g.value}
+                      onChange={() => patch({ gender: g.value })}
+                      className="accent-brand"
+                    />
+                    {g.label}
+                  </label>
+                ))}
+              </div>
+            </Field>
           </>
         ) : null /* organisation has Registered country in the Case-ID row above */}
 
