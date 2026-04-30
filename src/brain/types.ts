@@ -5,6 +5,8 @@
 
 export type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
 import type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
+export type { CrossRegimeConflictReport, RegimeStatus, RegimeHit } from './cross-regime-conflict.js';
+import type { CrossRegimeConflictReport } from './cross-regime-conflict.js';
 
 export type FacultyId =
   | 'reasoning'
@@ -333,6 +335,12 @@ export interface BrainVerdict {
   // corroborated is the evidence stack" so an MLRO can demand additional
   // sources when the score is low even though the posterior is high.
   evidenceCorroboration?: EvidenceCorroborationSummary;
+  // Cross-regime sanctions conflict report. Populated when the caller
+  // supplied `regimeStatuses` to engine.run(). Auto-escalates a fusion
+  // outcome of `clear` to `flag` when regimes split (one designates,
+  // another doesn't) — fixes the audit gap where split-regime cases
+  // never auto-escalated.
+  crossRegimeConflict?: CrossRegimeConflictReport;
 }
 
 export interface ReasoningChainNode {

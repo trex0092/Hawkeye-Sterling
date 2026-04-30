@@ -16,6 +16,7 @@
 
 import type { EvidenceItem } from './evidence.js';
 import { adjustForEvidence } from './evidence-weighted-fusion.js';
+import { detectCrossRegimeConflict, type RegimeStatus } from './cross-regime-conflict.js';
 import { FACULTY_BY_ID } from './faculties.js';
 import { fuseFindings } from './fusion.js';
 import { introspect } from './introspection.js';
@@ -47,10 +48,16 @@ export interface RunOptions {
   primaryHypothesis?: Hypothesis;
   /** Override the prior probability of the primary hypothesis. Defaults to 0.1. */
   prior?: number;
+  /** Per-regime designation status (UN / OFAC / EU / UK / UAE EOCN / UAE Local /
+   *  CH / CA). When supplied, `detectCrossRegimeConflict` runs and attaches a
+   *  `crossRegimeConflict` summary to the verdict. A `clear` outcome from
+   *  fusion is auto-escalated to `flag` when the regimes split, fixing the
+   *  audit gap where split-regime cases never escalated. */
+  regimeStatuses?: readonly RegimeStatus[];
 }
 
 export async function run(options: RunOptions): Promise<BrainVerdict> {
-  const { subject, evidence = {}, domains, maxModes, evidenceIndex, primaryHypothesis, prior } = options;
+  const { subject, evidence = {}, domains, maxModes, evidenceIndex, primaryHypothesis, prior, regimeStatuses } = options;
   const runId = cryptoRandomId();
   const startedAt = Date.now();
 
@@ -115,6 +122,22 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
     }
   }
 
+  // Cross-regime conflict pass — runs when caller supplied per-regime
+  // designation statuses. Surfaces split-regime cases that would otherwise
+  // auto-clear (audit gap fix) and produces a recommendedAction the verdict
+  // can lift its outcome to. Never DOWNGRADES fusion's outcome — only
+  // escalates `clear` when regimes disagree.
+  const crossRegimeConflict = regimeStatuses && regimeStatuses.length > 0
+    ? detectCrossRegimeConflict(regimeStatuses)
+    : undefined;
+  let outcome = fusion.outcome;
+  if (crossRegimeConflict && outcome === 'clear') {
+    const ra = crossRegimeConflict.recommendedAction;
+    if (ra === 'freeze' || ra === 'block') outcome = 'block';
+    else if (ra === 'escalate') outcome = 'escalate';
+    else if (ra === 'review' || crossRegimeConflict.split) outcome = 'flag';
+  }
+
   const baseScore = evidenceWeighted?.score ?? fusion.score;
   const baseConfidence = evidenceWeighted?.confidence ?? fusion.confidence;
   const adjustedConfidence = clamp01(baseConfidence + introspection.confidenceAdjustment);
@@ -122,12 +145,12 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
   const verdict: BrainVerdict = {
     runId,
     subject,
-    outcome: fusion.outcome,
+    outcome,
     aggregateScore: baseScore,
     aggregateConfidence: adjustedConfidence,
     findings,
     chain,
-    recommendedActions: recommend(fusion.outcome, fusion.conflicts.length > 0, introspection.coverageGaps),
+    recommendedActions: recommend(outcome, fusion.conflicts.length > 0, introspection.coverageGaps),
     generatedAt: Date.now(),
     prior: fusion.prior,
     posterior: evidenceWeighted?.posterior ?? fusion.posterior,
@@ -141,6 +164,7 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
   };
   if (fusion.bayesTrace !== undefined) verdict.bayesTrace = fusion.bayesTrace;
   if (evidenceWeighted !== undefined) verdict.evidenceWeighted = evidenceWeighted;
+  if (crossRegimeConflict !== undefined) verdict.crossRegimeConflict = crossRegimeConflict;
   if (fusion.evidenceCorroboration !== undefined) {
     verdict.evidenceCorroboration = fusion.evidenceCorroboration;
   }
