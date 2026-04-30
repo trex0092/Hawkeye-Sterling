@@ -30,10 +30,10 @@ export interface ScreeningFormData {
   alternateNames: string[];
   caseId: string;
   group: string;
-  /** Inclusive single-select. KYC norms still expect a single chosen
-   *  identity for matching; "prefer_not_to_say" is captured for record-
-   *  keeping but doesn't affect matching. */
-  gender?: "male" | "female" | "non_binary" | "prefer_not_to_say";
+  /** Binary gender — matches the male/female presentation on
+   *  government-issued ID documents that the screening pipeline
+   *  matches against. */
+  gender?: "male" | "female";
   dob?: string; // "dd/mm/yyyy"
   placeOfBirth?: string;
   countryLocation?: string;
@@ -467,17 +467,14 @@ export function NewScreeningForm({
               </Field>
             </div>
 
-            {/* Inclusive gender row — single-select but four options
-                (matches FATF + UAE EOCN onboarding templates which now
-                accept non-binary + prefer-not-to-say). Goes below
-                citizenship because it's optional and rarely matched on. */}
+            {/* Gender — Male / Female only, matching the binary
+                presentation on government-issued ID documents that
+                screening matches against. */}
             <Field label="Gender">
               <div className="flex flex-wrap gap-x-5 gap-y-2 py-1">
                 {([
                   { value: "male", label: "Male" },
                   { value: "female", label: "Female" },
-                  { value: "non_binary", label: "Non-binary" },
-                  { value: "prefer_not_to_say", label: "Prefer not to say" },
                 ] as const).map((g) => (
                   <label
                     key={g.value}
