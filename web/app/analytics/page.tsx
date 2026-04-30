@@ -288,6 +288,9 @@ export default function AnalyticsPage() {
           {/* Cover band */}
           <div className="flex items-start justify-between border-b-2 border-ink-0 pb-4 mb-6 print:mb-4">
             <div>
+              <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+                MODULE 40
+              </div>
               <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">
                 Analytics · MLRO Performance Digest
               </div>
