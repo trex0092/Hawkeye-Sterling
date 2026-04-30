@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
 import {
   exportAuditCsv,
   loadAuditEntries,
@@ -178,10 +179,7 @@ export default function AuditTrailPage() {
                   return (
                     <tr key={entry.id} className="hover:bg-bg-1">
                       <td className={`px-4 py-2.5 font-mono text-10 text-ink-2 ${isLast ? "" : "border-b border-hair"}`}>
-                        {new Date(entry.timestamp).toLocaleString("en-GB", {
-                          day: "2-digit", month: "2-digit", year: "numeric",
-                          hour: "2-digit", minute: "2-digit", second: "2-digit",
-                        })}
+                        {formatDMYTimeSec(entry.timestamp)}
                       </td>
                       <td className={`px-4 py-2.5 text-12 text-ink-0 ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.actor}

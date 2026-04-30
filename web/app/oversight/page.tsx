@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { DateParts } from "@/components/ui/DateParts";
+import { formatDMY } from "@/lib/utils/dateFormat";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -525,7 +526,7 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; on
     onAdd({
       id: `CIR-CUSTOM-${Date.now()}`,
       ref: ref.trim(),
-      date: date || new Date().toLocaleDateString("en-GB"),
+      date: date || formatDMY(new Date()),
       issuer: issuer.trim() || "—",
       title: title.trim(),
       disposition,

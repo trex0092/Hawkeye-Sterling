@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { formatDMYTime } from "@/lib/utils/dateFormat";
 
 type Status = "ready" | "partial" | "missing";
 
@@ -214,12 +215,12 @@ export default function InspectionRoomPage() {
 
   useEffect(() => {
     setPanels(buildPanels());
-    setGeneratedAt(new Date().toLocaleString());
+    setGeneratedAt(formatDMYTime(new Date()));
   }, []);
 
   const refresh = () => {
     setPanels(buildPanels());
-    setGeneratedAt(new Date().toLocaleString());
+    setGeneratedAt(formatDMYTime(new Date()));
   };
 
   const handlePrint = () => {

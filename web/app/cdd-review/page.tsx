@@ -5,6 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import type { CaseRecord } from "@/lib/types";
+import { formatDMY, parseDMY } from "@/lib/utils/dateFormat";
 
 // Periodic CDD Review — tracks which customers are due for re-KYC based
 // on their risk tier. Review cadences per FDL 10/2025 Art.11:
@@ -56,20 +57,6 @@ const TIER_LABEL: Record<ReviewTier, string> = {
   standard: "Low risk",
 };
 
-/** "dd/mm/yyyy" → Date | null */
-function parseDMY(s: string): Date | null {
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  return new Date(parseInt(m[3]!), parseInt(m[2]!) - 1, parseInt(m[1]!));
-}
-
-/** ISO string → "dd/mm/yyyy" */
-function isoToDMY(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
-
 function deriveStatus(record: ReviewRecord): { status: ReviewStatus; daysOverdue: number; nextDue: string } {
   if (!record.lastReview) return { status: "unknown", daysOverdue: 0, nextDue: "—" };
   const last = parseDMY(record.lastReview);
@@ -78,8 +65,7 @@ function deriveStatus(record: ReviewRecord): { status: ReviewStatus; daysOverdue
   const nextTs = last.getTime() + cadence * 86_400_000;
   const now = Date.now();
   const days = Math.round((nextTs - now) / 86_400_000);
-  const nextDate = new Date(nextTs);
-  const nextDue = `${String(nextDate.getDate()).padStart(2, "0")}/${String(nextDate.getMonth() + 1).padStart(2, "0")}/${nextDate.getFullYear()}`;
+  const nextDue = formatDMY(new Date(nextTs));
   if (days < 0) return { status: "overdue", daysOverdue: Math.abs(days), nextDue };
   if (days <= 60) return { status: "due-soon", daysOverdue: 0, nextDue };
   return { status: "current", daysOverdue: 0, nextDue };
@@ -122,7 +108,7 @@ function casesToRecords(cases: CaseRecord[]): ReviewRecord[] {
       id: `case-${c.id}`,
       subject: c.subject,
       tier,
-      lastReview: lastTs ? isoToDMY(new Date(lastTs).toISOString()) : "",
+      lastReview: lastTs ? formatDMY(new Date(lastTs).toISOString()) : "",
       notes: `Auto-imported from case ${c.id} · badge: ${c.badge}`,
       source: "case" as const,
     };
@@ -176,7 +162,7 @@ export default function CddReviewPage() {
 
   const markReviewed = (id: string, outcome: ReviewOutcome) => {
     const nowIso = new Date().toISOString();
-    const today = isoToDMY(nowIso);
+    const today = formatDMY(nowIso);
     const update = (r: ReviewRecord) =>
       r.id === id
         ? { ...r, lastReview: today, lastOutcome: outcome, lastOutcomeAt: nowIso }

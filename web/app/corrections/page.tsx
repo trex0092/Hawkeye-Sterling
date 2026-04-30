@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { formatDMY } from "@/lib/utils/dateFormat";
 
 type Capacity =
   | "subject"
@@ -98,7 +99,7 @@ export default function CorrectionsPage() {
             <div className="text-12 text-ink-0 mb-1">
               Response due by:{" "}
               <span className="font-mono">
-                {new Date(receipt.dueBy).toLocaleDateString()}
+                {formatDMY(receipt.dueBy)}
               </span>
             </div>
             <div className="text-11 text-ink-2 mt-2">{receipt.message}</div>
