@@ -38,6 +38,7 @@ import {
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
+import { exportStrDraft } from "@/lib/pdf/exporters";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -344,7 +345,26 @@ export default function StrCasesPage() {
               label: "FDL Art. 26–27 · File without delay",
               tone: "critical",
             }}
-            actions={<Btn variant="ghost">+ New case</Btn>}
+            actions={
+              <div className="flex items-center gap-2">
+                <Btn
+                  variant="ghost"
+                  onClick={() => {
+                    const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
+                    exportStrDraft({
+                      subject: open.length > 0 ? open[0].subject : "Multiple subjects",
+                      narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
+                      transactions: [],
+                      composite: 75,
+                      jurisdiction: "AE",
+                    });
+                  }}
+                >
+                  ↓ Export PDF
+                </Btn>
+                <Btn variant="ghost">+ New case</Btn>
+              </div>
+            }
       />
 
       <KpiGrid cols={4}>

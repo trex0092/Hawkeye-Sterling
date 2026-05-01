@@ -128,13 +128,16 @@ function projectGidForModule(module: string): string {
 
     // 15 · MLRO Workbench
     // Primary nav: MLRO Advisor, Intel
-    // Intelligence: Workbench, Investigation, Brain, OSINT
+    // Intelligence: Workbench, Investigation, Brain, OSINT, Heatmap, Telemetry, Red-Team
     case "mlro-advisor":
     case "workbench":
     case "investigation":
     case "weaponized-brain":
     case "intel":
     case "osint":
+    case "heatmap":
+    case "telemetry":
+    case "red-team":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
     // 16 · Supply Chain, ESG & LBMA Gold
@@ -148,7 +151,20 @@ function projectGidForModule(module: string): string {
     case "eocn":
       return process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? inbox;
 
-    // Everything else (api-docs, status, …) lands in 00 · Master Inbox.
+    // 18 · Regulator Portal Handoff
+    // Governance: Inspection Room
+    case "inspection-room":
+      return process.env["ASANA_REGULATOR_PROJECT_GID"] ?? inbox;
+
+    // 07 · CDD/KYC — Onboarding Wizard
+    case "onboarding":
+      return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
+
+    // 05 · STR/SAR — legacy goAML export
+    case "goaml":
+      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
+
+    // Everything else (status, …) lands in 00 · Master Inbox.
     default:
       return inbox;
   }
@@ -212,10 +228,19 @@ const MODULE_LABELS: Record<string, string> = {
   "mlro-advisor":           "MLRO Advisor",
   investigation:            "Investigation",
   "weaponized-brain":       "Weaponized Brain",
+  heatmap:                  "Geographic Heatmap",
+  telemetry:                "Mode Telemetry",
+  "red-team":               "Red-Team Prompt Tests",
   // 16 · Supply Chain
   "vessel-check":           "Vessel Check",
   // 17 · Export Control
   eocn:                     "EOCN Trade Compliance",
+  // 18 · Regulator Portal
+  "inspection-room":        "Inspection Room",
+  // 07 · CDD — Onboarding
+  onboarding:               "Onboarding Wizard",
+  // 05 · STR/SAR
+  goaml:                    "goAML Export",
 };
 
 // Project board label — shown in the Asana task notes.
@@ -262,8 +287,14 @@ const PROJECT_BOARD: Record<string, string> = {
   "mlro-advisor":           "15 · MLRO Workbench",
   investigation:            "15 · MLRO Workbench",
   "weaponized-brain":       "15 · MLRO Workbench",
+  heatmap:                  "15 · MLRO Workbench",
+  telemetry:                "15 · MLRO Workbench",
+  "red-team":               "15 · MLRO Workbench",
   "vessel-check":           "16 · Supply Chain, ESG & LBMA Gold",
   eocn:                     "17 · Export Control & Dual-Use",
+  "inspection-room":        "18 · Regulator Portal Handoff",
+  onboarding:               "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  goaml:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
 };
 
 interface Body {

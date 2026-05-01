@@ -5,6 +5,7 @@ import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { StrDraftModal } from "@/components/shared/StrDraftModal";
 import { downloadEvidencePack, type EvidencePackEntry } from "@/lib/evidencePack";
+import { exportMlroMemo } from "@/lib/pdf/exporters";
 import { findApplicableConflicts, type JurisdictionalConflict } from "@/lib/jurisdictionalConflicts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -3022,6 +3023,21 @@ export default function MlroAdvisorPage() {
               </div>
               {advisorHistory.length > 0 && (
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const last = advisorHistory[advisorHistory.length - 1];
+                      exportMlroMemo({
+                        subject: last?.question?.slice(0, 80) ?? "MLRO Advisory Session",
+                        summary: advisorHistory.map((h) => `Q: ${h.question}\nVerdict: ${h.result.complianceReview.advisorVerdict}`).join("\n\n"),
+                        recommendation: last?.result.complianceReview.advisorVerdict ?? "See session transcript",
+                        regulatoryBasis: "UAE FDL 10/2025 · FATF Recommendations · CBUAE AML Standards",
+                      });
+                    }}
+                    className="text-11 text-ink-3 hover:text-brand border border-hair-2 hover:border-brand px-2.5 py-1 rounded transition-colors"
+                  >
+                    ↓ PDF Memo
+                  </button>
                   <button
                     type="button"
                     onClick={() => exportAdvisorSession(advisorHistory)}
