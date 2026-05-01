@@ -25,6 +25,8 @@ interface GraphEdge {
   from: string;
   to: string;
   label?: string;
+  suggested?: boolean;
+  suggestedId?: string;
 }
 
 interface BrainAnalysis {
@@ -33,6 +35,33 @@ interface BrainAnalysis {
   keyRelationships: string[];
   nextSteps: string[];
   riskLevel: "critical" | "high" | "medium" | "low";
+}
+
+interface SuggestedLink {
+  fromId: string;
+  toId: string;
+  linkType: string;
+  confidence: number;
+  reasoning: string;
+  fatfRef: string;
+}
+
+interface DiscoverLinksResult {
+  ok: boolean;
+  suggestedLinks: SuggestedLink[];
+  networkRiskScore: number;
+  summary: string;
+}
+
+interface EvidencePackResult {
+  ok: boolean;
+  caseOverview: string;
+  entityProfiles: Record<string, string>;
+  networkNarrative: string;
+  evidencePoints: string[];
+  nextSteps: string[];
+  regulatoryBasis: string;
+  generatedAt: string;
 }
 
 type SearchKind = "entity" | "individual";
@@ -122,6 +151,19 @@ export default function InvestigationPage() {
   const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
   const [brainLoading, setBrainLoading] = useState(false);
 
+  // AI Discover Links state
+  const [discoveringLinks, setDiscoveringLinks] = useState(false);
+  const [suggestedLinks, setSuggestedLinks] = useState<SuggestedLink[]>([]);
+  const [dismissedLinkIds, setDismissedLinkIds] = useState<Set<string>>(new Set());
+  const [networkRiskScore, setNetworkRiskScore] = useState<number | null>(null);
+  const [discoverLinksSummary, setDiscoverLinksSummary] = useState<string | null>(null);
+
+  // Evidence pack state
+  const [exportingPack, setExportingPack] = useState(false);
+  const [evidencePack, setEvidencePack] = useState<EvidencePackResult | null>(null);
+  const [showEvidencePack, setShowEvidencePack] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["caseOverview"]));
+
   useEffect(() => { setAllCases(loadCases()); }, []);
 
   const knownSubjects = useMemo(() => Array.from(new Set(allCases.map((c) => c.subject))).sort(), [allCases]);
@@ -137,6 +179,24 @@ export default function InvestigationPage() {
     return m;
   }, [nodes]);
 
+  // Build edges including accepted suggested links
+  const activeSuggestedLinkEdges = useMemo<GraphEdge[]>(() => {
+    return suggestedLinks
+      .filter((sl) => {
+        const sid = `${sl.fromId}|${sl.toId}`;
+        return !dismissedLinkIds.has(sid);
+      })
+      .map((sl) => ({
+        from: sl.fromId,
+        to: sl.toId,
+        label: sl.linkType.replace(/_/g, " "),
+        suggested: true,
+        suggestedId: `${sl.fromId}|${sl.toId}`,
+      }));
+  }, [suggestedLinks, dismissedLinkIds]);
+
+  const allEdges = useMemo(() => [...edges, ...activeSuggestedLinkEdges], [edges, activeSuggestedLinkEdges]);
+
   function submit(name: string) {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -146,12 +206,18 @@ export default function InvestigationPage() {
     setQuery(trimmed); setShowSuggestions(false);
     setSelectedId(null); setDiscoverCount(0);
     setBrainAnalysis(null);
+    setSuggestedLinks([]); setDismissedLinkIds(new Set());
+    setNetworkRiskScore(null); setDiscoverLinksSummary(null);
+    setEvidencePack(null); setShowEvidencePack(false);
   }
 
   function clearSearch() {
     setNodes(DEMO_NODES); setEdges(DEMO_EDGES);
     setCommitted(null); setQuery(""); setSelectedId(null);
     setDiscoverCount(0); setBrainAnalysis(null);
+    setSuggestedLinks([]); setDismissedLinkIds(new Set());
+    setNetworkRiskScore(null); setDiscoverLinksSummary(null);
+    setEvidencePack(null); setShowEvidencePack(false);
     inputRef.current?.focus();
   }
 
@@ -240,6 +306,58 @@ export default function InvestigationPage() {
     finally { setDiscovering(false); }
   }, [committed, nodes, edges, nodesById]);
 
+  // ── AI Discover Links ─────────────────────────────────────────────────────
+
+  const runDiscoverLinks = useCallback(async () => {
+    setDiscoveringLinks(true);
+    setSuggestedLinks([]);
+    setDismissedLinkIds(new Set());
+    setNetworkRiskScore(null);
+    setDiscoverLinksSummary(null);
+    try {
+      const entities = nodes.map((n) => ({
+        id: n.id,
+        name: n.label,
+        type: n.kind,
+        jurisdiction: undefined as string | undefined,
+        riskScore: n.confidence ?? (n.kind === "subject" ? 80 : n.kind === "ai_discovered" ? 65 : 50),
+      }));
+      const existingLinks = edges.map((e) => ({
+        from: e.from,
+        to: e.to,
+        type: e.label ?? "linked",
+      }));
+      const res = await fetch("/api/investigation/discover-links", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ entities, existingLinks }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as DiscoverLinksResult;
+      if (!data.ok) return;
+      setSuggestedLinks(data.suggestedLinks ?? []);
+      setNetworkRiskScore(data.networkRiskScore ?? null);
+      setDiscoverLinksSummary(data.summary ?? null);
+    } catch { /* silent */ }
+    finally { setDiscoveringLinks(false); }
+  }, [nodes, edges]);
+
+  const addSuggestedLink = useCallback((sl: SuggestedLink) => {
+    const newEdge: GraphEdge = {
+      from: sl.fromId,
+      to: sl.toId,
+      label: sl.linkType.replace(/_/g, " "),
+    };
+    setEdges((prev) => [...prev, newEdge]);
+    const sid = `${sl.fromId}|${sl.toId}`;
+    setDismissedLinkIds((prev) => new Set([...prev, sid]));
+  }, []);
+
+  const dismissSuggestedLink = useCallback((sl: SuggestedLink) => {
+    const sid = `${sl.fromId}|${sl.toId}`;
+    setDismissedLinkIds((prev) => new Set([...prev, sid]));
+  }, []);
+
   // ── Brain Analysis ────────────────────────────────────────────────────────
 
   const matchedCases = useMemo(() => {
@@ -263,10 +381,67 @@ export default function InvestigationPage() {
     finally { setBrainLoading(false); }
   }, [committed, committedKind, matchedCases]);
 
+  // ── Evidence Pack Export ──────────────────────────────────────────────────
+
+  const runExportPack = useCallback(async () => {
+    setExportingPack(true);
+    setEvidencePack(null);
+    setShowEvidencePack(false);
+    try {
+      const caseTitle = committed ? `Investigation: ${committed}` : "Investigation Canvas Export";
+      const entitiesPayload = nodes.map((n) => ({
+        id: n.id,
+        name: n.label,
+        kind: n.kind,
+        riskScore: n.confidence ?? (n.kind === "subject" ? 80 : n.kind === "ai_discovered" ? 65 : 50),
+        confidence: n.confidence,
+        relationship: n.relationship,
+        reasoning: n.reasoning,
+      }));
+      const linksPayload = allEdges.map((e) => ({
+        from: nodesById[e.from]?.label ?? e.from,
+        to: nodesById[e.to]?.label ?? e.to,
+        label: e.label,
+        suggested: e.suggested ?? false,
+      }));
+      const narrative = brainAnalysis?.narrative ?? "";
+      const res = await fetch("/api/investigation/evidence-pack", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ caseTitle, entities: entitiesPayload, links: linksPayload, narrative, analyst: "Hawkeye Sterling Analyst" }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as EvidencePackResult;
+      if (!data.ok) return;
+      setEvidencePack(data);
+      setShowEvidencePack(true);
+      setExpandedSections(new Set(["caseOverview"]));
+    } catch { /* silent */ }
+    finally { setExportingPack(false); }
+  }, [committed, nodes, allEdges, nodesById, brainAnalysis]);
+
+  function toggleSection(key: string) {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   const selectedNode = selectedId ? nodesById[selectedId] : null;
   const riskCls = { critical: "bg-red text-white", high: "bg-red-dim text-red", medium: "bg-amber-dim text-amber", low: "bg-green-dim text-green" };
+  const networkRiskCls = networkRiskScore != null
+    ? networkRiskScore >= 80 ? "bg-red text-white" : networkRiskScore >= 60 ? "bg-red-dim text-red" : networkRiskScore >= 40 ? "bg-amber-dim text-amber" : "bg-green-dim text-green"
+    : "";
+
+  const visibleSuggestedLinks = suggestedLinks.filter((sl) => !dismissedLinkIds.has(`${sl.fromId}|${sl.toId}`));
+  const confirmedFromSuggested = suggestedLinks.filter((sl) => {
+    const sid = `${sl.fromId}|${sl.toId}`;
+    return dismissedLinkIds.has(sid) && edges.some((e) => e.from === sl.fromId && e.to === sl.toId);
+  });
 
   return (
     <ModuleLayout asanaModule="investigation" asanaLabel="Investigation">
@@ -280,7 +455,7 @@ export default function InvestigationPage() {
 
       {/* Search bar */}
       <div className="relative mt-4 mb-3">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <div className="flex rounded border border-hair-2 overflow-hidden shrink-0">
             {(["entity", "individual"] as SearchKind[]).map((k) => (
               <button key={k} type="button" onClick={() => setSearchKind(k)}
@@ -289,7 +464,7 @@ export default function InvestigationPage() {
               </button>
             ))}
           </div>
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-[200px]">
             <input ref={inputRef} type="text" value={query}
               placeholder={searchKind === "entity" ? "Company or organisation name…" : "Individual name…"}
               onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
@@ -313,6 +488,21 @@ export default function InvestigationPage() {
             className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border border-green/50 bg-green/10 text-green hover:bg-green/20 disabled:opacity-40 transition-colors whitespace-nowrap">
             {discovering ? "Discovering…" : discoverCount > 0 ? `✦ Discover (${discoverCount})` : "✦ AI Discover"}
           </button>
+          {/* AI Discover Links button */}
+          <button type="button" onClick={() => void runDiscoverLinks()} disabled={discoveringLinks}
+            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border border-violet/50 bg-violet/10 text-violet hover:bg-violet/20 disabled:opacity-40 transition-colors whitespace-nowrap flex items-center gap-1.5">
+            {discoveringLinks ? "Analyzing…" : "🔍 AI Discover Links"}
+            {networkRiskScore != null && !discoveringLinks && (
+              <span className={`ml-1 px-1.5 py-px rounded font-semibold text-9 ${networkRiskCls}`}>
+                Risk {networkRiskScore}
+              </span>
+            )}
+          </button>
+          {/* Export Evidence Pack button */}
+          <button type="button" onClick={() => void runExportPack()} disabled={exportingPack}
+            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border border-amber/50 bg-amber/10 text-amber hover:bg-amber/20 disabled:opacity-40 transition-colors whitespace-nowrap">
+            {exportingPack ? "Generating…" : "📦 Export Evidence Pack"}
+          </button>
           {committed && (
             <button type="button" onClick={clearSearch} className="font-mono text-10.5 px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-ink-1 hover:border-hair-3 transition-colors">Demo</button>
           )}
@@ -323,6 +513,12 @@ export default function InvestigationPage() {
             <span className="text-ink-1 font-semibold">{committed}</span>
             {" · "}{nodes.length} nodes · {edges.length} connections
             {discoverCount > 0 && <span className="ml-1 text-green font-semibold">· {discoverCount} AI-discovered</span>}
+            {suggestedLinks.length > 0 && <span className="ml-1 text-violet font-semibold">· {visibleSuggestedLinks.length} suggested link{visibleSuggestedLinks.length !== 1 ? "s" : ""}</span>}
+            {networkRiskScore != null && (
+              <span className={`ml-2 px-1.5 py-px rounded font-mono text-9 font-bold ${networkRiskCls}`}>
+                Network Risk: {networkRiskScore}/100
+              </span>
+            )}
           </p>
         )}
       </div>
@@ -347,6 +543,9 @@ export default function InvestigationPage() {
             <marker id="arr-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
               <path d="M0,0 L10,5 L0,10 z" fill="#34d399" />
             </marker>
+            <marker id="arr-suggested" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#a78bfa" />
+            </marker>
             <filter id="glow-green">
               <feGaussianBlur stdDeviation="3" result="blur" />
               <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
@@ -358,27 +557,29 @@ export default function InvestigationPage() {
           </defs>
 
           <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
-            {/* Edges */}
-            {edges.map((e) => {
+            {/* Edges (confirmed + suggested overlay) */}
+            {allEdges.map((e) => {
               const a = nodesById[e.from];
               const b = nodesById[e.to];
               if (!a || !b) return null;
-              const isAi = b.kind === "ai_discovered";
+              const isAi = !e.suggested && (b.kind === "ai_discovered");
+              const isSuggested = e.suggested === true;
               const faded = selectedId && selectedId !== a.id && selectedId !== b.id;
               const mx = (a.x + b.x) / 2;
               const my = (a.y + b.y) / 2 - 30;
+              const edgeKey = isSuggested ? `suggested-${e.suggestedId ?? `${e.from}-${e.to}`}` : `${e.from}-${e.to}`;
               return (
-                <g key={`${e.from}-${e.to}`} style={{ opacity: faded ? 0.1 : 1, transition: "opacity 0.15s" }}>
+                <g key={edgeKey} style={{ opacity: faded ? 0.1 : 1, transition: "opacity 0.15s" }}>
                   <path d={`M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`}
                     fill="none"
-                    stroke={isAi ? "#34d399" : "#334155"}
-                    strokeWidth={isAi ? 1.5 : 1}
-                    strokeDasharray={isAi ? "5 3" : ""}
-                    markerEnd={isAi ? "url(#arr-ai)" : "url(#arr-dark)"}
-                    style={{ opacity: isAi ? 0.7 : 0.6 }}
+                    stroke={isSuggested ? "#a78bfa" : isAi ? "#34d399" : "#334155"}
+                    strokeWidth={isSuggested ? 1.5 : isAi ? 1.5 : 1}
+                    strokeDasharray={isSuggested ? "8 4" : isAi ? "5 3" : ""}
+                    markerEnd={isSuggested ? "url(#arr-suggested)" : isAi ? "url(#arr-ai)" : "url(#arr-dark)"}
+                    style={{ opacity: isSuggested ? 0.65 : isAi ? 0.7 : 0.6 }}
                   />
                   {e.label && (
-                    <text x={mx} y={my - 4} textAnchor="middle" style={{ fontSize: 9, fill: isAi ? "#34d399" : "#475569", fontFamily: "monospace" }}>
+                    <text x={mx} y={my - 4} textAnchor="middle" style={{ fontSize: 9, fill: isSuggested ? "#a78bfa" : isAi ? "#34d399" : "#475569", fontFamily: "monospace" }}>
                       {e.label}
                     </text>
                   )}
@@ -442,6 +643,13 @@ export default function InvestigationPage() {
                 <span className="capitalize" style={{ color: "#94a3b8" }}>{k.replace("_", " ")}</span>
               </span>
             ))}
+            {/* Suggested link legend entry */}
+            {suggestedLinks.length > 0 && (
+              <span className="flex items-center gap-1" style={{ color: "#64748b" }}>
+                <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#a78bfa" strokeWidth="1.5" strokeDasharray="8 4" /></svg>
+                <span style={{ color: "#a78bfa" }}>AI suggested link</span>
+              </span>
+            )}
           </div>
           <div className="ml-auto flex items-center gap-3" style={{ color: "#475569" }}>
             <span>scroll to zoom · drag to pan · drag nodes</span>
@@ -464,10 +672,75 @@ export default function InvestigationPage() {
             {selectedNode.relationship && <div className="text-11 text-ink-2 mb-0.5"><strong className="text-ink-3">Relationship:</strong> {selectedNode.relationship}</div>}
             {selectedNode.reasoning && <div className="text-11 text-ink-2 italic">{selectedNode.reasoning}</div>}
             <div className="text-10 font-mono text-ink-4 mt-1">
-              {edges.filter((e) => e.from === selectedNode.id || e.to === selectedNode.id).length} connection{edges.filter((e) => e.from === selectedNode.id || e.to === selectedNode.id).length !== 1 ? "s" : ""}
+              {allEdges.filter((e) => e.from === selectedNode.id || e.to === selectedNode.id).length} connection{allEdges.filter((e) => e.from === selectedNode.id || e.to === selectedNode.id).length !== 1 ? "s" : ""}
             </div>
           </div>
           <button type="button" onClick={() => setSelectedId(null)} className="text-ink-3 hover:text-ink-1 text-14">×</button>
+        </div>
+      )}
+
+      {/* AI Discover Links suggestion panel */}
+      {(discoveringLinks || suggestedLinks.length > 0) && (
+        <div className="mt-3 bg-bg-panel border border-violet/30 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-violet/20" style={{ background: "rgba(139,92,246,0.06)" }}>
+            <div className="flex items-center gap-2">
+              <span className="text-11 font-semibold uppercase tracking-wide-3 text-violet">AI Link Discovery</span>
+              {networkRiskScore != null && (
+                <span className={`font-mono text-9 px-2 py-px rounded font-bold ${networkRiskCls}`}>
+                  Network Risk: {networkRiskScore}/100
+                </span>
+              )}
+              {confirmedFromSuggested.length > 0 && (
+                <span className="font-mono text-9 px-1.5 py-px rounded bg-green-dim text-green">{confirmedFromSuggested.length} confirmed</span>
+              )}
+            </div>
+            {discoveringLinks && <span className="font-mono text-10 text-ink-3 animate-pulse">Analyzing network…</span>}
+          </div>
+
+          {discoverLinksSummary && (
+            <div className="px-4 py-2.5 border-b border-hair-2">
+              <p className="text-11 text-ink-2 leading-relaxed">{discoverLinksSummary}</p>
+            </div>
+          )}
+
+          {visibleSuggestedLinks.length > 0 && (
+            <div className="divide-y divide-hair-1">
+              {visibleSuggestedLinks.map((sl) => {
+                const fromNode = nodesById[sl.fromId];
+                const toNode = nodesById[sl.toId];
+                const confidenceCls = sl.confidence >= 80 ? "text-red" : sl.confidence >= 60 ? "text-amber" : "text-green";
+                return (
+                  <div key={`${sl.fromId}|${sl.toId}`} className="px-4 py-3 flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-mono text-10 font-semibold text-ink-0">{fromNode?.label ?? sl.fromId}</span>
+                        <span className="text-ink-4 text-10">→</span>
+                        <span className="font-mono text-10 font-semibold text-ink-0">{toNode?.label ?? sl.toId}</span>
+                        <span className="font-mono text-9 px-1.5 py-px rounded bg-violet/10 text-violet border border-violet/20">{sl.linkType.replace(/_/g, " ")}</span>
+                        <span className={`font-mono text-9 font-bold ${confidenceCls}`}>{sl.confidence}% confidence</span>
+                      </div>
+                      <p className="text-11 text-ink-2 leading-relaxed mb-0.5">{sl.reasoning}</p>
+                      <p className="text-10 font-mono text-ink-4">{sl.fatfRef}</p>
+                    </div>
+                    <div className="flex gap-1.5 shrink-0 mt-0.5">
+                      <button type="button" onClick={() => addSuggestedLink(sl)}
+                        className="font-mono text-9 px-2 py-1 rounded bg-green/10 text-green border border-green/30 hover:bg-green/20 transition-colors whitespace-nowrap">
+                        Add Link
+                      </button>
+                      <button type="button" onClick={() => dismissSuggestedLink(sl)}
+                        className="font-mono text-9 px-2 py-1 rounded bg-bg-1 text-ink-3 border border-hair-2 hover:border-hair-3 hover:text-ink-1 transition-colors">
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!discoveringLinks && suggestedLinks.length > 0 && visibleSuggestedLinks.length === 0 && (
+            <div className="px-4 py-3 text-11 text-ink-3 font-mono">All suggestions have been actioned.</div>
+          )}
         </div>
       )}
 
@@ -517,6 +790,145 @@ export default function InvestigationPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Evidence Pack Modal / Panel */}
+      {showEvidencePack && evidencePack && (
+        <div className="mt-3 bg-bg-panel border border-amber/30 rounded-xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-amber/20" style={{ background: "rgba(245,158,11,0.06)" }}>
+            <div className="flex items-center gap-3">
+              <span className="text-13">📦</span>
+              <div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber">Evidence Pack</div>
+                <div className="text-10 font-mono text-ink-3">Generated {new Date(evidencePack.generatedAt).toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => window.print()}
+                className="font-mono text-10.5 font-medium px-3 py-1.5 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors whitespace-nowrap">
+                ↓ Print / Export PDF
+              </button>
+              <button type="button" onClick={() => setShowEvidencePack(false)}
+                className="text-ink-3 hover:text-ink-1 text-14 ml-1">×</button>
+            </div>
+          </div>
+
+          {/* Sections */}
+          <div className="divide-y divide-hair-1">
+            {/* Case Overview */}
+            <div>
+              <button type="button" onClick={() => toggleSection("caseOverview")}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-1 transition-colors">
+                <span className="text-11 font-semibold text-ink-1">Case Overview</span>
+                <span className="text-ink-4 text-12">{expandedSections.has("caseOverview") ? "▲" : "▼"}</span>
+              </button>
+              {expandedSections.has("caseOverview") && (
+                <div className="px-4 pb-4">
+                  <p className="text-12 text-ink-1 leading-relaxed whitespace-pre-line">{evidencePack.caseOverview}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Entity Profiles */}
+            <div>
+              <button type="button" onClick={() => toggleSection("entityProfiles")}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-1 transition-colors">
+                <span className="text-11 font-semibold text-ink-1">Entity Profiles</span>
+                <span className="text-ink-4 text-12">{expandedSections.has("entityProfiles") ? "▲" : "▼"}</span>
+              </button>
+              {expandedSections.has("entityProfiles") && (
+                <div className="px-4 pb-4 space-y-3">
+                  {Object.entries(evidencePack.entityProfiles).map(([name, profile]) => (
+                    <div key={name} className="rounded-lg border border-hair-2 p-3">
+                      <div className="text-11 font-semibold text-ink-0 mb-1">{name}</div>
+                      <p className="text-11 text-ink-2 leading-relaxed">{profile}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Network Analysis */}
+            <div>
+              <button type="button" onClick={() => toggleSection("networkNarrative")}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-1 transition-colors">
+                <span className="text-11 font-semibold text-ink-1">Network Analysis</span>
+                <span className="text-ink-4 text-12">{expandedSections.has("networkNarrative") ? "▲" : "▼"}</span>
+              </button>
+              {expandedSections.has("networkNarrative") && (
+                <div className="px-4 pb-4">
+                  <p className="text-12 text-ink-1 leading-relaxed">{evidencePack.networkNarrative}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Evidence Points */}
+            <div>
+              <button type="button" onClick={() => toggleSection("evidencePoints")}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-1 transition-colors">
+                <span className="text-11 font-semibold text-ink-1">Evidence Points</span>
+                <span className="text-ink-4 text-12">{expandedSections.has("evidencePoints") ? "▲" : "▼"}</span>
+              </button>
+              {expandedSections.has("evidencePoints") && (
+                <div className="px-4 pb-4">
+                  <ol className="space-y-2">
+                    {evidencePack.evidencePoints.map((pt, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <span className="font-mono text-10 font-bold text-amber shrink-0 mt-0.5">{i + 1}.</span>
+                        <span className="text-12 text-ink-1 leading-relaxed">{pt}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+
+            {/* Next Steps */}
+            <div>
+              <button type="button" onClick={() => toggleSection("nextSteps")}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-1 transition-colors">
+                <span className="text-11 font-semibold text-ink-1">Next Steps</span>
+                <span className="text-ink-4 text-12">{expandedSections.has("nextSteps") ? "▲" : "▼"}</span>
+              </button>
+              {expandedSections.has("nextSteps") && (
+                <div className="px-4 pb-4">
+                  <ol className="space-y-2">
+                    {evidencePack.nextSteps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <span className="font-mono text-10 font-bold text-blue shrink-0 mt-0.5">{i + 1}.</span>
+                        <span className="text-12 text-ink-1 leading-relaxed">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+
+            {/* Regulatory Basis */}
+            <div>
+              <button type="button" onClick={() => toggleSection("regulatoryBasis")}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-1 transition-colors">
+                <span className="text-11 font-semibold text-ink-1">Regulatory Basis</span>
+                <span className="text-ink-4 text-12">{expandedSections.has("regulatoryBasis") ? "▲" : "▼"}</span>
+              </button>
+              {expandedSections.has("regulatoryBasis") && (
+                <div className="px-4 pb-4">
+                  <p className="text-12 text-ink-1 leading-relaxed">{evidencePack.regulatoryBasis}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-hair-2 flex items-center justify-between" style={{ background: "#080b0d" }}>
+            <span className="font-mono text-10 text-ink-4">Court-ready evidence pack · Hawkeye Sterling AML Platform</span>
+            <button type="button" onClick={() => window.print()}
+              className="font-mono text-10 font-medium px-3 py-1.5 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors">
+              ↓ Print / Export PDF
+            </button>
+          </div>
         </div>
       )}
     </ModuleLayout>
