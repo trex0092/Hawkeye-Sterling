@@ -67,12 +67,13 @@ interface UseAlertsReturn {
 }
 
 export function useAlerts(): UseAlertsReturn {
-  const [alerts, setAlerts] = useState<DesignationAlert[]>(() =>
-    mergeAlerts(loadCache(), loadBellEvents()),
-  );
-  const [loading, setLoading] = useState(false);
+  // Start empty to avoid server/client hydration mismatch (localStorage
+  // is undefined on the server). The useEffect below immediately loads
+  // the cache and fires the first API poll.
+  const [alerts, setAlerts] = useState<DesignationAlert[]>([]);
+  const [loading, setLoading] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const dismissedRef = useRef<Set<string>>(loadDismissed());
+  const dismissedRef = useRef<Set<string>>(new Set());
 
   const unreadCount = alerts.filter((a) => !a.read).length;
 
