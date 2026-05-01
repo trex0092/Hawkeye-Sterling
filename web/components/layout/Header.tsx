@@ -46,6 +46,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "Audit", href: "/audit-trail", hint: "Immutable audit chain" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year FDL Art.19 log" },
+      { label: "Live Adverse Media", href: "/adverse-media-live", hint: "GDELT real-time news feed" },
       { label: "Regulatory", href: "/regulatory", hint: "Searchable library" },
       { label: "Policies", href: "/policies", hint: "Charter / SOPs" },
       { label: "Playbook", href: "/playbook", hint: "Typology guides" },
@@ -55,6 +56,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Oversight", href: "/oversight", hint: "Management sign-off & minutes" },
       { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative" },
       { label: "EOCN", href: "/eocn", hint: "UAE TFS list & declarations" },
+      { label: "goAML Submission", href: "/goaml-submission", hint: "UAE FIU STR XML wizard" },
       // goAML export is now reachable from a row action on /str-cases
       // (the case register), so we drop it from the global nav. The
       // standalone /goaml-export page still exists for any saved
@@ -67,6 +69,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Enrichment",
     items: [
       { label: "GLEIF / LEI", href: "/gleif", hint: "Beneficial ownership chain" },
+      { label: "Entity Graph", href: "/entity-graph", hint: "UBO · officers · OpenCorporates" },
       { label: "Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security" },
       { label: "Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint analysis" },
       { label: "Vessel Check", href: "/vessel-check", hint: "IMO sanctions & ownership" },
