@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
 export type RiskTheme =
-  | "financial crime"
+  | "financial_crime"
   | "sanctions"
   | "corruption"
   | "regulatory"
@@ -55,7 +55,7 @@ const FALLBACK: NewsIntelResult = {
       date: "2025-04-28",
       sentiment: "negative",
       sentimentScore: -72,
-      riskThemes: ["financial crime", "regulatory"],
+      riskThemes: ["financial_crime", "regulatory"],
       reason: "Major regulatory enforcement action with significant financial penalty",
     },
     {
@@ -70,7 +70,7 @@ const FALLBACK: NewsIntelResult = {
   ],
   dismissed: [],
   sentimentScore: -58,
-  riskThemes: ["financial crime", "regulatory", "sanctions"],
+  riskThemes: ["financial_crime", "regulatory", "sanctions"],
   trend: "escalating",
   overallRiskScore: 72,
   keyFindings: [

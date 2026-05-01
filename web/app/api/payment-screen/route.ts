@@ -118,7 +118,7 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
       : Promise.resolve(null),
   ]);
 
-  const yenteSummary = yenteResults?.map((r, i) => ({
+  const yenteSummary = yenteResults?.map((r: any, i: number) => ({
     name: namesToMatch[i],
     topScore: r.hits[0]?.score ?? 0,
     datasets: r.hits[0]?.datasets ?? [],

@@ -22,49 +22,49 @@ const POPULAR_COUNTRIES = [
   "Nigeria",
 ];
 
-const RISK_COLORS: Record<string, string> = {
+const RISK_COLORS = {
   low: "text-green bg-green-dim border-green/20",
   medium: "text-amber bg-amber/10 border-amber/20",
   high: "text-orange bg-orange/10 border-orange/20",
   critical: "text-red bg-red/10 border-red/20",
-};
+} satisfies Record<string, string>;
 
-const RISK_BAR_COLORS: Record<string, string> = {
+const RISK_BAR_COLORS = {
   low: "bg-green",
   medium: "bg-amber",
   high: "bg-orange",
   critical: "bg-red",
-};
+} satisfies Record<string, string>;
 
-const FATF_COLORS: Record<string, string> = {
+const FATF_COLORS = {
   member: "text-green bg-green-dim border-green/20",
   grey_list: "text-amber bg-amber/10 border-amber/20",
   black_list: "text-red bg-red/10 border-red/20",
   non_member: "text-ink-2 bg-bg-2 border-hair-2",
-};
+} satisfies Record<string, string>;
 
-const FATF_LABELS: Record<string, string> = {
+const FATF_LABELS = {
   member: "FATF Member",
   grey_list: "FATF Grey List",
   black_list: "FATF Black List",
   non_member: "Non-Member",
-};
+} satisfies Record<string, string>;
 
-const RECOMMENDATION_LABELS: Record<string, string> = {
+const RECOMMENDATION_LABELS = {
   standard_dd: "Standard Due Diligence",
   enhanced_dd: "Enhanced Due Diligence",
   senior_approval: "Senior Management Approval",
   prohibited: "PROHIBITED",
-};
+} satisfies Record<string, string>;
 
-const RECOMMENDATION_COLORS: Record<string, string> = {
+const RECOMMENDATION_COLORS = {
   standard_dd: "text-green bg-green-dim border-green/20",
   enhanced_dd: "text-amber bg-amber/10 border-amber/20",
   senior_approval: "text-orange bg-orange/10 border-orange/20",
   prohibited: "text-red bg-red/10 border-red/20",
-};
+} satisfies Record<string, string>;
 
-function scoreToRisk(score: number): string {
+function scoreToRisk(score: number): "low" | "medium" | "high" | "critical" {
   if (score >= 75) return "critical";
   if (score >= 55) return "high";
   if (score >= 30) return "medium";

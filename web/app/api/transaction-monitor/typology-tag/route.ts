@@ -135,7 +135,7 @@ ${JSON.stringify(transactions, null, 2)}`,
       response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const parsed = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
-    ) as { tagged: Omit<TaggedTx, keyof TxInput>[]; summary: string };
+    ) as { tagged: Array<{ id: string; typology: string; confidence: number; redFlags: string[]; fatfReference: string }>; summary: string };
 
     // Merge AI tags back onto original transaction objects
     const tagMap = new Map(
@@ -147,9 +147,9 @@ ${JSON.stringify(transactions, null, 2)}`,
       if (aiTag) {
         return {
           ...tx,
-          typology: aiTag.typology ?? "none",
+          typology: (aiTag.typology ?? "none") as TaggedTx["typology"],
           confidence: typeof aiTag.confidence === "number" ? aiTag.confidence : 0,
-          redFlags: Array.isArray(aiTag.redFlags) ? aiTag.redFlags : [],
+          redFlags: Array.isArray(aiTag.redFlags) ? (aiTag.redFlags as string[]) : [],
           fatfReference: aiTag.fatfReference ?? "FATF Rec. 20",
         };
       }

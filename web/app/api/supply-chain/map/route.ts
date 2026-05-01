@@ -63,11 +63,11 @@ const COUNTRY_RISK: Record<string, { level: "critical" | "high" | "medium" | "lo
   "Singapore": { level: "low", score: 10, flags: [] },
 };
 
-function getCountryRisk(country: string) {
+function getCountryRisk(country: string): { level: "low" | "medium" | "high" | "critical"; score: number; flags: string[] } {
   const key = Object.keys(COUNTRY_RISK).find(
     (k) => k.toLowerCase() === country.toLowerCase()
   );
-  return key ? COUNTRY_RISK[key] : { level: "medium" as const, score: 50, flags: ["Risk data unavailable — manual review required"] };
+  return (key ? COUNTRY_RISK[key as keyof typeof COUNTRY_RISK] : undefined) ?? { level: "medium" as const, score: 50, flags: ["Risk data unavailable — manual review required"] };
 }
 
 export async function POST(req: Request) {

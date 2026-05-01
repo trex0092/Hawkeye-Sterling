@@ -8571,7 +8571,7 @@ export default function MlroAdvisorPage() {
                                 {mx["detected"] ? "DETECTED" : "NONE"}
                               </span>
                             </div>
-                            {mx["detected"] && (
+                            {Boolean(mx["detected"]) && (
                               <>
                                 <div className="text-11 text-ink-0 font-semibold">{String(mx["mixerType"])}</div>
                                 <div className="text-10 text-ink-2">{String(mx["estimatedTaintedFunds"])}</div>
@@ -8589,7 +8589,7 @@ export default function MlroAdvisorPage() {
                                 {dn["detected"] ? "DETECTED" : "NONE"}
                               </span>
                             </div>
-                            {dn["detected"] && (
+                            {Boolean(dn["detected"]) && (
                               <>
                                 {(dn["marketplaces"] as string[] | undefined)?.map((m, i) => (
                                   <div key={i} className="text-10 text-amber font-mono">{m}</div>
@@ -8609,7 +8609,7 @@ export default function MlroAdvisorPage() {
                                 {rw["detected"] ? "DETECTED" : "NONE"}
                               </span>
                             </div>
-                            {rw["detected"] && (
+                            {Boolean(rw["detected"]) && (
                               <>
                                 {(rw["knownGroups"] as string[] | undefined)?.map((g, i) => (
                                   <div key={i} className="text-10 text-red font-mono font-semibold">{g}</div>
@@ -8629,9 +8629,9 @@ export default function MlroAdvisorPage() {
                               </span>
                             </div>
                             <div className="flex gap-2 flex-wrap">
-                              {sa["ofacSdn"] && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">OFAC SDN</span>}
-                              {sa["euSanctions"] && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">EU</span>}
-                              {sa["unSanctions"] && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">UN</span>}
+                              {Boolean(sa["ofacSdn"]) && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">OFAC SDN</span>}
+                              {Boolean(sa["euSanctions"]) && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">EU</span>}
+                              {Boolean(sa["unSanctions"]) && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">UN</span>}
                             </div>
                             {(sa["matchedAddresses"] as string[] | undefined)?.slice(0,1).map((a, i) => (
                               <div key={i} className="text-10 font-mono text-red leading-snug break-all">{a}</div>
@@ -8647,7 +8647,7 @@ export default function MlroAdvisorPage() {
                                 {String(tr["status"]).replace("_", " ").toUpperCase()}
                               </span>
                             </div>
-                            {tr["required"] && <div className="text-10 text-ink-3">Required: Yes (FATF R.16)</div>}
+                            {Boolean(tr["required"]) && <div className="text-10 text-ink-3">Required: Yes (FATF R.16)</div>}
                             {(tr["missingInformation"] as string[] | undefined)?.slice(0,2).map((m, i) => (
                               <div key={i} className="text-10 text-amber">⚠ {m}</div>
                             ))}
@@ -8695,8 +8695,8 @@ export default function MlroAdvisorPage() {
                                       </div>
                                     </div>
                                     <p className="text-11 text-ink-2 leading-snug mt-0.5">{String(typ["description"])}</p>
-                                    {typ["evidence"] && <p className="text-10 font-mono text-ink-3 mt-1 leading-snug">Evidence: {String(typ["evidence"])}</p>}
-                                    {typ["fatfRef"] && <p className="text-10 text-violet mt-0.5">📌 {String(typ["fatfRef"])}</p>}
+                                    {Boolean(typ["evidence"]) && <p className="text-10 font-mono text-ink-3 mt-1 leading-snug">Evidence: {String(typ["evidence"])}</p>}
+                                    {Boolean(typ["fatfRef"]) && <p className="text-10 text-violet mt-0.5">📌 {String(typ["fatfRef"])}</p>}
                                   </div>
                                 </div>
                               </div>
@@ -8723,7 +8723,6 @@ export default function MlroAdvisorPage() {
                         </div>
                       )}
 
-                      {/* Regulatory Obligations Accordion */}
                       {obligations.length > 0 && (
                         <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
                           <div className="px-3 py-2 border-b border-hair-2">
@@ -8809,8 +8808,7 @@ export default function MlroAdvisorPage() {
                         </div>
                       )}
 
-                      {/* Summary */}
-                      {r["summary"] && (
+                      {Boolean(r["summary"]) && (
                         <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
                           <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">Summary</div>
                           <p className="text-12 text-ink-1 leading-relaxed">{String(r["summary"])}</p>

@@ -518,7 +518,7 @@ function FeedTab({
   }, [fetchFeed]);
 
   const filtered =
-    filter === "all" ? items : items.filter((it) => it.riskThemes.includes(filter));
+    filter === "all" ? items : items.filter((it) => it.riskThemes.includes(filter as typeof it.riskThemes[number]));
 
   return (
     <div className="space-y-4">

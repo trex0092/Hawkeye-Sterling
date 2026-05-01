@@ -60,7 +60,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   // Cold-start hydration from Blobs — idempotent after first call.
   await hydrateJournalFromBlobs();
 
-  const all = getJournal().list().filter((r) => {
+  const all = (getJournal().list() as Array<{ at: string; reviewerId: string; groundTruth: string; modeIds?: string[] }>).filter((r) => {
     const t = Date.parse(r.at);
     if (Number.isNaN(t)) return true;
     if (t < since) return false;
@@ -83,11 +83,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
     const sub = new OutcomeFeedbackJournal();
     for (const r of recs) sub.record(r);
     const ag = sub.agreement();
-    const topOverrideCodes = Object.entries(ag.overrideRateByCode)
+    const topOverrideCodes = Object.entries(ag.overrideRateByCode as Record<string, { total: number; rate: number }>)
       .map(([code, v]) => ({ code, total: v.total, rate: v.rate }))
       .sort((a, b) => b.rate - a.rate)
       .slice(0, 5);
-    const topOverrideModes = Object.entries(ag.overrideRateByMode)
+    const topOverrideModes = Object.entries(ag.overrideRateByMode as Record<string, { total: number; rate: number }>)
       .map(([modeId, v]) => ({ modeId, total: v.total, rate: v.rate }))
       .sort((a, b) => b.rate - a.rate)
       .slice(0, 5);
