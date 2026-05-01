@@ -7,6 +7,7 @@ import { DateParts } from "@/components/ui/DateParts";
 import { formatDMY } from "@/lib/utils/dateFormat";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
+import type { BoardPackResult } from "@/app/api/oversight/board-pack/route";
 import { exportGapAnalysis } from "@/lib/pdf/exporters";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
@@ -769,6 +770,12 @@ export default function OversightPage() {
   const [boardResult, setBoardResult] = useState<(BoardAmlReportResult & { ok: boolean }) | null>(null);
   const [boardError, setBoardError] = useState("");
 
+  // Board Pack state
+  const [packLoading, setPackLoading] = useState(false);
+  const [packResult, setPackResult] = useState<BoardPackResult | null>(null);
+  const [packError, setPackError] = useState("");
+  const [packExpandedSection, setPackExpandedSection] = useState<string | null>("executiveSummary");
+
   useEffect(() => { setOverlay(loadOversightOverlay()); }, []);
 
   const updateOverlay = (next: OversightOverlay) => { setOverlay(next); saveOversightOverlay(next); };
@@ -1012,6 +1019,42 @@ export default function OversightPage() {
       setBoardError(e instanceof Error ? e.message : "Unknown error");
     } finally {
       setBoardLoading(false);
+    }
+  };
+
+  // ── Board Pack ───────────────────────────────────────────────────────────
+  const generateBoardPack = async () => {
+    setPackLoading(true);
+    setPackError("");
+    try {
+      const res = await fetch("/api/oversight/board-pack", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          pendingApprovals,
+          slaBreached,
+          gaps,
+          gapGrade: gapResult?.overallGrade,
+          kpiSnapshot: {
+            "Approval SLA %": slaPct,
+            "Open action items": openActionsCount,
+            "Meetings this quarter": meetingsThisQuarter,
+            "Total approvals": liveApprovals.length,
+            "Circulars tracked": liveCirculars.length,
+            "Circulars implemented": liveCirculars.filter((c) => c.disposition === "implemented").length,
+          },
+          meetingDate: new Date().toLocaleDateString("en-GB"),
+          institutionName: "Hawkeye Sterling DMCC",
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as BoardPackResult;
+      setPackResult(data);
+      setPackExpandedSection("executiveSummary");
+    } catch (e) {
+      setPackError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setPackLoading(false);
     }
   };
 
@@ -1695,6 +1738,155 @@ export default function OversightPage() {
               <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-amber-dim text-amber text-center leading-3 font-bold">?</span> Pending</span>
               <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-bg-2 text-ink-3 text-center leading-3 font-bold">—</span> Rejected/Escalated</span>
             </div>
+          </div>
+
+          {/* Generate Board Pack */}
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">📋 Generate Board Pack</div>
+                <div className="text-11 text-ink-3 mt-0.5">
+                  Produces a formal board pack: executive summary, compliance posture, pending items, regulatory horizon, and resolutions.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void generateBoardPack()}
+                disabled={packLoading}
+                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+              >
+                {packLoading ? (
+                  <>
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  "Generate Board Pack"
+                )}
+              </button>
+            </div>
+
+            {packError && (
+              <div className="text-11 text-red bg-red-dim border border-red/20 rounded-lg px-4 py-2 mb-3">{packError}</div>
+            )}
+
+            {packResult && (
+              <div className="flex flex-col gap-3 border-t border-hair-2 pt-4 mt-2">
+                {/* Export PDF button */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="text-11 font-mono text-brand hover:text-brand/80"
+                  >
+                    ↓ Export PDF
+                  </button>
+                </div>
+
+                {/* Expandable section helper */}
+                {(
+                  [
+                    { key: "executiveSummary", label: "Executive Summary", content: packResult.executiveSummary },
+                    { key: "compliancePosture", label: "Compliance Posture", content: packResult.compliancePosture },
+                    { key: "regulatoryHorizon", label: "Regulatory Horizon", content: packResult.regulatoryHorizon },
+                  ] as Array<{ key: string; label: string; content: string }>
+                ).map(({ key, label, content }) => (
+                  <div key={key} className="border border-hair-2 rounded-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setPackExpandedSection(packExpandedSection === key ? null : key)}
+                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                    >
+                      <span className="text-12 font-semibold text-ink-0">{label}</span>
+                      <span className="text-ink-3 text-13">{packExpandedSection === key ? "▲" : "▾"}</span>
+                    </button>
+                    {packExpandedSection === key && (
+                      <div className="px-4 pb-4 border-t border-hair-2">
+                        <p className="text-12 text-ink-1 leading-relaxed whitespace-pre-wrap mt-3">{content}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Pending items */}
+                {packResult.pendingItems.length > 0 && (
+                  <div className="border border-hair-2 rounded-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setPackExpandedSection(packExpandedSection === "pendingItems" ? null : "pendingItems")}
+                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                    >
+                      <span className="text-12 font-semibold text-ink-0">
+                        Pending Items Requiring Board Attention
+                        <span className="ml-2 font-mono text-10 text-ink-3">({packResult.pendingItems.length})</span>
+                      </span>
+                      <span className="text-ink-3 text-13">{packExpandedSection === "pendingItems" ? "▲" : "▾"}</span>
+                    </button>
+                    {packExpandedSection === "pendingItems" && (
+                      <div className="px-4 pb-4 border-t border-hair-2 mt-0">
+                        <div className="flex flex-col gap-3 mt-3">
+                          {packResult.pendingItems.map((item, i) => {
+                            const priCls =
+                              item.priority === "immediate"
+                                ? "bg-red-dim text-red"
+                                : item.priority === "high"
+                                ? "bg-amber-dim text-amber"
+                                : "bg-blue-dim text-blue";
+                            return (
+                              <div key={i} className="bg-bg-1 rounded p-3 flex flex-col gap-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${priCls}`}>
+                                    {item.priority}
+                                  </span>
+                                </div>
+                                <p className="text-12 text-ink-1">{item.item}</p>
+                                <p className="text-11 text-ink-3 italic">{item.recommendation}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Recommended resolutions */}
+                {packResult.recommendations.length > 0 && (
+                  <div className="border border-hair-2 rounded-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setPackExpandedSection(packExpandedSection === "recommendations" ? null : "recommendations")}
+                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                    >
+                      <span className="text-12 font-semibold text-ink-0">
+                        Recommended Resolutions
+                        <span className="ml-2 font-mono text-10 text-ink-3">({packResult.recommendations.length})</span>
+                      </span>
+                      <span className="text-ink-3 text-13">{packExpandedSection === "recommendations" ? "▲" : "▾"}</span>
+                    </button>
+                    {packExpandedSection === "recommendations" && (
+                      <div className="px-4 pb-4 border-t border-hair-2">
+                        <div className="flex flex-col gap-2 mt-3">
+                          {packResult.recommendations.map((r, i) => (
+                            <div key={i} className="flex gap-3 text-12 bg-bg-1 rounded p-3">
+                              <span className="shrink-0 font-mono text-10 font-bold text-brand mt-0.5">{i + 1}.</span>
+                              <div>
+                                <div className="text-ink-1">{r.resolution}</div>
+                                <div className="text-10 text-ink-3 font-mono mt-0.5">{r.owner} · {r.deadline}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="text-10 text-ink-3 font-mono border-t border-hair-2 pt-2">
+                  Generated: {new Date(packResult.generatedAt).toLocaleString("en-GB")} · UAE FDL 10/2025 Art.20 · CBUAE AML Standards §6
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Generate Board Report */}

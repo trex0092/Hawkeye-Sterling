@@ -1418,6 +1418,32 @@ export default function MlroAdvisorPage() {
   const [chainResult, setChainResult] = useState<ChainRunResult | null>(null);
   const [chainError, setChainError] = useState<string | null>(null);
 
+  const handleChainRun = useCallback(async () => {
+    if (!chainSubject.trim()) return;
+    setChainRunning(true);
+    setChainResult(null);
+    setChainError(null);
+    try {
+      const res = await fetch("/api/mlro-advisor/chain-run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: chainSubject.trim(),
+          jurisdiction: chainJurisdiction,
+          riskScore: chainRiskScore,
+          transactionPattern: chainPattern.trim(),
+        }),
+      });
+      const data = (await res.json()) as ChainRunResult;
+      if (!data.ok) throw new Error((data as { error?: string }).error ?? "Chain analysis failed");
+      setChainResult(data);
+    } catch (err) {
+      setChainError(err instanceof Error ? err.message : "Chain analysis failed");
+    } finally {
+      setChainRunning(false);
+    }
+  }, [chainSubject, chainJurisdiction, chainRiskScore, chainPattern]);
+
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
   const [mode, setMode] = useState<ReasoningMode>("quick");
@@ -3027,6 +3053,98 @@ export default function MlroAdvisorPage() {
           <button type="button" onClick={() => setPageTab("super-tools")} className={tabCls(pageTab === "super-tools")}>
             Super Tools
           </button>
+        </div>
+
+        {/* ── ⚡ Chain Run panel — always visible above all tabs ──────────── */}
+        <div className="mb-6 bg-bg-1 border border-brand/30 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-brand font-semibold text-11 uppercase tracking-wide-4">⚡ Chain Run</span>
+            <span className="font-mono text-10 text-ink-3">— Subject Brief · Typology Match · STR Recommendation</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div>
+              <label className="block text-10 text-ink-3 mb-1 uppercase tracking-wide-2">Subject name</label>
+              <input
+                value={chainSubject}
+                onChange={(e) => setChainSubject(e.target.value)}
+                placeholder="e.g. Al-Rashid Trading LLC"
+                disabled={chainRunning}
+                className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 disabled:opacity-50"
+              />
+            </div>
+            <div>
+              <label className="block text-10 text-ink-3 mb-1 uppercase tracking-wide-2">Jurisdiction</label>
+              <select
+                value={chainJurisdiction}
+                onChange={(e) => setChainJurisdiction(e.target.value)}
+                disabled={chainRunning}
+                className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 disabled:opacity-50"
+              >
+                <option value="UAE">UAE</option>
+                <option value="UK">UK</option>
+                <option value="US">US</option>
+                <option value="SG">SG</option>
+                <option value="HK">HK</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-10 text-ink-3 mb-1 uppercase tracking-wide-2">Risk score: {chainRiskScore}</label>
+              <input
+                type="range"
+                min={1}
+                max={100}
+                value={chainRiskScore}
+                onChange={(e) => setChainRiskScore(Number(e.target.value))}
+                disabled={chainRunning}
+                className="w-full accent-brand disabled:opacity-50 mt-1"
+              />
+              <div className="flex justify-between font-mono text-9 text-ink-3 mt-0.5">
+                <span>1</span><span>100</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-10 text-ink-3 mb-1 uppercase tracking-wide-2">Transaction pattern</label>
+              <input
+                value={chainPattern}
+                onChange={(e) => setChainPattern(e.target.value)}
+                placeholder="e.g. High-volume cash, round-trip wires"
+                disabled={chainRunning}
+                className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 disabled:opacity-50"
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => { void handleChainRun(); }}
+            disabled={chainRunning || !chainSubject.trim()}
+            className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          >
+            {chainRunning ? "Running 3-tool chain analysis…" : "⚡ Run Chain Analysis"}
+          </button>
+          {chainError && (
+            <div className="mt-3 text-12 text-red font-mono">{chainError}</div>
+          )}
+          {chainResult && (
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                <div className="text-10 uppercase tracking-wide-4 font-semibold text-brand mb-2">Subject Brief</div>
+                <p className="text-12 text-ink-1 leading-relaxed m-0">{chainResult.subjectBrief}</p>
+              </div>
+              <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                <div className="text-10 uppercase tracking-wide-4 font-semibold text-brand mb-2">Typology Match</div>
+                <p className="text-12 text-ink-1 leading-relaxed m-0">{chainResult.typologyMatch}</p>
+              </div>
+              <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                <div className="text-10 uppercase tracking-wide-4 font-semibold text-brand mb-2">STR Recommendation</div>
+                <p className="text-12 text-ink-1 leading-relaxed m-0">{chainResult.strRecommendation}</p>
+                {chainResult.chainDuration != null && chainResult.chainDuration > 0 && (
+                  <div className="font-mono text-10 text-ink-3 mt-2">
+                    chain: {(chainResult.chainDuration / 1000).toFixed(1)}s
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── MLRO Advisor tab ──────────────────────────────────────────────── */}

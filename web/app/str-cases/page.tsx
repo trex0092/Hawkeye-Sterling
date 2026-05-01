@@ -39,6 +39,7 @@ import {
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
 import { exportStrDraft } from "@/lib/pdf/exporters";
+import type { PatternDetectResult, DetectedPattern } from "@/app/api/str-cases/pattern-detect/route";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -210,6 +211,11 @@ export default function StrCasesPage() {
   const [briefing, setBriefing] = useState<MlroBriefing | null>(null);
   const [briefingLoading, setBriefingLoading] = useState(false);
 
+  // Cross-case pattern detection
+  const [patternResult, setPatternResult] = useState<PatternDetectResult | null>(null);
+  const [patternLoading, setPatternLoading] = useState(false);
+  const [patternExpanded, setPatternExpanded] = useState(false);
+
   const open = cases.filter(
     (c) => c.status !== "Submitted" && c.status !== "Closed",
   ).length;
@@ -258,6 +264,32 @@ export default function StrCasesPage() {
       if (data.ok) setBriefing(data.briefing);
     } catch { /* silent */ }
     finally { setBriefingLoading(false); }
+  };
+
+  const runPatternDetection = async () => {
+    setPatternLoading(true);
+    try {
+      const res = await fetch("/api/str-cases/pattern-detect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          cases: cases.map((c) => ({
+            id: c.id,
+            subject: c.subject,
+            amount: c.amountAed,
+            jurisdiction: "",
+            typology: c.reportKind,
+            status: c.status,
+            date: c.openedAt,
+          })),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as PatternDetectResult;
+      setPatternResult(data);
+      setPatternExpanded(true);
+    } catch { /* silent */ }
+    finally { setPatternLoading(false); }
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -399,11 +431,16 @@ export default function StrCasesPage() {
             }
       />
 
-      <KpiGrid cols={4}>
+      <KpiGrid cols={5}>
             <Kpi value={cases.length} label="Total" tone="brand" />
             <Kpi value={open} label="Open" tone="amber" />
             <Kpi value={submitted} label="Submitted" tone="green" />
             <Kpi value={overdue} label="Overdue" tone="red" />
+            <Kpi
+              value={patternResult ? `⚠️ ${patternResult.patterns.length}` : "—"}
+              label="Patterns detected"
+              tone={patternResult && patternResult.patterns.length > 0 ? "red" : undefined}
+            />
       </KpiGrid>
 
       {briefing && (
@@ -439,6 +476,102 @@ export default function StrCasesPage() {
           )}
         </div>
       )}
+
+      {/* Pattern Detection banner */}
+      <div className="mt-4 mb-2 bg-bg-panel border border-hair-2 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-1">
+              🔍 Pattern Detection
+            </span>
+            <span className="ml-2 text-11 text-ink-3">
+              Cross-case analysis · structuring · linked subjects · jurisdiction clustering
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {patternResult && !patternLoading && (
+              <button
+                type="button"
+                onClick={() => setPatternExpanded((v) => !v)}
+                className="text-11 text-ink-3 hover:text-ink-1"
+              >
+                {patternExpanded ? "Hide ▲" : `Show ${patternResult.patterns.length} pattern(s) ▾`}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void runPatternDetection()}
+              disabled={patternLoading || cases.length === 0}
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors"
+            >
+              {patternLoading ? "Analysing…" : "Run Cross-Case Analysis"}
+            </button>
+          </div>
+        </div>
+
+        {patternExpanded && patternResult && (
+          <div className="mt-3 border-t border-hair-2 pt-3">
+            {patternResult.summary && (
+              <p className="text-12 text-ink-1 leading-relaxed mb-3">{patternResult.summary}</p>
+            )}
+            {patternResult.patterns.length === 0 ? (
+              <p className="text-11 text-ink-3 italic">No significant patterns detected across current cases.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {patternResult.patterns.map((p: DetectedPattern, i) => {
+                  const sevCls =
+                    p.severity === "critical"
+                      ? "bg-red-dim text-red border-red/20"
+                      : p.severity === "high"
+                      ? "bg-amber-dim text-amber border-amber/20"
+                      : p.severity === "medium"
+                      ? "bg-blue-dim text-blue border-blue/20"
+                      : "bg-bg-2 text-ink-2 border-hair-2";
+                  const sevBadgeCls =
+                    p.severity === "critical"
+                      ? "bg-red/15 text-red"
+                      : p.severity === "high"
+                      ? "bg-amber/15 text-amber"
+                      : p.severity === "medium"
+                      ? "bg-blue/15 text-blue"
+                      : "bg-bg-2 text-ink-3";
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-lg border p-3 flex flex-col gap-1.5 ${sevCls}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${sevBadgeCls}`}
+                        >
+                          {p.severity}
+                        </span>
+                        <span className="font-mono text-10 text-ink-2 uppercase">
+                          {p.type.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <p className="text-12 text-ink-0 leading-snug">{p.description}</p>
+                      {p.caseIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {p.caseIds.map((id) => (
+                            <span
+                              key={id}
+                              className="font-mono text-10 bg-bg-0/50 text-ink-2 px-1.5 py-px rounded"
+                            >
+                              {id}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="text-10 font-mono text-ink-3 mt-0.5">{p.regulatoryRef}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <Card>
             <form onSubmit={openCase}>
