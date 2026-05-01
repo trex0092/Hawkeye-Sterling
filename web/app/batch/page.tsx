@@ -43,6 +43,27 @@ interface BatchRanking {
   batchSummary: string;
 }
 
+interface SmartPrioritySubject {
+  id: string;
+  name: string;
+  jurisdiction?: string;
+  clientType?: string;
+  lastScreened?: string;
+  riskScore?: number;
+  hitCount?: number;
+  priority: "immediate" | "scheduled" | "low";
+  reason: string;
+  estimatedRisk: string;
+}
+
+interface SmartPrioritization {
+  ok: true;
+  prioritized: SmartPrioritySubject[];
+  immediateCount: number;
+  scheduledCount: number;
+  insights: string;
+}
+
 interface RowResult {
   name: string;
   entityType?: string;
@@ -283,6 +304,9 @@ export default function BatchPage() {
   const [page, setPage] = useState(0);
   const [ranking, setRanking] = useState<BatchRanking | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const [smartPriority, setSmartPriority] = useState<SmartPrioritization | null>(null);
+  const [smartPriorityLoading, setSmartPriorityLoading] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "immediate" | "scheduled" | "low">("all");
   const fileInput = useRef<HTMLInputElement>(null);
 
   // Name Variant Generator state
