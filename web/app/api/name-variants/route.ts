@@ -69,7 +69,7 @@ function buildFallback(name: string): NameVariantsResponse {
     entityVariants: [],
     screeningStrings: [name],
     scriptVariants: [],
-    notes: "API key not configured.",
+    notes: "AI analysis unavailable.",
   };
 }
 

@@ -12,7 +12,7 @@ interface QaAnswer {
 }
 
 const EMPTY_ANSWER: QaAnswer = {
-  answer: "API key not configured — manual review required",
+  answer: "AI analysis unavailable — check ANTHROPIC_API_KEY",
   citations: [],
   confidence: 0,
   relatedPlaybooks: [],

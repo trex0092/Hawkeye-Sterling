@@ -37,7 +37,7 @@ interface DataQualityPlanResult {
 const FALLBACK: DataQualityPlanResult = {
   remediationPlan: [],
   criticalCount: 0,
-  portfolioRisk: "API key not configured — manual review required.",
+  portfolioRisk: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   topGaps: [],
   regulatoryExposure: "",
 };

@@ -38,7 +38,7 @@ function fallbackScores(cases: CaseInput[]): QaScore[] {
     id: c.id,
     score: 0,
     grade: "F" as const,
-    missingElements: ["API key not configured"],
+    missingElements: ["AI analysis unavailable — check ANTHROPIC_API_KEY"],
     suggestions: [],
     fatalIssues: [],
   }));

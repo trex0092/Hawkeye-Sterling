@@ -46,7 +46,7 @@ interface EmployeeRiskResult {
 
 const FALLBACK: EmployeeRiskResult = {
   portfolioStatus: "compliant",
-  summary: "API key not configured — manual review required.",
+  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   criticalExpiries: [],
   screeningAlerts: [],
   highRiskNationalities: [],

@@ -40,7 +40,7 @@ const FALLBACK: ExtractFlagsResult = {
   flags: [],
   overallRisk: "low",
   recommendedDisposition: "MONITOR",
-  summary: "API key not configured",
+  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY",
 };
 
 export async function POST(req: Request): Promise<NextResponse> {

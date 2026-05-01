@@ -35,7 +35,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!apiKey) {
     return NextResponse.json({
       ok: true,
-      explanation: "API key not configured",
+      explanation: "AI analysis unavailable — check ANTHROPIC_API_KEY",
       disposition: "monitor",
       dispositionReason: "Manual review required",
       regulatoryBasis: "",

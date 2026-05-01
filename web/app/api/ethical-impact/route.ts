@@ -69,7 +69,7 @@ Output JSON (ONLY valid JSON, no markdown):
 
 const FALLBACK: EthicalImpactResponse = {
   impactLevel: "medium",
-  impactNarrative: "API key not configured — manual impact assessment required.",
+  impactNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   rightsImpacted: [],
   proportionalityAssessment: "",
   humanOversightStatus: "",

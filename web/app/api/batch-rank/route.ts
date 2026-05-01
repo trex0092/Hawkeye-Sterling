@@ -80,7 +80,7 @@ const FALLBACK: BatchRankingResponse = {
   immediateCount: 0,
   urgentCount: 0,
   topThreats: [],
-  batchSummary: "API key not configured",
+  batchSummary: "AI analysis unavailable — check ANTHROPIC_API_KEY",
 };
 
 export async function POST(req: Request): Promise<NextResponse> {

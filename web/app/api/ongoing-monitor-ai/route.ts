@@ -89,7 +89,7 @@ const FALLBACK: MonitorAlertsResponse = {
   portfolioHealth: "healthy",
   immediateEscalations: [],
   cadenceRecommendations: [],
-  summary: "API key not configured",
+  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY",
 };
 
 export async function POST(req: Request): Promise<NextResponse> {

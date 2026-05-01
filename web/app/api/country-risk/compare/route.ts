@@ -117,7 +117,7 @@ function buildFallback(country: string): CountryRiskResult {
     },
     fatfStatus: "non_member",
     sanctionsProfile: { ofac: false, eu: false, un: false, uk: false, details: [] },
-    keyRisks: ["Risk data unavailable — API key not configured"],
+    keyRisks: ["AI analysis unavailable — check ANTHROPIC_API_KEY"],
     recentDevelopments: ["No live data available"],
     regulatoryObligations: [
       { obligation: "Enhanced Due Diligence", regulation: "FATF Recommendation 19" },

@@ -34,7 +34,7 @@ interface UboRiskResult {
 
 const FALLBACK: UboRiskResult = {
   overallRisk: "medium",
-  riskNarrative: "API key not configured — manual review required.",
+  riskNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   ownershipStructureRisk: "",
   pepRiskFlags: [],
   nationalityRisks: [],

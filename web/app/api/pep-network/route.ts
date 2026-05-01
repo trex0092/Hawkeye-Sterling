@@ -43,7 +43,7 @@ interface PepNetworkResult {
 const FALLBACK: PepNetworkResult = {
   pepCategory: "Senior Government Official",
   riskRating: "high",
-  riskNarrative: "API key not configured — manual review required.",
+  riskNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   personsToScreen: [],
   entitiesToScreen: [],
   typicalMlRisks: [],

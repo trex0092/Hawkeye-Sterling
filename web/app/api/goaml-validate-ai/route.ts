@@ -26,7 +26,7 @@ interface ValidationResult {
 const FALLBACK: ValidationResult = {
   score: 0,
   grade: "FAIL",
-  missingElements: ["API key not configured"],
+  missingElements: ["AI analysis unavailable — check ANTHROPIC_API_KEY"],
   tippingOffRisk: false,
   tippingOffFlags: [],
   suggestions: [],

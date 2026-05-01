@@ -26,7 +26,7 @@ interface BenfordInterpretation {
 }
 
 const FALLBACK: BenfordInterpretation = {
-  interpretation: "API key not configured",
+  interpretation: "AI analysis unavailable — check ANTHROPIC_API_KEY",
   financialCrimeIndicators: [],
   regulatoryRelevance: "",
   confidence: "low",

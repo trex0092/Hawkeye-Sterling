@@ -49,7 +49,7 @@ const FALLBACK: PredictRiskResult = {
       urgency: "immediate",
     },
   ],
-  summary: "Anthropic API key not configured. Showing placeholder forecast.",
+  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
 };
 
 export async function POST(req: Request) {

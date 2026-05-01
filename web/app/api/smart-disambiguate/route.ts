@@ -113,7 +113,7 @@ Output ONLY valid JSON, no markdown, no explanation:
 
 const FALLBACK: DisambiguationResult & { ok: boolean } = {
   ok: true,
-  overallAssessment: "API key not configured — manual review required.",
+  overallAssessment: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   clientRiskProfile: "",
   disambiguationStrategy: "",
   hits: [],

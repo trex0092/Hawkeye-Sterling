@@ -37,7 +37,7 @@ interface JurisdictionIntelResult {
 const FALLBACK: JurisdictionIntelResult = {
   countryName: "country",
   overallRisk: "medium",
-  fatfStatus: "API key not configured.",
+  fatfStatus: "AI analysis unavailable.",
   fatfDetail: "",
   sanctionsExposure: { uae: "", un: "", ofac: "", eu: "", uk: "" },
   cahraStatus: "",

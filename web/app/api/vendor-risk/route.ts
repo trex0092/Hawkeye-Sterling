@@ -32,7 +32,7 @@ const FALLBACK_RESULT: VendorRiskResult = {
   riskScore: 0,
   riskLevel: "low",
   eddRequired: false,
-  findings: ["API key not configured"],
+  findings: ["AI analysis unavailable — check ANTHROPIC_API_KEY"],
   redFlags: [],
   recommendation: "Manual review required",
   regulatoryBasis: "",

@@ -22,7 +22,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!apiKey) {
     return NextResponse.json({
       ok: true,
-      contextBlock: "Case context unavailable — API key not configured",
+      contextBlock: "AI analysis unavailable — check ANTHROPIC_API_KEY",
       caseCount: 0,
       priorityIds: [],
     });

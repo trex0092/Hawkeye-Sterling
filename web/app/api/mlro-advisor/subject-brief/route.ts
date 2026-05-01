@@ -34,7 +34,7 @@ const FALLBACK: SubjectBriefResult = {
     jurisdictionRisk: "low",
     entityTypeRisk: "low",
     compositeRisk: "low",
-    rationale: "API key not configured — manual pre-screening required",
+    rationale: "AI analysis unavailable — check ANTHROPIC_API_KEY",
   },
   likelyTypologies: [],
   sanctionsExposure: "",

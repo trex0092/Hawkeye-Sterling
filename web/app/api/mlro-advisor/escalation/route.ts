@@ -32,7 +32,7 @@ const FALLBACK: EscalationDecision = {
   decision: "MONITOR",
   confidence: 0,
   urgency: "routine",
-  primaryTrigger: "API key not configured",
+  primaryTrigger: "AI analysis unavailable — check ANTHROPIC_API_KEY",
   regulatoryBasis: "",
   rationale: "Manual review required",
   requiredActions: [],

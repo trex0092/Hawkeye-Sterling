@@ -33,7 +33,7 @@ const FALLBACK: PrioritizeResult = {
   prioritized: [],
   immediateCount: 0,
   scheduledCount: 0,
-  insights: "Unable to generate prioritization — Anthropic API key not configured.",
+  insights: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
 };
 
 export async function POST(req: Request) {
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       prioritized: subjects.map((s) => ({
         ...s,
         priority: "scheduled" as const,
-        reason: "Default scheduled — API key not configured",
+        reason: "Default scheduled — AI analysis unavailable",
         estimatedRisk: "Unknown",
       })),
     };

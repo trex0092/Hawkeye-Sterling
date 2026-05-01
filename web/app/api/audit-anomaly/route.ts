@@ -44,7 +44,7 @@ const FALLBACK: AuditAnomalyResult = {
   anomalyScore: 0,
   anomalyLevel: "normal",
   anomalies: [],
-  patternSummary: "API key not configured — manual review required.",
+  patternSummary: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
   actorRisk: [],
   integrityNote: "",
   regulatoryNote: "",
