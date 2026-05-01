@@ -2422,6 +2422,30 @@ export default function MlroAdvisorPage() {
   const [cryptoTracingLoading, setCryptoTracingLoading] = useState(false);
   const [cryptoTracingOpenObligation, setCryptoTracingOpenObligation] = useState<number | null>(null);
 
+  // ── Generic new-tools state (shared; only one panel visible at a time) ─────
+  const [nt, setNt] = useState<Record<string, string>>({});
+  const [ntResult, setNtResult] = useState<Record<string, unknown> | null>(null);
+  const [ntLoading, setNtLoading] = useState(false);
+  const [ntError, setNtError] = useState<string | null>(null);
+
+  const ntIn = (f: string) => nt[f] ?? "";
+  const ntSet = (f: string, v: string) => setNt(p => ({ ...p, [f]: v }));
+  const runNt = async (toolId: string) => {
+    setNtLoading(true); setNtResult(null); setNtError(null);
+    try {
+      const res = await fetch("/api/mlro-advisor/generic-tool", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ toolId, inputs: nt }),
+      });
+      if (!res.ok) { setNtError(`Error ${res.status}`); return; }
+      const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
+      if (data.ok) setNtResult(data);
+      else setNtError(data.error ?? "Analysis failed");
+    } catch (e) { setNtError(e instanceof Error ? e.message : "Network error"); }
+    finally { setNtLoading(false); }
+  };
+
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
     setTfLoading(true); setTfResult(null);
@@ -3951,6 +3975,118 @@ export default function MlroAdvisorPage() {
               <option value="trade-finance-risk">🚢 Trade Finance Risk</option>
               <option value="insider-threat">👤 Insider Threat</option>
               <option value="crypto-tracing">🔗 Crypto Tracing</option>
+              <optgroup label="── Financial Crime Investigation ──">
+              <option value="romance-fraud">💌 Romance / Pig-Butchering Detector</option>
+              <option value="investment-fraud">📈 Investment Fraud / Ponzi Screener</option>
+              <option value="bec-fraud">📧 BEC / CEO Fraud Detector</option>
+              <option value="cash-courier">💼 Bulk Cash Courier Detector</option>
+              <option value="nft-wash">🖼 NFT Wash Trade Detector</option>
+              <option value="carbon-fraud">🌿 Carbon Credit Fraud Analyser</option>
+              <option value="darknet-exposure">🕶 Darknet Market Exposure</option>
+              <option value="drug-trafficking">💊 Drug Trafficking Financial Indicators</option>
+              <option value="human-trafficking-fin">🚨 Human Trafficking Financial Patterns</option>
+              <option value="arms-trafficking">⚔️ Arms / Weapons Trafficking Indicators</option>
+              <option value="corruption-bribery">🤝 Corruption &amp; Bribery Analyser</option>
+              <option value="tax-evasion-fin">💸 Tax Evasion Financial Indicators</option>
+              <option value="cybercrime-proceeds">💻 Cybercrime Proceeds Analyser</option>
+              <option value="market-manipulation">📊 Market Manipulation Detector</option>
+              <option value="insurance-fraud">🛡 Insurance Fraud Detector</option>
+              <option value="mortgage-fraud">🏠 Mortgage Fraud Analyser</option>
+              <option value="identity-theft">🪪 Identity Theft Indicators</option>
+              <option value="elder-fraud">👴 Elder Financial Abuse</option>
+              <option value="ransomware-response">🔒 Ransomware Payment Response</option>
+              <option value="fraud-network">🕸 Fraud Network Mapper</option>
+              </optgroup>
+              <optgroup label="── Regulatory &amp; Compliance ──">
+              <option value="fatf-evaluation-prep">🎯 FATF Mutual Evaluation Prep</option>
+              <option value="vara-compliance">🔐 VARA AML Compliance Checker</option>
+              <option value="cbuae-exam">🏦 CBUAE Examination Readiness</option>
+              <option value="eu-amla">🇪🇺 EU AMLA Requirements Analyser</option>
+              <option value="mica-compliance">💎 MiCA Crypto Asset Compliance</option>
+              <option value="dora-resilience">🖥 DORA Operational Resilience</option>
+              <option value="aml-framework-gap">🔍 AML Framework Gap Analyser</option>
+              <option value="regulatory-breach-notice">📢 Regulatory Breach Notification</option>
+              <option value="remediation-planner">🔧 Regulatory Remediation Planner</option>
+              <option value="mou-treaty">🤝 MOU / Treaty Obligation Checker</option>
+              <option value="finma-compliance">🇨🇭 FINMA AML Compliance (Swiss)</option>
+              <option value="mas-compliance">🇸🇬 MAS AML Notice Compliance</option>
+              <option value="fca-compliance">🇬🇧 FCA ML Regs Compliance</option>
+              <option value="bafin-compliance">🇩🇪 BaFin AML Compliance</option>
+              <option value="basel-aml-index">🌍 Basel AML Index Risk Assessor</option>
+              <option value="egmont-fiu">📬 Egmont FIU Information Request</option>
+              <option value="wolfsberg-principles">📋 Wolfsberg Principles Checker</option>
+              <option value="palermo-convention">⚖️ Palermo Convention Analysis</option>
+              <option value="vienna-convention">🌐 Vienna Convention Analysis</option>
+              <option value="fatf-grey-impact">⚠️ FATF Grey/Black List Impact</option>
+              </optgroup>
+              <optgroup label="── Advanced KYC/CDD ──">
+              <option value="digital-identity">🔐 Digital Identity Verifier</option>
+              <option value="synthetic-identity">🤖 Synthetic Identity Detector</option>
+              <option value="deepfake-kyc">🎭 Deepfake / AI Doc Detector</option>
+              <option value="adverse-media-deep">📰 Deep Adverse Media Analysis</option>
+              <option value="sow-substantiator">💼 Source of Wealth Substantiator</option>
+              <option value="corporate-registry">🏢 Corporate Registry Crosscheck</option>
+              <option value="entity-resolution">🔍 Entity Resolution Engine</option>
+              <option value="politically-sensitive">🎖 Politically Sensitive Person Mapper</option>
+              <option value="dual-nationality">🌐 Dual Nationality Risk Analyser</option>
+              <option value="high-risk-profession">💼 High-Risk Profession Screener</option>
+              <option value="local-kyc-requirements">📋 UAE/Local KYC Requirements Guide</option>
+              <option value="ekyc-risk">📱 eKYC Risk Assessment</option>
+              <option value="perpetual-kyc">♻️ Perpetual KYC Trigger Analyser</option>
+              <option value="beneficial-ownership-calc">🏛 Beneficial Ownership Calculator</option>
+              <option value="corporate-complexity">🔀 Corporate Complexity Scorer</option>
+              </optgroup>
+              <optgroup label="── Transaction Monitoring ──">
+              <option value="velocity-analyzer">⚡ Transaction Velocity Analyser</option>
+              <option value="peer-group-anomaly">👥 Peer Group Anomaly Detector</option>
+              <option value="round-trip-detector">🔄 Round-Trip Transaction Detector</option>
+              <option value="funnel-account">🌀 Funnel Account Detector</option>
+              <option value="dormant-reactivation">😴 Dormant Account Reactivation Alert</option>
+              <option value="currency-mismatch">💱 Currency Mismatch Analyser</option>
+              <option value="ach-fraud">🏦 ACH / Direct Debit Fraud Detector</option>
+              <option value="wire-transfer-risk">📡 Wire Transfer Risk Scorer</option>
+              <option value="high-freq-trading">📈 High-Frequency Trading Abuse</option>
+              <option value="payment-routing">🌐 Unusual Payment Routing Analyser</option>
+              <option value="refund-arbitrage">🔁 Refund / Chargeback Arbitrage</option>
+              <option value="correspondent-chain">🏦 Correspondent Banking Chain Analyser</option>
+              <option value="remittance-risk">💸 Remittance Risk Analyser</option>
+              <option value="atm-pattern">🏧 ATM Pattern Analyser</option>
+              <option value="casino-chip">🎰 Casino Chip Washing Detector</option>
+              </optgroup>
+              <optgroup label="── Sector-Specific ──">
+              <option value="luxury-goods">💎 Luxury Goods AML Risk</option>
+              <option value="art-provenance">🎨 Art Market Provenance Checker</option>
+              <option value="superyacht-jet">✈️ Superyacht / Private Jet Risk</option>
+              <option value="agri-commodities">🌾 Agricultural Commodities Risk</option>
+              <option value="precious-stones">💠 Precious Stones / Diamonds Risk</option>
+              <option value="gaming-sector">🎮 Gaming / iGaming AML</option>
+              <option value="fintech-risk">📱 FinTech / Payment Institution Risk</option>
+              <option value="fund-administration">📊 Fund Administration AML Risk</option>
+              <option value="private-equity">💰 Private Equity AML Risk</option>
+              <option value="hedge-fund">🏦 Hedge Fund Risk Profile</option>
+              <option value="family-office">🏠 Family Office Risk Assessment</option>
+              <option value="free-zone">🏙 UAE Free Zone Entity Risk</option>
+              <option value="foundation-risk">🏛 Foundation / Endowment Risk</option>
+              <option value="crowdfunding">🌐 Crowdfunding / ICO Risk</option>
+              <option value="p2p-lending">💳 P2P Lending Platform Risk</option>
+              </optgroup>
+              <optgroup label="── Advanced Analytics &amp; Investigation ──">
+              <option value="geopolitical-risk">🌍 Geopolitical Risk Overlay</option>
+              <option value="network-centrality">🕸 Network Centrality Analyser</option>
+              <option value="follow-the-money">💵 Follow the Money Tracer</option>
+              <option value="causal-chain">🔗 Causal Chain Builder</option>
+              <option value="evidence-assessment">⚖️ Evidence Strength Assessor</option>
+              <option value="witness-statement">📜 Witness Statement Analyser</option>
+              <option value="open-source-intel">🔍 OSINT Investigation Guide</option>
+              <option value="court-order-drafter">⚖️ Court Order / Production Order Guide</option>
+              <option value="law-enforcement-liaison">🚔 Law Enforcement Liaison Guide</option>
+              <option value="mutual-legal-assistance">🌐 Mutual Legal Assistance (MLA) Guide</option>
+              <option value="asset-recovery">💰 Asset Recovery Strategy</option>
+              <option value="forfeiture-analysis">⚖️ Civil / Criminal Forfeiture Analysis</option>
+              <option value="whistleblower-protect">🔔 Whistleblower Protection Assessment</option>
+              <option value="regtech-assessment">🤖 AML RegTech Assessment</option>
+              <option value="aml-innovation">🚀 AML Innovation / Technology Roadmap</option>
+              </optgroup>
             </select>
 
             {/* Escalation Engine */}
