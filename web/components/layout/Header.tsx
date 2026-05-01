@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { AlertBell } from "./AlertBell";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 import {
   loadOperatorRole,
@@ -252,7 +251,6 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <AlertBell />
           <NotificationBell />
           <HeaderUserCard />
           <select
