@@ -1393,10 +1393,30 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
+// ── Chain Run types ───────────────────────────────────────────────────────────
+
+interface ChainRunResult {
+  ok: boolean;
+  subjectBrief?: string;
+  typologyMatch?: string;
+  strRecommendation?: string;
+  chainDuration?: number;
+  error?: string;
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
   const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa" | "super-tools">("advisor");
+
+  // ── Chain Run state ──────────────────────────────────────────────────────────
+  const [chainSubject, setChainSubject] = useState("");
+  const [chainJurisdiction, setChainJurisdiction] = useState("UAE");
+  const [chainRiskScore, setChainRiskScore] = useState(50);
+  const [chainPattern, setChainPattern] = useState("");
+  const [chainRunning, setChainRunning] = useState(false);
+  const [chainResult, setChainResult] = useState<ChainRunResult | null>(null);
+  const [chainError, setChainError] = useState<string | null>(null);
 
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
