@@ -375,7 +375,7 @@ function nowTs(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
-type Tab = "approvals" | "minutes" | "circulars" | "actions" | "kpis";
+type Tab = "approvals" | "minutes" | "circulars" | "action-tracker" | "kpi";
 
 function SlaBar({ elapsed, sla }: { elapsed: number; sla: number }) {
   const pct = Math.min((elapsed / sla) * 100, 100);
@@ -760,6 +760,7 @@ export default function OversightPage() {
   const [gapLoading, setGapLoading] = useState(false);
   const [gapResult, setGapResult] = useState<GovernanceGapResult | null>(null);
   const [gapError, setGapError] = useState("");
+  const [gapOpen, setGapOpen] = useState(false);
 
   // Board Report state
   const [boardLoading, setBoardLoading] = useState(false);
@@ -800,12 +801,55 @@ export default function OversightPage() {
     patchApproval(a.id, { status: "rejected" });
   };
 
+  // ── New sign/reject handlers (overlay-based, replaces seed record) ─────────
+  const signApproval = (id: string, stage: "first" | "second") => {
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    const patch = (a: Approval): Approval => {
+      if (a.id !== id) return a;
+      if (stage === "first") return { ...a, firstSignedAt: ts };
+      return { ...a, secondSignedAt: ts, status: "approved" };
+    };
+    const isCustom = overlay.customApprovals.some((a) => a.id === id);
+    if (isCustom) {
+      updateOverlay({ ...overlay, customApprovals: overlay.customApprovals.map(patch) });
+    } else {
+      const orig = liveApprovals.find((a) => a.id === id)!;
+      updateOverlay({ ...overlay, deletedApprovalIds: [...overlay.deletedApprovalIds, id], customApprovals: [...overlay.customApprovals, patch(orig)] });
+    }
+  };
+
+  const rejectApproval = (id: string) => {
+    const patch = (a: Approval): Approval => a.id === id ? { ...a, status: "rejected" } : a;
+    const isCustom = overlay.customApprovals.some((a) => a.id === id);
+    if (isCustom) {
+      updateOverlay({ ...overlay, customApprovals: overlay.customApprovals.map(patch) });
+    } else {
+      const orig = liveApprovals.find((a) => a.id === id)!;
+      updateOverlay({ ...overlay, deletedApprovalIds: [...overlay.deletedApprovalIds, id], customApprovals: [...overlay.customApprovals, patch(orig)] });
+    }
+  };
+
   // ── Action item toggle ─────────────────────────────────────────────────────
   const toggleAction = (aiId: string, currentlyClosed: boolean) => {
     updateOverlay({
       ...overlay,
       actionPatches: { ...overlay.actionPatches, [aiId]: !currentlyClosed },
     });
+  };
+
+  const toggleActionItem = (minuteId: string, actionId: string, currentlyClosed: boolean) => {
+    const patchMinute = (m: Minute): Minute => {
+      if (m.id !== minuteId) return m;
+      return { ...m, actionItems: m.actionItems.map((ai) => ai.id === actionId ? { ...ai, closed: !currentlyClosed } : ai) };
+    };
+    const isCustom = overlay.customMinutes.some((m) => m.id === minuteId);
+    if (isCustom) {
+      updateOverlay({ ...overlay, customMinutes: overlay.customMinutes.map(patchMinute) });
+    } else {
+      const orig = liveMinutes.find((m) => m.id === minuteId)!;
+      updateOverlay({ ...overlay, deletedMinuteIds: [...overlay.deletedMinuteIds, minuteId], customMinutes: [...overlay.customMinutes, patchMinute(orig)] });
+    }
   };
 
   const startEditApproval = (a: Approval) => { setEditingApprovalId(a.id); setEditApprovalNotes(a.notes); };
