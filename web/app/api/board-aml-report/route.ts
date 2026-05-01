@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface BoardAmlReportResult {
   executiveSummary: string;
@@ -129,16 +130,20 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        system: `You are a UAE AML governance specialist with expertise in Board-level MIS reporting, CBUAE quarterly reporting requirements, and AML programme performance metrics. Generate comprehensive quarterly Board AML/CFT reports including executive summaries, KPI commentary, MLRO updates, regulatory highlights, open findings, upcoming obligations, and board recommendations. Reports must comply with UAE FDL 10/2025 Art.5(2) Board accountability requirements and CBUAE AML/CFT Guidelines quarterly reporting expectations. Use professional, regulator-facing language. Respond ONLY with valid JSON matching the BoardAmlReportResult interface — no markdown fences.`,
-        messages: [{
-          role: "user",
-          content: `Institution Name: ${body.institutionName ?? "not specified"}
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML governance specialist with expertise in Board-level MIS reporting, CBUAE quarterly reporting requirements, and AML programme performance metrics. Generate comprehensive quarterly Board AML/CFT reports including executive summaries, KPI commentary, MLRO updates, regulatory highlights, open findings, upcoming obligations, and board recommendations. Reports must comply with UAE FDL 10/2025 Art.5(2) Board accountability requirements and CBUAE AML/CFT Guidelines quarterly reporting expectations. Use professional, regulator-facing language. Respond ONLY with valid JSON matching the BoardAmlReportResult interface — no markdown fences.`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Institution Name: ${body.institutionName ?? "not specified"}
 Reporting Period: ${body.reportingPeriod ?? "current quarter"}
 STR Count: ${body.strCount ?? "not provided"}
 CTR Count: ${body.ctrCount ?? "not provided"}
@@ -147,12 +152,9 @@ Open Audit Findings: ${body.openFindings ?? "not provided"}
 Additional Context: ${body.context ?? "none"}
 
 Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAmlReportResult JSON.`,
-        }],
-      }),
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as BoardAmlReportResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {

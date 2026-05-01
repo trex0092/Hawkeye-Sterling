@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface GapFinding {
   area: string;
@@ -204,17 +205,14 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(FALLBACK);
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2000,
-        system: `You are a UAE AML governance expert specialising in CBUAE AML Standards, UAE FDL 10/2025, LBMA RGG, and FATF Recommendations. Analyse governance data (approvals, meeting minutes, regulatory circulars) and produce a comprehensive gap analysis. Identify critical gaps, assign severity ratings, and provide prioritised recommendations. Return ONLY valid JSON with this exact structure (no markdown fences):
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2000,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML governance expert specialising in CBUAE AML Standards, UAE FDL 10/2025, LBMA RGG, and FATF Recommendations. Analyse governance data (approvals, meeting minutes, regulatory circulars) and produce a comprehensive gap analysis. Identify critical gaps, assign severity ratings, and provide prioritised recommendations. Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
   "overallGrade": "A"|"B"|"C"|"D"|"F",
@@ -225,22 +223,22 @@ export async function POST(req: Request) {
   "regulatoryRisks": [{"risk":"string","likelihood":"high"|"medium"|"low","impact":"high"|"medium"|"low","mitigant":"string"}],
   "summary": "string"
 }`,
-        messages: [
-          {
-            role: "user",
-            content: `Institution: ${body.institutionName ?? "Hawkeye Sterling"}
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: `Institution: ${body.institutionName ?? "Hawkeye Sterling"}
 Approvals: ${JSON.stringify(body.approvals ?? [], null, 2)}
 Meeting Minutes: ${JSON.stringify(body.minutes ?? [], null, 2)}
 Regulatory Circulars: ${JSON.stringify(body.circulars ?? [], null, 2)}
 
 Perform a comprehensive AML governance gap analysis. Identify all gaps, risks, and remediation actions.`,
-          },
-        ],
-      }),
+        },
+      ],
     });
-    if (!response.ok) return NextResponse.json(FALLBACK);
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as GovernanceGapResult;
     return NextResponse.json(result);
   } catch {

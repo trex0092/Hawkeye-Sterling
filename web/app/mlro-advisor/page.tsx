@@ -1811,7 +1811,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -2310,6 +2310,67 @@ export default function MlroAdvisorPage() {
   const [staffAlertInput, setStaffAlertInput] = useState({ alertSource: "", employeeName: "", employeeRole: "", allegation: "", evidenceDescribed: "", context: "" });
   const [staffAlertResult, setStaffAlertResult] = useState<Record<string, unknown> | null>(null);
   const [staffAlertLoading, setStaffAlertLoading] = useState(false);
+
+  // Wave 5 tools
+  const [strQualityInput, setStrQualityInput] = useState({ narrativeText: "", subjectName: "", totalAmount: "", transactionCount: "", suspectedOffence: "", context: "" });
+  const [strQualityResult, setStrQualityResult] = useState<Record<string, unknown> | null>(null);
+  const [strQualityLoading, setStrQualityLoading] = useState(false);
+
+  const [hawalaInput, setHawalaInput] = useState({ subjectName: "", businessType: "", transactionPattern: "", counterparties: "", cashVolume: "", context: "" });
+  const [hawalaResult, setHawalaResult] = useState<Record<string, unknown> | null>(null);
+  const [hawalaLoading, setHawalaLoading] = useState(false);
+
+  const [nomineeInput, setNomineeInput] = useState({ companyName: "", directorName: "", incorporationDate: "", businessActivity: "", controllerDetails: "", context: "" });
+  const [nomineeResult, setNomineeResult] = useState<Record<string, unknown> | null>(null);
+  const [nomineeLoading, setNomineeLoading] = useState(false);
+
+  const [pepCorpInput, setPepCorpInput] = useState({ companyName: "", pepName: "", pepRole: "", ownershipPct: "", industryContext: "", context: "" });
+  const [pepCorpResult, setPepCorpResult] = useState<Record<string, unknown> | null>(null);
+  const [pepCorpLoading, setPepCorpLoading] = useState(false);
+
+  const [cryptoMixInput, setCryptoMixInput] = useState({ walletAddress: "", cryptoType: "", transactionHashes: "", exchangeContext: "", amountUsd: "", context: "" });
+  const [cryptoMixResult, setCryptoMixResult] = useState<Record<string, unknown> | null>(null);
+  const [cryptoMixLoading, setCryptoMixLoading] = useState(false);
+
+  const [ghostCoInput, setGhostCoInput] = useState({ companyName: "", incorporationDate: "", tradeActivity: "", employeeCount: "", physicalAddress: "", context: "" });
+  const [ghostCoResult, setGhostCoResult] = useState<Record<string, unknown> | null>(null);
+  const [ghostCoLoading, setGhostCoLoading] = useState(false);
+
+  const [pKycInput, setPKycInput] = useState({ customerCount: "", highRiskCount: "", pepCount: "", overdueCount: "", institutionType: "", context: "" });
+  const [pKycResult, setPKycResult] = useState<Record<string, unknown> | null>(null);
+  const [pKycLoading, setPKycLoading] = useState(false);
+
+  const [whistleInput, setWhistleInput] = useState({ allegation: "", reportSource: "", accusedRole: "", evidenceDescribed: "", affectedCustomers: "", context: "" });
+  const [whistleResult, setWhistleResult] = useState<Record<string, unknown> | null>(null);
+  const [whistleLoading, setWhistleLoading] = useState(false);
+
+  const [tradeFinRfInput, setTradeFinRfInput] = useState({ transactionType: "", commodity: "", importerName: "", exporterName: "", invoiceValue: "", marketValue: "", shippingRoute: "", context: "" });
+  const [tradeFinRfResult, setTradeFinRfResult] = useState<Record<string, unknown> | null>(null);
+  const [tradeFinRfLoading, setTradeFinRfLoading] = useState(false);
+
+  const [sanctionsExpInput, setSanctionsExpInput] = useState({ entityName: "", entityType: "", jurisdictions: "", transactionCount: "", totalValueUsd: "", context: "" });
+  const [sanctionsExpResult, setSanctionsExpResult] = useState<Record<string, unknown> | null>(null);
+  const [sanctionsExpLoading, setSanctionsExpLoading] = useState(false);
+
+  const [custLifeInput, setCustLifeInput] = useState({ customerName: "", onboardingDate: "", currentRiskRating: "", recentChanges: "", transactionVolume: "", context: "" });
+  const [custLifeResult, setCustLifeResult] = useState<Record<string, unknown> | null>(null);
+  const [custLifeLoading, setCustLifeLoading] = useState(false);
+
+  const [pepEnhInput, setPepEnhInput] = useState({ subjectName: "", currentRole: "", jurisdiction: "", wealthEstimate: "", knownConnections: "", context: "" });
+  const [pepEnhResult, setPepEnhResult] = useState<Record<string, unknown> | null>(null);
+  const [pepEnhLoading, setPepEnhLoading] = useState(false);
+
+  const [amlTrainInput, setAmlTrainInput] = useState({ staffCount: "", completionRate: "", highRiskRoles: "", overdueCount: "", lastTrainingDate: "", context: "" });
+  const [amlTrainResult, setAmlTrainResult] = useState<Record<string, unknown> | null>(null);
+  const [amlTrainLoading, setAmlTrainLoading] = useState(false);
+
+  const [uboVerifyInput, setUboVerifyInput] = useState({ entityName: "", ownershipStructure: "", jurisdictions: "", layerCount: "", uboName: "", context: "" });
+  const [uboVerifyResult, setUboVerifyResult] = useState<Record<string, unknown> | null>(null);
+  const [uboVerifyLoading, setUboVerifyLoading] = useState(false);
+
+  const [amlKpiInput, setAmlKpiInput] = useState({ institutionType: "", strCount: "", falsePositiveRate: "", trainingCompletion: "", openFindings: "", context: "" });
+  const [amlKpiResult, setAmlKpiResult] = useState<Record<string, unknown> | null>(null);
+  const [amlKpiLoading, setAmlKpiLoading] = useState(false);
 
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;

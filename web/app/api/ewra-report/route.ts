@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface EwraBoardReportResult {
   overallRisk: "critical" | "high" | "medium" | "low";
@@ -102,13 +103,14 @@ export async function POST(req: Request) {
     .join("\n") ?? "No dimension data provided";
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2000,
-        system: `You are a UAE AML/CFT compliance specialist generating a formal Enterprise-Wide Risk Assessment (EWRA) board report under UAE FDL 10/2025 Art.4 and FATF R.1.
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2000,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML/CFT compliance specialist generating a formal Enterprise-Wide Risk Assessment (EWRA) board report under UAE FDL 10/2025 Art.4 and FATF R.1.
 
 Generate a professional, board-ready EWRA report based on the risk dimension scores provided. The report must:
 - Be written in formal, regulatory-grade English suitable for Board presentation
@@ -128,9 +130,12 @@ Respond ONLY with valid JSON — no markdown fences:
   "approvalStatement": "<formal approval paragraph>",
   "nextSteps": ["<step>"]
 }`,
-        messages: [{
-          role: "user",
-          content: `Institution: ${body.institutionName ?? "UAE Financial Institution"}
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Institution: ${body.institutionName ?? "UAE Financial Institution"}
 Reporting Period: ${body.reportingPeriod ?? "Current year"}
 
 Risk Dimension Scores:
@@ -139,13 +144,10 @@ ${dimensionText}
 Additional Context: ${body.context ?? "none"}
 
 Generate the board EWRA report.`,
-        }],
-      }),
+      }],
     });
 
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {

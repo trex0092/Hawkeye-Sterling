@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface EthicsAssessmentResult {
   overallScore: number; // 0–100
@@ -119,35 +120,32 @@ export async function POST(req: Request) {
     .join("; ");
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2000,
-        system: `You are a Responsible AI governance expert specialising in AML/CFT systems. You assess AI programmes against the UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), the EU AI Act, and UAE AI governance frameworks. Evaluate model registries, incident logs, and bias metrics. Score 0–100. Return ONLY valid JSON matching EthicsAssessmentResult — no markdown fences.`,
-        messages: [
-          {
-            role: "user",
-            content: `Conduct an AI ethics assessment for an AML/CFT compliance platform.
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2000,
+      system: [
+        {
+          type: "text",
+          text: `You are a Responsible AI governance expert specialising in AML/CFT systems. You assess AI programmes against the UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), the EU AI Act, and UAE AI governance frameworks. Evaluate model registries, incident logs, and bias metrics. Score 0–100. Return ONLY valid JSON matching EthicsAssessmentResult — no markdown fences.`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: `Conduct an AI ethics assessment for an AML/CFT compliance platform.
 
 Registered AI Models: ${modelSummary || "none provided"}
 Recent Incidents: ${incidentSummary || "none logged"}
 Bias Monitoring Data (FPR by segment): ${biasSummary || "not provided"}
 
 Return complete EthicsAssessmentResult JSON with overallScore (0-100), rating, unescoCompliancePct, summary, findings array, strengths, priorities, and nextReviewDate.`,
-          },
-        ],
-      }),
+        },
+      ],
     });
 
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EthicsAssessmentResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
