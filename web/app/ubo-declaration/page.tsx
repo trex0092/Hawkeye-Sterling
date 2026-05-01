@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { DateParts } from "@/components/ui/DateParts";
 import { RowActions } from "@/components/shared/RowActions";
 
 // ── UBO AI Risk types ─────────────────────────────────────────────────────────
@@ -292,38 +291,33 @@ export default function UboDeclarationPage() {
                   />
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-[2fr_1.5fr_120px_80px] gap-2">
                 <input
                   value={u.name}
                   onChange={(e) => update(idx, "name", e.target.value)}
                   placeholder="Full legal name"
-                  className={`${inputCls} flex-[2]`}
+                  className={inputCls}
                 />
-                <DateParts
-                  value={u.dob}
-                  onChange={(v) => update(idx, "dob", v)}
-                  className={`${inputCls} flex-1`}
+                <input
+                  value={u.nationality}
+                  onChange={(e) => update(idx, "nationality", e.target.value)}
+                  placeholder="Nationality / country"
+                  className={inputCls}
                 />
                 <select
                   value={u.gender}
                   onChange={(e) => update(idx, "gender", e.target.value)}
-                  className={`${inputCls} flex-1`}
+                  className={inputCls}
                 >
                   <option value="">Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                 </select>
                 <input
-                  value={u.nationality}
-                  onChange={(e) => update(idx, "nationality", e.target.value)}
-                  placeholder="Nationality"
-                  className={`${inputCls} flex-1`}
-                />
-                <input
                   value={u.ownershipPct}
                   onChange={(e) => update(idx, "ownershipPct", e.target.value.replace(/[^\d.]/g, ""))}
                   placeholder="%"
-                  className={`${inputCls} w-16 flex-none`}
+                  className={inputCls}
                 />
               </div>
             </div>
