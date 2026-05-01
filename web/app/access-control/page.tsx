@@ -454,8 +454,10 @@ export default function AccessControlPage() {
         localStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
       }
     } catch {
-      const cached = localStorage.getItem("hawkeye.access.users");
-      if (cached) setUsers(JSON.parse(cached) as AccessUser[]);
+      try {
+        const cached = localStorage.getItem("hawkeye.access.users");
+        if (cached) setUsers(JSON.parse(cached) as AccessUser[]);
+      } catch { /* corrupted cache — ignore */ }
     } finally {
       setLoadingUsers(false);
     }
@@ -471,19 +473,23 @@ export default function AccessControlPage() {
         localStorage.setItem("hawkeye.access.log", JSON.stringify(data.log));
       }
     } catch {
-      const cached = localStorage.getItem("hawkeye.access.log");
-      if (cached) setLog(JSON.parse(cached) as PermissionLogEntry[]);
+      try {
+        const cached = localStorage.getItem("hawkeye.access.log");
+        if (cached) setLog(JSON.parse(cached) as PermissionLogEntry[]);
+      } catch { /* corrupted cache — ignore */ }
     } finally {
       setLoadingLog(false);
     }
   }, []);
 
   useEffect(() => {
-    // Hydrate from localStorage immediately
-    const cachedUsers = localStorage.getItem("hawkeye.access.users");
-    if (cachedUsers) setUsers(JSON.parse(cachedUsers) as AccessUser[]);
-    const cachedLog = localStorage.getItem("hawkeye.access.log");
-    if (cachedLog) setLog(JSON.parse(cachedLog) as PermissionLogEntry[]);
+    // Hydrate from localStorage immediately (guarded against corrupted data)
+    try {
+      const cachedUsers = localStorage.getItem("hawkeye.access.users");
+      if (cachedUsers) setUsers(JSON.parse(cachedUsers) as AccessUser[]);
+      const cachedLog = localStorage.getItem("hawkeye.access.log");
+      if (cachedLog) setLog(JSON.parse(cachedLog) as PermissionLogEntry[]);
+    } catch { /* corrupted cache — will be replaced by API response */ }
 
     void fetchUsers();
     void fetchLog();
