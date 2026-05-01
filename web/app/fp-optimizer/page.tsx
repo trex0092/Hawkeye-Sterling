@@ -244,7 +244,7 @@ export default function FpOptimizerPage() {
                 <div className="font-mono text-11 uppercase tracking-wide text-ink-3 mb-3">
                   FP Patterns Identified
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {analysisResult.patterns.map((pattern: FpPattern, i) => (
                     <div key={i} className="border border-hair-2 rounded-lg p-4 bg-bg-1">
                       <div className="flex items-start justify-between mb-2 gap-2">
@@ -341,7 +341,7 @@ export default function FpOptimizerPage() {
             <div className="font-mono text-11 uppercase tracking-wide text-ink-3 mb-4">
               New Screening Hit — FP Prediction
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="block text-11 font-mono text-ink-3 mb-1">Subject Name</label>
                 <input

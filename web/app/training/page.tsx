@@ -341,7 +341,7 @@ export default function TrainingPage() {
                     editingId === r.id ? (
                       <tr key={r.id} className={i < rows.length - 1 ? "border-b border-hair" : ""}>
                         <td colSpan={8} className="px-3 py-2">
-                          <div className="grid grid-cols-6 gap-2 mb-1.5">
+                          <div className="grid grid-cols-6 gap-3 mb-1.5">
                             <input value={editDraft.name} onChange={setEdit("name")} placeholder="Name" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0 col-span-1" />
                             <input value={editDraft.course} onChange={setEdit("course")} placeholder="Course" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 col-span-2" />
                             <input value={editDraft.provider} onChange={setEdit("provider")} placeholder="Provider" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
@@ -390,12 +390,12 @@ export default function TrainingPage() {
               <div className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2 mb-2">
                 Log new training
               </div>
-              <div className="grid grid-cols-3 gap-2 mb-2">
+              <div className="grid grid-cols-3 gap-3 mb-2">
                 <input value={draft.name} onChange={set("name")} placeholder="Name" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
                 <input value={draft.course} onChange={set("course")} placeholder="Course" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
                 <input value={draft.provider} onChange={set("provider")} placeholder="Training Provider" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 <input value={draft.completed} onChange={set("completed")} placeholder="Completed dd/mm/yyyy" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
                 <input value={draft.durationHrs} onChange={set("durationHrs")} placeholder="Duration (Hrs)" type="number" min="0" step="0.5" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
                 <input value={draft.delivery} onChange={set("delivery")} placeholder="Delivery Method" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
@@ -457,7 +457,7 @@ export default function TrainingPage() {
                       return editing ? (
                         <tr key={s.session} className="border-b border-hair bg-bg-1">
                           <td colSpan={11} className="px-3 py-3">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                            <div className="grid grid-cols-4 gap-3 mb-2">
                               <input value={progEditDraft.subject ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, subject: e.target.value }))} placeholder="Subject" className="col-span-2 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded text-ink-0" />
                               <input value={progEditDraft.dateWeek ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, dateWeek: e.target.value }))} placeholder="Date / Week" className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0 font-mono" />
                               <input value={String(progEditDraft.durationHrs ?? "")} onChange={(e) => setProgEditDraft((d) => ({ ...d, durationHrs: Number(e.target.value) }))} placeholder="Hrs" type="number" min={0} step={0.5} className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0 font-mono" />

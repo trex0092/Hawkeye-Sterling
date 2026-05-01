@@ -307,7 +307,7 @@ export default function InvestigationPage() {
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") addParty(); if (e.key === "Escape") setAddingParty(false); }}
                   placeholder="Name…" className={inputCls} />
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <select value={newKind} onChange={(e) => setNewKind(e.target.value as PartyKind)} className={selectCls}>
                     {(Object.keys(PARTY_LABEL) as PartyKind[]).map((k) => (
                       <option key={k} value={k}>{PARTY_LABEL[k]}</option>
@@ -374,7 +374,7 @@ export default function InvestigationPage() {
 
             {addingEvent && (
               <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className={inputCls} />
                   <select value={newEvKind} onChange={(e) => setNewEvKind(e.target.value as EventKind)} className={selectCls}>
                     {(Object.keys(EVENT_LABEL) as EventKind[]).map((k) => (

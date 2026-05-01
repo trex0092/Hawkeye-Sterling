@@ -123,7 +123,7 @@ export default function PepProfilePage() {
           Subject Information
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
               Full Name <span className="text-red">*</span>
@@ -146,7 +146,7 @@ export default function PepProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Position / Title</label>
             <input
@@ -167,7 +167,7 @@ export default function PepProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Political Party</label>
             <input
@@ -201,7 +201,7 @@ export default function PepProfilePage() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-2 gap-3 mb-5">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Source of Wealth</label>
             <textarea

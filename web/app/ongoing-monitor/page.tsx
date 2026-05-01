@@ -450,12 +450,12 @@ export default function OngoingMonitorPage() {
 
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-0">
             <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Enrol subject</div>
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="grid grid-cols-3 gap-3 mb-2">
               <input value={draft.name} onChange={set("name")} placeholder="Subject name" className={inputCls} />
               <input value={draft.caseId} onChange={set("caseId")} placeholder="Case ID (optional)" className={inputCls} />
               <input value={draft.enrolledBy} onChange={set("enrolledBy")} placeholder="Enrolled by" className={inputCls} />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <select value={draft.tier} onChange={set("tier")} className={inputCls}>
                 <option value="high">High risk</option>
                 <option value="medium">Medium risk</option>
@@ -492,7 +492,7 @@ export default function OngoingMonitorPage() {
                   editingId === s.id ? (
                     <tr key={s.id} className={i < subjects.length - 1 ? "border-b border-hair" : ""}>
                       <td colSpan={9} className="px-3 py-2">
-                        <div className="grid grid-cols-5 gap-2 mb-1.5">
+                        <div className="grid grid-cols-5 gap-3 mb-1.5">
                           <input value={editDraft.name} onChange={setE("name")} placeholder="Subject name" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0 col-span-2" />
                           <input value={editDraft.caseId} onChange={setE("caseId")} placeholder="Case ID" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
                           <select value={editDraft.tier} onChange={setE("tier")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">

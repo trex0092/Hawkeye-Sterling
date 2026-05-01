@@ -1562,32 +1562,34 @@ export default function ScreeningPage() {
             // when the upstream feed is degraded (e.g. Taranis returned 0
             // items). Normalise everything so the UI doesn't crash on
             // missing arrays / undefined counters.
-            const findings = amVerdict.findings ?? [];
-            const fatfRecs = amVerdict.fatfRecommendations ?? [];
-            const investigations = amVerdict.investigationLines ?? [];
-            const breakdown = amVerdict.categoryBreakdown ?? [];
-            const modes = amVerdict.modesCited ?? [];
-            const tierStyle = ADVERSE_TIER_STYLE[amVerdict.riskTier] ?? "bg-bg-2 text-ink-2";
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const v = amVerdict!;
+            const findings = v.findings ?? [];
+            const fatfRecs = v.fatfRecommendations ?? [];
+            const investigations = v.investigationLines ?? [];
+            const breakdown = v.categoryBreakdown ?? [];
+            const modes = v.modesCited ?? [];
+            const tierStyle = ADVERSE_TIER_STYLE[v.riskTier] ?? "bg-bg-2 text-ink-2";
             return (
             <div className="space-y-4">
-              <div className={`border-2 rounded-xl p-5 ${amVerdict.riskTier === "critical" || amVerdict.riskTier === "high" ? "border-red/40" : amVerdict.riskTier === "medium" ? "border-amber/40" : "border-hair-2"}`}>
+              <div className={`border-2 rounded-xl p-5 ${v.riskTier === "critical" || v.riskTier === "high" ? "border-red/40" : v.riskTier === "medium" ? "border-amber/40" : "border-hair-2"}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="text-16 font-semibold text-ink-0">{amVerdict.subject}</h3>
-                    <p className="text-12 text-ink-2 mt-0.5">{amVerdict.riskDetail}</p>
+                    <h3 className="text-16 font-semibold text-ink-0">{v.subject}</h3>
+                    <p className="text-12 text-ink-2 mt-0.5">{v.riskDetail}</p>
                   </div>
                   <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${tierStyle}`}>
-                    {amVerdict.riskTier}
+                    {v.riskTier}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-5 gap-3 mb-4">
                   {[
-                    { label: "Total", value: amVerdict.totalItems ?? 0 },
-                    { label: "Adverse", value: amVerdict.adverseItems ?? 0 },
-                    { label: "Critical", value: amVerdict.criticalCount ?? 0 },
-                    { label: "High", value: amVerdict.highCount ?? 0 },
-                    { label: "Medium", value: amVerdict.mediumCount ?? 0 },
+                    { label: "Total", value: v.totalItems ?? 0 },
+                    { label: "Adverse", value: v.adverseItems ?? 0 },
+                    { label: "Critical", value: v.criticalCount ?? 0 },
+                    { label: "High", value: v.highCount ?? 0 },
+                    { label: "Medium", value: v.mediumCount ?? 0 },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-bg-1 border border-hair-2 rounded p-2 text-center">
                       <div className="text-18 font-mono font-semibold text-ink-0">{value}</div>
@@ -1596,10 +1598,10 @@ export default function ScreeningPage() {
                   ))}
                 </div>
 
-                {amVerdict.sarRecommended && (
+                {v.sarRecommended && (
                   <div className="bg-red-dim border border-red/30 rounded-lg p-3 mb-3">
                     <span className="text-12 font-bold text-red uppercase">SAR RECOMMENDED (FATF R.20)</span>
-                    <p className="text-11 text-red/80 mt-1 leading-relaxed">{amVerdict.sarBasis}</p>
+                    <p className="text-11 text-red/80 mt-1 leading-relaxed">{v.sarBasis}</p>
                   </div>
                 )}
 
@@ -1612,7 +1614,7 @@ export default function ScreeningPage() {
                 )}
 
                 <p className="text-11 text-ink-3">
-                  Confidence: <span className="font-semibold text-ink-1">{(amVerdict.confidenceTier ?? "low").toUpperCase()}</span> {amVerdict.confidenceBasis ? `- ${amVerdict.confidenceBasis}` : ""}
+                  Confidence: <span className="font-semibold text-ink-1">{(v.confidenceTier ?? "low").toUpperCase()}</span> {v.confidenceBasis ? `- ${v.confidenceBasis}` : ""}
                 </p>
               </div>
 
@@ -1647,10 +1649,10 @@ export default function ScreeningPage() {
                 </div>
               )}
 
-              {amVerdict.counterfactual && (
+              {v.counterfactual && (
                 <div className="bg-amber-dim border border-amber/30 rounded-xl p-4">
                   <p className="text-11 font-semibold text-amber mb-1">Counterfactual Assessment</p>
-                  <p className="text-11 text-amber/80 leading-relaxed">{amVerdict.counterfactual}</p>
+                  <p className="text-11 text-amber/80 leading-relaxed">{v.counterfactual}</p>
                 </div>
               )}
 

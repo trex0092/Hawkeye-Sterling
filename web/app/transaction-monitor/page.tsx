@@ -280,8 +280,8 @@ export default function TransactionMonitorPage() {
     };
     setTxs((prev) => [row, ...prev]);
     // Push bell event when behavioural flags fire or amount ≥ DPMS threshold
-    if (row.behaviouralFlags.length > 0 || amount >= 55000) {
-      const isReportable = amount >= 55000;
+    if (row.behaviouralFlags.length > 0 || parsedAmount >= 55000) {
+      const isReportable = parsedAmount >= 55000;
       pushBellEvent({
         id: `tm-${row.id}`,
         listId: isReportable ? "ofac_sdn" : "eu_consolidated",
