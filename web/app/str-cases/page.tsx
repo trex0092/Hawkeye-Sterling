@@ -352,7 +352,7 @@ export default function StrCasesPage() {
                   onClick={() => {
                     const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
                     exportStrDraft({
-                      subject: open.length > 0 ? open[0].subject : "Multiple subjects",
+                      subject: open[0]?.subject ?? "Multiple subjects",
                       narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
                       transactions: [],
                       composite: 75,
