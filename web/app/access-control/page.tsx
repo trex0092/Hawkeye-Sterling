@@ -512,7 +512,7 @@ export default function AccessControlPage() {
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string };
       if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
       if (data.user) setUsers((prev) => [...prev, data.user!]);
-      setAddForm({ name: "", email: "", role: "compliance"});
+      setAddForm({ name: "", email: "", role: "compliance" });
       setShowAddForm(false);
       void fetchLog();
     } catch {
@@ -646,7 +646,7 @@ export default function AccessControlPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance"}); }}
+                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance" }); }}
                   className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
                 >
                   Cancel

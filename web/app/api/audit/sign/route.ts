@@ -45,6 +45,7 @@ const ALLOWED_ACTIONS = new Set([
   // result lands in the tamper-evident HMAC chain in Netlify Blobs —
   // not just the client-side localStorage copy.
   "subject_added",
+  "subject_removed",
   "screening_completed",
   "ongoing_enrolled",
   "subject_removed",
@@ -59,6 +60,7 @@ const ACTION_MIN_ROLE: Record<string, string> = {
   dispose:             "mlro",
   goaml_submit:        "mlro",
   subject_added:       "analyst",
+  subject_removed:     "analyst",
   screening_completed: "analyst",
   ongoing_enrolled:    "analyst",
   subject_removed:     "analyst",
