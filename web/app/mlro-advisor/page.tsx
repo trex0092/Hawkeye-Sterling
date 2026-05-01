@@ -596,48 +596,6 @@ interface PepEddResult { pepClassification: "domestic_pep"|"foreign_pep"|"intern
 interface SanctionsListHit { list: string; listAuthority: string; hitType: "confirmed"|"possible"|"name_match"|"none"; designationDate?: string; designationBasis?: string; assetFreezeRequired: boolean; freezeTimeline?: string; dealingProhibition: boolean; reportingObligation?: string }
 interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"medium"|"low"|"none"; immediateFreeze: boolean; freezeBasis?: string; listHits: SanctionsListHit[]; assetFreezeRequired: boolean; dealingProhibition: boolean; tippingOffRisk: boolean; recommendedAction: "freeze_immediately"|"file_str"|"escalate_mlro"|"enhanced_screening"|"clear"; actionRationale: string; frozenAssetReportingDeadline?: string; applicableRegime: string[]; complianceObligations: string[]; regulatoryBasis: string }
 
-// ── Tax Evasion ML types ─────────────────────────────────────────────────────
-
-interface TaxEvasionIdentifiedScheme { scheme: string; description: string; estimatedImpact: string; detectabilityRisk: "low"|"medium"|"high"; legalRef: string }
-interface TaxEvasionJurisdictionItem { jurisdiction: string; role: "tax_haven"|"conduit"|"sink"|"clean"; bepsRisk: string; taxTreatyAbuse: boolean }
-interface TaxEvasionResult {
-  taxEvasionRiskScore: number;
-  riskTier: "low"|"medium"|"high"|"critical";
-  identifiedSchemes: TaxEvasionIdentifiedScheme[];
-  jurisdictionAnalysis: TaxEvasionJurisdictionItem[];
-  wealthIncomeDiscrepancy: { declared: string; estimated: string; plausibility: "plausible"|"questionable"|"implausible"; explanation: string };
-  crsGaps: string[];
-  transferPricingFlags: string[];
-  roundTrippingIndicators: string[];
-  regulatoryRequirements: Array<{ obligation: string; regulation: string }>;
-  redFlags: string[];
-  recommendation: "clear"|"monitor"|"request_tax_docs"|"file_str"|"report_to_tax_authority";
-  taxAuthorityReferral: boolean;
-  estimatedTaxLiability: string;
-  summary: string;
-}
-
-// ── Human Trafficking ML types ───────────────────────────────────────────────
-
-interface HtFinancialPattern { pattern: string; description: string; severity: "low"|"medium"|"high"; fatfRef: string }
-interface HumanTraffickingResult {
-  htRiskScore: number;
-  htRiskTier: "low"|"medium"|"high"|"critical";
-  traffickingType: Array<"labour"|"sexual"|"organ"|"forced_criminality"|"mixed">;
-  iloIndicatorsPresent: string[];
-  financialPatterns: HtFinancialPattern[];
-  geographicRiskAnalysis: { originRisk: string; destinationRisk: string; corridorRisk: string; knownRoutes: string[] };
-  victimProfileIndicators: string[];
-  controllerNetworkFlags: string[];
-  regulatoryObligations: Array<{ obligation: string; regulation: string; timeline: string }>;
-  redFlags: string[];
-  recommendation: "clear"|"monitor"|"edd"|"file_str_immediate"|"report_to_law_enforcement";
-  lawEnforcementReferral: boolean;
-  referralAgency: string;
-  victimSupportConsideration: string;
-  summary: string;
-}
-
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
 // repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
@@ -1854,7 +1812,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"tax-evasion"|"human-trafficking">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -2415,29 +2373,38 @@ export default function MlroAdvisorPage() {
   const [amlKpiResult, setAmlKpiResult] = useState<Record<string, unknown> | null>(null);
   const [amlKpiLoading, setAmlKpiLoading] = useState(false);
 
-  // ── Tax Evasion ML state ─────────────────────────────────────────────────
-  const [taxEvasionInput, setTaxEvasionInput] = useState({
-    entity: "", entityType: "corporate" as "individual"|"corporate"|"trust"|"foundation",
-    jurisdiction: "", offshoreJurisdictions: [] as string[], offshoreJurisdictionsText: "",
-    structureType: "holding_company" as "direct"|"holding_company"|"trust_structure"|"foundation"|"hybrid",
-    declaredIncome: "", estimatedWealth: "", transactionPatterns: "",
-    taxTreatyAbuse: false, transferPricingConcerns: false, shellCompanies: false,
-    crsReporting: false, fatcaStatus: "unknown" as "compliant"|"non_compliant"|"unknown",
+  // Trade Finance Risk (TBML)
+  const [tradeFinRiskInput, setTradeFinRiskInput] = useState({
+    transactionType: "letter_of_credit" as "letter_of_credit" | "documentary_collection" | "open_account" | "advance_payment" | "guarantee",
+    exporterName: "", exporterCountry: "", exporterSector: "",
+    importerName: "", importerCountry: "", importerSector: "",
+    goods: "", hsCode: "", declaredValue: "", quantity: "", shippingRoute: "", financingBank: "",
+    docMultipleInvoiceRevisions: false, docValueMismatch: false, docPhantomGoods: false,
+    docCircularRouting: false, docOverUnderInvoicing: false,
+    sanctionedPartyFlags: false, dualUseGoods: false,
     context: "",
   });
-  const [taxEvasionResult, setTaxEvasionResult] = useState<TaxEvasionResult | null>(null);
-  const [taxEvasionLoading, setTaxEvasionLoading] = useState(false);
+  const [tradeFinRiskResult, setTradeFinRiskResult] = useState<Record<string, unknown> | null>(null);
+  const [tradeFinRiskLoading, setTradeFinRiskLoading] = useState(false);
 
-  // ── Human Trafficking ML state ───────────────────────────────────────────
-  const [htInput, setHtInput] = useState({
-    entity: "", entityType: "corporate" as "individual"|"corporate"|"network",
-    sector: "", indicators: [] as string[], transactionPatterns: "",
-    originCountries: "", destinationCountries: "", transitCountries: "",
-    cashIntensive: false, multipleVictimAccounts: false, controllingThirdParty: false, unusualWorkingHours: false,
+  // Insider Threat (full assessment — separate from insider-threat-screen)
+  const [itInput, setItInput] = useState({
+    employee: "", role: "",
+    department: "compliance" as "compliance" | "operations" | "it" | "finance" | "front_office" | "risk" | "executive" | "other",
+    accessLevel: "read_write" as "read_only" | "read_write" | "admin" | "super_admin",
+    yearsAtFirm: 0,
+    recentLifeEventsRaw: "",
+    behaviouralIndicatorsRaw: "",
+    unusualHours: false, bulkDataExport: false, unauthorisedSystemAccess: false,
+    deletedLogs: false, vpnFromUnusualLocations: false,
+    lifestyleInflation: false, unexplainedWealth: false, largePersonalTransactions: false,
+    offshoreAccounts: false, gamblingDebt: false,
+    previousSARs: 0, disciplinaryActions: 0, trainingNonCompletion: false,
+    breachedPoliciesRaw: "",
     context: "",
   });
-  const [htResult, setHtResult] = useState<HumanTraffickingResult | null>(null);
-  const [htLoading, setHtLoading] = useState(false);
+  const [itResult, setItResult] = useState<Record<string, unknown> | null>(null);
+  const [itLoading, setItLoading] = useState(false);
 
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
@@ -2912,55 +2879,75 @@ export default function MlroAdvisorPage() {
   const runUboVerify = async () => { setUboVerifyLoading(true); try { const r = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(uboVerifyInput) }); setUboVerifyResult(await r.json()); } catch { setUboVerifyResult({ ok: false, error: "Network error" }); } finally { setUboVerifyLoading(false); } };
   const runAmlKpi = async () => { setAmlKpiLoading(true); try { const r = await fetch("/api/aml-kpi-dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlKpiInput) }); setAmlKpiResult(await r.json()); } catch { setAmlKpiResult({ ok: false, error: "Network error" }); } finally { setAmlKpiLoading(false); } };
 
-  const runTaxEvasion = async () => {
-    if (!taxEvasionInput.entity.trim()) return;
-    setTaxEvasionLoading(true); setTaxEvasionResult(null);
+  const runTradeFinRisk = async () => {
+    if (!tradeFinRiskInput.exporterName.trim() && !tradeFinRiskInput.goods.trim()) return;
+    setTradeFinRiskLoading(true); setTradeFinRiskResult(null);
     try {
       const body = {
-        entity: taxEvasionInput.entity,
-        entityType: taxEvasionInput.entityType,
-        jurisdiction: taxEvasionInput.jurisdiction,
-        offshoreJurisdictions: taxEvasionInput.offshoreJurisdictionsText.split(",").map(s => s.trim()).filter(Boolean),
-        structureType: taxEvasionInput.structureType,
-        declaredIncome: taxEvasionInput.declaredIncome,
-        estimatedWealth: taxEvasionInput.estimatedWealth,
-        transactionPatterns: taxEvasionInput.transactionPatterns,
-        taxTreatyAbuse: taxEvasionInput.taxTreatyAbuse,
-        transferPricingConcerns: taxEvasionInput.transferPricingConcerns,
-        shellCompanies: taxEvasionInput.shellCompanies,
-        crsReporting: taxEvasionInput.crsReporting,
-        fatcaStatus: taxEvasionInput.fatcaStatus,
-        context: taxEvasionInput.context,
+        transactionType: tradeFinRiskInput.transactionType,
+        exporter: { name: tradeFinRiskInput.exporterName, country: tradeFinRiskInput.exporterCountry, sector: tradeFinRiskInput.exporterSector },
+        importer: { name: tradeFinRiskInput.importerName, country: tradeFinRiskInput.importerCountry, sector: tradeFinRiskInput.importerSector },
+        goods: tradeFinRiskInput.goods,
+        hsCode: tradeFinRiskInput.hsCode,
+        declaredValue: tradeFinRiskInput.declaredValue,
+        quantity: tradeFinRiskInput.quantity,
+        shippingRoute: tradeFinRiskInput.shippingRoute,
+        financingBank: tradeFinRiskInput.financingBank,
+        documentFlags: {
+          multipleInvoiceRevisions: tradeFinRiskInput.docMultipleInvoiceRevisions,
+          valueMismatch: tradeFinRiskInput.docValueMismatch,
+          phantomGoods: tradeFinRiskInput.docPhantomGoods,
+          circularRouting: tradeFinRiskInput.docCircularRouting,
+          overUnderInvoicing: tradeFinRiskInput.docOverUnderInvoicing,
+        },
+        sanctionedPartyFlags: tradeFinRiskInput.sanctionedPartyFlags,
+        dualUseGoods: tradeFinRiskInput.dualUseGoods,
+        context: tradeFinRiskInput.context,
       };
-      const r = await fetch("/api/tax-evasion", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      setTaxEvasionResult(await r.json() as TaxEvasionResult);
-    } catch { setTaxEvasionResult(null); } finally { setTaxEvasionLoading(false); }
+      const r = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      setTradeFinRiskResult(await r.json());
+    } catch { setTradeFinRiskResult({ ok: false, error: "Network error" }); }
+    finally { setTradeFinRiskLoading(false); }
   };
 
-  const runHumanTrafficking = async () => {
-    if (!htInput.entity.trim()) return;
-    setHtLoading(true); setHtResult(null);
+  const runInsiderThreatFull = async () => {
+    if (!itInput.employee.trim()) return;
+    setItLoading(true); setItResult(null);
     try {
       const body = {
-        entity: htInput.entity,
-        entityType: htInput.entityType,
-        sector: htInput.sector,
-        indicators: htInput.indicators,
-        transactionPatterns: htInput.transactionPatterns,
-        geographicProfile: {
-          originCountries: htInput.originCountries.split(",").map(s => s.trim()).filter(Boolean),
-          destinationCountries: htInput.destinationCountries.split(",").map(s => s.trim()).filter(Boolean),
-          transitCountries: htInput.transitCountries.split(",").map(s => s.trim()).filter(Boolean),
+        employee: itInput.employee,
+        role: itInput.role,
+        department: itInput.department,
+        accessLevel: itInput.accessLevel,
+        yearsAtFirm: itInput.yearsAtFirm,
+        recentLifeEvents: itInput.recentLifeEventsRaw ? itInput.recentLifeEventsRaw.split(",").map(s => s.trim()).filter(Boolean) : [],
+        behaviouralIndicators: itInput.behaviouralIndicatorsRaw ? itInput.behaviouralIndicatorsRaw.split("\n").map(s => s.trim()).filter(Boolean) : [],
+        systemAccessAnomalies: {
+          unusualHours: itInput.unusualHours,
+          bulkDataExport: itInput.bulkDataExport,
+          unauthorisedSystemAccess: itInput.unauthorisedSystemAccess,
+          deletedLogs: itInput.deletedLogs,
+          vpnFromUnusualLocations: itInput.vpnFromUnusualLocations,
         },
-        cashIntensive: htInput.cashIntensive,
-        multipleVictimAccounts: htInput.multipleVictimAccounts,
-        controllingThirdParty: htInput.controllingThirdParty,
-        unusualWorkingHours: htInput.unusualWorkingHours,
-        context: htInput.context,
+        financialIndicators: {
+          lifestyleInflation: itInput.lifestyleInflation,
+          unexplainedWealth: itInput.unexplainedWealth,
+          largePersonalTransactions: itInput.largePersonalTransactions,
+          offshoreAccounts: itInput.offshoreAccounts,
+          gamblingDebt: itInput.gamblingDebt,
+        },
+        complianceHistory: {
+          previousSARs: itInput.previousSARs,
+          disciplinaryActions: itInput.disciplinaryActions,
+          trainingNonCompletion: itInput.trainingNonCompletion,
+          breachedPolicies: itInput.breachedPoliciesRaw ? itInput.breachedPoliciesRaw.split(",").map(s => s.trim()).filter(Boolean) : [],
+        },
+        context: itInput.context,
       };
-      const r = await fetch("/api/human-trafficking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      setHtResult(await r.json() as HumanTraffickingResult);
-    } catch { setHtResult(null); } finally { setHtLoading(false); }
+      const r = await fetch("/api/insider-threat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      setItResult(await r.json());
+    } catch { setItResult({ ok: false, error: "Network error" }); }
+    finally { setItLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -3855,10 +3842,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","tax-evasion","human-trafficking"] as const).map((t) => (
+              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","trade-finance-risk","insider-threat"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "tax-evasion" ? "💰 Tax Evasion" : "🚨 Human Trafficking"}
+                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "trade-finance-risk" ? "🚢 Trade Finance Risk" : "👤 Insider Threat"}
                 </button>
               ))}
             </div>
@@ -7849,205 +7836,216 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
-            {/* ── Tax Evasion ML ──────────────────────────────────────────────── */}
-            {superToolsTab === "tax-evasion" && (
+            {/* ── Trade Finance Risk (TBML) ─────────────────────────────────────── */}
+            {superToolsTab === "trade-finance-risk" && (
               <div className="space-y-4">
                 <div>
-                  <div className="text-13 font-semibold text-ink-0">💰 Tax Evasion ML Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · OECD BEPS 15 Actions · CRS / FATCA · Panama & Pandora Papers typologies · UAE CIT 2023 · Pillar Two</div>
+                  <div className="text-13 font-semibold text-ink-0">Trade Finance Risk — TBML Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML 2006/2020 · Wolfsberg Trade Finance Principles · BIS guidance · ICC UCP 600 · UAE FDL 10/2025</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name *</label>
-                    <input value={taxEvasionInput.entity} onChange={e => setTaxEvasionInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual name" />
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label>
-                    <select value={taxEvasionInput.entityType} onChange={e => setTaxEvasionInput(p => ({...p, entityType: e.target.value as "individual"|"corporate"|"trust"|"foundation"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
-                      <option value="individual">Individual</option>
-                      <option value="corporate">Corporate</option>
-                      <option value="trust">Trust</option>
-                      <option value="foundation">Foundation</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Home Jurisdiction</label>
-                    <input value={taxEvasionInput.jurisdiction} onChange={e => setTaxEvasionInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE, UK, Germany" />
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Structure Type</label>
-                    <select value={taxEvasionInput.structureType} onChange={e => setTaxEvasionInput(p => ({...p, structureType: e.target.value as "direct"|"holding_company"|"trust_structure"|"foundation"|"hybrid"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
-                      <option value="direct">Direct</option>
-                      <option value="holding_company">Holding Company</option>
-                      <option value="trust_structure">Trust Structure</option>
-                      <option value="foundation">Foundation</option>
-                      <option value="hybrid">Hybrid</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Offshore Jurisdictions (comma-separated)</label>
-                    <input value={taxEvasionInput.offshoreJurisdictionsText} onChange={e => setTaxEvasionInput(p => ({...p, offshoreJurisdictionsText: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. BVI, Cayman, Luxembourg" />
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">FATCA Status</label>
-                    <select value={taxEvasionInput.fatcaStatus} onChange={e => setTaxEvasionInput(p => ({...p, fatcaStatus: e.target.value as "compliant"|"non_compliant"|"unknown"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
-                      <option value="compliant">Compliant</option>
-                      <option value="non_compliant">Non-Compliant</option>
-                      <option value="unknown">Unknown</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared Annual Income</label>
-                    <input value={taxEvasionInput.declaredIncome} onChange={e => setTaxEvasionInput(p => ({...p, declaredIncome: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 2.4M / USD 650K" />
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Total Wealth</label>
-                    <input value={taxEvasionInput.estimatedWealth} onChange={e => setTaxEvasionInput(p => ({...p, estimatedWealth: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 45M based on property, offshore accounts" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Patterns</label>
-                    <textarea value={taxEvasionInput.transactionPatterns} onChange={e => setTaxEvasionInput(p => ({...p, transactionPatterns: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe observed transaction patterns: intra-group flows, offshore transfers, royalty payments, management fees…" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Risk Indicators</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {([
-                        { key: "taxTreatyAbuse", label: "Tax Treaty Abuse / Treaty Shopping" },
-                        { key: "transferPricingConcerns", label: "Transfer Pricing Concerns" },
-                        { key: "shellCompanies", label: "Shell Company Involvement" },
-                        { key: "crsReporting", label: "CRS Reporting Compliant" },
-                      ] as const).map(({ key, label }) => (
-                        <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
-                          <input type="checkbox" checked={taxEvasionInput[key]} onChange={e => setTaxEvasionInput(p => ({...p, [key]: e.target.checked}))} className="w-4 h-4 rounded border border-hair-2 accent-brand" />
-                          <span className="text-11 text-ink-1">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label>
-                    <textarea value={taxEvasionInput.context} onChange={e => setTaxEvasionInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Any additional relevant information about the entity, source of wealth, business rationale…" />
-                  </div>
-                </div>
-                <button type="button" onClick={() => void runTaxEvasion()} disabled={taxEvasionLoading || !taxEvasionInput.entity.trim()} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">
-                  {taxEvasionLoading ? "◌ Analysing…" : "Run Tax Evasion ML Analysis"}
-                </button>
 
-                {taxEvasionResult && (() => {
-                  const r = taxEvasionResult;
-                  const scoreCls = r.taxEvasionRiskScore >= 76 ? "text-red" : r.taxEvasionRiskScore >= 51 ? "text-amber" : r.taxEvasionRiskScore >= 26 ? "text-brand" : "text-green";
-                  const tierCls = r.riskTier === "critical" ? "bg-red text-white" : r.riskTier === "high" ? "bg-red-dim text-red" : r.riskTier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
-                  const recCls = r.recommendation === "report_to_tax_authority" || r.recommendation === "file_str" ? "bg-red text-white" : r.recommendation === "request_tax_docs" ? "bg-amber-dim text-amber" : r.recommendation === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
-                  const plausibilityCls = r.wealthIncomeDiscrepancy.plausibility === "implausible" ? "text-red border-red/30 bg-red-dim" : r.wealthIncomeDiscrepancy.plausibility === "questionable" ? "text-amber border-amber/30 bg-amber-dim" : "text-green border-green/30 bg-green-dim";
+                {/* Transaction & Parties */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Type</label>
+                    <select value={tradeFinRiskInput.transactionType} onChange={e => setTradeFinRiskInput(p => ({...p, transactionType: e.target.value as typeof p.transactionType}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="letter_of_credit">Letter of Credit (MT700)</option>
+                      <option value="documentary_collection">Documentary Collection</option>
+                      <option value="open_account">Open Account</option>
+                      <option value="advance_payment">Advance Payment</option>
+                      <option value="guarantee">Guarantee / Standby LC</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exporter Name</label><input value={tradeFinRiskInput.exporterName} onChange={e => setTradeFinRiskInput(p => ({...p, exporterName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exporter Country</label><input value={tradeFinRiskInput.exporterCountry} onChange={e => setTradeFinRiskInput(p => ({...p, exporterCountry: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE, China, Turkey" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exporter Sector</label><input value={tradeFinRiskInput.exporterSector} onChange={e => setTradeFinRiskInput(p => ({...p, exporterSector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. commodities, electronics" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Importer Name</label><input value={tradeFinRiskInput.importerName} onChange={e => setTradeFinRiskInput(p => ({...p, importerName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Importer Country</label><input value={tradeFinRiskInput.importerCountry} onChange={e => setTradeFinRiskInput(p => ({...p, importerCountry: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Pakistan, Nigeria" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Importer Sector</label><input value={tradeFinRiskInput.importerSector} onChange={e => setTradeFinRiskInput(p => ({...p, importerSector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. manufacturing, retail" /></div>
+                </div>
+
+                {/* Goods & Value */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Goods Description</label><input value={tradeFinRiskInput.goods} onChange={e => setTradeFinRiskInput(p => ({...p, goods: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. industrial precision components, gold bullion, consumer electronics" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">HS Code</label><input value={tradeFinRiskInput.hsCode} onChange={e => setTradeFinRiskInput(p => ({...p, hsCode: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 8487.90" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared Value</label><input value={tradeFinRiskInput.declaredValue} onChange={e => setTradeFinRiskInput(p => ({...p, declaredValue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 3,450,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Quantity</label><input value={tradeFinRiskInput.quantity} onChange={e => setTradeFinRiskInput(p => ({...p, quantity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 50,000 units / 2 containers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Shipping Route</label><input value={tradeFinRiskInput.shippingRoute} onChange={e => setTradeFinRiskInput(p => ({...p, shippingRoute: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Dubai → Singapore → Panama → Lagos" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Financing Bank</label><input value={tradeFinRiskInput.financingBank} onChange={e => setTradeFinRiskInput(p => ({...p, financingBank: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. ABC Bank Dubai" /></div>
+                </div>
+
+                {/* Document Flags */}
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Documentary Red Flags</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      ["docMultipleInvoiceRevisions", "Multiple invoice revisions with material value changes"],
+                      ["docValueMismatch", "Value mismatch across documentary set"],
+                      ["docPhantomGoods", "Phantom goods / no evidence of physical shipment"],
+                      ["docCircularRouting", "Circular or unexplained shipping route"],
+                      ["docOverUnderInvoicing", "Over/under-invoicing vs. market price"],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
+                        <input type="checkbox" checked={tradeFinRiskInput[key]} onChange={e => setTradeFinRiskInput(p => ({...p, [key]: e.target.checked}))} className="rounded border-hair-2 accent-brand" />
+                        {label}
+                      </label>
+                    ))}
+                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
+                      <input type="checkbox" checked={tradeFinRiskInput.sanctionedPartyFlags} onChange={e => setTradeFinRiskInput(p => ({...p, sanctionedPartyFlags: e.target.checked}))} className="rounded border-hair-2 accent-red" />
+                      <span className="text-red">Sanctioned party / jurisdiction flag</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
+                      <input type="checkbox" checked={tradeFinRiskInput.dualUseGoods} onChange={e => setTradeFinRiskInput(p => ({...p, dualUseGoods: e.target.checked}))} className="rounded border-hair-2 accent-amber" />
+                      <span className="text-amber">Dual-use / controlled goods</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label><textarea value={tradeFinRiskInput.context} onChange={e => setTradeFinRiskInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Relationship history, prior transactions, intelligence, adverse media…" /></div>
+
+                <button type="button" onClick={() => void runTradeFinRisk()} disabled={tradeFinRiskLoading || (!tradeFinRiskInput.exporterName.trim() && !tradeFinRiskInput.goods.trim())} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{tradeFinRiskLoading ? "◌ Analysing TBML risk…" : "Run TBML Risk Analysis"}</button>
+
+                {tradeFinRiskResult && (() => {
+                  const r = tradeFinRiskResult;
+                  const score = Number(r["tbmlRiskScore"] ?? 0);
+                  const tier = String(r["riskTier"] ?? "");
+                  const tierCls = tier === "critical" ? "bg-red text-white" : tier === "high" ? "bg-red-dim text-red" : tier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const rec = String(r["recommendation"] ?? "");
+                  const recCls = rec === "refuse_transaction" || rec === "file_str" ? "bg-red text-white" : rec === "independent_valuation" ? "bg-amber-dim text-amber" : rec === "request_additional_docs" ? "bg-violet-dim text-violet" : "bg-green-dim text-green";
+                  const recLabel = rec === "clear" ? "CLEAR" : rec === "request_additional_docs" ? "REQUEST ADDITIONAL DOCS" : rec === "independent_valuation" ? "INDEPENDENT VALUATION REQUIRED" : rec === "file_str" ? "FILE STR" : "REFUSE TRANSACTION";
+                  const schemes = r["identifiedSchemes"] as Array<{scheme:string;description:string;evidence:string;estimatedDiscrepancy:string;fatfRef:string}> ?? [];
+                  const pa = r["priceAnalysis"] as {declaredValue:string;benchmarkRange:string;variance:string;anomalyScore:number;interpretation:string} | undefined;
+                  const gr = r["goodsRiskAssessment"] as {goodsDescription:string;dualUseRisk:boolean;sanctionedGoodsRisk:boolean;hsCodeFlags:string[];physicalPlausibility:string} | undefined;
+                  const cp = r["counterpartyRisk"] as {exporterRisk:string;importerRisk:string;sharedBeneficialOwner:boolean;relatedPartyTransaction:boolean} | undefined;
+                  const docRisk = r["documentaryRisk"] as string[] ?? [];
+                  const redFlags = r["redFlags"] as string[] ?? [];
+                  const obligations = r["regulatoryObligations"] as Array<{obligation:string;regulation:string}> ?? [];
+                  const actions = r["immediateActions"] as string[] ?? [];
                   return (
                     <div className="mt-3 space-y-4 bg-bg-1 rounded-lg p-4">
                       {/* Score header */}
                       <div className="flex items-center gap-4 flex-wrap">
                         <div className="text-center">
-                          <div className={`text-40 font-bold leading-none ${scoreCls}`}>{r.taxEvasionRiskScore}</div>
-                          <div className="text-10 font-mono text-ink-3 uppercase mt-1">Tax Evasion Risk Score</div>
+                          <div className={`text-32 font-bold ${score >= 75 ? "text-red" : score >= 50 ? "text-amber" : "text-brand"}`}>{score}</div>
+                          <div className="text-10 font-mono text-ink-3 uppercase">TBML Risk Score</div>
                         </div>
-                        <div className="space-y-1.5">
-                          <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${tierCls}`}>{r.riskTier} Risk</span>
-                          <div>
-                            <span className={`font-mono text-11 px-2 py-0.5 rounded uppercase ${recCls}`}>{r.recommendation.replace(/_/g, " ")}</span>
+                        <div className="flex flex-col gap-1.5">
+                          <span className={`font-mono text-11 font-semibold uppercase px-3 py-1 rounded ${tierCls}`}>{tier.toUpperCase()} RISK</span>
+                          <span className={`font-mono text-11 font-semibold uppercase px-3 py-1 rounded ${recCls}`}>{recLabel}</span>
+                        </div>
+                        {Boolean(r["sanctionedRouteRisk"]) && (
+                          <div className="flex-1 text-11 text-amber bg-amber-dim/30 rounded px-3 py-2 leading-relaxed">
+                            <span className="font-semibold uppercase text-10 tracking-wide-3 block mb-0.5">Sanctioned Route Risk</span>
+                            {String(r["sanctionedRouteRisk"])}
                           </div>
-                          {r.taxAuthorityReferral && <div><span className="font-mono text-11 px-2 py-0.5 rounded bg-red text-white">TAX AUTHORITY REFERRAL WARRANTED</span></div>}
-                        </div>
-                        <div className="flex-1 text-12 text-ink-1 leading-relaxed border-l border-hair-2 pl-4">{r.summary}</div>
+                        )}
                       </div>
+
+                      {/* Price Analysis */}
+                      {pa && (
+                        <div className="border border-hair-2 rounded-lg p-3 space-y-2">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Price Analysis</div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div><div className="text-10 text-ink-3 mb-0.5">Declared Value</div><div className="text-12 font-semibold text-ink-0">{pa.declaredValue}</div></div>
+                            <div><div className="text-10 text-ink-3 mb-0.5">Market Benchmark</div><div className="text-12 font-semibold text-ink-0">{pa.benchmarkRange}</div></div>
+                            <div><div className="text-10 text-ink-3 mb-0.5">Variance</div><div className={`text-12 font-bold ${pa.anomalyScore >= 70 ? "text-red" : pa.anomalyScore >= 40 ? "text-amber" : "text-brand"}`}>{pa.variance}</div></div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-10 text-ink-3 shrink-0">Anomaly Score</div>
+                            <div className="flex-1 h-2 bg-bg-2 rounded overflow-hidden max-w-xs">
+                              <div className={`h-2 ${pa.anomalyScore >= 70 ? "bg-red" : pa.anomalyScore >= 40 ? "bg-amber" : "bg-brand"}`} style={{width:`${Math.min(100, pa.anomalyScore)}%`}} />
+                            </div>
+                            <div className={`font-mono text-12 font-semibold ${pa.anomalyScore >= 70 ? "text-red" : pa.anomalyScore >= 40 ? "text-amber" : "text-brand"}`}>{pa.anomalyScore}/100</div>
+                          </div>
+                          <p className="text-12 text-ink-1 leading-relaxed">{pa.interpretation}</p>
+                        </div>
+                      )}
 
                       {/* Identified Schemes */}
-                      {r.identifiedSchemes.length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Identified Schemes ({r.identifiedSchemes.length})</div>
-                          <div className="space-y-2">
-                            {r.identifiedSchemes.map((s, i) => (
-                              <div key={i} className="px-3 py-2.5 bg-bg-panel border border-hair-2 rounded-lg">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  <span className={`text-10 font-mono px-1.5 py-px rounded uppercase ${s.detectabilityRisk === "high" ? "bg-red-dim text-red" : s.detectabilityRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>detect: {s.detectabilityRisk}</span>
-                                  <span className="text-12 font-semibold text-ink-0">{s.scheme}</span>
-                                </div>
-                                <p className="text-11 text-ink-1 leading-relaxed mb-1">{s.description}</p>
-                                <div className="flex items-center gap-3 text-10 text-ink-3">
-                                  <span className="font-mono">Impact: {s.estimatedImpact}</span>
-                                </div>
-                                <div className="text-10 font-mono text-ink-3 mt-0.5">{s.legalRef}</div>
+                      {schemes.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Identified TBML Schemes ({schemes.length})</div>
+                          {schemes.map((s, i) => (
+                            <div key={i} className="border-l-4 border-red pl-3 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-12 font-semibold text-ink-0">{s.scheme}</span>
+                                <span className="font-mono text-10 text-ink-3">{s.fatfRef}</span>
                               </div>
-                            ))}
-                          </div>
+                              <p className="text-12 text-ink-1 leading-relaxed">{s.description}</p>
+                              <div className="text-11 text-amber"><span className="font-semibold">Evidence:</span> {s.evidence}</div>
+                              {s.estimatedDiscrepancy && <div className="text-11 text-red font-mono">{s.estimatedDiscrepancy}</div>}
+                            </div>
+                          ))}
                         </div>
                       )}
 
-                      {/* Jurisdiction Analysis */}
-                      {r.jurisdictionAnalysis.length > 0 && (
+                      {/* Goods & Counterparty side by side */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {gr && (
+                          <div className="border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Goods Risk Assessment</div>
+                            <div className="flex gap-2 flex-wrap">
+                              {gr.dualUseRisk && <span className="text-10 font-mono px-1.5 py-px rounded bg-amber-dim text-amber">Dual-Use Risk</span>}
+                              {gr.sanctionedGoodsRisk && <span className="text-10 font-mono px-1.5 py-px rounded bg-red-dim text-red">Sanctioned Goods</span>}
+                            </div>
+                            {gr.hsCodeFlags.length > 0 && <ul className="space-y-0.5">{gr.hsCodeFlags.map((f,i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span className="shrink-0">⚑</span>{f}</li>)}</ul>}
+                            <p className="text-11 text-ink-1 leading-relaxed">{gr.physicalPlausibility}</p>
+                          </div>
+                        )}
+                        {cp && (
+                          <div className="border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty Risk</div>
+                            <div className="flex gap-2 flex-wrap mb-1">
+                              {cp.sharedBeneficialOwner && <span className="text-10 font-mono px-1.5 py-px rounded bg-red-dim text-red">Shared UBO</span>}
+                              {cp.relatedPartyTransaction && <span className="text-10 font-mono px-1.5 py-px rounded bg-red-dim text-red">Related Party</span>}
+                            </div>
+                            <div><span className="text-10 text-ink-3">Exporter: </span><span className="text-11 text-ink-1">{cp.exporterRisk}</span></div>
+                            <div><span className="text-10 text-ink-3">Importer: </span><span className="text-11 text-ink-1">{cp.importerRisk}</span></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Documentary Risk */}
+                      {docRisk.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Jurisdiction Analysis</div>
-                          <div className="space-y-2">
-                            {r.jurisdictionAnalysis.map((j, i) => {
-                              const roleCls = j.role === "tax_haven" ? "bg-red-dim text-red" : j.role === "conduit" ? "bg-amber-dim text-amber" : j.role === "sink" ? "bg-red text-white" : "bg-green-dim text-green";
-                              return (
-                                <div key={i} className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
-                                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                                    <span className={`text-10 font-mono px-1.5 py-px rounded uppercase ${roleCls}`}>{j.role.replace(/_/g, " ")}</span>
-                                    <span className="text-12 font-semibold text-ink-0">{j.jurisdiction}</span>
-                                    {j.taxTreatyAbuse && <span className="text-10 font-mono px-1.5 py-px rounded bg-red-dim text-red">treaty abuse</span>}
-                                  </div>
-                                  <p className="text-11 text-ink-2">{j.bepsRisk}</p>
-                                </div>
-                              );
-                            })}
-                          </div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Documentary Red Flags</div>
+                          <ul className="space-y-1">{docRisk.map((d,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">✗</span>{d}</li>)}</ul>
                         </div>
                       )}
-
-                      {/* Wealth / Income Discrepancy */}
-                      <div className={`px-3 py-2.5 border rounded-lg ${plausibilityCls}`}>
-                        <div className="text-10 font-mono uppercase tracking-wide-3 mb-1.5">Wealth / Income Discrepancy — {r.wealthIncomeDiscrepancy.plausibility.toUpperCase()}</div>
-                        <div className="grid grid-cols-2 gap-3 mb-2 text-12">
-                          <div><span className="text-ink-3">Declared:</span> <span className="font-semibold">{r.wealthIncomeDiscrepancy.declared}</span></div>
-                          <div><span className="text-ink-3">Estimated:</span> <span className="font-semibold">{r.wealthIncomeDiscrepancy.estimated}</span></div>
-                        </div>
-                        <p className="text-11 leading-relaxed">{r.wealthIncomeDiscrepancy.explanation}</p>
-                      </div>
-
-                      {/* CRS Gaps, Transfer Pricing, Round-Tripping */}
-                      <div className="grid grid-cols-1 gap-3">
-                        {r.crsGaps.length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">CRS / FATCA Gaps</div><ul className="space-y-0.5">{r.crsGaps.map((g,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-amber shrink-0">⚠</span>{g}</li>)}</ul></div>}
-                        {r.transferPricingFlags.length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Transfer Pricing Flags</div><ul className="space-y-0.5">{r.transferPricingFlags.map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">→</span>{f}</li>)}</ul></div>}
-                        {r.roundTrippingIndicators.length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Round-Tripping Indicators</div><ul className="space-y-0.5">{r.roundTrippingIndicators.map((ri,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">↺</span>{ri}</li>)}</ul></div>}
-                      </div>
 
                       {/* Red Flags */}
-                      {r.redFlags.length > 0 && (
+                      {redFlags.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags ({r.redFlags.length})</div>
-                          <ul className="space-y-1">
-                            {r.redFlags.map((rf,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 font-bold">✗</span>{rf}</li>)}
-                          </ul>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">All Red Flags ({redFlags.length})</div>
+                          <div className="flex flex-wrap gap-1">{redFlags.map((f,i) => <span key={i} className="text-10 font-mono px-2 py-px rounded bg-red-dim text-red">{f}</span>)}</div>
                         </div>
                       )}
 
-                      {/* Regulatory Requirements */}
-                      {r.regulatoryRequirements.length > 0 && (
+                      {/* Regulatory Obligations */}
+                      {obligations.length > 0 && (
                         <div>
                           <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Regulatory Obligations</div>
-                          <div className="space-y-1.5">
-                            {r.regulatoryRequirements.map((req, i) => (
-                              <div key={i} className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
-                                <div className="text-12 text-ink-0 mb-0.5">{req.obligation}</div>
-                                <div className="text-10 font-mono text-ink-3">{req.regulation}</div>
-                              </div>
-                            ))}
-                          </div>
+                          <ul className="space-y-1.5">{obligations.map((o,i) => (
+                            <li key={i} className="text-12 text-ink-1 leading-relaxed">
+                              <span className="font-mono text-10 text-violet">[{o.regulation}]</span> {o.obligation}
+                            </li>
+                          ))}</ul>
                         </div>
                       )}
 
-                      {/* Estimated Tax Liability */}
-                      {r.estimatedTaxLiability && (
-                        <div className="px-3 py-2 bg-amber-dim border border-amber/30 rounded">
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1">Estimated Tax Liability Exposure</div>
-                          <p className="text-12 text-ink-0">{r.estimatedTaxLiability}</p>
+                      {/* Immediate Actions */}
+                      {actions.length > 0 && (
+                        <div className="bg-red-dim/20 border border-red/20 rounded-lg p-3">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-red mb-1.5">Immediate Actions Required</div>
+                          <ol className="space-y-1 list-decimal list-inside">{actions.map((a,i) => <li key={i} className="text-12 text-ink-0 leading-relaxed">{a}</li>)}</ol>
+                        </div>
+                      )}
+
+                      {/* Summary */}
+                      {Boolean(r["summary"]) && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Assessment Summary</div>
+                          <p className="text-12 text-ink-1 leading-relaxed">{String(r["summary"])}</p>
                         </div>
                       )}
                     </div>
@@ -8056,165 +8054,163 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
-            {/* ── Human Trafficking ML ────────────────────────────────────────── */}
-            {superToolsTab === "human-trafficking" && (
+            {/* ── Insider Threat ────────────────────────────────────────────────── */}
+            {superToolsTab === "insider-threat" && (
               <div className="space-y-4">
                 <div>
-                  <div className="text-13 font-semibold text-ink-0">🚨 Human Trafficking ML Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF HT Guidance (2018/2023) · Palermo Protocol · ILO 11 Forced Labour Indicators · UAE Federal Law 51/2006 · Kafala exploitation patterns</div>
+                  <div className="text-13 font-semibold text-ink-0">Insider Threat Assessor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF insider facilitation · ACAMS insider threat framework · CERT MERIT model · MICE analysis · UAE FDL 10/2025 Art.26 · CBUAE staff screening</div>
                 </div>
+
+                {/* Employee basics */}
                 <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Name / Identifier</label><input value={itInput.employee} onChange={e => setItInput(p => ({...p, employee: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name or reference ID" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Role / Job Title</label><input value={itInput.role} onChange={e => setItInput(p => ({...p, role: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Senior Compliance Analyst" /></div>
                   <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity / Subject Name *</label>
-                    <input value={htInput.entity} onChange={e => setHtInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual, company, or network name" />
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label>
-                    <select value={htInput.entityType} onChange={e => setHtInput(p => ({...p, entityType: e.target.value as "individual"|"corporate"|"network"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
-                      <option value="individual">Individual</option>
-                      <option value="corporate">Corporate</option>
-                      <option value="network">Network</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sector</label>
-                    <select value={htInput.sector} onChange={e => setHtInput(p => ({...p, sector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
-                      <option value="">Select sector…</option>
-                      <option value="hospitality">Hospitality</option>
-                      <option value="domestic_work">Domestic Work</option>
-                      <option value="construction">Construction</option>
-                      <option value="agriculture">Agriculture</option>
-                      <option value="entertainment">Entertainment</option>
-                      <option value="manufacturing">Manufacturing</option>
-                      <option value="retail">Retail</option>
-                      <option value="transport">Transport / Logistics</option>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Department</label>
+                    <select value={itInput.department} onChange={e => setItInput(p => ({...p, department: e.target.value as typeof p.department}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="compliance">Compliance</option>
+                      <option value="operations">Operations</option>
+                      <option value="it">IT / Technology</option>
+                      <option value="finance">Finance / Accounts</option>
+                      <option value="front_office">Front Office</option>
+                      <option value="risk">Risk</option>
+                      <option value="executive">Executive / C-Suite</option>
                       <option value="other">Other</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Countries (comma-separated)</label>
-                    <input value={htInput.originCountries} onChange={e => setHtInput(p => ({...p, originCountries: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Bangladesh, Philippines, Nepal" />
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">System Access Level</label>
+                    <select value={itInput.accessLevel} onChange={e => setItInput(p => ({...p, accessLevel: e.target.value as typeof p.accessLevel}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="read_only">Read Only</option>
+                      <option value="read_write">Read / Write</option>
+                      <option value="admin">Admin</option>
+                      <option value="super_admin">Super Admin</option>
+                    </select>
                   </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Countries (comma-separated)</label>
-                    <input value={htInput.destinationCountries} onChange={e => setHtInput(p => ({...p, destinationCountries: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE, Saudi Arabia, Kuwait" />
-                  </div>
-                  <div>
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transit Countries (comma-separated)</label>
-                    <input value={htInput.transitCountries} onChange={e => setHtInput(p => ({...p, transitCountries: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Oman, Jordan, Turkey" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Patterns</label>
-                    <textarea value={htInput.transactionPatterns} onChange={e => setHtInput(p => ({...p, transactionPatterns: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe observed transaction patterns: multiple depositors, cash intensity, remittance corridors, structured deposits…" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Financial / Operational Indicators</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {([
-                        { key: "cashIntensive", label: "Cash-Intensive Operations" },
-                        { key: "multipleVictimAccounts", label: "Multiple Individuals Depositing to Single Account" },
-                        { key: "controllingThirdParty", label: "Controlling Third Party Identified" },
-                        { key: "unusualWorkingHours", label: "Unusual Working Hours / Activity Patterns" },
-                      ] as const).map(({ key, label }) => (
-                        <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
-                          <input type="checkbox" checked={htInput[key]} onChange={e => setHtInput(p => ({...p, [key]: e.target.checked}))} className="w-4 h-4 rounded border border-hair-2 accent-brand" />
-                          <span className="text-11 text-ink-1">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-2">ILO Forced Labour Indicators (select all that apply)</label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        "Abuse of vulnerability",
-                        "Deception / false promises",
-                        "Restriction of movement",
-                        "Isolation from community",
-                        "Physical or sexual violence",
-                        "Intimidation and threats",
-                        "Retention of identity documents",
-                        "Withholding of wages",
-                        "Debt bondage",
-                        "Abusive working/living conditions",
-                        "Excessive overtime",
-                        "Abuse of legal processes",
-                      ].map(ind => (
-                        <label key={ind} className="flex items-center gap-2 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={htInput.indicators.includes(ind)}
-                            onChange={e => setHtInput(p => ({
-                              ...p,
-                              indicators: e.target.checked
-                                ? [...p.indicators, ind]
-                                : p.indicators.filter(i => i !== ind),
-                            }))}
-                            className="w-4 h-4 rounded border border-hair-2 accent-red"
-                          />
-                          <span className="text-11 text-ink-1">{ind}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label>
-                    <textarea value={htInput.context} onChange={e => setHtInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Intelligence from sector contacts, news, prior STRs, case notes…" />
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Years at Firm</label><input type="number" min={0} value={itInput.yearsAtFirm} onChange={e => setItInput(p => ({...p, yearsAtFirm: Number(e.target.value)}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recent Life Events (comma-separated)</label><input value={itInput.recentLifeEventsRaw} onChange={e => setItInput(p => ({...p, recentLifeEventsRaw: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="divorce, financial_stress, disciplinary_action, passed_over_promotion" /></div>
+                </div>
+
+                {/* Behavioural indicators */}
+                <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Behavioural Indicators (one per line)</label><textarea value={itInput.behaviouralIndicatorsRaw} onChange={e => setItInput(p => ({...p, behaviouralIndicatorsRaw: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="e.g. Arrives early / stays late unexpectedly&#10;Expresses disgruntlement about management&#10;Reluctant to take leave / share work" /></div>
+
+                {/* System Access Anomalies */}
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">System Access Anomalies (UEBA / DLP)</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      ["unusualHours", "Unusual hours access (off-hours, weekends)"],
+                      ["bulkDataExport", "Bulk data export (DLP alert triggered)"],
+                      ["unauthorisedSystemAccess", "Unauthorised system access (outside role scope)"],
+                      ["deletedLogs", "Attempted log deletion or tampering"],
+                      ["vpnFromUnusualLocations", "VPN from unusual / unregistered locations"],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
+                        <input type="checkbox" checked={itInput[key]} onChange={e => setItInput(p => ({...p, [key]: e.target.checked}))} className="rounded border-hair-2 accent-brand" />
+                        {label}
+                      </label>
+                    ))}
                   </div>
                 </div>
-                <button type="button" onClick={() => void runHumanTrafficking()} disabled={htLoading || !htInput.entity.trim()} className="px-4 py-2 rounded bg-red text-white text-12 font-semibold hover:opacity-90 disabled:opacity-60">
-                  {htLoading ? "◌ Analysing…" : "Run Human Trafficking ML Analysis"}
-                </button>
 
-                {htResult && (() => {
-                  const r = htResult;
-                  const scoreCls = r.htRiskScore >= 76 ? "text-red" : r.htRiskScore >= 51 ? "text-amber" : r.htRiskScore >= 26 ? "text-brand" : "text-green";
-                  const tierCls = r.htRiskTier === "critical" ? "bg-red text-white" : r.htRiskTier === "high" ? "bg-red-dim text-red" : r.htRiskTier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
-                  const recCls = r.recommendation === "report_to_law_enforcement" || r.recommendation === "file_str_immediate" ? "bg-red text-white" : r.recommendation === "edd" ? "bg-amber-dim text-amber" : r.recommendation === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
+                {/* Financial Indicators */}
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Financial Indicators (MICE — Money)</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      ["lifestyleInflation", "Lifestyle inflation (luxury purchases vs salary)"],
+                      ["unexplainedWealth", "Unexplained wealth / assets"],
+                      ["largePersonalTransactions", "Large personal cash transactions"],
+                      ["offshoreAccounts", "Offshore account activity detected"],
+                      ["gamblingDebt", "Gambling debt or addiction indicators"],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
+                        <input type="checkbox" checked={itInput[key]} onChange={e => setItInput(p => ({...p, [key]: e.target.checked}))} className="rounded border-hair-2 accent-amber" />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Compliance History */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Prior SARs (by or about subject)</label><input type="number" min={0} value={itInput.previousSARs} onChange={e => setItInput(p => ({...p, previousSARs: Number(e.target.value)}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disciplinary Actions on File</label><input type="number" min={0} value={itInput.disciplinaryActions} onChange={e => setItInput(p => ({...p, disciplinaryActions: Number(e.target.value)}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Breached Policies (comma-separated)</label><input value={itInput.breachedPoliciesRaw} onChange={e => setItInput(p => ({...p, breachedPoliciesRaw: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="data access policy, AML training requirement" /></div>
+                  <div className="flex items-center">
+                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer mt-4">
+                      <input type="checkbox" checked={itInput.trainingNonCompletion} onChange={e => setItInput(p => ({...p, trainingNonCompletion: e.target.checked}))} className="rounded border-hair-2 accent-brand" />
+                      AML training non-completion
+                    </label>
+                  </div>
+                </div>
+
+                <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context / Intelligence</label><textarea value={itInput.context} onChange={e => setItInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="UEBA alerts, peer reports, system logs, HR narrative, surveillance intelligence…" /></div>
+
+                <button type="button" onClick={() => void runInsiderThreatFull()} disabled={itLoading || !itInput.employee.trim()} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{itLoading ? "◌ Assessing threat…" : "Run Insider Threat Assessment"}</button>
+
+                {itResult && (() => {
+                  const r = itResult;
+                  const score = Number(r["insiderThreatScore"] ?? 0);
+                  const tier = String(r["riskTier"] ?? "");
+                  const tierCls = tier === "critical" ? "bg-red text-white" : tier === "high" ? "bg-red-dim text-red" : tier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const rec = String(r["recommendation"] ?? "");
+                  const recCls = rec === "suspend_pending_investigation" || rec === "report_to_regulators" ? "bg-red text-white" : rec === "hr_investigation" || rec === "restrict_access" ? "bg-red-dim text-red" : rec === "enhanced_monitoring" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const recLabel = rec.replace(/_/g, " ").toUpperCase();
+                  const mice = r["miceAnalysis"] as {money:{score:number;indicators:string[]};ideology:{score:number;indicators:string[]};coercion:{score:number;indicators:string[]};ego:{score:number;indicators:string[]}} | undefined;
+                  const beh = r["behaviouralRiskProfile"] as {stressors:string[];warningBehaviours:string[];escalationRisk:string} | undefined;
+                  const sysRisk = r["systemicRisk"] as {accessRisk:string;dataExfiltrationRisk:string;fraudRisk:string;mlFacilitationRisk:string} | undefined;
+                  const controls = r["recommendedControls"] as Array<{control:string;urgency:string;owner:string}> ?? [];
+                  const hrActions = r["hrActions"] as string[] ?? [];
+                  const invSteps = r["investigativeSteps"] as string[] ?? [];
+                  const redFlags = r["redFlags"] as string[] ?? [];
+                  const escPath = r["escalationPath"] as string[] ?? [];
+                  const threatCats = r["threatCategory"] as string[] ?? [];
+                  const escalRisk = beh?.escalationRisk ?? "";
+                  const escalCls = escalRisk === "imminent" ? "text-red bg-red-dim" : escalRisk === "increasing" ? "text-amber bg-amber-dim" : "text-brand bg-brand-dim";
                   return (
                     <div className="mt-3 space-y-4 bg-bg-1 rounded-lg p-4">
                       {/* Score header */}
                       <div className="flex items-center gap-4 flex-wrap">
                         <div className="text-center">
-                          <div className={`text-40 font-bold leading-none ${scoreCls}`}>{r.htRiskScore}</div>
-                          <div className="text-10 font-mono text-ink-3 uppercase mt-1">HT Risk Score</div>
+                          <div className={`text-32 font-bold ${score >= 75 ? "text-red" : score >= 50 ? "text-amber" : "text-brand"}`}>{score}</div>
+                          <div className="text-10 font-mono text-ink-3 uppercase">Insider Threat Score</div>
                         </div>
-                        <div className="space-y-1.5">
-                          <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${tierCls}`}>{r.htRiskTier} Risk</span>
-                          <div>
-                            <span className={`font-mono text-11 px-2 py-0.5 rounded uppercase ${recCls}`}>{r.recommendation.replace(/_/g, " ")}</span>
+                        <div className="flex flex-col gap-1.5">
+                          <span className={`font-mono text-11 font-semibold uppercase px-3 py-1 rounded ${tierCls}`}>{tier.toUpperCase()} RISK</span>
+                          <span className={`font-mono text-11 font-semibold uppercase px-3 py-1 rounded ${recCls}`}>{recLabel}</span>
+                        </div>
+                        <div className={`px-3 py-1.5 rounded font-mono text-11 font-semibold uppercase ${escalCls}`}>
+                          Escalation: {escalRisk.toUpperCase()}
+                        </div>
+                        {threatCats.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {threatCats.map((c,i) => <span key={i} className="text-10 font-mono px-2 py-px rounded bg-violet-dim text-violet">{c.replace(/_/g," ")}</span>)}
                           </div>
-                          {r.lawEnforcementReferral && <div><span className="font-mono text-11 px-2 py-0.5 rounded bg-red text-white">LAW ENFORCEMENT REFERRAL REQUIRED</span></div>}
-                          {r.traffickingType.length > 0 && <div className="flex gap-1 flex-wrap">{r.traffickingType.map((t, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red uppercase">{t}</span>)}</div>}
-                        </div>
-                        <div className="flex-1 text-12 text-ink-1 leading-relaxed border-l border-hair-2 pl-4">{r.summary}</div>
+                        )}
                       </div>
 
-                      {/* ILO Indicators */}
-                      {r.iloIndicatorsPresent.length > 0 && (
+                      {/* MICE 4-quadrant grid */}
+                      {mice && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">ILO Forced Labour Indicators Present ({r.iloIndicatorsPresent.length})</div>
-                          <ul className="space-y-1">
-                            {r.iloIndicatorsPresent.map((ind,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 font-bold">✗</span>{ind}</li>)}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Financial Patterns */}
-                      {r.financialPatterns.length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Financial Patterns ({r.financialPatterns.length})</div>
-                          <div className="space-y-2">
-                            {r.financialPatterns.map((fp, i) => {
-                              const sevCls = fp.severity === "high" ? "bg-red-dim text-red" : fp.severity === "medium" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand-deep";
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">MICE Analysis — Motivation Quadrants</div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {(["money","ideology","coercion","ego"] as const).map(dim => {
+                              const q = mice[dim];
+                              const label = dim === "money" ? "Money (M)" : dim === "ideology" ? "Ideology (I)" : dim === "coercion" ? "Coercion (C)" : "Ego (E)";
+                              const barCls = q.score >= 70 ? "bg-red" : q.score >= 40 ? "bg-amber" : "bg-brand";
+                              const scoreCls = q.score >= 70 ? "text-red" : q.score >= 40 ? "text-amber" : "text-brand";
                               return (
-                                <div key={i} className="px-3 py-2.5 bg-bg-panel border border-hair-2 rounded-lg">
-                                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                                    <span className={`text-10 font-mono px-1.5 py-px rounded uppercase ${sevCls}`}>{fp.severity}</span>
-                                    <span className="text-12 font-semibold text-ink-0">{fp.pattern}</span>
+                                <div key={dim} className="border border-hair-2 rounded-lg p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-11 font-semibold text-ink-0">{label}</span>
+                                    <span className={`font-mono text-13 font-bold ${scoreCls}`}>{q.score}</span>
                                   </div>
-                                  <p className="text-11 text-ink-1 leading-relaxed mb-0.5">{fp.description}</p>
-                                  <div className="text-10 font-mono text-ink-3">{fp.fatfRef}</div>
+                                  <div className="h-1.5 bg-bg-2 rounded overflow-hidden">
+                                    <div className={`h-1.5 ${barCls}`} style={{width:`${Math.min(100,q.score)}%`}} />
+                                  </div>
+                                  <ul className="space-y-0.5">{q.indicators.slice(0,3).map((ind,i) => <li key={i} className="text-11 text-ink-2 leading-relaxed flex gap-1.5"><span className="shrink-0 text-ink-3">▸</span>{ind}</li>)}</ul>
                                 </div>
                               );
                             })}
@@ -8222,77 +8218,106 @@ export default function MlroAdvisorPage() {
                         </div>
                       )}
 
-                      {/* Geographic Risk */}
-                      <div className="px-3 py-2.5 bg-bg-panel border border-hair-2 rounded-lg space-y-2">
-                        <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Geographic Risk Analysis</div>
-                        <div className="grid grid-cols-1 gap-2 text-12">
-                          <div><span className="font-semibold text-ink-0">Origin: </span><span className="text-ink-1">{r.geographicRiskAnalysis.originRisk}</span></div>
-                          <div><span className="font-semibold text-ink-0">Destination: </span><span className="text-ink-1">{r.geographicRiskAnalysis.destinationRisk}</span></div>
-                          <div><span className="font-semibold text-ink-0">Corridor: </span><span className="text-ink-1">{r.geographicRiskAnalysis.corridorRisk}</span></div>
+                      {/* Behavioural profile */}
+                      {beh && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {beh.stressors.length > 0 && (
+                            <div className="border border-hair-2 rounded-lg p-3">
+                              <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Stressors</div>
+                              <ul className="space-y-0.5">{beh.stressors.map((s,i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-amber shrink-0">⚠</span>{s}</li>)}</ul>
+                            </div>
+                          )}
+                          {beh.warningBehaviours.length > 0 && (
+                            <div className="border border-hair-2 rounded-lg p-3">
+                              <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Warning Behaviours</div>
+                              <ul className="space-y-0.5">{beh.warningBehaviours.map((w,i) => <li key={i} className="text-11 text-red flex gap-1.5"><span className="shrink-0">✗</span>{w}</li>)}</ul>
+                            </div>
+                          )}
                         </div>
-                        {r.geographicRiskAnalysis.knownRoutes.length > 0 && (
-                          <div>
-                            <div className="text-10 font-mono text-ink-3 mb-0.5">Known Trafficking Routes</div>
-                            <ul className="space-y-0.5">{r.geographicRiskAnalysis.knownRoutes.map((route,i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="text-red shrink-0">→</span>{route}</li>)}</ul>
-                          </div>
-                        )}
-                      </div>
+                      )}
 
-                      {/* Victim Profile & Controller Network */}
+                      {/* Systemic Risk */}
+                      {sysRisk && (
+                        <div className="border border-hair-2 rounded-lg p-3 space-y-2">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Systemic Risk Assessment</div>
+                          {([["accessRisk","Access Risk"],["dataExfiltrationRisk","Data Exfiltration"],["fraudRisk","Fraud Risk"],["mlFacilitationRisk","ML Facilitation"]] as const).map(([key, label]) => (
+                            <div key={key}>
+                              <div className="text-10 text-ink-3 uppercase tracking-wide-2 mb-0.5">{label}</div>
+                              <p className="text-12 text-ink-1 leading-relaxed">{sysRisk[key]}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Financial & Compliance profiles */}
                       <div className="grid grid-cols-2 gap-3">
-                        {r.victimProfileIndicators.length > 0 && (
-                          <div>
-                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Victim Profile Indicators</div>
-                            <ul className="space-y-0.5">{r.victimProfileIndicators.map((v,i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="text-amber shrink-0">⚠</span>{v}</li>)}</ul>
+                        {Boolean(r["financialProfile"]) && (
+                          <div className="border border-hair-2 rounded-lg p-3">
+                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Financial Profile</div>
+                            <p className="text-12 text-ink-1 leading-relaxed">{String(r["financialProfile"])}</p>
                           </div>
                         )}
-                        {r.controllerNetworkFlags.length > 0 && (
-                          <div>
-                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Controller Network Flags</div>
-                            <ul className="space-y-0.5">{r.controllerNetworkFlags.map((c,i) => <li key={i} className="text-11 text-red flex gap-2"><span className="shrink-0">✗</span>{c}</li>)}</ul>
+                        {Boolean(r["complianceRiskHistory"]) && (
+                          <div className="border border-hair-2 rounded-lg p-3">
+                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Compliance History</div>
+                            <p className="text-12 text-ink-1 leading-relaxed">{String(r["complianceRiskHistory"])}</p>
                           </div>
                         )}
                       </div>
 
                       {/* Red Flags */}
-                      {r.redFlags.length > 0 && (
+                      {redFlags.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags ({r.redFlags.length})</div>
-                          <ul className="space-y-1">
-                            {r.redFlags.map((rf,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 font-bold">✗</span>{rf}</li>)}
-                          </ul>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags ({redFlags.length})</div>
+                          <div className="flex flex-wrap gap-1">{redFlags.map((f,i) => <span key={i} className="text-10 font-mono px-2 py-px rounded bg-red-dim text-red">{f}</span>)}</div>
                         </div>
                       )}
 
-                      {/* Regulatory Obligations */}
-                      {r.regulatoryObligations.length > 0 && (
+                      {/* Controls */}
+                      {controls.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Regulatory Obligations</div>
-                          <div className="space-y-2">
-                            {r.regulatoryObligations.map((ob, i) => (
-                              <div key={i} className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
-                                <div className="text-12 text-ink-0 mb-0.5">{ob.obligation}</div>
-                                <div className="flex items-center gap-3 text-10 font-mono text-ink-3">
-                                  <span>{ob.regulation}</span>
-                                  {ob.timeline && <span className="text-red">Timeline: {ob.timeline}</span>}
-                                </div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommended Controls</div>
+                          <div className="space-y-1.5">{controls.map((c,i) => {
+                            const urgCls = c.urgency === "immediate" ? "bg-red text-white" : c.urgency === "within_24h" ? "bg-red-dim text-red" : "bg-amber-dim text-amber";
+                            return (
+                              <div key={i} className="flex gap-2 items-start">
+                                <span className={`text-10 font-mono font-semibold px-1.5 py-px rounded shrink-0 uppercase ${urgCls}`}>{c.urgency.replace(/_/g," ")}</span>
+                                <div><span className="text-12 text-ink-0">{c.control}</span>{c.owner && <span className="text-10 text-ink-3 ml-2">— {c.owner}</span>}</div>
                               </div>
-                            ))}
-                          </div>
+                            );
+                          })}</div>
                         </div>
                       )}
 
-                      {/* Referral & Victim Support */}
-                      {r.lawEnforcementReferral && (
-                        <div className="px-3 py-2.5 bg-red-dim border border-red/30 rounded-lg space-y-2">
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-red">Law Enforcement Referral</div>
-                          <p className="text-12 text-ink-0 font-medium">{r.referralAgency}</p>
+                      {/* HR Actions */}
+                      {hrActions.length > 0 && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">HR Actions</div>
+                          <ol className="space-y-1 list-decimal list-inside">{hrActions.map((a,i) => <li key={i} className="text-12 text-ink-1 leading-relaxed">{a}</li>)}</ol>
                         </div>
                       )}
-                      {r.victimSupportConsideration && (
-                        <div className="px-3 py-2.5 bg-amber-dim border border-amber/30 rounded-lg">
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1">Victim Support Consideration</div>
-                          <p className="text-12 text-ink-1 leading-relaxed">{r.victimSupportConsideration}</p>
+
+                      {/* Investigative Steps */}
+                      {invSteps.length > 0 && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Investigative Steps</div>
+                          <ol className="space-y-1 list-decimal list-inside">{invSteps.map((s,i) => <li key={i} className="text-12 text-ink-1 leading-relaxed">{s}</li>)}</ol>
+                        </div>
+                      )}
+
+                      {/* Escalation Path */}
+                      {escPath.length > 0 && (
+                        <div className="bg-red-dim/20 border border-red/20 rounded-lg p-3">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-red mb-1.5">Escalation Path</div>
+                          <ol className="space-y-1 list-decimal list-inside">{escPath.map((e,i) => <li key={i} className="text-12 text-ink-0 leading-relaxed">{e}</li>)}</ol>
+                        </div>
+                      )}
+
+                      {/* Summary */}
+                      {Boolean(r["summary"]) && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Assessment Summary</div>
+                          <p className="text-12 text-ink-1 leading-relaxed">{String(r["summary"])}</p>
                         </div>
                       )}
                     </div>
