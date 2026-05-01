@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
+import { STRINGS, t, type Locale } from "@/lib/server/i18n";
 import {
   loadOperatorRole,
   saveOperatorRole,
@@ -119,41 +119,27 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 const THEME_KEY = "hawkeye.theme";
-const LOCALE_KEY = "hawkeye.locale";
 
 function applyTheme(theme: "light" | "dark"): void {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme", theme);
 }
 
-function applyDir(locale: Locale): void {
-  if (typeof document === "undefined") return;
-  const entry = LOCALES.find((l) => l.code === locale);
-  document.documentElement.setAttribute("dir", entry?.dir ?? "ltr");
-  document.documentElement.setAttribute("lang", locale);
-}
-
 export function Header() {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [locale, setLocale] = useState<Locale>("en");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLDivElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
+  const locale: Locale = "en";
 
   useEffect(() => {
     const storedTheme =
       (typeof localStorage !== "undefined" &&
         (localStorage.getItem(THEME_KEY) as "light" | "dark" | null)) ||
       "light";
-    const storedLocale =
-      (typeof localStorage !== "undefined" &&
-        (localStorage.getItem(LOCALE_KEY) as Locale | null)) ||
-      "en";
     setTheme(storedTheme);
-    setLocale(storedLocale);
     applyTheme(storedTheme);
-    applyDir(storedLocale);
   }, []);
 
   const toggleTheme = () => {
@@ -161,12 +147,6 @@ export function Header() {
     setTheme(next);
     applyTheme(next);
     if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next);
-  };
-
-  const pickLocale = (code: Locale) => {
-    setLocale(code);
-    applyDir(code);
-    if (typeof localStorage !== "undefined") localStorage.setItem(LOCALE_KEY, code);
   };
 
   return (
@@ -267,18 +247,6 @@ export function Header() {
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
           <NotificationBell />
           <HeaderUserCard />
-          <select
-            value={locale}
-            onChange={(e) => pickLocale(e.target.value as Locale)}
-            className="bg-transparent border border-hair-2 rounded px-1.5 py-0.5 text-10.5 text-ink-1"
-            title="Language"
-          >
-            {LOCALES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </select>
           <button
             type="button"
             onClick={toggleTheme}
