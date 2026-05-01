@@ -533,6 +533,37 @@ export default function BatchPage() {
     finally { setRankLoading(false); }
   };
 
+  const runSmartPrioritize = async () => {
+    if (results.length === 0 && rows.length === 0) return;
+    setSmartPriorityLoading(true);
+    setSmartPriority(null);
+    setPriorityFilter("all");
+    try {
+      const subjects = results.length > 0
+        ? results.slice(0, 100).map((r, i) => ({
+            id: `subj-${i}`,
+            name: r.name,
+            jurisdiction: r.jurisdiction,
+            riskScore: r.topScore,
+            hitCount: r.hitCount,
+          }))
+        : rows.slice(0, 100).map((r, i) => ({
+            id: `subj-${i}`,
+            name: r.name,
+            jurisdiction: r.jurisdiction,
+          }));
+      const res = await fetch("/api/batch/prioritize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjects }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as SmartPrioritization;
+      if (data.ok) setSmartPriority(data);
+    } catch { /* silent */ }
+    finally { setSmartPriorityLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
       <div>
@@ -696,7 +727,15 @@ export default function BatchPage() {
                 className="px-4 py-1.5 bg-brand text-white rounded font-semibold text-12.5 hover:bg-brand-hover disabled:opacity-50">
                 {running ? "Streaming…" : "Run batch"}
               </button>
-              <button onClick={() => { setRows([]); setResults([]); setSummary(null); setProgress(null); setError(null); }}
+              <button
+                type="button"
+                onClick={() => void runSmartPrioritize()}
+                disabled={smartPriorityLoading}
+                className="px-4 py-1.5 bg-amber-dim text-amber border border-amber/30 rounded font-semibold text-12.5 hover:bg-amber/20 disabled:opacity-50"
+              >
+                {smartPriorityLoading ? "Prioritizing…" : "🎯 Smart Prioritize"}
+              </button>
+              <button onClick={() => { setRows([]); setResults([]); setSummary(null); setProgress(null); setError(null); setSmartPriority(null); }}
                 className="px-3 py-1.5 text-ink-2 text-12 hover:text-ink-0">
                 Clear
               </button>
@@ -798,6 +837,82 @@ export default function BatchPage() {
               className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
               {rankLoading ? "Ranking…" : "AI Priority Ranking"}
             </button>
+          </div>
+        )}
+
+        {/* Smart Priority Panel */}
+        {smartPriority && (
+          <div className="mb-4 bg-bg-panel border border-amber/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-11 font-semibold uppercase tracking-wide-3 text-amber">🎯 Smart Prioritization</span>
+                {smartPriority.immediateCount > 0 && (
+                  <span className="font-mono text-10 px-2 py-px rounded bg-red text-white font-semibold">🔴 {smartPriority.immediateCount} immediate</span>
+                )}
+                {smartPriority.scheduledCount > 0 && (
+                  <span className="font-mono text-10 px-2 py-px rounded bg-amber-dim text-amber font-semibold">🟡 {smartPriority.scheduledCount} scheduled</span>
+                )}
+                {smartPriority.prioritized.filter((s) => s.priority === "low").length > 0 && (
+                  <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-2 font-semibold">⚪ {smartPriority.prioritized.filter((s) => s.priority === "low").length} low</span>
+                )}
+              </div>
+              <button type="button" onClick={() => { setSmartPriority(null); setPriorityFilter("all"); }} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+            </div>
+            <div className="bg-amber-dim/40 border border-amber/20 rounded-lg px-3 py-2">
+              <span className="text-10 font-semibold uppercase tracking-wide-3 text-amber mr-2">Insights</span>
+              <span className="text-12 text-ink-1">{smartPriority.insights}</span>
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {(["all", "immediate", "scheduled", "low"] as const).map((tab) => {
+                const counts: Record<string, number> = {
+                  all: smartPriority.prioritized.length,
+                  immediate: smartPriority.immediateCount,
+                  scheduled: smartPriority.scheduledCount,
+                  low: smartPriority.prioritized.filter((s) => s.priority === "low").length,
+                };
+                const tabLabel: Record<string, string> = { all: "All", immediate: "🔴 Immediate", scheduled: "🟡 Scheduled", low: "⚪ Low" };
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setPriorityFilter(tab)}
+                    className={`px-3 py-1 rounded text-11 font-semibold transition-colors ${
+                      priorityFilter === tab ? "bg-amber text-white" : "bg-bg-2 text-ink-2 hover:text-ink-0"
+                    }`}
+                  >
+                    {tabLabel[tab]} ({counts[tab]})
+                  </button>
+                );
+              })}
+            </div>
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {smartPriority.prioritized
+                .filter((s) => priorityFilter === "all" || s.priority === priorityFilter)
+                .map((s, i) => {
+                  const badgeCls =
+                    s.priority === "immediate"
+                      ? "bg-red text-white"
+                      : s.priority === "scheduled"
+                        ? "bg-amber-dim text-amber"
+                        : "bg-bg-2 text-ink-3";
+                  const badgeEmoji = s.priority === "immediate" ? "🔴" : s.priority === "scheduled" ? "🟡" : "⚪";
+                  return (
+                    <div key={s.id ?? i} className="flex items-start gap-2 bg-bg-1 rounded px-2.5 py-2 text-12">
+                      <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${badgeCls}`}>
+                        {badgeEmoji} {s.priority}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-ink-0 text-12">{s.name}</span>
+                          {s.jurisdiction && <span className="font-mono text-10 text-ink-3">{s.jurisdiction}</span>}
+                          {s.estimatedRisk && <span className="font-mono text-10 px-1.5 py-px rounded bg-bg-2 text-ink-2">{s.estimatedRisk}</span>}
+                        </div>
+                        <p className="text-11 text-ink-2 mt-0.5 leading-snug">{s.reason}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         )}
 
