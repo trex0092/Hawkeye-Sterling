@@ -378,58 +378,6 @@ function nowTs(): string {
 
 type Tab = "approvals" | "minutes" | "circulars" | "action-tracker" | "kpi";
 
-// ── Gap Analysis ─────────────────────────────────────────────────────────────
-
-interface GapAnalysisResult {
-  gaps: string[];
-  overdueItems: string[];
-  breachRisks: string[];
-  deadlines: string[];
-  recommendation: string;
-}
-
-async function fetchGapAnalysis(
-  approvals: Approval[],
-  circulars: Circular[],
-  minutes: Minute[],
-): Promise<GapAnalysisResult> {
-  const pendingEscalated = approvals.filter((a) => a.status === "pending" || a.status === "escalated").map((a) => ({
-    id: a.id,
-    title: a.title,
-    category: a.category,
-    elapsedHours: a.elapsedHours,
-    slaHours: a.slaHours,
-    notes: a.notes,
-  }));
-
-  const openCirculars = circulars.filter((c) => c.disposition !== "implemented").map((c) => ({
-    ref: c.ref,
-    title: c.title,
-    dueDate: c.dueDate,
-    issuer: c.issuer,
-    notes: c.notes,
-  }));
-
-  const openActions = minutes.flatMap((m) =>
-    m.actionItems.filter((ai) => !ai.closed).map((ai) => ({
-      action: ai.action,
-      owner: ai.owner,
-      due: ai.due,
-      minute: m.title,
-    })),
-  );
-
-  const res = await fetch("/api/oversight-gap-analysis", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ pendingEscalatedApprovals: pendingEscalated, openCirculars, openActionItems: openActions }),
-  });
-
-  if (!res.ok) throw new Error(`Gap analysis API error: ${res.status}`);
-  const data = await res.json() as { ok: boolean; result: GapAnalysisResult; error?: string };
-  if (!data.ok) throw new Error(data.error ?? "Unknown error");
-  return data.result;
-}
 
 function SlaBar({ elapsed, sla }: { elapsed: number; sla: number }) {
   const pct = Math.min((elapsed / sla) * 100, 100);
@@ -799,9 +747,6 @@ export default function OversightPage() {
   const [showAddCircular, setShowAddCircular] = useState(false);
   const [showAddApproval, setShowAddApproval] = useState(false);
   const [showAddMinute, setShowAddMinute] = useState(false);
-  const [gapAnalysis, setGapAnalysis] = useState<GapAnalysisResult | null>(null);
-  const [gapLoading, setGapLoading] = useState(false);
-  const [gapTimestamp, setGapTimestamp] = useState<string>("");
 
   // Inline edit state
   const [editingApprovalId, setEditingApprovalId] = useState<string | null>(null);
@@ -998,19 +943,6 @@ export default function OversightPage() {
   const openActionsCount = allActionItems.filter((ai) => !ai.closed).length;
   const openActions = openActionsCount;
 
-  const runGapAnalysis = async () => {
-    setGapLoading(true);
-    try {
-      const result = await fetchGapAnalysis(liveApprovals, liveCirculars, liveMinutes);
-      setGapAnalysis(result);
-      setGapTimestamp(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-    } catch (err) {
-      console.error("Gap analysis failed:", err);
-    } finally {
-      setGapLoading(false);
-    }
-  };
-
   const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
 
   const pendingApprovals = liveApprovals.filter((a) => a.status === "pending").length;
@@ -1095,7 +1027,7 @@ export default function OversightPage() {
     <ModuleLayout asanaModule="oversight" asanaLabel="Oversight" engineLabel="Governance engine">
       <ModuleHero
         moduleNumber={26}
-        eyebrow="Module 25 · Governance"
+        eyebrow="Module 26 · Governance"
         title="Management"
         titleEm="oversight."
         intro={
