@@ -99,6 +99,32 @@ interface TmExplanation {
   typologies: string[];
 }
 
+type TypologyKind =
+  | "structuring"
+  | "layering"
+  | "smurfing"
+  | "trade-based ML"
+  | "funnel account"
+  | "crypto conversion"
+  | "none";
+
+interface TxTypologyTag {
+  typology: TypologyKind;
+  confidence: number;
+  redFlags: string[];
+  fatfReference: string;
+}
+
+const TYPOLOGY_COLORS: Record<TypologyKind, string> = {
+  structuring: "bg-red-dim text-red border border-red/30",
+  smurfing: "bg-red-dim text-red border border-red/30",
+  layering: "bg-amber-dim text-amber border border-amber/30",
+  "trade-based ML": "bg-blue-dim text-blue border border-blue/30",
+  "funnel account": "bg-blue-dim text-blue border border-blue/30",
+  "crypto conversion": "bg-blue-dim text-blue border border-blue/30",
+  none: "bg-bg-2 text-ink-3 border border-hair-2",
+};
+
 export default function TransactionMonitorPage() {
   const [txs, setTxs] = useState<TxRow[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -106,6 +132,9 @@ export default function TransactionMonitorPage() {
   const formRef = useRef<HTMLFormElement | null>(null);
   const [explanations, setExplanations] = useState<Record<string, TmExplanation>>({});
   const [explaining, setExplaining] = useState<Record<string, boolean>>({});
+  const [typologyTags, setTypologyTags] = useState<Record<string, TxTypologyTag>>({});
+  const [tagging, setTagging] = useState(false);
+  const [tagSummary, setTagSummary] = useState<{ text: string; highRiskCount: number } | null>(null);
 
   useEffect(() => {
     setTxs(loadTxs());
@@ -152,6 +181,49 @@ export default function TransactionMonitorPage() {
       if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
     } catch { /* silent */ }
     finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
+  };
+
+  const autoTagTypologies = async () => {
+    if (txs.length === 0) return;
+    setTagging(true);
+    try {
+      const payload = txs.map((t) => ({
+        id: t.id,
+        amount: t.amount,
+        currency: t.currency,
+        fromAccount: t.counterparty,
+        toAccount: "",
+        date: t.occurredOn,
+        description: t.notes,
+        channel: t.channel,
+        direction: t.direction,
+        behaviouralFlags: t.behaviouralFlags,
+        counterpartyCountry: t.counterpartyCountry,
+      }));
+      const res = await fetch("/api/transaction-monitor/typology-tag", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transactions: payload }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as {
+        tagged: (TxTypologyTag & { id: string })[];
+        highRiskCount: number;
+        summary: string;
+      };
+      const tagMap: Record<string, TxTypologyTag> = {};
+      for (const t of data.tagged ?? []) {
+        tagMap[t.id] = {
+          typology: t.typology,
+          confidence: t.confidence,
+          redFlags: t.redFlags,
+          fatfReference: t.fatfReference,
+        };
+      }
+      setTypologyTags(tagMap);
+      setTagSummary({ text: data.summary, highRiskCount: data.highRiskCount });
+    } catch { /* silent */ }
+    finally { setTagging(false); }
   };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
@@ -263,6 +335,9 @@ export default function TransactionMonitorPage() {
                 <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
                   {running ? "Running scan…" : "Run daily scan"}
                 </Btn>
+                <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
+                  {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
+                </Btn>
                 <Btn variant="primary" onClick={focusForm}>
                   + Add transaction
                 </Btn>
@@ -275,6 +350,70 @@ export default function TransactionMonitorPage() {
             <Kpi value={alerts} label="Alerts" tone="amber" />
             <Kpi value={reportable} label="Reportable (DPMS ≥ 55k)" tone="red" />
       </KpiGrid>
+
+      {tagSummary && (
+        <div className="mt-4 mb-2 bg-bg-panel border border-hair-2 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-mono text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
+              Typology Summary
+            </div>
+            <div className="flex items-center gap-3">
+              {tagSummary.highRiskCount > 0 && (
+                <span className="font-mono text-11 font-bold px-2 py-px rounded bg-red-dim text-red">
+                  {tagSummary.highRiskCount} high-risk
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setTagSummary(null)}
+                className="text-10 text-ink-3 hover:text-ink-1 underline"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          {tagSummary.text && (
+            <p className="text-12 text-ink-1 leading-relaxed mb-3">{tagSummary.text}</p>
+          )}
+          {(() => {
+            const counts: Partial<Record<TypologyKind, number>> = {};
+            for (const tag of Object.values(typologyTags)) {
+              if (tag.typology !== "none") {
+                counts[tag.typology] = (counts[tag.typology] ?? 0) + 1;
+              }
+            }
+            const entries = Object.entries(counts) as [TypologyKind, number][];
+            if (entries.length === 0) return (
+              <p className="text-12 text-ink-3 italic">No ML typologies detected.</p>
+            );
+            const max = Math.max(...entries.map(([, v]) => v));
+            return (
+              <div className="space-y-1.5">
+                {entries.map(([typ, count]) => (
+                  <div key={typ} className="flex items-center gap-3">
+                    <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded w-36 text-center shrink-0 ${TYPOLOGY_COLORS[typ]}`}>
+                      {typ}
+                    </span>
+                    <div className="flex-1 bg-bg-2 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          typ === "structuring" || typ === "smurfing"
+                            ? "bg-red"
+                            : typ === "layering"
+                            ? "bg-amber"
+                            : "bg-blue"
+                        }`}
+                        style={{ width: `${Math.round((count / max) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-11 text-ink-2 w-6 text-right shrink-0">{count}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       <Card>
             <form ref={formRef} onSubmit={log}>
@@ -360,6 +499,9 @@ export default function TransactionMonitorPage() {
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Flags
                     </th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                      Typology
+                    </th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">AI</th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Logged
@@ -399,6 +541,22 @@ export default function TransactionMonitorPage() {
                             —
                           </span>
                         )}
+                      </td>
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                        {(() => {
+                          const tag = typologyTags[t.id];
+                          if (!tag) return <span className="text-ink-3 font-mono text-10">—</span>;
+                          const colorCls = TYPOLOGY_COLORS[tag.typology];
+                          const tooltipText = `${tag.fatfReference} · confidence ${tag.confidence}%${tag.redFlags.length > 0 ? ` · ${tag.redFlags.join("; ")}` : ""}`;
+                          return (
+                            <span
+                              title={tooltipText}
+                              className={`inline-flex items-center px-1.5 py-px rounded font-mono text-10 font-semibold cursor-help ${colorCls}`}
+                            >
+                              {tag.typology}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                         <button
