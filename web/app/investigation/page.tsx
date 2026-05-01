@@ -483,28 +483,42 @@ export default function InvestigationPage() {
               </div>
             )}
           </div>
-          <button type="button" onClick={() => submit(query)} className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded bg-brand text-white hover:opacity-90">Search</button>
-          <button type="button" onClick={() => void runDiscover()} disabled={discovering}
-            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border border-green/50 bg-green/10 text-green hover:bg-green/20 disabled:opacity-40 transition-colors whitespace-nowrap">
-            {discovering ? "Discovering…" : discoverCount > 0 ? `✦ Discover (${discoverCount})` : "✦ AI Discover"}
+          {/* Search */}
+          <button type="button" onClick={() => submit(query)} title="Search entity or case"
+            className="w-8 h-8 flex items-center justify-center rounded bg-brand text-white hover:opacity-90 text-15 shrink-0">
+            ⌕
           </button>
-          {/* AI Discover Links button */}
-          <button type="button" onClick={() => void runDiscoverLinks()} disabled={discoveringLinks}
-            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border border-violet/50 bg-violet/10 text-violet hover:bg-violet/20 disabled:opacity-40 transition-colors whitespace-nowrap flex items-center gap-1.5">
-            {discoveringLinks ? "Analyzing…" : "🔍 AI Discover Links"}
-            {networkRiskScore != null && !discoveringLinks && (
-              <span className={`ml-1 px-1.5 py-px rounded font-semibold text-9 ${networkRiskCls}`}>
-                Risk {networkRiskScore}
+          {/* AI Discover */}
+          <button type="button" onClick={() => void runDiscover()} disabled={discovering} title="AI Discover — surface connected entities"
+            className="w-8 h-8 flex items-center justify-center rounded border border-green/50 bg-green/10 text-green hover:bg-green/20 disabled:opacity-40 transition-colors shrink-0 relative text-14 font-bold">
+            {discovering ? <span className="text-10 animate-pulse">…</span> : "✦"}
+            {discoverCount > 0 && !discovering && (
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-green text-white text-8 font-bold flex items-center justify-center leading-none">
+                {discoverCount}
               </span>
             )}
           </button>
-          {/* Export Evidence Pack button */}
-          <button type="button" onClick={() => void runExportPack()} disabled={exportingPack}
-            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border border-amber/50 bg-amber/10 text-amber hover:bg-amber/20 disabled:opacity-40 transition-colors whitespace-nowrap">
-            {exportingPack ? "Generating…" : "📦 Export Evidence Pack"}
+          {/* AI Discover Links */}
+          <button type="button" onClick={() => void runDiscoverLinks()} disabled={discoveringLinks} title="Discover relationship links + network risk score"
+            className="w-8 h-8 flex items-center justify-center rounded border border-violet/50 bg-violet/10 text-violet hover:bg-violet/20 disabled:opacity-40 transition-colors shrink-0 relative text-15">
+            {discoveringLinks ? <span className="text-10 animate-pulse">…</span> : "🕸"}
+            {networkRiskScore != null && !discoveringLinks && (
+              <span className={`absolute -top-1.5 -right-1.5 px-1 h-4 rounded-full text-8 font-bold flex items-center justify-center leading-none ${networkRiskCls}`}>
+                {networkRiskScore}
+              </span>
+            )}
           </button>
+          {/* Export Evidence Pack */}
+          <button type="button" onClick={() => void runExportPack()} disabled={exportingPack} title="Export evidence pack (PDF + JSON)"
+            className="w-8 h-8 flex items-center justify-center rounded border border-amber/50 bg-amber/10 text-amber hover:bg-amber/20 disabled:opacity-40 transition-colors shrink-0 text-15">
+            {exportingPack ? <span className="text-10 animate-pulse">…</span> : "📤"}
+          </button>
+          {/* Demo */}
           {committed && (
-            <button type="button" onClick={clearSearch} className="font-mono text-10.5 px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-ink-1 hover:border-hair-3 transition-colors">Demo</button>
+            <button type="button" onClick={clearSearch} title="Clear / reset demo graph"
+              className="w-8 h-8 flex items-center justify-center rounded border border-hair-2 text-ink-3 hover:text-ink-1 hover:border-hair-3 transition-colors shrink-0 text-12">
+              ▶
+            </button>
           )}
         </div>
         {committed && (
