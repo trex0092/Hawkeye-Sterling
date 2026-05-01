@@ -6705,6 +6705,491 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
+            {/* NPO Risk */}
+            {superToolsTab === "npo-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Non-Profit Organisation Risk Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.8 · UAE Cabinet Decision 74/2020 · NPO/NGO ML/TF vulnerability assessment</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">NPO Name</label><input value={npoInput.npoName} onChange={e => setNpoInput(p => ({...p, npoName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Organisation name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={npoInput.country} onChange={e => setNpoInput(p => ({...p, country: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Registration country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sector / Activity</label><input value={npoInput.sector} onChange={e => setNpoInput(p => ({...p, sector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Humanitarian, religious, education…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Funding Sources</label><input value={npoInput.fundingSource} onChange={e => setNpoInput(p => ({...p, fundingSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Donor countries, anonymous, grants…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary Regions</label><input value={npoInput.beneficiaryRegion} onChange={e => setNpoInput(p => ({...p, beneficiaryRegion: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries or regions where funds are deployed" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={npoInput.context} onChange={e => setNpoInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNpoRisk()} disabled={npoLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{npoLoading ? "◌ Analysing…" : "Run NPO Risk Assessment"}</button>
+                {npoResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(npoResult["riskRating"]) === "critical" ? "bg-red-dim text-red" : String(npoResult["riskRating"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(npoResult["riskRating"] ?? "")}</span>
+                      <span className="text-12 font-semibold text-ink-0">Risk Rating</span>
+                    </div>
+                    {Boolean(npoResult["keyRedFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Red Flags</div><ul className="space-y-1">{(npoResult["keyRedFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(npoResult["tfIndicators"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">TF Indicators</div><ul className="space-y-1">{(npoResult["tfIndicators"] as string[]).map((f,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">☢</span>{f}</li>)}</ul></div>}
+                    {Boolean(npoResult["dueDiligenceSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Due Diligence Steps</div><ul className="space-y-1">{(npoResult["dueDiligenceSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                    <div className="text-10 font-mono text-ink-3 border-t border-hair-2 pt-2">{String(npoResult["regulatoryBasis"] ?? "")}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Correspondent Bank */}
+            {superToolsTab === "correspondent-bank" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Correspondent Bank Risk Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.13 · BCBS Guidelines · Correspondent banking ML/TF risk and shell-bank prohibition</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bank Name</label><input value={corrBankInput.bankName} onChange={e => setCorrBankInput(p => ({...p, bankName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Correspondent bank name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={corrBankInput.country} onChange={e => setCorrBankInput(p => ({...p, country: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Jurisdiction of incorporation" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Body</label><input value={corrBankInput.regulatoryBody} onChange={e => setCorrBankInput(p => ({...p, regulatoryBody: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. OCC, FCA, SAMA" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last KYC Date</label><input value={corrBankInput.lastKycDate} onChange={e => setCorrBankInput(p => ({...p, lastKycDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="YYYY-MM-DD" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AML Programme Status</label><input value={corrBankInput.amlProgrammeStatus} onChange={e => setCorrBankInput(p => ({...p, amlProgrammeStatus: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Wolfsberg certified, recent enforcement action…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={corrBankInput.context} onChange={e => setCorrBankInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runCorrBank()} disabled={corrBankLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{corrBankLoading ? "◌ Analysing…" : "Run Correspondent Bank Assessment"}</button>
+                {corrBankResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(corrBankResult["riskRating"]) === "critical" ? "bg-red-dim text-red" : String(corrBankResult["riskRating"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(corrBankResult["riskRating"] ?? "")}</span>
+                      <span className="text-12 font-semibold text-ink-0">Risk Rating</span>
+                    </div>
+                    {Boolean(corrBankResult["kycStatus"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">KYC Status</div><p className="text-12 text-ink-1">{String(corrBankResult["kycStatus"])}</p></div>}
+                    {Boolean(corrBankResult["amlProgrammeAssessment"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">AML Programme Assessment</div><p className="text-12 text-ink-1 leading-relaxed">{String(corrBankResult["amlProgrammeAssessment"])}</p></div>}
+                    <div className="flex gap-3 flex-wrap">
+                      {corrBankResult["shellBankRisk"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${corrBankResult["shellBankRisk"] ? "bg-red-dim text-red" : "bg-green-dim text-green"}`}>Shell Bank Risk: {corrBankResult["shellBankRisk"] ? "YES" : "NO"}</span>}
+                      {corrBankResult["payableThrough"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${corrBankResult["payableThrough"] ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Payable-Through: {corrBankResult["payableThrough"] ? "YES" : "NO"}</span>}
+                    </div>
+                    {Boolean(corrBankResult["requiredEnhancements"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Enhancements</div><ul className="space-y-1">{(corrBankResult["requiredEnhancements"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mixed Funds */}
+            {superToolsTab === "mixed-funds" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Mixed Funds / Commingling Analysis</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · POCA 2002 (UK) · UAE AML Law Art.2 · Taint percentage and confiscation risk</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Account Holder</label><input value={mixedFundsInput.accountHolder} onChange={e => setMixedFundsInput(p => ({...p, accountHolder: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name or entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Balance</label><input value={mixedFundsInput.totalBalance} onChange={e => setMixedFundsInput(p => ({...p, totalBalance: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 5,000,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Suspected Proceeds Amount</label><input value={mixedFundsInput.suspectedProceedsAmount} onChange={e => setMixedFundsInput(p => ({...p, suspectedProceedsAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 2,000,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legitimate Funds Amount</label><input value={mixedFundsInput.legitimateFundsAmount} onChange={e => setMixedFundsInput(p => ({...p, legitimateFundsAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 3,000,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mixing Period</label><input value={mixedFundsInput.mixingPeriod} onChange={e => setMixedFundsInput(p => ({...p, mixingPeriod: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 6 months, Jan–Jun 2024" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={mixedFundsInput.context} onChange={e => setMixedFundsInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runMixedFunds()} disabled={mixedFundsLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{mixedFundsLoading ? "◌ Analysing…" : "Run Mixed Funds Analysis"}</button>
+                {mixedFundsResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(mixedFundsResult["taintPercentage"]) && <div className="text-center"><div className="text-32 font-bold text-red">{String(mixedFundsResult["taintPercentage"])}%</div><div className="text-10 font-mono text-ink-3 uppercase">Taint %</div></div>}
+                      {Boolean(mixedFundsResult["taintRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(mixedFundsResult["taintRating"]) === "high" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>{String(mixedFundsResult["taintRating"])}</span>}
+                    </div>
+                    <div className="flex gap-3 flex-wrap text-12 text-ink-1">
+                      {Boolean(mixedFundsResult["taintedAmount"]) && <span>Tainted: <span className="font-semibold text-red">{String(mixedFundsResult["taintedAmount"])}</span></span>}
+                      {Boolean(mixedFundsResult["cleanAmount"]) && <span>Clean: <span className="font-semibold text-green">{String(mixedFundsResult["cleanAmount"])}</span></span>}
+                    </div>
+                    {Boolean(mixedFundsResult["tracingMethod"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Tracing Method</div><span className="font-mono text-11 px-2 py-0.5 rounded bg-brand-dim text-brand-deep">{String(mixedFundsResult["tracingMethod"])}</span></div>}
+                    {Boolean(mixedFundsResult["legalAnalysis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Legal Analysis</div><p className="text-12 text-ink-1 leading-relaxed">{String(mixedFundsResult["legalAnalysis"])}</p></div>}
+                    {mixedFundsResult["confiscationRisk"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${mixedFundsResult["confiscationRisk"] ? "bg-red-dim text-red" : "bg-green-dim text-green"}`}>Confiscation Risk: {mixedFundsResult["confiscationRisk"] ? "YES" : "NO"}</span>}
+                    {Boolean(mixedFundsResult["investigativeSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Investigative Steps</div><ul className="space-y-1">{(mixedFundsResult["investigativeSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sanctions Breach */}
+            {superToolsTab === "sanctions-breach" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Sanctions Breach Response Advisor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">OFAC · EU Regulation 833/2014 · UAE Cabinet Decision 99/2024 · Voluntary disclosure strategy</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label><input value={sanctionsBreachInput.counterparty} onChange={e => setSanctionsBreachInput(p => ({...p, counterparty: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name of sanctioned entity/individual" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Amount</label><input value={sanctionsBreachInput.transactionAmount} onChange={e => setSanctionsBreachInput(p => ({...p, transactionAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 500,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sanctions List</label><input value={sanctionsBreachInput.sanctionsList} onChange={e => setSanctionsBreachInput(p => ({...p, sanctionsList: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="OFAC SDN, EU, UN, UAEI…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Discovery Date</label><input value={sanctionsBreachInput.discoveryDate} onChange={e => setSanctionsBreachInput(p => ({...p, discoveryDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="YYYY-MM-DD" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Breach Duration</label><input value={sanctionsBreachInput.breachDuration} onChange={e => setSanctionsBreachInput(p => ({...p, breachDuration: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. single transaction, ongoing 3 months" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={sanctionsBreachInput.context} onChange={e => setSanctionsBreachInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runSanctionsBreach()} disabled={sanctionsBreachLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{sanctionsBreachLoading ? "◌ Analysing…" : "Run Sanctions Breach Analysis"}</button>
+                {sanctionsBreachResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(sanctionsBreachResult["breachSeverity"]) === "critical" ? "bg-red-dim text-red" : String(sanctionsBreachResult["breachSeverity"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(sanctionsBreachResult["breachSeverity"] ?? "")}</span>
+                      {sanctionsBreachResult["voluntaryDisclosureRecommended"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${sanctionsBreachResult["voluntaryDisclosureRecommended"] ? "bg-brand-dim text-brand-deep" : "bg-bg-2 text-ink-2"}`}>Voluntary Disclosure: {sanctionsBreachResult["voluntaryDisclosureRecommended"] ? "RECOMMENDED" : "NOT required"}</span>}
+                    </div>
+                    {Boolean(sanctionsBreachResult["estimatedPenaltyRange"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Penalty Range</div><p className="text-12 font-semibold text-red">{String(sanctionsBreachResult["estimatedPenaltyRange"])}</p></div>}
+                    {Boolean(sanctionsBreachResult["mitigatingFactors"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Mitigating Factors</div><ul className="space-y-1">{(sanctionsBreachResult["mitigatingFactors"] as string[]).map((f,i) => <li key={i} className="text-12 text-green flex gap-2"><span className="shrink-0">✓</span>{f}</li>)}</ul></div>}
+                    {Boolean(sanctionsBreachResult["aggravatingFactors"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Aggravating Factors</div><ul className="space-y-1">{(sanctionsBreachResult["aggravatingFactors"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{f}</li>)}</ul></div>}
+                    {Boolean(sanctionsBreachResult["immediateActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Immediate Actions</div><ul className="space-y-1">{(sanctionsBreachResult["immediateActions"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                    {Boolean(sanctionsBreachResult["disclosureDraft"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Disclosure Draft</div><pre className="text-11 text-ink-1 bg-bg-panel border border-hair-2 rounded p-3 whitespace-pre-wrap leading-relaxed">{String(sanctionsBreachResult["disclosureDraft"])}</pre></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Freeze / Seizure */}
+            {superToolsTab === "freeze-seizure" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Asset Freeze / Seizure Advisor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE AML Law Art.14 · FATF R.4 · Egmont Group · Freeze order drafting and procedure</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={freezeSeizureInput.subjectName} onChange={e => setFreezeSeizureInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Description</label><input value={freezeSeizureInput.assetDescription} onChange={e => setFreezeSeizureInput(p => ({...p, assetDescription: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank accounts, property, vehicles…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis Cited</label><input value={freezeSeizureInput.legalBasisCited} onChange={e => setFreezeSeizureInput(p => ({...p, legalBasisCited: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE AML Art.14, court order no." /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Value</label><input value={freezeSeizureInput.estimatedValue} onChange={e => setFreezeSeizureInput(p => ({...p, estimatedValue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 10,000,000" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={freezeSeizureInput.jurisdictions} onChange={e => setFreezeSeizureInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries where assets are held" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={freezeSeizureInput.context} onChange={e => setFreezeSeizureInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runFreezeSeizure()} disabled={freezeSeizureLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{freezeSeizureLoading ? "◌ Analysing…" : "Run Freeze / Seizure Analysis"}</button>
+                {freezeSeizureResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(freezeSeizureResult["legalBasis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</div><p className="text-12 text-ink-1 leading-relaxed">{String(freezeSeizureResult["legalBasis"])}</p></div>}
+                    {Boolean(freezeSeizureResult["eligibleAssets"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Eligible Assets</div><ul className="space-y-1">{(freezeSeizureResult["eligibleAssets"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">→</span>{a}</li>)}</ul></div>}
+                    {Boolean(freezeSeizureResult["freezeOrderDraft"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Freeze Order Draft</div><pre className="text-11 text-ink-1 bg-bg-panel border border-hair-2 rounded p-3 whitespace-pre-wrap leading-relaxed">{String(freezeSeizureResult["freezeOrderDraft"])}</pre></div>}
+                    {Boolean(freezeSeizureResult["procedureSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Procedure Steps</div><ul className="space-y-1">{(freezeSeizureResult["procedureSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                    {Boolean(freezeSeizureResult["timeConstraints"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Time Constraints</div><p className="text-12 text-amber">{String(freezeSeizureResult["timeConstraints"])}</p></div>}
+                    {freezeSeizureResult["internationalCooperation"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${freezeSeizureResult["internationalCooperation"] ? "bg-brand-dim text-brand-deep" : "bg-bg-2 text-ink-2"}`}>International Cooperation: {freezeSeizureResult["internationalCooperation"] ? "REQUIRED" : "Not required"}</span>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Audit Response */}
+            {superToolsTab === "audit-response" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Audit Response Generator</div>
+                  <div className="text-11 text-ink-2 mt-0.5">CBUAE Notice 2023 · IIA Standards · Structured management responses to AML/CFT audit findings</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Auditor / Body Name</label><input value={auditResponseInput.auditorName} onChange={e => setAuditResponseInput(p => ({...p, auditorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Internal Audit, CBUAE, KPMG" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Audit Date</label><input value={auditResponseInput.auditDate} onChange={e => setAuditResponseInput(p => ({...p, auditDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="YYYY-MM-DD" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={auditResponseInput.institutionType} onChange={e => setAuditResponseInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="bank / DPMS / VASP…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Audit Findings</label><textarea value={auditResponseInput.findings} onChange={e => setAuditResponseInput(p => ({...p, findings: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Paste the audit findings / observations here…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={auditResponseInput.context} onChange={e => setAuditResponseInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runAuditResponse()} disabled={auditResponseLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{auditResponseLoading ? "◌ Generating…" : "Generate Audit Response"}</button>
+                {auditResponseResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(auditResponseResult["overallRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(auditResponseResult["overallRating"]) === "unsatisfactory" ? "bg-red-dim text-red" : String(auditResponseResult["overallRating"]) === "needs improvement" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(auditResponseResult["overallRating"])}</span><span className="text-12 font-semibold text-ink-0">Overall Rating</span></div>}
+                    {Array.isArray(auditResponseResult["responses"]) && (auditResponseResult["responses"] as Array<Record<string,string>>).map((resp, i) => (
+                      <div key={i} className="border border-hair-2 rounded-lg p-3 space-y-2 bg-bg-panel">
+                        <div className="text-12 font-semibold text-ink-0">{resp["finding"]}</div>
+                        {Boolean(resp["response"]) && <p className="text-12 text-ink-1 leading-relaxed">{resp["response"]}</p>}
+                        {Boolean(resp["rootCause"]) && <div><span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Root Cause: </span><span className="text-11 text-ink-2">{resp["rootCause"]}</span></div>}
+                        {Boolean(resp["remediation"]) && <div><span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Remediation: </span><span className="text-11 text-ink-1">{resp["remediation"]}</span></div>}
+                        <div className="flex gap-4 text-11 text-ink-3">
+                          {Boolean(resp["owner"]) && <span>Owner: <span className="text-ink-1">{resp["owner"]}</span></span>}
+                          {Boolean(resp["deadline"]) && <span>Deadline: <span className="text-amber">{resp["deadline"]}</span></span>}
+                        </div>
+                      </div>
+                    ))}
+                    {Boolean(auditResponseResult["coveringLetter"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Covering Letter</div><pre className="text-11 text-ink-1 bg-bg-panel border border-hair-2 rounded p-3 whitespace-pre-wrap leading-relaxed">{String(auditResponseResult["coveringLetter"])}</pre></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* High Net Worth */}
+            {superToolsTab === "high-net-worth" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">High Net Worth Individual Profile</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · UAE AML Art.16 · EDD requirements for HNWI and source-of-wealth verification</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={hnwInput.subjectName} onChange={e => setHnwInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nationality</label><input value={hnwInput.nationality} onChange={e => setHnwInput(p => ({...p, nationality: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of nationality" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wealth Estimate (AED)</label><input value={hnwInput.wealthEstimateAed} onChange={e => setHnwInput(p => ({...p, wealthEstimateAed: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 500,000,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Status</label><input value={hnwInput.pepStatus} onChange={e => setHnwInput(p => ({...p, pepStatus: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="None / Tier 1 / Tier 2 / Family member" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wealth Sources</label><input value={hnwInput.wealthSources} onChange={e => setHnwInput(p => ({...p, wealthSources: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Business, inheritance, investments, real estate…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={hnwInput.jurisdictions} onChange={e => setHnwInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries of residence / business / asset holding" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={hnwInput.context} onChange={e => setHnwInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runHnw()} disabled={hnwLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{hnwLoading ? "◌ Analysing…" : "Run HNW Profile Analysis"}</button>
+                {hnwResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(hnwResult["riskScore"]) && <div className="text-center"><div className="text-32 font-bold text-red">{String(hnwResult["riskScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Risk Score</div></div>}
+                      {Boolean(hnwResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(hnwResult["riskRating"]) === "critical" ? "bg-red-dim text-red" : String(hnwResult["riskRating"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(hnwResult["riskRating"])}</span>}
+                      {hnwResult["wealthSourceVerified"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${hnwResult["wealthSourceVerified"] ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>SOW Verified: {hnwResult["wealthSourceVerified"] ? "YES" : "NO"}</span>}
+                    </div>
+                    {Boolean(hnwResult["wealthSourceGaps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Wealth Source Gaps</div><ul className="space-y-1">{(hnwResult["wealthSourceGaps"] as string[]).map((g,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">⚠</span>{g}</li>)}</ul></div>}
+                    {Boolean(hnwResult["keyRiskFactors"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Risk Factors</div><ul className="space-y-1">{(hnwResult["keyRiskFactors"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(hnwResult["eddRequirements"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">EDD Requirements</div><ul className="space-y-1">{(hnwResult["eddRequirements"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{r}</li>)}</ul></div>}
+                    {Boolean(hnwResult["ongoingMonitoringPlan"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Ongoing Monitoring Plan</div><p className="text-12 text-ink-1 leading-relaxed">{String(hnwResult["ongoingMonitoringPlan"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cash-Intensive */}
+            {superToolsTab === "cash-intensive" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Cash-Intensive Business Risk Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · UAE AML Law Art.3 · Structuring typologies and cash deposit pattern analysis</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Name</label><input value={cashIntensiveInput.businessName} onChange={e => setCashIntensiveInput(p => ({...p, businessName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Type</label><input value={cashIntensiveInput.businessType} onChange={e => setCashIntensiveInput(p => ({...p, businessType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Restaurant, car wash, retail…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Monthly Revenue</label><input value={cashIntensiveInput.monthlyRevenue} onChange={e => setCashIntensiveInput(p => ({...p, monthlyRevenue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 200,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash % of Revenue</label><input value={cashIntensiveInput.cashPct} onChange={e => setCashIntensiveInput(p => ({...p, cashPct: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 80%" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deposit Pattern</label><input value={cashIntensiveInput.depositPattern} onChange={e => setCashIntensiveInput(p => ({...p, depositPattern: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. daily small deposits, round numbers, just below threshold" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={cashIntensiveInput.context} onChange={e => setCashIntensiveInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runCashIntensive()} disabled={cashIntensiveLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{cashIntensiveLoading ? "◌ Analysing…" : "Run Cash-Intensive Analysis"}</button>
+                {cashIntensiveResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(cashIntensiveResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(cashIntensiveResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(cashIntensiveResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(cashIntensiveResult["riskRating"])}</span>}
+                      {Boolean(cashIntensiveResult["cashRiskScore"]) && <div className="text-center"><div className="text-24 font-bold text-amber">{String(cashIntensiveResult["cashRiskScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Cash Risk Score</div></div>}
+                    </div>
+                    {Boolean(cashIntensiveResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(cashIntensiveResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(cashIntensiveResult["typologiesMatched"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Typologies Matched</div><div className="flex flex-wrap gap-1.5">{(cashIntensiveResult["typologiesMatched"] as string[]).map((t,i) => <span key={i} className="font-mono text-11 px-2 py-0.5 rounded bg-brand-dim text-brand-deep">{t}</span>)}</div></div>}
+                    {Boolean(cashIntensiveResult["controlGaps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Control Gaps</div><ul className="space-y-1">{(cashIntensiveResult["controlGaps"] as string[]).map((g,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">⚠</span>{g}</li>)}</ul></div>}
+                    {Boolean(cashIntensiveResult["enhancedMeasures"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Enhanced Measures</div><ul className="space-y-1">{(cashIntensiveResult["enhancedMeasures"] as string[]).map((m,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{m}</li>)}</ul></div>}
+                    {Boolean(cashIntensiveResult["reportingObligations"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Reporting Obligations</div><ul className="space-y-1">{(cashIntensiveResult["reportingObligations"] as string[]).map((o,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">→</span>{o}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Trust Structures */}
+            {superToolsTab === "trust-structures" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Trust & Complex Structure Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.25 · UAE FDL 10/2025 Art.7 · UBO identification and opacity risk in layered structures</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={trustStructInput.entityName} onChange={e => setTrustStructInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Trust / foundation / holding name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Structure Type</label><input value={trustStructInput.structureType} onChange={e => setTrustStructInput(p => ({...p, structureType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Discretionary trust, foundation, LLC chain…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={trustStructInput.jurisdictions} onChange={e => setTrustStructInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="BVI, Cayman, UAE, Jersey…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Layer Count</label><input value={trustStructInput.layerCount} onChange={e => setTrustStructInput(p => ({...p, layerCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of structural layers" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Stated Purpose</label><input value={trustStructInput.purposeStated} onChange={e => setTrustStructInput(p => ({...p, purposeStated: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estate planning, asset protection, charity…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={trustStructInput.context} onChange={e => setTrustStructInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runTrustStruct()} disabled={trustStructLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{trustStructLoading ? "◌ Analysing…" : "Run Trust Structure Analysis"}</button>
+                {trustStructResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(trustStructResult["opacityScore"]) && <div className="text-center"><div className="text-32 font-bold text-red">{String(trustStructResult["opacityScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Opacity Score</div></div>}
+                      {Boolean(trustStructResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(trustStructResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(trustStructResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(trustStructResult["riskRating"])}</span>}
+                      {trustStructResult["uboIdentified"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${trustStructResult["uboIdentified"] ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>UBO Identified: {trustStructResult["uboIdentified"] ? "YES" : "NO"}</span>}
+                    </div>
+                    {Boolean(trustStructResult["jurisdictionRisk"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction Risk</div><p className="text-12 text-ink-1 leading-relaxed">{String(trustStructResult["jurisdictionRisk"])}</p></div>}
+                    {Boolean(trustStructResult["layersCount"]) && <div className="text-12 text-ink-2">Structural layers: <span className="font-semibold text-ink-0">{String(trustStructResult["layersCount"])}</span></div>}
+                    {Boolean(trustStructResult["structureRedFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Structure Red Flags</div><ul className="space-y-1">{(trustStructResult["structureRedFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(trustStructResult["uboVerificationSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">UBO Verification Steps</div><ul className="space-y-1">{(trustStructResult["uboVerificationSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cross-Border Wire */}
+            {superToolsTab === "cross-border-wire" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Cross-Border Wire Transfer Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.16 · UAE Cabinet Decision 10/2019 · Travel Rule compliance and corridor risk</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originator Name</label><input value={crossBorderInput.originatorName} onChange={e => setCrossBorderInput(p => ({...p, originatorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sending party name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary Name</label><input value={crossBorderInput.beneficiaryName} onChange={e => setCrossBorderInput(p => ({...p, beneficiaryName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Receiving party name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount</label><input value={crossBorderInput.amount} onChange={e => setCrossBorderInput(p => ({...p, amount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 250,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Currency</label><input value={crossBorderInput.currency} onChange={e => setCrossBorderInput(p => ({...p, currency: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="USD / AED / EUR…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Country</label><input value={crossBorderInput.originCountry} onChange={e => setCrossBorderInput(p => ({...p, originCountry: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sending country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Country</label><input value={crossBorderInput.destinationCountry} onChange={e => setCrossBorderInput(p => ({...p, destinationCountry: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Receiving country" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Purpose</label><input value={crossBorderInput.purpose} onChange={e => setCrossBorderInput(p => ({...p, purpose: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated purpose of transfer" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={crossBorderInput.context} onChange={e => setCrossBorderInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runCrossBorder()} disabled={crossBorderLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{crossBorderLoading ? "◌ Analysing…" : "Run Cross-Border Wire Analysis"}</button>
+                {crossBorderResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {Boolean(crossBorderResult["corridorRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(crossBorderResult["corridorRisk"]) === "high" ? "bg-red-dim text-red" : String(crossBorderResult["corridorRisk"]) === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(crossBorderResult["corridorRisk"])} Corridor Risk</span>}
+                      {Boolean(crossBorderResult["r16ComplianceStatus"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(crossBorderResult["r16ComplianceStatus"]) === "non-compliant" ? "bg-red-dim text-red" : String(crossBorderResult["r16ComplianceStatus"]) === "partial" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>R.16: {String(crossBorderResult["r16ComplianceStatus"])}</span>}
+                      {Boolean(crossBorderResult["recommendedAction"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(crossBorderResult["recommendedAction"]) === "hold-investigate" ? "bg-red-dim text-red" : String(crossBorderResult["recommendedAction"]) === "proceed" ? "bg-green-dim text-green" : "bg-amber-dim text-amber"}`}>{String(crossBorderResult["recommendedAction"])}</span>}
+                    </div>
+                    {Boolean(crossBorderResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(crossBorderResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(crossBorderResult["missingOriginatorInfo"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Missing Originator Info</div><ul className="space-y-1">{(crossBorderResult["missingOriginatorInfo"] as string[]).map((f,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">→</span>{f}</li>)}</ul></div>}
+                    {Boolean(crossBorderResult["missingBeneficiaryInfo"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Missing Beneficiary Info</div><ul className="space-y-1">{(crossBorderResult["missingBeneficiaryInfo"] as string[]).map((f,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">→</span>{f}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* FIU Feedback */}
+            {superToolsTab === "fiu-feedback" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">FIU Feedback Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FIU · Egmont Group · goAML feedback loop — structured response to FIU feedback on STRs</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">FIU Reference</label><input value={fiuFeedbackInput.fiuRef} onChange={e => setFiuFeedbackInput(p => ({...p, fiuRef: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FIU feedback reference number" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Feedback Date</label><input value={fiuFeedbackInput.feedbackDate} onChange={e => setFiuFeedbackInput(p => ({...p, feedbackDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="YYYY-MM-DD" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Original STR Reference</label><input value={fiuFeedbackInput.originalStrRef} onChange={e => setFiuFeedbackInput(p => ({...p, originalStrRef: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="STR / goAML reference" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Feedback Content</label><textarea value={fiuFeedbackInput.feedbackContent} onChange={e => setFiuFeedbackInput(p => ({...p, feedbackContent: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Paste the FIU feedback message here…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={fiuFeedbackInput.context} onChange={e => setFiuFeedbackInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runFiuFeedback()} disabled={fiuFeedbackLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{fiuFeedbackLoading ? "◌ Analysing…" : "Analyse FIU Feedback"}</button>
+                {fiuFeedbackResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {Boolean(fiuFeedbackResult["feedbackType"]) && <span className="font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded bg-brand-dim text-brand-deep">{String(fiuFeedbackResult["feedbackType"])}</span>}
+                      {Boolean(fiuFeedbackResult["deadlineDays"]) && <span className="font-mono text-11 px-2 py-0.5 rounded bg-red-dim text-red">Respond within {String(fiuFeedbackResult["deadlineDays"])} days</span>}
+                    </div>
+                    {Boolean(fiuFeedbackResult["keyPoints"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Points</div><ul className="space-y-1">{(fiuFeedbackResult["keyPoints"] as string[]).map((p,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">→</span>{p}</li>)}</ul></div>}
+                    {Boolean(fiuFeedbackResult["requiredActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Actions</div><ul className="space-y-1">{(fiuFeedbackResult["requiredActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">⚠</span>{a}</li>)}</ul></div>}
+                    {Boolean(fiuFeedbackResult["responseDraft"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Response Draft</div><pre className="text-11 text-ink-1 bg-bg-panel border border-hair-2 rounded p-3 whitespace-pre-wrap leading-relaxed">{String(fiuFeedbackResult["responseDraft"])}</pre></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* De-Risking Impact */}
+            {superToolsTab === "derisking-impact" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">De-Risking Impact Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Guidance on De-Risking · Basel Committee · Proportionality and financial inclusion obligations</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Segment</label><input value={deriskingInput.customerSegment} onChange={e => setDeriskingInput(p => ({...p, customerSegment: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. MSBs, NPOs, crypto exchanges" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Affected Customer Count</label><input value={deriskingInput.affectedCount} onChange={e => setDeriskingInput(p => ({...p, affectedCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of affected customers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={deriskingInput.institutionType} onChange={e => setDeriskingInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="bank / VASP / DPMS…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Justification</label><textarea value={deriskingInput.riskJustification} onChange={e => setDeriskingInput(p => ({...p, riskJustification: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="State the risk rationale for de-risking this segment…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={deriskingInput.context} onChange={e => setDeriskingInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runDerisking()} disabled={deriskingLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{deriskingLoading ? "◌ Analysing…" : "Run De-Risking Assessment"}</button>
+                {deriskingResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {Boolean(deriskingResult["justificationStrength"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(deriskingResult["justificationStrength"]) === "weak" ? "bg-red-dim text-red" : String(deriskingResult["justificationStrength"]) === "moderate" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(deriskingResult["justificationStrength"])} Justification</span>}
+                      {deriskingResult["fatfConformant"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${deriskingResult["fatfConformant"] ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>FATF Conformant: {deriskingResult["fatfConformant"] ? "YES" : "NO"}</span>}
+                      {Boolean(deriskingResult["reputationalRisk"]) && <span className={`font-mono text-11 px-2 py-0.5 rounded ${String(deriskingResult["reputationalRisk"]) === "high" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>Reputational Risk: {String(deriskingResult["reputationalRisk"])}</span>}
+                    </div>
+                    {Boolean(deriskingResult["affectedCustomerCount"]) && <div className="text-12 text-ink-2">Affected customers: <span className="font-semibold text-ink-0">{String(deriskingResult["affectedCustomerCount"])}</span></div>}
+                    {Boolean(deriskingResult["alternativesMitigants"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Alternatives / Mitigants</div><ul className="space-y-1">{(deriskingResult["alternativesMitigants"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">→</span>{a}</li>)}</ul></div>}
+                    {Boolean(deriskingResult["exitProcessRequirements"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Exit Process Requirements</div><ul className="space-y-1">{(deriskingResult["exitProcessRequirements"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{r}</li>)}</ul></div>}
+                    {Boolean(deriskingResult["documentationRequired"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Documentation Required</div><ul className="space-y-1">{(deriskingResult["documentationRequired"] as string[]).map((d,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">→</span>{d}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Legal Privilege */}
+            {superToolsTab === "legal-privilege" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Legal Professional Privilege Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.23 · UAE Federal Decree 26/2021 · LPP scope, tipping-off risk, and disclosure obligations</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Type</label><input value={legalPrivInput.subjectType} onChange={e => setLegalPrivInput(p => ({...p, subjectType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="law firm, in-house counsel, barrister…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Communication Type</label><input value={legalPrivInput.communicationType} onChange={e => setLegalPrivInput(p => ({...p, communicationType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="legal advice, litigation support, transactional…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Relationship</label><input value={legalPrivInput.legalRelationship} onChange={e => setLegalPrivInput(p => ({...p, legalRelationship: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Describe the client–lawyer relationship and instruction" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={legalPrivInput.context} onChange={e => setLegalPrivInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runLegalPriv()} disabled={legalPrivLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{legalPrivLoading ? "◌ Analysing…" : "Analyse Legal Privilege"}</button>
+                {legalPrivResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {legalPrivResult["privilegeApplies"] !== undefined && <span className={`font-mono text-13 font-bold uppercase px-3 py-1 rounded ${legalPrivResult["privilegeApplies"] ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>Privilege {legalPrivResult["privilegeApplies"] ? "APPLIES" : "DOES NOT APPLY"}</span>}
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      {Boolean(legalPrivResult["tippingOffRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(legalPrivResult["tippingOffRisk"]) === "high" ? "bg-red-dim text-red" : String(legalPrivResult["tippingOffRisk"]) === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Tipping-Off Risk: {String(legalPrivResult["tippingOffRisk"])}</span>}
+                      {legalPrivResult["disclosurePermitted"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${legalPrivResult["disclosurePermitted"] ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>Disclosure: {legalPrivResult["disclosurePermitted"] ? "PERMITTED" : "NOT PERMITTED"}</span>}
+                      {legalPrivResult["legalCounselRequired"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${legalPrivResult["legalCounselRequired"] ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>Legal Counsel: {legalPrivResult["legalCounselRequired"] ? "REQUIRED" : "Optional"}</span>}
+                    </div>
+                    {Boolean(legalPrivResult["safeProcedureSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Safe Procedure Steps</div><ul className="space-y-1">{(legalPrivResult["safeProcedureSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ML Scenario */}
+            {superToolsTab === "ml-scenario" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Money Laundering Scenario Builder</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF 40 Recommendations · UNODC · Placement / Layering / Integration typology mapping</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={mlScenarioInput.subjectName} onChange={e => setMlScenarioInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Predicate Offence</label><input value={mlScenarioInput.predicateOffence} onChange={e => setMlScenarioInput(p => ({...p, predicateOffence: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fraud, corruption, drug trafficking…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Amount</label><input value={mlScenarioInput.estimatedAmount} onChange={e => setMlScenarioInput(p => ({...p, estimatedAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 25,000,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sectors Involved</label><input value={mlScenarioInput.sectors} onChange={e => setMlScenarioInput(p => ({...p, sectors: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Real estate, banking, crypto…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={mlScenarioInput.jurisdictions} onChange={e => setMlScenarioInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries involved in the scenario" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={mlScenarioInput.context} onChange={e => setMlScenarioInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runMlScenario()} disabled={mlScenarioLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{mlScenarioLoading ? "◌ Building…" : "Build ML Scenario"}</button>
+                {mlScenarioResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(mlScenarioResult["scenarioTitle"]) && <div className="text-14 font-bold text-ink-0">{String(mlScenarioResult["scenarioTitle"])}</div>}
+                    <div className="grid grid-cols-1 gap-3">
+                      {Boolean(mlScenarioResult["predicate"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Predicate Offence</div><p className="text-12 text-ink-1 leading-relaxed">{String(mlScenarioResult["predicate"])}</p></div>}
+                      {Boolean(mlScenarioResult["placement"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Placement</div><p className="text-12 text-ink-1 leading-relaxed">{String(mlScenarioResult["placement"])}</p></div>}
+                      {Boolean(mlScenarioResult["layering"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Layering</div><p className="text-12 text-ink-1 leading-relaxed">{String(mlScenarioResult["layering"])}</p></div>}
+                      {Boolean(mlScenarioResult["integration"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Integration</div><p className="text-12 text-ink-1 leading-relaxed">{String(mlScenarioResult["integration"])}</p></div>}
+                    </div>
+                    {Boolean(mlScenarioResult["totalAmountAed"]) && <div className="text-12 text-ink-2">Total Amount: <span className="font-semibold text-ink-0">{String(mlScenarioResult["totalAmountAed"])}</span></div>}
+                    {Boolean(mlScenarioResult["keyVehicles"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Vehicles</div><div className="flex flex-wrap gap-1.5">{(mlScenarioResult["keyVehicles"] as string[]).map((v,i) => <span key={i} className="font-mono text-11 px-2 py-0.5 rounded bg-brand-dim text-brand-deep">{v}</span>)}</div></div>}
+                    {Boolean(mlScenarioResult["redFlagSummary"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flag Summary</div><ul className="space-y-1">{(mlScenarioResult["redFlagSummary"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(mlScenarioResult["typologyCode"]) && <span className="font-mono text-11 px-2 py-0.5 rounded bg-bg-2 text-ink-2">Typology: {String(mlScenarioResult["typologyCode"])}</span>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Staff Alert */}
+            {superToolsTab === "staff-alert" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Staff Alert / Internal Whistleblower Adviser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.24 · FATF R.18 · Internal alert credibility and MLRO action protocol</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Alert Source</label><input value={staffAlertInput.alertSource} onChange={e => setStaffAlertInput(p => ({...p, alertSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anonymous tip, line manager, hotline…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Name</label><input value={staffAlertInput.employeeName} onChange={e => setStaffAlertInput(p => ({...p, employeeName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject employee (if known)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Role</label><input value={staffAlertInput.employeeRole} onChange={e => setStaffAlertInput(p => ({...p, employeeRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Relationship manager, teller, analyst…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Allegation</label><input value={staffAlertInput.allegation} onChange={e => setStaffAlertInput(p => ({...p, allegation: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of alleged misconduct" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Described</label><textarea value={staffAlertInput.evidenceDescribed} onChange={e => setStaffAlertInput(p => ({...p, evidenceDescribed: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe any evidence mentioned in the alert…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={staffAlertInput.context} onChange={e => setStaffAlertInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runStaffAlert()} disabled={staffAlertLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{staffAlertLoading ? "◌ Analysing…" : "Analyse Staff Alert"}</button>
+                {staffAlertResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(staffAlertResult["credibilityScore"]) && <div className="text-center"><div className="text-32 font-bold text-amber">{String(staffAlertResult["credibilityScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Credibility Score</div></div>}
+                      {Boolean(staffAlertResult["urgencyLevel"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(staffAlertResult["urgencyLevel"]) === "critical" ? "bg-red-dim text-red" : String(staffAlertResult["urgencyLevel"]) === "high" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(staffAlertResult["urgencyLevel"])} Urgency</span>}
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      {staffAlertResult["hrCoordinationRequired"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${staffAlertResult["hrCoordinationRequired"] ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>HR Coordination: {staffAlertResult["hrCoordinationRequired"] ? "REQUIRED" : "Not required"}</span>}
+                      {staffAlertResult["regulatoryReportingRequired"] !== undefined && <span className={`font-mono text-11 px-2 py-0.5 rounded ${staffAlertResult["regulatoryReportingRequired"] ? "bg-red-dim text-red" : "bg-bg-2 text-ink-2"}`}>Regulatory Reporting: {staffAlertResult["regulatoryReportingRequired"] ? "REQUIRED" : "Not required"}</span>}
+                    </div>
+                    {Boolean(staffAlertResult["verificationSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Verification Steps</div><ul className="space-y-1">{(staffAlertResult["verificationSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                    {Boolean(staffAlertResult["mlroActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">MLRO Actions</div><ul className="space-y-1">{(staffAlertResult["mlroActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">⚠</span>{a}</li>)}</ul></div>}
+                    {Boolean(staffAlertResult["confidentialityProtocol"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Confidentiality Protocol</div><p className="text-12 text-ink-1 leading-relaxed">{String(staffAlertResult["confidentialityProtocol"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         )}
       </div>
