@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
@@ -243,8 +244,8 @@ export async function POST(req: Request) {
     const client = new Anthropic({ apiKey });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
       system: [
         {
           type: "text",
