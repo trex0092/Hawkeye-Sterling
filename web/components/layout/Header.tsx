@@ -60,6 +60,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       // standalone /goaml-export page still exists for any saved
       // bookmarks but is no longer surfaced.
       { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
+      { label: "Responsible AI", href: "/responsible-ai", hint: "UNESCO principles · model registry · bias · audit" },
     ],
   },
   {
