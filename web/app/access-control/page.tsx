@@ -5,7 +5,15 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type UserRole = "viewer" | "analyst" | "supervisor" | "mlro" | "admin";
+type UserRole = "compliance" | "management" | "logistics" | "trading" | "accounts";
+
+const ROLE_LABEL: Record<UserRole, string> = {
+  compliance: "Compliance Department",
+  management: "Management Department",
+  logistics: "Logistic Department",
+  trading: "Trading Department",
+  accounts: "Accounts Department",
+};
 
 interface AccessUser {
   id: string;
@@ -42,11 +50,11 @@ const TABS = ["👥 Users", "🔑 Permission Matrix", "👁️ Session Monitor",
 type Tab = (typeof TABS)[number];
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  viewer: "bg-bg-2 text-ink-2",
-  analyst: "bg-blue-dim text-blue",
-  supervisor: "bg-amber-dim text-amber",
-  mlro: "bg-brand/15 text-brand",
-  admin: "bg-red-dim text-red",
+  compliance: "bg-brand/15 text-brand",
+  management: "bg-amber-dim text-amber",
+  logistics: "bg-blue-dim text-blue",
+  trading: "bg-green-dim text-green",
+  accounts: "bg-violet-dim text-violet",
 };
 
 const ALL_MODULES = [
@@ -62,60 +70,12 @@ const ALL_MODULES = [
   "Access Control",
 ];
 
-const ROLES: UserRole[] = ["viewer", "analyst", "supervisor", "mlro", "admin"];
+const ROLES: UserRole[] = ["compliance", "management", "logistics", "trading", "accounts"];
 
 // Permission matrix: "full" | "read" | "none"
 type AccessLevel = "full" | "read" | "none";
 const MATRIX: Record<UserRole, Record<string, AccessLevel>> = {
-  viewer: {
-    Screening: "read",
-    "STR Cases": "none",
-    "MLRO Advisor": "none",
-    Oversight: "none",
-    "Responsible AI": "none",
-    EWRA: "none",
-    Playbook: "none",
-    Investigation: "none",
-    "Audit Trail": "read",
-    "Access Control": "none",
-  },
-  analyst: {
-    Screening: "full",
-    "STR Cases": "full",
-    "MLRO Advisor": "none",
-    Oversight: "none",
-    "Responsible AI": "none",
-    EWRA: "none",
-    Playbook: "none",
-    Investigation: "full",
-    "Audit Trail": "read",
-    "Access Control": "none",
-  },
-  supervisor: {
-    Screening: "full",
-    "STR Cases": "full",
-    "MLRO Advisor": "read",
-    Oversight: "full",
-    "Responsible AI": "none",
-    EWRA: "full",
-    Playbook: "full",
-    Investigation: "full",
-    "Audit Trail": "full",
-    "Access Control": "none",
-  },
-  mlro: {
-    Screening: "full",
-    "STR Cases": "full",
-    "MLRO Advisor": "full",
-    Oversight: "full",
-    "Responsible AI": "full",
-    EWRA: "full",
-    Playbook: "full",
-    Investigation: "full",
-    "Audit Trail": "full",
-    "Access Control": "none",
-  },
-  admin: {
+  compliance: {
     Screening: "full",
     "STR Cases": "full",
     "MLRO Advisor": "full",
@@ -126,6 +86,54 @@ const MATRIX: Record<UserRole, Record<string, AccessLevel>> = {
     Investigation: "full",
     "Audit Trail": "full",
     "Access Control": "full",
+  },
+  management: {
+    Screening: "full",
+    "STR Cases": "full",
+    "MLRO Advisor": "read",
+    Oversight: "full",
+    "Responsible AI": "none",
+    EWRA: "full",
+    Playbook: "none",
+    Investigation: "none",
+    "Audit Trail": "read",
+    "Access Control": "none",
+  },
+  logistics: {
+    Screening: "full",
+    "STR Cases": "none",
+    "MLRO Advisor": "none",
+    Oversight: "none",
+    "Responsible AI": "none",
+    EWRA: "none",
+    Playbook: "none",
+    Investigation: "read",
+    "Audit Trail": "read",
+    "Access Control": "none",
+  },
+  trading: {
+    Screening: "full",
+    "STR Cases": "none",
+    "MLRO Advisor": "none",
+    Oversight: "none",
+    "Responsible AI": "none",
+    EWRA: "none",
+    Playbook: "none",
+    Investigation: "none",
+    "Audit Trail": "read",
+    "Access Control": "none",
+  },
+  accounts: {
+    Screening: "full",
+    "STR Cases": "none",
+    "MLRO Advisor": "none",
+    Oversight: "none",
+    "Responsible AI": "none",
+    EWRA: "none",
+    Playbook: "none",
+    Investigation: "none",
+    "Audit Trail": "read",
+    "Access Control": "none",
   },
 };
 
@@ -148,24 +156,6 @@ const DEMO_SESSIONS: Session[] = [
     ip: "10.0.1.42",
     started: "2025-04-30T07:50:00Z",
     lastActive: "2025-04-30T09:15:22Z",
-    active: true,
-  },
-  {
-    id: "sess-002",
-    userId: "usr-002",
-    userName: "Ahmed Rahman",
-    ip: "10.0.1.55",
-    started: "2025-04-30T07:55:00Z",
-    lastActive: "2025-04-30T09:10:05Z",
-    active: true,
-  },
-  {
-    id: "sess-003",
-    userId: "usr-004",
-    userName: "Tariq Ibrahim",
-    ip: "10.0.1.61",
-    started: "2025-04-30T09:00:00Z",
-    lastActive: "2025-04-30T09:14:50Z",
     active: true,
   },
 ];
@@ -191,7 +181,7 @@ function RoleBadge({ role }: { role: UserRole }) {
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-mono font-semibold uppercase tracking-wide ${ROLE_COLORS[role]}`}
     >
-      {role}
+      {ROLE_LABEL[role]}
     </span>
   );
 }
@@ -640,7 +630,7 @@ export default function AccessControlPage() {
                     className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
                   >
                     {ROLES.map((r) => (
-                      <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                      <option key={r} value={r}>{ROLE_LABEL[r]}</option>
                     ))}
                   </select>
                 </div>
