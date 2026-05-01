@@ -401,12 +401,6 @@ export default function EocnPage() {
             </div>
           )}
 
-          {deletedMatchIds.length > 0 && (
-            <div className="px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">
-              <span className="text-amber font-semibold">{deletedMatchIds.length} match{deletedMatchIds.length === 1 ? "" : "es"} hidden</span>
-              <button type="button" onClick={restoreMatches} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
-            </div>
-          )}
 
           {liveMatches.map((m) => (
             <div key={m.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
