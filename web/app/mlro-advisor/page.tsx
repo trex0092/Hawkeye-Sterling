@@ -2432,9 +2432,19 @@ export default function MlroAdvisorPage() {
   const [w6EnvResult, setW6EnvResult] = useState<Record<string, unknown> | null>(null);
   const [w6EnvLoading, setW6EnvLoading] = useState(false);
 
-  const [w6CryptoInput, setW6CryptoInput] = useState({ walletAddress: "", blockchain: "BTC", transactionHistory: "" });
+  const [w6CryptoInput, setW6CryptoInput] = useState({
+    walletAddress: "",
+    blockchain: "bitcoin" as "bitcoin"|"ethereum"|"tron"|"monero"|"litecoin"|"bnb"|"solana"|"other",
+    transactionHistory: "",
+    entityName: "",
+    exchangeOrigin: "",
+    transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false },
+    riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false },
+    context: "",
+  });
   const [w6CryptoResult, setW6CryptoResult] = useState<Record<string, unknown> | null>(null);
   const [w6CryptoLoading, setW6CryptoLoading] = useState(false);
+  const [w6CryptoOpenObligation, setW6CryptoOpenObligation] = useState<number | null>(null);
 
   const [w6HtInput, setW6HtInput] = useState({ entity: "", indicators: [] as string[], transactionPatterns: "" });
   const [w6HtResult, setW6HtResult] = useState<Record<string, unknown> | null>(null);
