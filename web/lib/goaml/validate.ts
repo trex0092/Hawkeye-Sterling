@@ -16,7 +16,7 @@
 // before the XML is generated server-side.
 
 export const REPORT_CODES = [
-  "STR", "SAR", "FFR", "PNMR", "CTR", "AIF", "EFT", "HRC", "RFI",
+  "STR", "SAR", "FFR", "PNMR", "CTR", "AIF",
 ] as const;
 export type ReportCode = (typeof REPORT_CODES)[number];
 
@@ -27,9 +27,6 @@ export const REPORT_CODE_LABEL: Record<ReportCode, string> = {
   PNMR: "Partial Name Match Report",
   CTR:  "Cash Threshold Report",
   AIF:  "Additional Information File",
-  EFT:  "Electronic Funds Transfer",
-  HRC:  "High-Risk Customer Report",
-  RFI:  "Request For Information response",
 };
 
 export type EntityKind = "individual" | "organisation" | "vessel" | "aircraft" | "other";

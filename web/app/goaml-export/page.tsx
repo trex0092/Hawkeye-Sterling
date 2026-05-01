@@ -241,33 +241,31 @@ export default function GoAmlExportPage() {
         {step === 2 && (
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Subject</h2>
-            <Field label="Entity type">
-              <select
-                value={draft.subject.entityType}
-                onChange={(e) => updateSubject({ entityType: e.target.value as DraftEnvelope["subject"]["entityType"] })}
-                className="w-full text-12 border border-hair-2 bg-bg-panel text-ink-0 rounded px-2 py-1.5 focus:border-brand focus:outline-none"
-              >
-                <option value="individual">Individual</option>
-                <option value="organisation">Organisation</option>
-                <option value="vessel">Vessel</option>
-                <option value="aircraft">Aircraft</option>
-                <option value="other">Other</option>
-              </select>
-            </Field>
-            <FieldText
-              label={draft.subject.entityType === "individual" ? "Full name" : "Legal name"}
-              value={draft.subject.name}
-              onChange={(v) => updateSubject({ name: v })}
-            />
-            {draft.subject.entityType === "individual" && (
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Entity type">
+                <select
+                  value={draft.subject.entityType}
+                  onChange={(e) => updateSubject({ entityType: e.target.value as DraftEnvelope["subject"]["entityType"] })}
+                  className="w-full text-12 border border-hair-2 bg-bg-panel text-ink-0 rounded px-2 py-1.5 focus:border-brand focus:outline-none"
+                >
+                  <option value="individual">Individual</option>
+                  <option value="organisation">Organisation</option>
+                  <option value="vessel">Vessel</option>
+                  <option value="aircraft">Aircraft</option>
+                  <option value="other">Other</option>
+                </select>
+              </Field>
               <FieldText
-                label="Date of birth (YYYY-MM-DD)"
+                label={draft.subject.entityType === "individual" ? "Full name" : "Legal name"}
+                value={draft.subject.name}
+                onChange={(v) => updateSubject({ name: v })}
+              />
+              <FieldText
+                label="DOB/Registration (dd/mm/yyyy)"
                 value={draft.subject.dob ?? ""}
                 onChange={(v) => updateSubject({ dob: v })}
-                placeholder="1985-04-12"
+                placeholder="12/04/1985"
               />
-            )}
-            <div className="grid grid-cols-2 gap-3">
               <FieldText
                 label="Jurisdiction (ISO-2)"
                 value={draft.subject.jurisdiction ?? ""}
@@ -279,17 +277,12 @@ export default function GoAmlExportPage() {
                 value={draft.subject.idNumber ?? ""}
                 onChange={(v) => updateSubject({ idNumber: v })}
               />
+              <FieldText
+                label="Internal case ID (optional)"
+                value={draft.subject.caseId ?? ""}
+                onChange={(v) => updateSubject({ caseId: v })}
+              />
             </div>
-            <FieldText
-              label="Aliases (comma-separated)"
-              value={draft.subject.aliases ?? ""}
-              onChange={(v) => updateSubject({ aliases: v })}
-            />
-            <FieldText
-              label="Internal case ID (optional)"
-              value={draft.subject.caseId ?? ""}
-              onChange={(v) => updateSubject({ caseId: v })}
-            />
           </div>
         )}
 
