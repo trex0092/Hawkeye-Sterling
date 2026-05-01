@@ -218,7 +218,7 @@ export default function GoAmlExportPage() {
               suspicion; FFR is reserved for funds-freeze actions arising from
               UN/Cabinet 74/2020 designations.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {REPORT_CODES.map((code) => (
                 <button
                   key={code}

@@ -750,7 +750,7 @@ export default function EwraPage() {
                     Residual: {RISK_LABEL[res]}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
                     <div className="text-10 text-ink-3 font-mono uppercase tracking-wide-2 mb-1">
                       Inherent risk — {RISK_LABEL[d.inherent]}

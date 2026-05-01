@@ -374,7 +374,7 @@ export default function AdverseMediaLookbackPage() {
           <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
             Log new finding
           </div>
-          <div className="grid grid-cols-3 gap-2 mb-2">
+          <div className="grid grid-cols-3 gap-3 mb-2">
             <input value={draft.subject} onChange={set("subject")}
               placeholder="Subject name" className={inputCls} />
             <input value={draft.headline} onChange={set("headline")}
@@ -382,7 +382,7 @@ export default function AdverseMediaLookbackPage() {
             <input value={draft.source} onChange={set("source")}
               placeholder="Source (e.g. Reuters)" className={inputCls} />
           </div>
-          <div className="grid grid-cols-4 gap-2 mb-2">
+          <div className="grid grid-cols-4 gap-3 mb-2">
             <input value={draft.articleDate} onChange={set("articleDate")}
               placeholder="Article date dd/mm/yyyy" className={inputCls} />
             <select value={draft.category} onChange={set("category")} className={inputCls}>

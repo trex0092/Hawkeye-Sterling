@@ -270,7 +270,7 @@ export default function SupplyChainPage() {
       {/* ── Input form ── */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">
         <h2 className="text-14 font-semibold text-ink-0 mb-4">Company & Supply Chain Setup</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">Company Name</label>
             <input
@@ -295,7 +295,7 @@ export default function SupplyChainPage() {
           <SupplierList suppliers={suppliers} onChange={setSuppliers} />
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <TagInput label="Key Source Countries" placeholder="e.g. DRC, China" values={sourceCountries} onChange={setSourceCountries} />
           <TagInput label="Commodities" placeholder="e.g. Gold, Cobalt, Cotton" values={commodities} onChange={setCommodities} />
           <TagInput label="Certifications Held" placeholder="e.g. RMAP, FSC, ISO 14001" values={certifications} onChange={setCertifications} />

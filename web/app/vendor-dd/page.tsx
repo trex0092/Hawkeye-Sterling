@@ -297,7 +297,7 @@ export default function SupplierDdPage() {
           <div key={v.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
             {editingId === v.id ? (
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <input
                     className="text-12 px-2 py-1.5 rounded border border-brand bg-bg-0 text-ink-0 col-span-2"
                     value={editForm.name}

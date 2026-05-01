@@ -641,7 +641,7 @@ export default function CddReviewPage() {
         {/* Add manual record */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
           <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Add subject</div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             <input value={draft.subject} onChange={set("subject")} placeholder="Subject name" className={inputCls} />
             <select value={draft.tier} onChange={set("tier")} className={inputCls}>
               <option value="high">High risk (3 months)</option>
@@ -676,7 +676,7 @@ export default function CddReviewPage() {
                 editingId === r.id ? (
                   <tr key={r.id} className={i < sorted.length - 1 ? "border-b border-hair" : ""}>
                     <td colSpan={7} className="px-3 py-2">
-                      <div className="grid grid-cols-4 gap-2 mb-1.5">
+                      <div className="grid grid-cols-4 gap-3 mb-1.5">
                         <input value={editDraft.subject} onChange={setE("subject")} placeholder="Subject" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" />
                         <select value={editDraft.tier} onChange={setE("tier")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
                           <option value="high">High risk (3 months)</option>
