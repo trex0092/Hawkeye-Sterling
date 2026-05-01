@@ -8,10 +8,13 @@ interface Playbook {
   title: string;
   typology: string;
   family: string;
+  description?: string;
+  citations?: string[];
   steps: Array<{
     title: string;
     required: boolean;
     checks: string[];
+    citation?: string;
   }>;
 }
 
@@ -21,6 +24,8 @@ const PLAYBOOKS: Playbook[] = [
     title: "Trade-Based Money Laundering (TBML)",
     typology: "tbml",
     family: "ML",
+    description: "TBML exploits international trade transactions to move value across borders, typically through over/under-invoicing, multiple invoicing, falsely described goods, or phantom shipments. Gold sector entities are primary TBML vectors per FATF DPMS Guidance (2023). Each trade transaction must be benchmarked against world commodity prices and shipping logistics verified end-to-end.",
+    citations: ["FATF R.16 (Wire transfers & trade)", "FATF DPMS Guidance 2023 §4", "UAE FDL 10/2025 Art.14", "UN Panel of Experts reports"],
     steps: [
       {
         title: "1. Price analysis",
@@ -66,6 +71,8 @@ const PLAYBOOKS: Playbook[] = [
     title: "PEP Enhanced Due Diligence (FATF R.12)",
     typology: "pep",
     family: "PEP",
+    description: "Politically Exposed Persons present heightened corruption and bribery risk due to their public function, influence over government decisions, and access to public funds. FATF R.12 mandates enhanced due diligence for foreign PEPs — including senior management approval — and applies risk-based measures to domestic PEPs and international organization PEPs. UAE FDL 10/2025 Art.17 requires Board-level sign-off for all PEP relationships.",
+    citations: ["FATF R.12 (Politically exposed persons)", "UAE FDL 10/2025 Art.17", "CBUAE AML Standards §4.3", "Wolfsberg PEP Guidance 2023"],
     steps: [
       {
         title: "1. PEP classification",
@@ -110,6 +117,8 @@ const PLAYBOOKS: Playbook[] = [
     title: "Correspondent Banking · Nested Relationship",
     typology: "correspondent_banking",
     family: "banking",
+    description: "Correspondent banking allows foreign institutions to access domestic payment systems. Nested relationships — where a respondent bank provides correspondent services to other institutions through the same channel — amplify risk exponentially. FATF R.13 prohibits relationships with shell banks. FATF R.7 requires targeted financial sanctions screening on all respondent relationships. UAE CBUAE requires Wolfsberg CBDDQ completion before onboarding.",
+    citations: ["FATF R.13 (Correspondent banking)", "FATF R.7 (Targeted financial sanctions)", "Wolfsberg CBDDQ 2024", "UAE CBUAE Circular 02/2022"],
     steps: [
       {
         title: "1. Respondent-bank licensing",
@@ -4881,6 +4890,864 @@ const PLAYBOOKS: Playbook[] = [
     ],
   },
   {
+    id: "nft-money-laundering",
+    title: "NFT & Digital Art Money Laundering",
+    typology: "nft_ml",
+    family: "VASP",
+    description: "NFTs enable wash trading and value laundering through the subjective pricing of digital art. A criminal buys their own NFT through a controlled wallet at an artificially high price, creating apparent profit from illicit funds. FATF Guidance on Virtual Assets (2021, updated 2023) classifies NFT platforms as VASPs where used for investment. UAE CBUAE requires VASP registration for NFT marketplaces facilitating value transfer.",
+    citations: ["FATF VASP Guidance 2023 §38-42", "UAE CBUAE VASP Framework 2023", "FATF R.15 (New technologies)", "FinCEN FIN-2019-G001"],
+    steps: [
+      {
+        title: "1. Platform & counterparty classification",
+        required: true,
+        checks: [
+          "Determine if NFT platform is regulated as a VASP in relevant jurisdiction",
+          "Identify if NFT is primarily used for investment/speculation (VASP trigger) vs. consumable item",
+          "Screen platform operator against sanctions/adverse media databases",
+          "Verify KYC standards of the NFT marketplace used by customer",
+        ],
+      },
+      {
+        title: "2. Wash trading detection",
+        required: true,
+        checks: [
+          "Identify circular transactions: customer sells NFT to wallet they control",
+          "Check if buyer/seller share same wallet cluster or IP address",
+          "Review price against comparable NFT sales on same platform",
+          "Flag same NFT traded >3 times within 30 days between related wallets",
+        ],
+      },
+      {
+        title: "3. Source of funds for high-value NFTs",
+        required: true,
+        checks: [
+          "Obtain SoF declaration for NFT purchases >AED 100,000 equivalent",
+          "Verify fiat or crypto origin is documented",
+          "Check on-chain history of crypto used — run blockchain analytics",
+          "Cross-reference purchase price against customer's declared income/assets",
+        ],
+      },
+      {
+        title: "4. Suspicious activity indicators",
+        required: false,
+        checks: [
+          "Celebrity or influencer promotion immediately preceding purchase",
+          "Rapid resale at >200% profit within 7 days",
+          "Buyer and seller in same geographic location / known associates",
+          "Payment in privacy coins (Monero, Zcash) converted for NFT purchase",
+        ],
+      },
+    ],
+  },
+  {
+    id: "crypto-mining-proceeds",
+    title: "Cryptocurrency Mining Proceeds",
+    typology: "crypto_mining",
+    family: "VASP",
+    description: "Mining rewards represent legitimately created cryptocurrency but can be used to layer proceeds from other crimes by commingling with mining rewards. Mining operations in high-risk or sanctioned jurisdictions (Iran, DPRK, Russia) may be subject to OFAC and UN sanctions. FATF Guidance clarifies miners are not VASPs but exchangers and custodians receiving mining proceeds are.",
+    citations: ["FATF VASP Guidance 2023 §28", "OFAC Virtual Currency Compliance 2021", "UAE CBUAE VASP Circular 2023"],
+    steps: [
+      {
+        title: "1. Mining operation verification",
+        required: true,
+        checks: [
+          "Obtain proof of mining operation: mining pool statements, hardware invoices, electricity contracts",
+          "Verify jurisdiction of mining hardware — flag any DPRK, Iran, Russia, Belarus nexus",
+          "Screen mining pool operator name against sanctions lists",
+          "Obtain wallet address used for mining payouts for blockchain analytics",
+        ],
+      },
+      {
+        title: "2. Blockchain analytics on mining wallet",
+        required: true,
+        checks: [
+          "Run CHAINALYSIS / Elliptic / TRM on mining reward wallet",
+          "Check for commingling with high-risk counterparties (darknet markets, ransomware wallets)",
+          "Verify mining pool payouts are consistent with declared hashrate",
+          "Flag anomalous spikes in reward frequency inconsistent with declared hardware",
+        ],
+      },
+      {
+        title: "3. Source of wealth for mining infrastructure",
+        required: false,
+        checks: [
+          "Obtain SoW explanation for initial mining hardware investment",
+          "Verify electricity costs are plausible for claimed hashrate",
+          "Cross-check declared mining income against on-chain payout history",
+        ],
+      },
+    ],
+  },
+  {
+    id: "carbon-credit-fraud",
+    title: "Carbon Credit & ESG Fraud",
+    typology: "carbon_fraud",
+    family: "Fraud",
+    description: "Voluntary carbon markets are largely unregulated, creating opportunities for fraudulent credit generation, double-counting, and proceeds laundering through green investment vehicles. FATF has flagged carbon markets as an emerging ML vulnerability. The OECD Due Diligence Guidance and ICVCM Core Carbon Principles provide the key standards. UAE companies with net-zero commitments are exposed through carbon offset procurement.",
+    citations: ["FATF Emerging ML/TF Risks 2023", "ICVCM Core Carbon Principles 2023", "OECD RBC Guidance", "EU Carbon Border Adjustment Mechanism"],
+    steps: [
+      {
+        title: "1. Carbon registry verification",
+        required: true,
+        checks: [
+          "Verify credits registered on recognised registry: Verra VCS, Gold Standard, American Carbon Registry",
+          "Check serial numbers for double-counting against registry public records",
+          "Confirm project developer identity and registration status",
+          "Screen project developer against sanctions / adverse media",
+        ],
+      },
+      {
+        title: "2. Project integrity checks",
+        required: true,
+        checks: [
+          "Verify project validation by accredited third-party auditor (e.g. SCS Global, Bureau Veritas)",
+          "Check project is not in sanctioned or CAHRA jurisdiction without appropriate controls",
+          "Confirm land tenure documentation is genuine and not subject to dispute",
+          "Review vintage year — old pre-2015 credits have lower credibility",
+        ],
+      },
+      {
+        title: "3. Financial flows",
+        required: true,
+        checks: [
+          "Identify intermediary brokers — more than 2 intermediaries is a red flag",
+          "Verify payment flows match contracted carbon price (current market: USD 5-20/tonne)",
+          "Flag payments through shell companies in secrecy jurisdictions",
+          "Obtain evidence of retirement (permanent cancellation) of credits on registry",
+        ],
+      },
+    ],
+  },
+  {
+    id: "deepfake-identity-fraud",
+    title: "Deepfake & Synthetic Identity Fraud",
+    typology: "synthetic_id_v2",
+    family: "Fraud",
+    description: "AI-generated deepfakes now defeat many biometric liveness checks used for remote KYC. Synthetic identities combine real data (e.g. genuine passport + AI-generated face) with fabricated attributes to create fraudulent identities that pass automated screening. FATF identifies AI-enabled fraud as a priority emerging risk. UAE CBUAE requires liveness verification meeting ISO/IEC 30107-3 PAD Level 2 for high-risk onboarding.",
+    citations: ["FATF Digital Identity Guidance 2023", "UAE CBUAE Digital Onboarding Standards 2022", "ISO/IEC 30107-3 Presentation Attack Detection", "NIST SP 800-63B Digital Identity Guidelines"],
+    steps: [
+      {
+        title: "1. Document authentication",
+        required: true,
+        checks: [
+          "Run document through certified forensic verification (Onfido, Jumio, iProov) — not manual check alone",
+          "Check MRZ consistency with visual zone",
+          "Verify chip data via NFC read for e-Passport",
+          "Cross-reference against INTERPOL Stolen and Lost Travel Documents (SLTD) database",
+        ],
+      },
+      {
+        title: "2. Liveness and biometric check",
+        required: true,
+        checks: [
+          "Require active liveness challenge (not just passive selfie) meeting PAD Level 2",
+          "Check for pixel-level GAN artifacts using deepfake detection tool",
+          "Verify face match score ≥95% against document photo",
+          "Flag if device used for onboarding has been flagged in fraud database",
+        ],
+      },
+      {
+        title: "3. Data consistency checks",
+        required: true,
+        checks: [
+          "Cross-check name/DOB/address against credit bureau or government database",
+          "Verify email domain age — new domains (< 30 days) associated with synthetic IDs",
+          "Check phone number — VoIP numbers without carrier history are a red flag",
+          "Review IP geolocation against stated address jurisdiction",
+        ],
+      },
+      {
+        title: "4. Behavioural red flags",
+        required: false,
+        checks: [
+          "Unusually fast form completion (automated bot filling)",
+          "Multiple onboarding attempts with slight name/date variations",
+          "Device fingerprint matches previously rejected application",
+          "Customer refuses video call verification request",
+        ],
+      },
+    ],
+  },
+  {
+    id: "gold-free-zone-smuggling",
+    title: "Gold Smuggling via UAE Free Zones",
+    typology: "gold_smuggling",
+    family: "DPMS",
+    description: "UAE Free Zones (DMCC, Dubai South, JAFZA) offer logistical advantages exploited for gold smuggling — undeclared imports from CAHRA jurisdictions, re-labelling of conflict gold as UAE-origin, and circular trade to artificially create provenance documentation. EOCN and UAE MoE mandate full chain-of-custody documentation. LBMA RGG Step 4 requires country-of-origin verification. The FATF DPMS Guidance (2023) specifically flags UAE Free Zones.",
+    citations: ["FATF DPMS Guidance 2023 §5.2", "EOCN Supply Chain Policy", "LBMA RGG v9 Step-4", "UAE MoE DPMS Circular 2/2024", "UN Panel of Experts (CAR, DRC, Sudan)"],
+    steps: [
+      {
+        title: "1. Country-of-origin verification",
+        required: true,
+        checks: [
+          "Obtain smelter/refiner certificate of origin — LBMA Good Delivery or equivalent",
+          "Cross-reference stated origin against UN Panel of Experts CAHRA list",
+          "Verify refiner is on LBMA, RJC, or RMAP approved smelter list",
+          "Obtain assay certificate from independent laboratory",
+        ],
+      },
+      {
+        title: "2. Free Zone import documentation",
+        required: true,
+        checks: [
+          "Obtain Dubai Customs import declaration (HS code 7108.12.00 for non-monetary gold)",
+          "Verify declared weight matches physical assay and transport manifest",
+          "Cross-check consignor identity against Free Zone registered entities",
+          "Confirm DMCC/JAFZA trade licence is valid for gold dealing",
+        ],
+      },
+      {
+        title: "3. Re-labelling and re-branding detection",
+        required: true,
+        checks: [
+          "Check if bar serial numbers match hallmarks from claimed refinery",
+          "Verify brand stamp against official refinery hallmark database",
+          "Flag bars without XRF or fire assay certificate",
+          "Confirm no prior import by same consignor under different HS code",
+        ],
+      },
+      {
+        title: "4. Circular trade pattern detection",
+        required: false,
+        checks: [
+          "Track if same gold (by weight/assay) appears in multiple import records",
+          "Flag round-trip trades: exported and re-imported within 90 days",
+          "Check if importer and exporter share common UBO or director",
+          "Verify final buyer is not in the same jurisdiction as original exporter",
+        ],
+      },
+    ],
+  },
+  {
+    id: "terrorist-financing-charity",
+    title: "Terrorist Financing via Charities & NPOs",
+    typology: "tf_charity",
+    family: "CFT",
+    description: "Non-profit organizations are exploited for terrorist financing through diversion of legitimate donations, commingling with illicit funds, and use of NPO infrastructure to move funds to conflict zones. FATF R.8 (Non-profit organisations) requires risk-based supervision. UAE Cabinet Resolution 74/2020 established a comprehensive NPO oversight framework. UAE Executive Office (EOCN) maintains a Terrorist Financing watch list for NPOs.",
+    citations: ["FATF R.8 (Non-profit organisations)", "UAE Cabinet Resolution 74/2020 Art.17", "EOCN TFS Framework", "UN Security Council 1373 (2001)", "FATF Best Practices on NPOs 2023"],
+    steps: [
+      {
+        title: "1. NPO registration and legitimacy check",
+        required: true,
+        checks: [
+          "Verify registration with UAE Ministry of Community Development (MoCD) or equivalent regulator",
+          "Screen NPO name, directors, and beneficiaries against UNSCR 1267, 1373, and EOCN lists",
+          "Obtain audited financial statements for last 3 years",
+          "Confirm operating charter — stated purpose must match actual activities",
+        ],
+      },
+      {
+        title: "2. Fund flows and geographic exposure",
+        required: true,
+        checks: [
+          "Map all jurisdictions where NPO operates or sends funds",
+          "Identify any nexus to conflict zones: Syria, Yemen, Somalia, Afghanistan, Libya",
+          "Verify that fund remittances are through regulated banking channels, not informal hawala",
+          "Check if NPO receives funds from anonymous sources above AED 5,000",
+        ],
+      },
+      {
+        title: "3. Beneficiary verification",
+        required: true,
+        checks: [
+          "Identify ultimate beneficiaries of charitable distributions",
+          "Screen beneficiary organizations against OFAC, UN, EU, UAE TFS lists",
+          "Verify aid delivery documentation (photos, receipts, registration) for in-kind distributions",
+          "Confirm no designated entities serve as distribution partners",
+        ],
+      },
+      {
+        title: "4. Ongoing monitoring",
+        required: false,
+        checks: [
+          "Annual re-screening of all directors and key personnel",
+          "Quarterly review of incoming donations > AED 50,000",
+          "Flag sudden spikes in donation volumes not linked to documented campaigns",
+          "File STR if any TF suspicion — zero tolerance per FATF R.8",
+        ],
+      },
+    ],
+  },
+  {
+    id: "luxury-real-estate-dubai",
+    title: "Luxury Real Estate — Dubai ML Risk",
+    typology: "luxury_reml",
+    family: "REML",
+    description: "Dubai's real estate market is a globally recognized ML vulnerability. FATF Mutual Evaluation Report (UAE, 2020) identified real estate as the highest-risk sector. Off-plan purchases, cash transactions, nominee purchasers, and rapid flip cycles are key red flags. UAE MoE registration for DNFBP real estate brokers is mandatory. FDL 10/2025 Art.22 requires real estate brokers to perform full CDD on all parties.",
+    citations: ["FATF MER UAE 2020 §§5.3-5.4", "UAE FDL 10/2025 Art.22", "UAE MoE Real Estate DNFBP Registration", "CBUAE AML/CFT Guidelines §7", "Global Witness UAE Real Estate Report 2022"],
+    steps: [
+      {
+        title: "1. Buyer identity and source of funds",
+        required: true,
+        checks: [
+          "Full KYC on buyer: Emirates ID / passport, utility bill, TIN",
+          "Screen buyer against all sanctions and PEP lists",
+          "Obtain SoF declaration: salary records, business ownership, investment portfolio",
+          "For cash purchases: mandatory STR if >AED 55,000 cash component",
+        ],
+      },
+      {
+        title: "2. Beneficial owner identification",
+        required: true,
+        checks: [
+          "Identify UBO for any corporate purchaser — go through all layers to natural person",
+          "Flag nominee arrangements: third party paying on behalf of named buyer",
+          "Verify that UBO is consistent with declared SoW",
+          "For purchases through offshore structures: enhanced due diligence mandatory",
+        ],
+      },
+      {
+        title: "3. Transaction structure red flags",
+        required: true,
+        checks: [
+          "Rapid flip: re-sale within 12 months of purchase at significant premium",
+          "All-cash purchase by foreign national from high-risk jurisdiction without explained SoF",
+          "Multiple purchases by same buyer / UBO within 90 days",
+          "Use of real estate escrow to receive funds from multiple unrelated parties",
+        ],
+      },
+      {
+        title: "4. Developer and intermediary checks",
+        required: false,
+        checks: [
+          "Verify developer is registered with Dubai Land Department (DLD) / RERA",
+          "Screen all intermediary agents and brokers (RERA licenced?)",
+          "Check if developer accepts cryptocurrency payments — enhanced monitoring required",
+          "Obtain copy of SPA and verify payment terms are consistent with banking records",
+        ],
+      },
+    ],
+  },
+  {
+    id: "darknet-proceeds",
+    title: "Darknet Marketplace Proceeds",
+    typology: "darknet",
+    family: "ML",
+    description: "Darknet markets operate on Tor/I2P networks accepting cryptocurrency for illegal goods (narcotics, firearms, stolen data, counterfeit documents). Exit scams, seizures, and migration between markets create complex on-chain trails. Proceeds are typically laundered via crypto mixers, chain-hopping, and DeFi protocols before fiat conversion. FATF has flagged darknet-linked wallets as requiring mandatory STR filing.",
+    citations: ["FATF Guidance on Virtual Assets 2021 §§76-82", "OFAC Darknet Advisory 2020", "FinCEN FIN-2019-A003", "Europol IOCTA 2023"],
+    steps: [
+      {
+        title: "1. Blockchain analytics — wallet risk scoring",
+        required: true,
+        checks: [
+          "Run CHAINALYSIS Reactor / Elliptic / TRM Labs on customer's declared wallets",
+          "Flag any direct or indirect exposure to known darknet market wallets (Hydra, AlphaBay, etc.)",
+          "Check for mixer / tumbler usage in transaction history",
+          "Identify chain-hopping: Bitcoin → Monero → Ethereum as laundering indicator",
+        ],
+      },
+      {
+        title: "2. Customer profile anomalies",
+        required: true,
+        checks: [
+          "Unexplained cryptocurrency wealth inconsistent with stated occupation",
+          "Customer mentions Tor browser, privacy coins, or peer-to-peer exchanges unprompted",
+          "Transactions at unusual hours (3-6 AM) consistent with international darknet trading",
+          "Multiple small deposits just below reporting thresholds (structuring)",
+        ],
+      },
+      {
+        title: "3. Suspicious transaction patterns",
+        required: true,
+        checks: [
+          "Immediate conversion of crypto to fiat after receipt",
+          "Unusual geographic footprint: Tor exit nodes, VPN usage identified by IP analysis",
+          "Peer-to-peer exchange usage (LocalBitcoins, Paxful) to avoid KYC",
+          "Gift card purchases with crypto — common darknet cross-laundering method",
+        ],
+      },
+      {
+        title: "4. Reporting obligations",
+        required: true,
+        checks: [
+          "File STR via goAML within 35 days if darknet exposure suspected — zero tolerance",
+          "Do not tip off customer during investigation",
+          "Preserve all blockchain analytics reports and on-chain evidence",
+          "Escalate to MLRO for account freeze consideration",
+        ],
+      },
+    ],
+  },
+  {
+    id: "romance-scam-proceeds",
+    title: "Romance Scam / Pig-Butchering Proceeds",
+    typology: "romance_ml",
+    family: "Fraud",
+    description: "Romance scams involve criminals building fake emotional relationships online to convince victims to invest in fraudulent crypto schemes ('pig butchering') or send direct funds. The UAE is both a victim and transit jurisdiction. Proceeds are rapidly moved through multiple crypto wallets and exchange accounts before fiat conversion. FATF Guidance (2023) identifies romance scams as a major crypto-linked fraud typology.",
+    citations: ["FATF Crypto Crime Guidance 2023", "UAE MoI Cybercrime warnings 2023", "FIU goAML Typology 12 (Romance fraud)", "Europol IOCTA 2023 §4.2"],
+    steps: [
+      {
+        title: "1. Identify mule or direct victim scenario",
+        required: true,
+        checks: [
+          "Determine if customer is victim (unwitting) or money mule (witting/semi-witting)",
+          "Interview customer to understand origin of funds — look for 'investment platform' mentioned",
+          "Check for use of crypto platforms marketed as high-yield investments",
+          "Verify if customer has been contacted by UAE Cybercrime Unit or filed a police report",
+        ],
+      },
+      {
+        title: "2. Transaction pattern analysis",
+        required: true,
+        checks: [
+          "Rapid outgoing wire transfers to new/unfamiliar beneficiaries",
+          "Cryptocurrency purchases shortly after receipt of large transfers from unknown sources",
+          "Sending funds to crypto exchanges with poor KYC standards",
+          "Multiple transfers to same ultimate destination through layered intermediaries",
+        ],
+      },
+      {
+        title: "3. Blockchain and counterparty analysis",
+        required: true,
+        checks: [
+          "Run analytics on receiving crypto addresses — look for known fraud cluster exposure",
+          "Check if receiving addresses are associated with OFAC-designated exchanges (Garantex, etc.)",
+          "Identify convergence of funds from multiple victims at same wallet address",
+          "Map destination platform's jurisdiction and KYC standards",
+        ],
+      },
+      {
+        title: "4. Action and reporting",
+        required: true,
+        checks: [
+          "File STR via goAML within 35 days — both victim and mule scenarios require reporting",
+          "Consider account freeze for mule accounts holding un-transferred funds",
+          "Refer victim to UAE cybercrime portal: cybercrime.gov.ae",
+          "Coordinate with correspondent banks to recall wire transfers where possible",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sports-betting-ml",
+    title: "Sports Betting & Match Fixing ML",
+    typology: "sports_betting",
+    family: "ML",
+    description: "Sports betting accounts are used to layer proceeds by placing bets on both outcomes of an event, deliberately losing a portion to convert illicit funds into 'winnings'. Match fixing syndicates additionally corrupt athletes to control outcomes, generating large betting profits. Offshore gambling platforms without UAE licences are not permitted but are accessed by UAE residents. FDL 10/2025 covers gambling as a designated predicate offence.",
+    citations: ["UAE FDL 10/2025 Art.2 (Predicate offences)", "FATF Guidance on Gambling 2023", "Council of Europe MEDICRIME Convention", "UNODC Sports Integrity Toolkit"],
+    steps: [
+      {
+        title: "1. Gambling platform legitimacy",
+        required: true,
+        checks: [
+          "Verify if platform holds a valid UAE or recognised international gambling licence",
+          "Check if platform is on UAE TRA blocked list",
+          "Confirm platform has KYC and AML controls — obtain their compliance certificate",
+          "Screen platform operator against sanctions lists",
+        ],
+      },
+      {
+        title: "2. Bet-on-both-sides pattern detection",
+        required: true,
+        checks: [
+          "Identify customer placing large offsetting bets on same event at different platforms",
+          "Check if net payout is inconsistent with any genuine gambling motivation",
+          "Flag accounts receiving large winnings transfers from multiple gambling platforms",
+          "Review frequency of play: laundering accounts typically have few large bets, not many small ones",
+        ],
+      },
+      {
+        title: "3. Fund flows",
+        required: true,
+        checks: [
+          "Verify source of betting deposits — are they from known, clean accounts?",
+          "Check if winnings are immediately withdrawn and transferred",
+          "Flag winnings converted to crypto or foreign currency immediately after receipt",
+          "Identify any involvement of professional sports agents or club officials",
+        ],
+      },
+    ],
+  },
+  {
+    id: "immigration-fraud-ml",
+    title: "Immigration & Document Fraud Proceeds",
+    typology: "immigration_fraud",
+    family: "Fraud",
+    description: "Immigration fraud — forged visas, fake degrees, ghost employment schemes — generates significant criminal proceeds. UAE's status as a global migration hub makes it a target for document fraud networks. Proceeds are typically laundered through informal money transfer, hawala, and real estate. FDL 10/2025 identifies fraud and forgery as predicate offences requiring STR filing on suspicion.",
+    citations: ["UAE FDL 10/2025 Art.2 (Predicate offences)", "INTERPOL Human Trafficking notices", "IOM Migrant Vulnerability Report 2023", "UAE Cabinet Resolution 38/2022 (human trafficking)"],
+    steps: [
+      {
+        title: "1. Document authenticity verification",
+        required: true,
+        checks: [
+          "Verify employment contracts against UAE Ministry of Human Resources (MOHRE) records",
+          "Check educational certificates through UAE MOHESR attestation database",
+          "Confirm visa status through ICA eVisa portal",
+          "Screen employer sponsoring the visa against company registry and sanctions lists",
+        ],
+      },
+      {
+        title: "2. Red flags for ghost employment",
+        required: true,
+        checks: [
+          "Employer payroll significantly above declared company revenue",
+          "Multiple unrelated individuals with same employer and same residential address",
+          "Salary received but immediately transferred to unknown third-party accounts",
+          "No consistent work-related expenses (transport, meals) for stated profession",
+        ],
+      },
+      {
+        title: "3. Proceeds detection",
+        required: false,
+        checks: [
+          "Remittance to home country inconsistent with declared salary",
+          "Cash withdrawals matching common fee structure for document fraud rings",
+          "Transactions with known manpower agencies flagged in adverse media",
+          "Multiple salary sources from shell companies sharing same address",
+        ],
+      },
+    ],
+  },
+  {
+    id: "tax-evasion-crypto",
+    title: "Tax Evasion via Cryptocurrency",
+    typology: "tax_crypto",
+    family: "ML",
+    description: "Cryptocurrency is used to conceal income and assets from tax authorities through undisclosed exchange accounts in non-reporting jurisdictions, staking and mining income not declared, and crypto-to-crypto swaps that reset cost basis. OECD Crypto-Asset Reporting Framework (CARF) requires crypto exchanges to report to tax authorities from 2027. UAE introduced corporate tax in 2023 and exchanges must cooperate with FTA on request.",
+    citations: ["OECD CARF Framework 2022", "UAE Federal Corporate Tax Law 2023", "UAE FTA Circular on Crypto 2023", "FATF R.3 (Tax crimes as predicate offence)", "Common Reporting Standard (CRS)"],
+    steps: [
+      {
+        title: "1. Cross-reference declared income vs. crypto wealth",
+        required: true,
+        checks: [
+          "Compare on-chain crypto holdings/transactions against customer's declared income",
+          "Check for undisclosed exchange accounts via transaction analysis",
+          "Identify if customer holds crypto in non-CRS jurisdictions (e.g. Panama, UAE pre-2024)",
+          "Review customer's tax residency claims vs. actual location data",
+        ],
+      },
+      {
+        title: "2. Unreported income patterns",
+        required: true,
+        checks: [
+          "Mining income: large inflows from mining pool addresses not matched by declared mining business",
+          "DeFi yield: staking rewards and liquidity pool income not consistent with declared investment profile",
+          "P2P trading: high-volume peer-to-peer crypto trading without business registration",
+          "NFT gains: significant NFT sale proceeds not declared as income",
+        ],
+      },
+      {
+        title: "3. Reporting obligations",
+        required: false,
+        checks: [
+          "File STR if tax evasion is suspected and proceeds exceed AED 1,000,000",
+          "Tax crimes are predicate ML offences under UAE FDL 10/2025 — STR obligation applies",
+          "Coordinate with UAE FTA if formal voluntary disclosure process is initiated",
+          "Maintain client file for 10 years per FDL 10/2025 Art.16",
+        ],
+      },
+    ],
+  },
+  {
+    id: "arms-embargo-evasion",
+    title: "Arms Embargo Evasion",
+    typology: "arms_embargo",
+    family: "Sanctions",
+    description: "Arms embargo evasion involves shipping dual-use goods, weapons components, or finished weapons to embargoed destinations through intermediary jurisdictions. UAE is a transit hub with significant re-export risk. UN Panel of Experts reports have documented UAE-nexus arms embargo violations (Sudan, Yemen, Libya, CAR). Export licence controls and end-use certification are mandatory. CBUAE requires financial institutions to screen trade finance for arms-related transactions.",
+    citations: ["UNSCR 1970 (Libya)", "UNSCR 2216 (Yemen)", "UNSCR 2625 (CAR)", "EU Dual-Use Regulation 2021/821", "UAE Federal Law No. 13/2016 (Export Controls)", "FATF R.7 (Targeted financial sanctions)"],
+    steps: [
+      {
+        title: "1. HS code and goods classification",
+        required: true,
+        checks: [
+          "Classify goods under EU CCL / Wassenaar Arrangement Munitions List",
+          "Check for ML/PF-sensitive dual-use categories: nuclear (Cat.0), military (Cat.ML), chemicals (Cat.1)",
+          "Verify HS code matches physical goods description",
+          "Obtain UAE Ministry of Economy export licence for controlled goods",
+        ],
+      },
+      {
+        title: "2. End-use and end-user certificate",
+        required: true,
+        checks: [
+          "Obtain End-Use Certificate (EUC) signed by government official of receiving country",
+          "Verify EUC issuing ministry exists and official is genuine",
+          "Cross-reference against UN Panel of Experts reports for known diversion routes",
+          "Screen end-user against OFAC, UN, EU arms embargo lists",
+        ],
+      },
+      {
+        title: "3. Transit and re-export risk",
+        required: true,
+        checks: [
+          "Identify all transit countries — flag UAE Free Zone transit for embargoed goods",
+          "Confirm final destination is not subject to an arms embargo",
+          "Check shipping company and freight forwarder for previous violations",
+          "Verify consignee is the stated end-user, not a broker/intermediary",
+        ],
+      },
+      {
+        title: "4. Financial controls",
+        required: true,
+        checks: [
+          "Require letter of credit or verified wire from legitimate financial institution",
+          "Flag cash or crypto payment for any arms/dual-use goods transaction",
+          "Screen all parties to LC (applicant, beneficiary, issuing bank) against sanctions",
+          "File OFAC notification if US-origin goods or USD payments involved",
+        ],
+      },
+    ],
+  },
+  {
+    id: "elder-financial-abuse",
+    title: "Elder Financial Abuse & Exploitation",
+    typology: "elder_abuse",
+    family: "Fraud",
+    description: "Financial abuse of elderly customers by family members, caregivers, or strangers is a growing AML/fraud concern. Sudden changes in account signatories, large cash withdrawals by third parties, and unusual spending patterns are key indicators. UAE Federal Law No. 2/2019 on the rights of elderly persons requires reporting mechanisms. FDL 10/2025 requires STR filing where funds are proceeds of exploitation.",
+    citations: ["UAE Federal Law No. 2/2019 (Elderly persons)", "FATF Elder Financial Exploitation Guidance 2020", "UAE FDL 10/2025 Art.15", "CFPB Elder Financial Exploitation guidance 2019"],
+    steps: [
+      {
+        title: "1. Account access change red flags",
+        required: true,
+        checks: [
+          "New signatory added to elderly customer's account with no prior relationship",
+          "Power of Attorney registered within last 30 days — verify it is genuine and witnessed",
+          "Customer's contact information changed to a third party's details",
+          "Large wire transfers to new beneficiaries shortly after POA registration",
+        ],
+      },
+      {
+        title: "2. Transaction pattern analysis",
+        required: true,
+        checks: [
+          "Sudden increase in cash withdrawals from previously low-activity account",
+          "Purchases inconsistent with customer's known lifestyle (luxury goods, gambling sites)",
+          "Frequent transfers to 'lottery' or 'investment' accounts",
+          "Third party withdrawing cash from customer's account at ATM (camera review)",
+        ],
+      },
+      {
+        title: "3. Welfare check and customer contact",
+        required: true,
+        checks: [
+          "Conduct private welfare call to elderly customer — not in presence of suspected abuser",
+          "Verify customer understands and consents to all large/unusual transactions",
+          "Check if customer shows signs of cognitive decline or undue influence",
+          "Consider referring to UAE Elder Protection Unit if abuse is suspected",
+        ],
+      },
+      {
+        title: "4. Reporting",
+        required: false,
+        checks: [
+          "File STR if financial exploitation is suspected — exploitation proceeds are ML predicate",
+          "Do not tip off suspected family member/carer",
+          "Consider account restriction pending MLRO review",
+          "Report to UAE social services if customer is at immediate risk",
+        ],
+      },
+    ],
+  },
+  {
+    id: "insurance-premium-laundering",
+    title: "Insurance Premium Laundering",
+    typology: "insurance_ml",
+    family: "ML",
+    description: "Insurance products are used for ML via overpayment of premiums followed by early redemption (receiving 'clean' refund cheque), fictitious claims, and purchase of single-premium investment products. FATF R.26 requires insurance companies to implement AML controls. UAE Insurance Authority (now CBUAE) guidelines require CDD on all single-premium life policies and early surrender monitoring.",
+    citations: ["FATF R.26 (Regulation of financial institutions)", "UAE CBUAE Insurance Circular 15/2022", "UAE FDL 10/2025 Art.8", "Wolfsberg Insurance Principles 2019"],
+    steps: [
+      {
+        title: "1. Single-premium policy risk assessment",
+        required: true,
+        checks: [
+          "Obtain SoF documentation for all single-premium payments >AED 100,000",
+          "Screen policyholder and beneficiary against all sanctions and PEP lists",
+          "Verify premium source is from known, disclosed banking account",
+          "Flag if customer requests immediate assignment of policy to third party",
+        ],
+      },
+      {
+        title: "2. Early redemption / surrender monitoring",
+        required: true,
+        checks: [
+          "Flag surrender requests within 12 months of policy inception",
+          "Check if customer accepts surrender penalty without negotiation (ML indicator)",
+          "Verify destination account for surrender proceeds is customer's own known account",
+          "Document rationale for early redemption — medical emergency, etc.",
+        ],
+      },
+      {
+        title: "3. Claims fraud detection",
+        required: false,
+        checks: [
+          "Verify claim documentation for authenticity: medical reports, police reports, receipts",
+          "Check if claim amount appears pre-calculated to just exceed policy minimum",
+          "Screen third-party beneficiaries of claims against sanctions and adverse media",
+          "Flag repeat claims across multiple policies within 24 months",
+        ],
+      },
+    ],
+  },
+  {
+    id: "student-visa-fraud",
+    title: "Student Visa / Academic Fraud Proceeds",
+    typology: "student_fraud",
+    family: "Fraud",
+    description: "Ghost student schemes, fake universities, and diploma mills generate proceeds through visa fees, tuition payment fraud, and student loan proceeds in target countries. UAE institutions have been exploited as conduits for education-related proceeds. UAE MoE and MOHESR maintain approved institution lists. Fraudulent student accounts show salary-inconsistent spending patterns with tuition-related payments to unverified institutions.",
+    citations: ["UAE MOHESR Approved Institutions Register", "UAE Cybercrime Law No. 34/2021 Art.16", "FATF Fraud Typologies 2023"],
+    steps: [
+      {
+        title: "1. Institution legitimacy verification",
+        required: true,
+        checks: [
+          "Verify university against MOHESR approved institutions list (for UAE-issued credentials)",
+          "Cross-reference against known diploma mill lists (CHEA, Oregon diploma mill list)",
+          "Check if tuition fees match known rates for the claimed institution",
+          "Verify student's academic record is consistent with claimed institution",
+        ],
+      },
+      {
+        title: "2. Financial flow anomalies",
+        required: true,
+        checks: [
+          "Tuition payments to institutions not on approved lists",
+          "Large transfers from overseas parties described as 'family support' or 'scholarship'",
+          "Student account receiving commercial-scale transfers inconsistent with study",
+          "Immediate conversion of tuition refunds to cash or crypto",
+        ],
+      },
+      {
+        title: "3. Identity consistency",
+        required: false,
+        checks: [
+          "Verify student ID against issuing university's alumni verification service",
+          "Check employment records — full-time students should not hold full-time professional positions simultaneously",
+          "Confirm visa status and study permit are valid for stated enrollment period",
+        ],
+      },
+    ],
+  },
+  {
+    id: "fractional-crypto-laundering",
+    title: "Micro-Transaction Crypto Structuring",
+    typology: "crypto_structuring",
+    family: "VASP",
+    description: "Criminals use automated scripts to break large crypto amounts into thousands of micro-transactions below reporting thresholds, distributing across multiple wallets before consolidation. This mirrors fiat structuring (smurfing) but is automated at scale. FATF Travel Rule applies to transfers above USD 1,000 — below this threshold micro-transactions are designed to avoid reporting. Advanced blockchain analytics can detect consolidation patterns.",
+    citations: ["FATF Travel Rule Guidance 2019 (R.16)", "FinCEN Structuring Advisory 2019", "UAE CBUAE VASP AML Standards 2023", "FATF Guidance on Virtual Assets 2023 §§68-72"],
+    steps: [
+      {
+        title: "1. Micro-transaction pattern detection",
+        required: true,
+        checks: [
+          "Identify high-frequency small transfers (<USD 1,000 each) from single source over 24-hour period",
+          "Check if aggregate of micro-transactions reaches reporting threshold within 7-day rolling window",
+          "Flag automated transaction cadence: transactions at regular intervals (every 5 min, etc.)",
+          "Run blockchain analytics to trace consolidation destination of micro-transactions",
+        ],
+      },
+      {
+        title: "2. Consolidation wallet analysis",
+        required: true,
+        checks: [
+          "Identify the wallet(s) receiving consolidated funds from micro-transaction sources",
+          "Screen consolidation wallet against known high-risk entity lists",
+          "Check if consolidation wallet immediately converts to fiat or moves to mixer",
+          "Verify customer's self-declared wallet addresses match observed on-chain activity",
+        ],
+      },
+      {
+        title: "3. Customer assessment",
+        required: true,
+        checks: [
+          "Request explanation for micro-transaction pattern from customer",
+          "Verify if automated trading strategy is documented and plausible",
+          "Check if pattern is consistent with legitimate DCA (dollar-cost averaging) investment strategy",
+          "File STR if structuring intent cannot be ruled out after customer explanation",
+        ],
+      },
+    ],
+  },
+  {
+    id: "public-procurement-fraud",
+    title: "Public Procurement Fraud & Corruption",
+    typology: "procurement_fraud",
+    family: "ABC",
+    description: "Public procurement fraud involves kickbacks, bid rigging, fictitious invoices, and inflated contracts between government contractors and complicit officials. Proceeds are laundered through shell company layers, real estate, and offshore accounts. FCPA, UK Bribery Act, and UAE FDL 10/2025 Art.2 all identify public corruption as a predicate offence. PEP-linked companies in government contracting require enhanced scrutiny.",
+    citations: ["UAE FDL 10/2025 Art.2 (Corruption as predicate)", "FCPA (US)", "UK Bribery Act 2010 §6", "OECD Anti-Bribery Convention", "UNODC UN Convention Against Corruption Art.9"],
+    steps: [
+      {
+        title: "1. PEP connection to government contracts",
+        required: true,
+        checks: [
+          "Identify if customer's company holds government contracts in home or host jurisdiction",
+          "Screen all directors and major shareholders against PEP databases",
+          "Flag immediate family members of PEPs as beneficial owners of contracting entity",
+          "Check if government contract value is consistent with company size and capability",
+        ],
+      },
+      {
+        title: "2. Suspicious payment structures",
+        required: true,
+        checks: [
+          "Payments to 'consultants' or 'agents' without clear service description",
+          "Large success fees to third parties shortly after contract award",
+          "Payments routed through multiple offshore shell companies",
+          "Invoices for services rendered in different jurisdiction from where contract was executed",
+        ],
+      },
+      {
+        title: "3. Red flags in contract execution",
+        required: false,
+        checks: [
+          "Sole-source contracts without competitive tendering for large amounts",
+          "Contract prices significantly above market benchmarks for same services",
+          "No evidence of goods/services actually delivered despite payment",
+          "Company with no track record winning large sophisticated government contracts",
+        ],
+      },
+      {
+        title: "4. Reporting obligations",
+        required: true,
+        checks: [
+          "File STR via goAML if corruption/bribery suspected — mandatory under FDL 10/2025",
+          "Escalate to MLRO for immediate review if public official (PEP) is the contracting party",
+          "Preserve all contract documentation and payment records for 10 years",
+          "Consider account restriction pending MLRO decision",
+        ],
+      },
+    ],
+  },
+  {
+    id: "medical-billing-fraud",
+    title: "Healthcare & Medical Billing Fraud",
+    typology: "medical_fraud",
+    family: "Fraud",
+    description: "Medical billing fraud involves fictitious patient claims, upcoding of procedures, phantom medical equipment, and kickbacks between providers and insurers. In UAE, DHA-licensed providers are the regulated sector. Insurance fraud proceeds are laundered through healthcare company accounts before distribution. FATF identifies healthcare fraud as a growing predicate ML offence.",
+    citations: ["UAE Health Insurance Law (Dubai Law No. 11/2013)", "UAE DHA Provider Licensing", "FATF Fraud Typologies 2023", "UAE FDL 10/2025 Art.2 (Fraud as predicate)"],
+    steps: [
+      {
+        title: "1. Provider legitimacy check",
+        required: true,
+        checks: [
+          "Verify DHA / HAAD / DOH licence for medical facility or practitioner",
+          "Screen provider entity and key personnel against sanctions and adverse media",
+          "Check if provider has prior insurance fraud regulatory action",
+          "Verify physical existence of clinic/hospital at registered address",
+        ],
+      },
+      {
+        title: "2. Billing pattern analysis",
+        required: true,
+        checks: [
+          "Compare billing volume against physical capacity (patient throughput per day)",
+          "Flag identical procedure codes billed for all patients on same date",
+          "Identify upcoding: billing for complex procedures but facility lacks equipment",
+          "Check for billing of phantom services: medications not in pharmacy stock records",
+        ],
+      },
+      {
+        title: "3. Financial flows",
+        required: false,
+        checks: [
+          "Insurance reimbursements paid to account different from stated corporate account",
+          "Large cash withdrawals from healthcare company accounts without documented patient receipts",
+          "Transfers from healthcare company to unrelated entities (related-party transactions)",
+          "Sudden spikes in insurance claims following management change",
+        ],
+      },
+    ],
+  },
+  {
     id: "ai-vendor-assessment",
     title: "AI Vendor / Third-Party Assessment",
     typology: "ai-vendor-assessment",
@@ -4905,110 +5772,315 @@ const PLAYBOOKS: Playbook[] = [
   },
 ];
 
-export default function PlaybookPage() {
-  const [active, setActive] = useState<string>(PLAYBOOKS[0]!.id);
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+const FAMILY_COLORS: Record<string, string> = {
+  ML: "bg-red-dim text-red",
+  PEP: "bg-violet-dim text-violet",
+  banking: "bg-blue-dim text-blue",
+  DPMS: "bg-amber-dim text-amber",
+  PF: "bg-red-dim text-red",
+  EOCN: "bg-green-dim text-green",
+  VASP: "bg-blue-dim text-blue",
+  UBO: "bg-violet-dim text-violet",
+  REML: "bg-amber-dim text-amber",
+  TF: "bg-amber-dim text-amber",
+  Payments: "bg-blue-dim text-blue",
+  MSB: "bg-green-dim text-green",
+  ABC: "bg-violet-dim text-violet",
+  "TF/ML": "bg-red-dim text-red",
+  Fraud: "bg-red-dim text-red",
+  CFT: "bg-red-dim text-red",
+  Sanctions: "bg-red-dim text-red",
+  CDD: "bg-blue-dim text-blue",
+  Risk: "bg-amber-dim text-amber",
+  MoE: "bg-green-dim text-green",
+  FIU: "bg-violet-dim text-violet",
+  OECD: "bg-green-dim text-green",
+  "VASP/Fraud": "bg-red-dim text-red",
+  "Risk": "bg-amber-dim text-amber",
+};
 
-  const pb = PLAYBOOKS.find((p) => p.id === active) ?? PLAYBOOKS[0]!;
-  const totalChecks = pb.steps.reduce((a, s) => a + s.checks.length, 0);
-  const doneChecks = Object.entries(checked).filter(
-    ([k, v]) => v && k.startsWith(`${pb.id}:`),
-  ).length;
+function getFamilyColor(family: string) {
+  return FAMILY_COLORS[family] ?? "bg-bg-2 text-ink-2";
+}
+
+export default function PlaybookPage() {
+  const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState("");
+  const [familyFilter, setFamilyFilter] = useState<string>("all");
+
+  const pb = PLAYBOOKS.find((p) => p.id === drawerOpen) ?? null;
+
+  const totalChecks = pb ? pb.steps.reduce((a, s) => a + s.checks.length, 0) : 0;
+  const doneChecks = pb
+    ? Object.entries(checked).filter(([k, v]) => v && k.startsWith(`${pb.id}:`)).length
+    : 0;
   const pct = Math.round((doneChecks / Math.max(totalChecks, 1)) * 100);
 
-  const toggle = (stepIdx: number, checkIdx: number) => {
-    const k = `${pb.id}:${stepIdx}:${checkIdx}`;
-    setChecked({ ...checked, [k]: !checked[k] });
+  const toggle = (pbId: string, stepIdx: number, checkIdx: number) => {
+    const k = `${pbId}:${stepIdx}:${checkIdx}`;
+    setChecked((prev) => ({ ...prev, [k]: !prev[k] }));
+  };
+
+  const families = Array.from(new Set(PLAYBOOKS.map((p) => p.family))).sort();
+
+  const filtered = PLAYBOOKS.filter((p) => {
+    const matchSearch = !search.trim() || p.title.toLowerCase().includes(search.toLowerCase()) || p.family.toLowerCase().includes(search.toLowerCase()) || (p.description ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchFamily = familyFilter === "all" || p.family === familyFilter;
+    return matchSearch && matchFamily;
+  });
+
+  const getProgress = (pbId: string, steps: Playbook["steps"]) => {
+    const total = steps.reduce((a, s) => a + s.checks.length, 0);
+    const done = Object.entries(checked).filter(([k, v]) => v && k.startsWith(`${pbId}:`)).length;
+    return total > 0 ? Math.round((done / total) * 100) : 0;
   };
 
   return (
     <ModuleLayout asanaModule="playbook" asanaLabel="Playbook">
-        <ModuleHero
-          eyebrow="Module 16 · Guided due-diligence"
-          title="Playbook"
-          titleEm="engine."
-          intro={
-            <>
-              <strong>One walk-through per typology.</strong> Pick a playbook,
-              work through the mandated checks in order. The brain cites the
-              specific FATF / LBMA / FDL articles behind each step so nothing
-              gets skipped.
-            </>
-          }
-        />
+      <ModuleHero
+        eyebrow="Module 16 · Guided due-diligence"
+        title="Playbook"
+        titleEm="engine."
+        intro={
+          <>
+            <strong>One walk-through per typology.</strong> Pick a playbook,
+            work through the mandated checks in order. The brain cites the
+            specific FATF / LBMA / FDL articles behind each step so nothing
+            gets skipped.
+          </>
+        }
+        kpis={[
+          { value: String(PLAYBOOKS.length), label: "playbooks" },
+          { value: String(PLAYBOOKS.reduce((a, p) => a + p.steps.reduce((b, s) => b + s.checks.length, 0), 0)), label: "total checks" },
+          { value: String(Object.values(checked).filter(Boolean).length), label: "checks completed" },
+          { value: String(families.length), label: "typology families" },
+        ]}
+      />
 
-        <div className="grid grid-cols-4 gap-2 mt-6 mb-4">
-          {PLAYBOOKS.map((p) => (
+      {/* Search + filter bar */}
+      <div className="flex gap-3 mb-4 items-center">
+        <div className="relative flex-1 max-w-sm">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 text-[14px] pointer-events-none">⌕</span>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search playbooks…"
+            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-12 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand"
+          />
+        </div>
+        <div className="flex gap-1 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setFamilyFilter("all")}
+            className={`px-2.5 py-1 rounded-full text-10 font-semibold border transition-colors ${familyFilter === "all" ? "bg-ink-0 text-bg-0 border-ink-0" : "bg-bg-panel text-ink-2 border-hair-2 hover:border-hair-3"}`}
+          >All</button>
+          {families.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFamilyFilter(f === familyFilter ? "all" : f)}
+              className={`px-2.5 py-1 rounded-full text-10 font-semibold border transition-colors ${familyFilter === f ? "bg-brand text-white border-brand" : "bg-bg-panel text-ink-2 border-hair-2 hover:border-hair-3 hover:text-ink-0"}`}
+            >{f}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="text-11 text-ink-3 mb-3">{filtered.length} playbooks · click any to open</div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-4 gap-2 mb-8">
+        {filtered.map((p) => {
+          const prog = getProgress(p.id, p.steps);
+          return (
             <button
               key={p.id}
               type="button"
-              onClick={() => setActive(p.id)}
-              className={`text-left text-12 px-3 py-2 rounded border ${
-                active === p.id
-                  ? "border-brand bg-brand-dim text-brand-deep font-semibold"
-                  : "border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1"
-              }`}
+              onClick={() => setDrawerOpen(p.id)}
+              className="text-left px-3 py-2.5 rounded border border-hair-2 bg-bg-panel hover:border-brand hover:bg-brand-dim transition-colors group"
             >
-              <span className="font-mono text-10 text-ink-3 block">
-                {p.family}
-              </span>
-              <span className="block text-11">{p.title}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
-          <div className="flex items-baseline justify-between mb-3">
-            <h2 className="text-14 font-semibold text-ink-0 m-0">{pb.title}</h2>
-            <span className="font-mono text-10 text-ink-3">
-              {doneChecks} / {totalChecks} · {pct}%
-            </span>
-          </div>
-          <div className="h-1.5 bg-bg-2 rounded-sm mb-4">
-            <div
-              className="h-full bg-brand rounded-sm"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="space-y-3">
-            {pb.steps.map((step, si) => (
-              <div key={si} className="border-l-2 border-brand pl-3">
-                <div className="flex items-baseline gap-2 mb-1.5">
-                  <span className="text-12 font-semibold text-ink-0">
-                    {step.title}
-                  </span>
-                  {step.required && (
-                    <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold bg-red-dim text-red">
-                      required
-                    </span>
-                  )}
-                </div>
-                <ul className="list-none p-0 m-0 space-y-1">
-                  {step.checks.map((c, ci) => {
-                    const k = `${pb.id}:${si}:${ci}`;
-                    return (
-                      <li key={ci} className="flex items-start gap-2 text-11">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(checked[k])}
-                          onChange={() => toggle(si, ci)}
-                          className="mt-0.5 accent-brand"
-                        />
-                        <span
-                          className={
-                            checked[k] ? "text-ink-3 line-through" : "text-ink-1"
-                          }
-                        >
-                          {c}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded-sm ${getFamilyColor(p.family)}`}>
+                  {p.family}
+                </span>
+                {prog > 0 && (
+                  <span className="font-mono text-10 text-brand">{prog}%</span>
+                )}
               </div>
-            ))}
+              <span className="block text-11 text-ink-0 group-hover:text-brand leading-snug">{p.title}</span>
+              <div className="flex items-center gap-1 mt-1.5">
+                <div className="flex-1 h-0.5 bg-bg-2 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand rounded-full" style={{ width: `${prog}%` }} />
+                </div>
+                <span className="text-10 text-ink-3 font-mono">{p.steps.length} steps</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Slide-in drawer */}
+      {drawerOpen && pb && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(null)}
+          />
+
+          {/* Drawer panel */}
+          <div className="fixed top-0 right-0 h-full w-[640px] bg-bg-0 border-l border-hair-2 z-50 flex flex-col shadow-2xl">
+            {/* Header */}
+            <div className="flex items-start justify-between px-6 py-5 border-b border-hair-2 bg-bg-panel shrink-0">
+              <div className="flex-1 pr-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded-sm ${getFamilyColor(pb.family)}`}>
+                    {pb.family}
+                  </span>
+                  <span className="font-mono text-10 text-ink-3">{pb.typology}</span>
+                </div>
+                <h2 className="text-18 font-bold text-ink-0 leading-tight m-0">{pb.title}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(null)}
+                className="text-ink-3 hover:text-ink-0 text-20 leading-none mt-0.5 px-1"
+                aria-label="Close"
+              >✕</button>
+            </div>
+
+            {/* Progress bar */}
+            <div className="px-6 py-3 border-b border-hair-2 shrink-0 bg-bg-panel">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-11 text-ink-2 font-medium">Completion</span>
+                <span className="font-mono text-11 text-brand font-semibold">{doneChecks} / {totalChecks} · {pct}%</span>
+              </div>
+              <div className="h-2 bg-bg-2 rounded-full overflow-hidden">
+                <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
+              {pct === 100 && (
+                <div className="mt-2 text-11 text-green font-semibold">✓ All checks complete — playbook ready for sign-off</div>
+              )}
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+              {/* Description */}
+              {pb.description && (
+                <div className="bg-brand-dim border border-brand/20 rounded-lg px-4 py-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-1.5">About this playbook</div>
+                  <p className="text-12 text-ink-1 leading-relaxed m-0">{pb.description}</p>
+                </div>
+              )}
+
+              {/* Regulatory citations */}
+              {pb.citations && pb.citations.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Regulatory basis</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {pb.citations.map((c) => (
+                      <span key={c} className="text-10 font-mono px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Steps */}
+              <div className="space-y-5">
+                {pb.steps.map((step, si) => {
+                  const stepDone = step.checks.filter((_, ci) => checked[`${pb.id}:${si}:${ci}`]).length;
+                  const stepTotal = step.checks.length;
+                  return (
+                    <div key={si} className="border border-hair-2 rounded-lg overflow-hidden">
+                      <div className={`px-4 py-2.5 flex items-center justify-between border-b border-hair-2 ${stepDone === stepTotal ? "bg-green-dim" : "bg-bg-panel"}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-12 font-semibold text-ink-0">{step.title}</span>
+                          {step.required && (
+                            <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold bg-red-dim text-red">
+                              required
+                            </span>
+                          )}
+                          {stepDone === stepTotal && stepTotal > 0 && (
+                            <span className="font-mono text-10 text-green font-semibold">✓ done</span>
+                          )}
+                        </div>
+                        <span className="font-mono text-10 text-ink-3">{stepDone}/{stepTotal}</span>
+                      </div>
+                      <ul className="list-none p-0 m-0 divide-y divide-hair">
+                        {step.checks.map((c, ci) => {
+                          const k = `${pb.id}:${si}:${ci}`;
+                          const done = Boolean(checked[k]);
+                          return (
+                            <li key={ci}>
+                              <label className={`flex items-start gap-3 px-4 py-2.5 cursor-pointer hover:bg-bg-1 transition-colors ${done ? "bg-green-dim/30" : ""}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={done}
+                                  onChange={() => toggle(pb.id, si, ci)}
+                                  className="mt-0.5 accent-brand shrink-0"
+                                />
+                                <span className={`text-12 leading-relaxed ${done ? "text-ink-3 line-through" : "text-ink-1"}`}>
+                                  {c}
+                                </span>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {step.citation && (
+                        <div className="px-4 py-1.5 bg-bg-1 border-t border-hair text-10 text-ink-3 font-mono">
+                          {step.citation}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-hair-2 bg-bg-panel shrink-0 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  const keys = pb.steps.flatMap((s, si) => s.checks.map((_, ci) => `${pb.id}:${si}:${ci}`));
+                  const allDone = keys.every((k) => checked[k]);
+                  setChecked((prev) => {
+                    const next = { ...prev };
+                    keys.forEach((k) => { next[k] = !allDone; });
+                    return next;
+                  });
+                }}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
+              >
+                {pb.steps.flatMap((s, si) => s.checks.map((_, ci) => `${pb.id}:${si}:${ci}`)).every((k) => checked[k]) ? "Uncheck all" : "Check all"}
+              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const keys = pb.steps.flatMap((s, si) => s.checks.map((_, ci) => `${pb.id}:${si}:${ci}`));
+                    setChecked((prev) => { const next = { ...prev }; keys.forEach((k) => { delete next[k]; }); return next; });
+                  }}
+                  className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 text-ink-3 hover:border-red hover:text-red transition-colors"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(null)}
+                  className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        </>
+      )}
     </ModuleLayout>
   );
 }

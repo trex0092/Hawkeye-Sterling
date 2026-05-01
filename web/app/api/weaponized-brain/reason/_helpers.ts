@@ -505,8 +505,11 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
   const now = new Date().toISOString();
   const subjectName = input.subject.name;
   const entityType = input.subject.entityType ?? "individual";
-  const jurisdiction = result.jurisdiction?.name ?? input.subject.jurisdiction ?? "—";
-  const sector = input.subject.sector ?? "—";
+  const jurisdictionRaw = result.jurisdiction?.name ?? input.subject.jurisdiction;
+  const jurisdiction = jurisdictionRaw ?? "— [SUPPLEMENT: enter subject's country before filing]";
+  const sectorRaw = input.subject.sector;
+  const sector = sectorRaw ?? "— [SUPPLEMENT: enter sector/business activity before filing]";
+  const narrativeEmpty = !(input.narrative ?? "").trim() && !(input.adverseMediaText ?? "").trim();
 
   const trigger = [
     result.screen.hits.length > 0 ? `${result.screen.hits.length} watchlist candidate hit(s) (top score ${result.screen.topScore}, severity ${result.screen.severity})` : null,
@@ -517,7 +520,10 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
     result.jurisdiction?.cahra ? `CAHRA-domiciled (${result.jurisdiction.name})` : null,
   ].filter(Boolean).join("; ") || "Composite-score threshold breach";
 
-  const activitySummary = (input.narrative ?? "").trim().slice(0, 1200) || "(no narrative supplied — facts to be supplemented from primary records before filing)";
+  const activitySummary = (input.narrative ?? "").trim().slice(0, 1200) ||
+    (narrativeEmpty
+      ? "[NARRATIVE NOT PROVIDED] — The Brain Inspector was run without adverse-media / OSINT text. Composite score reflects name-match and jurisdiction screening only. Paste transaction records, adverse media, or OSINT into the narrative field and re-run for a complete assessment. Supplement with primary records from the case file before filing with goAML."
+      : "(no narrative supplied — facts to be supplemented from primary records before filing)");
 
   const redFlags = [
     ...result.redlines.fired.map((r) => `REDLINE · ${r.label} (${r.action.toUpperCase()})`),

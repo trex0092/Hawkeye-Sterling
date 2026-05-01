@@ -84,7 +84,7 @@ export function RegulatoryTicker() {
       <div className="flex items-center h-[30px]">
         {/* Static label */}
         <div className="shrink-0 px-3 h-full flex items-center border-r border-hair-2 bg-bg-1">
-          <span className="text-9 font-mono font-semibold uppercase tracking-wide-4 text-pink-400 whitespace-nowrap">
+          <span className="text-9 font-mono font-semibold uppercase tracking-wide-4 text-amber whitespace-nowrap">
             Regulatory basis
           </span>
         </div>
