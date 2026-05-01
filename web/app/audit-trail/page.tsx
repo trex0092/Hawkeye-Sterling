@@ -102,15 +102,17 @@ export default function AuditTrailPage() {
     try {
       const sliced = entries.slice(-200);
       const payload = sliced.map((e) => ({
-        ts: e.timestamp,
+        id: e.id,
+        timestamp: e.timestamp,
         actor: e.actor,
         action: e.action,
-        subject: e.target,
+        target: e.target,
+        ip: undefined as string | undefined,
       }));
-      const res = await fetch("/api/audit-anomaly", {
+      const res = await fetch("/api/audit-trail/anomaly-detect", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ entries: payload, periodDays: 30 }),
+        body: JSON.stringify({ events: payload }),
       });
       if (res.ok) {
         const data = (await res.json()) as AuditAnomaly;
