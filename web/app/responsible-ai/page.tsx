@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

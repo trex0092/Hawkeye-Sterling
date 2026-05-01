@@ -939,6 +939,7 @@ export default function OversightPage() {
   );
 
   const openActionsCount = allActionItems.filter((ai) => !ai.closed).length;
+  const openActions = openActionsCount;
 
   const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
 
@@ -979,6 +980,7 @@ export default function OversightPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as GovernanceGapResult;
       setGapResult(data);
+      setGapOpen(true);
     } catch (e) {
       setGapError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -1015,8 +1017,8 @@ export default function OversightPage() {
     approvals: "Approvals",
     minutes: "Meeting minutes",
     circulars: "Circulars",
-    actions: `Action tracker${openActionsCount > 0 ? ` (${openActionsCount})` : ""}`,
-    kpis: "KPI Dashboard",
+    "action-tracker": `Action tracker${openActions > 0 ? ` (${openActions})` : ""}`,
+    kpi: "KPI Dashboard",
   };
 
   return (
@@ -1046,20 +1048,19 @@ export default function OversightPage() {
         <div className="flex items-center gap-3 mb-3">
           <button
             type="button"
-            onClick={runGapAnalysis}
+            onClick={() => void runGapAnalysis()}
             disabled={gapLoading}
-            className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+            className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
           >
-            {gapLoading ? (
-              <>
-                <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Analysing…
-              </>
-            ) : (
-              "Run AI Gap Analysis"
-            )}
+            {gapLoading ? "◌ Analysing…" : "✦ Run AI Gap Analysis"}
           </button>
-          {gapResult && !gapLoading && (
+          {gapOpen && gapResult && (
+            <button type="button" onClick={() => setGapOpen(false)} className="text-11 text-ink-2 hover:text-ink-0">
+              Hide report ▲
+            </button>
+          )}
+          {gapError && <span className="text-11 text-red">{gapError}</span>}
+          {gapResult && !gapLoading && !gapOpen && (
             <span className="text-11 text-ink-3">
               Overall grade:{" "}
               <span className={`font-bold font-mono text-14 ${GRADE_TONE[gapResult.overallGrade] ?? "text-ink-0"}`}>
@@ -1069,11 +1070,7 @@ export default function OversightPage() {
           )}
         </div>
 
-        {gapError && (
-          <div className="text-11 text-red bg-red-dim border border-red/20 rounded-lg px-4 py-2 mb-3">{gapError}</div>
-        )}
-
-        {gapResult && (
+        {gapOpen && gapResult && (
           <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 flex flex-col gap-5">
             {/* Grade + rationale */}
             <div className="flex gap-4 items-start">
@@ -1184,7 +1181,7 @@ export default function OversightPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-hair-2 overflow-x-auto">
-        {(["approvals", "minutes", "circulars", "actions", "kpis"] as Tab[]).map((t) => (
+        {(["approvals", "minutes", "circulars", "action-tracker", "kpi"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -1192,6 +1189,8 @@ export default function OversightPage() {
             className={`px-4 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
               tab === t
                 ? "border-brand text-brand bg-brand-dim"
+                : t === "action-tracker" && openActions > 0
+                ? "border-transparent text-amber hover:text-amber/80 hover:bg-bg-1"
                 : "border-transparent text-ink-2 hover:text-ink-0 hover:bg-bg-1"
             }`}
           >
@@ -1287,14 +1286,14 @@ export default function OversightPage() {
                 <div className="mt-1 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => handleFirstSign(a)}
+                    onClick={() => signApproval(a.id, "first")}
                     className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
                   >
                     Approve (Sign)
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleReject(a)}
+                    onClick={() => rejectApproval(a.id)}
                     className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim"
                   >
                     Reject
@@ -1305,14 +1304,14 @@ export default function OversightPage() {
                 <div className="mt-1 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => handleSecondSign(a)}
+                    onClick={() => signApproval(a.id, "second")}
                     className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
                   >
                     Second sign-off
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleReject(a)}
+                    onClick={() => rejectApproval(a.id)}
                     className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim"
                   >
                     Reject
@@ -1522,7 +1521,7 @@ export default function OversightPage() {
       )}
 
       {/* ACTION TRACKER TAB */}
-      {tab === "actions" && (
+      {tab === "action-tracker" && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -1586,7 +1585,7 @@ export default function OversightPage() {
       )}
 
       {/* KPI DASHBOARD TAB */}
-      {tab === "kpis" && (
+      {tab === "kpi" && (
         <div className="flex flex-col gap-6">
           {/* KPI cards */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
