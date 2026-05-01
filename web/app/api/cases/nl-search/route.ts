@@ -21,6 +21,46 @@ export const maxDuration = 30;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 
+// ── Legacy interface exported for ScreeningToolbar compatibility ──────────────
+
+export interface NlSearchFilter {
+  /** ISO2 country codes or country name fragments to match against subject.country */
+  countries?: string[];
+  /** Minimum risk score 0-100 */
+  riskScoreMin?: number;
+  /** Maximum risk score 0-100 */
+  riskScoreMax?: number;
+  /** CDD posture values: "CDD" | "EDD" | "SDD" | "RFI" | "PENDING" */
+  cddPostures?: string[];
+  /** Entity types: "individual" | "organisation" | "vessel" | "aircraft" */
+  entityTypes?: string[];
+  /** Subject status: "active" | "frozen" | "cleared" */
+  statuses?: string[];
+  /** True = must have at least one sanctions list hit */
+  sanctionsHit?: boolean;
+  /** True = must have PEP flag */
+  pepFlag?: boolean;
+  /** True = must have SLA breach (< 0 hours remaining) */
+  slaBreach?: boolean;
+  /** Free-text fragments to match against name (case-insensitive) */
+  nameContains?: string[];
+  /** Free-text fragments to match against meta/notes (case-insensitive) */
+  metaContains?: string[];
+  /** Minimum number of sanctions lists matched */
+  minListCount?: number;
+}
+
+export interface NlSearchResult {
+  ok: boolean;
+  query: string;
+  interpreted: string;
+  filters: NlSearchFilter;
+  confidence: "high" | "medium" | "low";
+  clarification?: string;
+}
+
+// ── Rich subject type for server-side filter application ─────────────────────
+
 interface SubjectSlim {
   id: string;
   name: string;

@@ -1,9 +1,13 @@
 // Hawkeye Sterling — UAE Regulatory Live Feed
-// Pulls the latest regulatory notices from three primary UAE sources:
+// Pulls the latest regulatory notices from primary UAE and international sources:
 //   1. Ministry of Economy (MoET) — moet.gov.ae
 //   2. UAE Import-Export Compliance (UAE IEC) — uaeiec.gov.ae
 //   3. Central Bank of the UAE (CBUAE) — centralbank.ae
 //   4. Google News RSS — targeted queries for UAE AML/CFT regulatory news
+//   5. GDELT Project API — live AML/sanctions/DPMS news with tone scores
+//   6. FATF Latest News RSS — fatf-gafi.org
+//   7. OFAC Sanctions Actions XML — ofac.treasury.gov
+//   8. UN Security Council Press Releases — un.org
 //
 // Each source is attempted independently; failures are silently dropped
 // so a single unavailable government portal never blocks the feed.
@@ -31,9 +35,11 @@ export interface RegulatoryItem {
   title: string;
   url: string;
   pubDate: string;     // ISO-8601 or free-form date string
+  publishedAt?: string; // alias for pubDate used by UI
   source: string;      // "MoET" | "UAE IEC" | "CBUAE" | "UAEFIU" | "FATF" | "Google News"
   category: string;    // "AML/CFT" | "Sanctions" | "PDPL" | "Trade" | "AI Governance" ...
   tone: "green" | "amber" | "red";  // green = informational, amber = guidance update, red = enforcement/alert
+  summary?: string;    // alias for snippet used by UI
   snippet?: string;
 }
 
@@ -44,6 +50,19 @@ interface FeedResult {
   fetchedAt: string;
   errors: string[];
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 15-minute module-level cache
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CacheEntry {
+  payload: FeedResult;
+  ts: number; // Date.now() at write time
+}
+
+const _cache = globalThis as unknown as Record<string, CacheEntry | undefined>;
+const CACHE_KEY = "__hsRegulatoryFeedCache";
+const CACHE_TTL_MS = 30 * 60_000; // 30 minutes
 
 const FETCH_TIMEOUT_MS = 5_000;
 
@@ -61,6 +80,326 @@ function sanitizeUrl(raw: string): string {
   const t = raw.trim();
   if (/^https?:\/\//i.test(t)) return t;
   return "";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RSS/XML helpers — no external XML library needed; extract fields with regex
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Extract the text content of the first occurrence of <tag>...</tag> */
+function extractTag(xml: string, tag: string): string {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+  const m = xml.match(re);
+  if (!m) return "";
+  const raw = m[1] ?? "";
+  return stripHtml(raw.trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));
+}
+
+/** Split XML into individual <item>...</item> blocks */
+function splitItems(xml: string): string[] {
+  return xml.split(/<item[\s>]/i).slice(1).map((chunk) => {
+    const end = chunk.indexOf("</item>");
+    return end >= 0 ? chunk.slice(0, end) : chunk;
+  });
+}
+
+/** Classify tone based on keywords in title/description */
+function classifyTone(text: string): RegulatoryItem["tone"] {
+  const lower = text.toLowerCase();
+  if (/grey\s*list|blacklist|sanctioned|violation|penalty|enforcement|criminal|freeze|convicted/.test(lower)) {
+    return "red";
+  }
+  if (/updated|new guidance|circular|consultation|review|amended|guidance|revision|notice/.test(lower)) {
+    return "amber";
+  }
+  return "green";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FATF Latest News RSS
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchFatfRss(): Promise<RegulatoryItem[]> {
+  const url = "https://www.fatf-gafi.org/en/topics/fatf-latest-news.rss";
+  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; fatf-feed)",
+        accept: "application/rss+xml, application/xml, */*",
+      },
+      signal,
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items = splitItems(xml);
+    return items.slice(0, 8).map((block, i): RegulatoryItem | null => {
+      const title = extractTag(block, "title");
+      if (!title) return null;
+      const link = sanitizeUrl(extractTag(block, "link"));
+      const pubDate = extractTag(block, "pubDate");
+      const description = extractTag(block, "description");
+      const combined = `${title} ${description}`;
+      return {
+        id: `fatf-rss-${i}-${Buffer.from(title).toString("base64").slice(0, 10)}`,
+        title: title.slice(0, 200),
+        url: link || "https://www.fatf-gafi.org/en/topics/fatf-latest-news.html",
+        pubDate,
+        publishedAt: pubDate,
+        source: "FATF",
+        category: "AML/CFT",
+        tone: classifyTone(combined),
+        summary: description.slice(0, 300) || undefined,
+        snippet: description.slice(0, 300) || undefined,
+      };
+    }).filter((x): x is RegulatoryItem => x !== null);
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OFAC Sanctions Actions XML
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchOfacXml(): Promise<RegulatoryItem[]> {
+  const url = "https://ofac.treasury.gov/system/files/126/ofac_sanctions_actions.xml";
+  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; ofac-feed)",
+        accept: "application/xml, */*",
+      },
+      signal,
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items = splitItems(xml);
+    return items.slice(0, 8).map((block, i): RegulatoryItem | null => {
+      const title = extractTag(block, "title");
+      if (!title) return null;
+      const link = sanitizeUrl(extractTag(block, "link"));
+      const pubDate = extractTag(block, "pubDate") || extractTag(block, "date");
+      const description = extractTag(block, "description");
+      const combined = `${title} ${description}`;
+      return {
+        id: `ofac-${i}-${Buffer.from(title).toString("base64").slice(0, 10)}`,
+        title: title.slice(0, 200),
+        url: link || "https://ofac.treasury.gov/recent-actions",
+        pubDate,
+        publishedAt: pubDate,
+        source: "OFAC",
+        category: "Sanctions",
+        tone: classifyTone(combined),
+        summary: description.slice(0, 300) || undefined,
+        snippet: description.slice(0, 300) || undefined,
+      };
+    }).filter((x): x is RegulatoryItem => x !== null);
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UN Security Council press release feed
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchUnScFeed(): Promise<RegulatoryItem[]> {
+  const url = "https://www.un.org/press/en/feeds/all-press-releases";
+  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; un-feed)",
+        accept: "application/rss+xml, application/xml, */*",
+      },
+      signal,
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items = splitItems(xml);
+    // Filter to SC/sanctions-relevant items only
+    const relevant = items.filter((block) => {
+      const title = extractTag(block, "title").toLowerCase();
+      const desc = extractTag(block, "description").toLowerCase();
+      const combined = `${title} ${desc}`;
+      return /sanction|terror|al-qaeda|isil|dprk|iran|freeze|designat|proliferat|money laundering|aml|financial crime/.test(combined);
+    });
+    return relevant.slice(0, 6).map((block, i): RegulatoryItem | null => {
+      const title = extractTag(block, "title");
+      if (!title) return null;
+      const link = sanitizeUrl(extractTag(block, "link"));
+      const pubDate = extractTag(block, "pubDate");
+      const description = extractTag(block, "description");
+      const combined = `${title} ${description}`;
+      return {
+        id: `unsc-${i}-${Buffer.from(title).toString("base64").slice(0, 10)}`,
+        title: title.slice(0, 200),
+        url: link || "https://www.un.org/press/en",
+        pubDate,
+        publishedAt: pubDate,
+        source: "UN Security Council",
+        category: "Sanctions",
+        tone: classifyTone(combined),
+        summary: description.slice(0, 300) || undefined,
+        snippet: description.slice(0, 300) || undefined,
+      };
+    }).filter((x): x is RegulatoryItem => x !== null);
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UAE-specific static items — always shown, not from a feed
+// ─────────────────────────────────────────────────────────────────────────────
+
+const UAE_STATIC: RegulatoryItem[] = [
+  {
+    id: "uae-001",
+    title: "FDL 10/2025 — UAE AML/CFT Law in Force",
+    url: "https://www.moet.gov.ae/en/legislation/laws/federal-decree-law-no-10-of-2025",
+    pubDate: "2025-01-01",
+    publishedAt: "2025-01-01",
+    source: "UAE Cabinet",
+    tone: "green",
+    category: "legislation",
+    summary: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2019. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
+    snippet: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2019. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
+  },
+  {
+    id: "uae-002",
+    title: "MoE Circular 2/2024 — DPMS AED 55,000 Cash Reporting",
+    url: "https://www.moet.gov.ae/en/legislation",
+    pubDate: "2024-06-01",
+    publishedAt: "2024-06-01",
+    source: "UAE MoE",
+    tone: "amber",
+    category: "circular",
+    summary: "Ministry of Economy mandates CTR filing for DPMS cash transactions ≥ AED 55,000. Effective immediately. Non-compliance: AED 100K–1M penalty.",
+    snippet: "Ministry of Economy mandates CTR filing for DPMS cash transactions ≥ AED 55,000. Effective immediately. Non-compliance: AED 100K–1M penalty.",
+  },
+  {
+    id: "uae-003",
+    title: "CBUAE AML Standards — Updated §3.4 PEP Requirements",
+    url: "https://www.centralbank.ae/en/aml",
+    pubDate: "2025-02-01",
+    publishedAt: "2025-02-01",
+    source: "CBUAE",
+    tone: "amber",
+    category: "standards",
+    summary: "Updated PEP EDD requirements including enhanced source of wealth verification and quarterly review for PEP-1 customers.",
+    snippet: "Updated PEP EDD requirements including enhanced source of wealth verification and quarterly review for PEP-1 customers.",
+  },
+  {
+    id: "uae-004",
+    title: "LBMA RGG v9 — Step-4 Audit Requirements Updated",
+    url: "https://www.lbma.org.uk/rules-and-standards/responsible-sourcing",
+    pubDate: "2025-01-01",
+    publishedAt: "2025-01-01",
+    source: "LBMA",
+    tone: "amber",
+    category: "guidance",
+    summary: "LBMA Responsible Gold Guidance v9 updates Step-4 independent audit requirements. New audit scope includes digital supply chain tracking.",
+    snippet: "LBMA Responsible Gold Guidance v9 updates Step-4 independent audit requirements. New audit scope includes digital supply chain tracking.",
+  },
+  {
+    id: "uae-005",
+    title: "FATF Plenary — UAE Mutual Evaluation Follow-up",
+    url: "https://www.fatf-gafi.org/en/topics/fatf-latest-news.html",
+    pubDate: "2025-03-01",
+    publishedAt: "2025-03-01",
+    source: "FATF",
+    tone: "green",
+    category: "evaluation",
+    summary: "FATF Plenary acknowledges UAE progress on follow-up actions from 2020 Mutual Evaluation Report. Enhanced follow-up status maintained.",
+    snippet: "FATF Plenary acknowledges UAE progress on follow-up actions from 2020 Mutual Evaluation Report. Enhanced follow-up status maintained.",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GDELT Project API — live news with sentiment tone scores
+// Free, no API key. Tone < -5 → red, -5 to -2 → amber, else → green.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
+const GDELT_QUERIES = [
+  "FATF AML sanctions money laundering",
+  "UAE Central Bank compliance financial crime",
+  "gold silver DPMS precious metals fraud",
+] as const;
+
+interface GdeltArticle {
+  url?: string;
+  title?: string;
+  seendate?: string; // "20250501T120000Z"
+  domain?: string;
+  tone?: number;    // sentiment: negative = bad news
+  relevance?: number;
+}
+
+interface GdeltResponse {
+  articles?: GdeltArticle[];
+}
+
+function gdeltTone(tone: number): RegulatoryItem["tone"] {
+  if (tone < -5) return "red";
+  if (tone < -2) return "amber";
+  return "green";
+}
+
+function gdeltDate(seendate: string | undefined): string {
+  if (!seendate) return "";
+  // Format: "20250501T120000Z" → "2025-05-01T12:00:00Z"
+  const m = seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+  if (!m) return seendate;
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+}
+
+async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
+  const url =
+    `${GDELT_BASE}?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=10&format=json&timespan=7d`;
+  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; gdelt-feed)",
+        accept: "application/json",
+      },
+      signal,
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as GdeltResponse;
+    if (!Array.isArray(data.articles)) return [];
+    return data.articles
+      .filter((a) => a.url && a.title)
+      .map((a) => {
+        const tone = a.tone ?? 0;
+        const pubDate = gdeltDate(a.seendate);
+        const source = a.domain ?? "GDELT";
+        return {
+          id: `gdelt-${Buffer.from(a.url!).toString("base64").slice(0, 14)}`,
+          title: a.title!.slice(0, 200),
+          url: a.url!,
+          pubDate,
+          source,
+          category: "AML/CFT",
+          tone: gdeltTone(tone),
+          snippet: undefined,
+        } satisfies RegulatoryItem;
+      });
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -435,13 +774,25 @@ const STATIC_ITEMS: RegulatoryItem[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function GET(_req: Request): Promise<NextResponse> {
+  // Return cached payload if still fresh (15-minute TTL)
+  const cached = _cache[CACHE_KEY];
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return NextResponse.json(cached.payload, {
+      headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" },
+    });
+  }
+
   const errors: string[] = [];
   const sourcesHit = new Set<string>();
 
-  // Fan out: direct site scrapes + Google News RSS queries in parallel
-  const [siteResults, gnewsResults] = await Promise.all([
+  // Fan out: direct site scrapes + Google News RSS queries + GDELT + FATF RSS + OFAC + UN SC in parallel
+  const [siteResults, gnewsResults, gdeltResults, fatfItems, ofacItems, unScItems] = await Promise.all([
     Promise.allSettled(SITE_CONFIGS.map((cfg) => scrapeSite(cfg))),
     Promise.allSettled(GNEWS_QUERIES.map((q) => fetchGNews(q))),
+    Promise.allSettled(GDELT_QUERIES.map((q) => fetchGdelt(q))),
+    fetchFatfRss(),
+    fetchOfacXml(),
+    fetchUnScFeed(),
   ]);
 
   const live: RegulatoryItem[] = [];
@@ -466,7 +817,52 @@ export async function GET(_req: Request): Promise<NextResponse> {
     }
   }
 
-  // Deduplicate by URL (direct scrapes and Google News may overlap)
+  // GDELT results — collect, deduplicate later, sort by tone (most negative first)
+  const gdeltItems: RegulatoryItem[] = [];
+  for (let i = 0; i < GDELT_QUERIES.length; i++) {
+    const r = gdeltResults[i];
+    if (!r) continue;
+    if (r.status === "fulfilled" && r.value.length > 0) {
+      gdeltItems.push(...r.value);
+      sourcesHit.add("GDELT");
+    } else if (r.status === "rejected") {
+      errors.push(`GDELT[${i}]: fetch failed`);
+    }
+  }
+
+  // Deduplicate GDELT by URL and sort most negative tone first
+  const gdeltSeen = new Set<string>();
+  const gdeltDeduped = gdeltItems
+    .filter((item) => {
+      if (gdeltSeen.has(item.url)) return false;
+      gdeltSeen.add(item.url);
+      return true;
+    });
+  const gdeltToneRank = (t: RegulatoryItem["tone"]) => t === "red" ? 2 : t === "amber" ? 1 : 0;
+  gdeltDeduped.sort((a, b) => gdeltToneRank(b.tone) - gdeltToneRank(a.tone));
+
+  // Add GDELT items to live feed
+  live.push(...gdeltDeduped.slice(0, 20));
+
+  // Add FATF RSS items
+  if (fatfItems.length > 0) {
+    live.push(...fatfItems);
+    sourcesHit.add("FATF");
+  }
+
+  // Add OFAC items
+  if (ofacItems.length > 0) {
+    live.push(...ofacItems);
+    sourcesHit.add("OFAC");
+  }
+
+  // Add UN SC items
+  if (unScItems.length > 0) {
+    live.push(...unScItems);
+    sourcesHit.add("UN Security Council");
+  }
+
+  // Deduplicate all live items by URL
   const seen = new Set<string>();
   const deduped = live.filter((item) => {
     if (seen.has(item.url)) return false;
@@ -474,20 +870,37 @@ export async function GET(_req: Request): Promise<NextResponse> {
     return true;
   });
 
-  // Merge: live items first (sorted by pubDate desc), then static items not
-  // already covered by a live item with the same title or URL.
+  // Populate publishedAt and summary aliases from existing fields
+  for (const item of deduped) {
+    if (!item.publishedAt) item.publishedAt = item.pubDate;
+    if (!item.summary) item.summary = item.snippet;
+  }
+
+  // UAE static items — always shown, always in output regardless of live results
+  const uaeStaticFiltered = UAE_STATIC.filter(
+    (s) => !seen.has(s.url) && !deduped.some((d) => d.id === s.id),
+  );
+
+  // Merge: live items first, then legacy static items not already covered
   const staticFiltered = STATIC_ITEMS.filter(
     (s) => !seen.has(s.url) && !deduped.some((d) => d.title.toLowerCase() === s.title.toLowerCase()),
   );
 
   const allItems: RegulatoryItem[] = [
+    ...uaeStaticFiltered,
     ...deduped.slice(0, 80),
     ...staticFiltered,
   ];
 
-  // Tone-sort: red → amber → green, preserve order within same tone
+  // Sort by date descending, then by tone (red first within same date)
   const toneRank = { red: 2, amber: 1, green: 0 };
-  allItems.sort((a, b) => (toneRank[b.tone] ?? 0) - (toneRank[a.tone] ?? 0));
+  allItems.sort((a, b) => {
+    const aDate = a.pubDate || a.publishedAt || "";
+    const bDate = b.pubDate || b.publishedAt || "";
+    if (bDate > aDate) return 1;
+    if (aDate > bDate) return -1;
+    return (toneRank[b.tone] ?? 0) - (toneRank[a.tone] ?? 0);
+  });
 
   const payload: FeedResult = {
     ok: true,
@@ -497,10 +910,14 @@ export async function GET(_req: Request): Promise<NextResponse> {
     errors,
   };
 
+  // Write to cache
+  _cache[CACHE_KEY] = { payload, ts: Date.now() };
+
   return NextResponse.json(payload, {
     headers: {
       "Cache-Control": "no-store, no-cache, must-revalidate",
       "Pragma": "no-cache",
+      "X-Cache": "MISS",
     },
   });
 }

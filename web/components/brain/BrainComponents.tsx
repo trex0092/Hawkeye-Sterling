@@ -609,12 +609,35 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
         {/* Output */}
         <div className="p-4 bg-bg-1/40 max-h-[720px] overflow-auto">
           {!result && !running && (
-            <div className="text-11 text-ink-3 italic">
-              Pick a preset above or fill in a subject. The full reasoning chain — watchlist hits, jurisdiction profile, redlines fired, doctrines in scope, typology fingerprints, meta-cognition primitives, composite score and disposition — will render here.
+            <div className="space-y-3">
+              <div className="text-11 text-ink-3 italic">
+                Pick a preset above or fill in a subject. The full reasoning chain — watchlist hits, jurisdiction profile, redlines fired, doctrines in scope, typology fingerprints, meta-cognition primitives, composite score and disposition — will render here.
+              </div>
+              <div className="text-10 text-ink-3 bg-bg-2 border border-hair-2 rounded p-2.5 space-y-1">
+                <div className="font-semibold text-ink-2">⚠ For accurate scoring — fill ALL fields:</div>
+                <div>• <strong>Jurisdiction</strong> — ISO-2 code or country name (e.g. "RU", "Russia", "TR", "AE")</div>
+                <div>• <strong>Sector</strong> — business activity (e.g. "gold refinery", "VASP", "real estate")</div>
+                <div>• <strong>Narrative</strong> — paste adverse media, OSINT, or transaction text here. <em>An empty narrative field produces 0 adverse-media score regardless of subject profile.</em></div>
+                <div className="mt-1 pt-1 border-t border-hair text-ink-3">The composite score shown here reflects ONLY what you input — it is independent of any screening-panel score for the same subject.</div>
+              </div>
             </div>
           )}
           {running && <div className="text-12 text-ink-2 font-mono">Composing reasoning chain…</div>}
-          {result && <BrainResult r={result} />}
+          {result && (
+            <>
+              {result.composite?.score === 0 && !narrative.trim() && (
+                <div className="mb-3 px-3 py-2 bg-amber-dim border border-amber/30 rounded text-11 text-amber font-medium">
+                  ⚠ Composite 0/100 because the <strong>Narrative field is empty</strong> — adverse-media scoring was not applied. Paste OSINT, news headlines, or adverse media text and re-run for an accurate score.
+                </div>
+              )}
+              {result.composite?.score === 0 && !jurisdiction.trim() && (
+                <div className="mb-3 px-3 py-2 bg-amber-dim border border-amber/30 rounded text-11 text-amber">
+                  ⚠ <strong>Jurisdiction field is empty</strong> — no jurisdiction penalty applied. Enter the subject's country (e.g. "RU" or "Russia") for a complete assessment.
+                </div>
+              )}
+              <BrainResult r={result} />
+            </>
+          )}
         </div>
       </div>
     </div>

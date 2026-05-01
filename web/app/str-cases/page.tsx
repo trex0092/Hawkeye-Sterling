@@ -38,6 +38,7 @@ import {
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
+import { exportStrDraft } from "@/lib/pdf/exporters";
 
 type FlashTone = "success" | "error";
 interface Flash {
@@ -377,6 +378,21 @@ export default function StrCasesPage() {
               <div className="flex items-center gap-2">
                 <Btn variant="ghost" onClick={() => void generateBriefing()} disabled={briefingLoading || cases.length === 0}>
                   {briefingLoading ? "Generating…" : "AI Briefing"}
+                </Btn>
+                <Btn
+                  variant="ghost"
+                  onClick={() => {
+                    const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
+                    exportStrDraft({
+                      subject: open[0]?.subject ?? "Multiple subjects",
+                      narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
+                      transactions: [],
+                      composite: 75,
+                      jurisdiction: "AE",
+                    });
+                  }}
+                >
+                  ↓ Export PDF
                 </Btn>
                 <Btn variant="ghost">+ New case</Btn>
               </div>

@@ -14,6 +14,7 @@ import {
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import { lookupKnownPEP } from "@/lib/data/known-entities";
 import type { CDDPosture, FilterKey, QueueFilter, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
+import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
@@ -528,6 +529,14 @@ export default function ScreeningPage() {
   const [appliedSearchId, setAppliedSearchId] = useState<string | null>(null);
   const [minRisk, setMinRisk] = useState<number>(0);
   const [selectedRowIds, setSelectedRowIds] = useState<ReadonlySet<string>>(new Set());
+
+  // AI natural-language search filter
+  const [aiFilter, setAiFilter] = useState<NlSearchFilter | null>(null);
+  const [aiFilterLabel, setAiFilterLabel] = useState<string | null>(null);
+  const handleAiFilter = useCallback((filter: NlSearchFilter | null, label?: string) => {
+    setAiFilter(filter);
+    setAiFilterLabel(filter ? (label ?? null) : null);
+  }, []);
   const [columns, setColumns] = useState<Record<TableColumnKey, boolean>>({
     risk: true, status: true, cdd: true, sla: true, lists: true, snooze: false,
   });
@@ -595,6 +604,37 @@ export default function ScreeningPage() {
     if (minRisk > 0) {
       list = list.filter((s) => s.riskScore >= minRisk);
     }
+    if (aiFilter) {
+      const f = aiFilter;
+      list = list.filter((s) => {
+        if (f.riskScoreMin != null && s.riskScore < f.riskScoreMin) return false;
+        if (f.riskScoreMax != null && s.riskScore > f.riskScoreMax) return false;
+        if (f.pepFlag && !s.pep) return false;
+        if (f.sanctionsHit && s.listCoverage.length === 0) return false;
+        if (f.minListCount != null && s.listCoverage.length < f.minListCount) return false;
+        if (f.slaBreach) {
+          const h = parseFloat(s.slaNotify);
+          if (isNaN(h) || h > 0) return false;
+        }
+        if (f.statuses?.length && !f.statuses.includes(s.status)) return false;
+        if (f.cddPostures?.length && !f.cddPostures.includes(s.cddPosture)) return false;
+        if (f.entityTypes?.length && !f.entityTypes.includes(s.entityType)) return false;
+        if (f.countries?.length) {
+          const country = (s.country + " " + s.jurisdiction).toLowerCase();
+          const hit = f.countries.some((c) => country.includes(c.toLowerCase()));
+          if (!hit) return false;
+        }
+        if (f.nameContains?.length) {
+          const name = s.name.toLowerCase();
+          if (!f.nameContains.every((n) => name.includes(n.toLowerCase()))) return false;
+        }
+        if (f.metaContains?.length) {
+          const meta = (s.meta + " " + (s.notes ?? "")).toLowerCase();
+          if (!f.metaContains.every((m) => meta.includes(m.toLowerCase()))) return false;
+        }
+        return true;
+      });
+    }
     const q = deferredQuery.trim().toLowerCase();
     if (q) {
       return list
@@ -604,7 +644,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter, minRisk, nlMatchIds]);
+  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter, nlMatchIds]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -1154,6 +1194,8 @@ export default function ScreeningPage() {
             onColumnsChange={handleColumnsChange}
             onBulkImport={() => setBulkImportOpen(true)}
             onExport={exportFilteredCsv}
+            onAiFilter={handleAiFilter}
+            aiFilterLabel={aiFilterLabel}
             onNLSearch={(q) => { void handleNLSearch(q); }}
             nlSearchActive={nlSearchActive}
             onNLSearchClear={clearNLSearch}
