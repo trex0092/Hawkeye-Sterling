@@ -43,6 +43,7 @@ export interface ReasonInput {
   };
   roleText?: string;
   narrative?: string;
+  adverseMediaText?: string;
 }
 
 export interface CitedModule {

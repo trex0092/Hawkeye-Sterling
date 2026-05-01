@@ -52,9 +52,6 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const client = new Anthropic({ apiKey });
-
     const prompt = `You are a UAE AML/CFT compliance expert specialising in NPO/charity sector risks under FATF Recommendation 8 and UAE Cabinet Decision 74/2020.
 
 Analyse the following NPO for money laundering and terrorist financing risks:
@@ -75,14 +72,22 @@ Return a JSON object with exactly these fields:
   "recommendedAction": string
 }`;
 
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      messages: [{ role: "user", content: prompt }],
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1500,
+        messages: [{ role: "user", content: prompt }],
+      }),
     });
-
-    const text =
-      message.content[0].type === "text" ? message.content[0].text : "";
+    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    const data = await response.json() as { content: Array<{ type: string; text: string }> };
+    const text = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
 

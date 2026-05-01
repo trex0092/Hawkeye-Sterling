@@ -5796,7 +5796,6 @@ const FAMILY_COLORS: Record<string, string> = {
   FIU: "bg-violet-dim text-violet",
   OECD: "bg-green-dim text-green",
   "VASP/Fraud": "bg-red-dim text-red",
-  "Risk": "bg-amber-dim text-amber",
 };
 
 function getFamilyColor(family: string) {
