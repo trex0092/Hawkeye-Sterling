@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { pushBellEvent } from "@/lib/bell-events";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleHeader,
@@ -278,6 +279,19 @@ export default function TransactionMonitorPage() {
       loggedAt: new Date().toISOString(),
     };
     setTxs((prev) => [row, ...prev]);
+    // Push bell event when behavioural flags fire or amount ≥ DPMS threshold
+    if (row.behaviouralFlags.length > 0 || amount >= 55000) {
+      const isReportable = amount >= 55000;
+      pushBellEvent({
+        id: `tm-${row.id}`,
+        listId: isReportable ? "ofac_sdn" : "eu_consolidated",
+        listLabel: isReportable ? "Transaction Monitor · DPMS ≥ 55k" : "Transaction Monitor · Flags",
+        matchedEntry: `${row.counterparty || "Unknown"} — ${row.ref}`,
+        sourceRef: row.ref,
+        severity: isReportable ? "critical" : "high",
+        detectedAt: row.loggedAt,
+      });
+    }
     flashFor(
       row.behaviouralFlags.length > 0
         ? "Transaction logged — behavioural flags fired"

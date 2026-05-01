@@ -27,6 +27,7 @@ import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
 import { AmLanguageBreakdown } from "@/components/screening/AmLanguageBreakdown";
 import { ComparePanel } from "@/components/screening/ComparePanel";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
+import { pushBellEvent } from "@/lib/bell-events";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 
 // ── Bulk Re-Screen types ──────────────────────────────────────────────────────
@@ -921,6 +922,21 @@ export default function ScreeningPage() {
               "screening.completed",
               `${subject.name} — score ${res.data.topScore} · ${res.data.severity}`,
             );
+            // Push bell notification for any screening hit (score ≥ 40)
+            if ((res.data.topScore ?? 0) >= 40) {
+              const sev = (res.data.topScore ?? 0) >= 80 ? "critical" : (res.data.topScore ?? 0) >= 60 ? "high" : "medium";
+              const listId = sev === "critical" ? "ofac_sdn" : sev === "high" ? "un_1267" : "eu_consolidated";
+              pushBellEvent({
+                id: `screen-${subject.id}-${Date.now()}`,
+                listId,
+                listLabel: `Screening hit · ${res.data.severity ?? sev.toUpperCase()}`,
+                matchedEntry: subject.name,
+                sourceRef: subject.id,
+                severity: sev,
+                detectedAt: new Date().toISOString(),
+                firedRedlineId: sev === "critical" ? "rl_ofac_sdn_confirmed" : undefined,
+              });
+            }
             // Mirror into server-side HMAC chain (fire-and-forget).
             void fetchJson("/api/audit/sign", {
               method: "POST",
