@@ -259,7 +259,7 @@ export default function EsgRiskPage() {
   const mlStyle = result ? ML_RISK_STYLES[result.mlRiskOverlay.overallMlRisk] : null;
 
   return (
-    <ModuleLayout engineLabel="ESG risk engine">
+    <ModuleLayout engineLabel="ESG risk engine" asanaModule="esg-risk" asanaLabel="ESG Risk">
       <ModuleHero
         moduleNumber={41}
         eyebrow="Hawkeye Sterling · Sustainability & Governance"
