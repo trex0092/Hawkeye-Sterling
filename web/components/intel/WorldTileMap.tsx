@@ -264,13 +264,14 @@ export function WorldTileMap({ exposure, risk }: Props) {
     [exposure],
   );
 
-  // Tile geometry — keep modest so the SVG fits without scrolling.
-  const cell = 26;
+  // Tile geometry — wider + taller to fit ISO code + full country name.
+  const cw = 52; // tile width
+  const ch = 40; // tile height
   const gap = 3;
   const cols = TILES.reduce((m, t) => Math.max(m, t.col), 0) + 1;
   const rows = TILES.reduce((m, t) => Math.max(m, t.row), 0) + 1;
-  const w = cols * (cell + gap);
-  const h = rows * (cell + gap);
+  const w = cols * (cw + gap);
+  const h = rows * (ch + gap);
 
   return (
     <svg
@@ -280,6 +281,17 @@ export function WorldTileMap({ exposure, risk }: Props) {
       className="w-full h-auto"
     >
       <title>Country exposure tile grid (cartogram)</title>
+      <defs>
+        {TILES.map((t) => {
+          const x = t.col * (cw + gap);
+          const y = t.row * (ch + gap);
+          return (
+            <clipPath key={`clip-${t.iso2}`} id={`clip-${t.iso2}`}>
+              <rect x={x + 2} y={y} width={cw - 4} height={ch} />
+            </clipPath>
+          );
+        })}
+      </defs>
       {TILES.map((t) => {
         const r = byIso.get(t.iso2);
         const count = exposure[t.iso2] ?? 0;
@@ -287,15 +299,16 @@ export function WorldTileMap({ exposure, risk }: Props) {
         const tier: BaselTier = r?.baselTier ?? "very_low";
         const fill = TIER_FILL[tier];
         const stroke = r?.fatf ? FATF_STROKE[r.fatf] : "transparent";
-        const x = t.col * (cell + gap);
-        const y = t.row * (cell + gap);
+        const x = t.col * (cw + gap);
+        const y = t.row * (ch + gap);
+        const name = r?.name ?? t.iso2;
         return (
           <g key={t.iso2}>
             <rect
               x={x}
               y={y}
-              width={cell}
-              height={cell}
+              width={cw}
+              height={ch}
               rx={3}
               fill={fill}
               fillOpacity={intensity}
@@ -303,7 +316,7 @@ export function WorldTileMap({ exposure, risk }: Props) {
               strokeWidth={stroke === "transparent" ? 0 : 1.5}
             >
               <title>
-                {`${t.iso2} ${r?.name ?? t.iso2} · tier=${tier}` +
+                {`${t.iso2} ${name} · tier=${tier}` +
                   (count > 0 ? ` · exposure=${count}` : " · no exposure") +
                   (r?.fatf && r.fatf !== "not_listed"
                     ? ` · FATF ${r.fatf.replace("_", "-")}`
@@ -311,23 +324,40 @@ export function WorldTileMap({ exposure, risk }: Props) {
                   (r?.eu === "high_risk_third_country" ? " · EU high-risk" : "")}
               </title>
             </rect>
+            {/* ISO code */}
             <text
-              x={x + cell / 2}
-              y={y + cell / 2 + 3}
+              x={x + cw / 2}
+              y={y + 14}
               textAnchor="middle"
               fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-              fontSize={8}
-              fontWeight={600}
+              fontSize={9}
+              fontWeight={700}
               fill="#0f172a"
-              opacity={0.85}
+              opacity={0.9}
               pointerEvents="none"
             >
               {t.iso2}
             </text>
+            {/* Full country name — clipped to tile width */}
+            <text
+              x={x + cw / 2}
+              y={y + 27}
+              textAnchor="middle"
+              fontFamily="ui-sans-serif, system-ui, sans-serif"
+              fontSize={6}
+              fontWeight={500}
+              fill="#0f172a"
+              opacity={0.8}
+              pointerEvents="none"
+              clipPath={`url(#clip-${t.iso2})`}
+            >
+              {name}
+            </text>
+            {/* Exposure count badge */}
             {count > 0 && (
               <text
-                x={x + cell - 2}
-                y={y + 8}
+                x={x + cw - 3}
+                y={y + 9}
                 textAnchor="end"
                 fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
                 fontSize={7}

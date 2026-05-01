@@ -390,6 +390,7 @@ export default function CountryRiskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: country.trim(), analysisDepth: depth }),
       });
+      if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
       const data = (await res.json()) as CountryRiskResult & { ok?: boolean; error?: string };
       if (data.error) throw new Error(data.error);
       setResult(data as CountryRiskResult);
@@ -431,6 +432,7 @@ export default function CountryRiskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ countries: compareList }),
       });
+      if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
       const data = (await res.json()) as CountryCompareResult & { ok?: boolean; error?: string };
       if (data.error) throw new Error(data.error);
       setCompareResult(data as CountryCompareResult);
