@@ -1184,6 +1184,10 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             state={screening}
             adverseMedia={subject.adverseMedia}
             rca={subject.rca}
+            subjectCtx={{
+              name: subject.name,
+              nationality: subject.country || subject.jurisdiction || undefined,
+            }}
           />
         )}
 
@@ -1500,10 +1504,12 @@ function ScreeningTab({
   state,
   adverseMedia,
   rca,
+  subjectCtx,
 }: {
   state: ReturnType<typeof useQuickScreen>;
   adverseMedia?: AdverseMediaMatch | undefined;
   rca?: { screened: boolean; linkedAssociates?: string[] } | undefined;
+  subjectCtx?: SubjectContext;
 }) {
   const title = (
     <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
@@ -1551,7 +1557,7 @@ function ScreeningTab({
       {title}
       <ScreeningSummary result={state.result} />
       <BrainDiagnostics result={state.result} />
-      <HitsList hits={state.result.hits} />
+      <HitsList hits={state.result.hits} subjectCtx={subjectCtx} />
       {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
       <RcaRow rca={rca} />
     </>
@@ -1784,7 +1790,38 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "red" }) {
   );
 }
 
-function HitsList({ hits }: { hits: QuickScreenHit[] }) {
+// ── AI Confidence Score types ─────────────────────────────────────────────────
+interface ConfidenceScoreResult {
+  ok: true;
+  confidenceScore: number;
+  falsePositiveProbability: number;
+  keyFactors: string[];
+  recommendation: "clear" | "escalate" | "file_str" | "manual_review";
+  reasoning: string;
+}
+
+const RECOMMENDATION_LABEL: Record<ConfidenceScoreResult["recommendation"], string> = {
+  clear: "Clear — False Positive",
+  escalate: "Escalate to MLRO",
+  file_str: "File STR",
+  manual_review: "Manual Review",
+};
+
+const RECOMMENDATION_STYLE: Record<ConfidenceScoreResult["recommendation"], string> = {
+  clear: "bg-green-dim text-green border border-green/30",
+  escalate: "bg-amber-dim text-amber border border-amber/30",
+  file_str: "bg-red-dim text-red border border-red/30",
+  manual_review: "bg-blue-dim text-blue border border-blue/30",
+};
+
+interface SubjectContext {
+  name: string;
+  dob?: string;
+  nationality?: string;
+  idNumber?: string;
+}
+
+function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: SubjectContext }) {
   if (hits.length === 0) {
     return (
       <div className="text-11 text-ink-2 py-2.5">
@@ -1795,19 +1832,101 @@ function HitsList({ hits }: { hits: QuickScreenHit[] }) {
   return (
     <ul className="list-none p-0 m-0">
       {hits.map((hit, idx) => (
-        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} />
+        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} subjectCtx={subjectCtx} />
       ))}
     </ul>
   );
 }
 
-function HitRow({ hit }: { hit: QuickScreenHit }) {
+function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: SubjectContext }) {
   const pct = Math.round(hit.score * 100);
+  const [csLoading, setCsLoading] = useState(false);
+  const [csResult, setCsResult] = useState<ConfidenceScoreResult | null>(null);
+  const [csError, setCsError] = useState<string | null>(null);
+
+  const runConfidenceScore = async () => {
+    setCsLoading(true);
+    setCsError(null);
+    try {
+      const res = await fetch("/api/screening/confidence-score", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: {
+            name: subjectCtx?.name ?? hit.candidateName,
+            dob: subjectCtx?.dob,
+            nationality: subjectCtx?.nationality,
+            idNumber: subjectCtx?.idNumber,
+          },
+          hit: {
+            listName: hit.listId,
+            matchedName: hit.candidateName,
+            score: Math.round(hit.score * 100),
+            details: [
+              hit.listRef,
+              hit.reason,
+              hit.matchedAlias ? `alias: ${hit.matchedAlias}` : null,
+              hit.programs?.length ? `programs: ${hit.programs.join(", ")}` : null,
+            ].filter(Boolean).join(" · "),
+          },
+        }),
+      });
+      if (!res.ok) {
+        setCsError("API error — please retry");
+        return;
+      }
+      const data = (await res.json()) as ConfidenceScoreResult;
+      if (data.ok) setCsResult(data);
+    } catch {
+      setCsError("Request failed");
+    } finally {
+      setCsLoading(false);
+    }
+  };
+
+  // FP probability colour coding: green <30%, amber 30-70%, red >70%
+  const fpColor = csResult
+    ? csResult.falsePositiveProbability < 30
+      ? "text-green stroke-green"
+      : csResult.falsePositiveProbability < 70
+        ? "text-amber stroke-amber"
+        : "text-red stroke-red"
+    : "";
+  const fpBg = csResult
+    ? csResult.falsePositiveProbability < 30
+      ? "bg-green-dim border-green/30"
+      : csResult.falsePositiveProbability < 70
+        ? "bg-amber-dim border-amber/30"
+        : "bg-red-dim border-red/30"
+    : "";
+
   return (
     <li className="py-2.5 border-b border-hair last:border-b-0">
       <div className="flex justify-between items-baseline mb-1">
         <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
-        <span className="font-mono text-11 text-ink-2">{pct}%</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-11 text-ink-2">{pct}%</span>
+          {subjectCtx && !csResult && (
+            <button
+              type="button"
+              onClick={() => void runConfidenceScore()}
+              disabled={csLoading}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+            >
+              {csLoading ? "Scoring…" : "🎯 AI Confidence Score"}
+            </button>
+          )}
+          {csResult && (
+            <button
+              type="button"
+              onClick={() => setCsResult(null)}
+              className="text-10 text-ink-3 hover:text-ink-0"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
       <div className="text-12.5 text-ink-0 mb-1">
         {hit.candidateName}
@@ -1828,6 +1947,51 @@ function HitRow({ hit }: { hit: QuickScreenHit }) {
               {p}
             </span>
           ))}
+        </div>
+      )}
+      {csError && (
+        <div className="mt-2 text-11 text-red bg-red-dim rounded px-2 py-1">{csError}</div>
+      )}
+      {csResult && (
+        <div className={`mt-2 rounded-lg border p-3 ${fpBg}`}>
+          {/* Donut-style FP display */}
+          <div className="flex items-center gap-3 mb-2">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+                <circle cx="18" cy="18" r="14" fill="none" className="stroke-bg-2" strokeWidth="4" />
+                <circle
+                  cx="18" cy="18" r="14" fill="none"
+                  className={fpColor}
+                  strokeWidth="4"
+                  strokeDasharray={`${csResult.falsePositiveProbability * 0.88} 88`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className={`absolute inset-0 flex items-center justify-center font-mono text-10 font-bold ${fpColor.split(" ")[0]}`}>
+                {csResult.falsePositiveProbability}%
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">FP Probability</div>
+              <div className="text-11 font-semibold text-ink-0">
+                Confidence: {csResult.confidenceScore}/100 true match
+              </div>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-semibold mt-1 border ${RECOMMENDATION_STYLE[csResult.recommendation]}`}>
+                {RECOMMENDATION_LABEL[csResult.recommendation]}
+              </span>
+            </div>
+          </div>
+          {csResult.keyFactors.length > 0 && (
+            <ul className="space-y-0.5 mb-2">
+              {csResult.keyFactors.map((f, i) => (
+                <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+                  <span className="text-ink-3">·</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-11 text-ink-2 leading-relaxed italic">{csResult.reasoning}</p>
         </div>
       )}
     </li>

@@ -43,6 +43,27 @@ interface BatchRanking {
   batchSummary: string;
 }
 
+interface SmartPrioritySubject {
+  id: string;
+  name: string;
+  jurisdiction?: string;
+  clientType?: string;
+  lastScreened?: string;
+  riskScore?: number;
+  hitCount?: number;
+  priority: "immediate" | "scheduled" | "low";
+  reason: string;
+  estimatedRisk: string;
+}
+
+interface SmartPrioritization {
+  ok: true;
+  prioritized: SmartPrioritySubject[];
+  immediateCount: number;
+  scheduledCount: number;
+  insights: string;
+}
+
 interface RowResult {
   name: string;
   entityType?: string;
@@ -283,6 +304,9 @@ export default function BatchPage() {
   const [page, setPage] = useState(0);
   const [ranking, setRanking] = useState<BatchRanking | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const [smartPriority, setSmartPriority] = useState<SmartPrioritization | null>(null);
+  const [smartPriorityLoading, setSmartPriorityLoading] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "immediate" | "scheduled" | "low">("all");
   const fileInput = useRef<HTMLInputElement>(null);
 
   // Name Variant Generator state
@@ -509,6 +533,39 @@ export default function BatchPage() {
     finally { setRankLoading(false); }
   };
 
+  const runSmartPrioritize = async () => {
+    if (results.length === 0 && rows.length === 0) return;
+    setSmartPriorityLoading(true);
+    setSmartPriority(null);
+    setPriorityFilter("all");
+    try {
+      // Build subjects from available data (results if screened, else raw rows)
+      const subjects = results.length > 0
+        ? results.slice(0, 100).map((r, i) => ({
+            id: `subj-${i}`,
+            name: r.name,
+            jurisdiction: r.jurisdiction,
+            riskScore: r.topScore,
+            hitCount: r.hitCount,
+          }))
+        : rows.slice(0, 100).map((r, i) => ({
+            id: `subj-${i}`,
+            name: r.name,
+            jurisdiction: r.jurisdiction,
+          }));
+
+      const res = await fetch("/api/batch/prioritize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjects }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as SmartPrioritization;
+      if (data.ok) setSmartPriority(data);
+    } catch { /* silent */ }
+    finally { setSmartPriorityLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
       <div>
@@ -672,7 +729,15 @@ export default function BatchPage() {
                 className="px-4 py-1.5 bg-brand text-white rounded font-semibold text-12.5 hover:bg-brand-hover disabled:opacity-50">
                 {running ? "Streaming…" : "Run batch"}
               </button>
-              <button onClick={() => { setRows([]); setResults([]); setSummary(null); setProgress(null); setError(null); }}
+              <button
+                type="button"
+                onClick={() => void runSmartPrioritize()}
+                disabled={smartPriorityLoading}
+                className="px-4 py-1.5 bg-amber-dim text-amber border border-amber/30 rounded font-semibold text-12.5 hover:bg-amber/20 disabled:opacity-50"
+              >
+                {smartPriorityLoading ? "Prioritizing…" : "🎯 Smart Prioritize"}
+              </button>
+              <button onClick={() => { setRows([]); setResults([]); setSummary(null); setProgress(null); setError(null); setSmartPriority(null); }}
                 className="px-3 py-1.5 text-ink-2 text-12 hover:text-ink-0">
                 Clear
               </button>
