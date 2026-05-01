@@ -596,6 +596,48 @@ interface PepEddResult { pepClassification: "domestic_pep"|"foreign_pep"|"intern
 interface SanctionsListHit { list: string; listAuthority: string; hitType: "confirmed"|"possible"|"name_match"|"none"; designationDate?: string; designationBasis?: string; assetFreezeRequired: boolean; freezeTimeline?: string; dealingProhibition: boolean; reportingObligation?: string }
 interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"medium"|"low"|"none"; immediateFreeze: boolean; freezeBasis?: string; listHits: SanctionsListHit[]; assetFreezeRequired: boolean; dealingProhibition: boolean; tippingOffRisk: boolean; recommendedAction: "freeze_immediately"|"file_str"|"escalate_mlro"|"enhanced_screening"|"clear"; actionRationale: string; frozenAssetReportingDeadline?: string; applicableRegime: string[]; complianceObligations: string[]; regulatoryBasis: string }
 
+// ── Tax Evasion ML types ─────────────────────────────────────────────────────
+
+interface TaxEvasionIdentifiedScheme { scheme: string; description: string; estimatedImpact: string; detectabilityRisk: "low"|"medium"|"high"; legalRef: string }
+interface TaxEvasionJurisdictionItem { jurisdiction: string; role: "tax_haven"|"conduit"|"sink"|"clean"; bepsRisk: string; taxTreatyAbuse: boolean }
+interface TaxEvasionResult {
+  taxEvasionRiskScore: number;
+  riskTier: "low"|"medium"|"high"|"critical";
+  identifiedSchemes: TaxEvasionIdentifiedScheme[];
+  jurisdictionAnalysis: TaxEvasionJurisdictionItem[];
+  wealthIncomeDiscrepancy: { declared: string; estimated: string; plausibility: "plausible"|"questionable"|"implausible"; explanation: string };
+  crsGaps: string[];
+  transferPricingFlags: string[];
+  roundTrippingIndicators: string[];
+  regulatoryRequirements: Array<{ obligation: string; regulation: string }>;
+  redFlags: string[];
+  recommendation: "clear"|"monitor"|"request_tax_docs"|"file_str"|"report_to_tax_authority";
+  taxAuthorityReferral: boolean;
+  estimatedTaxLiability: string;
+  summary: string;
+}
+
+// ── Human Trafficking ML types ───────────────────────────────────────────────
+
+interface HtFinancialPattern { pattern: string; description: string; severity: "low"|"medium"|"high"; fatfRef: string }
+interface HumanTraffickingResult {
+  htRiskScore: number;
+  htRiskTier: "low"|"medium"|"high"|"critical";
+  traffickingType: Array<"labour"|"sexual"|"organ"|"forced_criminality"|"mixed">;
+  iloIndicatorsPresent: string[];
+  financialPatterns: HtFinancialPattern[];
+  geographicRiskAnalysis: { originRisk: string; destinationRisk: string; corridorRisk: string; knownRoutes: string[] };
+  victimProfileIndicators: string[];
+  controllerNetworkFlags: string[];
+  regulatoryObligations: Array<{ obligation: string; regulation: string; timeline: string }>;
+  redFlags: string[];
+  recommendation: "clear"|"monitor"|"edd"|"file_str_immediate"|"report_to_law_enforcement";
+  lawEnforcementReferral: boolean;
+  referralAgency: string;
+  victimSupportConsideration: string;
+  summary: string;
+}
+
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
 // repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
@@ -1812,7 +1854,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"environmental-crime"|"corruption-risk">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"tax-evasion"|"human-trafficking">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -2373,17 +2415,29 @@ export default function MlroAdvisorPage() {
   const [amlKpiResult, setAmlKpiResult] = useState<Record<string, unknown> | null>(null);
   const [amlKpiLoading, setAmlKpiLoading] = useState(false);
 
-  // Environmental Crime ML
-  const [envCrimeInput, setEnvCrimeInput] = useState({ entity: "", entityType: "corporate", commodities: "", tradeRoutes: "", jurisdictions: "", shellCompanyFlags: false, cashIntensive: false, context: "" });
-  const [envCrimeResult, setEnvCrimeResult] = useState<Record<string, unknown> | null>(null);
-  const [envCrimeLoading, setEnvCrimeLoading] = useState(false);
-  const [envCrimeError, setEnvCrimeError] = useState<string | null>(null);
+  // ── Tax Evasion ML state ─────────────────────────────────────────────────
+  const [taxEvasionInput, setTaxEvasionInput] = useState({
+    entity: "", entityType: "corporate" as "individual"|"corporate"|"trust"|"foundation",
+    jurisdiction: "", offshoreJurisdictions: [] as string[], offshoreJurisdictionsText: "",
+    structureType: "holding_company" as "direct"|"holding_company"|"trust_structure"|"foundation"|"hybrid",
+    declaredIncome: "", estimatedWealth: "", transactionPatterns: "",
+    taxTreatyAbuse: false, transferPricingConcerns: false, shellCompanies: false,
+    crsReporting: false, fatcaStatus: "unknown" as "compliant"|"non_compliant"|"unknown",
+    context: "",
+  });
+  const [taxEvasionResult, setTaxEvasionResult] = useState<TaxEvasionResult | null>(null);
+  const [taxEvasionLoading, setTaxEvasionLoading] = useState(false);
 
-  // Corruption Risk
-  const [corrInput, setCorrInput] = useState({ entity: "", entityType: "corporate", jurisdiction: "", sector: "construction", pepStatus: false, pepTier: "none", contractTypes: "", sourceOfWealth: "", beneficialOwnerOpacity: false, adverseMediaCorruption: false, jurisdictionCPI: "", context: "" });
-  const [corrResult, setCorrResult] = useState<Record<string, unknown> | null>(null);
-  const [corrLoading, setCorrLoading] = useState(false);
-  const [corrError, setCorrError] = useState<string | null>(null);
+  // ── Human Trafficking ML state ───────────────────────────────────────────
+  const [htInput, setHtInput] = useState({
+    entity: "", entityType: "corporate" as "individual"|"corporate"|"network",
+    sector: "", indicators: [] as string[], transactionPatterns: "",
+    originCountries: "", destinationCountries: "", transitCountries: "",
+    cashIntensive: false, multipleVictimAccounts: false, controllingThirdParty: false, unusualWorkingHours: false,
+    context: "",
+  });
+  const [htResult, setHtResult] = useState<HumanTraffickingResult | null>(null);
+  const [htLoading, setHtLoading] = useState(false);
 
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
@@ -2857,8 +2911,57 @@ export default function MlroAdvisorPage() {
   const runAmlTrain = async () => { setAmlTrainLoading(true); try { const r = await fetch("/api/aml-training-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlTrainInput) }); setAmlTrainResult(await r.json()); } catch { setAmlTrainResult({ ok: false, error: "Network error" }); } finally { setAmlTrainLoading(false); } };
   const runUboVerify = async () => { setUboVerifyLoading(true); try { const r = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(uboVerifyInput) }); setUboVerifyResult(await r.json()); } catch { setUboVerifyResult({ ok: false, error: "Network error" }); } finally { setUboVerifyLoading(false); } };
   const runAmlKpi = async () => { setAmlKpiLoading(true); try { const r = await fetch("/api/aml-kpi-dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlKpiInput) }); setAmlKpiResult(await r.json()); } catch { setAmlKpiResult({ ok: false, error: "Network error" }); } finally { setAmlKpiLoading(false); } };
-  const runEnvCrime = async () => { setEnvCrimeLoading(true); setEnvCrimeError(null); try { const payload = { ...envCrimeInput, commodities: envCrimeInput.commodities.split(",").map(s => s.trim()).filter(Boolean), tradeRoutes: envCrimeInput.tradeRoutes.split(";").map(s => s.trim()).filter(Boolean), jurisdictions: envCrimeInput.jurisdictions.split(",").map(s => s.trim()).filter(Boolean) }; const r = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); setEnvCrimeResult(await r.json()); } catch { setEnvCrimeError("Network error — check connection"); } finally { setEnvCrimeLoading(false); } };
-  const runCorr = async () => { setCorrLoading(true); setCorrError(null); try { const payload = { ...corrInput, contractTypes: corrInput.contractTypes.split(",").map(s => s.trim()).filter(Boolean), jurisdictionCPI: corrInput.jurisdictionCPI ? Number(corrInput.jurisdictionCPI) : undefined }; const r = await fetch("/api/corruption-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); setCorrResult(await r.json()); } catch { setCorrError("Network error — check connection"); } finally { setCorrLoading(false); } };
+
+  const runTaxEvasion = async () => {
+    if (!taxEvasionInput.entity.trim()) return;
+    setTaxEvasionLoading(true); setTaxEvasionResult(null);
+    try {
+      const body = {
+        entity: taxEvasionInput.entity,
+        entityType: taxEvasionInput.entityType,
+        jurisdiction: taxEvasionInput.jurisdiction,
+        offshoreJurisdictions: taxEvasionInput.offshoreJurisdictionsText.split(",").map(s => s.trim()).filter(Boolean),
+        structureType: taxEvasionInput.structureType,
+        declaredIncome: taxEvasionInput.declaredIncome,
+        estimatedWealth: taxEvasionInput.estimatedWealth,
+        transactionPatterns: taxEvasionInput.transactionPatterns,
+        taxTreatyAbuse: taxEvasionInput.taxTreatyAbuse,
+        transferPricingConcerns: taxEvasionInput.transferPricingConcerns,
+        shellCompanies: taxEvasionInput.shellCompanies,
+        crsReporting: taxEvasionInput.crsReporting,
+        fatcaStatus: taxEvasionInput.fatcaStatus,
+        context: taxEvasionInput.context,
+      };
+      const r = await fetch("/api/tax-evasion", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      setTaxEvasionResult(await r.json() as TaxEvasionResult);
+    } catch { setTaxEvasionResult(null); } finally { setTaxEvasionLoading(false); }
+  };
+
+  const runHumanTrafficking = async () => {
+    if (!htInput.entity.trim()) return;
+    setHtLoading(true); setHtResult(null);
+    try {
+      const body = {
+        entity: htInput.entity,
+        entityType: htInput.entityType,
+        sector: htInput.sector,
+        indicators: htInput.indicators,
+        transactionPatterns: htInput.transactionPatterns,
+        geographicProfile: {
+          originCountries: htInput.originCountries.split(",").map(s => s.trim()).filter(Boolean),
+          destinationCountries: htInput.destinationCountries.split(",").map(s => s.trim()).filter(Boolean),
+          transitCountries: htInput.transitCountries.split(",").map(s => s.trim()).filter(Boolean),
+        },
+        cashIntensive: htInput.cashIntensive,
+        multipleVictimAccounts: htInput.multipleVictimAccounts,
+        controllingThirdParty: htInput.controllingThirdParty,
+        unusualWorkingHours: htInput.unusualWorkingHours,
+        context: htInput.context,
+      };
+      const r = await fetch("/api/human-trafficking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      setHtResult(await r.json() as HumanTraffickingResult);
+    } catch { setHtResult(null); } finally { setHtLoading(false); }
+  };
 
   const runEscalation = async () => {
     if (!escSubject.trim()) return;
@@ -3752,10 +3855,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","environmental-crime","corruption-risk"] as const).map((t) => (
+              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","tax-evasion","human-trafficking"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "environmental-crime" ? "🌿 Environmental Crime" : "🏛️ Corruption Risk"}
+                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "tax-evasion" ? "💰 Tax Evasion" : "🚨 Human Trafficking"}
                 </button>
               ))}
             </div>
@@ -7746,68 +7849,151 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
-            {/* Environmental Crime ML */}
-            {superToolsTab === "environmental-crime" && (
+            {/* ── Tax Evasion ML ──────────────────────────────────────────────── */}
+            {superToolsTab === "tax-evasion" && (
               <div className="space-y-4">
                 <div>
-                  <div className="text-13 font-semibold text-ink-0">🌿 Environmental Crime ML Analyzer</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF Environmental Crime (2021) · CITES · Lacey Act · Basel Convention · EU Timber Regulation · UAE EOCN/LBMA/DPMS · OECD CAHRA 5-Step</div>
+                  <div className="text-13 font-semibold text-ink-0">💰 Tax Evasion ML Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · OECD BEPS 15 Actions · CRS / FATCA · Panama & Pandora Papers typologies · UAE CIT 2023 · Pillar Two</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name *</label><input value={envCrimeInput.entity} onChange={e => setEnvCrimeInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual name" /></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><select value={envCrimeInput.entityType} onChange={e => setEnvCrimeInput(p => ({...p, entityType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"><option value="individual">Individual</option><option value="corporate">Corporate</option><option value="vessel">Vessel</option><option value="trader">Trader / Dealer</option></select></div>
-                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Commodities (comma-separated)</label><input value={envCrimeInput.commodities} onChange={e => setEnvCrimeInput(p => ({...p, commodities: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. gold, timber, ivory, carbon credits, fish, e-waste" /></div>
-                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trade Routes (semicolon-separated)</label><input value={envCrimeInput.tradeRoutes} onChange={e => setEnvCrimeInput(p => ({...p, tradeRoutes: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Congo → UAE → China; Peru → Panama → UAE" /></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions (comma-separated)</label><input value={envCrimeInput.jurisdictions} onChange={e => setEnvCrimeInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE, DRC, China, Malaysia" /></div>
-                  <div className="flex flex-col gap-2 justify-center">
-                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"><input type="checkbox" checked={envCrimeInput.shellCompanyFlags} onChange={e => setEnvCrimeInput(p => ({...p, shellCompanyFlags: e.target.checked}))} className="accent-brand" /><span>Shell Company Flags Present</span></label>
-                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"><input type="checkbox" checked={envCrimeInput.cashIntensive} onChange={e => setEnvCrimeInput(p => ({...p, cashIntensive: e.target.checked}))} className="accent-brand" /><span>Cash-Intensive Transactions</span></label>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name *</label>
+                    <input value={taxEvasionInput.entity} onChange={e => setTaxEvasionInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual name" />
                   </div>
-                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label><textarea value={envCrimeInput.context} onChange={e => setEnvCrimeInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Supply chain details, counterparty information, transaction patterns, provenance documentation status…" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label>
+                    <select value={taxEvasionInput.entityType} onChange={e => setTaxEvasionInput(p => ({...p, entityType: e.target.value as "individual"|"corporate"|"trust"|"foundation"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="individual">Individual</option>
+                      <option value="corporate">Corporate</option>
+                      <option value="trust">Trust</option>
+                      <option value="foundation">Foundation</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Home Jurisdiction</label>
+                    <input value={taxEvasionInput.jurisdiction} onChange={e => setTaxEvasionInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE, UK, Germany" />
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Structure Type</label>
+                    <select value={taxEvasionInput.structureType} onChange={e => setTaxEvasionInput(p => ({...p, structureType: e.target.value as "direct"|"holding_company"|"trust_structure"|"foundation"|"hybrid"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="direct">Direct</option>
+                      <option value="holding_company">Holding Company</option>
+                      <option value="trust_structure">Trust Structure</option>
+                      <option value="foundation">Foundation</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Offshore Jurisdictions (comma-separated)</label>
+                    <input value={taxEvasionInput.offshoreJurisdictionsText} onChange={e => setTaxEvasionInput(p => ({...p, offshoreJurisdictionsText: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. BVI, Cayman, Luxembourg" />
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">FATCA Status</label>
+                    <select value={taxEvasionInput.fatcaStatus} onChange={e => setTaxEvasionInput(p => ({...p, fatcaStatus: e.target.value as "compliant"|"non_compliant"|"unknown"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="compliant">Compliant</option>
+                      <option value="non_compliant">Non-Compliant</option>
+                      <option value="unknown">Unknown</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared Annual Income</label>
+                    <input value={taxEvasionInput.declaredIncome} onChange={e => setTaxEvasionInput(p => ({...p, declaredIncome: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 2.4M / USD 650K" />
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Total Wealth</label>
+                    <input value={taxEvasionInput.estimatedWealth} onChange={e => setTaxEvasionInput(p => ({...p, estimatedWealth: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 45M based on property, offshore accounts" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Patterns</label>
+                    <textarea value={taxEvasionInput.transactionPatterns} onChange={e => setTaxEvasionInput(p => ({...p, transactionPatterns: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe observed transaction patterns: intra-group flows, offshore transfers, royalty payments, management fees…" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Risk Indicators</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { key: "taxTreatyAbuse", label: "Tax Treaty Abuse / Treaty Shopping" },
+                        { key: "transferPricingConcerns", label: "Transfer Pricing Concerns" },
+                        { key: "shellCompanies", label: "Shell Company Involvement" },
+                        { key: "crsReporting", label: "CRS Reporting Compliant" },
+                      ] as const).map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
+                          <input type="checkbox" checked={taxEvasionInput[key]} onChange={e => setTaxEvasionInput(p => ({...p, [key]: e.target.checked}))} className="w-4 h-4 rounded border border-hair-2 accent-brand" />
+                          <span className="text-11 text-ink-1">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label>
+                    <textarea value={taxEvasionInput.context} onChange={e => setTaxEvasionInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Any additional relevant information about the entity, source of wealth, business rationale…" />
+                  </div>
                 </div>
-                <button type="button" onClick={() => void runEnvCrime()} disabled={envCrimeLoading || !envCrimeInput.entity.trim()} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{envCrimeLoading ? "◌ Analyzing…" : "Run Environmental Crime Assessment"}</button>
-                {envCrimeError && <div className="text-12 text-red bg-red-dim rounded px-3 py-2">{envCrimeError}</div>}
-                {envCrimeResult && (() => {
-                  const r = envCrimeResult;
-                  const score = Number(r["riskScore"] ?? 0);
-                  const risk = String(r["overallRisk"] ?? "low");
-                  const riskCls = risk === "critical" ? "bg-red text-white" : risk === "high" ? "bg-red-dim text-red" : risk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
-                  const recCls = (rec: string) => rec === "report_to_enforcement" || rec === "file_str" ? "bg-red text-white" : rec === "edd" ? "bg-amber-dim text-amber" : rec === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
+                <button type="button" onClick={() => void runTaxEvasion()} disabled={taxEvasionLoading || !taxEvasionInput.entity.trim()} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">
+                  {taxEvasionLoading ? "◌ Analysing…" : "Run Tax Evasion ML Analysis"}
+                </button>
+
+                {taxEvasionResult && (() => {
+                  const r = taxEvasionResult;
+                  const scoreCls = r.taxEvasionRiskScore >= 76 ? "text-red" : r.taxEvasionRiskScore >= 51 ? "text-amber" : r.taxEvasionRiskScore >= 26 ? "text-brand" : "text-green";
+                  const tierCls = r.riskTier === "critical" ? "bg-red text-white" : r.riskTier === "high" ? "bg-red-dim text-red" : r.riskTier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const recCls = r.recommendation === "report_to_tax_authority" || r.recommendation === "file_str" ? "bg-red text-white" : r.recommendation === "request_tax_docs" ? "bg-amber-dim text-amber" : r.recommendation === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
+                  const plausibilityCls = r.wealthIncomeDiscrepancy.plausibility === "implausible" ? "text-red border-red/30 bg-red-dim" : r.wealthIncomeDiscrepancy.plausibility === "questionable" ? "text-amber border-amber/30 bg-amber-dim" : "text-green border-green/30 bg-green-dim";
                   return (
-                    <div className="mt-2 space-y-4 bg-bg-1 rounded-lg p-4 border border-hair-2">
+                    <div className="mt-3 space-y-4 bg-bg-1 rounded-lg p-4">
                       {/* Score header */}
                       <div className="flex items-center gap-4 flex-wrap">
-                        <div className="text-center min-w-[72px]">
-                          <div className={`text-36 font-black ${risk === "critical" ? "text-red" : risk === "high" ? "text-red" : risk === "medium" ? "text-amber" : "text-green"}`}>{score}</div>
-                          <div className="text-10 font-mono text-ink-3 uppercase">Risk Score</div>
+                        <div className="text-center">
+                          <div className={`text-40 font-bold leading-none ${scoreCls}`}>{r.taxEvasionRiskScore}</div>
+                          <div className="text-10 font-mono text-ink-3 uppercase mt-1">Tax Evasion Risk Score</div>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <span className={`font-mono text-11 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>{risk} risk</span>
-                          {Boolean(r["recommendation"]) && <span className={`font-mono text-10 px-2 py-0.5 rounded uppercase ${recCls(String(r["recommendation"]))}`}>{String(r["recommendation"]).replace(/_/g, " ")}</span>}
-                          {Boolean(r["internationalReferral"]) && <span className="font-mono text-10 px-2 py-0.5 rounded uppercase bg-red-dim text-red">International Referral Required</span>}
+                        <div className="space-y-1.5">
+                          <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${tierCls}`}>{r.riskTier} Risk</span>
+                          <div>
+                            <span className={`font-mono text-11 px-2 py-0.5 rounded uppercase ${recCls}`}>{r.recommendation.replace(/_/g, " ")}</span>
+                          </div>
+                          {r.taxAuthorityReferral && <div><span className="font-mono text-11 px-2 py-0.5 rounded bg-red text-white">TAX AUTHORITY REFERRAL WARRANTED</span></div>}
                         </div>
+                        <div className="flex-1 text-12 text-ink-1 leading-relaxed border-l border-hair-2 pl-4">{r.summary}</div>
                       </div>
 
-                      {/* Crime Categories */}
-                      {Array.isArray(r["crimeCategories"]) && (r["crimeCategories"] as Array<Record<string,unknown>>).length > 0 && (
+                      {/* Identified Schemes */}
+                      {r.identifiedSchemes.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Crime Category Analysis</div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Identified Schemes ({r.identifiedSchemes.length})</div>
                           <div className="space-y-2">
-                            {(r["crimeCategories"] as Array<Record<string,unknown>>).map((cat, i) => {
-                              const catRisk = String(cat["risk"] ?? "low");
-                              const catCls = catRisk === "critical" ? "border-red bg-red/5" : catRisk === "high" ? "border-red/50 bg-red/3" : catRisk === "medium" ? "border-amber/50 bg-amber/3" : "border-hair-2";
-                              const catBadgeCls = catRisk === "critical" ? "bg-red text-white" : catRisk === "high" ? "bg-red-dim text-red" : catRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                            {r.identifiedSchemes.map((s, i) => (
+                              <div key={i} className="px-3 py-2.5 bg-bg-panel border border-hair-2 rounded-lg">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <span className={`text-10 font-mono px-1.5 py-px rounded uppercase ${s.detectabilityRisk === "high" ? "bg-red-dim text-red" : s.detectabilityRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>detect: {s.detectabilityRisk}</span>
+                                  <span className="text-12 font-semibold text-ink-0">{s.scheme}</span>
+                                </div>
+                                <p className="text-11 text-ink-1 leading-relaxed mb-1">{s.description}</p>
+                                <div className="flex items-center gap-3 text-10 text-ink-3">
+                                  <span className="font-mono">Impact: {s.estimatedImpact}</span>
+                                </div>
+                                <div className="text-10 font-mono text-ink-3 mt-0.5">{s.legalRef}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Jurisdiction Analysis */}
+                      {r.jurisdictionAnalysis.length > 0 && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Jurisdiction Analysis</div>
+                          <div className="space-y-2">
+                            {r.jurisdictionAnalysis.map((j, i) => {
+                              const roleCls = j.role === "tax_haven" ? "bg-red-dim text-red" : j.role === "conduit" ? "bg-amber-dim text-amber" : j.role === "sink" ? "bg-red text-white" : "bg-green-dim text-green";
                               return (
-                                <div key={i} className={`border rounded-lg p-3 space-y-1.5 ${catCls}`}>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-12 font-semibold text-ink-0">{String(cat["category"])}</span>
-                                    <span className={`font-mono text-10 px-2 py-px rounded uppercase ${catBadgeCls}`}>{catRisk}</span>
+                                <div key={i} className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
+                                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                                    <span className={`text-10 font-mono px-1.5 py-px rounded uppercase ${roleCls}`}>{j.role.replace(/_/g, " ")}</span>
+                                    <span className="text-12 font-semibold text-ink-0">{j.jurisdiction}</span>
+                                    {j.taxTreatyAbuse && <span className="text-10 font-mono px-1.5 py-px rounded bg-red-dim text-red">treaty abuse</span>}
                                   </div>
-                                  {Boolean(cat["fatfRef"]) && <div className="font-mono text-10 text-ink-3">{String(cat["fatfRef"])}</div>}
-                                  {Boolean(cat["estimatedProceedsRisk"]) && <div className="text-11 text-amber font-semibold">{String(cat["estimatedProceedsRisk"])}</div>}
-                                  {Array.isArray(cat["indicators"]) && (cat["indicators"] as string[]).length > 0 && (
-                                    <ul className="space-y-0.5 mt-1">{(cat["indicators"] as string[]).map((ind, j) => <li key={j} className="text-11 text-ink-1 flex gap-1.5"><span className="text-red shrink-0 mt-0.5">•</span>{ind}</li>)}</ul>
-                                  )}
+                                  <p className="text-11 text-ink-2">{j.bepsRisk}</p>
                                 </div>
                               );
                             })}
@@ -7815,72 +8001,54 @@ export default function MlroAdvisorPage() {
                         </div>
                       )}
 
+                      {/* Wealth / Income Discrepancy */}
+                      <div className={`px-3 py-2.5 border rounded-lg ${plausibilityCls}`}>
+                        <div className="text-10 font-mono uppercase tracking-wide-3 mb-1.5">Wealth / Income Discrepancy — {r.wealthIncomeDiscrepancy.plausibility.toUpperCase()}</div>
+                        <div className="grid grid-cols-2 gap-3 mb-2 text-12">
+                          <div><span className="text-ink-3">Declared:</span> <span className="font-semibold">{r.wealthIncomeDiscrepancy.declared}</span></div>
+                          <div><span className="text-ink-3">Estimated:</span> <span className="font-semibold">{r.wealthIncomeDiscrepancy.estimated}</span></div>
+                        </div>
+                        <p className="text-11 leading-relaxed">{r.wealthIncomeDiscrepancy.explanation}</p>
+                      </div>
+
+                      {/* CRS Gaps, Transfer Pricing, Round-Tripping */}
+                      <div className="grid grid-cols-1 gap-3">
+                        {r.crsGaps.length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">CRS / FATCA Gaps</div><ul className="space-y-0.5">{r.crsGaps.map((g,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-amber shrink-0">⚠</span>{g}</li>)}</ul></div>}
+                        {r.transferPricingFlags.length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Transfer Pricing Flags</div><ul className="space-y-0.5">{r.transferPricingFlags.map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">→</span>{f}</li>)}</ul></div>}
+                        {r.roundTrippingIndicators.length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Round-Tripping Indicators</div><ul className="space-y-0.5">{r.roundTrippingIndicators.map((ri,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-red shrink-0">↺</span>{ri}</li>)}</ul></div>}
+                      </div>
+
                       {/* Red Flags */}
-                      {Array.isArray(r["redFlags"]) && (r["redFlags"] as string[]).length > 0 && (
+                      {r.redFlags.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div>
-                          <ul className="space-y-1">{(r["redFlags"] as string[]).map((flag, i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 mt-0.5">🚩</span>{flag}</li>)}</ul>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags ({r.redFlags.length})</div>
+                          <ul className="space-y-1">
+                            {r.redFlags.map((rf,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 font-bold">✗</span>{rf}</li>)}
+                          </ul>
                         </div>
                       )}
 
-                      {/* Jurisdiction Risk */}
-                      {Array.isArray(r["jurisdictionRisk"]) && (r["jurisdictionRisk"] as Array<Record<string,unknown>>).length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Jurisdiction Risk</div>
-                          <div className="space-y-1.5">
-                            {(r["jurisdictionRisk"] as Array<Record<string,unknown>>).map((j, i) => {
-                              const jrisk = String(j["risk"] ?? "");
-                              const jcls = jrisk === "critical" ? "text-red" : jrisk === "high" ? "text-red/80" : jrisk === "medium" ? "text-amber" : "text-green";
-                              return <div key={i} className="flex gap-2 text-12"><span className={`font-semibold shrink-0 ${jcls}`}>{String(j["jurisdiction"])}</span><span className="text-ink-3">—</span><span className="text-ink-1">{String(j["reason"])}</span></div>;
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Financial Flow Patterns */}
-                      {Array.isArray(r["financialFlowPatterns"]) && (r["financialFlowPatterns"] as string[]).length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Financial Flow Patterns</div>
-                          <ul className="space-y-1">{(r["financialFlowPatterns"] as string[]).map((p, i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">▸</span>{p}</li>)}</ul>
-                        </div>
-                      )}
-
-                      {/* Shell Company Analysis */}
-                      {Boolean(r["shellCompanyAnalysis"]) && (
-                        <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Shell Company Analysis</div><p className="text-12 text-ink-1 leading-relaxed">{String(r["shellCompanyAnalysis"])}</p></div>
-                      )}
-
-                      {/* Regulatory Obligations */}
-                      {Array.isArray(r["regulatoryObligations"]) && (r["regulatoryObligations"] as Array<Record<string,unknown>>).length > 0 && (
+                      {/* Regulatory Requirements */}
+                      {r.regulatoryRequirements.length > 0 && (
                         <div>
                           <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Regulatory Obligations</div>
-                          <div className="space-y-2">
-                            {(r["regulatoryObligations"] as Array<Record<string,unknown>>).map((ob, i) => (
-                              <div key={i} className="border border-hair-2 rounded px-3 py-2 space-y-0.5">
-                                <div className="text-12 font-semibold text-ink-0">{String(ob["obligation"])}</div>
-                                <div className="flex gap-3 text-10 font-mono text-ink-3 flex-wrap"><span>{String(ob["regulator"])}</span><span className="text-amber">⏱ {String(ob["deadline"])}</span></div>
+                          <div className="space-y-1.5">
+                            {r.regulatoryRequirements.map((req, i) => (
+                              <div key={i} className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
+                                <div className="text-12 text-ink-0 mb-0.5">{req.obligation}</div>
+                                <div className="text-10 font-mono text-ink-3">{req.regulation}</div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* Recommended Actions */}
-                      {Array.isArray(r["recommendedActions"]) && (r["recommendedActions"] as string[]).length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommended Actions</div>
-                          <ol className="space-y-1 list-decimal list-inside">{(r["recommendedActions"] as string[]).map((act, i) => <li key={i} className="text-12 text-ink-1">{act}</li>)}</ol>
+                      {/* Estimated Tax Liability */}
+                      {r.estimatedTaxLiability && (
+                        <div className="px-3 py-2 bg-amber-dim border border-amber/30 rounded">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1">Estimated Tax Liability Exposure</div>
+                          <p className="text-12 text-ink-0">{r.estimatedTaxLiability}</p>
                         </div>
-                      )}
-
-                      {/* International Referral */}
-                      {Boolean(r["referralJustification"]) && (
-                        <div className="bg-red/5 border border-red/30 rounded-lg px-3 py-2.5"><div className="text-10 font-mono uppercase tracking-wide-3 text-red mb-1">International Referral Justification</div><p className="text-12 text-ink-1 leading-relaxed">{String(r["referralJustification"])}</p></div>
-                      )}
-
-                      {/* Summary */}
-                      {Boolean(r["summary"]) && (
-                        <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Executive Summary</div><p className="text-12 text-ink-1 leading-relaxed border-l-2 border-brand pl-3">{String(r["summary"])}</p></div>
                       )}
                     </div>
                   );
@@ -7888,147 +8056,244 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
-            {/* Corruption Risk */}
-            {superToolsTab === "corruption-risk" && (
+            {/* ── Human Trafficking ML ────────────────────────────────────────── */}
+            {superToolsTab === "human-trafficking" && (
               <div className="space-y-4">
                 <div>
-                  <div className="text-13 font-semibold text-ink-0">🏛️ Corruption Risk Analyzer</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · OECD Anti-Bribery · UK Bribery Act · FCPA · UNCAC · Transparency International CPI · Basel AML Index</div>
+                  <div className="text-13 font-semibold text-ink-0">🚨 Human Trafficking ML Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF HT Guidance (2018/2023) · Palermo Protocol · ILO 11 Forced Labour Indicators · UAE Federal Law 51/2006 · Kafala exploitation patterns</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name *</label><input value={corrInput.entity} onChange={e => setCorrInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual name" /></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><select value={corrInput.entityType} onChange={e => setCorrInput(p => ({...p, entityType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"><option value="individual">Individual</option><option value="corporate">Corporate</option><option value="government_official">Government Official</option></select></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={corrInput.jurisdiction} onChange={e => setCorrInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Nigeria, UAE, Russia" /></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sector</label><select value={corrInput.sector} onChange={e => setCorrInput(p => ({...p, sector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"><option value="construction">Construction / Infrastructure</option><option value="defence">Defence</option><option value="oil_gas">Oil & Gas</option><option value="healthcare">Healthcare</option><option value="telecoms">Telecoms</option><option value="mining">Mining</option><option value="financial">Financial Services</option><option value="other">Other</option></select></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Tier</label><select value={corrInput.pepTier} onChange={e => setCorrInput(p => ({...p, pepTier: e.target.value, pepStatus: e.target.value !== "none"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"><option value="none">Not a PEP</option><option value="tier1_head_of_state">Tier 1 — Head of State / Government</option><option value="tier2_senior_official">Tier 2 — Senior Official / Minister</option><option value="tier3_local_official">Tier 3 — Local / Regional Official</option><option value="family_associate">PEP Family Member / Close Associate</option></select></div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction CPI Score (0-100)</label><input value={corrInput.jurisdictionCPI} onChange={e => setCorrInput(p => ({...p, jurisdictionCPI: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="0 = most corrupt, 100 = cleanest" /></div>
-                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Contract Types (comma-separated)</label><input value={corrInput.contractTypes} onChange={e => setCorrInput(p => ({...p, contractTypes: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. government_procurement, no_bid_contract, infrastructure, defence_supply" /></div>
-                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Source of Wealth</label><input value={corrInput.sourceOfWealth} onChange={e => setCorrInput(p => ({...p, sourceOfWealth: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Government salary, business income, inheritance, investments" /></div>
-                  <div className="flex flex-col gap-2 justify-center">
-                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"><input type="checkbox" checked={corrInput.beneficialOwnerOpacity} onChange={e => setCorrInput(p => ({...p, beneficialOwnerOpacity: e.target.checked}))} className="accent-brand" /><span>Beneficial Owner Opacity</span></label>
-                    <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"><input type="checkbox" checked={corrInput.adverseMediaCorruption} onChange={e => setCorrInput(p => ({...p, adverseMediaCorruption: e.target.checked}))} className="accent-brand" /><span>Adverse Media — Corruption</span></label>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity / Subject Name *</label>
+                    <input value={htInput.entity} onChange={e => setHtInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual, company, or network name" />
                   </div>
-                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label><textarea value={corrInput.context} onChange={e => setCorrInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Procurement history, contract details, relationship network, asset profile…" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label>
+                    <select value={htInput.entityType} onChange={e => setHtInput(p => ({...p, entityType: e.target.value as "individual"|"corporate"|"network"}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="individual">Individual</option>
+                      <option value="corporate">Corporate</option>
+                      <option value="network">Network</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sector</label>
+                    <select value={htInput.sector} onChange={e => setHtInput(p => ({...p, sector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="">Select sector…</option>
+                      <option value="hospitality">Hospitality</option>
+                      <option value="domestic_work">Domestic Work</option>
+                      <option value="construction">Construction</option>
+                      <option value="agriculture">Agriculture</option>
+                      <option value="entertainment">Entertainment</option>
+                      <option value="manufacturing">Manufacturing</option>
+                      <option value="retail">Retail</option>
+                      <option value="transport">Transport / Logistics</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Countries (comma-separated)</label>
+                    <input value={htInput.originCountries} onChange={e => setHtInput(p => ({...p, originCountries: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Bangladesh, Philippines, Nepal" />
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Countries (comma-separated)</label>
+                    <input value={htInput.destinationCountries} onChange={e => setHtInput(p => ({...p, destinationCountries: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE, Saudi Arabia, Kuwait" />
+                  </div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transit Countries (comma-separated)</label>
+                    <input value={htInput.transitCountries} onChange={e => setHtInput(p => ({...p, transitCountries: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Oman, Jordan, Turkey" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Patterns</label>
+                    <textarea value={htInput.transactionPatterns} onChange={e => setHtInput(p => ({...p, transactionPatterns: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe observed transaction patterns: multiple depositors, cash intensity, remittance corridors, structured deposits…" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Financial / Operational Indicators</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { key: "cashIntensive", label: "Cash-Intensive Operations" },
+                        { key: "multipleVictimAccounts", label: "Multiple Individuals Depositing to Single Account" },
+                        { key: "controllingThirdParty", label: "Controlling Third Party Identified" },
+                        { key: "unusualWorkingHours", label: "Unusual Working Hours / Activity Patterns" },
+                      ] as const).map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
+                          <input type="checkbox" checked={htInput[key]} onChange={e => setHtInput(p => ({...p, [key]: e.target.checked}))} className="w-4 h-4 rounded border border-hair-2 accent-brand" />
+                          <span className="text-11 text-ink-1">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-2">ILO Forced Labour Indicators (select all that apply)</label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        "Abuse of vulnerability",
+                        "Deception / false promises",
+                        "Restriction of movement",
+                        "Isolation from community",
+                        "Physical or sexual violence",
+                        "Intimidation and threats",
+                        "Retention of identity documents",
+                        "Withholding of wages",
+                        "Debt bondage",
+                        "Abusive working/living conditions",
+                        "Excessive overtime",
+                        "Abuse of legal processes",
+                      ].map(ind => (
+                        <label key={ind} className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={htInput.indicators.includes(ind)}
+                            onChange={e => setHtInput(p => ({
+                              ...p,
+                              indicators: e.target.checked
+                                ? [...p.indicators, ind]
+                                : p.indicators.filter(i => i !== ind),
+                            }))}
+                            className="w-4 h-4 rounded border border-hair-2 accent-red"
+                          />
+                          <span className="text-11 text-ink-1">{ind}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label>
+                    <textarea value={htInput.context} onChange={e => setHtInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Intelligence from sector contacts, news, prior STRs, case notes…" />
+                  </div>
                 </div>
-                <button type="button" onClick={() => void runCorr()} disabled={corrLoading || !corrInput.entity.trim()} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{corrLoading ? "◌ Analyzing…" : "Run Corruption Risk Assessment"}</button>
-                {corrError && <div className="text-12 text-red bg-red-dim rounded px-3 py-2">{corrError}</div>}
-                {corrResult && (() => {
-                  const r = corrResult;
-                  const score = Number(r["corruptionRiskScore"] ?? 0);
-                  const tier = String(r["corruptionRiskTier"] ?? "low");
-                  const tierCls = tier === "critical" ? "bg-red text-white" : tier === "high" ? "bg-red-dim text-red" : tier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
-                  const recCls = (rec: string) => rec === "exit_relationship" || rec === "file_str" ? "bg-red text-white" : rec === "senior_approval" || rec === "edd_required" ? "bg-amber-dim text-amber" : rec === "enhanced_monitoring" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
-                  const pep = r["pepRiskAssessment"] as Record<string,unknown> | undefined;
-                  const sowCls = String(pep?.["sourceOfWealthPlausibility"] ?? "") === "implausible" ? "text-red" : String(pep?.["sourceOfWealthPlausibility"] ?? "") === "questionable" ? "text-amber" : "text-green";
+                <button type="button" onClick={() => void runHumanTrafficking()} disabled={htLoading || !htInput.entity.trim()} className="px-4 py-2 rounded bg-red text-white text-12 font-semibold hover:opacity-90 disabled:opacity-60">
+                  {htLoading ? "◌ Analysing…" : "Run Human Trafficking ML Analysis"}
+                </button>
+
+                {htResult && (() => {
+                  const r = htResult;
+                  const scoreCls = r.htRiskScore >= 76 ? "text-red" : r.htRiskScore >= 51 ? "text-amber" : r.htRiskScore >= 26 ? "text-brand" : "text-green";
+                  const tierCls = r.htRiskTier === "critical" ? "bg-red text-white" : r.htRiskTier === "high" ? "bg-red-dim text-red" : r.htRiskTier === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  const recCls = r.recommendation === "report_to_law_enforcement" || r.recommendation === "file_str_immediate" ? "bg-red text-white" : r.recommendation === "edd" ? "bg-amber-dim text-amber" : r.recommendation === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
                   return (
-                    <div className="mt-2 space-y-4 bg-bg-1 rounded-lg p-4 border border-hair-2">
+                    <div className="mt-3 space-y-4 bg-bg-1 rounded-lg p-4">
                       {/* Score header */}
                       <div className="flex items-center gap-4 flex-wrap">
-                        <div className="text-center min-w-[72px]">
-                          <div className={`text-36 font-black ${tier === "critical" || tier === "high" ? "text-red" : tier === "medium" ? "text-amber" : "text-green"}`}>{score}</div>
-                          <div className="text-10 font-mono text-ink-3 uppercase">Corruption Score</div>
+                        <div className="text-center">
+                          <div className={`text-40 font-bold leading-none ${scoreCls}`}>{r.htRiskScore}</div>
+                          <div className="text-10 font-mono text-ink-3 uppercase mt-1">HT Risk Score</div>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <span className={`font-mono text-11 font-bold px-3 py-1 rounded uppercase ${tierCls}`}>{tier} corruption risk</span>
-                          {Boolean(r["recommendation"]) && <span className={`font-mono text-10 px-2 py-0.5 rounded uppercase ${recCls(String(r["recommendation"]))}`}>{String(r["recommendation"]).replace(/_/g, " ")}</span>}
-                          {pep && Boolean(pep["enhancedMeasuresRequired"]) && <span className="font-mono text-10 px-2 py-0.5 rounded uppercase bg-amber-dim text-amber">Enhanced Measures Required</span>}
+                        <div className="space-y-1.5">
+                          <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${tierCls}`}>{r.htRiskTier} Risk</span>
+                          <div>
+                            <span className={`font-mono text-11 px-2 py-0.5 rounded uppercase ${recCls}`}>{r.recommendation.replace(/_/g, " ")}</span>
+                          </div>
+                          {r.lawEnforcementReferral && <div><span className="font-mono text-11 px-2 py-0.5 rounded bg-red text-white">LAW ENFORCEMENT REFERRAL REQUIRED</span></div>}
+                          {r.traffickingType.length > 0 && <div className="flex gap-1 flex-wrap">{r.traffickingType.map((t, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red uppercase">{t}</span>)}</div>}
                         </div>
+                        <div className="flex-1 text-12 text-ink-1 leading-relaxed border-l border-hair-2 pl-4">{r.summary}</div>
                       </div>
 
-                      {/* PEP Risk Assessment */}
-                      {pep && (
-                        <div className="border border-amber/40 bg-amber/5 rounded-lg p-3 space-y-1.5">
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1">PEP Risk Assessment (FATF R.12 · UAE FDL 10/2025 Art.14)</div>
-                          <p className="text-12 text-ink-1">{String(pep["pepExposure"] ?? "")}</p>
-                          <p className="text-11 text-ink-2">{String(pep["pepTierRisk"] ?? "")}</p>
-                          <div className="flex items-center gap-2 mt-1"><span className="text-10 font-mono text-ink-3">Source of Wealth:</span><span className={`font-mono text-11 font-semibold ${sowCls}`}>{String(pep["sourceOfWealthPlausibility"] ?? "").toUpperCase()}</span></div>
+                      {/* ILO Indicators */}
+                      {r.iloIndicatorsPresent.length > 0 && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">ILO Forced Labour Indicators Present ({r.iloIndicatorsPresent.length})</div>
+                          <ul className="space-y-1">
+                            {r.iloIndicatorsPresent.map((ind,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 font-bold">✗</span>{ind}</li>)}
+                          </ul>
                         </div>
                       )}
 
-                      {/* Sector Risk */}
-                      {Boolean(r["sectorRisk"]) && (() => {
-                        const sr = r["sectorRisk"] as Record<string,unknown>;
-                        return (
-                          <div>
-                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Sector Risk — {String(sr["sector"])} <span className="text-amber font-semibold">[{String(sr["risk"])}]</span></div>
-                            {Array.isArray(sr["typicalSchemes"]) && <ul className="space-y-1">{(sr["typicalSchemes"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-amber shrink-0">▸</span>{s}</li>)}</ul>}
+                      {/* Financial Patterns */}
+                      {r.financialPatterns.length > 0 && (
+                        <div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Financial Patterns ({r.financialPatterns.length})</div>
+                          <div className="space-y-2">
+                            {r.financialPatterns.map((fp, i) => {
+                              const sevCls = fp.severity === "high" ? "bg-red-dim text-red" : fp.severity === "medium" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand-deep";
+                              return (
+                                <div key={i} className="px-3 py-2.5 bg-bg-panel border border-hair-2 rounded-lg">
+                                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                                    <span className={`text-10 font-mono px-1.5 py-px rounded uppercase ${sevCls}`}>{fp.severity}</span>
+                                    <span className="text-12 font-semibold text-ink-0">{fp.pattern}</span>
+                                  </div>
+                                  <p className="text-11 text-ink-1 leading-relaxed mb-0.5">{fp.description}</p>
+                                  <div className="text-10 font-mono text-ink-3">{fp.fatfRef}</div>
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })()}
+                        </div>
+                      )}
+
+                      {/* Geographic Risk */}
+                      <div className="px-3 py-2.5 bg-bg-panel border border-hair-2 rounded-lg space-y-2">
+                        <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Geographic Risk Analysis</div>
+                        <div className="grid grid-cols-1 gap-2 text-12">
+                          <div><span className="font-semibold text-ink-0">Origin: </span><span className="text-ink-1">{r.geographicRiskAnalysis.originRisk}</span></div>
+                          <div><span className="font-semibold text-ink-0">Destination: </span><span className="text-ink-1">{r.geographicRiskAnalysis.destinationRisk}</span></div>
+                          <div><span className="font-semibold text-ink-0">Corridor: </span><span className="text-ink-1">{r.geographicRiskAnalysis.corridorRisk}</span></div>
+                        </div>
+                        {r.geographicRiskAnalysis.knownRoutes.length > 0 && (
+                          <div>
+                            <div className="text-10 font-mono text-ink-3 mb-0.5">Known Trafficking Routes</div>
+                            <ul className="space-y-0.5">{r.geographicRiskAnalysis.knownRoutes.map((route,i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="text-red shrink-0">→</span>{route}</li>)}</ul>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Victim Profile & Controller Network */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {r.victimProfileIndicators.length > 0 && (
+                          <div>
+                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Victim Profile Indicators</div>
+                            <ul className="space-y-0.5">{r.victimProfileIndicators.map((v,i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="text-amber shrink-0">⚠</span>{v}</li>)}</ul>
+                          </div>
+                        )}
+                        {r.controllerNetworkFlags.length > 0 && (
+                          <div>
+                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Controller Network Flags</div>
+                            <ul className="space-y-0.5">{r.controllerNetworkFlags.map((c,i) => <li key={i} className="text-11 text-red flex gap-2"><span className="shrink-0">✗</span>{c}</li>)}</ul>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Red Flags */}
-                      {Array.isArray(r["redFlags"]) && (r["redFlags"] as string[]).length > 0 && (
+                      {r.redFlags.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div>
-                          <ul className="space-y-1">{(r["redFlags"] as string[]).map((flag, i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 mt-0.5">🚩</span>{flag}</li>)}</ul>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags ({r.redFlags.length})</div>
+                          <ul className="space-y-1">
+                            {r.redFlags.map((rf,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0 font-bold">✗</span>{rf}</li>)}
+                          </ul>
                         </div>
                       )}
 
-                      {/* Contract Red Flags */}
-                      {Array.isArray(r["contractRedFlags"]) && (r["contractRedFlags"] as string[]).length > 0 && (
+                      {/* Regulatory Obligations */}
+                      {r.regulatoryObligations.length > 0 && (
                         <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Contract Red Flags</div>
-                          <ul className="space-y-1">{(r["contractRedFlags"] as string[]).map((flag, i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">⚠</span>{flag}</li>)}</ul>
-                        </div>
-                      )}
-
-                      {/* Jurisdiction Analysis */}
-                      {Boolean(r["jurisdictionAnalysis"]) && (() => {
-                        const ja = r["jurisdictionAnalysis"] as Record<string,unknown>;
-                        return (
-                          <div className="border border-hair-2 rounded-lg p-3 space-y-1.5">
-                            <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction Analysis</div>
-                            <div className="flex items-center gap-3"><span className="text-11 text-ink-2">CPI Score:</span><span className={`font-mono text-13 font-bold ${Number(ja["cpiScore"]) < 30 ? "text-red" : Number(ja["cpiScore"]) < 50 ? "text-amber" : "text-green"}`}>{String(ja["cpiScore"])}/100</span><span className="font-mono text-10 text-ink-3">{String(ja["riskRating"])}</span></div>
-                            {Array.isArray(ja["knownPatterns"]) && <ul className="space-y-0.5 mt-1">{(ja["knownPatterns"] as string[]).map((p,i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-red shrink-0">•</span>{p}</li>)}</ul>}
-                          </div>
-                        );
-                      })()}
-
-                      {/* Beneficial Ownership Risk */}
-                      {Boolean(r["beneficialOwnershipRisk"]) && (
-                        <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Beneficial Ownership Risk</div><p className="text-12 text-ink-1 leading-relaxed">{String(r["beneficialOwnershipRisk"])}</p></div>
-                      )}
-
-                      {/* Adverse Media */}
-                      {Boolean(r["adverseMediaSummary"]) && (
-                        <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Adverse Media Summary</div><p className="text-12 text-ink-1 leading-relaxed">{String(r["adverseMediaSummary"])}</p></div>
-                      )}
-
-                      {/* Regulatory Requirements */}
-                      {Array.isArray(r["regulatoryRequirements"]) && (r["regulatoryRequirements"] as Array<Record<string,unknown>>).length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Regulatory Requirements</div>
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Regulatory Obligations</div>
                           <div className="space-y-2">
-                            {(r["regulatoryRequirements"] as Array<Record<string,unknown>>).map((req, i) => (
-                              <div key={i} className="border border-hair-2 rounded px-3 py-2 space-y-0.5">
-                                <div className="text-12 font-semibold text-ink-0">{String(req["requirement"])}</div>
-                                <div className="font-mono text-10 text-ink-3">{String(req["regulation"])}</div>
-                                <div className="text-11 text-brand">{String(req["action"])}</div>
+                            {r.regulatoryObligations.map((ob, i) => (
+                              <div key={i} className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
+                                <div className="text-12 text-ink-0 mb-0.5">{ob.obligation}</div>
+                                <div className="flex items-center gap-3 text-10 font-mono text-ink-3">
+                                  <span>{ob.regulation}</span>
+                                  {ob.timeline && <span className="text-red">Timeline: {ob.timeline}</span>}
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* Required Approvals */}
-                      {Array.isArray(r["requiredApprovals"]) && (r["requiredApprovals"] as string[]).length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Approvals</div>
-                          <ul className="space-y-1">{(r["requiredApprovals"] as string[]).map((ap, i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-amber shrink-0">✓</span>{ap}</li>)}</ul>
+                      {/* Referral & Victim Support */}
+                      {r.lawEnforcementReferral && (
+                        <div className="px-3 py-2.5 bg-red-dim border border-red/30 rounded-lg space-y-2">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-red">Law Enforcement Referral</div>
+                          <p className="text-12 text-ink-0 font-medium">{r.referralAgency}</p>
                         </div>
                       )}
-
-                      {/* Reporting Obligations */}
-                      {Array.isArray(r["reportingObligations"]) && (r["reportingObligations"] as string[]).length > 0 && (
-                        <div>
-                          <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Reporting Obligations</div>
-                          <ul className="space-y-1">{(r["reportingObligations"] as string[]).map((ob, i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">▸</span>{ob}</li>)}</ul>
+                      {r.victimSupportConsideration && (
+                        <div className="px-3 py-2.5 bg-amber-dim border border-amber/30 rounded-lg">
+                          <div className="text-10 font-mono uppercase tracking-wide-3 text-amber mb-1">Victim Support Consideration</div>
+                          <p className="text-12 text-ink-1 leading-relaxed">{r.victimSupportConsideration}</p>
                         </div>
-                      )}
-
-                      {/* Summary */}
-                      {Boolean(r["summary"]) && (
-                        <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Executive Summary</div><p className="text-12 text-ink-1 leading-relaxed border-l-2 border-brand pl-3">{String(r["summary"])}</p></div>
                       )}
                     </div>
                   );
