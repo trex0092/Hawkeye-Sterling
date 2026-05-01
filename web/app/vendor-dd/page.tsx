@@ -206,66 +206,70 @@ export default function SupplierDdPage() {
       {showForm && (
         <div className="mb-5 bg-bg-panel border border-hair-2 rounded-lg p-4">
           <div className="text-11 uppercase tracking-wide-4 text-ink-3 mb-3 font-semibold">New supplier</div>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="col-span-2">
-              <label className="block text-10 text-ink-3 mb-1">Supplier name *</label>
-              <input
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                placeholder="e.g. Valcambi SA"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-10 text-ink-3 mb-1">Jurisdiction (ISO-2)</label>
-              <input
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                placeholder="AE"
-                maxLength={3}
-                value={form.jurisdiction}
-                onChange={(e) => setForm((f) => ({ ...f, jurisdiction: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-10 text-ink-3 mb-1">Tier</label>
-              <select
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
-                value={form.tier}
-                onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value as Supplier["tier"] }))}
-              >
-                <option value="critical">Critical (annual review)</option>
-                <option value="significant">Significant (18-month review)</option>
-                <option value="standard">Standard (24-month review)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-10 text-ink-3 mb-1">Last review date</label>
-              <IsoDateInput
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
-                value={form.lastReview}
-                onChange={(iso) => setForm((f) => ({ ...f, lastReview: iso }))}
-              />
-            </div>
-            <div className="flex items-center gap-5 pt-4">
-              <div className="flex items-center gap-2">
+          <div className="space-y-3 mb-3">
+            <div className="grid grid-cols-4 gap-3">
+              <div className="col-span-2">
+                <label className="block text-10 text-ink-3 mb-1">Supplier name *</label>
                 <input
-                  id="lbma-check"
-                  type="checkbox"
-                  className="accent-brand"
-                  checked={form.lbmaListed}
-                  onChange={(e) => setForm((f) => ({ ...f, lbmaListed: e.target.checked }))}
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
+                  placeholder="e.g. Valcambi SA"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 />
-                <label htmlFor="lbma-check" className="text-12 text-ink-1 cursor-pointer">LBMA Good Delivery listed</label>
               </div>
-              <div className="flex items-center gap-2">
+              <div>
+                <label className="block text-10 text-ink-3 mb-1">Jurisdiction (ISO-2)</label>
                 <input
-                  id="dgd-check"
-                  type="checkbox"
-                  className="accent-brand"
-                  checked={form.dgdListed}
-                  onChange={(e) => setForm((f) => ({ ...f, dgdListed: e.target.checked }))}
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
+                  placeholder="AE"
+                  maxLength={3}
+                  value={form.jurisdiction}
+                  onChange={(e) => setForm((f) => ({ ...f, jurisdiction: e.target.value }))}
                 />
-                <label htmlFor="dgd-check" className="text-12 text-ink-1 cursor-pointer">DGD (Dubai Good Delivery) listed</label>
+              </div>
+              <div>
+                <label className="block text-10 text-ink-3 mb-1">Tier</label>
+                <select
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                  value={form.tier}
+                  onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value as Supplier["tier"] }))}
+                >
+                  <option value="critical">Critical (annual review)</option>
+                  <option value="significant">Significant (18-month review)</option>
+                  <option value="standard">Standard (24-month review)</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-3 items-end">
+              <div>
+                <label className="block text-10 text-ink-3 mb-1">Last review date</label>
+                <IsoDateInput
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                  value={form.lastReview}
+                  onChange={(iso) => setForm((f) => ({ ...f, lastReview: iso }))}
+                />
+              </div>
+              <div className="col-span-3 flex items-center gap-6 pb-1">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="lbma-check"
+                    type="checkbox"
+                    className="accent-brand"
+                    checked={form.lbmaListed}
+                    onChange={(e) => setForm((f) => ({ ...f, lbmaListed: e.target.checked }))}
+                  />
+                  <label htmlFor="lbma-check" className="text-12 text-ink-1 cursor-pointer">LBMA Good Delivery listed</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="dgd-check"
+                    type="checkbox"
+                    className="accent-brand"
+                    checked={form.dgdListed}
+                    onChange={(e) => setForm((f) => ({ ...f, dgdListed: e.target.checked }))}
+                  />
+                  <label htmlFor="dgd-check" className="text-12 text-ink-1 cursor-pointer">DGD (Dubai Good Delivery) listed</label>
+                </div>
               </div>
             </div>
           </div>

@@ -824,8 +824,8 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New shipment</div>
       {err && <p className="text-11 text-red mb-2">{err}</p>}
 
-      {/* Row 1 — 3 equal cols */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      {/* Row 1 */}
+      <div className="grid grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reference *</label>
           <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="SHP-2025-0042" className={iCls} />
@@ -838,14 +838,14 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Material origin</label>
           <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="City, Country" className={iCls} />
         </div>
-      </div>
-
-      {/* Row 2 — 3 equal cols */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin country</label>
           <input value={originCountry} onChange={(e) => setOriginCountry(e.target.value)} placeholder="AE" className={iCls} />
         </div>
+      </div>
+
+      {/* Row 2 */}
+      <div className="grid grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Direction</label>
           <select value={direction} onChange={(e) => setDirection(e.target.value as "Import" | "Export")} className={iCls}>
@@ -864,10 +864,6 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
             <option value="delivered">Delivered</option>
           </select>
         </div>
-      </div>
-
-      {/* Row 3 — 3 equal cols */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gross weight (kg)</label>
           <input value={grossWeightKg} onChange={(e) => setGrossWeightKg(e.target.value)} placeholder="124.8" className={iCls} />
@@ -876,14 +872,14 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Net weight (kg)</label>
           <input value={netWeightKg} onChange={(e) => setNetWeightKg(e.target.value)} placeholder="124.4" className={iCls} />
         </div>
+      </div>
+
+      {/* Row 3 */}
+      <div className="grid grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bars</label>
           <input value={bars} onChange={(e) => setBars(e.target.value)} placeholder="10" className={iCls} />
         </div>
-      </div>
-
-      {/* Row 4 — 3 equal cols */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">USD value</label>
           <input value={usdValue} onChange={(e) => setUsdValue(e.target.value)} placeholder="11240000" className={iCls} />
@@ -898,17 +894,17 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
         </div>
       </div>
 
-      {/* Row 5 — 3 equal cols */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      {/* Row 4 */}
+      <div className="grid grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label>
           <input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Buyer / consignee" className={iCls} />
         </div>
-        <div className="col-span-2">
+        <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
             Risk level <span className="text-ink-3 normal-case tracking-normal">(multi-select)</span>
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {RISK_LEVEL_OPTIONS.map((lvl) => {
               const active = riskLevels.includes(lvl);
               return (
@@ -917,55 +913,36 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
                   type="button"
                   onClick={() => toggleRisk(lvl)}
                   aria-pressed={active}
-                  className={`flex-1 py-1.5 rounded border text-11 font-semibold transition-colors ${
-                    active
-                      ? RISK_LEVEL_TONE[lvl]
-                      : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
+                  className={`flex-1 py-1.5 rounded border text-10 font-semibold transition-colors ${
+                    active ? RISK_LEVEL_TONE[lvl] : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
                   }`}
                 >
-                  {lvl}
+                  {lvl.replace("-Risk", "")}
                 </button>
               );
             })}
           </div>
         </div>
-      </div>
-
-      {/* Row 6 — CDD reference / clearance date / invoice number */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">CDD ref.</label>
-          <input
-            value={cddRef}
-            onChange={(e) => setCddRef(e.target.value)}
-            placeholder="CDD-2025-0042"
-            className={iCls}
-          />
+          <input value={cddRef} onChange={(e) => setCddRef(e.target.value)} placeholder="CDD-2025-0042" className={iCls} />
         </div>
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Clearance date</label>
-          <input
-            type="date"
-            value={clearanceDate}
-            onChange={(e) => setClearanceDate(e.target.value)}
-            className={iCls}
-          />
-        </div>
-        <div>
-          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice no.</label>
-          <input
-            value={invoiceNo}
-            onChange={(e) => setInvoiceNo(e.target.value)}
-            placeholder="INV-2025-0042"
-            className={iCls}
-          />
+          <input type="date" value={clearanceDate} onChange={(e) => setClearanceDate(e.target.value)} className={iCls} />
         </div>
       </div>
 
-      {/* Full-width vault location */}
-      <div className="mb-4">
-        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vault / delivery location</label>
-        <input value={vaultLocation} onChange={(e) => setVaultLocation(e.target.value)} className={iCls} />
+      {/* Row 5 */}
+      <div className="grid grid-cols-4 gap-3 mb-4">
+        <div>
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice no.</label>
+          <input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="INV-2025-0042" className={iCls} />
+        </div>
+        <div className="col-span-3">
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vault / delivery location</label>
+          <input value={vaultLocation} onChange={(e) => setVaultLocation(e.target.value)} className={iCls} />
+        </div>
       </div>
 
       <div className="flex gap-2">

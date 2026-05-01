@@ -399,7 +399,7 @@ export default function ClientPortalPage() {
               Entity
             </div>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>Registered entity name *</label>
                   <input required value={entity.name} onChange={setE("name")}
@@ -410,19 +410,17 @@ export default function ClientPortalPage() {
                   <input value={entity.alternateNames} onChange={setE("alternateNames")}
                     placeholder="Semi-colon separated" className={inputCls} />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Country of incorporation</label>
                   <input value={entity.countryOfIncorporation}
                     onChange={setE("countryOfIncorporation")} placeholder="e.g. UAE, TR, CH" className={inputCls} />
                 </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>Trade licence / Registration number</label>
                   <input value={entity.tradeLicence} onChange={setE("tradeLicence")} className={inputCls} />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Contact email</label>
                   <input type="email" value={entity.email} onChange={setE("email")} className={inputCls} />
