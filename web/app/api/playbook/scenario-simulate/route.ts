@@ -14,25 +14,25 @@ export interface ScenarioSimulateResult {
 }
 
 const FALLBACK: ScenarioSimulateResult = {
-  chapters: ["PEP Enhanced Due Diligence (FATF R.12)", "Shell Company / Complex Structure (FATF R.24/25)"],
+  chapters: ["PEP Enhanced Due Diligence (FATF R.12)", "Wire Transfer Screening (FATF R.16)"],
   redFlags: [
-    "Client unable to explain source of large cash deposits",
-    "Transaction volume inconsistent with declared business turnover",
-    "Use of multiple jurisdictions with no apparent commercial rationale",
+    "Transaction inconsistent with declared business profile",
+    "Funds routed through multiple jurisdictions without commercial rationale",
+    "Client reluctant to provide source of funds documentation",
   ],
   actions: [
-    "1. Immediately freeze pending transactions and place account under enhanced review.",
-    "2. Request source-of-funds documentation within 5 business days.",
-    "3. Conduct adverse media screening across all identified entities and associates.",
-    "4. Brief MLRO with preliminary findings and await determination to report.",
-    "5. If documentation unsatisfactory, prepare STR and submit to goAML within 35 days of suspicion.",
+    "1. Freeze the transaction pending MLRO review — do not process until cleared.",
+    "2. Obtain certified source-of-funds documentation from the client within 48 hours.",
+    "3. Run comprehensive sanctions screening across OFAC, UN, EU, and EOCN lists.",
+    "4. Perform adverse media search covering the past 5 years.",
+    "5. Escalate to MLRO with a full case summary and supporting documentation.",
+    "6. Await MLRO determination on whether to file an STR within the 35-day FDL deadline.",
   ],
   regulatoryRefs: [
-    "UAE FDL 10/2025 Art.14 (STR obligation)",
-    "UAE FDL 10/2025 Art.17 (PEP EDD)",
-    "CBUAE AML Standards §4.3",
-    "FATF R.12 (PEPs)",
-    "FATF R.20 (Reporting of suspicious transactions)",
+    "UAE FDL 10/2025 Art.15 (STR obligation)",
+    "UAE FDL 10/2025 Art.11 (CDD requirements)",
+    "FATF R.16 (Wire transfer due diligence)",
+    "CBUAE AML Standards §4.3 (EDD triggers)",
   ],
   recommendation: "Escalate to MLRO",
   urgency: "24h",
@@ -60,48 +60,66 @@ export async function POST(req: Request) {
 
   try {
     const client = new Anthropic({ apiKey });
-
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2000,
       system: [
         {
           type: "text",
-          text: `You are a senior UAE AML/CFT compliance expert and MLRO advisor. You specialise in UAE Federal Decree-Law 10/2025 (AML/CFT Law), CBUAE AML Standards, FATF Recommendations, and DPMS/DNFBP sector regulations. Your role is to analyse transaction scenarios and client behaviours to identify typologies, red flags, and required compliance actions.
+          text: `You are a UAE AML compliance expert with deep knowledge of UAE FDL 10/2025, CBUAE AML Standards, FATF Recommendations, LBMA Responsible Gold Guidance, and EOCN regulations. Your role is to analyse transaction scenarios or client behaviour descriptions and provide actionable AML guidance.
 
-When given a scenario, you must:
-1. Identify which playbook chapter(s) apply from the list: Trade-Based Money Laundering (TBML), PEP Enhanced Due Diligence, Correspondent Banking, DPMS Retail, Proliferation Financing, Conflict Minerals, VASP/Virtual Asset, Shell Company/Complex Structure, Real Estate, Trade Finance, Wire Transfer, Digital Assets & NFT, Hawala/MSB, Bribery & Corruption, Human Trafficking, Tax Evasion.
-2. List all red flags present in the scenario (specific, actionable observations).
-3. Provide numbered step-by-step recommended actions (minimum 4 steps, maximum 8).
-4. Cite specific regulatory articles from UAE FDL 10/2025, CBUAE AML Standards, or FATF Recommendations.
-5. Give a single recommendation: "File STR" | "Enhanced Due Diligence" | "Close Case" | "Escalate to MLRO".
-6. Set urgency: "immediate" (file within hours / freeze now), "24h" (action required within one business day), or "7d" (action within one week).
+Available playbook chapters you may reference (use exact titles):
+- Trade-Based Money Laundering (TBML)
+- PEP Enhanced Due Diligence (FATF R.12)
+- Correspondent Banking · Nested Relationship
+- DPMS Retail (cash-intensive precious-metals)
+- Proliferation Financing (FATF R.7 / UNSCR)
+- Conflict Minerals — OECD 5-Step / EOCN
+- VASP / Virtual-Asset Customer (FATF R.15)
+- Shell Company / Complex Structure (FATF R.24/25)
+- Real Estate & Property Transaction
+- Trade Finance & Letters of Credit
+- Wire Transfer Screening (FATF R.16)
+- Digital Assets & NFT Transactions
+- Hawala / Money Service Business (MSB)
+- Bribery & Corruption (FCPA / UK Bribery Act)
+- Human Trafficking & Modern Slavery
+- Tax Evasion Red Flags
+- Insider Threat & Internal Fraud
+- Environmental Crime & Illegal Extraction
+- High-Value Dealer (Non-Gold DPMS)
 
-Return ONLY valid JSON with this exact structure (no markdown fences, no explanation outside JSON):
+Return ONLY valid JSON with this exact structure (no markdown fences):
 {
-  "chapters": ["string"],
-  "redFlags": ["string"],
-  "actions": ["string"],
-  "regulatoryRefs": ["string"],
+  "chapters": ["exact chapter title from the list above"],
+  "redFlags": ["specific red flag present in the scenario"],
+  "actions": ["1. First action step", "2. Second action step"],
+  "regulatoryRefs": ["UAE FDL 10/2025 Art.X", "FATF R.XX", "CBUAE AML Standards §X.X"],
   "recommendation": "File STR" | "Enhanced Due Diligence" | "Close Case" | "Escalate to MLRO",
   "urgency": "immediate" | "24h" | "7d"
-}`,
+}
+
+Guidelines:
+- chapters: 1-3 most relevant playbook chapters (exact titles only)
+- redFlags: 3-6 specific red flags identified in the scenario
+- actions: 5-8 numbered step-by-step actions, specific and actionable
+- regulatoryRefs: 3-5 specific regulatory citations with article/section numbers
+- recommendation: single most appropriate action
+- urgency: "immediate" if STR/freeze required now, "24h" if escalation needed today, "7d" if EDD can be completed within a week`,
           cache_control: { type: "ephemeral" },
         },
       ],
       messages: [
         {
           role: "user",
-          content: `Analyse the following scenario and provide compliance guidance.
+          content: `Analyse this scenario and provide AML guidance:
 
+Scenario: ${body.scenario}
 Client Type: ${body.clientType ?? "Unknown"}
 Jurisdiction: ${body.jurisdiction ?? "UAE"}
 Risk Level: ${body.riskLevel ?? "Medium"}
 
-Scenario:
-${body.scenario}
-
-Identify all relevant playbook chapters, red flags, recommended actions, regulatory references, and provide a clear recommendation with urgency rating.`,
+Identify the relevant playbook chapters, red flags present, step-by-step recommended actions, specific regulatory citations, and determine the appropriate recommendation and urgency.`,
         },
       ],
     });
