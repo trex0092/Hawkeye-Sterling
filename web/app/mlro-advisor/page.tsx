@@ -1019,6 +1019,182 @@ const SUGGESTED_GROUPS = [
       "What feedback does the UAE FIU provide to reporting entities after an STR is filed?",
     ],
   },
+  {
+    label: "Layering Detection & Asset Tracing",
+    questions: [
+      "What are the three ML stages (placement, layering, integration) and how does the UAE FDL 10/2025 address each?",
+      "What structuring patterns indicate placement-stage ML under UAE CTR threshold rules?",
+      "What round-trip transaction indicators indicate layering per FATF typologies?",
+      "How does the UAE confiscation framework under Federal Law 4/2002 apply to traced criminal proceeds?",
+      "What MLAT frameworks are available for UAE asset tracing to offshore jurisdictions?",
+      "What evidence standard is required for asset restraint under UAE Federal Law 35/1992?",
+    ],
+  },
+  {
+    label: "Real Estate Money Laundering",
+    questions: [
+      "What off-plan property red flags must UAE DNFBP real estate agents report under FDL 10/2025?",
+      "When is a UAE real estate transaction classified as all-cash and what EDD applies?",
+      "What third-party payment red flags trigger STR obligations for UAE real estate agents?",
+      "How does rapid DLD re-registration within 6 months indicate ML layering?",
+      "What DLD and RERA records must be preserved for AML investigations in UAE?",
+      "What does the FATF 2022 Guidance on ML through Real Estate require from DNFBPs?",
+    ],
+  },
+  {
+    label: "Source of Wealth & Illicit Enrichment",
+    questions: [
+      "What is UNCAC Article 20 illicit enrichment and how does it apply to UAE public officials?",
+      "What documentation must a UAE FI obtain to verify PEP source of wealth under FDL 10/2025?",
+      "What is the difference between source of wealth and source of funds in UAE EDD?",
+      "What unexplained wealth gap percentage triggers an STR filing obligation for a UAE MLRO?",
+      "How should a UAE FI handle an inheritance claim that cannot be independently verified?",
+      "What lifestyle indicators are red flags for illicit enrichment in UAE compliance screening?",
+    ],
+  },
+  {
+    label: "Insider Threat & Employee Conduct",
+    questions: [
+      "What constitutes tipping off under UAE FDL 10/2025 Art.20 and what are the criminal penalties?",
+      "What controls must a UAE FI have to detect insider facilitation of financial crime per FATF R.18?",
+      "What lifestyle checks can a UAE FI conduct on employees in sensitive AML roles?",
+      "When must a UAE MLRO notify regulators of a confirmed insider tipping-off incident?",
+      "What HR disciplinary steps must align with UAE Labour Law before an employee is suspended for AML breaches?",
+      "What system access monitoring is required to detect after-hours MLRO case system access?",
+    ],
+  },
+  {
+    label: "Board AML Governance & Reporting",
+    questions: [
+      "What quarterly AML MIS must a UAE Board receive under FDL 10/2025 Art.5(2)?",
+      "What personal liability does a UAE Board member face for AML programme failures?",
+      "What KPIs must a UAE Board monitor for AML effectiveness under CBUAE guidelines?",
+      "When must a UAE MLRO escalate a compliance matter directly to the Board?",
+      "What does a UAE Board AML risk appetite statement need to contain under FDL 10/2025?",
+      "What is the three lines of defence model in UAE AML/CFT governance?",
+    ],
+  },
+  {
+    label: "Enforcement & Regulatory Penalties",
+    questions: [
+      "What are the maximum administrative penalties under UAE FDL 10/2025 for AML violations?",
+      "When does an AML violation result in criminal prosecution of the MLRO personally under UAE law?",
+      "What self-reporting discount is available under CBUAE enforcement policy for voluntary disclosure?",
+      "What precedent CBUAE enforcement actions have been taken for STR filing failures?",
+      "What mitigating factors reduce AML penalties in UAE regulatory proceedings?",
+      "What is the MLRO's personal criminal exposure for knowingly failing to file an STR in UAE?",
+    ],
+  },
+  {
+    label: "Inter-Agency Coordination & Referrals",
+    questions: [
+      "What are the legal pathways for a UAE FI to refer a case to law enforcement under FDL 10/2025?",
+      "What information must a UAE MLRO provide to the UAE FIU in an inter-agency referral?",
+      "When must a UAE MLRO refer a matter to the UAE Attorney General vs filing an STR?",
+      "What Egmont Group channels are available for UAE cross-border intelligence sharing?",
+      "What tipping-off restrictions apply when coordinating with UAE law enforcement on a live case?",
+      "How does the UAE NAMLCFTC coordinate between CBUAE, MOF, and law enforcement?",
+    ],
+  },
+  {
+    label: "AML Policy & Programme Governance",
+    questions: [
+      "What elements must a UAE AML/CFT policy contain to comply with FDL 10/2025 and CBUAE guidelines?",
+      "How often must a UAE AML policy be formally reviewed and board-approved?",
+      "What policy changes are mandatory following UAE FDL 10/2025 coming into force?",
+      "What does FATF R.18 require regarding documented AML policies and procedures?",
+      "How should a UAE AML policy address the risk-based approach to CDD and monitoring?",
+      "What policy documentation must be available during a CBUAE AML/CFT inspection?",
+    ],
+  },
+  {
+    label: "SWIFT, Letters of Credit & Trade Finance AML",
+    questions: [
+      "What SWIFT MT103 fields must a compliance officer review for TBML red flags?",
+      "What LC documentary credit conditions indicate over-invoicing ML risk?",
+      "What does FATF TBML guidance require for correspondent bank screening of trade finance?",
+      "When must a UAE bank reject an LC application on AML grounds?",
+      "What dual-use goods require enhanced scrutiny in trade finance under UAE export controls?",
+      "How does phantom shipment TBML typology manifest in SWIFT message fields?",
+    ],
+  },
+  {
+    label: "Regulatory Calendar & Compliance Deadlines",
+    questions: [
+      "What is the STR filing deadline under UAE FDL 10/2025 and when does the clock start?",
+      "What is the CTR filing deadline for cash transactions above AED 55,000?",
+      "When must a UAE FI file its annual AML self-assessment with CBUAE?",
+      "What is the goAML registration renewal deadline for UAE reporting entities?",
+      "What quarterly reporting obligations do UAE FIs have under CBUAE AML guidelines?",
+      "What is the EWRA annual review deadline and board approval requirement?",
+    ],
+  },
+  {
+    label: "Enterprise-Wide Risk Assessment (EWRA)",
+    questions: [
+      "What risk categories must a UAE FI&apos;s EWRA cover under FDL 10/2025?",
+      "How should a UAE DPMS entity weight real estate and gold sector risks in its EWRA?",
+      "What methodology does FATF recommend for institutional ML/TF risk assessment?",
+      "When must a UAE FI update its EWRA outside the annual review cycle?",
+      "What residual risk rating triggers mandatory enhanced controls under CBUAE expectations?",
+      "How should a UAE FI document the link between EWRA outcomes and its AML programme design?",
+    ],
+  },
+  {
+    label: "AML Programme Gap Analysis",
+    questions: [
+      "What are the mandatory components of a UAE AML/CFT programme under FDL 10/2025 Art.18?",
+      "What CBUAE inspection findings most commonly indicate AML programme gaps?",
+      "What does FATF R.18 require for internal AML audit independence and frequency?",
+      "What gaps in a UAE TM programme are considered systemic failures by CBUAE?",
+      "What remediation timeline is considered adequate for a critical AML programme gap?",
+      "What documentation must a UAE MLRO maintain to evidence programme effectiveness?",
+    ],
+  },
+  {
+    label: "Trade Invoice & TBML Analysis",
+    questions: [
+      "What HS code categories carry heightened TBML risk under UAE AML guidelines?",
+      "How does over-invoicing by 10% or more trigger UAE TBML reporting obligations?",
+      "What does FATF TBML Guidance 2020 require for port-of-entry customs coordination?",
+      "When does a discrepancy between invoice value and customs declaration require STR filing?",
+      "What TBML red flags arise when a UAE free zone entity is the importer?",
+      "How do phantom shipments in gold trading create integration-stage ML risk?",
+    ],
+  },
+  {
+    label: "Entity Network & Beneficial Ownership Mapping",
+    questions: [
+      "What relationship indicators suggest a nominee director arrangement under UAE FDL 10/2025?",
+      "How does a shared registered address across multiple companies indicate a shell network?",
+      "What is the UAE UBO disclosure threshold and how is it applied to layered holding structures?",
+      "When do transaction links between entities indicate conduit ML activity per FATF typologies?",
+      "What corporate registry searches must a UAE FI conduct for network mapping under FATF R.24?",
+      "How should a UAE MLRO document a complex ML network for a goAML STR narrative?",
+    ],
+  },
+  {
+    label: "Risk Appetite & Governance Frameworks",
+    questions: [
+      "What must a UAE FI&apos;s AML risk appetite statement prohibit as zero-tolerance activities?",
+      "How should Board risk appetite thresholds translate into operational TM alert parameters?",
+      "What does UAE FDL 10/2025 Art.5 require of the Board on AML risk appetite?",
+      "How often must a UAE AML risk appetite statement be reviewed and re-approved by the Board?",
+      "What risk appetite metrics must be reported to the MLRO and Board regularly?",
+      "What is the difference between risk tolerance and risk appetite in UAE AML governance?",
+    ],
+  },
+  {
+    label: "Regulatory Examination Readiness",
+    questions: [
+      "What are CBUAE examiners&apos; most common AML findings in UAE bank inspections?",
+      "What CDD file evidence must be prepared for a CBUAE AML inspection of a DPMS entity?",
+      "How should a UAE MLRO prepare for a FATF mutual evaluation onsite visit?",
+      "What TM effectiveness metrics do CBUAE examiners request in AML inspections?",
+      "What remediation documentation satisfies a CBUAE enforcement notice for AML deficiencies?",
+      "How does the CBUAE risk-based inspection approach determine examination depth and scope?",
+    ],
+  },
 ];
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
@@ -5939,8 +6115,8 @@ export default function MlroAdvisorPage() {
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>ML Risk: {risk}</span>
                         <span className="font-mono text-11 px-2 py-px rounded bg-brand-dim text-brand-deep">Action: {String(r["recommendedAction"]).replace(/_/g, " ")}</span>
-                        {r["priceManipulation"] && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Price Manipulation</span>}
-                        {r["rapidFlipping"] && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">Rapid Flipping</span>}
+                        {Boolean(r["priceManipulation"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Price Manipulation</span>}
+                        {Boolean(r["rapidFlipping"]) && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">Rapid Flipping</span>}
                       </div>
                       <p className="text-12 text-ink-1 leading-relaxed">{String(r["actionRationale"] ?? "")}</p>
                       {Array.isArray(r["indicators"]) && (r["indicators"] as Array<Record<string,unknown>>).map((ind, i) => (
@@ -5983,8 +6159,8 @@ export default function MlroAdvisorPage() {
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>Tracing Risk: {risk}</span>
-                        {r["confiscationPotential"] && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Confiscation Potential</span>}
-                        {r["mutualLegalAssistanceRequired"] && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">MLAT Required</span>}
+                        {Boolean(r["confiscationPotential"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Confiscation Potential</span>}
+                        {Boolean(r["mutualLegalAssistanceRequired"]) && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">MLAT Required</span>}
                       </div>
                       {Array.isArray(r["tracingStages"]) && (r["tracingStages"] as Array<Record<string,unknown>>).map((stage, i) => (
                         <div key={i} className="border border-hair-2 rounded p-3 bg-bg-panel">
@@ -5994,7 +6170,7 @@ export default function MlroAdvisorPage() {
                           <div className="text-10 text-ink-3 mt-0.5">{String(stage["evidenceType"] ?? "")}</div>
                         </div>
                       ))}
-                      {r["confiscationBasis"] && <div className="bg-red-dim rounded p-3 text-11 text-red">{String(r["confiscationBasis"])}</div>}
+                      {Boolean(r["confiscationBasis"]) && <div className="bg-red-dim rounded p-3 text-11 text-red">{String(r["confiscationBasis"])}</div>}
                       {Array.isArray(r["investigativeSteps"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investigative Steps</div><ul className="space-y-0.5">{(r["investigativeSteps"] as string[]).map((s, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{s}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
                     </div>
@@ -6026,7 +6202,7 @@ export default function MlroAdvisorPage() {
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>SOW Risk: {risk}</span>
-                        {r["illicitEnrichmentRisk"] && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Illicit Enrichment Risk</span>}
+                        {Boolean(r["illicitEnrichmentRisk"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Illicit Enrichment Risk</span>}
                         <span className="font-mono text-11 px-2 py-px rounded bg-bg-2 text-ink-2">Unexplained: AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString()} ({String(r["unexplainedWealthPct"] ?? 0)}%)</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
@@ -6127,8 +6303,8 @@ export default function MlroAdvisorPage() {
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-mono text-12 font-bold px-3 py-1 rounded bg-red-dim text-red uppercase">{String(r["violationCategory"] ?? "")}</span>
-                        {r["criminalExposure"] && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Criminal Exposure</span>}
-                        {r["mlroPersonalLiability"] && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">MLRO Personal Liability</span>}
+                        {Boolean(r["criminalExposure"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Criminal Exposure</span>}
+                        {Boolean(r["mlroPersonalLiability"]) && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">MLRO Personal Liability</span>}
                       </div>
                       {penRange && <div className="grid grid-cols-3 gap-2"><div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Min Penalty</div><div className="font-mono text-12 font-semibold text-ink-0">{penRange["min"]} {penRange["currency"]}</div></div><div className="border border-red-dim bg-red-dim rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Likely Penalty</div><div className="font-mono text-12 font-semibold text-red">{String(r["likelyPenalty"] ?? "")}</div></div><div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Max Penalty</div><div className="font-mono text-12 font-semibold text-ink-0">{penRange["max"]} {penRange["currency"]}</div></div></div>}
                       {Array.isArray(r["mitigatingFactors"]) && <div><div className="text-10 uppercase tracking-wide-3 text-green mb-1">Mitigating Factors</div><ul className="space-y-0.5">{(r["mitigatingFactors"] as string[]).map((f, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-green">+</span>{f}</li>)}</ul></div>}
@@ -6161,8 +6337,8 @@ export default function MlroAdvisorPage() {
                   const r = referralResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["referralNarrative"] && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Referral Narrative</div><p className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{String(r["referralNarrative"])}</p></div>}
-                      {r["recommendedRecipient"] && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Recommended Recipient:</span><span className="font-mono text-11 font-semibold text-brand">{String(r["recommendedRecipient"])}</span></div>}
+                      {Boolean(r["referralNarrative"]) && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Referral Narrative</div><p className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{String(r["referralNarrative"])}</p></div>}
+                      {Boolean(r["recommendedRecipient"]) && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Recommended Recipient:</span><span className="font-mono text-11 font-semibold text-brand">{String(r["recommendedRecipient"])}</span></div>}
                       {Array.isArray(r["requiredActions"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Actions</div><ul className="space-y-0.5">{(r["requiredActions"] as string[]).map((a, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{a}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
                     </div>
@@ -6190,7 +6366,7 @@ export default function MlroAdvisorPage() {
                   const r = policyResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["overallAssessment"] && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Overall Assessment</div><p className="text-12 text-ink-0">{String(r["overallAssessment"])}</p></div>}
+                      {Boolean(r["overallAssessment"]) && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Overall Assessment</div><p className="text-12 text-ink-0">{String(r["overallAssessment"])}</p></div>}
                       {Array.isArray(r["criticalGaps"]) && <div><div className="text-10 uppercase tracking-wide-3 text-red mb-1">Critical Gaps</div><ul className="space-y-0.5">{(r["criticalGaps"] as string[]).map((g, i) => <li key={i} className="text-11 text-red flex gap-1.5"><span>✗</span>{g}</li>)}</ul></div>}
                       {Array.isArray(r["recommendedAmendments"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recommended Amendments</div><ul className="space-y-0.5">{(r["recommendedAmendments"] as string[]).map((a, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{a}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
@@ -6217,7 +6393,7 @@ export default function MlroAdvisorPage() {
                   const r = compTestResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["testingObjective"] && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Testing Objective</div><p className="text-12 text-ink-0">{String(r["testingObjective"])}</p></div>}
+                      {Boolean(r["testingObjective"]) && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Testing Objective</div><p className="text-12 text-ink-0">{String(r["testingObjective"])}</p></div>}
                       {Array.isArray(r["testingModules"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Testing Modules</div><div className="space-y-2">{(r["testingModules"] as Array<Record<string,unknown>>).map((m, i) => <div key={i} className="border border-hair-2 rounded p-2 bg-bg-panel"><div className="text-11 font-semibold text-ink-0 mb-1">{String(m["moduleName"] ?? m["name"] ?? `Module ${i+1}`)}</div>{Array.isArray(m["testSteps"]) && <ul className="space-y-0.5">{(m["testSteps"] as string[]).map((s, j) => <li key={j} className="text-11 text-ink-2 flex gap-1.5"><span className="text-brand">→</span>{s}</li>)}</ul>}</div>)}</div></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
                     </div>
@@ -6249,8 +6425,8 @@ export default function MlroAdvisorPage() {
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       {risk && <span className={`inline-flex font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>AML Risk: {risk}</span>}
-                      {r["analysisNarrative"] && <p className="text-12 text-ink-1 leading-relaxed">{String(r["analysisNarrative"])}</p>}
-                      {r["recommendedAction"] && <div className="flex items-center gap-2"><span className="text-10 text-ink-3">Action:</span><span className="font-mono text-11 font-semibold text-brand">{String(r["recommendedAction"]).replace(/_/g, " ")}</span></div>}
+                      {Boolean(r["analysisNarrative"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(r["analysisNarrative"])}</p>}
+                      {Boolean(r["recommendedAction"]) && <div className="flex items-center gap-2"><span className="text-10 text-ink-3">Action:</span><span className="font-mono text-11 font-semibold text-brand">{String(r["recommendedAction"]).replace(/_/g, " ")}</span></div>}
                       {Array.isArray(r["redFlags"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Red Flags</div><ul className="space-y-0.5">{(r["redFlags"] as string[]).map((f, i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span>⚠</span>{f}</li>)}</ul></div>}
                       {Array.isArray(r["requiredActions"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Actions</div><ul className="space-y-0.5">{(r["requiredActions"] as string[]).map((a, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{a}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
@@ -6271,7 +6447,7 @@ export default function MlroAdvisorPage() {
                   const r = regCalResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["calendarSummary"] && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Calendar Summary</div><p className="text-12 text-ink-0">{String(r["calendarSummary"])}</p></div>}
+                      {Boolean(r["calendarSummary"]) && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Calendar Summary</div><p className="text-12 text-ink-0">{String(r["calendarSummary"])}</p></div>}
                       {Array.isArray(r["obligations"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Key Obligations</div><div className="space-y-2">{(r["obligations"] as Array<Record<string,unknown>>).slice(0, 15).map((ob, i) => <div key={i} className="border border-hair-2 rounded p-2 bg-bg-panel flex items-start gap-3"><div className="font-mono text-10 text-brand-deep shrink-0 w-20">{String(ob["deadline"] ?? ob["frequency"] ?? "")}</div><div><div className="text-11 font-semibold text-ink-0">{String(ob["obligation"] ?? ob["name"] ?? "")}</div><div className="text-10 font-mono text-ink-3">{String(ob["legalBasis"] ?? ob["basis"] ?? "")}</div></div></div>)}</div></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
                     </div>
@@ -6298,7 +6474,7 @@ export default function MlroAdvisorPage() {
                   const r = ewraResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["overallResidualRisk"] && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Overall Residual Risk:</span><span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${r["overallResidualRisk"] === "high" || r["overallResidualRisk"] === "critical" ? "bg-red-dim text-red" : r["overallResidualRisk"] === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(r["overallResidualRisk"])}</span></div>}
+                      {Boolean(r["overallResidualRisk"]) && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Overall Residual Risk:</span><span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${r["overallResidualRisk"] === "high" || r["overallResidualRisk"] === "critical" ? "bg-red-dim text-red" : r["overallResidualRisk"] === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(r["overallResidualRisk"])}</span></div>}
                       {Array.isArray(r["riskCategories"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Categories</div><div className="space-y-2">{(r["riskCategories"] as Array<Record<string,unknown>>).map((cat, i) => <div key={i} className="border border-hair-2 rounded p-2 bg-bg-panel"><div className="flex items-center justify-between mb-1"><span className="text-11 font-semibold text-ink-0">{String(cat["category"] ?? cat["name"] ?? "")}</span><span className={`text-9 font-mono px-1.5 py-px rounded uppercase ${cat["residualRisk"] === "high" ? "bg-red-dim text-red" : cat["residualRisk"] === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(cat["residualRisk"] ?? cat["risk"] ?? "")}</span></div><p className="text-11 text-ink-2">{String(cat["commentary"] ?? cat["description"] ?? "")}</p></div>)}</div></div>}
                       {Array.isArray(r["recommendedActions"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recommended Actions</div><ul className="space-y-0.5">{(r["recommendedActions"] as string[]).map((a, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{a}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
@@ -6326,7 +6502,7 @@ export default function MlroAdvisorPage() {
                   const r = amlGapResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["overallMaturity"] && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Programme Maturity:</span><span className="font-mono text-12 font-bold px-3 py-1 rounded bg-brand-dim text-brand-deep">{String(r["overallMaturity"])}</span></div>}
+                      {Boolean(r["overallMaturity"]) && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Programme Maturity:</span><span className="font-mono text-12 font-bold px-3 py-1 rounded bg-brand-dim text-brand-deep">{String(r["overallMaturity"])}</span></div>}
                       {Array.isArray(r["criticalGaps"]) && <div><div className="text-10 uppercase tracking-wide-3 text-red mb-1">Critical Gaps</div><ul className="space-y-0.5">{(r["criticalGaps"] as string[]).map((g, i) => <li key={i} className="text-11 text-red flex gap-1.5"><span>✗</span>{g}</li>)}</ul></div>}
                       {Array.isArray(r["remediationPriorities"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Remediation Priorities</div><ul className="space-y-0.5">{(r["remediationPriorities"] as string[]).map((p, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{p}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
@@ -6359,7 +6535,7 @@ export default function MlroAdvisorPage() {
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       {risk && <span className={`inline-flex font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>TBML Risk: {risk}</span>}
-                      {r["actionRationale"] && <p className="text-12 text-ink-1 leading-relaxed">{String(r["actionRationale"])}</p>}
+                      {Boolean(r["actionRationale"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(r["actionRationale"])}</p>}
                       {Array.isArray(r["indicators"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Indicators</div><div className="space-y-1">{(r["indicators"] as Array<Record<string,unknown>>).map((ind, i) => <div key={i} className="border border-hair-2 rounded p-2 bg-bg-panel"><div className="flex items-center gap-2 mb-0.5"><span className={`text-9 font-mono px-1.5 py-px rounded uppercase ${ind["severity"] === "critical" ? "bg-red text-white" : ind["severity"] === "high" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>{String(ind["severity"])}</span><span className="text-11 font-semibold text-ink-0">{String(ind["indicator"])}</span></div><div className="text-10 font-mono text-ink-3">{String(ind["fatfRef"] ?? "")}</div></div>)}</div></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
                     </div>
@@ -6388,8 +6564,8 @@ export default function MlroAdvisorPage() {
                   const r = networkMapResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["networkRisk"] && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Network Risk:</span><span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${r["networkRisk"] === "critical" || r["networkRisk"] === "high" ? "bg-red-dim text-red" : r["networkRisk"] === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(r["networkRisk"])}</span></div>}
-                      {r["networkSummary"] && <p className="text-12 text-ink-1 leading-relaxed">{String(r["networkSummary"])}</p>}
+                      {Boolean(r["networkRisk"]) && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Network Risk:</span><span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${r["networkRisk"] === "critical" || r["networkRisk"] === "high" ? "bg-red-dim text-red" : r["networkRisk"] === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(r["networkRisk"])}</span></div>}
+                      {Boolean(r["networkSummary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(r["networkSummary"])}</p>}
                       {Array.isArray(r["relationships"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Key Relationships</div><ul className="space-y-0.5">{(r["relationships"] as Array<Record<string,unknown>>).slice(0, 10).map((rel, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{String(rel["description"] ?? rel["link"] ?? JSON.stringify(rel))}</li>)}</ul></div>}
                       {Array.isArray(r["investigativeActions"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investigative Actions</div><ul className="space-y-0.5">{(r["investigativeActions"] as string[]).map((a, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{a}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
@@ -6416,7 +6592,7 @@ export default function MlroAdvisorPage() {
                   const r = riskAppResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["riskAppetiteStatement"] && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Risk Appetite Statement</div><p className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{String(r["riskAppetiteStatement"])}</p></div>}
+                      {Boolean(r["riskAppetiteStatement"]) && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Risk Appetite Statement</div><p className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{String(r["riskAppetiteStatement"])}</p></div>}
                       {Array.isArray(r["prohibitedActivities"]) && <div><div className="text-10 uppercase tracking-wide-3 text-red mb-1">Prohibited Activities (Zero Tolerance)</div><ul className="space-y-0.5">{(r["prohibitedActivities"] as string[]).map((p, i) => <li key={i} className="text-11 text-red flex gap-1.5"><span>✗</span>{p}</li>)}</ul></div>}
                       {Array.isArray(r["riskToleranceThresholds"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Tolerance Thresholds</div><ul className="space-y-0.5">{(r["riskToleranceThresholds"] as string[]).map((t, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{t}</li>)}</ul></div>}
                       <div className="text-10 font-mono text-ink-3">{String(r["regulatoryBasis"] ?? "")}</div>
@@ -6441,7 +6617,7 @@ export default function MlroAdvisorPage() {
                   const r = examPrepResult as Record<string, unknown>;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
-                      {r["examinerFocus"] && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Examiner Focus Areas</div><p className="text-12 text-ink-0">{String(r["examinerFocus"])}</p></div>}
+                      {Boolean(r["examinerFocus"]) && <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Examiner Focus Areas</div><p className="text-12 text-ink-0">{String(r["examinerFocus"])}</p></div>}
                       {Array.isArray(r["keyQuestions"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Likely Examiner Questions</div><ul className="space-y-1">{(r["keyQuestions"] as string[]).map((q, i) => <li key={i} className="text-11 text-ink-1 border border-hair-2 rounded p-2 bg-bg-panel">{q}</li>)}</ul></div>}
                       {Array.isArray(r["requiredEvidence"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Evidence / Documentation</div><ul className="space-y-0.5">{(r["requiredEvidence"] as string[]).map((e, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{e}</li>)}</ul></div>}
                       {Array.isArray(r["remediationPriorities"]) && <div><div className="text-10 uppercase tracking-wide-3 text-amber mb-1">Pre-Exam Remediation Priorities</div><ul className="space-y-0.5">{(r["remediationPriorities"] as string[]).map((p, i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span>⚠</span>{p}</li>)}</ul></div>}
