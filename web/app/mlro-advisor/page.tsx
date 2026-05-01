@@ -1812,7 +1812,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat"|"crypto-tracing"|"investment-fraud"|"bec-fraud"|"cash-courier"|"nft-wash"|"carbon-fraud"|"darknet-exposure"|"drug-trafficking"|"human-trafficking-fin"|"arms-trafficking"|"corruption-bribery"|"tax-evasion-fin"|"cybercrime-proceeds"|"market-manipulation"|"insurance-fraud"|"mortgage-fraud"|"identity-theft"|"elder-fraud"|"ransomware-response"|"fraud-network"|"fatf-evaluation-prep"|"vara-compliance"|"cbuae-exam"|"eu-amla"|"mica-compliance"|"dora-resilience"|"aml-framework-gap"|"regulatory-breach-notice"|"remediation-planner"|"mou-treaty"|"finma-compliance"|"mas-compliance"|"fca-compliance"|"bafin-compliance"|"basel-aml-index"|"egmont-fiu"|"wolfsberg-principles"|"palermo-convention"|"vienna-convention"|"fatf-grey-impact"|"digital-identity"|"synthetic-identity"|"deepfake-kyc"|"adverse-media-deep"|"sow-substantiator"|"corporate-registry"|"entity-resolution"|"politically-sensitive"|"dual-nationality"|"high-risk-profession"|"local-kyc-requirements"|"ekyc-risk"|"perpetual-kyc"|"beneficial-ownership-calc"|"corporate-complexity"|"velocity-analyzer"|"peer-group-anomaly"|"round-trip-detector"|"funnel-account"|"dormant-reactivation"|"currency-mismatch"|"ach-fraud"|"wire-transfer-risk"|"high-freq-trading"|"payment-routing"|"refund-arbitrage"|"correspondent-chain"|"remittance-risk"|"atm-pattern"|"casino-chip"|"luxury-goods"|"art-provenance"|"superyacht-jet"|"agri-commodities"|"precious-stones"|"gaming-sector"|"fintech-risk"|"fund-administration"|"private-equity"|"hedge-fund"|"family-office"|"free-zone"|"foundation-risk"|"crowdfunding"|"p2p-lending"|"geopolitical-risk"|"network-centrality"|"follow-the-money"|"causal-chain"|"evidence-assessment"|"witness-statement"|"open-source-intel"|"court-order-drafter"|"law-enforcement-liaison"|"mutual-legal-assistance"|"asset-recovery"|"forfeiture-analysis"|"whistleblower-protect"|"regtech-assessment"|"aml-innovation">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat"|"crypto-tracing"|"romance-fraud"|"investment-fraud"|"bec-fraud"|"cash-courier"|"nft-wash"|"carbon-fraud"|"darknet-exposure"|"drug-trafficking"|"human-trafficking-fin"|"arms-trafficking"|"corruption-bribery"|"tax-evasion-fin"|"cybercrime-proceeds"|"market-manipulation"|"insurance-fraud"|"mortgage-fraud"|"identity-theft"|"elder-fraud"|"ransomware-response"|"fraud-network"|"fatf-evaluation-prep"|"vara-compliance"|"cbuae-exam"|"eu-amla"|"mica-compliance"|"dora-resilience"|"aml-framework-gap"|"regulatory-breach-notice"|"remediation-planner"|"mou-treaty"|"finma-compliance"|"mas-compliance"|"fca-compliance"|"bafin-compliance"|"basel-aml-index"|"egmont-fiu"|"wolfsberg-principles"|"palermo-convention"|"vienna-convention"|"fatf-grey-impact"|"digital-identity"|"synthetic-identity"|"deepfake-kyc"|"adverse-media-deep"|"sow-substantiator"|"corporate-registry"|"entity-resolution"|"politically-sensitive"|"dual-nationality"|"high-risk-profession"|"local-kyc-requirements"|"ekyc-risk"|"perpetual-kyc"|"beneficial-ownership-calc"|"corporate-complexity"|"velocity-analyzer"|"peer-group-anomaly"|"round-trip-detector"|"funnel-account"|"dormant-reactivation"|"currency-mismatch"|"ach-fraud"|"wire-transfer-risk"|"high-freq-trading"|"payment-routing"|"refund-arbitrage"|"correspondent-chain"|"remittance-risk"|"atm-pattern"|"casino-chip"|"luxury-goods"|"art-provenance"|"superyacht-jet"|"agri-commodities"|"precious-stones"|"gaming-sector"|"fintech-risk"|"fund-administration"|"private-equity"|"hedge-fund"|"family-office"|"free-zone"|"foundation-risk"|"crowdfunding"|"p2p-lending"|"geopolitical-risk"|"network-centrality"|"follow-the-money"|"causal-chain"|"evidence-assessment"|"witness-statement"|"open-source-intel"|"court-order-drafter"|"law-enforcement-liaison"|"mutual-legal-assistance"|"asset-recovery"|"forfeiture-analysis"|"whistleblower-protect"|"regtech-assessment"|"aml-innovation">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -9050,6 +9050,2807 @@ export default function MlroAdvisorPage() {
                     </div>
                   );
                 })()}
+              </div>
+            )}
+
+
+            {/* Romance / Pig-Butchering Detector */}
+            {superToolsTab === "romance-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💌 Romance / Pig-Butchering Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1/3/20 · UAE FDL 20/2018</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "romance-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => ntSet("platform", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. WhatsApp, Tinder" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount Transferred</label><input value={ntIn("amountTransferred")} onChange={e => ntSet("amountTransferred", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 50,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Contact Method</label><input value={ntIn("contactMethod")} onChange={e => ntSet("contactMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. dating app, social media" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("romance-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Investment Fraud / Ponzi Screener */}
+            {superToolsTab === "investment-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📈 Investment Fraud / Ponzi Screener</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · SEC guidance</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Scheme Type</label><input value={ntIn("schemeType")} onChange={e => { if (superToolsTab !== "investment-fraud") { setNt({}); setNtResult(null); } ntSet("schemeType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Ponzi, pyramid, HYIP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Promoter Name</label><input value={ntIn("promoterName")} onChange={e => ntSet("promoterName", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Promoter / operator name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Return Promised</label><input value={ntIn("returnPromised")} onChange={e => ntSet("returnPromised", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 20% monthly" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Count</label><input value={ntIn("investorCount")} onChange={e => ntSet("investorCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated number of investors" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("investment-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* BEC / CEO Fraud Detector */}
+            {superToolsTab === "bec-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📧 BEC / CEO Fraud Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · FBI IC3 · UAE CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Email Domain</label><input value={ntIn("emailDomain")} onChange={e => { if (superToolsTab !== "bec-fraud") { setNt({}); setNtResult(null); } ntSet("emailDomain", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Spoofed / lookalike domain" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Amount</label><input value={ntIn("paymentAmount")} onChange={e => ntSet("paymentAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 250,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice Date</label><input value={ntIn("invoiceDate")} onChange={e => ntSet("invoiceDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of fraudulent invoice" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Redirect Target</label><input value={ntIn("redirectTarget")} onChange={e => ntSet("redirectTarget", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Mule account / bank" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("bec-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bulk Cash Courier Detector */}
+            {superToolsTab === "cash-courier" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💼 Bulk Cash Courier Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.32 · UAE FDL Art.15</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Route Origin</label><input value={ntIn("routeOrigin")} onChange={e => { if (superToolsTab !== "cash-courier") { setNt({}); setNtResult(null); } ntSet("routeOrigin", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin country / city" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Route Destination</label><input value={ntIn("routeDestination")} onChange={e => ntSet("routeDestination", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Destination country / city" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash Amount</label><input value={ntIn("cashAmount")} onChange={e => ntSet("cashAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Amount transported" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Currency</label><input value={ntIn("currency")} onChange={e => ntSet("currency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD, EUR, AED" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("cash-courier")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* NFT Wash Trade Detector */}
+            {superToolsTab === "nft-wash" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🖼 NFT Wash Trade Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.15 · VARA guidance</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Collection</label><input value={ntIn("collection")} onChange={e => { if (superToolsTab !== "nft-wash") { setNt({}); setNtResult(null); } ntSet("collection", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="NFT collection name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet A</label><input value={ntIn("walletA")} onChange={e => ntSet("walletA", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First wallet address" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet B</label><input value={ntIn("walletB")} onChange={e => ntSet("walletB", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Second wallet address" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Price Escalation</label><input value={ntIn("priceEscalation")} onChange={e => ntSet("priceEscalation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 0.1 ETH to 50 ETH" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("nft-wash")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Carbon Credit Fraud Analyser */}
+            {superToolsTab === "carbon-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌿 Carbon Credit Fraud Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">ICVCM · Article 6 Paris</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Project ID</label><input value={ntIn("projectId")} onChange={e => { if (superToolsTab !== "carbon-fraud") { setNt({}); setNtResult(null); } ntSet("projectId", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Carbon project identifier" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registry</label><input value={ntIn("registry")} onChange={e => ntSet("registry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Verra, Gold Standard" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Credit Volume</label><input value={ntIn("creditVolume")} onChange={e => ntSet("creditVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Credits issued / traded" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Host country" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("carbon-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Darknet Market Exposure */}
+            {superToolsTab === "darknet-exposure" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🕶 Darknet Market Exposure</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF VASP guidance · OFAC</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "darknet-exposure") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject / wallet / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => ntSet("platform", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Darknet market name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Hash</label><input value={ntIn("transactionHash")} onChange={e => ntSet("transactionHash", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Relevant tx hash" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Volume</label><input value={ntIn("estimatedVolume")} onChange={e => ntSet("estimatedVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated USD volume" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("darknet-exposure")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Drug Trafficking Financial Indicators */}
+            {superToolsTab === "drug-trafficking" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💊 Drug Trafficking Financial Indicators</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · UN Convention</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "drug-trafficking") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Geography</label><input value={ntIn("geography")} onChange={e => ntSet("geography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries / regions involved" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash Volume</label><input value={ntIn("cashVolume")} onChange={e => ntSet("cashVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated cash volume" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Associated Business</label><input value={ntIn("associatedBusiness")} onChange={e => ntSet("associatedBusiness", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Linked business name" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("drug-trafficking")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Human Trafficking Financial Patterns */}
+            {superToolsTab === "human-trafficking-fin" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🚨 Human Trafficking Financial Patterns</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · IOM · UNODC</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "human-trafficking-fin") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recruitment Method</label><input value={ntIn("recruitmentMethod")} onChange={e => ntSet("recruitmentMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. online, agent" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Remittance Pattern</label><input value={ntIn("remittancePattern")} onChange={e => ntSet("remittancePattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remittance corridor / method" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Geography</label><input value={ntIn("geography")} onChange={e => ntSet("geography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries / regions involved" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("human-trafficking-fin")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Arms / Weapons Trafficking Indicators */}
+            {superToolsTab === "arms-trafficking" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚔️ Arms / Weapons Trafficking Indicators</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.7 · UN 1540</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "arms-trafficking") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Export Licence</label><input value={ntIn("exportLicense")} onChange={e => ntSet("exportLicense", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Licence number / status" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">End-User Certificate</label><input value={ntIn("endUserCert")} onChange={e => ntSet("endUserCert", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="EUC details" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Shipment Route</label><input value={ntIn("shipmentRoute")} onChange={e => ntSet("shipmentRoute", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transit countries" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("arms-trafficking")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Corruption &amp; Bribery Analyser */}
+            {superToolsTab === "corruption-bribery" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🤝 Corruption &amp; Bribery Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · FCPA · UK Bribery Act</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "corruption-bribery") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Public Official</label><input value={ntIn("publicOfficial")} onChange={e => ntSet("publicOfficial", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Official involved" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Method</label><input value={ntIn("paymentMethod")} onChange={e => ntSet("paymentMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. wire, cash, gift" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Contract Value</label><input value={ntIn("contractValue")} onChange={e => ntSet("contractValue", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Value of related contract" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("corruption-bribery")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tax Evasion Financial Indicators */}
+            {superToolsTab === "tax-evasion-fin" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💸 Tax Evasion Financial Indicators</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · OECD BEPS</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "tax-evasion-fin") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Tax jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Undeclared Income</label><input value={ntIn("undeclaredIncome")} onChange={e => ntSet("undeclaredIncome", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated undeclared amount" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Offshore Structure</label><input value={ntIn("offshoreStructure")} onChange={e => ntSet("offshoreStructure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Structure description" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("tax-evasion-fin")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cybercrime Proceeds Analyser */}
+            {superToolsTab === "cybercrime-proceeds" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💻 Cybercrime Proceeds Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · Budapest Convention</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "cybercrime-proceeds") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject / wallet / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crime Type</label><input value={ntIn("crimeType")} onChange={e => ntSet("crimeType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. ransomware, fraud, hacking" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crypto Involved</label><input value={ntIn("cryptoInvolved")} onChange={e => ntSet("cryptoInvolved", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Crypto assets / wallets" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Loss</label><input value={ntIn("estimatedLoss")} onChange={e => ntSet("estimatedLoss", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="USD value of proceeds" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("cybercrime-proceeds")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Market Manipulation Detector */}
+            {superToolsTab === "market-manipulation" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📊 Market Manipulation Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · IOSCO · UAE SCA</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "market-manipulation") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject / trader name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset</label><input value={ntIn("asset")} onChange={e => ntSet("asset", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Security / crypto asset" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trading Pattern</label><input value={ntIn("tradingPattern")} onChange={e => ntSet("tradingPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. wash trades, layering" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Suspected Coordinator</label><input value={ntIn("suspectedCoordinator")} onChange={e => ntSet("suspectedCoordinator", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Coordinator identity" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("market-manipulation")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Insurance Fraud Detector */}
+            {superToolsTab === "insurance-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🛡 Insurance Fraud Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · UAE IA</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "insurance-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Policyholder / claimant name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Policy Type</label><input value={ntIn("policyType")} onChange={e => ntSet("policyType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. life, property, marine" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Claim Amount</label><input value={ntIn("claimAmount")} onChange={e => ntSet("claimAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Claimed amount (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Claim Frequency</label><input value={ntIn("claimFrequency")} onChange={e => ntSet("claimFrequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of claims / period" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("insurance-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mortgage Fraud Analyser */}
+            {superToolsTab === "mortgage-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏠 Mortgage Fraud Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Real Estate 2022 · UAE RERA</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "mortgage-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicant / entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Property Value</label><input value={ntIn("propertyValue")} onChange={e => ntSet("propertyValue", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated property value" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Loan Amount</label><input value={ntIn("loanAmount")} onChange={e => ntSet("loanAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Mortgage / loan amount" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Valuation</label><input value={ntIn("valuation")} onChange={e => ntSet("valuation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Valuation source / method" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("mortgage-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Identity Theft Indicators */}
+            {superToolsTab === "identity-theft" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🪪 Identity Theft Indicators</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · UAE cybercrime law</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "identity-theft") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document Type</label><input value={ntIn("documentType")} onChange={e => ntSet("documentType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. passport, Emirates ID" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Discrepancies</label><input value={ntIn("discrepancies")} onChange={e => ntSet("discrepancies", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Noted inconsistencies" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Usage Pattern</label><input value={ntIn("usagePattern")} onChange={e => ntSet("usagePattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How ID was used" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("identity-theft")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Elder Financial Abuse */}
+            {superToolsTab === "elder-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">👴 Elder Financial Abuse</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · UAE family law</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "elder-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Victim name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Age</label><input value={ntIn("age")} onChange={e => ntSet("age", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Victim age" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Account Changes</label><input value={ntIn("accountChanges")} onChange={e => ntSet("accountChanges", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Recent account changes" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Authorised Person</label><input value={ntIn("authorizedPerson")} onChange={e => ntSet("authorizedPerson", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="POA / authorised signatory" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("elder-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Ransomware Payment Response */}
+            {superToolsTab === "ransomware-response" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔒 Ransomware Payment Response</div>
+                  <div className="text-11 text-ink-2 mt-0.5">OFAC guidance · FATF R.15</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "ransomware-response") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Victim entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label><input value={ntIn("walletAddress")} onChange={e => ntSet("walletAddress", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Attacker wallet address" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Demand Amount</label><input value={ntIn("demandAmount")} onChange={e => ntSet("demandAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Ransom amount" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cryptocurrency</label><input value={ntIn("cryptocurrency")} onChange={e => ntSet("cryptocurrency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Demanded crypto asset" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("ransomware-response")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fraud Network Mapper */}
+            {superToolsTab === "fraud-network" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🕸 Fraud Network Mapper</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · Egmont FINT</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Case ID</label><input value={ntIn("caseId")} onChange={e => { if (superToolsTab !== "fraud-network") { setNt({}); setNtResult(null); } ntSet("caseId", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Internal case reference" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Known Actors</label><input value={ntIn("knownActors")} onChange={e => ntSet("knownActors", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Names / entities in network" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Connection Type</label><input value={ntIn("connectionType")} onChange={e => ntSet("connectionType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. family, business, co-signatory" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Geography</label><input value={ntIn("geography")} onChange={e => ntSet("geography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries involved" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("fraud-network")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* FATF Mutual Evaluation Prep */}
+            {superToolsTab === "fatf-evaluation-prep" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🎯 FATF Mutual Evaluation Prep</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Methodology 2022</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "fatf-evaluation-prep") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country being evaluated" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last Evaluation</label><input value={ntIn("lastEvaluation")} onChange={e => ntSet("lastEvaluation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last MER" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Focus Area</label><input value={ntIn("focusArea")} onChange={e => ntSet("focusArea", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. technical compliance, effectiveness" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Known Weaknesses</label><input value={ntIn("knownWeaknesses")} onChange={e => ntSet("knownWeaknesses", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key identified gaps" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("fatf-evaluation-prep")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VARA AML Compliance Checker */}
+            {superToolsTab === "vara-compliance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔐 VARA AML Compliance Checker</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE VARA VASP Regs 2023</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "vara-compliance") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="VASP name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Licence Type</label><input value={ntIn("licenceType")} onChange={e => ntSet("licenceType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="VARA licence category" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">VASP Type</label><input value={ntIn("vasp")} onChange={e => ntSet("vasp", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. exchange, custodian" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AML Programme</label><input value={ntIn("amlProgram")} onChange={e => ntSet("amlProgram", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="AML programme status" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("vara-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* CBUAE Examination Readiness */}
+            {superToolsTab === "cbuae-exam" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏦 CBUAE Examination Readiness</div>
+                  <div className="text-11 text-ink-2 mt-0.5">CBUAE Circular 2/2022</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "cbuae-exam") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, exchange, finance co." /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last Exam Date</label><input value={ntIn("lastExamDate")} onChange={e => ntSet("lastExamDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last CBUAE exam" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Open Findings</label><input value={ntIn("openFindings")} onChange={e => ntSet("openFindings", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Outstanding examination findings" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Rating</label><input value={ntIn("riskRating")} onChange={e => ntSet("riskRating", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Current supervisory risk rating" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("cbuae-exam")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* EU AMLA Requirements Analyser */}
+            {superToolsTab === "eu-amla" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🇪🇺 EU AMLA Requirements Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">EU AMLA Reg 2024/1624</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "eu-amla") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, VASP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="EU member state" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Profile</label><input value={ntIn("riskProfile")} onChange={e => ntSet("riskProfile", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity risk classification" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporting Obligation</label><input value={ntIn("reportingObligation")} onChange={e => ntSet("reportingObligation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable reporting obligations" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("eu-amla")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MiCA Crypto Asset Compliance */}
+            {superToolsTab === "mica-compliance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💎 MiCA Crypto Asset Compliance</div>
+                  <div className="text-11 text-ink-2 mt-0.5">EU MiCA Reg 2023/1114</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Type</label><input value={ntIn("assetType")} onChange={e => { if (superToolsTab !== "mica-compliance") { setNt({}); setNtResult(null); } ntSet("assetType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. ART, EMT, other crypto-asset" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Issuer</label><input value={ntIn("issuer")} onChange={e => ntSet("issuer", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Token issuer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Whitepaper Status</label><input value={ntIn("whitepaperStatus")} onChange={e => ntSet("whitepaperStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Whitepaper published / approved" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AML Obligation</label><input value={ntIn("amlObligation")} onChange={e => ntSet("amlObligation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable AML obligations" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("mica-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* DORA Operational Resilience */}
+            {superToolsTab === "dora-resilience" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🖥 DORA Operational Resilience</div>
+                  <div className="text-11 text-ink-2 mt-0.5">EU DORA Reg 2022/2554</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "dora-resilience") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, investment firm" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">ICT Risk</label><input value={ntIn("ictRisk")} onChange={e => ntSet("ictRisk", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key ICT risks identified" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Incident History</label><input value={ntIn("incidentHistory")} onChange={e => ntSet("incidentHistory", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Recent ICT incidents" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Third Party</label><input value={ntIn("thirdParty")} onChange={e => ntSet("thirdParty", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Critical third-party ICT providers" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("dora-resilience")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AML Framework Gap Analyser */}
+            {superToolsTab === "aml-framework-gap" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔍 AML Framework Gap Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · UAE FDL 20/2018</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "aml-framework-gap") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, VASP, DNFBP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Policy Age</label><input value={ntIn("policyAge")} onChange={e => ntSet("policyAge", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Age of current AML policy" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Training Status</label><input value={ntIn("trainingStatus")} onChange={e => ntSet("trainingStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Last training date / coverage" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Monitoring Coverage</label><input value={ntIn("monitoringCoverage")} onChange={e => ntSet("monitoringCoverage", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="% of accounts monitored" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("aml-framework-gap")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Regulatory Breach Notification */}
+            {superToolsTab === "regulatory-breach-notice" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📢 Regulatory Breach Notification</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL Art.17 · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Breach Type</label><input value={ntIn("breachType")} onChange={e => { if (superToolsTab !== "regulatory-breach-notice") { setNt({}); setNtResult(null); } ntSet("breachType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of breach" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Severity</label><input value={ntIn("severity")} onChange={e => ntSet("severity", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. critical, significant, minor" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Discovery Date</label><input value={ntIn("discoveryDate")} onChange={e => ntSet("discoveryDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="When breach was discovered" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Affected Parties</label><input value={ntIn("affectedParties")} onChange={e => ntSet("affectedParties", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customers / counterparties affected" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("regulatory-breach-notice")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Regulatory Remediation Planner */}
+            {superToolsTab === "remediation-planner" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔧 Regulatory Remediation Planner</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF MER guidance</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Finding Type</label><input value={ntIn("findingType")} onChange={e => { if (superToolsTab !== "remediation-planner") { setNt({}); setNtResult(null); } ntSet("findingType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Regulatory finding description" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Root Cause</label><input value={ntIn("rootCause")} onChange={e => ntSet("rootCause", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Identified root cause" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deadline</label><input value={ntIn("deadline")} onChange={e => ntSet("deadline", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remediation deadline" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Resource Needed</label><input value={ntIn("resourceNeeded")} onChange={e => ntSet("resourceNeeded", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Budget / personnel required" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("remediation-planner")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MOU / Treaty Obligation Checker */}
+            {superToolsTab === "mou-treaty" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🤝 MOU / Treaty Obligation Checker</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.40 · Egmont</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requesting Country</label><input value={ntIn("requestingCountry")} onChange={e => { if (superToolsTab !== "mou-treaty") { setNt({}); setNtResult(null); } ntSet("requestingCountry", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country making request" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Basis of Request</label><input value={ntIn("basisOfRequest")} onChange={e => ntSet("basisOfRequest", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Treaty / MOU reference" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Information Type</label><input value={ntIn("informationType")} onChange={e => ntSet("informationType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of information sought" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Timeline</label><input value={ntIn("timeline")} onChange={e => ntSet("timeline", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Response deadline" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("mou-treaty")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* FINMA AML Compliance (Swiss) */}
+            {superToolsTab === "finma-compliance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🇨🇭 FINMA AML Compliance (Swiss)</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FINMA AMLO-FINMA 2021</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "finma-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, securities dealer, VASP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Base</label><input value={ntIn("clientBase")} onChange={e => ntSet("clientBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Client risk profile description" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Exposure</label><input value={ntIn("riskExposure")} onChange={e => ntSet("riskExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key risk categories" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporting Obligation</label><input value={ntIn("reportingObligation")} onChange={e => ntSet("reportingObligation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="MROS reporting status" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("finma-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MAS AML Notice Compliance */}
+            {superToolsTab === "mas-compliance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🇸🇬 MAS AML Notice Compliance</div>
+                  <div className="text-11 text-ink-2 mt-0.5">MAS Notice CMS-N02</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "mas-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. CMS licensee, bank" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last MAS Exam</label><input value={ntIn("lastMASExam")} onChange={e => ntSet("lastMASExam", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last examination" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Model</label><input value={ntIn("riskModel")} onChange={e => ntSet("riskModel", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Risk assessment model used" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Exposure</label><input value={ntIn("pepExposure")} onChange={e => ntSet("pepExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="PEP client exposure" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("mas-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* FCA ML Regs Compliance */}
+            {superToolsTab === "fca-compliance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🇬🇧 FCA ML Regs Compliance</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UK MLR 2017 · JMLSG</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "fca-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, payment firm" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Firm Type</label><input value={ntIn("firmType")} onChange={e => ntSet("firmType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FCA firm type / category" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Supervisory Body</label><input value={ntIn("supervisoryBody")} onChange={e => ntSet("supervisoryBody", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Supervisory authority" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last MLRO Report</label><input value={ntIn("lastMLROReport")} onChange={e => ntSet("lastMLROReport", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last MLRO annual report" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("fca-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* BaFin AML Compliance */}
+            {superToolsTab === "bafin-compliance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🇩🇪 BaFin AML Compliance</div>
+                  <div className="text-11 text-ink-2 mt-0.5">GwG (Germany) · AMLD6</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "bafin-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, crypto custodian" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Obligation Level</label><input value={ntIn("obligationLevel")} onChange={e => ntSet("obligationLevel", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="General or enhanced obligations" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Management</label><input value={ntIn("riskMgmt")} onChange={e => ntSet("riskMgmt", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Risk management system status" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporting Status</label><input value={ntIn("reportingStatus")} onChange={e => ntSet("reportingStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FIU reporting compliance" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("bafin-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Basel AML Index Risk Assessor */}
+            {superToolsTab === "basel-aml-index" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌍 Basel AML Index Risk Assessor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">Basel Institute 2024</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "basel-aml-index") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country to assess" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Index Score</label><input value={ntIn("indexScore")} onChange={e => ntSet("indexScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Basel AML Index score (0-10)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Key Risk</label><input value={ntIn("keyRisk")} onChange={e => ntSet("keyRisk", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Primary risk drivers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mitigating Factors</label><input value={ntIn("mitigatingFactors")} onChange={e => ntSet("mitigatingFactors", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Risk mitigants" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("basel-aml-index")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Egmont FIU Information Request */}
+            {superToolsTab === "egmont-fiu" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📬 Egmont FIU Information Request</div>
+                  <div className="text-11 text-ink-2 mt-0.5">Egmont Group Principles</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Request Type</label><input value={ntIn("requestType")} onChange={e => { if (superToolsTab !== "egmont-fiu") { setNt({}); setNtResult(null); } ntSet("requestType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. spontaneous, upon request" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requesting FIU</label><input value={ntIn("requestingFIU")} onChange={e => ntSet("requestingFIU", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FIU making the request" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={ntIn("subjectName")} onChange={e => ntSet("subjectName", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Person / entity of interest" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</label><input value={ntIn("legalBasis")} onChange={e => ntSet("legalBasis", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable legal basis" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("egmont-fiu")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Wolfsberg Principles Checker */}
+            {superToolsTab === "wolfsberg-principles" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📋 Wolfsberg Principles Checker</div>
+                  <div className="text-11 text-ink-2 mt-0.5">Wolfsberg AML Principles 2023</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Principle Area</label><input value={ntIn("principleArea")} onChange={e => { if (superToolsTab !== "wolfsberg-principles") { setNt({}); setNtResult(null); } ntSet("principleArea", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. correspondent banking, PEPs" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => ntSet("institutionType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Financial institution type" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gap Identified</label><input value={ntIn("gap")} onChange={e => ntSet("gap", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Specific gap or deficiency" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mitigants</label><input value={ntIn("mitigants")} onChange={e => ntSet("mitigants", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Existing mitigating controls" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("wolfsberg-principles")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Palermo Convention Analysis */}
+            {superToolsTab === "palermo-convention" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚖️ Palermo Convention Analysis</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UN CTOC 2000 · Art.6</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crime Type</label><input value={ntIn("crimeType")} onChange={e => { if (superToolsTab !== "palermo-convention") { setNt({}); setNtResult(null); } ntSet("crimeType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Predicate offence type" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Relevant jurisdiction(s)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Proceeds Estimate</label><input value={ntIn("proceedsEstimate")} onChange={e => ntSet("proceedsEstimate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated proceeds value" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cooperation Needed</label><input value={ntIn("cooperationNeeded")} onChange={e => ntSet("cooperationNeeded", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of MLA required" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("palermo-convention")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Vienna Convention Analysis */}
+            {superToolsTab === "vienna-convention" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌐 Vienna Convention Analysis</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UN 1988 Vienna Convention</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Substance Type</label><input value={ntIn("substanceType")} onChange={e => { if (superToolsTab !== "vienna-convention") { setNt({}); setNtResult(null); } ntSet("substanceType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Drug / precursor type" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Financial Pattern</label><input value={ntIn("financialPattern")} onChange={e => ntSet("financialPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Financial pattern observed" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={ntIn("jurisdictions")} onChange={e => ntSet("jurisdictions", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries involved" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cooperation Mechanism</label><input value={ntIn("cooperationMechanism")} onChange={e => ntSet("cooperationMechanism", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="MLA / extradition mechanism" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("vienna-convention")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* FATF Grey/Black List Impact */}
+            {superToolsTab === "fatf-grey-impact" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚠️ FATF Grey/Black List Impact</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.19 · CBUAE guidance</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "fatf-grey-impact") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Listed country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">List Status</label><input value={ntIn("listStatus")} onChange={e => ntSet("listStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Grey list / black list" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Exposure</label><input value={ntIn("businessExposure")} onChange={e => ntSet("businessExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Extent of business with country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mitigation Measures</label><input value={ntIn("mitigationMeasures")} onChange={e => ntSet("mitigationMeasures", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="EDD / countermeasures in place" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("fatf-grey-impact")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Digital Identity Verifier */}
+            {superToolsTab === "digital-identity" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔐 Digital Identity Verifier</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID Guidance 2020</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">ID Type</label><input value={ntIn("idType")} onChange={e => { if (superToolsTab !== "digital-identity") { setNt({}); setNtResult(null); } ntSet("idType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. national ID, passport, eID" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Issuing Country</label><input value={ntIn("issuingCountry")} onChange={e => ntSet("issuingCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of document issuance" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Verification Method</label><input value={ntIn("verificationMethod")} onChange={e => ntSet("verificationMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. biometric, OCR, chip" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Biometric Used</label><input value={ntIn("biometricUsed")} onChange={e => ntSet("biometricUsed", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Biometric technology applied" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("digital-identity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Synthetic Identity Detector */}
+            {superToolsTab === "synthetic-identity" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🤖 Synthetic Identity Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF guidance · FinCEN advisory</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "synthetic-identity") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / reference" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document Inconsistencies</label><input value={ntIn("documentInconsistencies")} onChange={e => ntSet("documentInconsistencies", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Noted inconsistencies" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Credit History</label><input value={ntIn("creditHistory")} onChange={e => ntSet("creditHistory", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Credit history anomalies" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Behaviour Pattern</label><input value={ntIn("behaviourPattern")} onChange={e => ntSet("behaviourPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account behaviour description" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("synthetic-identity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Deepfake / AI Doc Detector */}
+            {superToolsTab === "deepfake-kyc" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🎭 Deepfake / AI Doc Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID · VARA</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document Type</label><input value={ntIn("documentType")} onChange={e => { if (superToolsTab !== "deepfake-kyc") { setNt({}); setNtResult(null); } ntSet("documentType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. passport, selfie, video" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Metadata Flags</label><input value={ntIn("metadataFlags")} onChange={e => ntSet("metadataFlags", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Metadata anomalies found" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Biometric Result</label><input value={ntIn("biometricResult")} onChange={e => ntSet("biometricResult", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Liveness check result" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Consistency Score</label><input value={ntIn("consistencyScore")} onChange={e => ntSet("consistencyScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Document consistency score" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("deepfake-kyc")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Deep Adverse Media Analysis */}
+            {superToolsTab === "adverse-media-deep" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📰 Deep Adverse Media Analysis</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · Wolfsberg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "adverse-media-deep") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject jurisdiction(s)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Timeframe</label><input value={ntIn("timeframe")} onChange={e => ntSet("timeframe", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Search time window" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Media Source</label><input value={ntIn("mediaSource")} onChange={e => ntSet("mediaSource", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sources searched" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("adverse-media-deep")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Source of Wealth Substantiator */}
+            {superToolsTab === "sow-substantiator" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💼 Source of Wealth Substantiator</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · Wolfsberg FAQ</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "sow-substantiator") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared SoW</label><input value={ntIn("declaredSoW")} onChange={e => ntSet("declaredSoW", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Declared source of wealth" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Documents Provided</label><input value={ntIn("documentProvided")} onChange={e => ntSet("documentProvided", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Supporting documents submitted" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gap</label><input value={ntIn("gap")} onChange={e => ntSet("gap", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Unsubstantiated elements" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("sow-substantiator")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Corporate Registry Crosscheck */}
+            {superToolsTab === "corporate-registry" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏢 Corporate Registry Crosscheck</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · UAE CCL</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "corporate-registry") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Company name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registered Jurisdiction</label><input value={ntIn("registeredJurisdiction")} onChange={e => ntSet("registeredJurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Incorporation jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registration Date</label><input value={ntIn("registrationDate")} onChange={e => ntSet("registrationDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of incorporation" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registered Agent</label><input value={ntIn("registeredAgent")} onChange={e => ntSet("registeredAgent", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Agent / service provider" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("corporate-registry")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Entity Resolution Engine */}
+            {superToolsTab === "entity-resolution" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔍 Entity Resolution Engine</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · Wolfsberg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity 1</label><input value={ntIn("entity1")} onChange={e => { if (superToolsTab !== "entity-resolution") { setNt({}); setNtResult(null); } ntSet("entity1", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity 2</label><input value={ntIn("entity2")} onChange={e => ntSet("entity2", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Second entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Common Attributes</label><input value={ntIn("commonAttributes")} onChange={e => ntSet("commonAttributes", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Shared identifiers / addresses" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Separation Degree</label><input value={ntIn("separationDegree")} onChange={e => ntSet("separationDegree", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Degrees of separation" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("entity-resolution")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Politically Sensitive Person Mapper */}
+            {superToolsTab === "politically-sensitive" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🎖 Politically Sensitive Person Mapper</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · Basel PEP guidance</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "politically-sensitive") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Position</label><input value={ntIn("position")} onChange={e => ntSet("position", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Political / public role" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of position" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Family Connections</label><input value={ntIn("familyConnections")} onChange={e => ntSet("familyConnections", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Family / close associate links" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("politically-sensitive")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Dual Nationality Risk Analyser */}
+            {superToolsTab === "dual-nationality" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌐 Dual Nationality Risk Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · CBUAE KYC</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "dual-nationality") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nationality 1</label><input value={ntIn("nationality1")} onChange={e => ntSet("nationality1", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First nationality" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nationality 2</label><input value={ntIn("nationality2")} onChange={e => ntSet("nationality2", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Second nationality" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Tax Implications</label><input value={ntIn("taxImplications")} onChange={e => ntSet("taxImplications", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="CRS / FATCA implications" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("dual-nationality")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* High-Risk Profession Screener */}
+            {superToolsTab === "high-risk-profession" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💼 High-Risk Profession Screener</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF RBA · Wolfsberg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "high-risk-profession") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Profession</label><input value={ntIn("profession")} onChange={e => ntSet("profession", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Occupation / profession" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction of Work</label><input value={ntIn("jurisdictionOfWork")} onChange={e => ntSet("jurisdictionOfWork", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Work jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Base</label><input value={ntIn("clientBase")} onChange={e => ntSet("clientBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject's client base" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("high-risk-profession")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* UAE/Local KYC Requirements Guide */}
+            {superToolsTab === "local-kyc-requirements" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📋 UAE/Local KYC Requirements Guide</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 20/2018 · CRS · FATCA</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "local-kyc-requirements") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Obliged entity type" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Type</label><input value={ntIn("clientType")} onChange={e => ntSet("clientType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual / corporate / VASP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Tier</label><input value={ntIn("riskTier")} onChange={e => ntSet("riskTier", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer risk tier" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable jurisdiction" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("local-kyc-requirements")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* eKYC Risk Assessment */}
+            {superToolsTab === "ekyc-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📱 eKYC Risk Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID 2020 · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vendor</label><input value={ntIn("vendor")} onChange={e => { if (superToolsTab !== "ekyc-risk") { setNt({}); setNtResult(null); } ntSet("vendor", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="eKYC vendor name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Method Used</label><input value={ntIn("methodUsed")} onChange={e => ntSet("methodUsed", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Verification method" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Failure Rate</label><input value={ntIn("failureRate")} onChange={e => ntSet("failureRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="False acceptance / rejection rate" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Audit Trail</label><input value={ntIn("auditTrail")} onChange={e => ntSet("auditTrail", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Audit trail availability" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("ekyc-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Perpetual KYC Trigger Analyser */}
+            {superToolsTab === "perpetual-kyc" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">♻️ Perpetual KYC Trigger Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · CBUAE EDD</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "perpetual-kyc") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last KYC Date</label><input value={ntIn("lastKycDate")} onChange={e => ntSet("lastKycDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last KYC review" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trigger Event</label><input value={ntIn("triggerEvent")} onChange={e => ntSet("triggerEvent", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Event triggering review" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Priority Score</label><input value={ntIn("priorityScore")} onChange={e => ntSet("priorityScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Review priority score" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("perpetual-kyc")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Beneficial Ownership Calculator */}
+            {superToolsTab === "beneficial-ownership-calc" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏛 Beneficial Ownership Calculator</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24/25 · UAE UBO Reg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "beneficial-ownership-calc") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership Layers</label><input value={ntIn("ownershipLayers")} onChange={e => ntSet("ownershipLayers", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of ownership layers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Percentage Threshold</label><input value={ntIn("percentageThreshold")} onChange={e => ntSet("percentageThreshold", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable threshold (e.g. 25%)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Incorporation jurisdiction" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("beneficial-ownership-calc")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Corporate Complexity Scorer */}
+            {superToolsTab === "corporate-complexity" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔀 Corporate Complexity Scorer</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · Wolfsberg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "corporate-complexity") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Layer Count</label><input value={ntIn("layerCount")} onChange={e => ntSet("layerCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of corporate layers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction Count</label><input value={ntIn("jurisdictionCount")} onChange={e => ntSet("jurisdictionCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of jurisdictions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nominee Count</label><input value={ntIn("nomineeCount")} onChange={e => ntSet("nomineeCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of nominees / proxies" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("corporate-complexity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Transaction Velocity Analyser */}
+            {superToolsTab === "velocity-analyzer" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚡ Transaction Velocity Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "velocity-analyzer") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Period</label><input value={ntIn("period")} onChange={e => ntSet("period", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Analysis period (e.g. 30 days)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Count</label><input value={ntIn("transactionCount")} onChange={e => ntSet("transactionCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of transactions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Volume</label><input value={ntIn("totalVolume")} onChange={e => ntSet("totalVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total transaction volume (USD)" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("velocity-analyzer")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Peer Group Anomaly Detector */}
+            {superToolsTab === "peer-group-anomaly" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">👥 Peer Group Anomaly Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE STR</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "peer-group-anomaly") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Peer Group</label><input value={ntIn("peerGroup")} onChange={e => ntSet("peerGroup", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Peer group description" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deviation %</label><input value={ntIn("deviationPercent")} onChange={e => ntSet("deviationPercent", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Deviation from peer average" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Time Window</label><input value={ntIn("timeWindow")} onChange={e => ntSet("timeWindow", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Analysis time window" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("peer-group-anomaly")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Round-Trip Transaction Detector */}
+            {superToolsTab === "round-trip-detector" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔄 Round-Trip Transaction Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · IMF guidance</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount</label><input value={ntIn("amount")} onChange={e => { if (superToolsTab !== "round-trip-detector") { setNt({}); setNtResult(null); } ntSet("amount", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction amount (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originating Account</label><input value={ntIn("originatingAccount")} onChange={e => ntSet("originatingAccount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Source account" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Account</label><input value={ntIn("destinationAccount")} onChange={e => ntSet("destinationAccount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="End beneficiary account" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Intermediaries</label><input value={ntIn("intermediaries")} onChange={e => ntSet("intermediaries", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Intermediate accounts / entities" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("round-trip-detector")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Funnel Account Detector */}
+            {superToolsTab === "funnel-account" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌀 Funnel Account Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · UAE FIU</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "funnel-account") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Inbound Count</label><input value={ntIn("inboundCount")} onChange={e => ntSet("inboundCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of inbound transactions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Outbound Count</label><input value={ntIn("outboundCount")} onChange={e => ntSet("outboundCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of outbound transactions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Net Position</label><input value={ntIn("netPosition")} onChange={e => ntSet("netPosition", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Net account position" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("funnel-account")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Dormant Account Reactivation Alert */}
+            {superToolsTab === "dormant-reactivation" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">😴 Dormant Account Reactivation Alert</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "dormant-reactivation") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Dormancy Period</label><input value={ntIn("dormancyPeriod")} onChange={e => ntSet("dormancyPeriod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Period of inactivity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reactivation Amount</label><input value={ntIn("reactivationAmount")} onChange={e => ntSet("reactivationAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First transaction amount" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">New Beneficiary</label><input value={ntIn("newBeneficiary")} onChange={e => ntSet("newBeneficiary", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="New payment beneficiary" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("dormant-reactivation")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Currency Mismatch Analyser */}
+            {superToolsTab === "currency-mismatch" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💱 Currency Mismatch Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trading Pair</label><input value={ntIn("tradingPair")} onChange={e => { if (superToolsTab !== "currency-mismatch") { setNt({}); setNtResult(null); } ntSet("tradingPair", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Currency pair involved" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared Currency</label><input value={ntIn("declaredCurrency")} onChange={e => ntSet("declaredCurrency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Currency per trade documents" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Settlement Currency</label><input value={ntIn("settlementCurrency")} onChange={e => ntSet("settlementCurrency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Actual settlement currency" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Volume Discrepancy</label><input value={ntIn("volumeDiscrepancy")} onChange={e => ntSet("volumeDiscrepancy", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Discrepancy amount / %" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("currency-mismatch")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ACH / Direct Debit Fraud Detector */}
+            {superToolsTab === "ach-fraud" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏦 ACH / Direct Debit Fraud Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">NACHA · FATF R.3</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "ach-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Originator / account name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Return Rate</label><input value={ntIn("returnRate")} onChange={e => ntSet("returnRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ACH return rate %" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originating Bank</label><input value={ntIn("originatingBank")} onChange={e => ntSet("originatingBank", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Originating bank name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Frequency</label><input value={ntIn("frequency")} onChange={e => ntSet("frequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction frequency" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("ach-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Wire Transfer Risk Scorer */}
+            {superToolsTab === "wire-transfer-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📡 Wire Transfer Risk Scorer</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.16 · SWIFT</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Country</label><input value={ntIn("originCountry")} onChange={e => { if (superToolsTab !== "wire-transfer-risk") { setNt({}); setNtResult(null); } ntSet("originCountry", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sending country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Country</label><input value={ntIn("destinationCountry")} onChange={e => ntSet("destinationCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Receiving country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount</label><input value={ntIn("amount")} onChange={e => ntSet("amount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Wire amount (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary</label><input value={ntIn("beneficiary")} onChange={e => ntSet("beneficiary", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Beneficiary name / entity" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("wire-transfer-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* High-Frequency Trading Abuse */}
+            {superToolsTab === "high-freq-trading" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📈 High-Frequency Trading Abuse</div>
+                  <div className="text-11 text-ink-2 mt-0.5">IOSCO · FATF R.3</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset</label><input value={ntIn("asset")} onChange={e => { if (superToolsTab !== "high-freq-trading") { setNt({}); setNtResult(null); } ntSet("asset", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Security / crypto asset" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Order Count</label><input value={ntIn("orderCount")} onChange={e => ntSet("orderCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Orders placed per day" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cancellation Rate</label><input value={ntIn("cancellationRate")} onChange={e => ntSet("cancellationRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Order cancellation rate %" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Market Impact</label><input value={ntIn("marketImpact")} onChange={e => ntSet("marketImpact", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated market impact" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("high-freq-trading")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Unusual Payment Routing Analyser */}
+            {superToolsTab === "payment-routing" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌐 Unusual Payment Routing Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML · CBE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Route</label><input value={ntIn("paymentRoute")} onChange={e => { if (superToolsTab !== "payment-routing") { setNt({}); setNtResult(null); } ntSet("paymentRoute", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Describe routing path" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Countries</label><input value={ntIn("countries")} onChange={e => ntSet("countries", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transit countries" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Correspondents</label><input value={ntIn("correspondents")} onChange={e => ntSet("correspondents", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Correspondent banks used" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Justification</label><input value={ntIn("justification")} onChange={e => ntSet("justification", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Client-stated reason for routing" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("payment-routing")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Refund / Chargeback Arbitrage */}
+            {superToolsTab === "refund-arbitrage" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔁 Refund / Chargeback Arbitrage</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · payment schemes</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Merchant</label><input value={ntIn("merchant")} onChange={e => { if (superToolsTab !== "refund-arbitrage") { setNt({}); setNtResult(null); } ntSet("merchant", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Merchant name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Refund Volume</label><input value={ntIn("refundVolume")} onChange={e => ntSet("refundVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total refunds (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Chargeback Rate</label><input value={ntIn("chargebackRate")} onChange={e => ntSet("chargebackRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Chargeback rate %" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Pattern</label><input value={ntIn("pattern")} onChange={e => ntSet("pattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Observed refund pattern" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("refund-arbitrage")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Correspondent Banking Chain Analyser */}
+            {superToolsTab === "correspondent-chain" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏦 Correspondent Banking Chain Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.13 · Wolfsberg CBR</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Bank</label><input value={ntIn("originBank")} onChange={e => { if (superToolsTab !== "correspondent-chain") { setNt({}); setNtResult(null); } ntSet("originBank", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Originating bank" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Intermediaries</label><input value={ntIn("intermediaries")} onChange={e => ntSet("intermediaries", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Intermediate correspondent banks" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Final Bank</label><input value={ntIn("finalBank")} onChange={e => ntSet("finalBank", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Final receiving bank" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => ntSet("country", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries in chain" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("correspondent-chain")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Remittance Risk Analyser */}
+            {superToolsTab === "remittance-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💸 Remittance Risk Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.14 · UAE exchange laws</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Corridor</label><input value={ntIn("corridor")} onChange={e => { if (superToolsTab !== "remittance-risk") { setNt({}); setNtResult(null); } ntSet("corridor", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remittance corridor (e.g. UAE-PK)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Volume</label><input value={ntIn("volume")} onChange={e => ntSet("volume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Monthly volume (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Provider</label><input value={ntIn("provider")} onChange={e => ntSet("provider", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remittance service provider" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Frequency</label><input value={ntIn("frequency")} onChange={e => ntSet("frequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction frequency" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("remittance-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ATM Pattern Analyser */}
+            {superToolsTab === "atm-pattern" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏧 ATM Pattern Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "atm-pattern") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Withdrawal Count</label><input value={ntIn("withdrawalCount")} onChange={e => ntSet("withdrawalCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ATM withdrawals per period" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Locations</label><input value={ntIn("locations")} onChange={e => ntSet("locations", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ATM locations / geographic spread" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Frequency</label><input value={ntIn("frequency")} onChange={e => ntSet("frequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Withdrawal frequency" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("atm-pattern")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Casino Chip Washing Detector */}
+            {superToolsTab === "casino-chip" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🎰 Casino Chip Washing Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · UAE Gaming</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "casino-chip") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Patron name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Chip Volume</label><input value={ntIn("chipVolume")} onChange={e => ntSet("chipVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total chips purchased (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wagered Amount</label><input value={ntIn("wageredAmount")} onChange={e => ntSet("wageredAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Amount actually wagered" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cashout Method</label><input value={ntIn("cashoutMethod")} onChange={e => ntSet("cashoutMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How chips were cashed out" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("casino-chip")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Luxury Goods AML Risk */}
+            {superToolsTab === "luxury-goods" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💎 Luxury Goods AML Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF DNFBP · MoE circular</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Goods Type</label><input value={ntIn("goodsType")} onChange={e => { if (superToolsTab !== "luxury-goods") { setNt({}); setNtResult(null); } ntSet("goodsType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. watches, jewellery, cars" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Value</label><input value={ntIn("value")} onChange={e => ntSet("value", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction value (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Method</label><input value={ntIn("paymentMethod")} onChange={e => ntSet("paymentMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. cash, crypto, wire" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Buyer Profile</label><input value={ntIn("buyerProfile")} onChange={e => ntSet("buyerProfile", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Buyer description" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("luxury-goods")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Art Market Provenance Checker */}
+            {superToolsTab === "art-provenance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🎨 Art Market Provenance Checker</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Art Market 2021</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Artwork</label><input value={ntIn("artwork")} onChange={e => { if (superToolsTab !== "art-provenance") { setNt({}); setNtResult(null); } ntSet("artwork", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Artwork title / description" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Seller</label><input value={ntIn("seller")} onChange={e => ntSet("seller", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Seller / gallery name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Provenance Documentation</label><input value={ntIn("provenanceDoc")} onChange={e => ntSet("provenanceDoc", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Documentation status" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Valuation Method</label><input value={ntIn("valuationMethod")} onChange={e => ntSet("valuationMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How artwork was valued" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("art-provenance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Superyacht / Private Jet Risk */}
+            {superToolsTab === "superyacht-jet" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">✈️ Superyacht / Private Jet Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · OFAC</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Type</label><input value={ntIn("assetType")} onChange={e => { if (superToolsTab !== "superyacht-jet") { setNt({}); setNtResult(null); } ntSet("assetType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Superyacht / private jet" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registration Flag</label><input value={ntIn("registrationFlag")} onChange={e => ntSet("registrationFlag", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Flag state / registration country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner Structure</label><input value={ntIn("ownerStructure")} onChange={e => ntSet("ownerStructure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Ownership structure description" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Operating Country</label><input value={ntIn("operatingCountry")} onChange={e => ntSet("operatingCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of operation" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("superyacht-jet")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Agricultural Commodities Risk */}
+            {superToolsTab === "agri-commodities" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌾 Agricultural Commodities Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML · UN FAO</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Commodity</label><input value={ntIn("commodity")} onChange={e => { if (superToolsTab !== "agri-commodities") { setNt({}); setNtResult(null); } ntSet("commodity", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. wheat, sugar, coffee" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Export Country</label><input value={ntIn("exportCountry")} onChange={e => ntSet("exportCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Exporting country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Import Country</label><input value={ntIn("importCountry")} onChange={e => ntSet("importCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Importing country" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Quantity</label><input value={ntIn("quantity")} onChange={e => ntSet("quantity", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Volume / weight / value" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("agri-commodities")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Precious Stones / Diamonds Risk */}
+            {superToolsTab === "precious-stones" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💠 Precious Stones / Diamonds Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · Kimberley Process</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Stone Type</label><input value={ntIn("stoneType")} onChange={e => { if (superToolsTab !== "precious-stones") { setNt({}); setNtResult(null); } ntSet("stoneType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. diamond, ruby, emerald" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin</label><input value={ntIn("origin")} onChange={e => ntSet("origin", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of origin" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Certificate Status</label><input value={ntIn("certificateStatus")} onChange={e => ntSet("certificateStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="KP / GIA certificate status" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Buyer</label><input value={ntIn("buyer")} onChange={e => ntSet("buyer", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Buyer name / entity" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("precious-stones")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gaming / iGaming AML */}
+            {superToolsTab === "gaming-sector" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🎮 Gaming / iGaming AML</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · UAE gaming laws</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => { if (superToolsTab !== "gaming-sector") { setNt({}); setNtResult(null); } ntSet("platform", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Gaming platform name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Player Volume</label><input value={ntIn("playerVolume")} onChange={e => ntSet("playerVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Active players / accounts" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deposit Method</label><input value={ntIn("depositMethod")} onChange={e => ntSet("depositMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Primary deposit method" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Withdrawal Pattern</label><input value={ntIn("withdrawalPattern")} onChange={e => ntSet("withdrawalPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Withdrawal behaviour pattern" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("gaming-sector")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* FinTech / Payment Institution Risk */}
+            {superToolsTab === "fintech-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📱 FinTech / Payment Institution Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · PSD2 · UAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "fintech-risk") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. payment institution, e-money" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Status</label><input value={ntIn("regulatoryStatus")} onChange={e => ntSet("regulatoryStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Licence / registration status" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Product Offering</label><input value={ntIn("productOffering")} onChange={e => ntSet("productOffering", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Products / services offered" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Base</label><input value={ntIn("customerBase")} onChange={e => ntSet("customerBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Target customer description" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("fintech-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fund Administration AML Risk */}
+            {superToolsTab === "fund-administration" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📊 Fund Administration AML Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · IOSCO</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fund Type</label><input value={ntIn("fundType")} onChange={e => { if (superToolsTab !== "fund-administration") { setNt({}); setNtResult(null); } ntSet("fundType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. hedge fund, PE, UCITS" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AUM</label><input value={ntIn("aum")} onChange={e => ntSet("aum", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Assets under management (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Domicile jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Type</label><input value={ntIn("investorType")} onChange={e => ntSet("investorType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investor profile / categories" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("fund-administration")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Private Equity AML Risk */}
+            {superToolsTab === "private-equity" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💰 Private Equity AML Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · Wolfsberg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fund Name</label><input value={ntIn("fundName")} onChange={e => { if (superToolsTab !== "private-equity") { setNt({}); setNtResult(null); } ntSet("fundName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fund name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Strategy</label><input value={ntIn("strategy")} onChange={e => ntSet("strategy", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investment strategy" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Base</label><input value={ntIn("investorBase")} onChange={e => ntSet("investorBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="LP profile description" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fund jurisdiction" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("private-equity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hedge Fund Risk Profile */}
+            {superToolsTab === "hedge-fund" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏦 Hedge Fund Risk Profile</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · IOSCO</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fund Name</label><input value={ntIn("fundName")} onChange={e => { if (superToolsTab !== "hedge-fund") { setNt({}); setNtResult(null); } ntSet("fundName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fund name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AUM</label><input value={ntIn("aum")} onChange={e => ntSet("aum", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Assets under management (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Strategy</label><input value={ntIn("strategy")} onChange={e => ntSet("strategy", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Trading strategy" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Leverage</label><input value={ntIn("leverage")} onChange={e => ntSet("leverage", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Leverage ratio" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("hedge-fund")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Family Office Risk Assessment */}
+            {superToolsTab === "family-office" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏠 Family Office Risk Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · Wolfsberg</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Family Name</label><input value={ntIn("familyName")} onChange={e => { if (superToolsTab !== "family-office") { setNt({}); setNtResult(null); } ntSet("familyName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Family / office name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AUM</label><input value={ntIn("aum")} onChange={e => ntSet("aum", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Assets under management (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Domicile jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Status</label><input value={ntIn("pepStatus")} onChange={e => ntSet("pepStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Family PEP exposure" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("family-office")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* UAE Free Zone Entity Risk */}
+            {superToolsTab === "free-zone" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏙 UAE Free Zone Entity Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Free Zone laws · FATF R.24</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "free-zone") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Free Zone</label><input value={ntIn("freeZone")} onChange={e => ntSet("freeZone", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Free zone name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Activity Type</label><input value={ntIn("activityType")} onChange={e => ntSet("activityType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Licensed activity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership Origin</label><input value={ntIn("ownershipOrigin")} onChange={e => ntSet("ownershipOrigin", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="UBO nationality / origin" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("free-zone")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Foundation / Endowment Risk */}
+            {superToolsTab === "foundation-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🏛 Foundation / Endowment Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.8 · UAE foundation law</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Foundation Name</label><input value={ntIn("foundationName")} onChange={e => { if (superToolsTab !== "foundation-risk") { setNt({}); setNtResult(null); } ntSet("foundationName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Foundation name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Purpose</label><input value={ntIn("purpose")} onChange={e => ntSet("purpose", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated purpose / objects" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Foundation jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary Type</label><input value={ntIn("beneficiaryType")} onChange={e => ntSet("beneficiaryType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Beneficiary categories" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("foundation-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Crowdfunding / ICO Risk */}
+            {superToolsTab === "crowdfunding" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌐 Crowdfunding / ICO Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.15 · VARA · SCA</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform Type</label><input value={ntIn("platformType")} onChange={e => { if (superToolsTab !== "crowdfunding") { setNt({}); setNtResult(null); } ntSet("platformType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. equity, debt, ICO" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Project Name</label><input value={ntIn("projectName")} onChange={e => ntSet("projectName", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Project / token name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Raised Amount</label><input value={ntIn("raisedAmount")} onChange={e => ntSet("raisedAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total raised (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Count</label><input value={ntIn("investorCount")} onChange={e => ntSet("investorCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of investors" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("crowdfunding")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* P2P Lending Platform Risk */}
+            {superToolsTab === "p2p-lending" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💳 P2P Lending Platform Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · SCA · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => { if (superToolsTab !== "p2p-lending") { setNt({}); setNtResult(null); } ntSet("platform", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="P2P platform name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Loan Volume</label><input value={ntIn("loanVolume")} onChange={e => ntSet("loanVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total loan volume (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Borrower Geography</label><input value={ntIn("borrowerGeography")} onChange={e => ntSet("borrowerGeography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Borrower countries" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Default Rate</label><input value={ntIn("defaultRate")} onChange={e => ntSet("defaultRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Loan default rate %" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("p2p-lending")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Geopolitical Risk Overlay */}
+            {superToolsTab === "geopolitical-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌍 Geopolitical Risk Overlay</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.19 · UN sanctions</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "geopolitical-risk") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of concern" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sanction</label><input value={ntIn("sanction")} onChange={e => ntSet("sanction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable sanctions regimes" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Conflict Level</label><input value={ntIn("conflictLevel")} onChange={e => ntSet("conflictLevel", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Conflict / instability level" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Instability Index</label><input value={ntIn("instabilityIndex")} onChange={e => ntSet("instabilityIndex", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fragile States Index / other" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("geopolitical-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Network Centrality Analyser */}
+            {superToolsTab === "network-centrality" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🕸 Network Centrality Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · Egmont</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "network-centrality") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Central node / entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Network Size</label><input value={ntIn("networkSize")} onChange={e => ntSet("networkSize", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total nodes in network" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Connection Type</label><input value={ntIn("connectionType")} onChange={e => ntSet("connectionType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. financial, corporate, family" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Centrality Score</label><input value={ntIn("centralityScore")} onChange={e => ntSet("centralityScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Calculated centrality score" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("network-centrality")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Follow the Money Tracer */}
+            {superToolsTab === "follow-the-money" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💵 Follow the Money Tracer</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · Egmont FINT</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Case ID</label><input value={ntIn("caseId")} onChange={e => { if (superToolsTab !== "follow-the-money") { setNt({}); setNtResult(null); } ntSet("caseId", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investigation case reference" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Starting Entity</label><input value={ntIn("startingEntity")} onChange={e => ntSet("startingEntity", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin of funds" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ending Destination</label><input value={ntIn("endingDestination")} onChange={e => ntSet("endingDestination", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Final destination" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Hops</label><input value={ntIn("hops")} onChange={e => ntSet("hops", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of intermediate hops" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("follow-the-money")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Causal Chain Builder */}
+            {superToolsTab === "causal-chain" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔗 Causal Chain Builder</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · case analysis</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Predicate Offence</label><input value={ntIn("predicateOffence")} onChange={e => { if (superToolsTab !== "causal-chain") { setNt({}); setNtResult(null); } ntSet("predicateOffence", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Underlying crime" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Financial Mechanism</label><input value={ntIn("financialMechanism")} onChange={e => ntSet("financialMechanism", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How proceeds were generated" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Layering Method</label><input value={ntIn("layeringMethod")} onChange={e => ntSet("layeringMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Layering techniques used" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Integration</label><input value={ntIn("integration")} onChange={e => ntSet("integration", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Integration stage description" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("causal-chain")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Evidence Strength Assessor */}
+            {superToolsTab === "evidence-assessment" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚖️ Evidence Strength Assessor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.29 · UAE CPL</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Type</label><input value={ntIn("evidenceType")} onChange={e => { if (superToolsTab !== "evidence-assessment") { setNt({}); setNtResult(null); } ntSet("evidenceType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. documentary, witness, digital" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Source</label><input value={ntIn("source")} onChange={e => ntSet("source", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Evidence source" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Corroboration</label><input value={ntIn("corroboration")} onChange={e => ntSet("corroboration", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corroborating evidence available" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Admissibility</label><input value={ntIn("admissibility")} onChange={e => ntSet("admissibility", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Admissibility assessment" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("evidence-assessment")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Witness Statement Analyser */}
+            {superToolsTab === "witness-statement" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">📜 Witness Statement Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE CPL · FATF R.29</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Statement Summary</label><input value={ntIn("statementSummary")} onChange={e => { if (superToolsTab !== "witness-statement") { setNt({}); setNtResult(null); } ntSet("statementSummary", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key statement points" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Consistency Check</label><input value={ntIn("consistencyCheck")} onChange={e => ntSet("consistencyCheck", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Internal consistency assessment" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Corroborating Evidence</label><input value={ntIn("corroboratingEvidence")} onChange={e => ntSet("corroboratingEvidence", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Supporting evidence" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Witness</label><input value={ntIn("witness")} onChange={e => ntSet("witness", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Witness name / category" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("witness-statement")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* OSINT Investigation Guide */}
+            {superToolsTab === "open-source-intel" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔍 OSINT Investigation Guide</div>
+                  <div className="text-11 text-ink-2 mt-0.5">Egmont FINT · FATF R.29</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "open-source-intel") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investigation subject" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Target Platforms</label><input value={ntIn("targetPlatforms")} onChange={e => ntSet("targetPlatforms", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="OSINT platforms to search" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Information Type</label><input value={ntIn("informationType")} onChange={e => ntSet("informationType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of information sought" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("open-source-intel")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Court Order / Production Order Guide */}
+            {superToolsTab === "court-order-drafter" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚖️ Court Order / Production Order Guide</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE CPL Art.199 · FATF R.29</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Target Entity</label><input value={ntIn("targetEntity")} onChange={e => { if (superToolsTab !== "court-order-drafter") { setNt({}); setNtResult(null); } ntSet("targetEntity", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity subject to order" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sought Information</label><input value={ntIn("soughtInformation")} onChange={e => ntSet("soughtInformation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Information / documents sought" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Court jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</label><input value={ntIn("legalBasis")} onChange={e => ntSet("legalBasis", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable legal basis" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("court-order-drafter")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Law Enforcement Liaison Guide */}
+            {superToolsTab === "law-enforcement-liaison" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🚔 Law Enforcement Liaison Guide</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.29/31 · UAE FIU</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Agency</label><input value={ntIn("agency")} onChange={e => { if (superToolsTab !== "law-enforcement-liaison") { setNt({}); setNtResult(null); } ntSet("agency", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Law enforcement agency" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Request Type</label><input value={ntIn("requestType")} onChange={e => ntSet("requestType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of request / referral" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Information</label><input value={ntIn("information")} onChange={e => ntSet("information", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Information to be shared" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Gateway</label><input value={ntIn("legalGateway")} onChange={e => ntSet("legalGateway", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable legal gateway" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("law-enforcement-liaison")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mutual Legal Assistance (MLA) Guide */}
+            {superToolsTab === "mutual-legal-assistance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🌐 Mutual Legal Assistance (MLA) Guide</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.37/40 · MLAT treaties</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requesting Country</label><input value={ntIn("requestingCountry")} onChange={e => { if (superToolsTab !== "mutual-legal-assistance") { setNt({}); setNtResult(null); } ntSet("requestingCountry", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country making MLA request" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requested Country</label><input value={ntIn("requestedCountry")} onChange={e => ntSet("requestedCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country receiving request" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crime Type</label><input value={ntIn("crimeType")} onChange={e => ntSet("crimeType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Predicate offence" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Sought</label><input value={ntIn("evidenceSought")} onChange={e => ntSet("evidenceSought", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Evidence / information sought" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("mutual-legal-assistance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Asset Recovery Strategy */}
+            {superToolsTab === "asset-recovery" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">💰 Asset Recovery Strategy</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.38 · StAR Initiative</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Type</label><input value={ntIn("assetType")} onChange={e => { if (superToolsTab !== "asset-recovery") { setNt({}); setNtResult(null); } ntSet("assetType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of asset to recover" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Asset location jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Value</label><input value={ntIn("estimatedValue")} onChange={e => ntSet("estimatedValue", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Asset value (USD)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</label><input value={ntIn("legalBasis")} onChange={e => ntSet("legalBasis", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Recovery legal basis" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("asset-recovery")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Civil / Criminal Forfeiture Analysis */}
+            {superToolsTab === "forfeiture-analysis" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">⚖️ Civil / Criminal Forfeiture Analysis</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE AML law Art.19 · FATF R.4</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Description</label><input value={ntIn("assetDescription")} onChange={e => { if (superToolsTab !== "forfeiture-analysis") { setNt({}); setNtResult(null); } ntSet("assetDescription", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Asset to be forfeited" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Link to Crime</label><input value={ntIn("linkToCrime")} onChange={e => ntSet("linkToCrime", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Crime-asset nexus" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Forfeiture jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner Defence</label><input value={ntIn("ownerDefence")} onChange={e => ntSet("ownerDefence", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anticipated owner defences" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("forfeiture-analysis")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Whistleblower Protection Assessment */}
+            {superToolsTab === "whistleblower-protect" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🔔 Whistleblower Protection Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree Law · FATF</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Report Type</label><input value={ntIn("reportType")} onChange={e => { if (superToolsTab !== "whistleblower-protect") { setNt({}); setNtResult(null); } ntSet("reportType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of report" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporter Exposure</label><input value={ntIn("reporterExposure")} onChange={e => ntSet("reporterExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Whistleblower exposure level" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Channel Used</label><input value={ntIn("channelUsed")} onChange={e => ntSet("channelUsed", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Reporting channel" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Protection Needed</label><input value={ntIn("protectionNeeded")} onChange={e => ntSet("protectionNeeded", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Required protections" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("whistleblower-protect")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AML RegTech Assessment */}
+            {superToolsTab === "regtech-assessment" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🤖 AML RegTech Assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID · MAS TRM</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Tool Type</label><input value={ntIn("toolType")} onChange={e => { if (superToolsTab !== "regtech-assessment") { setNt({}); setNtResult(null); } ntSet("toolType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. transaction monitoring, KYC, sanctions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vendor</label><input value={ntIn("vendor")} onChange={e => ntSet("vendor", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Technology vendor name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Data Inputs</label><input value={ntIn("dataInputs")} onChange={e => ntSet("dataInputs", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Required data inputs" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Fit</label><input value={ntIn("regulatoryFit")} onChange={e => ntSet("regulatoryFit", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Regulatory alignment assessment" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("regtech-assessment")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AML Innovation / Technology Roadmap */}
+            {superToolsTab === "aml-innovation" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">🚀 AML Innovation / Technology Roadmap</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Fintech guidance · CBUAE</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Size</label><input value={ntIn("institutionSize")} onChange={e => { if (superToolsTab !== "aml-innovation") { setNt({}); setNtResult(null); } ntSet("institutionSize", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. large bank, mid-tier, VASP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Current Tech</label><input value={ntIn("currentTech")} onChange={e => ntSet("currentTech", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Current AML technology stack" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gaps</label><input value={ntIn("gaps")} onChange={e => ntSet("gaps", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Identified technology gaps" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Budget</label><input value={ntIn("budget")} onChange={e => ntSet("budget", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Available investment budget" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNt("aml-innovation")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
+                {ntResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(ntResult["riskRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ntResult["riskRating"]) === "critical" || String(ntResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ntResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ntResult["riskRating"])} Risk</span>{Boolean(ntResult["riskScore"]) && <span className="text-24 font-black text-ink-0">{String(ntResult["riskScore"])}<span className="text-12 font-normal text-ink-3">/100</span></span>}</div>}
+                    {Boolean(ntResult["summary"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(ntResult["summary"])}</p>}
+                    {Array.isArray(ntResult["findings"]) && ntResult["findings"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Findings</div><ul className="space-y-1">{(ntResult["findings"] as string[]).map((f,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">&#9658;</span>{f}</li>)}</ul></div>}
+                    {Array.isArray(ntResult["recommendations"]) && ntResult["recommendations"].length > 0 && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ol className="space-y-1">{(ntResult["recommendations"] as string[]).map((r,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand font-mono shrink-0">{i+1}.</span>{r}</li>)}</ol></div>}
+                    {Boolean(ntResult["regulatoryBasis"]) && <div className="text-11 font-mono text-ink-3 border-t border-hair-2 pt-2 mt-2">{String(ntResult["regulatoryBasis"])}</div>}
+                  </div>
+                )}
               </div>
             )}
 
