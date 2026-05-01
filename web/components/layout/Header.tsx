@@ -266,18 +266,6 @@ export function Header() {
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
           <NotificationBell />
           <HeaderUserCard />
-          <select
-            value={locale}
-            onChange={(e) => pickLocale(e.target.value as Locale)}
-            className="bg-transparent border border-hair-2 rounded px-1.5 py-0.5 text-10.5 text-ink-1"
-            title="Language"
-          >
-            {LOCALES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </select>
           <button
             type="button"
             onClick={toggleTheme}

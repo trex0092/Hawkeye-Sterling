@@ -407,7 +407,6 @@ export default function RegChangePage() {
                 placeholder="e.g. Gold trading, Crypto custody"
                 className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
               />
-              <button type="button" onClick={addProduct} className="px-3 text-12 font-semibold bg-brand text-white rounded hover:bg-brand/90">Add</button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {products.map((p) => (
@@ -429,7 +428,6 @@ export default function RegChangePage() {
                 placeholder="e.g. Retail, Corporate, PEP"
                 className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
               />
-              <button type="button" onClick={addClientType} className="px-3 text-12 font-semibold bg-brand text-white rounded hover:bg-brand/90">Add</button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {clientTypes.map((c) => (

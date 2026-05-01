@@ -1118,21 +1118,6 @@ export default function ShipmentsPage() {
         ]}
       />
 
-      {deletedIds.length > 0 && (
-        <div className="mb-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">
-          <div className="font-mono text-10 text-amber">
-            {deletedIds.length} consignment
-            {deletedIds.length === 1 ? "" : "s"} hidden from the seeded register
-          </div>
-          <button
-            type="button"
-            onClick={onRestoreAll}
-            className="font-mono text-10 uppercase tracking-wide-3 px-2 py-1 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors"
-          >
-            Restore all
-          </button>
-        </div>
-      )}
 
       {showAdd ? (
         <AddShipmentForm onAdd={onAddRow} onCancel={() => setShowAdd(false)} />
