@@ -3,16 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { USERS, type UserRole } from "../users/route";
-import { PERMISSION_LOG } from "../permission-log/route";
-
-const ROLE_MODULES: Record<UserRole, string[]> = {
-  viewer: ["Screening", "Audit Trail"],
-  analyst: ["Screening", "STR Cases", "Investigation", "Audit Trail"],
-  supervisor: ["Screening", "STR Cases", "MLRO Advisor", "Oversight", "Investigation", "Audit Trail", "EWRA", "Playbook"],
-  mlro: ["Screening", "STR Cases", "MLRO Advisor", "Oversight", "Responsible AI", "EWRA", "Playbook", "Investigation", "Audit Trail"],
-  admin: ["Screening", "STR Cases", "MLRO Advisor", "Oversight", "Responsible AI", "EWRA", "Playbook", "Investigation", "Audit Trail", "Access Control"],
-};
+import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
   "viewer→analyst": "Promotion to Analyst grants read/write access to STR Cases and Investigation modules. The user can now draft and submit STR filings. Risk: ensure the user has completed mandatory AML training before activation.",
@@ -42,14 +33,8 @@ export async function POST(req: Request) {
   const user = USERS[userIdx]!;
   const oldRole = user.role;
 
-  // Update user role and modules
-  USERS[userIdx] = {
-    ...user,
-    role: newRole,
-    modules: ROLE_MODULES[newRole] ?? user.modules,
-  };
+  USERS[userIdx] = { ...user, role: newRole, modules: ROLE_MODULES[newRole] ?? user.modules };
 
-  // Log the change
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
     timestamp: new Date().toISOString(),
@@ -63,7 +48,6 @@ export async function POST(req: Request) {
   };
   PERMISSION_LOG.push(logEntry);
 
-  // Generate AI impact assessment with prompt caching
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   let impactAssessment = FALLBACK_ASSESSMENT[`${oldRole}→${newRole}`] ?? FALLBACK_ASSESSMENT["default"]!;
 
@@ -94,10 +78,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({
-    ok: true,
-    user: USERS[userIdx],
-    logEntry,
-    impactAssessment,
-  });
+  return NextResponse.json({ ok: true, user: USERS[userIdx], logEntry, impactAssessment });
 }

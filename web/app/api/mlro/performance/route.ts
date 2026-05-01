@@ -60,7 +60,8 @@ async function handleGet(req: Request): Promise<NextResponse> {
   // Cold-start hydration from Blobs — idempotent after first call.
   await hydrateJournalFromBlobs();
 
-  const all = (getJournal().list() as Array<{ at: string; reviewerId: string; groundTruth: string; modeIds?: string[] }>).filter((r) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const all = (getJournal().list() as any[]).filter((r: any) => {
     const t = Date.parse(r.at);
     if (Number.isNaN(t)) return true;
     if (t < since) return false;
@@ -71,7 +72,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   // Per-reviewer aggregation. Build a private journal per reviewer to
   // reuse the existing agreement() analytics + bias signals.
-  const byReviewer = new Map<string, OutcomeRecord[]>();
+  const byReviewer = new Map<string, any[]>();
   for (const r of all) {
     const arr = byReviewer.get(r.reviewerId);
     if (arr) arr.push(r);
@@ -81,7 +82,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const perReviewer: PerReviewerRow[] = [];
   for (const [reviewerId, recs] of byReviewer) {
     const sub = new OutcomeFeedbackJournal();
-    for (const r of recs) sub.record(r);
+    for (const r of recs) sub.record(r as OutcomeRecord);
     const ag = sub.agreement();
     const topOverrideCodes = Object.entries(ag.overrideRateByCode as Record<string, { total: number; rate: number }>)
       .map(([code, v]) => ({ code, total: v.total, rate: v.rate }))
@@ -105,7 +106,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   // Across-population bias signals (reuse the journal's own analytics).
   const populationJournal = new OutcomeFeedbackJournal();
-  for (const r of all) populationJournal.record(r);
+  for (const r of all) populationJournal.record(r as OutcomeRecord);
   const populationAgreement = populationJournal.agreement();
 
   return NextResponse.json(

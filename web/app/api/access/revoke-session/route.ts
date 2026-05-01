@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { USERS } from "../users/route";
-import { PERMISSION_LOG } from "../permission-log/route";
+import { USERS, PERMISSION_LOG } from "../_store";
 
 export async function POST(req: Request) {
   let body: { userId: string; reason: string; revokedBy?: string };
