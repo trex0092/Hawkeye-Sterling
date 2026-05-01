@@ -442,6 +442,10 @@ export default function AccessControlPage() {
   const [selectedUser, setSelectedUser] = useState<AccessUser | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", email: "", role: "analyst" as UserRole });
+  const [addingUser, setAddingUser] = useState(false);
+  const [addError, setAddError] = useState("");
 
   // Load from localStorage or API
   const fetchUsers = useCallback(async () => {
@@ -499,6 +503,33 @@ export default function AccessControlPage() {
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     setSelectedUser(updated);
     void fetchLog();
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError("");
+    if (!addForm.name.trim() || !addForm.email.trim()) {
+      setAddError("Name and email are required.");
+      return;
+    }
+    setAddingUser(true);
+    try {
+      const resp = await fetch("/api/access/add-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addForm),
+      });
+      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string };
+      if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
+      if (data.user) setUsers((prev) => [...prev, data.user!]);
+      setAddForm({ name: "", email: "", role: "analyst" });
+      setShowAddForm(false);
+      void fetchLog();
+    } catch {
+      setAddError("Network error — please try again.");
+    } finally {
+      setAddingUser(false);
+    }
   };
 
   const handleRevokeSession = async (session: Session) => {
@@ -565,7 +596,75 @@ export default function AccessControlPage() {
             <h2 className="text-14 font-semibold text-ink-0">
               {loadingUsers ? "Loading users…" : `${users.length} users`}
             </h2>
+            <button
+              type="button"
+              onClick={() => { setShowAddForm((v) => !v); setAddError(""); }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 transition-colors"
+            >
+              <span className="text-14 leading-none">+</span> Add user
+            </button>
           </div>
+
+          {/* Add User form */}
+          {showAddForm && (
+            <form onSubmit={(e) => { void handleAddUser(e); }} className="mb-5 border border-hair-2 rounded-md p-4 bg-bg-1">
+              <h3 className="text-13 font-semibold text-ink-0 mb-3">Add new user</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Full name</label>
+                  <input
+                    type="text"
+                    required
+                    value={addForm.name}
+                    onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Sara Al Maktoum"
+                    className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-1.5 text-12 text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={addForm.email}
+                    onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="e.g. s.almaktoum@hawkeyesterling.ae"
+                    className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-1.5 text-12 text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Role</label>
+                  <select
+                    value={addForm.role}
+                    onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value as UserRole }))}
+                    className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {addError && <p className="text-11 text-red mb-2">{addError}</p>}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={addingUser}
+                  className="px-4 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 disabled:opacity-50 transition-colors"
+                >
+                  {addingUser ? "Adding…" : "Add user"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "analyst" }); }}
+                  className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
           <div className="border border-hair-2 rounded-md overflow-hidden">
             <table className="w-full text-12">
               <thead>

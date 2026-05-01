@@ -298,19 +298,35 @@ export function Header() {
 
 function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const alerts = [
+  const [pos, setPos] = useState<{ right: number; top: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [alerts, setAlerts] = useState([
     { id: 1, text: "SLA breach — APV-2025-0081 awaiting second sign-off", time: "2m ago", read: false },
     { id: 2, text: "EWRA annual review due — FDL 10/2025 Art.4", time: "1h ago", read: false },
     { id: 3, text: "New FATF grey-list update — 3 jurisdictions affected", time: "3h ago", read: true },
     { id: 4, text: "goAML submission window closes in 12 days", time: "5h ago", read: true },
-  ];
+  ]);
   const unread = alerts.filter((a) => !a.read).length;
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ right: window.innerWidth - rect.right, top: rect.bottom + 6 });
+    }
+    setOpen((v) => !v);
+  };
+
+  const markAllRead = () => {
+    setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
+    setOpen(false);
+  };
 
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleOpen}
         className="relative p-1 rounded hover:bg-bg-2 transition-colors"
         aria-label="Notifications"
         title="Notifications"
@@ -325,10 +341,13 @@ function NotificationBell() {
           </span>
         )}
       </button>
-      {open && (
+      {open && pos && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1.5 z-50 w-72 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div
+            className="fixed z-50 w-72 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden"
+            style={{ right: pos.right, top: pos.top }}
+          >
             <div className="px-3 py-2 border-b border-hair-2 flex items-center justify-between">
               <span className="text-11 font-semibold text-ink-0">Notifications</span>
               {unread > 0 && (
@@ -352,7 +371,7 @@ function NotificationBell() {
               ))}
             </div>
             <div className="px-3 py-2 border-t border-hair-2 bg-bg-1">
-              <button type="button" onClick={() => setOpen(false)} className="text-10 text-ink-3 hover:text-brand underline">
+              <button type="button" onClick={markAllRead} className="text-10 text-ink-3 hover:text-brand underline">
                 Mark all read
               </button>
             </div>

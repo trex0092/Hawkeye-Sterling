@@ -329,14 +329,14 @@ export async function POST(req: Request) {
       : "";
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2000,
       system: [
         {
           type: "text",
           text:
             TYPOLOGY_KNOWLEDGE_BASE +
-            `\n\nReturn ONLY valid JSON with this exact structure (no markdown fences):\n{\n  "results": [\n    {\n      "id": "CATEGORY-NNN",\n      "name": "string",\n      "category": "string",\n      "description": "string",\n      "redFlags": ["string"],\n      "realWorldExample": "string",\n      "fatfRef": "string",\n      "riskLevel": "low"|"medium"|"high"|"critical",\n      "sectors": ["string"],\n      "jurisdictions": ["string"],\n      "relatedTypologies": ["string"],\n      "detectionMethods": ["string"],\n      "regulatoryResponse": "string"\n    }\n  ],\n  "totalFound": number,\n  "relatedCategories": ["string"]\n}\n\nReturn 5-10 most relevant typologies. Be comprehensive and expert-level.`,
+            `\n\nReturn ONLY valid JSON with this exact structure (no markdown fences):\n{\n  "results": [\n    {\n      "id": "CATEGORY-NNN",\n      "name": "string",\n      "category": "string",\n      "description": "string",\n      "redFlags": ["string"],\n      "realWorldExample": "string",\n      "fatfRef": "string",\n      "riskLevel": "low"|"medium"|"high"|"critical",\n      "sectors": ["string"],\n      "jurisdictions": ["string"],\n      "relatedTypologies": ["string"],\n      "detectionMethods": ["string"],\n      "regulatoryResponse": "string"\n    }\n  ],\n  "totalFound": number,\n  "relatedCategories": ["string"]\n}\n\nReturn 3-5 most relevant typologies. Be concise and expert-level.`,
           cache_control: { type: "ephemeral" },
         },
       ],
@@ -346,7 +346,7 @@ export async function POST(req: Request) {
           content: `Search query: "${body.query ?? ""}"
 ${filterStr}
 
-Find the most relevant AML/CFT typologies matching this search. Return comprehensive detail for each typology.`,
+Find the most relevant AML/CFT typologies matching this search. Return structured JSON only.`,
         },
       ],
     });
