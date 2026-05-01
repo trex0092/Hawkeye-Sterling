@@ -47,11 +47,41 @@ const inputCls = "flex-1 px-3 py-2 border border-hair-2 rounded text-13 font-mon
 const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
 const cardCls = "border border-hair-2 rounded-lg p-4";
 
+interface CryptoThreat {
+  complianceVerdict: "block" | "escalate" | "enhanced_kyc" | "monitor" | "clear";
+  fatfR15Exposure: string;
+  varaUaeRelevance: string;
+  sanctionsNexus: string;
+  typologies: string[];
+  narrative: string;
+  requiredActions: string[];
+  reportingObligation: boolean;
+  reportingBasis: string;
+}
+
 export default function CryptoRiskPage() {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<WalletRisk | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [threat, setThreat] = useState<CryptoThreat | null>(null);
+  const [threatLoading, setThreatLoading] = useState(false);
+
+  const analyzeWalletThreat = async (w: WalletRisk) => {
+    setThreatLoading(true);
+    setThreat(null);
+    try {
+      const res = await fetch("/api/crypto-threat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ address: w.address, chain: w.chain, riskScore: w.riskScore, riskLevel: w.riskLevel, riskCategory: w.riskCategory, exposure: w.exposure, labels: w.labels, taintedTransactions: w.taintedTransactions, totalTransactions: w.totalTransactions }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & CryptoThreat;
+      if (data.ok) setThreat(data);
+    } catch { /* silent */ }
+    finally { setThreatLoading(false); }
+  };
 
   async function score() {
     if (!address.trim()) return;
@@ -72,6 +102,7 @@ export default function CryptoRiskPage() {
   return (
     <ModuleLayout asanaModule="crypto-risk" asanaLabel="Crypto Risk" engineLabel="Crypto Risk">
       <ModuleHero
+        moduleNumber={37}
         eyebrow="Module · Crypto AML"
         title="Crypto wallet"
         titleEm="risk."
@@ -179,6 +210,41 @@ export default function CryptoRiskPage() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {result && result.ok && (
+          <div className="mt-4">
+            <button type="button" onClick={() => void analyzeWalletThreat(result)} disabled={threatLoading}
+              className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+              {threatLoading ? "Analyzing…" : "AI Blockchain Threat Analysis"}
+            </button>
+            {threat && (() => {
+              const vCls = threat.complianceVerdict === "block" ? "bg-red text-white" : threat.complianceVerdict === "escalate" ? "bg-red-dim text-red" : threat.complianceVerdict === "enhanced_kyc" ? "bg-amber-dim text-amber" : threat.complianceVerdict === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
+              return (
+                <div className="mt-3 bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${vCls}`}>{threat.complianceVerdict.replace(/_/g," ")}</span>
+                    {threat.reportingObligation && <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">STR REQUIRED</span>}
+                  </div>
+                  <p className="text-12 text-ink-0 leading-relaxed">{threat.narrative}</p>
+                  {threat.typologies.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">{threat.typologies.map((t, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{t}</span>)}</div>
+                  )}
+                  {threat.sanctionsNexus && <div className="text-11 text-red">{threat.sanctionsNexus}</div>}
+                  <div className="grid grid-cols-2 gap-2 text-10 font-mono text-ink-3">
+                    {threat.fatfR15Exposure && <div>{threat.fatfR15Exposure}</div>}
+                    {threat.varaUaeRelevance && <div>{threat.varaUaeRelevance}</div>}
+                  </div>
+                  {threat.requiredActions.length > 0 && (
+                    <ul className="text-11 text-ink-1 list-disc list-inside space-y-0.5">{threat.requiredActions.map((a, i) => <li key={i}>{a}</li>)}</ul>
+                  )}
+                  {threat.reportingObligation && threat.reportingBasis && (
+                    <div className="text-10 font-mono text-red">{threat.reportingBasis}</div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

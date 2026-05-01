@@ -206,6 +206,25 @@ export default function TrainingPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState(BLANK);
 
+  // Annual Programme state (mutable overlay over static data)
+  const [progRows, setProgRows] = useState<ProgrammeSession[]>(() => [...ANNUAL_PROGRAMME]);
+  const [progEditingSession, setProgEditingSession] = useState<number | null>(null);
+  const [progEditDraft, setProgEditDraft] = useState<Partial<ProgrammeSession>>({});
+
+  const startProgEdit = (s: ProgrammeSession) => {
+    setProgEditingSession(s.session);
+    setProgEditDraft({ ...s });
+  };
+  const saveProgEdit = () => {
+    if (progEditingSession === null) return;
+    setProgRows((prev) => prev.map((s) => s.session === progEditingSession ? { ...s, ...progEditDraft } as ProgrammeSession : s));
+    setProgEditingSession(null);
+    setProgEditDraft({});
+  };
+  const deleteProgRow = (session: number) => {
+    setProgRows((prev) => prev.filter((s) => s.session !== session));
+  };
+
   useEffect(() => {
     setRows(load());
   }, []);
@@ -268,6 +287,7 @@ export default function TrainingPage() {
   return (
     <ModuleLayout asanaModule="training" asanaLabel="Training">
       <ModuleHero
+          moduleNumber={18}
           eyebrow="Module 15 · Staff certification"
           title="Training"
           titleEm="log."
@@ -426,13 +446,37 @@ export default function TrainingPage() {
                       <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-44">Training Activities</th>
                       <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-40">Regulatory Basis</th>
                       <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-28">Status</th>
+                      <th className="w-[48px]" />
                     </tr>
                   </thead>
                   <tbody>
-                    {ANNUAL_PROGRAMME.map((s, i) => {
-                      const isLast = i === ANNUAL_PROGRAMME.length - 1;
-                      const isMonthStart = i === 0 || ANNUAL_PROGRAMME[i - 1]?.month !== s.month;
-                      return (
+                    {progRows.map((s, i) => {
+                      const isLast = i === progRows.length - 1;
+                      const isMonthStart = i === 0 || progRows[i - 1]?.month !== s.month;
+                      const editing = progEditingSession === s.session;
+                      return editing ? (
+                        <tr key={s.session} className="border-b border-hair bg-bg-1">
+                          <td colSpan={11} className="px-3 py-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                              <input value={progEditDraft.subject ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, subject: e.target.value }))} placeholder="Subject" className="col-span-2 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded text-ink-0" />
+                              <input value={progEditDraft.dateWeek ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, dateWeek: e.target.value }))} placeholder="Date / Week" className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0 font-mono" />
+                              <input value={String(progEditDraft.durationHrs ?? "")} onChange={(e) => setProgEditDraft((d) => ({ ...d, durationHrs: Number(e.target.value) }))} placeholder="Hrs" type="number" min={0} step={0.5} className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0 font-mono" />
+                              <input value={progEditDraft.audience ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, audience: e.target.value }))} placeholder="Audience" className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0" />
+                              <input value={progEditDraft.activities ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, activities: e.target.value }))} placeholder="Activities" className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0" />
+                              <input value={progEditDraft.regulatoryBasis ?? ""} onChange={(e) => setProgEditDraft((d) => ({ ...d, regulatoryBasis: e.target.value }))} placeholder="Regulatory Basis" className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0 font-mono" />
+                              <select value={progEditDraft.status ?? "planned"} onChange={(e) => setProgEditDraft((d) => ({ ...d, status: e.target.value as ProgrammeStatus }))} className="px-2 py-1 text-11 bg-bg-0 border border-hair-2 rounded text-ink-0">
+                                <option value="completed">Completed</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="planned">Planned</option>
+                              </select>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={saveProgEdit} className="text-11 px-3 py-1 bg-brand text-white rounded font-semibold hover:bg-brand-hover">Save</button>
+                              <button type="button" onClick={() => { setProgEditingSession(null); setProgEditDraft({}); }} className="text-11 px-3 py-1 border border-hair-2 rounded text-ink-2 hover:text-ink-0">Cancel</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
                         <tr
                           key={s.session}
                           className={[
@@ -441,9 +485,7 @@ export default function TrainingPage() {
                           ].join(" ")}
                         >
                           <td className="px-3 py-2 font-mono text-10 text-ink-3">{s.session}</td>
-                          <td className="px-3 py-2 text-11 text-ink-2 font-medium">
-                            {isMonthStart ? s.month : ""}
-                          </td>
+                          <td className="px-3 py-2 text-11 text-ink-2 font-medium">{isMonthStart ? s.month : ""}</td>
                           <td className="px-3 py-2 font-mono text-11 text-ink-2">{s.dateWeek}</td>
                           <td className="px-3 py-2 text-ink-0 font-medium">{s.subject}</td>
                           <td className="px-3 py-2 font-mono text-11 text-ink-2 text-center">{s.durationHrs}</td>
@@ -455,6 +497,14 @@ export default function TrainingPage() {
                             <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold whitespace-nowrap ${PROG_STATUS_TONE[s.status]}`}>
                               {PROG_STATUS_LABEL[s.status]}
                             </span>
+                          </td>
+                          <td className="px-2 py-2 text-right">
+                            <RowActions
+                              label={`session ${s.session}`}
+                              onEdit={() => startProgEdit(s)}
+                              onDelete={() => deleteProgRow(s.session)}
+                              confirmDelete={false}
+                            />
                           </td>
                         </tr>
                       );

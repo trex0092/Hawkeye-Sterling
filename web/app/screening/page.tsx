@@ -24,6 +24,7 @@ import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
 import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
 import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
 import { AmLanguageBreakdown } from "@/components/screening/AmLanguageBreakdown";
+import { ComparePanel } from "@/components/screening/ComparePanel";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 
@@ -95,6 +96,8 @@ const ADVERSE_SEV_STYLE: Record<string, string> = {
   low:      "bg-amber-dim text-amber",
   clear:    "bg-green-dim text-green",
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -540,6 +543,17 @@ export default function ScreeningPage() {
   // Hydrate column visibility from localStorage after mount.
   useEffect(() => { setColumns(loadColumnVisibility()); }, []);
 
+  // Side-by-side compare — up to 2 subject IDs
+  const [compareIds, setCompareIds] = useState<ReadonlySet<string>>(new Set());
+
+  // Natural language search
+  const [nlSearchActive, setNlSearchActive] = useState(false);
+  const [nlSearchLoading, setNlSearchLoading] = useState(false);
+  const [nlMatchIds, setNlMatchIds] = useState<ReadonlySet<string> | null>(null);
+  const [nlInterpretation, setNlInterpretation] = useState<string>("");
+  const [nlConfidence, setNlConfidence] = useState<number>(0);
+  const [nlReasoning, setNlReasoning] = useState<string>("");
+
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -571,6 +585,10 @@ export default function ScreeningPage() {
   const dynamicFilters = useMemo(() => computeDynamicFilters(subjects), [subjects]);
 
   const filtered = useMemo(() => {
+    // NL search overrides normal filtering pipeline
+    if (nlMatchIds !== null) {
+      return subjects.filter((s) => nlMatchIds.has(s.id));
+    }
     // Snoozed subjects drop out of the active queue until their `until`
     // timestamp passes. Showing them under "Closed" lets the analyst
     // still find them — that view is intentionally inclusive.
@@ -626,7 +644,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter]);
+  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter, nlMatchIds]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -717,6 +735,69 @@ export default function ScreeningPage() {
     writeAuditEvent("analyst", "bulk.deleted", `${selectedRowIds.size} subjects`);
     setSelectedRowIds(new Set());
   }, [selectedRowIds]);
+
+  const toggleCompare = useCallback((id: string) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < 2) {
+        next.add(id);
+      } else {
+        // Already have 2 — swap out the oldest (first) and add the new one
+        const [first] = next;
+        if (first !== undefined) next.delete(first);
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleNLSearch = useCallback(async (q: string) => {
+    if (!q.trim()) return;
+    setNlSearchLoading(true);
+    try {
+      const slim = subjects.map((s) => ({
+        id: s.id,
+        name: s.name,
+        meta: s.meta,
+        country: s.country,
+        jurisdiction: s.jurisdiction,
+        entityType: s.entityType,
+        riskScore: s.riskScore,
+        cddPosture: s.cddPosture,
+        listCoverage: s.listCoverage,
+        status: s.status,
+        pep: s.pep ?? null,
+        adverseMedia: s.adverseMedia ?? null,
+        aliases: s.aliases ?? [],
+      }));
+      const res = await fetch("/api/cases/nl-search", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query: q, subjects: slim }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { ok: boolean; matchIds?: string[]; interpretation?: string; confidence?: number; reasoning?: string };
+        if (data.ok && data.matchIds) {
+          setNlMatchIds(new Set(data.matchIds));
+          setNlInterpretation(data.interpretation ?? q);
+          setNlConfidence(typeof data.confidence === "number" ? data.confidence : 0);
+          setNlReasoning(data.reasoning ?? "");
+          setNlSearchActive(true);
+        }
+      }
+    } catch { /* keep current state */ }
+    finally { setNlSearchLoading(false); }
+  }, [subjects]);
+
+  const clearNLSearch = useCallback(() => {
+    setNlSearchActive(false);
+    setNlMatchIds(null);
+    setNlInterpretation("");
+    setNlConfidence(0);
+    setNlReasoning("");
+  }, []);
 
   // Export the filtered queue as a CSV the user downloads. Lets the
   // weekly MLRO pack go out without a server round-trip.
@@ -1102,7 +1183,7 @@ export default function ScreeningPage() {
           <ScreeningToolbar
             ref={searchInputRef}
             query={query}
-            onQueryChange={setQuery}
+            onQueryChange={(v) => { setQuery(v); if (nlSearchActive && !v) clearNLSearch(); }}
             onNewScreening={() => setFormOpen((o) => !o)}
             sortKey={sortKey}
             sortDir={sortDir}
@@ -1115,6 +1196,10 @@ export default function ScreeningPage() {
             onExport={exportFilteredCsv}
             onAiFilter={handleAiFilter}
             aiFilterLabel={aiFilterLabel}
+            onNLSearch={(q) => { void handleNLSearch(q); }}
+            nlSearchActive={nlSearchActive}
+            onNLSearchClear={clearNLSearch}
+            nlSearchLoading={nlSearchLoading}
           />
 
           <div className="mb-3">
@@ -1145,6 +1230,30 @@ export default function ScreeningPage() {
               />
             </div>
           )}
+
+          {/* NL search result banner */}
+          {nlSearchActive && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 px-4 py-2.5 bg-amber-dim border border-amber/30 rounded-lg text-12">
+              <span className="text-amber font-semibold">✦ AI search</span>
+              <span className={`text-11 font-mono px-1.5 rounded ${nlConfidence >= 0.8 ? "bg-green-dim text-green" : nlConfidence >= 0.5 ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>
+                {(nlConfidence * 100).toFixed(0)}% confident
+              </span>
+              <span className="text-ink-1 flex-1">{nlInterpretation}</span>
+              {nlReasoning && <span className="text-10 text-ink-3 font-mono w-full">{nlReasoning}</span>}
+              <span className="text-ink-2">{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
+              <button type="button" onClick={clearNLSearch} className="text-ink-3 hover:text-ink-0 text-12">✕ clear</button>
+            </div>
+          )}
+
+          {/* Compare button when 2 subjects selected */}
+          {compareIds.size === 2 && (
+            <div className="mb-3 flex items-center gap-3 px-4 py-2 bg-bg-panel border border-brand/30 rounded-lg text-12">
+              <span className="text-brand font-semibold">⇔ Compare mode</span>
+              <span className="text-ink-2">2 subjects selected — side-by-side comparison active</span>
+              <button type="button" onClick={() => setCompareIds(new Set())} className="ml-auto text-11 text-ink-3 hover:text-ink-0">✕ clear</button>
+            </div>
+          )}
+
           <ScreeningTable
             subjects={filtered}
             columns={columns}
@@ -1159,21 +1268,43 @@ export default function ScreeningPage() {
             onSortChange={handleSortChange}
             pendingIds={pendingIds}
             errorIds={errorIds}
+            compareIds={compareIds}
+            onToggleCompare={toggleCompare}
           />
         </main>
 
-        {selected && !formOpen ? (
-          <SubjectDetailPanel
-            subject={selected}
-            onUpdate={handleUpdateSubject}
-            allSubjects={subjects}
-            onSelectSubject={setSelectedId}
-          />
-        ) : (
-          <aside className="border-l border-[#ec4899] overflow-y-auto px-5 py-6">
-            <ActivityFeed />
-          </aside>
-        )}
+        {(() => {
+          if (compareIds.size === 2) {
+            const [idA, idB] = [...compareIds];
+            const subA = idA !== undefined ? subjects.find((s) => s.id === idA) : undefined;
+            const subB = idB !== undefined ? subjects.find((s) => s.id === idB) : undefined;
+            if (subA && subB) {
+              return (
+                <ComparePanel
+                  subjectA={subA}
+                  subjectB={subB}
+                  onClose={() => setCompareIds(new Set())}
+                  onSelect={(id) => { setSelectedId(id); setCompareIds(new Set()); }}
+                />
+              );
+            }
+          }
+          if (selected && !formOpen) {
+            return (
+              <SubjectDetailPanel
+                subject={selected}
+                onUpdate={handleUpdateSubject}
+                allSubjects={subjects}
+                onSelectSubject={setSelectedId}
+              />
+            );
+          }
+          return (
+            <aside className="border-l border-[#ec4899] overflow-y-auto px-5 py-6">
+              <ActivityFeed />
+            </aside>
+          );
+        })()}
       </div>}
 
       <BulkImportDialog

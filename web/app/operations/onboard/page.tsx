@@ -83,6 +83,17 @@ interface AdvisorResponseV1 {
   escalationPath: { responsible: string; accountable: string; consulted: string[]; informed: string[]; nextAction: string };
 }
 
+interface AdaptiveAnswers {
+  sowNarrative?: string;
+  sofDocumentation?: string;
+  cryptoVaspLicence?: string;
+  cryptoTravelRule?: string;
+  eddJustification?: string;
+  eddApprover?: string;
+  cahraOriginCert?: boolean;
+  cahraChainOfCustody?: string;
+}
+
 interface Draft {
   // Step 1: Entity (legal person / organisation / vessel — never natural)
   fullName: string;          // Entity legal name
@@ -93,9 +104,12 @@ interface Draft {
   occupation: string;        // Sector / business activity
   sourceOfFunds: string;
   expectedProfile: string;
-  // Step 3: Screening
+  // Step 3: Screening + adaptive questions
   screenedAt?: number;
   screeningHits?: ScreeningHit[];
+  firedRedlineIds?: string[];
+  mlroRedlineOverride?: boolean;
+  adaptiveAnswers?: AdaptiveAnswers;
   // Step 4: Risk-rate
   riskTier?: Tier;
   riskRationale?: string;
@@ -117,6 +131,71 @@ const BLANK_DRAFT: Draft = {
   sourceOfFunds: "",
   expectedProfile: "",
   mlroNote: "",
+};
+
+// CAHRA jurisdictions per UAE Cabinet Decision 74/2020 + OECD guidance
+const CAHRA_ISO2 = new Set(["CD", "CF", "ZW", "AF", "MM", "SD", "LY", "SO", "SS", "YE", "SL", "MZ"]);
+
+function isCahraJurisdiction(iso2: string): boolean {
+  return CAHRA_ISO2.has(iso2.trim().toUpperCase().slice(0, 2));
+}
+
+function isVaspOccupation(occupation: string): boolean {
+  return /\b(vasp|crypto|bitcoin|exchange|defi|blockchain|digital asset|virtual asset|nft|staking|lending platform)\b/i.test(occupation);
+}
+
+// Redline map — mirrors alerts-store for step-3 blocking
+const LIST_REDLINE_MAP: Record<string, string> = {
+  ofac_sdn:        "rl_ofac_sdn_confirmed",
+  un_1267:         "rl_un_consolidated_confirmed",
+  eu_consolidated: "rl_eu_cfsp_confirmed",
+  uk_ofsi:         "rl_uk_ofsi_confirmed",
+  uae_eocn:        "rl_eocn_confirmed",
+};
+
+const REDLINE_ANCHORS: Record<string, string> = {
+  rl_ofac_sdn_confirmed:        "OFAC 31 CFR §594 · FDL 10/2025 Art.22 · Cabinet Decision 133/2025",
+  rl_un_consolidated_confirmed: "UNSC Res.1267 consolidated list · Cabinet Decision 133/2025 Art.6",
+  rl_eu_cfsp_confirmed:         "EU CFSP Council Reg.2580/2001 · FDL 10/2025 Art.23",
+  rl_uk_ofsi_confirmed:         "UK OFSI consolidated list · SAMLIT TF guidance",
+  rl_eocn_confirmed:            "UAE EOCN list · Cabinet Decision 74/2021 · AML/CFT SRR",
+};
+
+interface DocCheckItem {
+  id: string;
+  label: string;
+  required: boolean;
+}
+
+const TIER_DOC_CHECKLISTS: Record<Tier, DocCheckItem[]> = {
+  "tier-1": [
+    { id: "cert_incorp",      label: "Certificate of incorporation (certified copy)",         required: true },
+    { id: "mem_articles",     label: "Memorandum & articles of association",                   required: true },
+    { id: "ubo_disclosure",   label: "UBO disclosure register (≥25% threshold — FDL 10/2025 Art.11)", required: true },
+    { id: "ubo_passport",     label: "Certified copies of each UBO's passport / EID",          required: true },
+    { id: "audited_accounts", label: "Audited financial statements (last 2 FY)",               required: true },
+    { id: "bank_ref",         label: "Bank reference letter (≤3 months old)",                  required: true },
+    { id: "sof_evidence",     label: "Source-of-funds documentary evidence",                    required: true },
+    { id: "sow_evidence",     label: "Source-of-wealth documentary evidence",                   required: true },
+    { id: "sanctions_cert",   label: "Self-certification: no undisclosed sanctions exposure",   required: true },
+    { id: "mlro_approval",    label: "Senior management / MLRO written sign-off",              required: true },
+  ],
+  "tier-2": [
+    { id: "cert_incorp",    label: "Certificate of incorporation",             required: true },
+    { id: "mem_articles",   label: "Memorandum & articles of association",     required: true },
+    { id: "ubo_disclosure", label: "UBO disclosure (≥25% threshold)",          required: true },
+    { id: "trade_licence",  label: "Trade licence or regulatory equivalent",    required: true },
+    { id: "bank_statement", label: "Bank statements (last 3 months)",           required: true },
+    { id: "sof_evidence",   label: "Source-of-funds evidence",                  required: true },
+    { id: "director_id",    label: "Director / authorised signatory ID",        required: true },
+    { id: "reg_filing",     label: "Latest regulatory filing / annual return",  required: false },
+  ],
+  "tier-3": [
+    { id: "cert_incorp",   label: "Certificate of incorporation",         required: true },
+    { id: "trade_licence", label: "Trade licence or equivalent",           required: true },
+    { id: "ubo_basic",     label: "Basic UBO identification",              required: true },
+    { id: "director_id",   label: "Director / authorised signatory ID",   required: true },
+  ],
 };
 
 const STORAGE_DRAFT = "hawkeye.onboarding.draft.v1";
@@ -257,6 +336,8 @@ function recordStepTransition(fromStep: Step, toStep: Step, draft: Draft): void 
     occupation: draft.occupation.slice(0, 80),
     screened: !!draft.screenedAt,
     hits: (draft.screeningHits ?? []).length,
+    firedRedlineIds: draft.firedRedlineIds ?? [],
+    mlroRedlineOverride: !!draft.mlroRedlineOverride,
     riskTier: draft.riskTier ?? null,
     manualOverride: !!draft.manualOverride,
   };
@@ -343,6 +424,8 @@ export default function OnboardingWizardPage() {
   const [tierInfo, setTierInfo] = useState<RiskTierResult | null>(null);
   const [tierLoading, setTierLoading] = useState(false);
   const [advisor, setAdvisor] = useState<{ inFlight: boolean; error?: string }>({ inFlight: false });
+  const [mlroRedlineOverride, setMlroRedlineOverride] = useState(false);
+  const [docChecks, setDocChecks] = useState<Record<string, boolean>>({});
   const draftRef = useRef(draft);
   draftRef.current = draft;
 
@@ -387,6 +470,11 @@ export default function OnboardingWizardPage() {
     draft.relationshipTypes,
   ]);
 
+  // Which redlines would fire based on current screening hits?
+  const firedRedlines = (draft.screeningHits ?? [])
+    .map((h) => LIST_REDLINE_MAP[h.listId])
+    .filter((r): r is string => r !== undefined);
+
   const can: Record<Step, boolean> = {
     1:
       draft.fullName.trim().length > 1 &&
@@ -394,7 +482,8 @@ export default function OnboardingWizardPage() {
       draft.idNumber.trim().length > 0 &&
       draft.relationshipTypes.length > 0,
     2: draft.occupation.trim().length > 0 && draft.sourceOfFunds.trim().length > 0,
-    3: !!draft.screenedAt,
+    // Blocked by unresolved redlines unless MLRO explicitly overrides
+    3: !!draft.screenedAt && (firedRedlines.length === 0 || mlroRedlineOverride),
     4: !!draft.riskTier,
     5: draft.mlroNote.trim().length > 0,
   };
@@ -467,7 +556,7 @@ export default function OnboardingWizardPage() {
   if (submitted) {
     return (
       <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
-        <ModuleHero eyebrow="Module · Onboarding Wizard" title="Subject" titleEm="onboarded." />
+        <ModuleHero moduleNumber={11} eyebrow="Module · Onboarding Wizard" title="Subject" titleEm="onboarded." />
         <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-6 text-center">
           <div className="text-14 font-semibold text-emerald-700 mb-2">
             ✓ Onboarding complete and signed off by MLRO
@@ -491,6 +580,7 @@ export default function OnboardingWizardPage() {
   return (
     <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
       <ModuleHero
+        moduleNumber={11}
         eyebrow="Module · Onboarding Wizard"
         title="Guided new-customer"
         titleEm="onboarding."
@@ -626,6 +716,148 @@ export default function OnboardingWizardPage() {
                 )}
               </div>
             )}
+
+            {/* Redline block — fires when any hit maps to a critical watchlist redline */}
+            {firedRedlines.length > 0 && (
+              <div className="mt-3 border-2 border-red rounded-lg p-4 bg-red-dim space-y-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-red font-bold text-13 leading-none mt-0.5">⛔</span>
+                  <div>
+                    <div className="text-13 font-bold text-red uppercase tracking-wide-2">
+                      CRITICAL REDLINE — Onboarding blocked
+                    </div>
+                    <div className="text-12 text-ink-0 mt-1">
+                      Screening hits fire {firedRedlines.length > 1 ? "the following redlines" : "a critical redline"}.
+                      Proceeding without MLRO override is a compliance breach.
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {firedRedlines.map((rid) => (
+                    <div key={rid} className="bg-bg-panel border border-red/40 rounded p-2">
+                      <div className="font-mono text-12 font-bold text-red">{rid}</div>
+                      <div className="text-10 font-mono text-ink-2 mt-0.5">
+                        {REDLINE_ANCHORS[rid] ?? "Regulatory anchor not mapped"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-2 border-t border-red/30">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={mlroRedlineOverride}
+                      onChange={(e) => setMlroRedlineOverride(e.target.checked)}
+                      className="mt-0.5 accent-red-600"
+                    />
+                    <span className="text-12 text-ink-0">
+                      <strong className="text-red">MLRO override:</strong>{" "}
+                      I confirm I have reviewed the above redline(s) and accept responsibility for proceeding.
+                      This override will be permanently recorded in the audit trail.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Adaptive risk-based questions — appear based on signals */}
+            {draft.screenedAt && (() => {
+              const hasHits = (draft.screeningHits ?? []).length > 0;
+              const isVasp = isVaspOccupation(draft.occupation);
+              const isCahra = isCahraJurisdiction(draft.registeredCountry);
+              const highRisk = hasHits || isCahra;
+              const showAny = hasHits || isVasp || isCahra;
+              if (!showAny) return null;
+              const aa: AdaptiveAnswers = draft.adaptiveAnswers ?? {};
+              const setAa = (patch: Partial<AdaptiveAnswers>) =>
+                setDraft((prev) => ({ ...prev, adaptiveAnswers: { ...(prev.adaptiveAnswers ?? {}), ...patch } }));
+              return (
+                <div className="mt-4 border border-amber-300 rounded-lg p-4 bg-amber-50 space-y-3">
+                  <div className="text-11 font-mono uppercase text-amber-700 font-semibold tracking-wide-2">
+                    ⚠ Enhanced Due Diligence questions — triggered by screening result
+                  </div>
+
+                  {hasHits && (
+                    <>
+                      <Field
+                        label="EDD justification — why should this entity proceed despite list hit(s)?"
+                        value={aa.eddJustification ?? ""}
+                        onChange={(v) => setAa({ eddJustification: v })}
+                        multiline
+                        placeholder="Explain basis for proceeding, legal opinion, regulator guidance, etc."
+                      />
+                      <Field
+                        label="EDD approver (name / title)"
+                        value={aa.eddApprover ?? ""}
+                        onChange={(v) => setAa({ eddApprover: v })}
+                        placeholder="Senior officer or MLRO name"
+                      />
+                    </>
+                  )}
+
+                  {(hasHits || highRisk) && (
+                    <>
+                      <Field
+                        label="Source of wealth — narrative detail (EDD depth required)"
+                        value={aa.sowNarrative ?? ""}
+                        onChange={(v) => setAa({ sowNarrative: v })}
+                        multiline
+                        placeholder="How was the entity's accumulated wealth generated? Who are the UBOs?"
+                      />
+                      <Field
+                        label="Source of funds documentation reference"
+                        value={aa.sofDocumentation ?? ""}
+                        onChange={(v) => setAa({ sofDocumentation: v })}
+                        placeholder="Invoice ref / bank cert / audited accounts / LEI etc."
+                      />
+                    </>
+                  )}
+
+                  {isVasp && (
+                    <>
+                      <div className="text-11 font-mono uppercase text-amber-700 font-semibold mt-2">VASP-specific questions (FDL 10/2025 Art.28)</div>
+                      <Field
+                        label="VASP licence number"
+                        value={aa.cryptoVaspLicence ?? ""}
+                        onChange={(v) => setAa({ cryptoVaspLicence: v })}
+                        placeholder="Regulatory licence or registration number"
+                      />
+                      <Field
+                        label="Travel Rule compliance status"
+                        value={aa.cryptoTravelRule ?? ""}
+                        onChange={(v) => setAa({ cryptoTravelRule: v })}
+                        placeholder="FATF Travel Rule compliant? Which protocol (TRUST, Sygna, OpenVASP)?"
+                      />
+                    </>
+                  )}
+
+                  {isCahra && (
+                    <>
+                      <div className="text-11 font-mono uppercase text-amber-700 font-semibold mt-2">CAHRA jurisdiction (Cabinet Decision 74/2020)</div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="cahra-cert"
+                          checked={aa.cahraOriginCert ?? false}
+                          onChange={(e) => setAa({ cahraOriginCert: e.target.checked })}
+                          className="accent-amber-600"
+                        />
+                        <label htmlFor="cahra-cert" className="text-12 text-ink-0">
+                          Chain-of-custody / origin certificate obtained
+                        </label>
+                      </div>
+                      <Field
+                        label="Supply chain description (CAHRA traceability)"
+                        value={aa.cahraChainOfCustody ?? ""}
+                        onChange={(v) => setAa({ cahraChainOfCustody: v })}
+                        multiline
+                        placeholder="Describe extraction site, smelters, couriers, intermediaries."
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -723,6 +955,80 @@ export default function OnboardingWizardPage() {
                 ✓ Tier {draft.riskTier} {draft.manualOverride ? "(manual override)" : "accepted"} — proceed to MLRO sign-off
               </div>
             )}
+
+            {/* Tier-driven document checklist */}
+            {(draft.riskTier ?? tierInfo?.tier) && (() => {
+              const activeTier = draft.riskTier ?? tierInfo?.tier ?? "tier-2";
+              const items = TIER_DOC_CHECKLISTS[activeTier];
+              const required = items.filter((i) => i.required);
+              const optional = items.filter((i) => !i.required);
+              const checkedRequired = required.filter((i) => docChecks[i.id]).length;
+              const tierLabel = activeTier === "tier-1" ? "EDD (Tier-1)" : activeTier === "tier-2" ? "Standard CDD (Tier-2)" : "Simplified CDD (Tier-3)";
+              return (
+                <div className="mt-4 border border-hair-2 rounded-lg p-4 bg-bg-1 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="text-11 font-mono uppercase text-ink-2 font-semibold tracking-wide-2">
+                      Document checklist — {tierLabel}
+                    </div>
+                    <span className={`text-10 font-mono font-semibold px-1.5 py-0.5 rounded border ${
+                      checkedRequired === required.length
+                        ? "text-green border-green/40 bg-green-dim"
+                        : "text-amber-700 border-amber-300 bg-amber-50"
+                    }`}>
+                      {checkedRequired}/{required.length} required
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {items.map((item) => (
+                      <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={docChecks[item.id] ?? false}
+                          onChange={(e) => setDocChecks((prev) => ({ ...prev, [item.id]: e.target.checked }))}
+                          className={`mt-0.5 ${item.required ? "accent-brand" : "accent-ink-2"}`}
+                        />
+                        <span className={`text-12 ${docChecks[item.id] ? "line-through text-ink-3" : "text-ink-0"}`}>
+                          {item.label}
+                          {item.required && <span className="ml-1 text-10 font-mono text-red">*</span>}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {optional.length > 0 && (
+                    <div className="text-10 font-mono text-ink-3 pt-1 border-t border-hair">
+                      * Required · unmarked items recommended but not blocking
+                    </div>
+                  )}
+                  {checkedRequired === required.length && (
+                    <div className="text-11 font-mono text-green">
+                      ✓ All required documents collected — CDD file complete for {tierLabel}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Show adaptive EDD answers as read-only context */}
+            {draft.adaptiveAnswers && Object.values(draft.adaptiveAnswers).some(Boolean) && (
+              <div className="mt-3 border border-amber-200 rounded p-3 bg-amber-50 text-12">
+                <div className="text-10 font-mono uppercase text-amber-700 mb-2">EDD answers from step 3</div>
+                {draft.adaptiveAnswers.eddJustification && (
+                  <div className="mb-1"><span className="text-ink-3">EDD justification:</span> {draft.adaptiveAnswers.eddJustification}</div>
+                )}
+                {draft.adaptiveAnswers.eddApprover && (
+                  <div className="mb-1"><span className="text-ink-3">Approver:</span> {draft.adaptiveAnswers.eddApprover}</div>
+                )}
+                {draft.adaptiveAnswers.sowNarrative && (
+                  <div className="mb-1"><span className="text-ink-3">SoW:</span> {draft.adaptiveAnswers.sowNarrative.slice(0, 120)}{draft.adaptiveAnswers.sowNarrative.length > 120 ? "…" : ""}</div>
+                )}
+                {draft.adaptiveAnswers.cryptoVaspLicence && (
+                  <div className="mb-1"><span className="text-ink-3">VASP licence:</span> {draft.adaptiveAnswers.cryptoVaspLicence}</div>
+                )}
+                {draft.adaptiveAnswers.cahraOriginCert && (
+                  <div className="mb-1">✓ CAHRA origin certificate obtained</div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -800,7 +1106,17 @@ export default function OnboardingWizardPage() {
           {step < 5 && (
             <button
               type="button"
-              onClick={() => setStep((Math.min(5, step + 1) as Step))}
+              onClick={() => {
+                // Persist redline override into draft before advancing from step 3
+                if (step === 3 && firedRedlines.length > 0) {
+                  setDraft((prev) => ({
+                    ...prev,
+                    firedRedlineIds: firedRedlines,
+                    mlroRedlineOverride: mlroRedlineOverride,
+                  }));
+                }
+                setStep((Math.min(5, step + 1) as Step));
+              }}
               disabled={!can[step]}
               className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >

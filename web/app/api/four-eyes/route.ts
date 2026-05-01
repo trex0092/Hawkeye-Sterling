@@ -45,6 +45,56 @@ function safeId(v: unknown): string | null {
   return s;
 }
 
+interface ApprovalSummary {
+  aiSummary: string;
+  aiRegulatoryAnchor: string;
+  aiRiskLevel: "critical" | "high" | "medium" | "low";
+}
+
+async function generateApprovalSummary(
+  action: string,
+  subjectName: string,
+  reason: string,
+  initiatedBy: string,
+): Promise<ApprovalSummary | null> {
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  if (!apiKey) return null;
+
+  const userContent = [
+    `Action: ${action}`,
+    `Subject: ${subjectName}`,
+    `Reason: ${reason}`,
+    `Initiated by: ${initiatedBy}`,
+  ].join("\n");
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 600,
+      system:
+        'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'FDL 10/2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.',
+      messages: [{ role: "user", content: userContent }],
+    }),
+  });
+
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    content?: { type: string; text: string }[];
+  };
+  const text = data?.content?.[0]?.text ?? "";
+
+  // Strip markdown fences before parsing
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  return JSON.parse(stripped) as ApprovalSummary;
+}
+
 async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const wantStatus = url.searchParams.get("status")?.trim();
@@ -90,8 +140,26 @@ async function handlePost(req: Request): Promise<NextResponse> {
     status: "pending",
     ...(stringField(raw["contextUrl"]) ? { contextUrl: stringField(raw["contextUrl"])! } : {}),
   };
-  await setJson(`four-eyes/${id}`, item);
-  return NextResponse.json({ ok: true, item });
+
+  // AI approval summary — enriches item before storage, graceful degradation
+  const aiEnrichment = await generateApprovalSummary(
+    item.action,
+    item.subjectName,
+    item.reason,
+    item.initiatedBy,
+  ).catch(() => null);
+
+  const enrichedItem: FourEyesItem & {
+    aiSummary?: string;
+    aiRegulatoryAnchor?: string;
+    aiRiskLevel?: string;
+  } = {
+    ...item,
+    ...(aiEnrichment ?? {}),
+  };
+
+  await setJson(`four-eyes/${id}`, enrichedItem);
+  return NextResponse.json({ ok: true, item: enrichedItem });
 }
 
 async function handlePatch(req: Request): Promise<NextResponse> {

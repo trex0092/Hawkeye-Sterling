@@ -5807,6 +5807,9 @@ export default function PlaybookPage() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [familyFilter, setFamilyFilter] = useState<string>("all");
+  const [qaQuestion, setQaQuestion] = useState("");
+  const [qaAnswer, setQaAnswer] = useState<{ answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] } | null>(null);
+  const [qaLoading, setQaLoading] = useState(false);
 
   const pb = PLAYBOOKS.find((p) => p.id === drawerOpen) ?? null;
 
@@ -5835,9 +5838,26 @@ export default function PlaybookPage() {
     return total > 0 ? Math.round((done / total) * 100) : 0;
   };
 
+  const askPlaybook = async () => {
+    if (!qaQuestion.trim()) return;
+    setQaLoading(true);
+    try {
+      const res = await fetch("/api/playbook-qa", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: qaQuestion }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean; answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] };
+      if (data.ok) setQaAnswer(data);
+    } catch { /* silent */ }
+    finally { setQaLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="playbook" asanaLabel="Playbook">
       <ModuleHero
+        moduleNumber={33}
         eyebrow="Module 16 · Guided due-diligence"
         title="Playbook"
         titleEm="engine."
@@ -6080,6 +6100,46 @@ export default function PlaybookPage() {
           </div>
         </>
       )}
+
+        <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-2">
+            <span className="text-12 font-semibold text-ink-0">Ask the Playbook</span>
+            <span className="text-10 font-mono text-ink-3">AI-powered compliance Q&amp;A</span>
+          </div>
+          <div className="p-4">
+            <div className="flex gap-2 mb-4">
+              <input
+                value={qaQuestion}
+                onChange={(e) => setQaQuestion(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void askPlaybook(); } }}
+                placeholder="What do I do if a customer is a Tier-1 PEP from a sanctioned country?"
+                className="flex-1 text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
+              />
+              <button type="button" onClick={() => void askPlaybook()} disabled={qaLoading || !qaQuestion.trim()}
+                className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                {qaLoading ? "Asking…" : "Ask"}
+              </button>
+            </div>
+            {qaAnswer && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-10 font-mono px-1.5 py-px rounded ${qaAnswer.confidence >= 0.8 ? "bg-green-dim text-green" : qaAnswer.confidence >= 0.5 ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>
+                    {(qaAnswer.confidence * 100).toFixed(0)}% confident
+                  </span>
+                  {qaAnswer.citations.map((c) => (
+                    <span key={c} className="text-9 font-mono px-1.5 py-px rounded bg-brand-dim text-brand-deep">{c}</span>
+                  ))}
+                </div>
+                <div className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{qaAnswer.answer}</div>
+                {qaAnswer.relatedPlaybooks.length > 0 && (
+                  <div className="text-10 text-ink-3">Related: {qaAnswer.relatedPlaybooks.join(" · ")}</div>
+                )}
+                <button type="button" onClick={() => { setQaAnswer(null); setQaQuestion(""); }}
+                  className="text-10 text-ink-3 hover:text-ink-1">Clear</button>
+              </div>
+            )}
+          </div>
+        </div>
     </ModuleLayout>
   );
 }

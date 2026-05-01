@@ -14,6 +14,15 @@ import type { CaseRecord } from "@/lib/types";
 // adds a peer-review stamp, and the case moves to "peer-reviewed"
 // state.
 
+interface QaScore {
+  id: string;
+  score: number;
+  grade: "A" | "B" | "C" | "D" | "F";
+  missingElements: string[];
+  suggestions: string[];
+  fatalIssues: string[];
+}
+
 type QaState = "awaiting-review" | "approved" | "challenged";
 
 type ChallengeReason =
@@ -89,12 +98,41 @@ export default function SarQaPage() {
   const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [reasonDraft, setReasonDraft] = useState<Record<string, ChallengeReason>>({});
+  const [aiScores, setAiScores] = useState<Record<string, QaScore>>({});
+  const [aiScoreLoading, setAiScoreLoading] = useState(false);
 
   useEffect(() => {
     setCases(loadCases().filter((c) => c.status === "reported"));
     setReviews(loadReviews());
     setRole(loadOperatorRole());
   }, []);
+
+  const runAiQa = async () => {
+    setAiScoreLoading(true);
+    try {
+      const payload = cases.map((c) => ({
+        id: c.id,
+        subject: c.subject,
+        meta: c.meta ?? "",
+        narrative: noteDraft[c.id] ?? "",
+      }));
+      const res = await fetch("/api/sar-qa-score", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cases: payload }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { ok: boolean; scores: QaScore[] };
+        const map: Record<string, QaScore> = {};
+        for (const s of data.scores) {
+          map[s.id] = s;
+        }
+        setAiScores(map);
+      }
+    } finally {
+      setAiScoreLoading(false);
+    }
+  };
 
   const stamp = (caseId: string, state: QaState) => {
     const note = noteDraft[caseId] ?? "";
@@ -115,6 +153,7 @@ export default function SarQaPage() {
   return (
     <ModuleLayout asanaModule="sar-qa" asanaLabel="SAR Quality Assurance">
         <ModuleHero
+          moduleNumber={21}
           eyebrow="Module 14 · Four-eyes peer review"
           title="SAR"
           titleEm="QA."
@@ -134,6 +173,13 @@ export default function SarQaPage() {
             the MLRO role from the sidebar to stamp reviews.
           </div>
         )}
+
+        <div className="mt-4 flex justify-end">
+          <button type="button" onClick={() => void runAiQa()} disabled={aiScoreLoading || cases.length === 0}
+            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40">
+            {aiScoreLoading ? "Scoring…" : "Run AI Quality Review"}
+          </button>
+        </div>
 
         <div className="mt-6 space-y-3">
           {cases.length === 0 ? (
@@ -180,6 +226,29 @@ export default function SarQaPage() {
                     </div>
                   </div>
                   <div className="text-11 text-ink-2 mb-3">{c.meta}</div>
+                  {aiScores[c.id] && (() => {
+                    const s = aiScores[c.id] as QaScore;
+                    const gradeCls = s.grade === "A" ? "bg-green text-white" : s.grade === "B" ? "bg-green-dim text-green" : s.grade === "C" ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
+                    return (
+                      <div className="mt-2 p-3 rounded-lg border border-hair-2 bg-bg-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-mono text-11 font-bold px-2 py-px rounded ${gradeCls}`}>{s.grade}</span>
+                          <span className="text-11 font-mono text-ink-2">Quality score: {s.score}/100</span>
+                        </div>
+                        {s.fatalIssues.length > 0 && (
+                          <div className="text-11 text-red font-semibold">Fatal: {s.fatalIssues.join(" · ")}</div>
+                        )}
+                        {s.missingElements.length > 0 && (
+                          <div className="text-10 text-amber">Missing: {s.missingElements.join(" · ")}</div>
+                        )}
+                        {s.suggestions.length > 0 && (
+                          <ul className="text-10 text-ink-2 space-y-0.5 list-disc list-inside">
+                            {s.suggestions.map((sg, i) => <li key={i}>{sg}</li>)}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {c.asanaTaskUrl && (
                     <AsanaStatus
                       state={{ status: "sent", taskUrl: c.asanaTaskUrl }}

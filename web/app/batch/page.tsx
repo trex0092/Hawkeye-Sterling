@@ -14,6 +14,35 @@ import {
   Cell,
 } from "recharts";
 
+interface NameVariants {
+  ok: boolean;
+  canonicalName: string;
+  variants: string[];
+  transliterations: string[];
+  patronymics: string[];
+  maidenNames: string[];
+  aliases: string[];
+  entityVariants: string[];
+  screeningStrings: string[];
+  scriptVariants: string[];
+  notes: string;
+}
+
+interface RankedResult {
+  name: string;
+  priority: number;
+  priorityLabel: "immediate" | "urgent" | "review" | "monitor" | "clear";
+  reason: string;
+  actionRequired: string;
+}
+interface BatchRanking {
+  ranked: RankedResult[];
+  immediateCount: number;
+  urgentCount: number;
+  topThreats: string[];
+  batchSummary: string;
+}
+
 interface RowResult {
   name: string;
   entityType?: string;
@@ -252,7 +281,31 @@ export default function BatchPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [filterSev, setFilterSev] = useState<string>("all");
   const [page, setPage] = useState(0);
+  const [ranking, setRanking] = useState<BatchRanking | null>(null);
+  const [rankLoading, setRankLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Name Variant Generator state
+  const [nameVars, setNameVars] = useState<NameVariants | null>(null);
+  const [nameVarsLoading, setNameVarsLoading] = useState(false);
+  const [nameVarsInput, setNameVarsInput] = useState("");
+
+  const generateVariants = async () => {
+    if (!nameVarsInput.trim() || nameVarsLoading) return;
+    setNameVarsLoading(true);
+    setNameVars(null);
+    try {
+      const res = await fetch("/api/name-variants", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: nameVarsInput }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as NameVariants;
+      if (data.ok) setNameVars(data);
+    } catch { /* silent */ }
+    finally { setNameVarsLoading(false); }
+  };
 
   // Pre-populate the row set when ?names=foo,bar,baz is in the URL —
   // EOCN announcement detail panels link into /batch with the
@@ -428,10 +481,41 @@ export default function BatchPage() {
     await exportPdf(results, summary);
   };
 
+  const runPriorityRanking = async (rows: RowResult[]) => {
+    if (rows.length === 0) return;
+    setRankLoading(true);
+    setRanking(null);
+    try {
+      const res = await fetch("/api/batch-rank", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          results: rows.slice(0, 50).map((r) => ({
+            name: r.name,
+            topScore: r.topScore,
+            severity: r.severity,
+            hitCount: r.hitCount,
+            listCoverage: r.listCoverage,
+            keywordGroups: r.keywordGroups,
+            jurisdiction: r.jurisdiction,
+            error: r.error,
+          })),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & BatchRanking;
+      if (data.ok) setRanking(data);
+    } catch { /* silent */ }
+    finally { setRankLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
       <div>
         <div className="mb-8">
+          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+            MODULE 06
+          </div>
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
             MODULE 07 · BATCH SCREENING
           </div>
@@ -443,6 +527,114 @@ export default function BatchPage() {
             streaming progress, severity chart, sortable/filterable results table.
             Export as CSV or jsPDF audit report.
           </p>
+        </div>
+
+        {/* Name Variant Generator */}
+        <div className="bg-bg-panel border border-brand/20 rounded-xl p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">Name Variant Generator</span>
+            <span className="text-10 text-ink-3 font-mono px-1.5 py-px bg-bg-1 rounded border border-hair-2">Beats World-Check static aliases</span>
+          </div>
+          <p className="text-11 text-ink-2 mb-3">Generate transliterations, patronymics, maiden names and aliases dynamically for any name in any script.</p>
+          <div className="flex gap-2 mb-3">
+            <input
+              className="flex-1 min-w-48 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+              placeholder="Enter name — Arabic, Cyrillic, Chinese, Latin…"
+              value={nameVarsInput}
+              onChange={(e) => setNameVarsInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void generateVariants()}
+            />
+            <button
+              type="button"
+              onClick={() => void generateVariants()}
+              disabled={nameVarsLoading || !nameVarsInput.trim()}
+              className="px-4 py-2 bg-brand text-white rounded text-12.5 font-semibold hover:bg-brand-hover disabled:opacity-50"
+            >
+              {nameVarsLoading ? "Generating…" : "Generate Variants"}
+            </button>
+          </div>
+
+          {nameVars && (
+            <div className="space-y-3">
+              <div className="font-semibold text-14 text-ink-0">
+                Canonical: <span className="text-brand">{nameVars.canonicalName}</span>
+              </div>
+
+              {nameVars.screeningStrings.length > 0 && (
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Screening Strings (click to copy)</div>
+                  <div className="flex flex-wrap gap-1.5 mb-1">
+                    {nameVars.screeningStrings.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => void navigator.clipboard.writeText(s)}
+                        className="px-2 py-0.5 bg-brand-dim text-brand border border-brand/30 rounded font-mono text-11 hover:bg-brand/20 cursor-pointer"
+                        title="Click to copy"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void navigator.clipboard.writeText(nameVars.screeningStrings.join("\n"))}
+                    className="text-10 text-ink-3 hover:text-ink-1 underline"
+                  >
+                    Copy all to clipboard
+                  </button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {nameVars.variants.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Variants</div>
+                    <div className="space-y-0.5">
+                      {nameVars.variants.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+                {nameVars.transliterations.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transliterations</div>
+                    <div className="space-y-0.5">
+                      {nameVars.transliterations.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+                {nameVars.aliases.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Aliases</div>
+                    <div className="space-y-0.5">
+                      {nameVars.aliases.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+                {nameVars.patronymics.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Patronymics</div>
+                    <div className="space-y-0.5">
+                      {nameVars.patronymics.map((v, i) => <div key={i} className="text-11 text-ink-1 font-mono">{v}</div>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {nameVars.scriptVariants.length > 0 && (
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Script Variants</div>
+                  <pre className="font-mono text-13 text-ink-0 bg-bg-1 px-3 py-2 rounded border border-hair-2 whitespace-pre-wrap">
+                    {nameVars.scriptVariants.join("\n")}
+                  </pre>
+                </div>
+              )}
+
+              {nameVars.notes && (
+                <p className="text-11 text-ink-2 italic border-l-2 border-brand/30 pl-2">{nameVars.notes}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Drop zone */}
@@ -578,6 +770,42 @@ export default function BatchPage() {
             <span className="ml-auto text-11 text-ink-3">
               {sortedFiltered.length} row{sortedFiltered.length === 1 ? "" : "s"}
             </span>
+            <button type="button" onClick={() => void runPriorityRanking(results)} disabled={rankLoading || results.length === 0}
+              className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+              {rankLoading ? "Ranking…" : "AI Priority Ranking"}
+            </button>
+          </div>
+        )}
+
+        {/* AI Priority Ranking banner */}
+        {ranking && (
+          <div className="mb-4 bg-bg-panel border border-brand/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">AI Priority Ranking</span>
+                {ranking.immediateCount > 0 && <span className="font-mono text-10 px-2 py-px rounded bg-red text-white">{ranking.immediateCount} immediate</span>}
+                {ranking.urgentCount > 0 && <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red">{ranking.urgentCount} urgent</span>}
+              </div>
+              <button type="button" onClick={() => setRanking(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+            </div>
+            <p className="text-11 text-ink-2">{ranking.batchSummary}</p>
+            {ranking.topThreats.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {ranking.topThreats.map((n, i) => <span key={i} className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">{n}</span>)}
+              </div>
+            )}
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {ranking.ranked.filter((r) => r.priorityLabel === "immediate" || r.priorityLabel === "urgent").map((r, i) => {
+                const lCls = r.priorityLabel === "immediate" ? "bg-red text-white" : "bg-red-dim text-red";
+                return (
+                  <div key={i} className="flex items-start gap-2 text-11">
+                    <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 mt-0.5 ${lCls}`}>{r.priorityLabel}</span>
+                    <span className="font-semibold text-ink-0 shrink-0">{r.name}</span>
+                    <span className="text-ink-3">— {r.reason}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -611,6 +839,12 @@ export default function BatchPage() {
                       {r.isDuplicate && (
                         <span className="ml-1.5 px-1 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber">dup</span>
                       )}
+                      {ranking && (() => {
+                        const ranked = ranking.ranked.find((x) => x.name === r.name);
+                        if (!ranked || ranked.priorityLabel === "clear" || ranked.priorityLabel === "monitor") return null;
+                        const lCls = ranked.priorityLabel === "immediate" ? "bg-red text-white" : ranked.priorityLabel === "urgent" ? "bg-red-dim text-red" : "bg-amber-dim text-amber";
+                        return <span className={`ml-1 font-mono text-9 px-1 py-px rounded uppercase ${lCls}`}>{ranked.priorityLabel}</span>;
+                      })()}
                     </td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 ${SEVERITY_CLS[r.severity] ?? "bg-bg-2 text-ink-1"}`}>

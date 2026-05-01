@@ -1,6 +1,9 @@
 export function CasesHero() {
   return (
     <div className="mb-8">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 03
+      </div>
       <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
         MODULE 02 · CASE MANAGEMENT
       </div>

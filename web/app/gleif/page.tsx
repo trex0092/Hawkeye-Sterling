@@ -99,6 +99,7 @@ export default function GleifPage() {
   return (
     <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI">
       <ModuleHero
+        moduleNumber={35}
         eyebrow="Module · Entity Intelligence"
         title="GLEIF"
         titleEm="LEI lookup."

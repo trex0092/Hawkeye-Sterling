@@ -30,6 +30,68 @@ interface Body {
   };
 }
 
+interface TypologyResult {
+  typologies: string[];
+  narrative: string;
+  severityUpgrade: boolean;
+  regulatoryBasis: string;
+}
+
+async function classifyTransaction(
+  ref: string,
+  counterparty: string,
+  counterpartyCountry: string | undefined,
+  amount: string,
+  currency: string,
+  channel: string,
+  direction: string,
+  behaviouralFlags: string[],
+  notes: string | undefined,
+): Promise<TypologyResult | null> {
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  if (!apiKey) return null;
+
+  const userContent = [
+    `Transaction ref: ${ref}`,
+    `Counterparty: ${counterparty}`,
+    counterpartyCountry ? `Counterparty country: ${counterpartyCountry}` : null,
+    `Amount: ${currency} ${amount}`,
+    `Channel: ${channel}`,
+    `Direction: ${direction}`,
+    behaviouralFlags.length > 0 ? `Behavioural flags: ${behaviouralFlags.join(", ")}` : null,
+    notes ? `Notes: ${notes}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 400,
+      system:
+        'You are a UAE-licensed AML typology classifier for a DPMS compliance platform. Analyze a transaction and return ONLY this JSON: { "typologies": ["string"], "narrative": "string", "severityUpgrade": boolean, "regulatoryBasis": "string" }. typologies = FATF ML/TF typology codes (e.g. \'ML-TF-01 Structuring\', \'ML-TF-09 Cash-intensive business\'). narrative = 1-2 sentence STR-ready description. severityUpgrade = true if you\'d recommend escalating severity. regulatoryBasis = specific UAE/FATF articles triggered.',
+      messages: [{ role: "user", content: userContent }],
+    }),
+  });
+
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    content?: { type: string; text: string }[];
+  };
+  const text = data?.content?.[0]?.text ?? "";
+
+  // Strip markdown fences before parsing
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  return JSON.parse(stripped) as TypologyResult;
+}
+
 async function handleTmReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
@@ -72,12 +134,11 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
   const amountNum = Number.parseFloat(t.amount.replace(/,/g, "")) || 0;
   const reportableCash =
     /cash/i.test(t.channel) && amountNum >= 55_000;
-  const severity = reportableCash
+  let severity: "ROUTINE" | "FLAGGED" | "REPORTABLE" = reportableCash
     ? "REPORTABLE"
     : flagged
       ? "FLAGGED"
       : "ROUTINE";
-  const name = `[TM · ${severity}] ${t.counterparty} · ${t.currency} ${t.amount} · ${t.ref}`;
 
   const lines: string[] = [];
   lines.push(`HAWKEYE STERLING · TRANSACTION-MONITOR FILING`);
@@ -106,11 +167,57 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
     lines.push(`── ANALYST NOTES ──`);
     lines.push(t.notes);
   }
+
+  // AI typology classification — fire before Asana filing, graceful degradation
+  let typologyResult: TypologyResult | null = null;
+  try {
+    typologyResult = await classifyTransaction(
+      t.ref,
+      t.counterparty,
+      t.counterpartyCountry,
+      t.amount,
+      t.currency,
+      t.channel,
+      t.direction,
+      t.behaviouralFlags ?? [],
+      t.notes,
+    );
+  } catch {
+    // Classification failed — proceed without enrichment
+  }
+
+  if (typologyResult) {
+    // Severity upgrade logic
+    if (typologyResult.severityUpgrade) {
+      if (severity === "ROUTINE") {
+        severity = "FLAGGED";
+        lines.push(`Severity upgrade recommended by AI classifier`);
+      } else if (severity === "FLAGGED") {
+        severity = "REPORTABLE";
+        lines.push(`Severity upgrade recommended by AI classifier`);
+      }
+    }
+
+    lines.push("");
+    lines.push(`── AI TYPOLOGY ANALYSIS ──`);
+    lines.push(
+      `Typologies : ${typologyResult.typologies.join(" · ")}`,
+    );
+    lines.push(`Narrative  : ${typologyResult.narrative}`);
+    lines.push(`Regulatory : ${typologyResult.regulatoryBasis}`);
+  }
+
+  // Build task name — include first typology code if available
+  const firstTypology = typologyResult?.typologies?.[0];
+  const name = firstTypology
+    ? `[TM · ${severity} · ${firstTypology}] ${t.counterparty} · ${t.currency} ${t.amount} · ${t.ref}`
+    : `[TM · ${severity}] ${t.counterparty} · ${t.currency} ${t.amount} · ${t.ref}`;
+
   lines.push("");
   lines.push(`── ACTIONS ──`);
-  if (reportableCash) {
+  if (severity === "REPORTABLE") {
     lines.push(`[ ] File DPMSR via goAML  [ ] Block relationship  [ ] Escalate to MLRO`);
-  } else if (flagged) {
+  } else if (severity === "FLAGGED") {
     lines.push(`[ ] Acknowledge  [ ] Open enquiry  [ ] Escalate to MLRO`);
   } else {
     lines.push(`[ ] Acknowledge  [ ] Archive`);

@@ -240,6 +240,7 @@ export default function InspectionRoomPage() {
   return (
     <ModuleLayout asanaModule="inspection-room" asanaLabel="Inspection Room">
       <ModuleHero
+        moduleNumber={30}
         eyebrow="Module · Inspection Room"
         title="Regulator-ready"
         titleEm="evidence."

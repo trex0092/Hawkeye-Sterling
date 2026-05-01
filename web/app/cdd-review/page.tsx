@@ -7,6 +7,21 @@ import { RowActions } from "@/components/shared/RowActions";
 import type { CaseRecord } from "@/lib/types";
 import { formatDMY, parseDMY } from "@/lib/utils/dateFormat";
 
+interface CddAdequacy {
+  assessments: Array<{
+    id: string;
+    adequacyScore: number;
+    adequacyLevel: "adequate" | "marginal" | "inadequate";
+    gaps: string[];
+    recommendedActions: string[];
+    enhancedMeasuresRequired: boolean;
+    regulatoryRisk: string;
+  }>;
+  portfolioStatus: "compliant" | "attention_required" | "breach";
+  criticalSubjects: string[];
+  summary: string;
+}
+
 // Periodic CDD Review — tracks which customers are due for re-KYC based
 // on their risk tier. Review cadences per FDL 10/2025 Art.11:
 //   High risk (PEP / sanctions hit): 3 months
@@ -131,6 +146,8 @@ export default function CddReviewPage() {
   const [draft, setDraft] = useState(BLANK);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState(BLANK);
+  const [adequacy, setAdequacy] = useState<CddAdequacy | null>(null);
+  const [adequacyLoading, setAdequacyLoading] = useState(false);
 
   useEffect(() => {
     setManualRecords(loadManual());
@@ -203,9 +220,34 @@ export default function CddReviewPage() {
     setEditingId(null);
   };
 
+  const runAdequacyCheck = async () => {
+    setAdequacyLoading(true);
+    try {
+      const reviews = sorted.map((r) => ({
+        id: r.id,
+        subject: r.subject,
+        tier: r.tier,
+        lastReview: r.lastReview,
+        notes: r.notes,
+        lastOutcome: r.lastOutcome,
+        daysOverdue: r.daysOverdue,
+        status: r.status,
+      }));
+      const res = await fetch("/api/cdd-adequacy", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reviews }),
+      });
+      const data = (await res.json()) as CddAdequacy;
+      setAdequacy(data);
+    } catch { /* non-fatal */ }
+    finally { setAdequacyLoading(false); }
+  };
+
   return (
     <ModuleLayout asanaModule="cdd-review" asanaLabel="CDD Review">
         <ModuleHero
+          moduleNumber={15}
           eyebrow="Module 22 · CDD Lifecycle"
           title="Periodic CDD"
           titleEm="review."
@@ -223,6 +265,37 @@ export default function CddReviewPage() {
             { value: String(all.length), label: "total tracked" },
           ]}
         />
+
+        {/* AI Adequacy Check */}
+        <div className="mt-6 flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => { void runAdequacyCheck(); }}
+            disabled={adequacyLoading || sorted.length === 0}
+            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
+          >
+            {adequacyLoading ? "Assessing…" : "Run AI Adequacy Check"}
+          </button>
+        </div>
+
+        {adequacy && (
+          <div className={`mt-3 rounded-lg border p-4 ${adequacy.portfolioStatus === "breach" ? "bg-red-dim border-red/30" : adequacy.portfolioStatus === "attention_required" ? "bg-amber-dim border-amber/30" : "bg-green-dim border-green/30"}`}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`font-mono text-10 font-semibold px-2 py-px rounded uppercase ${adequacy.portfolioStatus === "breach" ? "bg-red text-white" : adequacy.portfolioStatus === "attention_required" ? "bg-amber-dim text-amber border border-amber/40" : "bg-green-dim text-green border border-green/40"}`}>
+                {adequacy.portfolioStatus.replace("_", " ")}
+              </span>
+              <span className="text-12 text-ink-1">{adequacy.summary}</span>
+            </div>
+            {adequacy.criticalSubjects.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                <span className="text-10 text-ink-3 font-semibold uppercase tracking-wide-3">Immediate attention:</span>
+                {adequacy.criticalSubjects.map((name) => (
+                  <span key={name} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red">{name}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Add manual record */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
@@ -280,7 +353,22 @@ export default function CddReviewPage() {
                   </tr>
                 ) : (
                 <tr key={r.id} className={i < sorted.length - 1 ? "border-b border-hair" : ""}>
-                  <td className="px-3 py-2 text-ink-0 font-medium">{r.subject}</td>
+                  <td className="px-3 py-2 text-ink-0 font-medium">
+                    {r.subject}
+                    {adequacy && (() => {
+                      const a = adequacy.assessments.find((x) => x.id === r.id);
+                      if (!a) return null;
+                      const lvlCls = a.adequacyLevel === "inadequate" ? "bg-red-dim text-red" : a.adequacyLevel === "marginal" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                      return (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className={`font-mono text-9 px-1.5 py-px rounded uppercase font-semibold ${lvlCls}`}>{a.adequacyLevel}</span>
+                          <span className="font-mono text-9 text-ink-3">{a.adequacyScore}/100</span>
+                          {a.enhancedMeasuresRequired && <span className="font-mono text-9 px-1.5 py-px rounded bg-red-dim text-red">EDD required</span>}
+                          {a.gaps.length > 0 && <span className="text-9 text-amber italic">{a.gaps[0]}</span>}
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td className="px-3 py-2">
                     <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${TIER_TONE[r.tier]}`}>
                       {TIER_LABEL[r.tier]}

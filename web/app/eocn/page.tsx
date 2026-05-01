@@ -183,6 +183,7 @@ export default function EocnPage() {
   return (
     <ModuleLayout asanaModule="eocn" asanaLabel="EOCN Trade Compliance" engineLabel="EOCN sanctions engine">
       <ModuleHero
+        moduleNumber={24}
         eyebrow="Module 27 · Sanctions"
         title="EOCN targeted financial"
         titleEm="sanctions."
@@ -224,22 +225,14 @@ export default function EocnPage() {
         ))}
         <div className="flex-1" />
         <div className="flex items-center gap-2 pb-2">
-          <span
-            className={`inline-flex items-center px-2 py-px rounded font-mono text-10 font-semibold tracking-wide-2 uppercase ${
-              feed.source === "live"
-                ? "bg-green-dim text-green"
-                : "bg-amber-dim text-amber"
-            }`}
-            title={
-              feed.source === "live"
-                ? `Live feed${feed.upstreamUrl ? ` · ${feed.upstreamUrl}` : ""}`
-                : feed.upstreamError
-                  ? `Demo data · upstream: ${feed.upstreamError}`
-                  : "Demo data — set EOCN_FEED_URL in Netlify env to activate live polling"
-            }
-          >
-            {feed.source === "live" ? "live" : "demo"}
-          </span>
+          {feed.source === "live" && (
+            <span
+              className="inline-flex items-center px-2 py-px rounded font-mono text-10 font-semibold tracking-wide-2 uppercase bg-green-dim text-green"
+              title={`Live feed${feed.upstreamUrl ? ` · ${feed.upstreamUrl}` : ""}`}
+            >
+              live
+            </span>
+          )}
           {lastRefreshed && (
             <span className="text-10 font-mono text-ink-3">
               Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -249,7 +242,7 @@ export default function EocnPage() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1 rounded border border-hair-2 text-11 font-medium text-ink-2 bg-bg-1 hover:bg-bg-2 hover:text-ink-0 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1 rounded border border-blue/40 text-11 font-medium text-blue bg-blue/10 hover:bg-blue/20 transition-colors disabled:opacity-50"
           >
             <svg
               className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}

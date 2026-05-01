@@ -40,24 +40,24 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
   const draft = buildDraft(source, reporterEntity);
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white">
+    <div className="rounded-md border border-zinc-300 bg-white text-zinc-900">
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
         <div>
-          <div className="text-xs uppercase tracking-wide text-zinc-500">STR draft preview</div>
-          <div className="text-sm font-medium">goAML XML envelope (preview only — not filed)</div>
+          <div className="text-xs uppercase tracking-wide text-zinc-600">STR draft preview</div>
+          <div className="text-sm font-medium text-zinc-900">goAML XML envelope (preview only — not filed)</div>
         </div>
         <button
           type="button"
           onClick={() => setShowRaw((x) => !x)}
-          className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+          className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-800 hover:bg-zinc-100"
         >
           {showRaw ? "structured view" : "raw XML"}
         </button>
       </div>
 
-      <div className="p-3 text-xs">
+      <div className="p-3 text-xs text-zinc-900">
         {showRaw ? (
-          <pre className="overflow-x-auto rounded bg-zinc-50 p-2 text-[11px] leading-snug">
+          <pre className="overflow-x-auto rounded bg-zinc-100 p-2 text-[11px] leading-snug text-zinc-900">
             {draft.xml}
           </pre>
         ) : (
@@ -73,33 +73,33 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
             <Row label="Cross-regime" value={source.crossRegimeConflict?.recommendedAction ?? "n/a"} />
             <Row label="Redlines fired" value={(source.redlines?.fired ?? []).map((r) => r.id ?? r.label ?? "?").join(", ") || "none"} />
             <div>
-              <dt className="text-zinc-500">Reason for suspicion (auto-drafted)</dt>
-              <dd className="mt-1 whitespace-pre-wrap rounded bg-zinc-50 p-2 text-[11px]">{draft.reasonForSuspicion}</dd>
+              <dt className="text-zinc-600 font-medium">Reason for suspicion (auto-drafted)</dt>
+              <dd className="mt-1 whitespace-pre-wrap rounded bg-zinc-100 p-2 text-[11px] text-zinc-900">{draft.reasonForSuspicion}</dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Mode citations</dt>
+              <dt className="text-zinc-600 font-medium">Mode citations</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {(source.findings ?? [])
                   .filter((f) => (f.score ?? 0) >= 0.5)
                   .slice(0, 12)
                   .map((f) => (
-                    <span key={f.modeId} className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px]">
+                    <span key={f.modeId} className="rounded bg-zinc-200 px-1.5 py-0.5 font-mono text-[10px] text-zinc-900">
                       {f.modeId}
                     </span>
                   ))}
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Regulatory anchors</dt>
+              <dt className="text-zinc-600 font-medium">Regulatory anchors</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {draft.anchors.map((a) => (
-                  <span key={a} className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-mono">
+                  <span key={a} className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-[10px] font-mono text-zinc-900">
                     {a}
                   </span>
                 ))}
               </dd>
             </div>
-            <div className="rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-700">
+            <div className="rounded border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800">
               Charter P2 + P5: every claim above traces back to a brain
               finding or redline. No statement of guilt — observable
               facts + indicators only. Final legal characterisation is
@@ -115,8 +115,8 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }): JSX.Element {
   return (
     <div className="flex gap-3">
-      <dt className="w-32 shrink-0 text-zinc-500">{label}</dt>
-      <dd className={mono ? "font-mono text-zinc-800" : "text-zinc-800"}>{value}</dd>
+      <dt className="w-32 shrink-0 text-zinc-600 font-medium">{label}</dt>
+      <dd className={mono ? "font-mono text-zinc-900" : "text-zinc-900"}>{value}</dd>
     </div>
   );
 }

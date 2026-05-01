@@ -866,12 +866,16 @@ export default function RegulatoryPage() {
   return (
     <ModuleLayout asanaModule="regulatory" asanaLabel="Regulatory">
       <ModuleHero
-        eyebrow="Module · Regulatory Intelligence"
+        moduleNumber={31}
+        eyebrow="Module 11 · Regulatory Intelligence"
         title="Regulatory"
-        titleEm="feed."
+        titleEm="library."
         kpis={kpis}
         intro={
           <>
+            <strong>Every citation the brain makes, in one searchable reference.</strong>{" "}
+            FDL / CR / MoE / FATF / LBMA / OECD — keyword search across title,
+            citation, and summary; click a tag to narrow by framework.{" "}
             <strong>Primary UAE DPMS regulatory bodies:</strong>{" "}
             FATF (global standards), CBUAE (licensed financial institutions), MoE (DPMS/DNFBPs),
             LBMA (responsible gold guidance), and EOCN (targeted financial sanctions &amp; conflict minerals).

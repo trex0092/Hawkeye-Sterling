@@ -46,6 +46,15 @@ interface Flash {
   msg: string;
 }
 
+interface MlroBriefing {
+  summary: string;
+  priorityCases: Array<{ id: string; reason: string }>;
+  duplicateRisk: string | null;
+  actionItems: string[];
+  regulatoryDeadlines: string[];
+  mlroSignoff: string;
+}
+
 interface CaseRow {
   id: string;
   title: string;
@@ -198,6 +207,8 @@ export default function StrCasesPage() {
   const [noTippingOff, setNoTippingOff] = useState(true);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [briefing, setBriefing] = useState<MlroBriefing | null>(null);
+  const [briefingLoading, setBriefingLoading] = useState(false);
 
   const open = cases.filter(
     (c) => c.status !== "Submitted" && c.status !== "Closed",
@@ -232,6 +243,21 @@ export default function StrCasesPage() {
     if (typeof window !== "undefined") {
       window.setTimeout(() => setFlash(null), 3500);
     }
+  };
+
+  const generateBriefing = async () => {
+    setBriefingLoading(true);
+    try {
+      const res = await fetch("/api/str-briefing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cases }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean; briefing: MlroBriefing };
+      if (data.ok) setBriefing(data.briefing);
+    } catch { /* silent */ }
+    finally { setBriefingLoading(false); }
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -336,6 +362,9 @@ export default function StrCasesPage() {
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 05
+      </div>
       <ModuleHeader
             title="STR Case"
             titleEm="Management"
@@ -347,6 +376,9 @@ export default function StrCasesPage() {
             }}
             actions={
               <div className="flex items-center gap-2">
+                <Btn variant="ghost" onClick={() => void generateBriefing()} disabled={briefingLoading || cases.length === 0}>
+                  {briefingLoading ? "Generating…" : "AI Briefing"}
+                </Btn>
                 <Btn
                   variant="ghost"
                   onClick={() => {
@@ -373,6 +405,40 @@ export default function StrCasesPage() {
             <Kpi value={submitted} label="Submitted" tone="green" />
             <Kpi value={overdue} label="Overdue" tone="red" />
       </KpiGrid>
+
+      {briefing && (
+        <div className="mt-4 mb-2 bg-bg-panel border border-brand/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">MLRO Daily Briefing</span>
+            <button type="button" onClick={() => setBriefing(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+          </div>
+          <p className="text-12 text-ink-1 leading-relaxed">{briefing.summary}</p>
+          {briefing.duplicateRisk && (
+            <div className="text-11 font-semibold text-amber">Duplicate risk: {briefing.duplicateRisk}</div>
+          )}
+          {briefing.priorityCases.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Priority cases</div>
+              <ul className="space-y-0.5">
+                {briefing.priorityCases.map((pc) => (
+                  <li key={pc.id} className="text-11 text-ink-1"><span className="font-mono text-brand-deep">{pc.id}</span> — {pc.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {briefing.actionItems.length > 0 && (
+            <ul className="text-11 text-ink-2 list-disc list-inside space-y-0.5">
+              {briefing.actionItems.map((item, i) => <li key={i}>{item}</li>)}
+            </ul>
+          )}
+          {briefing.regulatoryDeadlines.length > 0 && (
+            <div className="text-10 font-mono text-red">{briefing.regulatoryDeadlines.join(" · ")}</div>
+          )}
+          {briefing.mlroSignoff && (
+            <div className="text-11 italic text-ink-3">{briefing.mlroSignoff}</div>
+          )}
+        </div>
+      )}
 
       <Card>
             <form onSubmit={openCase}>

@@ -6,6 +6,34 @@ import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMY } from "@/lib/utils/dateFormat";
 
+// ── TBML AI types ────────────────────────────────────────────────────────────
+interface TbmlFlaggedShipment {
+  reference: string;
+  tbmlIndicators: string[];
+  fatfTypologies: string[];
+  riskLevel: "critical" | "high" | "medium" | "low";
+  recommendedAction: "hold" | "enhanced_dd" | "file_str" | "monitor" | "clear";
+  rationale: string;
+}
+
+interface ShipmentTbml {
+  ok: boolean;
+  portfolioTbmlRisk: "critical" | "high" | "medium" | "low";
+  portfolioNarrative: string;
+  flaggedShipments: TbmlFlaggedShipment[];
+  systemicRisks: string[];
+  lbmaGaps: string[];
+  immediateHolds: string[];
+  regulatoryExposure: string;
+}
+
+const TBML_RISK_TONE: Record<string, string> = {
+  critical: "bg-red-dim text-red border-red/30",
+  high:     "bg-red-dim text-red border-red/30",
+  medium:   "bg-amber-dim text-amber border-amber/30",
+  low:      "bg-green-dim text-green border-green/30",
+};
+
 // Operator-saved deletes persist to localStorage so the working register
 // survives reload. The seed CONSIGNMENTS array stays the system-of-record;
 // user dismissals are overlaid and never mutate the seed.
@@ -976,6 +1004,8 @@ export default function ShipmentsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [releasedIds, setReleasedIds] = useState<string[]>([]);
   const [editingShipment, setEditingShipment] = useState<Consignment | null>(null);
+  const [tbml, setTbml] = useState<ShipmentTbml | null>(null);
+  const [tbmlLoading, setTbmlLoading] = useState(false);
 
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
@@ -1044,6 +1074,41 @@ export default function ShipmentsPage() {
     saveDeletedIds([]);
   };
 
+  const runTbmlScan = async (consignments: Consignment[]) => {
+    setTbmlLoading(true);
+    try {
+      const payload = consignments.map((c) => ({
+        reference: c.reference,
+        status: c.status,
+        origin: c.origin,
+        originCountry: c.originCountry,
+        refinery: c.refinery,
+        refineryLbmaId: c.refineryLbmaId,
+        grossWeightKg: c.grossWeightKg,
+        weightGms: c.weightGms,
+        fineness: c.fineness,
+        bars: c.bars,
+        valueUsd: c.usdValue,
+        counterparty: c.counterparty,
+        counterpartyCountry: c.counterpartyJurisdiction,
+        flags: c.flags,
+      }));
+      const res = await fetch("/api/shipment-tbml", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ consignments: payload }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as ShipmentTbml;
+        setTbml(data);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setTbmlLoading(false);
+    }
+  };
+
   const visible = tab === "all" ? live : live.filter((c) => c.status === tab);
   const detail = live.find((c) => c.id === selected) ?? null;
 
@@ -1056,6 +1121,7 @@ export default function ShipmentsPage() {
   return (
     <ModuleLayout asanaModule="shipments" asanaLabel="Shipments" engineLabel="Bullion compliance engine">
       <ModuleHero
+        moduleNumber={22}
         eyebrow="Module 24 · Bullion Logistics"
         title="Bullion chain-of-custody"
         titleEm="register."
@@ -1094,13 +1160,87 @@ export default function ShipmentsPage() {
       {showAdd ? (
         <AddShipmentForm onAdd={onAddRow} onCancel={() => setShowAdd(false)} />
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowAdd(true)}
-          className="self-start mb-4 text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
-        >
-          + Add
-        </button>
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="self-start text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
+          >
+            + Add
+          </button>
+          <button
+            type="button"
+            disabled={tbmlLoading}
+            onClick={() => void runTbmlScan(visible)}
+            className="self-start text-11 font-semibold px-4 py-2 rounded border border-amber/60 text-amber bg-amber-dim hover:bg-amber/20 transition-colors disabled:opacity-50"
+          >
+            {tbmlLoading ? "Scanning…" : "AI TBML Scan"}
+          </button>
+          {tbml && (
+            <button
+              type="button"
+              onClick={() => setTbml(null)}
+              className="self-start text-11 text-ink-3 hover:text-ink-1 px-2 py-2"
+            >
+              Clear scan
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* TBML AI panel */}
+      {tbml && (
+        <div className="mb-4 bg-bg-panel border border-amber/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-amber">AI TBML Assessment</span>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase border ${TBML_RISK_TONE[tbml.portfolioTbmlRisk] ?? "bg-bg-2 text-ink-3 border-hair-2"}`}>
+              Portfolio risk: {tbml.portfolioTbmlRisk}
+            </span>
+          </div>
+          <p className="text-12 text-ink-1">{tbml.portfolioNarrative}</p>
+
+          {tbml.immediateHolds.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-1.5">HOLD immediately</div>
+              <div className="flex flex-wrap gap-1.5">
+                {tbml.immediateHolds.map((ref) => (
+                  <span key={ref} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-dim border border-red/40 font-mono text-10 text-red">
+                    <strong>HOLD</strong> {ref}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tbml.systemicRisks.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Systemic risks</div>
+              <ul className="list-disc list-inside space-y-0.5">
+                {tbml.systemicRisks.map((r, i) => (
+                  <li key={i} className="text-12 text-ink-1">{r}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {tbml.lbmaGaps.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">LBMA RGG v9 gaps</div>
+              <ul className="list-disc list-inside space-y-0.5">
+                {tbml.lbmaGaps.map((g, i) => (
+                  <li key={i} className="text-12 text-ink-1">{g}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {tbml.regulatoryExposure && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Regulatory exposure</div>
+              <code className="font-mono text-10 text-ink-1 break-all">{tbml.regulatoryExposure}</code>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Filter tabs */}
@@ -1190,6 +1330,24 @@ export default function ShipmentsPage() {
                   <ProgressBar pct={c.transitProgress} />
                 </div>
               )}
+
+              {/* Per-shipment TBML inline badge */}
+              {tbml && (() => {
+                const shipmentFlag = tbml.flaggedShipments.find((f) => f.reference === c.reference);
+                if (!shipmentFlag) return null;
+                return (
+                  <div className="mb-1.5 flex flex-wrap gap-1">
+                    <span className={`inline-flex items-center px-1.5 py-px rounded-sm border font-mono text-10 font-semibold uppercase ${TBML_RISK_TONE[shipmentFlag.riskLevel] ?? "bg-bg-2 text-ink-3 border-hair-2"}`}>
+                      TBML {shipmentFlag.riskLevel}
+                    </span>
+                    {shipmentFlag.tbmlIndicators.map((ind, ii) => (
+                      <span key={ii} className="bg-amber-dim text-amber text-10 font-mono px-1.5 py-px rounded-sm">
+                        {ind}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-between flex-wrap gap-1">
                 <RggBadge step={c.rggStep} />

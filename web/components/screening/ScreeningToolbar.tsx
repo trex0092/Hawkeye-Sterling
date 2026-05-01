@@ -37,6 +37,12 @@ interface ScreeningToolbarProps {
   onAiFilter: (filter: NlSearchFilter | null, label?: string) => void;
   /** Active AI filter label, if any. */
   aiFilterLabel?: string | null;
+  /** AI natural-language search callback. */
+  onNLSearch?: (query: string) => void;
+  /** Whether AI search mode is active (hides sort/filter, shows clear button). */
+  nlSearchActive?: boolean;
+  onNLSearchClear?: () => void;
+  nlSearchLoading?: boolean;
 }
 
 export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarProps>(function ScreeningToolbar({
@@ -54,6 +60,10 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
   onExport,
   onAiFilter,
   aiFilterLabel,
+  onNLSearch,
+  nlSearchActive,
+  onNLSearchClear,
+  nlSearchLoading,
 }: ScreeningToolbarProps, ref) {
   const activeSortLabel = SORT_OPTIONS.find((o) => o.key === sortKey)?.label ?? "Risk score";
 
@@ -110,8 +120,13 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
             type="search"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search subjects — name, ID, country (press / to focus)…"
-            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && onNLSearch && query.trim().split(/\s+/).length > 2) {
+                onNLSearch(query.trim());
+              }
+            }}
+            placeholder={nlSearchActive ? "AI search active — press Esc or click ✕ to clear" : "Search subjects — name, ID, country (press / to focus)…"}
+            className={`w-full pl-8 pr-3 py-2 border rounded text-13 bg-bg-1 focus:outline-none focus:bg-bg-panel ${nlSearchActive ? "border-amber/50 focus:border-amber" : "border-hair-2 focus:border-brand"}`}
           />
         </div>
 
@@ -135,6 +150,27 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
         </button>
 
         <div className="flex gap-2 items-center">
+          {/* AI search button / clear */}
+          {onNLSearch && !nlSearchActive && (
+            <button
+              type="button"
+              onClick={() => { if (query.trim()) onNLSearch(query.trim()); }}
+              disabled={nlSearchLoading || !query.trim()}
+              title="Natural language AI search — describe the case in plain English"
+              className="inline-flex items-center gap-1 px-2.5 py-[5px] text-11.5 font-medium rounded border border-amber/40 text-amber bg-amber-dim hover:bg-amber-dim/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {nlSearchLoading ? "Thinking…" : "✦ AI search"}
+            </button>
+          )}
+          {nlSearchActive && onNLSearchClear && (
+            <button
+              type="button"
+              onClick={onNLSearchClear}
+              className="inline-flex items-center gap-1 px-2.5 py-[5px] text-11.5 font-medium rounded border border-amber/50 text-amber bg-amber-dim hover:opacity-80 transition-opacity whitespace-nowrap"
+            >
+              ✦ AI · ✕ clear
+            </button>
+          )}
           {/* Sort dropdown */}
           <div className="relative group">
             <ToolbarButton small>

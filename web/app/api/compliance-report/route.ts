@@ -266,7 +266,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{background:var(--bg);color:var(--ink1);font-family:"Courier New",ui-monospace,monospace;font-size:12px;line-height:1.6}
-    body{padding:32px 40px;max-width:900px;margin:0 auto}
+    body{padding:24px 28px;max-width:680px;margin:0 auto}
 
     /* toolbar */
     .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:28px}
@@ -419,7 +419,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       .audit-grid,.audit-signatures{background:#fff;border-color:#ddd}
       .canonical a{color:#222;text-decoration:underline}
       @page{
-        margin:18mm 16mm;
+        margin:18mm 22mm;
         @top-left{
           content:"HAWKEYE STERLING — confidential";
           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;

@@ -414,26 +414,44 @@ interface GNewsQuery {
 }
 
 const GNEWS_QUERIES: GNewsQuery[] = [
-  { q: '"Ministry of Economy" UAE AML CFT circular regulation', source: "MoET", category: "AML/CFT", tone: "amber" },
-  { q: '"Central Bank UAE" OR "CBUAE" AML CFT directive circular guidance', source: "CBUAE", category: "AML/CFT", tone: "amber" },
-  { q: '"UAE FIU" OR "goAML" UAE financial intelligence unit', source: "UAEFIU", category: "AML/CFT", tone: "amber" },
-  { q: 'UAE import export compliance regulation circular', source: "UAE IEC", category: "Trade", tone: "green" },
-  { q: 'FATF UAE mutual evaluation AML money laundering', source: "FATF", category: "AML/CFT", tone: "red" },
-  { q: 'UAE VARA virtual assets crypto regulation', source: "VARA", category: "VASPs", tone: "amber" },
-  { q: 'UAE Cabinet decision AML sanctions', source: "UAE Cabinet", category: "Sanctions", tone: "red" },
-  { q: 'PDPL UAE data protection law regulation', source: "UAE PDPL", category: "PDPL", tone: "amber" },
-  { q: 'UAE Ministry Economy DPMS gold precious metals', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
-  { q: 'UAE AI artificial intelligence regulation governance', source: "UAE Digital", category: "AI Governance", tone: "green" },
-  { q: 'LBMA "responsible gold guidance" OR "LBMA good delivery" gold refinery audit', source: "LBMA", category: "DPMS", tone: "green" },
-  { q: 'OECD "due diligence guidance" minerals conflict-affected responsible supply chain', source: "OECD", category: "DPMS", tone: "green" },
-  { q: 'RMI "Responsible Minerals Initiative" conflict minerals smelter refiner audit', source: "RMI", category: "DPMS", tone: "amber" },
-  { q: 'EOCN UAE "Executive Office for Control" non-proliferation targeted financial sanctions', source: "EOCN UAE", category: "Sanctions", tone: "red" },
+  // ── UAE Regulatory ────────────────────────────────────────────────────────
+  { q: '"Ministry of Economy" UAE AML CFT circular regulation 2025', source: "MoET", category: "AML/CFT", tone: "amber" },
+  { q: '"Central Bank UAE" OR "CBUAE" AML CFT directive circular 2025', source: "CBUAE", category: "AML/CFT", tone: "amber" },
+  { q: '"UAE FIU" OR "goAML" UAE financial intelligence unit suspicious transaction', source: "UAEFIU", category: "AML/CFT", tone: "amber" },
+  { q: 'FATF UAE money laundering financing terrorism 2025', source: "FATF", category: "AML/CFT", tone: "red" },
+  { q: 'UAE VARA virtual assets crypto regulation enforcement 2025', source: "VARA", category: "VASPs", tone: "amber" },
+  { q: 'UAE Cabinet decision AML sanctions enforcement', source: "UAE Cabinet", category: "Sanctions", tone: "red" },
+  { q: 'UAE DPMS gold precious metals regulation compliance dealer', source: "MoET / DPMS", category: "DPMS", tone: "amber" },
+  { q: 'EOCN UAE sanctions non-proliferation targeted financial asset freeze', source: "EOCN UAE", category: "Sanctions", tone: "red" },
+  { q: 'UAE sanctions Russia Iran DPRK North Korea enforcement', source: "UAE Cabinet", category: "Sanctions", tone: "red" },
+  { q: 'UAE financial crime enforcement arrest prosecution money laundering', source: "UAEFIU", category: "AML/CFT", tone: "red" },
+  { q: 'FATF grey list black list mutual evaluation 2025', source: "FATF", category: "AML/CFT", tone: "red" },
+  { q: 'LBMA "responsible gold" refinery audit good delivery 2025', source: "LBMA", category: "DPMS", tone: "green" },
+  { q: 'OECD conflict minerals due diligence CAHRA cobalt tantalum', source: "OECD", category: "DPMS", tone: "green" },
+  { q: 'RMI "Responsible Minerals Initiative" smelter audit 3TG 2025', source: "RMI", category: "DPMS", tone: "amber" },
+  // ── Mining & Metals — Global ──────────────────────────────────────────────
+  { q: 'gold mining illegal artisanal conflict minerals Africa 2025', source: "Mining", category: "Mining", tone: "red" },
+  { q: 'gold price bullion market London fix spot price 2025', source: "Mining", category: "Mining", tone: "green" },
+  { q: 'illegal gold mining money laundering smuggling criminal network', source: "Mining", category: "Mining", tone: "red" },
+  { q: 'conflict minerals DRC Congo Sudan Mali gold tantalum mining', source: "Mining", category: "Mining", tone: "red" },
+  { q: 'gold refinery UAE Dubai smuggling trafficking seizure arrest', source: "Mining", category: "DPMS", tone: "red" },
+  { q: 'artisanal small scale gold mining ASGM mercury environment', source: "Mining", category: "Mining", tone: "amber" },
+  { q: 'gold mining company ESG sanctions compliance supply chain', source: "Mining", category: "Mining", tone: "amber" },
+  { q: 'precious metals diamond trade financial crime typology', source: "Mining", category: "DPMS", tone: "red" },
+  { q: 'cobalt lithium mining Democratic Republic Congo supply chain risk', source: "Mining", category: "Mining", tone: "amber" },
+  { q: 'gold silver platinum price manipulation market abuse 2025', source: "Mining", category: "Mining", tone: "red" },
+  { q: 'mining company AML compliance due diligence 2025', source: "Mining", category: "Mining", tone: "amber" },
+  { q: '"World Gold Council" gold demand report 2025', source: "Mining", category: "Mining", tone: "green" },
+  { q: 'gold smuggling Africa Middle East UAE Dubai seizure customs', source: "Mining", category: "DPMS", tone: "red" },
+  { q: 'critical minerals strategic resources sanctions supply disruption', source: "Mining", category: "Mining", tone: "amber" },
+  { q: 'mining royalties corruption bribery Africa Latin America investigation', source: "Mining", category: "Mining", tone: "red" },
+  { q: 'LBMA gold bar seized counterfeit fraudulent refinery hallmark', source: "LBMA", category: "DPMS", tone: "red" },
 ];
 
 function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
   const items = xml.split(/<item>/i).slice(1);
   const out: RegulatoryItem[] = [];
-  for (const raw of items.slice(0, 5)) {
+  for (const raw of items.slice(0, 8)) {
     const body = raw.split(/<\/item>/i)[0] ?? "";
     const pick = (tag: string): string => {
       const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
@@ -468,7 +486,7 @@ async function fetchGNews(query: GNewsQuery): Promise<RegulatoryItem[]> {
     const res = await fetch(url, {
       headers: { "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; regulatory-monitor)", accept: "application/rss+xml,*/*" },
       signal,
-      next: { revalidate: 1800 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const xml = await res.text();
@@ -543,7 +561,7 @@ async function scrapeSite(cfg: SiteScrapeConfig): Promise<RegulatoryItem[]> {
         "accept-language": "en-US,en;q=0.9",
       },
       signal,
-      next: { revalidate: 1800 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const html = await res.text();
@@ -870,7 +888,7 @@ export async function GET(_req: Request): Promise<NextResponse> {
 
   const allItems: RegulatoryItem[] = [
     ...uaeStaticFiltered,
-    ...deduped.slice(0, 40),
+    ...deduped.slice(0, 80),
     ...staticFiltered,
   ];
 
@@ -886,7 +904,7 @@ export async function GET(_req: Request): Promise<NextResponse> {
 
   const payload: FeedResult = {
     ok: true,
-    items: allItems.slice(0, 30),
+    items: allItems.slice(0, 120),
     sources: Array.from(sourcesHit),
     fetchedAt: new Date().toISOString(),
     errors,
@@ -897,7 +915,8 @@ export async function GET(_req: Request): Promise<NextResponse> {
 
   return NextResponse.json(payload, {
     headers: {
-      "Cache-Control": "s-maxage=900, stale-while-revalidate=1800",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Pragma": "no-cache",
       "X-Cache": "MISS",
     },
   });

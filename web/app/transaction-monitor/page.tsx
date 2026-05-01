@@ -91,11 +91,21 @@ function loadTxs(): TxRow[] {
   }
 }
 
+interface TmExplanation {
+  explanation: string;
+  disposition: "dismiss" | "monitor" | "escalate" | "report";
+  dispositionReason: string;
+  regulatoryBasis: string;
+  typologies: string[];
+}
+
 export default function TransactionMonitorPage() {
   const [txs, setTxs] = useState<TxRow[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const counterpartyRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const [explanations, setExplanations] = useState<Record<string, TmExplanation>>({});
+  const [explaining, setExplaining] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setTxs(loadTxs());
@@ -128,6 +138,21 @@ export default function TransactionMonitorPage() {
 
   const openTxReport = (t: TxRow): void => setReportTx(t);
   const closeTxReport = (): void => setReportTx(null);
+
+  const explainTx = async (t: TxRow) => {
+    setExplaining((prev) => ({ ...prev, [t.id]: true }));
+    try {
+      const res = await fetch("/api/tm-explain", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transaction: t }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
+      if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
+    } catch { /* silent */ }
+    finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
+  };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
   const alerts = txs.filter((t) => t.behaviouralFlags.length > 0).length;
@@ -225,6 +250,9 @@ export default function TransactionMonitorPage() {
 
   return (
     <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 04
+      </div>
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"
@@ -332,6 +360,7 @@ export default function TransactionMonitorPage() {
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Flags
                     </th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">AI</th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Logged
                     </th>
@@ -371,6 +400,16 @@ export default function TransactionMonitorPage() {
                           </span>
                         )}
                       </td>
+                      <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => void explainTx(t)}
+                          disabled={explaining[t.id] === true}
+                          className="text-9 font-mono px-1.5 py-px rounded border border-brand/40 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
+                        >
+                          {explaining[t.id] === true ? "…" : "Explain"}
+                        </button>
+                      </td>
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
                         {new Date(t.loggedAt).toLocaleString()}
                       </td>
@@ -390,6 +429,28 @@ export default function TransactionMonitorPage() {
                   ))}
                 </tbody>
               </table>
+              {Object.keys(explanations).length > 0 && (
+                <div className="border-t border-hair-2 divide-y divide-hair">
+                  {txs.filter((t) => explanations[t.id]).map((t) => {
+                    const ex = explanations[t.id] as TmExplanation;
+                    const dispCls = ex.disposition === "report" ? "bg-red text-white" : ex.disposition === "escalate" ? "bg-red-dim text-red" : ex.disposition === "monitor" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                    return (
+                      <div key={t.id} className="px-4 py-3 bg-bg-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-10 text-ink-3">{t.ref}</span>
+                          <span className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded ${dispCls}`}>{ex.disposition}</span>
+                          {ex.typologies.map((typ) => (
+                            <span key={typ} className="font-mono text-9 px-1.5 py-px rounded bg-bg-2 text-ink-2">{typ}</span>
+                          ))}
+                        </div>
+                        <p className="text-11 text-ink-1 leading-snug mb-1">{ex.explanation}</p>
+                        <div className="text-10 text-ink-3 italic">{ex.dispositionReason}</div>
+                        {ex.regulatoryBasis && <div className="text-9 font-mono text-ink-4 mt-0.5">{ex.regulatoryBasis}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
       )}
       <PaymentScreen />

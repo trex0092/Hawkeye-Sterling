@@ -25,6 +25,7 @@ interface EwraState {
   approvedBy: string;
   nextReview: string; // dd/mm/yyyy
   boardMinutes: string;
+  unit: string;
 }
 
 const STORAGE = "hawkeye.ewra.v1";
@@ -86,6 +87,7 @@ const DEFAULT_STATE: EwraState = {
   approvedBy: "",
   nextReview: "",
   boardMinutes: "",
+  unit: "",
 };
 
 function load(): EwraState {
@@ -194,6 +196,7 @@ export default function EwraPage() {
   return (
     <ModuleLayout asanaModule="ewra" asanaLabel="Enterprise-Wide Risk Assessment">
         <ModuleHero
+          moduleNumber={20}
           eyebrow="Module 23 · Risk Assessment"
           title="EWRA / BWRA"
           titleEm="dashboard."
@@ -411,7 +414,13 @@ export default function EwraPage() {
         {/* Approval metadata */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
           <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Board approval</div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-5 gap-3">
+            <div>
+              <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Unit</label>
+              <input value={state.unit}
+                onChange={(e) => update({ ...state, unit: e.target.value })}
+                placeholder="e.g. AML Compliance" className={inputCls} />
+            </div>
             <div>
               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Last Approved</label>
               <input value={state.lastApproved}

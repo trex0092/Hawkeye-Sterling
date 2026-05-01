@@ -471,6 +471,9 @@ export default function ApiDocsPage() {
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 flex-wrap mb-6">
         <div>
+          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+            MODULE 47
+          </div>
           <div className="font-mono text-[11px] tracking-widest uppercase text-ink-3 mb-2">
             REST · JSON · OpenAPI 3.1
           </div>

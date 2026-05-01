@@ -225,6 +225,9 @@ export default function WorkbenchPage() {
         <main className="px-10 py-8 overflow-y-auto">
           {/* Unified hero */}
           <div className="mb-6">
+            <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+              MODULE 43
+            </div>
             <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
               MODULE 03 · WORKBENCH BRAIN
             </div>

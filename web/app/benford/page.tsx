@@ -68,12 +68,40 @@ function Bar({ pct, expected, max, flagged }: { pct: number; expected: number; m
   );
 }
 
+interface BenfordInterpretation {
+  interpretation: string;
+  financialCrimeIndicators: string[];
+  regulatoryRelevance: string;
+  confidence: "high" | "medium" | "low";
+  recommendedActions: string[];
+  mlTypologies: string[];
+  verdict: "refer_to_mlro" | "enhanced_review" | "monitor" | "clear";
+}
+
 export default function BenfordPage() {
   const [input, setInput] = useState("");
   const [label, setLabel] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<BenfordResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aiInterp, setAiInterp] = useState<BenfordInterpretation | null>(null);
+  const [interpLoading, setInterpLoading] = useState(false);
+
+  const interpretResult = async (r: BenfordResult) => {
+    setInterpLoading(true);
+    setAiInterp(null);
+    try {
+      const res = await fetch("/api/benford-interpret", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ label: r.label, n: r.n, mad: r.mad, chiSquared: r.chiSquared, risk: r.risk, riskDetail: r.riskDetail, flaggedDigits: r.flaggedDigits, digits: r.digits }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & BenfordInterpretation;
+      if (data.ok) setAiInterp(data);
+    } catch { /* silent */ }
+    finally { setInterpLoading(false); }
+  };
 
   function parseAmounts(): number[] {
     return input
@@ -106,6 +134,7 @@ export default function BenfordPage() {
   return (
     <ModuleLayout asanaModule="benford" asanaLabel="Benford Analysis" engineLabel="Benford Analysis">
       <ModuleHero
+        moduleNumber={39}
         eyebrow="Module · Forensic Accounting"
         title="Benford's Law"
         titleEm="analysis."
@@ -286,6 +315,41 @@ export default function BenfordPage() {
                 {result.error}
               </div>
             )}
+          </div>
+        )}
+
+        {result && result.ok && (
+          <div className="mt-4">
+            <button type="button" onClick={() => void interpretResult(result)} disabled={interpLoading}
+              className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+              {interpLoading ? "Interpreting…" : "AI Forensic Interpretation"}
+            </button>
+            {aiInterp && (() => {
+              const verdictCls = aiInterp.verdict === "refer_to_mlro" ? "bg-red text-white" : aiInterp.verdict === "enhanced_review" ? "bg-red-dim text-red" : aiInterp.verdict === "monitor" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+              const confCls = aiInterp.confidence === "high" ? "text-green" : aiInterp.confidence === "medium" ? "text-amber" : "text-red";
+              return (
+                <div className="mt-3 bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className={`font-mono text-11 font-bold px-2 py-px rounded uppercase ${verdictCls}`}>{aiInterp.verdict.replace(/_/g," ")}</span>
+                    <span className={`text-11 font-mono ${confCls}`}>{aiInterp.confidence} confidence</span>
+                  </div>
+                  <p className="text-12 text-ink-0 leading-relaxed">{aiInterp.interpretation}</p>
+                  {aiInterp.financialCrimeIndicators.length > 0 && (
+                    <div>
+                      <div className="text-10 uppercase tracking-wide-3 text-red mb-1">Financial crime indicators</div>
+                      <ul className="text-11 text-ink-1 list-disc list-inside space-y-0.5">{aiInterp.financialCrimeIndicators.map((f, i) => <li key={i}>{f}</li>)}</ul>
+                    </div>
+                  )}
+                  {aiInterp.mlTypologies.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">{aiInterp.mlTypologies.map((t, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{t}</span>)}</div>
+                  )}
+                  {aiInterp.regulatoryRelevance && <div className="text-10 font-mono text-ink-3">{aiInterp.regulatoryRelevance}</div>}
+                  {aiInterp.recommendedActions.length > 0 && (
+                    <ul className="text-11 text-ink-2 list-disc list-inside space-y-0.5">{aiInterp.recommendedActions.map((a, i) => <li key={i}>{a}</li>)}</ul>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

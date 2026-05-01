@@ -82,8 +82,54 @@ import {
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
 type Tab = (typeof TABS)[number];
+
+// ── Hit Disambiguator types ───────────────────────────────────────────────────
+interface DisambiguationHitInput {
+  hitId: string;
+  hitName: string;
+  hitCategory: string;
+  hitCountry?: string;
+  hitDob?: string;
+  hitRole?: string;
+  matchScore?: number;
+}
+interface DisambiguatedHit {
+  hitId: string;
+  verdict: "confirmed_false_positive" | "likely_false_positive" | "possible_match" | "likely_true_match";
+  confidenceScore: number;
+  primaryDifferentiator: string;
+  canAutoDispose: boolean;
+  dispositionText: string;
+  requiresClientClarification: boolean;
+  clarificationQuestion?: string;
+}
+interface DisambiguationResult {
+  ok: boolean;
+  overallAssessment: string;
+  clientRiskProfile: string;
+  disambiguationStrategy: string;
+  hits: DisambiguatedHit[];
+  clarificationQuestions: string[];
+  bulkDispositionText: string;
+  escalationItems: string[];
+  regulatoryNote: string;
+  processingTime: string;
+}
+
+interface EthicalImpact {
+  impactLevel: "high" | "medium" | "low";
+  impactNarrative: string;
+  rightsImpacted: string[];
+  proportionalityAssessment: string;
+  humanOversightStatus: string;
+  mitigationMeasures: string[];
+  subjectRights: string[];
+  documentationRequired: string[];
+  unescoAlignment: string;
+  reviewRecommendation: string;
+}
 
 const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
   clear: "Clear",
@@ -175,10 +221,89 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // records.
   const [roleOverride, setRoleOverride] = useState("");
   const [narrativeOverride, setNarrativeOverride] = useState("");
+  const [eiaResult, setEiaResult] = useState<EthicalImpact | null>(null);
+  const [eiaLoading, setEiaLoading] = useState(false);
   useEffect(() => {
     setRoleOverride("");
     setNarrativeOverride("");
+    setEiaResult(null);
   }, [subject.id]);
+
+  // ── Hit Disambiguator state ─────────────────────────────────────────────────
+  const [disambigResult, setDisambigResult] = useState<DisambiguationResult | null>(null);
+  const [disambigLoading, setDisambigLoading] = useState(false);
+  const [disambigClient, setDisambigClient] = useState({
+    name: subject.name,
+    nationality: subject.country,
+    dob: "",
+    gender: "",
+    occupation: subject.type.includes("Individual") ? "Individual" : subject.type,
+    context: subject.meta,
+  });
+  const [disambigHits, setDisambigHits] = useState<DisambiguationHitInput[]>([
+    { hitId: "hit-001", hitName: "", hitCategory: subject.listCoverage.length > 0 ? "Sanctions" : "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
+  ]);
+
+  // Re-seed client fields when the active subject changes
+  useEffect(() => {
+    setDisambigClient({
+      name: subject.name,
+      nationality: subject.country,
+      dob: "",
+      gender: "",
+      occupation: subject.type.includes("Individual") ? "Individual" : subject.type,
+      context: subject.meta,
+    });
+    setDisambigHits([{ hitId: "hit-001", hitName: "", hitCategory: "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined }]);
+    setDisambigResult(null);
+  }, [subject.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const addDisambigHit = () => setDisambigHits((prev) => [
+    ...prev,
+    { hitId: `hit-${String(prev.length + 1).padStart(3, "0")}`, hitName: "", hitCategory: "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
+  ]);
+  const removeDisambigHit = (idx: number) => setDisambigHits((prev) => prev.filter((_, i) => i !== idx));
+  const updateDisambigHit = (idx: number, patch: Partial<DisambiguationHitInput>) =>
+    setDisambigHits((prev) => prev.map((h, i) => i === idx ? { ...h, ...patch } : h));
+
+  const runDisambiguation = async () => {
+    const namedHits = disambigHits.filter((h) => h.hitName.trim());
+    if (!disambigClient.name.trim() || namedHits.length === 0) return;
+    setDisambigLoading(true);
+    try {
+      const res = await fetch("/api/smart-disambiguate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ client: disambigClient, hits: namedHits }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as DisambiguationResult;
+      if (data.ok) setDisambigResult(data);
+    } catch { /* silent */ }
+    finally { setDisambigLoading(false); }
+  };
+
+  const runEIA = async () => {
+    setEiaLoading(true);
+    setEiaResult(null);
+    try {
+      const res = await fetch("/api/ethical-impact", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subjectName: subject.name,
+          riskScore: subject.riskScore,
+          cddPosture: subject.cddPosture,
+          nationality: subject.country,
+          aiDecisions: [],
+        }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { ok: boolean } & EthicalImpact;
+      if (data.ok) setEiaResult(data);
+    } catch { /* silent */ }
+    finally { setEiaLoading(false); }
+  };
   const effectiveAdverseMediaText =
     narrativeOverride.trim() || adverseMediaText;
   const superBrain = useSuperBrain(qsSubjectForBrain, {
@@ -1085,6 +1210,284 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         {activeTab === "Evidence" && (
           <EvidenceTab superBrain={superBrain} subject={subject} />
         )}
+
+        {activeTab === "AI Ethics" && (
+          <EthicsTab
+            subject={subject}
+            eiaResult={eiaResult}
+            eiaLoading={eiaLoading}
+            onRun={() => void runEIA()}
+          />
+        )}
+
+        {activeTab === "Disambiguate" && (() => {
+          const verdictBadge: Record<string, string> = {
+            confirmed_false_positive: "bg-green-dim text-green border border-green/30",
+            likely_false_positive: "bg-green-dim text-green border border-green/30 opacity-70",
+            possible_match: "bg-amber-dim text-amber border border-amber/30",
+            likely_true_match: "bg-red text-white",
+          };
+          return (
+            <div>
+              <div className="text-11 text-ink-2 mb-4">
+                AI applies systematic multi-factor analysis (DOB, gender, nationality, role, geography) under FDL 10/2025 and FATF R.10. Client profile pre-filled from selected subject.
+              </div>
+
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Client Profile</div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Full Name *</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="Client full name"
+                    value={disambigClient.name}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Nationality</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="e.g. Pakistani"
+                    value={disambigClient.nationality}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, nationality: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Date of Birth</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="dd/mm/yyyy or yyyy-mm-dd"
+                    value={disambigClient.dob}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, dob: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Gender</label>
+                  <select
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    value={disambigClient.gender}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, gender: e.target.value }))}
+                  >
+                    <option value="">— select —</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Occupation</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="e.g. Gold trader, Importer"
+                    value={disambigClient.occupation}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, occupation: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Client Context</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="e.g. gold buyer, UAE-based, opened 2024"
+                    value={disambigClient.context}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, context: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Screening Hits</div>
+              <div className="space-y-2 mb-3">
+                {disambigHits.map((hit, idx) => (
+                  <div key={hit.hitId} className="grid gap-1.5 p-2 bg-bg-1 border border-hair-2 rounded" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px 32px" }}>
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Hit name"
+                      value={hit.hitName}
+                      onChange={(e) => updateDisambigHit(idx, { hitName: e.target.value })}
+                    />
+                    <select
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      value={hit.hitCategory}
+                      onChange={(e) => updateDisambigHit(idx, { hitCategory: e.target.value })}
+                    >
+                      {["Sanctions", "PEP", "Adverse Media", "SIP", "RCA"].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Country"
+                      value={hit.hitCountry ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { hitCountry: e.target.value })}
+                    />
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Hit DOB"
+                      value={hit.hitDob ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { hitDob: e.target.value })}
+                    />
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Role/title"
+                      value={hit.hitRole ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { hitRole: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Score"
+                      value={hit.matchScore ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { matchScore: e.target.value ? Number(e.target.value) : undefined })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeDisambigHit(idx)}
+                      disabled={disambigHits.length <= 1}
+                      className="flex items-center justify-center text-ink-3 hover:text-red disabled:opacity-30 text-14"
+                      title="Remove hit"
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+              <div className="text-10 text-ink-3 mb-3 font-mono">Columns: Hit Name · Category · Country · DOB · Role · Match Score</div>
+
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={addDisambigHit}
+                  className="px-3 py-1.5 border border-hair-2 rounded text-11 text-ink-2 hover:text-ink-0 hover:border-brand/40 transition-colors"
+                >
+                  + Add Hit
+                </button>
+                <button
+                  type="button"
+                  disabled={!disambigClient.name.trim() || disambigHits.every((h) => !h.hitName.trim()) || disambigLoading}
+                  onClick={() => { void runDisambiguation(); }}
+                  className="px-4 py-1.5 bg-violet-600 text-white rounded text-12 font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                >
+                  {disambigLoading ? "Running AI disambiguation…" : "Run Disambiguation"}
+                </button>
+              </div>
+
+              {disambigResult && (
+                <div className="space-y-4 pt-4 border-t border-hair-2">
+                  <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-bg-1 border border-hair-2 rounded-lg">
+                    <p className="text-12 font-bold text-ink-0 flex-1">{disambigResult.overallAssessment}</p>
+                    {disambigResult.processingTime && (
+                      <span className="text-10 font-mono px-2 py-0.5 bg-green-dim text-green border border-green/30 rounded">
+                        {disambigResult.processingTime}
+                      </span>
+                    )}
+                  </div>
+
+                  {(disambigResult.disambiguationStrategy || disambigResult.clientRiskProfile) && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {disambigResult.disambiguationStrategy && (
+                        <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disambiguation Strategy</div>
+                          <p className="text-11 text-ink-1">{disambigResult.disambiguationStrategy}</p>
+                        </div>
+                      )}
+                      {disambigResult.clientRiskProfile && (
+                        <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Risk Profile</div>
+                          <p className="text-11 text-ink-1">{disambigResult.clientRiskProfile}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {disambigResult.escalationItems.length > 0 && (
+                    <div className="flex items-start gap-2 px-4 py-3 bg-red-dim border border-red/40 rounded-lg">
+                      <span className="text-red font-bold text-13">!</span>
+                      <div>
+                        <div className="text-12 font-bold text-red mb-1">MLRO Escalation Required</div>
+                        <p className="text-11 text-ink-1">The following hits MUST be escalated to the MLRO: <span className="font-mono font-semibold text-red">{disambigResult.escalationItems.join(", ")}</span></p>
+                      </div>
+                    </div>
+                  )}
+
+                  {disambigResult.hits.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-10 uppercase tracking-wide-3 text-ink-3">Hit Assessments</div>
+                      {disambigResult.hits.map((h) => (
+                        <div key={h.hitId} className="px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg">
+                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span className="text-11 font-mono text-ink-3">{h.hitId}</span>
+                            <span className={`text-10 font-bold px-2 py-0.5 rounded uppercase ${verdictBadge[h.verdict] ?? "bg-bg-2 text-ink-2"}`}>
+                              {h.verdict.replace(/_/g, " ")}
+                            </span>
+                            <span className="text-11 font-mono text-ink-2">{h.confidenceScore}% confidence</span>
+                            {h.canAutoDispose && (
+                              <span className="text-10 px-2 py-0.5 bg-green-dim text-green border border-green/30 rounded">Auto-disposable</span>
+                            )}
+                          </div>
+                          <p className="text-11 text-ink-2 italic mb-1.5">{h.primaryDifferentiator}</p>
+                          {h.canAutoDispose && h.dispositionText && (
+                            <button
+                              type="button"
+                              className="w-full text-left px-2 py-1.5 bg-green-dim/50 border border-green/20 rounded text-10 text-ink-1 font-mono whitespace-pre-wrap hover:border-green/40 transition-colors mb-1.5"
+                              onClick={() => void navigator.clipboard.writeText(h.dispositionText)}
+                              title="Click to copy"
+                            >
+                              {h.dispositionText}
+                            </button>
+                          )}
+                          {h.requiresClientClarification && h.clarificationQuestion && (
+                            <div className="mt-1 px-2 py-1.5 bg-amber-dim border border-amber/30 rounded text-11 text-amber">
+                              <span className="font-semibold">Ask client:</span> {h.clarificationQuestion}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {disambigResult.clarificationQuestions.length > 0 && (
+                    <div className="px-3 py-2.5 bg-amber-dim/40 border border-amber/20 rounded-lg">
+                      <div className="text-10 uppercase tracking-wide-3 text-amber mb-2">Questions to Ask Client</div>
+                      <ul className="space-y-1">
+                        {disambigResult.clarificationQuestions.map((q, i) => (
+                          <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+                            <span className="text-amber">●</span>{q}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {disambigResult.bulkDispositionText && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3">Bulk Disposition Text</div>
+                        <button
+                          type="button"
+                          onClick={() => void navigator.clipboard.writeText(disambigResult.bulkDispositionText)}
+                          className="text-10 px-2 py-0.5 border border-hair-2 rounded text-ink-2 hover:text-ink-0 hover:border-brand/40 transition-colors"
+                        >
+                          Copy All Dispositions
+                        </button>
+                      </div>
+                      <textarea
+                        readOnly
+                        rows={5}
+                        className="w-full px-3 py-2 bg-bg-1 border border-hair-2 rounded text-11 font-mono text-ink-1 resize-y"
+                        value={disambigResult.bulkDispositionText}
+                      />
+                    </div>
+                  )}
+
+                  {disambigResult.regulatoryNote && (
+                    <p className="text-11 font-mono text-ink-3 border-l-2 border-violet/30 pl-3 italic">
+                      {disambigResult.regulatoryNote}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <NewsDossierPanel state={news} />
@@ -2328,5 +2731,164 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         ))}
       </ul>
     </Section>
+  );
+}
+
+function EthicsTab({
+  subject,
+  eiaResult,
+  eiaLoading,
+  onRun,
+}: {
+  subject: Subject;
+  eiaResult: EthicalImpact | null;
+  eiaLoading: boolean;
+  onRun: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyRights = async () => {
+    if (!eiaResult) return;
+    try {
+      await navigator.clipboard.writeText(eiaResult.subjectRights.join("\n"));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch { /* silent */ }
+  };
+
+  const impactColour =
+    eiaResult?.impactLevel === "high"
+      ? "bg-red-dim text-red"
+      : eiaResult?.impactLevel === "medium"
+        ? "bg-amber-dim text-amber"
+        : "bg-green-dim text-green";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2 mb-0.5">
+            Ethical Impact Assessment
+          </div>
+          <div className="text-10 text-ink-3 font-mono">
+            UNESCO AI Ethics 2021 · UAE PDPL FDL 45/2021 · FDL 10/2025
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={eiaLoading}
+          className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+        >
+          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run Ethical Impact Assessment"}
+        </button>
+      </div>
+
+      {eiaLoading && (
+        <div className="text-12 text-ink-2 animate-pulse">Running assessment for {subject.name}…</div>
+      )}
+
+      {eiaResult && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={`font-mono text-10 px-2 py-1 rounded font-semibold ${impactColour}`}>
+              {eiaResult.impactLevel} impact
+            </span>
+          </div>
+
+          <div>
+            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Impact Assessment</div>
+            <p className="text-12 text-ink-1 leading-relaxed">{eiaResult.impactNarrative}</p>
+          </div>
+
+          {eiaResult.rightsImpacted.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Rights Potentially Affected</div>
+              <div className="flex flex-wrap gap-1.5">
+                {eiaResult.rightsImpacted.map((r, i) => (
+                  <span key={i} className="text-10 px-2 py-1 rounded bg-red-dim text-red font-medium">{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {eiaResult.proportionalityAssessment && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Proportionality</div>
+              <p className="text-12 text-ink-1">{eiaResult.proportionalityAssessment}</p>
+            </div>
+          )}
+
+          {eiaResult.humanOversightStatus && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Human Oversight Status</div>
+              <p className="text-12 text-ink-1">{eiaResult.humanOversightStatus}</p>
+            </div>
+          )}
+
+          {eiaResult.mitigationMeasures.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Mitigation Measures</div>
+              <ul className="space-y-1">
+                {eiaResult.mitigationMeasures.map((m, i) => (
+                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                    <span className="text-violet mt-0.5 shrink-0">•</span>
+                    <span>{m}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.subjectRights.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Subject Rights</div>
+                <button
+                  type="button"
+                  onClick={() => void copyRights()}
+                  className="text-10 px-2 py-px rounded bg-bg-2 text-ink-2 hover:text-ink-0 font-mono"
+                >
+                  {copied ? "Copied ✓" : "Copy"}
+                </button>
+              </div>
+              <ul className="space-y-1">
+                {eiaResult.subjectRights.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                    <span className="text-green mt-0.5 shrink-0">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.documentationRequired.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Documentation Required</div>
+              <ul className="space-y-1">
+                {eiaResult.documentationRequired.map((d, i) => (
+                  <li key={i} className="flex items-start gap-2 text-11 font-mono text-ink-2">
+                    <span className="text-brand mt-0.5 shrink-0">→</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.unescoAlignment && (
+            <p className="font-mono text-10 text-ink-3 bg-bg-1 rounded px-3 py-2 leading-relaxed">{eiaResult.unescoAlignment}</p>
+          )}
+
+          {eiaResult.reviewRecommendation && (
+            <div className="flex items-center gap-2">
+              <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Review:</span>
+              <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{eiaResult.reviewRecommendation}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { writeAuditEvent } from "@/lib/audit";
 
 export interface EwraBoardReportResult {
   overallRisk: "critical" | "high" | "medium" | "low";
@@ -20,6 +21,18 @@ export interface EwraBoardReportResult {
   regulatoryContext: string;
   approvalStatement: string;
   nextSteps: string[];
+  // Additional fields from main branch schema
+  overallRiskVerdict?: "critical" | "high" | "medium" | "low";
+  topControlGaps?: Array<{
+    dimension: string;
+    gap: string;
+    recommendation: string;
+    urgency: "immediate" | "3months" | "annual";
+  }>;
+  immediateActions?: string[];
+  regulatoryExposure?: string;
+  boardNarrative?: string;
+  nextReviewDate?: string;
 }
 
 const FALLBACK: EwraBoardReportResult = {
@@ -84,16 +97,29 @@ const FALLBACK: EwraBoardReportResult = {
 
 export async function POST(req: Request) {
   let body: {
-    dimensions?: Array<{ dimension: string; inherent: number; controls: number; notes: string }>;
+    dimensions?: Array<{ id?: string; dimension: string; description?: string; inherent: number; controls: number; notes: string }>;
     institutionName?: string;
     reportingPeriod?: string;
     context?: string;
+    overallInherent?: number;
+    overallResidual?: number;
+    approvedBy?: string;
+    lastApproved?: string;
   };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
+
+  // Audit the report generation
+  try {
+    writeAuditEvent(
+      "mlro",
+      "ewra.ai-report-generated",
+      `overallInherent=${body.overallInherent ?? "?"} overallResidual=${body.overallResidual ?? "?"}`,
+    );
+  } catch { /* non-blocking */ }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
@@ -128,7 +154,11 @@ Respond ONLY with valid JSON — no markdown fences:
   "boardRecommendations": ["<recommendation>"],
   "regulatoryContext": "<paragraph citing UAE law>",
   "approvalStatement": "<formal approval paragraph>",
-  "nextSteps": ["<step>"]
+  "nextSteps": ["<step>"],
+  "immediateActions": ["<immediate action>"],
+  "regulatoryExposure": "<regulatory exposure summary>",
+  "boardNarrative": "<4-6 sentence board narrative>",
+  "nextReviewDate": "<recommended review date>"
 }`,
           cache_control: { type: "ephemeral" },
         },
@@ -137,6 +167,10 @@ Respond ONLY with valid JSON — no markdown fences:
         role: "user",
         content: `Institution: ${body.institutionName ?? "UAE Financial Institution"}
 Reporting Period: ${body.reportingPeriod ?? "Current year"}
+${body.overallInherent !== undefined ? `Overall Inherent Risk: ${body.overallInherent}/5` : ""}
+${body.overallResidual !== undefined ? `Overall Residual Risk: ${body.overallResidual}/5` : ""}
+${body.approvedBy ? `Last Approved By: ${body.approvedBy}` : ""}
+${body.lastApproved ? `Last Approval Date: ${body.lastApproved}` : ""}
 
 Risk Dimension Scores:
 ${dimensionText}

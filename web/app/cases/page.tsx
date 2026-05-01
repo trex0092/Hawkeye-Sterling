@@ -14,6 +14,19 @@ import type { CaseFilter, CaseFilterKey, CaseRecord } from "@/lib/types";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
+interface TriagedCase {
+  id: string;
+  typologies: string[];
+  narrative: string;
+  mostSerious: string;
+  escalation: "immediate" | "urgent" | "routine" | "none";
+  similarityGroup?: string;
+}
+interface TriageResult {
+  ok: boolean;
+  triaged: TriagedCase[];
+}
+
 // Shape a case record into the compliance-report payload so the modal
 // renders the same MLRO dossier the screening panel produces.
 //
@@ -85,6 +98,8 @@ export default function CasesPage() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [reportCase, setReportCase] = useState<CaseRecord | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
+  const [triageLoading, setTriageLoading] = useState(false);
 
   // Hydrate from localStorage on mount + react to writes from other
   // modules (STR filing form, screening-panel escalations, etc.).
@@ -134,6 +149,29 @@ export default function CasesPage() {
     [cases],
   );
 
+  const runBatchTriage = async () => {
+    setTriageLoading(true);
+    setTriageResult(null);
+    try {
+      const activeCases = cases.slice(0, 10).map((c) => ({
+        id: c.id,
+        subject: c.subject,
+        meta: c.meta ?? "",
+        status: c.status,
+        evidence: c.evidence ?? [],
+      }));
+      const res = await fetch("/api/cases/triage", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cases: activeCases }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as TriageResult;
+      if (data.ok) setTriageResult(data);
+    } catch { /* silent */ }
+    finally { setTriageLoading(false); }
+  };
+
   return (
     <>
       <Header />
@@ -150,11 +188,40 @@ export default function CasesPage() {
         <main className="px-10 py-8 overflow-y-auto">
           <div className="flex items-start justify-between mb-0">
             <CasesHero />
-            <div className="mt-1">
+            <div className="mt-1 flex items-center gap-2">
               <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
+              <button type="button" onClick={() => void runBatchTriage()} disabled={triageLoading || cases.length === 0}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+                {triageLoading ? "Triaging…" : `AI Triage (${Math.min(cases.length, 10)})`}
+              </button>
             </div>
           </div>
           <CasesToolbar query={query} onQueryChange={setQuery} />
+          {triageResult && (
+            <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-hair-2 bg-bg-1">
+                <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AI Triage Results</span>
+                <button type="button" onClick={() => setTriageResult(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+              </div>
+              <div className="divide-y divide-hair">
+                {triageResult.triaged.map((t) => {
+                  const escCls = t.escalation === "immediate" ? "bg-red text-white" : t.escalation === "urgent" ? "bg-red-dim text-red" : t.escalation === "routine" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div key={t.id} className="px-4 py-3 flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <span className="font-mono text-10 text-ink-3">{t.id}</span>
+                          <span className={`font-mono text-9 px-1.5 py-px rounded uppercase font-semibold ${escCls}`}>{t.escalation}</span>
+                          {t.typologies.map((typ) => <span key={typ} className="font-mono text-9 px-1.5 py-px rounded bg-bg-2 text-ink-2">{typ}</span>)}
+                        </div>
+                        <p className="text-11 text-ink-1 leading-snug">{t.narrative}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <CasesTable
             cases={filtered}
             selectedId={selectedId}
