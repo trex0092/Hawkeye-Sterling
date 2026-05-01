@@ -21,6 +21,7 @@ import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
+import { BatchTab } from "@/components/screening/BatchTab";
 import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
 import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
 import { AmLanguageBreakdown } from "@/components/screening/AmLanguageBreakdown";
@@ -537,8 +538,8 @@ export default function ScreeningPage() {
   // Subject IDs whose quick-screen call returned an error. Cleared on re-screen or delete.
   const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
-  // Page-level tab: "queue" shows the normal screening queue; "adverse-media" shows the media intel search
-  const [pageTab, setPageTab] = useState<"queue" | "adverse-media">("queue");
+  // Page-level tab: "queue" | "adverse-media" | "bulk"
+  const [pageTab, setPageTab] = useState<"queue" | "adverse-media" | "bulk">("queue");
 
   // ── Bulk Re-Screen state ─────────────────────────────────────────────────────
   const [rescreenLoading, setRescreenLoading] = useState(false);
@@ -1216,6 +1217,9 @@ export default function ScreeningPage() {
         <button type="button" onClick={() => setPageTab("adverse-media")} className={amTabCls(pageTab === "adverse-media")}>
           Adverse Media Intelligence
         </button>
+        <button type="button" onClick={() => setPageTab("bulk")} className={amTabCls(pageTab === "bulk")}>
+          Bulk Screening
+        </button>
         <div className="ml-auto py-2">
           <AsanaReportButton payload={{ module: "screening", label: "Screening Queue", summary: "Screening queue status report from Hawkeye Sterling — sanctions, PEP and adverse media vectors reviewed." }} />
         </div>
@@ -1507,6 +1511,8 @@ export default function ScreeningPage() {
           setBulkImportOpen(false);
         }}
       />
+
+      {pageTab === "bulk" && <BatchTab />}
 
       {pageTab === "adverse-media" && (
         <main className="max-w-5xl mx-auto px-10 py-8">
