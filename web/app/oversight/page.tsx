@@ -1059,11 +1059,11 @@ export default function OversightPage() {
   };
 
   const TAB_LABELS: Record<Tab, string> = {
-    approvals: "Approvals",
+    approvals: "⚖️ Approvals",
     minutes: "Meeting minutes",
-    circulars: "Circulars",
-    "action-tracker": `Action tracker${openActions > 0 ? ` (${openActions})` : ""}`,
-    kpi: "KPI Dashboard",
+    circulars: "📜 Circulars",
+    "action-tracker": `✅ Action tracker${openActions > 0 ? ` (${openActions})` : ""}`,
+    kpi: "📊 KPI Dashboard",
   };
 
   return (

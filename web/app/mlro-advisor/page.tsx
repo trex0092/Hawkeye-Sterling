@@ -1858,7 +1858,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"w6-virtual-asset-risk"|"w6-prolif-finance"|"w6-environmental-crime"|"w6-crypto-tracing"|"w6-human-trafficking"|"w6-tax-evasion"|"w6-corruption-risk"|"w6-real-estate-ml"|"w6-trade-finance"|"w6-insider-threat">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -2419,6 +2419,47 @@ export default function MlroAdvisorPage() {
   const [amlKpiResult, setAmlKpiResult] = useState<Record<string, unknown> | null>(null);
   const [amlKpiLoading, setAmlKpiLoading] = useState(false);
 
+  // ── Wave 6 tool state ──────────────────────────────────────────────────────
+  const [w6VaspInput, setW6VaspInput] = useState({ vasp: "", jurisdiction: "", products: [] as string[], volumes: "" });
+  const [w6VaspResult, setW6VaspResult] = useState<Record<string, unknown> | null>(null);
+  const [w6VaspLoading, setW6VaspLoading] = useState(false);
+
+  const [w6ProlifInput, setW6ProlifInput] = useState({ entity: "", jurisdiction: "", sectors: "", transactionPatterns: "" });
+  const [w6ProlifResult, setW6ProlifResult] = useState<Record<string, unknown> | null>(null);
+  const [w6ProlifLoading, setW6ProlifLoading] = useState(false);
+
+  const [w6EnvInput, setW6EnvInput] = useState({ entity: "", commodities: "", tradeRoutes: "", jurisdiction: "" });
+  const [w6EnvResult, setW6EnvResult] = useState<Record<string, unknown> | null>(null);
+  const [w6EnvLoading, setW6EnvLoading] = useState(false);
+
+  const [w6CryptoInput, setW6CryptoInput] = useState({ walletAddress: "", blockchain: "BTC", transactionHistory: "" });
+  const [w6CryptoResult, setW6CryptoResult] = useState<Record<string, unknown> | null>(null);
+  const [w6CryptoLoading, setW6CryptoLoading] = useState(false);
+
+  const [w6HtInput, setW6HtInput] = useState({ entity: "", indicators: [] as string[], transactionPatterns: "" });
+  const [w6HtResult, setW6HtResult] = useState<Record<string, unknown> | null>(null);
+  const [w6HtLoading, setW6HtLoading] = useState(false);
+
+  const [w6TaxInput, setW6TaxInput] = useState({ entity: "", jurisdiction: "", structureType: "", transactions: "" });
+  const [w6TaxResult, setW6TaxResult] = useState<Record<string, unknown> | null>(null);
+  const [w6TaxLoading, setW6TaxLoading] = useState(false);
+
+  const [w6CorrInput, setW6CorrInput] = useState({ entity: "", jurisdiction: "", sector: "", pepStatus: "No", contractTypes: "" });
+  const [w6CorrResult, setW6CorrResult] = useState<Record<string, unknown> | null>(null);
+  const [w6CorrLoading, setW6CorrLoading] = useState(false);
+
+  const [w6ReInput, setW6ReInput] = useState({ property: "", buyer: "", seller: "", price: "", jurisdiction: "", paymentMethod: "" });
+  const [w6ReResult, setW6ReResult] = useState<Record<string, unknown> | null>(null);
+  const [w6ReLoading, setW6ReLoading] = useState(false);
+
+  const [w6TfInput, setW6TfInput] = useState({ tradeFlow: "", goods: "", parties: "", jurisdiction: "", documents: "" });
+  const [w6TfResult, setW6TfResult] = useState<Record<string, unknown> | null>(null);
+  const [w6TfLoading, setW6TfLoading] = useState(false);
+
+  const [w6InsiderInput, setW6InsiderInput] = useState({ employee: "", role: "", access: "", behaviours: "", transactions: "" });
+  const [w6InsiderResult, setW6InsiderResult] = useState<Record<string, unknown> | null>(null);
+  const [w6InsiderLoading, setW6InsiderLoading] = useState(false);
+
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
     setTfLoading(true); setTfResult(null);
@@ -2892,6 +2933,18 @@ export default function MlroAdvisorPage() {
   const runUboVerify = async () => { setUboVerifyLoading(true); try { const r = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(uboVerifyInput) }); setUboVerifyResult(await r.json()); } catch { setUboVerifyResult({ ok: false, error: "Network error" }); } finally { setUboVerifyLoading(false); } };
   const runAmlKpi = async () => { setAmlKpiLoading(true); try { const r = await fetch("/api/aml-kpi-dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlKpiInput) }); setAmlKpiResult(await r.json()); } catch { setAmlKpiResult({ ok: false, error: "Network error" }); } finally { setAmlKpiLoading(false); } };
 
+  // ── Wave 6 handlers ────────────────────────────────────────────────────────
+  const runW6Vasp = async () => { setW6VaspLoading(true); try { const r = await fetch("/api/virtual-asset-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6VaspInput) }); setW6VaspResult(await r.json()); } catch { setW6VaspResult({ ok: false, error: "Network error" }); } finally { setW6VaspLoading(false); } };
+  const runW6Prolif = async () => { setW6ProlifLoading(true); try { const r = await fetch("/api/proliferation-finance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subject: w6ProlifInput.entity, subjectCountry: w6ProlifInput.jurisdiction, goods: w6ProlifInput.sectors, context: w6ProlifInput.transactionPatterns }) }); setW6ProlifResult(await r.json()); } catch { setW6ProlifResult({ ok: false, error: "Network error" }); } finally { setW6ProlifLoading(false); } };
+  const runW6Env = async () => { setW6EnvLoading(true); try { const r = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6EnvInput) }); setW6EnvResult(await r.json()); } catch { setW6EnvResult({ ok: false, error: "Network error" }); } finally { setW6EnvLoading(false); } };
+  const runW6Crypto = async () => { setW6CryptoLoading(true); try { const r = await fetch("/api/crypto-tracing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6CryptoInput) }); setW6CryptoResult(await r.json()); } catch { setW6CryptoResult({ ok: false, error: "Network error" }); } finally { setW6CryptoLoading(false); } };
+  const runW6Ht = async () => { setW6HtLoading(true); try { const r = await fetch("/api/human-trafficking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6HtInput) }); setW6HtResult(await r.json()); } catch { setW6HtResult({ ok: false, error: "Network error" }); } finally { setW6HtLoading(false); } };
+  const runW6Tax = async () => { setW6TaxLoading(true); try { const r = await fetch("/api/tax-evasion", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6TaxInput) }); setW6TaxResult(await r.json()); } catch { setW6TaxResult({ ok: false, error: "Network error" }); } finally { setW6TaxLoading(false); } };
+  const runW6Corr = async () => { setW6CorrLoading(true); try { const r = await fetch("/api/corruption-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6CorrInput) }); setW6CorrResult(await r.json()); } catch { setW6CorrResult({ ok: false, error: "Network error" }); } finally { setW6CorrLoading(false); } };
+  const runW6Re = async () => { setW6ReLoading(true); try { const r = await fetch("/api/real-estate-ml", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ propertyDetails: w6ReInput.property, buyerName: w6ReInput.buyer, sellerName: w6ReInput.seller, purchasePrice: w6ReInput.price, jurisdiction: w6ReInput.jurisdiction, paymentMethod: w6ReInput.paymentMethod }) }); setW6ReResult(await r.json()); } catch { setW6ReResult({ ok: false, error: "Network error" }); } finally { setW6ReLoading(false); } };
+  const runW6Tf = async () => { setW6TfLoading(true); try { const r = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6TfInput) }); setW6TfResult(await r.json()); } catch { setW6TfResult({ ok: false, error: "Network error" }); } finally { setW6TfLoading(false); } };
+  const runW6Insider = async () => { setW6InsiderLoading(true); try { const r = await fetch("/api/insider-threat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(w6InsiderInput) }); setW6InsiderResult(await r.json()); } catch { setW6InsiderResult({ ok: false, error: "Network error" }); } finally { setW6InsiderLoading(false); } };
+
   const runEscalation = async () => {
     if (!escSubject.trim()) return;
     setEscLoading(true);
@@ -3045,13 +3098,13 @@ export default function MlroAdvisorPage() {
         {/* Tab bar */}
         <div className="flex items-center gap-1.5 mb-5 pb-4 border-b border-hair-2">
           <button type="button" onClick={() => setPageTab("advisor")} className={tabCls(pageTab === "advisor")}>
-            MLRO Advisor
+            🧠 MLRO Advisor
           </button>
           <button type="button" onClick={() => setPageTab("regulatory-qa")} className={tabCls(pageTab === "regulatory-qa")}>
-            Regulatory Q&A
+            📜 Regulatory Q&A
           </button>
           <button type="button" onClick={() => setPageTab("super-tools")} className={tabCls(pageTab === "super-tools")}>
-            Super Tools
+            🛠️ Super Tools
           </button>
         </div>
 
@@ -3876,10 +3929,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard"] as const).map((t) => (
+              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","w6-virtual-asset-risk","w6-prolif-finance","w6-environmental-crime","w6-crypto-tracing","w6-human-trafficking","w6-tax-evasion","w6-corruption-risk","w6-real-estate-ml","w6-trade-finance","w6-insider-threat"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : "📊 AML KPIs"}
+                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "w6-virtual-asset-risk" ? "₿ Virtual Asset Risk" : t === "w6-prolif-finance" ? "☢️ Prolif Finance" : t === "w6-environmental-crime" ? "🌿 Environmental Crime" : t === "w6-crypto-tracing" ? "🔗 Crypto Tracing" : t === "w6-human-trafficking" ? "🚨 Human Trafficking" : t === "w6-tax-evasion" ? "💰 Tax Evasion" : t === "w6-corruption-risk" ? "🏛️ Corruption Risk" : t === "w6-real-estate-ml" ? "🏠 Real Estate ML" : t === "w6-trade-finance" ? "🚢 Trade Finance" : "👤 Insider Threat"}
                 </button>
               ))}
             </div>
@@ -7865,6 +7918,330 @@ export default function MlroAdvisorPage() {
                     {Boolean(amlKpiResult["redAreas"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Areas Requiring Attention</div><ul className="space-y-1">{(amlKpiResult["redAreas"] as string[]).map((area,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{area}</li>)}</ul></div>}
                     {Boolean(amlKpiResult["recommendations"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ul className="space-y-1">{(amlKpiResult["recommendations"] as string[]).map((rec,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{rec}</li>)}</ul></div>}
                     {Boolean(amlKpiResult["boardSummary"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Board Summary</div><p className="text-12 text-ink-1 leading-relaxed">{String(amlKpiResult["boardSummary"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Wave 6 Panels ─────────────────────────────────────────────── */}
+
+            {/* W6: Virtual Asset Risk */}
+            {superToolsTab === "w6-virtual-asset-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Virtual Asset Risk Assessor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.15/R.16 · UAE VARA · Travel Rule · VASP CDD — Assess Virtual Asset Service Provider AML/CFT risk</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">VASP Name</label><input value={w6VaspInput.vasp} onChange={e => setW6VaspInput(p => ({...p, vasp: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name of the VASP" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={w6VaspInput.jurisdiction} onChange={e => setW6VaspInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Registration jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Monthly Volume (USD)</label><input value={w6VaspInput.volumes} onChange={e => setW6VaspInput(p => ({...p, volumes: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 50,000,000" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Products/Services</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {["Exchange","Wallet","DeFi","NFT"].map(prod => (
+                        <label key={prod} className="flex items-center gap-1 text-11 text-ink-1 cursor-pointer">
+                          <input type="checkbox" checked={w6VaspInput.products.includes(prod)} onChange={e => setW6VaspInput(p => ({...p, products: e.target.checked ? [...p.products, prod] : p.products.filter(x => x !== prod)}))} className="accent-brand" />
+                          {prod}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runW6Vasp()} disabled={w6VaspLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6VaspLoading ? "◌ Assessing…" : "Assess VASP Risk"}</button>
+                {w6VaspResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6VaspResult["riskTier"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6VaspResult["riskTier"]) === "critical" ? "bg-red-dim text-red" : String(w6VaspResult["riskTier"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(w6VaspResult["riskTier"])} Risk</span>}
+                    {Boolean(w6VaspResult["fatfCompliance"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">FATF R.15/16 Compliance</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6VaspResult["fatfCompliance"])}</p></div>}
+                    {Boolean(w6VaspResult["travelRuleStatus"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Travel Rule Status</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6VaspResult["travelRuleStatus"])}</p></div>}
+                    {Boolean(w6VaspResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(w6VaspResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{f}</li>)}</ul></div>}
+                    {Boolean(w6VaspResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6VaspResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Proliferation Finance */}
+            {superToolsTab === "w6-prolif-finance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Proliferation Finance Risk Screener</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.7 · UN WMD Sanctions · UAE FDL 10/2025 Art.21(3) · Dual-use goods · DPRK/Iran/Syria nexus detection</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={w6ProlifInput.entity} onChange={e => setW6ProlifInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual to assess" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={w6ProlifInput.jurisdiction} onChange={e => setW6ProlifInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country or jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sectors / Goods</label><input value={w6ProlifInput.sectors} onChange={e => setW6ProlifInput(p => ({...p, sectors: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. machine tools, electronics, chemicals" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Patterns / Context</label><textarea value={w6ProlifInput.transactionPatterns} onChange={e => setW6ProlifInput(p => ({...p, transactionPatterns: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe transaction patterns, counterparties, routing…" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Prolif()} disabled={w6ProlifLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6ProlifLoading ? "◌ Screening…" : "Screen for PF Risk"}</button>
+                {w6ProlifResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6ProlifResult["pfRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6ProlifResult["pfRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6ProlifResult["pfRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>PF Risk: {String(w6ProlifResult["pfRisk"])}</span>}
+                    {Boolean(w6ProlifResult["wmdNexus"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ml-2 ${String(w6ProlifResult["wmdNexus"]) === "confirmed" ? "bg-red-dim text-red" : String(w6ProlifResult["wmdNexus"]) === "possible" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>WMD Nexus: {String(w6ProlifResult["wmdNexus"])}</span>}
+                    {Boolean(w6ProlifResult["primaryConcern"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Primary Concern</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6ProlifResult["primaryConcern"])}</p></div>}
+                    {Boolean(w6ProlifResult["requiredActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Actions</div><ul className="space-y-1">{(w6ProlifResult["requiredActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{a}</li>)}</ul></div>}
+                    {Boolean(w6ProlifResult["actionRationale"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Rationale</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6ProlifResult["actionRationale"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Environmental Crime */}
+            {superToolsTab === "w6-environmental-crime" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Environmental Crime ML Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · FATF Environmental Crime Guidance (2021) · CITES · Illegal wildlife, logging, mining, carbon fraud</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity</label><input value={w6EnvInput.entity} onChange={e => setW6EnvInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={w6EnvInput.jurisdiction} onChange={e => setW6EnvInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Operating jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Commodities</label><input value={w6EnvInput.commodities} onChange={e => setW6EnvInput(p => ({...p, commodities: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. timber, ivory, carbon credits, gold" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trade Routes</label><input value={w6EnvInput.tradeRoutes} onChange={e => setW6EnvInput(p => ({...p, tradeRoutes: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin, transit, destination countries" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Env()} disabled={w6EnvLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6EnvLoading ? "◌ Assessing…" : "Assess Environmental Crime Risk"}</button>
+                {w6EnvResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6EnvResult["environmentalRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6EnvResult["environmentalRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6EnvResult["environmentalRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Risk: {String(w6EnvResult["environmentalRisk"])}</span>}
+                    {Boolean(w6EnvResult["crimeTypes"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Crime Typologies</div><ul className="space-y-1">{(w6EnvResult["crimeTypes"] as string[]).map((c,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">▸</span>{c}</li>)}</ul></div>}
+                    {Boolean(w6EnvResult["fatfRef"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory References</div><p className="text-12 text-ink-2 leading-relaxed font-mono">{String(w6EnvResult["fatfRef"])}</p></div>}
+                    {Boolean(w6EnvResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6EnvResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Crypto Tracing */}
+            {superToolsTab === "w6-crypto-tracing" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Crypto Blockchain Tracing</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.15/16 · Mixer/tumbler detection · Darknet market links · Ransomware wallet proximity · Exchange risk</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label><input value={w6CryptoInput.walletAddress} onChange={e => setW6CryptoInput(p => ({...p, walletAddress: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand font-mono" placeholder="0x… or bc1… or T…" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Blockchain</label>
+                    <select value={w6CryptoInput.blockchain} onChange={e => setW6CryptoInput(p => ({...p, blockchain: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      {["BTC","ETH","TRX","XMR","BNB","SOL","LTC"].map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction History / Counterparties</label><textarea value={w6CryptoInput.transactionHistory} onChange={e => setW6CryptoInput(p => ({...p, transactionHistory: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none font-mono" placeholder="Paste transaction hashes, counterparty addresses, or describe patterns…" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Crypto()} disabled={w6CryptoLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6CryptoLoading ? "◌ Tracing…" : "Trace & Assess Risk"}</button>
+                {w6CryptoResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6CryptoResult["riskScore"]) && <div className="flex items-center gap-3"><div className="text-32 font-bold text-brand">{String(w6CryptoResult["riskScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Risk Score / 100</div></div>}
+                    {Boolean(w6CryptoResult["mixerExposure"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Mixer/Tumbler Exposure</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6CryptoResult["mixerExposure"])}</p></div>}
+                    {Boolean(w6CryptoResult["darknetLinks"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Darknet Market Links</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6CryptoResult["darknetLinks"])}</p></div>}
+                    {Boolean(w6CryptoResult["ransomwareLinks"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Ransomware Links</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6CryptoResult["ransomwareLinks"])}</p></div>}
+                    {Boolean(w6CryptoResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6CryptoResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Human Trafficking */}
+            {superToolsTab === "w6-human-trafficking" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Human Trafficking ML Indicators</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF Guidance on ML from Human Trafficking (2018) · FATF R.3 · Cash-intensive · Escort/hospitality · Cross-border corridors</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity / Subject</label><input value={w6HtInput.entity} onChange={e => setW6HtInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual name" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Indicators Present</label>
+                    <div className="flex flex-col gap-1.5 mt-1">
+                      {["Cash-intensive business","Escort / hospitality sector","Cross-border transfers to high-risk corridors","Multiple accounts / third-party control"].map(ind => (
+                        <label key={ind} className="flex items-center gap-2 text-11 text-ink-1 cursor-pointer">
+                          <input type="checkbox" checked={w6HtInput.indicators.includes(ind)} onChange={e => setW6HtInput(p => ({...p, indicators: e.target.checked ? [...p.indicators, ind] : p.indicators.filter(x => x !== ind)}))} className="accent-brand" />
+                          {ind}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Patterns</label><textarea value={w6HtInput.transactionPatterns} onChange={e => setW6HtInput(p => ({...p, transactionPatterns: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe cash flow patterns, volumes, counterparties…" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Ht()} disabled={w6HtLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6HtLoading ? "◌ Assessing…" : "Assess HT Risk"}</button>
+                {w6HtResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6HtResult["htRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6HtResult["htRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6HtResult["htRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>HT Risk: {String(w6HtResult["htRisk"])}</span>}
+                    {Boolean(w6HtResult["indicators"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Indicators Identified</div><ul className="space-y-1">{(w6HtResult["indicators"] as string[]).map((ind,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">⚠</span>{ind}</li>)}</ul></div>}
+                    {Boolean(w6HtResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(w6HtResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{f}</li>)}</ul></div>}
+                    {Boolean(w6HtResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6HtResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Tax Evasion */}
+            {superToolsTab === "w6-tax-evasion" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Tax Evasion ML Risk Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.3 (tax crimes as predicate) · OECD BEPS · CRS/AEOI · Round-tripping · Treaty shopping · Transfer pricing</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity</label><input value={w6TaxInput.entity} onChange={e => setW6TaxInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction(s)</label><input value={w6TaxInput.jurisdiction} onChange={e => setW6TaxInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Home and offshore jurisdictions" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Structure Type</label>
+                    <select value={w6TaxInput.structureType} onChange={e => setW6TaxInput(p => ({...p, structureType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="">Select structure…</option>
+                      <option value="Holding company">Holding company</option>
+                      <option value="Trust arrangement">Trust arrangement</option>
+                      <option value="Foundation">Foundation</option>
+                      <option value="Shell company">Shell company</option>
+                      <option value="Partnership">Partnership</option>
+                      <option value="Individual">Individual</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Description</label><textarea value={w6TaxInput.transactions} onChange={e => setW6TaxInput(p => ({...p, transactions: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe intercompany flows, offshore transfers, loan-backs…" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Tax()} disabled={w6TaxLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6TaxLoading ? "◌ Analysing…" : "Analyse Tax Evasion Risk"}</button>
+                {w6TaxResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6TaxResult["taxEvasionRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6TaxResult["taxEvasionRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6TaxResult["taxEvasionRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Risk: {String(w6TaxResult["taxEvasionRisk"])}</span>}
+                    {Boolean(w6TaxResult["typologies"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Tax Evasion Typologies</div><ul className="space-y-1">{(w6TaxResult["typologies"] as string[]).map((t,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">▸</span>{t}</li>)}</ul></div>}
+                    {Boolean(w6TaxResult["jurisdictionRisk"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction Risk</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6TaxResult["jurisdictionRisk"])}</p></div>}
+                    {Boolean(w6TaxResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6TaxResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Corruption Risk */}
+            {superToolsTab === "w6-corruption-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Corruption & Bribery Risk Assessor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 (PEPs) · FATF R.3 (corruption as predicate) · UNCAC · FCPA · UK Bribery Act 2010 · Public procurement red flags</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity</label><input value={w6CorrInput.entity} onChange={e => setW6CorrInput(p => ({...p, entity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity or individual" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={w6CorrInput.jurisdiction} onChange={e => setW6CorrInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Operating jurisdiction" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sector</label><input value={w6CorrInput.sector} onChange={e => setW6CorrInput(p => ({...p, sector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. government contracting, defence, energy" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Status</label>
+                    <select value={w6CorrInput.pepStatus} onChange={e => setW6CorrInput(p => ({...p, pepStatus: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="No">Not a PEP</option>
+                      <option value="Direct PEP">Direct PEP</option>
+                      <option value="PEP family member">PEP family member</option>
+                      <option value="PEP associate">PEP close associate</option>
+                      <option value="Former PEP">Former PEP (&lt;12 months)</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Contract Types / Procurement Activity</label><textarea value={w6CorrInput.contractTypes} onChange={e => setW6CorrInput(p => ({...p, contractTypes: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="e.g. government infrastructure, defence procurement, licences…" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Corr()} disabled={w6CorrLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6CorrLoading ? "◌ Assessing…" : "Assess Corruption Risk"}</button>
+                {w6CorrResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6CorrResult["corruptionRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6CorrResult["corruptionRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6CorrResult["corruptionRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Risk: {String(w6CorrResult["corruptionRisk"])}</span>}
+                    {Boolean(w6CorrResult["pepExposure"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">PEP Exposure</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6CorrResult["pepExposure"])}</p></div>}
+                    {Boolean(w6CorrResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(w6CorrResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{f}</li>)}</ul></div>}
+                    {Boolean(w6CorrResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6CorrResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Real Estate ML */}
+            {superToolsTab === "w6-real-estate-ml" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Real Estate ML Risk (Wave 6)</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · UAE DNFBP obligations · All-cash transactions · Anonymous buyers · Price manipulation · Dubai DLD risk</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Property Address / Details</label><input value={w6ReInput.property} onChange={e => setW6ReInput(p => ({...p, property: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Property description or address" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={w6ReInput.jurisdiction} onChange={e => setW6ReInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Dubai, London, Cyprus" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Buyer</label><input value={w6ReInput.buyer} onChange={e => setW6ReInput(p => ({...p, buyer: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Buyer name or entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Seller</label><input value={w6ReInput.seller} onChange={e => setW6ReInput(p => ({...p, seller: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Seller name or entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Purchase Price (USD)</label><input value={w6ReInput.price} onChange={e => setW6ReInput(p => ({...p, price: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction value" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Method</label>
+                    <select value={w6ReInput.paymentMethod} onChange={e => setW6ReInput(p => ({...p, paymentMethod: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="">Select…</option>
+                      <option value="All cash">All cash</option>
+                      <option value="Mortgage">Mortgage / bank finance</option>
+                      <option value="Crypto">Cryptocurrency</option>
+                      <option value="Third-party funds">Third-party funds</option>
+                      <option value="Mixed">Mixed / unclear</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runW6Re()} disabled={w6ReLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6ReLoading ? "◌ Assessing…" : "Assess Real Estate ML Risk"}</button>
+                {w6ReResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6ReResult["mlRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6ReResult["mlRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6ReResult["mlRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>ML Risk: {String(w6ReResult["mlRisk"])}</span>}
+                    {Boolean(w6ReResult["indicators"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">ML Indicators</div><ul className="space-y-1">{(w6ReResult["indicators"] as Array<{indicator: string; severity: string; detail: string}>).map((ind,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className={`shrink-0 font-mono text-10 uppercase ${ind.severity === "critical" || ind.severity === "high" ? "text-red" : "text-amber"}`}>[{ind.severity}]</span>{ind.indicator} — {ind.detail}</li>)}</ul></div>}
+                    {Boolean(w6ReResult["recommendedAction"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommended Action</div><p className="text-12 text-ink-1 font-semibold">{String(w6ReResult["recommendedAction"]).replace(/_/g, " ")}</p></div>}
+                    {Boolean(w6ReResult["actionRationale"]) && <p className="text-12 text-ink-1 leading-relaxed">{String(w6ReResult["actionRationale"])}</p>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Trade Finance Risk */}
+            {superToolsTab === "w6-trade-finance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Trade Finance ML Risk Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML Guidance (2021) · FATF R.3/R.7/R.8 · Invoice fraud · Over/under-invoicing · Phantom shipments · Dual-use goods</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trade Flow Description</label><textarea value={w6TfInput.tradeFlow} onChange={e => setW6TfInput(p => ({...p, tradeFlow: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe the trade transaction structure, routing, financing type (LC, documentary collection, open account)…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Goods / Commodities</label><input value={w6TfInput.goods} onChange={e => setW6TfInput(p => ({...p, goods: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. electronics, machinery, chemicals, textiles" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Parties</label><input value={w6TfInput.parties} onChange={e => setW6TfInput(p => ({...p, parties: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Buyer, seller, intermediaries, banks" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={w6TfInput.jurisdiction} onChange={e => setW6TfInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin, transit, destination" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Documents Available</label><input value={w6TfInput.documents} onChange={e => setW6TfInput(p => ({...p, documents: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. LC, invoice, bill of lading, certificate of origin" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Tf()} disabled={w6TfLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6TfLoading ? "◌ Analysing…" : "Analyse Trade Finance Risk"}</button>
+                {w6TfResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {Boolean(w6TfResult["tbmlRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6TfResult["tbmlRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6TfResult["tbmlRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>TBML Risk: {String(w6TfResult["tbmlRisk"])}</span>}
+                      {Boolean(w6TfResult["invoiceAnomalyScore"]) && <span className="font-mono text-11 px-2 py-0.5 rounded bg-bg-2 text-ink-2">Invoice Anomaly Score: {String(w6TfResult["invoiceAnomalyScore"])}/100</span>}
+                    </div>
+                    {Boolean(w6TfResult["sanctionedParties"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Sanctioned Parties Analysis</div><p className="text-12 text-red leading-relaxed">{String(w6TfResult["sanctionedParties"])}</p></div>}
+                    {Boolean(w6TfResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6TfResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* W6: Insider Threat */}
+            {superToolsTab === "w6-insider-threat" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Insider Threat ML Risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.18 · UAE FDL 10/2025 Art.20 · CBUAE AML Standards §7 · Unusual access · Unexplained wealth · Bribery indicators</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Name / ID</label><input value={w6InsiderInput.employee} onChange={e => setW6InsiderInput(p => ({...p, employee: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Employee reference (anonymise if needed)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Role / Department</label><input value={w6InsiderInput.role} onChange={e => setW6InsiderInput(p => ({...p, role: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Compliance Officer, Relationship Manager" /></div>
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">System Access Level</label>
+                    <select value={w6InsiderInput.access} onChange={e => setW6InsiderInput(p => ({...p, access: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
+                      <option value="">Select access level…</option>
+                      <option value="Standard">Standard user</option>
+                      <option value="Elevated">Elevated / privileged</option>
+                      <option value="Administrator">System administrator</option>
+                      <option value="MLRO-level">MLRO-level (SAR/STR access)</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Personal Transaction Anomalies</label><input value={w6InsiderInput.transactions} onChange={e => setW6InsiderInput(p => ({...p, transactions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. large cash deposits, offshore wires, lifestyle changes" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Observed Behaviours</label><textarea value={w6InsiderInput.behaviours} onChange={e => setW6InsiderInput(p => ({...p, behaviours: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe concerning behaviours: unusual after-hours access, accessing unrelated client records, resistance to audit, relationship with external parties…" /></div>
+                </div>
+                <button type="button" onClick={() => void runW6Insider()} disabled={w6InsiderLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{w6InsiderLoading ? "◌ Assessing…" : "Assess Insider Threat Risk"}</button>
+                {w6InsiderResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(w6InsiderResult["insiderRisk"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(w6InsiderResult["insiderRisk"]) === "critical" ? "bg-red-dim text-red" : String(w6InsiderResult["insiderRisk"]) === "high" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Risk: {String(w6InsiderResult["insiderRisk"])}</span>}
+                    {Boolean(w6InsiderResult["behaviourFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Behaviour Flags</div><ul className="space-y-1">{(w6InsiderResult["behaviourFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">⚠</span>{f}</li>)}</ul></div>}
+                    {Boolean(w6InsiderResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(w6InsiderResult["recommendation"])}</p></div>}
                   </div>
                 )}
               </div>

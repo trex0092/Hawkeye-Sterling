@@ -1360,11 +1360,11 @@ export default function ResponsibleAIPage() {
   };
 
   const tabs: Array<{ key: Tab; label: string }> = [
-    { key: "principles", label: "Principles" },
-    { key: "models", label: "Model Registry" },
-    { key: "incidents", label: "Incident Log" },
-    { key: "bias", label: "Bias Monitoring" },
-    { key: "audit-trail", label: "Audit Trail" },
+    { key: "principles", label: "🧭 Principles" },
+    { key: "models", label: "🤖 Model Registry" },
+    { key: "incidents", label: "🚨 Incident Log" },
+    { key: "bias", label: "⚖️ Bias Monitoring" },
+    { key: "audit-trail", label: "🔒 AI Audit Trail" },
   ];
 
   const runAssessment = async () => {

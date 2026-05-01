@@ -38,7 +38,7 @@ interface RoleRecommendation {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TABS = ["Users", "Permission Matrix", "Session Monitor", "Audit Log"] as const;
+const TABS = ["👥 Users", "🔑 Permission Matrix", "👁️ Session Monitor", "📋 Audit Log"] as const;
 type Tab = (typeof TABS)[number];
 
 const ROLE_COLORS: Record<UserRole, string> = {
@@ -435,7 +435,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AccessControlPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("Users");
+  const [activeTab, setActiveTab] = useState<Tab>("👥 Users");
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [log, setLog] = useState<PermissionLogEntry[]>([]);
   const [sessions, setSessions] = useState<Session[]>(DEMO_SESSIONS);
@@ -553,7 +553,7 @@ export default function AccessControlPage() {
       </div>
 
       {/* ── Tab 1: Users ────────────────────────────────────────────────────── */}
-      {activeTab === "Users" && (
+      {activeTab === "👥 Users" && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-14 font-semibold text-ink-0">
@@ -627,7 +627,7 @@ export default function AccessControlPage() {
       )}
 
       {/* ── Tab 2: Permission Matrix ─────────────────────────────────────────── */}
-      {activeTab === "Permission Matrix" && (
+      {activeTab === "🔑 Permission Matrix" && (
         <div>
           <div className="mb-4">
             <h2 className="text-14 font-semibold text-ink-0 mb-1">Permission matrix</h2>
@@ -677,7 +677,7 @@ export default function AccessControlPage() {
       )}
 
       {/* ── Tab 3: Session Monitor ───────────────────────────────────────────── */}
-      {activeTab === "Session Monitor" && (
+      {activeTab === "👁️ Session Monitor" && (
         <div>
           <div className="mb-4">
             <h2 className="text-14 font-semibold text-ink-0 mb-1">Active sessions</h2>
@@ -731,7 +731,7 @@ export default function AccessControlPage() {
       )}
 
       {/* ── Tab 4: Audit Log ─────────────────────────────────────────────────── */}
-      {activeTab === "Audit Log" && (
+      {activeTab === "📋 Audit Log" && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-14 font-semibold text-ink-0">
