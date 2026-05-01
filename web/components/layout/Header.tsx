@@ -56,7 +56,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
       { label: "⚖️ Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
       { label: "📰 Live Adverse Media", href: "/adverse-media-live", hint: "GDELT real-time news feed" },
-      { label: "📤 goAML Submission", href: "/goaml-submission", hint: "UAE FIU STR XML wizard" },
+      { label: "📤 goAML Export", href: "/goaml-export", hint: "UAE FIU STR XML wizard" },
     ],
   },
   {
@@ -72,6 +72,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📖 Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
+      { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
     ],
   },
   {
@@ -105,6 +106,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
       { label: "Status", href: "/status", hint: "Live endpoint & watchlist health" },
+      { label: "📊 Eval KPIs", href: "/eval-kpi", hint: "ML model evaluation · KPI metrics · performance tracking" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
   },
