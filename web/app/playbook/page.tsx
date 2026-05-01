@@ -5802,6 +5802,28 @@ function getFamilyColor(family: string) {
   return FAMILY_COLORS[family] ?? "bg-bg-2 text-ink-2";
 }
 
+interface ScenarioSimulateResult {
+  chapters: string[];
+  redFlags: string[];
+  actions: string[];
+  regulatoryRefs: string[];
+  recommendation: "File STR" | "Enhanced Due Diligence" | "Close Case" | "Escalate to MLRO";
+  urgency: "immediate" | "24h" | "7d";
+}
+
+const URGENCY_TONE: Record<ScenarioSimulateResult["urgency"], { badge: string; label: string }> = {
+  immediate: { badge: "bg-red text-white", label: "Immediate action required" },
+  "24h": { badge: "bg-amber-dim text-amber border border-amber/40", label: "Action within 24 hours" },
+  "7d": { badge: "bg-green-dim text-green border border-green/40", label: "Action within 7 days" },
+};
+
+const REC_TONE: Record<ScenarioSimulateResult["recommendation"], string> = {
+  "File STR": "text-red",
+  "Enhanced Due Diligence": "text-amber",
+  "Close Case": "text-green",
+  "Escalate to MLRO": "text-brand",
+};
+
 export default function PlaybookPage() {
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -5810,6 +5832,37 @@ export default function PlaybookPage() {
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<{ answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] } | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
+
+  // Scenario Simulator state
+  const [simScenario, setSimScenario] = useState("");
+  const [simClientType, setSimClientType] = useState("Individual");
+  const [simJurisdiction, setSimJurisdiction] = useState("UAE");
+  const [simRiskLevel, setSimRiskLevel] = useState("Medium");
+  const [simResult, setSimResult] = useState<ScenarioSimulateResult | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
+
+  const runSimulator = async () => {
+    if (!simScenario.trim()) return;
+    setSimLoading(true);
+    setSimResult(null);
+    try {
+      const res = await fetch("/api/playbook/scenario-simulate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          scenario: simScenario,
+          clientType: simClientType,
+          jurisdiction: simJurisdiction,
+          riskLevel: simRiskLevel,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json() as ScenarioSimulateResult;
+        setSimResult(data);
+      }
+    } catch { /* silent */ }
+    finally { setSimLoading(false); }
+  };
 
   const pb = PLAYBOOKS.find((p) => p.id === drawerOpen) ?? null;
 
@@ -5877,8 +5930,152 @@ export default function PlaybookPage() {
         ]}
       />
 
+      {/* ── Scenario Simulator ── */}
+      <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-2">
+          <span className="text-14">🎯</span>
+          <span className="text-13 font-semibold text-ink-0">Scenario Simulator</span>
+          <span className="text-10 font-mono text-ink-3 ml-1">AI-powered AML scenario analysis</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <textarea
+            value={simScenario}
+            onChange={(e) => setSimScenario(e.target.value)}
+            placeholder="Describe a transaction scenario or client behaviour… e.g. 'A new corporate client from the UAE requests to wire USD 500,000 to a counterparty in a free-trade zone. The UBO is a government official from West Africa. The funds are described as consulting fees but no invoice is provided.'"
+            rows={4}
+            className="w-full text-12 px-3 py-2.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none leading-relaxed"
+          />
+          <div className="flex gap-2 flex-wrap items-end">
+            <div className="flex flex-col gap-1">
+              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Client Type</label>
+              <select
+                value={simClientType}
+                onChange={(e) => setSimClientType(e.target.value)}
+                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
+              >
+                <option>Individual</option>
+                <option>Corporate</option>
+                <option>PEP</option>
+                <option>VASP</option>
+                <option>DNFBP</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Jurisdiction</label>
+              <select
+                value={simJurisdiction}
+                onChange={(e) => setSimJurisdiction(e.target.value)}
+                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
+              >
+                <option>UAE</option>
+                <option>UK</option>
+                <option>US</option>
+                <option>SG</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Risk Level</label>
+              <select
+                value={simRiskLevel}
+                onChange={(e) => setSimRiskLevel(e.target.value)}
+                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
+              >
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={() => { void runSimulator(); }}
+              disabled={simLoading || !simScenario.trim()}
+              className="text-12 font-semibold px-5 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
+            >
+              {simLoading ? "Analysing…" : "Simulate →"}
+            </button>
+            {simResult && (
+              <button type="button" onClick={() => setSimResult(null)} className="text-11 text-ink-3 hover:text-ink-1 px-2 py-1.5">Clear</button>
+            )}
+          </div>
+
+          {simResult && (
+            <div className="mt-4 space-y-4 border-t border-hair-2 pt-4">
+              {/* Urgency + Recommendation */}
+              <div className="flex items-start gap-3 flex-wrap">
+                <span className={`font-mono text-10 font-semibold px-2.5 py-1 rounded uppercase ${URGENCY_TONE[simResult.urgency].badge}`}>
+                  {URGENCY_TONE[simResult.urgency].label}
+                </span>
+                <span className={`text-20 font-bold leading-tight ${REC_TONE[simResult.recommendation]}`}>
+                  {simResult.recommendation}
+                </span>
+              </div>
+
+              {/* Chapters — clickable pills scrolling to playbook */}
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Relevant Playbook Chapters</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {simResult.chapters.map((ch) => {
+                    const match = PLAYBOOKS.find((p) => p.title === ch);
+                    return (
+                      <button
+                        key={ch}
+                        type="button"
+                        onClick={() => { if (match) { setDrawerOpen(match.id); } }}
+                        className={`text-11 font-semibold px-2.5 py-1 rounded-full border transition-colors ${match ? "bg-brand-dim text-brand border-brand/30 hover:bg-brand hover:text-white hover:border-brand" : "bg-bg-2 text-ink-2 border-hair-2"}`}
+                        title={match ? `Open ${ch} playbook` : ch}
+                      >
+                        {ch}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Red Flags */}
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Red Flags Identified</div>
+                <ul className="space-y-1">
+                  {simResult.redFlags.map((rf, i) => (
+                    <li key={i} className="flex items-start gap-2 text-12 text-red">
+                      <span className="shrink-0 mt-0.5 text-red font-bold">•</span>
+                      {rf}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Actions */}
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Step-by-Step Actions</div>
+                <ol className="space-y-1.5">
+                  {simResult.actions.map((action, i) => (
+                    <li key={i} className="text-12 text-ink-0 leading-relaxed pl-1">
+                      {action}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {/* Regulatory References */}
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Regulatory References</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {simResult.regulatoryRefs.map((ref) => (
+                    <span key={ref} className="font-mono text-10 px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1">
+                      {ref}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Search + filter bar */}
-      <div className="flex gap-3 mb-4 items-center">
+      <div className="flex gap-3 mt-6 mb-4 items-center">
         <div className="relative flex-1 max-w-sm">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 text-[14px] pointer-events-none">⌕</span>
           <input

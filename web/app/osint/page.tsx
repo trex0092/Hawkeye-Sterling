@@ -22,6 +22,18 @@ interface OsintSynthesis {
   complianceNarrative: string;
 }
 
+interface IntelSynthesis {
+  ok: boolean;
+  profile: string;
+  corroborating: string[];
+  contradicting: string[];
+  confidenceScore: number;
+  intelligenceGaps: string[];
+  threatLevel: "none" | "low" | "medium" | "high" | "critical";
+  assessment: string;
+  recommendedActions: string[];
+}
+
 type Mode = "domain" | "username";
 
 const MODE_HINT: Record<Mode, string> = {
@@ -42,6 +54,9 @@ export default function OsintPage() {
   const [scannedAt, setScannedAt] = useState("");
   const [synthesis, setSynthesis] = useState<OsintSynthesis | null>(null);
   const [synthLoading, setSynthLoading] = useState(false);
+  const [intelSynthesis, setIntelSynthesis] = useState<IntelSynthesis | null>(null);
+  const [intelSynthLoading, setIntelSynthLoading] = useState(false);
+  const [intelSources, setIntelSources] = useState("");
 
   const run = async () => {
     const t = target.trim();
@@ -108,6 +123,60 @@ export default function OsintPage() {
       if (data.ok) setSynthesis(data);
     } catch { /* silent */ }
     finally { setSynthLoading(false); }
+  };
+
+  const runIntelSynthesis = async () => {
+    setIntelSynthLoading(true);
+    setIntelSynthesis(null);
+    try {
+      // Build sources from existing scan results + manual sources text
+      const sources: Array<{ source: string; content: string; date?: string }> = [];
+      if (domainResult) {
+        sources.push({
+          source: "theHarvester Domain Scan",
+          content: `Emails: ${domainResult.emails.join(", ") || "none"}. Hosts: ${domainResult.hosts.join(", ") || "none"}. IPs: ${domainResult.ips.join(", ") || "none"}.`,
+          date: scannedAt || undefined,
+        });
+      }
+      if (sherlockResult) {
+        const found = sherlockResult.profiles.filter((p) => p.exists);
+        sources.push({
+          source: "Sherlock Username Search",
+          content: `${sherlockResult.totalFound} profiles found for username "${sherlockResult.username}": ${found.map((p) => p.site).join(", ") || "none"}.`,
+          date: scannedAt || undefined,
+        });
+      }
+      if (socialResult) {
+        sources.push({
+          source: "Social Analyzer",
+          content: `Person "${socialResult.person}" — platforms: ${socialResult.profiles.map((p) => `${p.platform} (${Math.round(p.score * 100)}%)`).join(", ") || "none"}.`,
+          date: scannedAt || undefined,
+        });
+      }
+      // Append manually entered source snippets
+      if (intelSources.trim()) {
+        const lines = intelSources.trim().split(/\n+/);
+        lines.forEach((line, i) => {
+          if (line.trim()) {
+            sources.push({ source: `Manual Source ${i + 1}`, content: line.trim() });
+          }
+        });
+      }
+      if (sources.length === 0) return;
+      const res = await fetch("/api/osint/synthesize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: target,
+          sources,
+          subjectType: mode === "domain" ? "corporate" : "individual",
+        }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as IntelSynthesis;
+      if (data.ok) setIntelSynthesis(data);
+    } catch { /* silent */ }
+    finally { setIntelSynthLoading(false); }
   };
 
   const hasResults = domainResult || sherlockResult || socialResult;

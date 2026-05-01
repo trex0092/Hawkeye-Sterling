@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
+import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
 import { exportEwraBoardReport } from "@/lib/pdf/exporters";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
@@ -29,6 +30,8 @@ interface EwraState {
 }
 
 const STORAGE = "hawkeye.ewra.v1";
+const HISTORY_STORAGE = "hawkeye.ewra.history.v1";
+const MAX_HISTORY = 5;
 
 const DEFAULT_DIMENSIONS: RiskDimension[] = [
   {
@@ -102,6 +105,39 @@ function save(s: EwraState) {
   try { window.localStorage.setItem(STORAGE, JSON.stringify(s)); } catch { /* */ }
 }
 
+interface EwraSnapshot {
+  id: string;
+  timestamp: string; // ISO
+  overallResidual: number;
+  overallInherent: number;
+  keyChanges: string[];
+  dimensions: Array<{ id: string; dimension: string; inherent: number; controls: number }>;
+}
+
+function loadHistory(): EwraSnapshot[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(HISTORY_STORAGE);
+    return raw ? (JSON.parse(raw) as EwraSnapshot[]) : [];
+  } catch { return []; }
+}
+
+function saveSnapshot(s: EwraState, overallInherent: number, overallResidual: number, keyChanges: string[]) {
+  try {
+    const history = loadHistory();
+    const snap: EwraSnapshot = {
+      id: `ewra-snap-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      overallResidual,
+      overallInherent,
+      keyChanges,
+      dimensions: s.dimensions.map((d) => ({ id: d.id, dimension: d.dimension, inherent: d.inherent, controls: d.controls })),
+    };
+    const next = [snap, ...history].slice(0, MAX_HISTORY);
+    window.localStorage.setItem(HISTORY_STORAGE, JSON.stringify(next));
+  } catch { /* */ }
+}
+
 function residual(d: RiskDimension): number {
   return Math.max(1, Math.round(d.inherent - (d.controls - 1) * 0.75));
 }
@@ -144,9 +180,52 @@ export default function EwraPage() {
   const [boardError, setBoardError] = useState<string | null>(null);
   const [boardOpen, setBoardOpen] = useState(false);
 
-  useEffect(() => { setState(load()); }, []);
+  // Threat intel state
+  const [threatIntel, setThreatIntel] = useState<ThreatIntelResult | null>(null);
+  const [threatLoading, setThreatLoading] = useState(false);
+  const [threatError, setThreatError] = useState<string | null>(null);
+  const [threatOpen, setThreatOpen] = useState(false);
+
+  // Version history state
+  const [history, setHistory] = useState<EwraSnapshot[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  useEffect(() => { setState(load()); setHistory(loadHistory()); }, []);
 
   const update = (updated: EwraState) => { setState(updated); save(updated); };
+
+  const runThreatIntel = async () => {
+    setThreatLoading(true);
+    setThreatError(null);
+    try {
+      const res = await fetch("/api/ewra/threat-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sector: "Precious Metals / DPMS",
+          jurisdiction: state.unit ? `UAE — ${state.unit}` : "UAE",
+          reportingPeriod: state.lastApproved
+            ? state.lastApproved
+            : new Date().getFullYear().toString(),
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string } & ThreatIntelResult;
+      if (!data.ok) { setThreatError(data.error ?? "Threat intel generation failed"); return; }
+      setThreatIntel(data);
+      setThreatOpen(true);
+    } catch {
+      setThreatError("Network error — try again");
+    } finally {
+      setThreatLoading(false);
+    }
+  };
+
+  const captureSnapshot = (keyChanges: string[] = []) => {
+    const inh = Math.round(state.dimensions.reduce((a, d) => a + d.inherent, 0) / state.dimensions.length);
+    const res = Math.round(state.dimensions.reduce((a, d) => a + residual(d), 0) / state.dimensions.length);
+    saveSnapshot(state, inh, res, keyChanges);
+    setHistory(loadHistory());
+  };
 
   const runBoardReport = async () => {
     setBoardLoading(true);
@@ -228,7 +307,7 @@ export default function EwraPage() {
         />
 
         {/* AI Board Report button */}
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 flex items-center gap-3 flex-wrap">
           <button
             type="button"
             onClick={() => { void runBoardReport(); }}
@@ -247,6 +326,32 @@ export default function EwraPage() {
               </>
             )}
           </button>
+          <button
+            type="button"
+            onClick={() => { void runThreatIntel(); }}
+            disabled={threatLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 bg-bg-panel text-ink-1 text-12 font-semibold hover:bg-bg-2 disabled:opacity-50 transition-colors"
+          >
+            {threatLoading ? (
+              <>
+                <span className="animate-spin font-mono">◌</span>
+                Loading…
+              </>
+            ) : (
+              <>
+                <span>🌐</span>
+                Inject Threat Intelligence
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => { captureSnapshot(["Manual snapshot"]); setHistoryOpen(true); }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 bg-bg-panel text-ink-2 text-12 font-medium hover:bg-bg-2 transition-colors"
+          >
+            <span>🕓</span>
+            Save Snapshot
+          </button>
           {boardReport && !boardOpen && (
             <button
               type="button"
@@ -256,8 +361,20 @@ export default function EwraPage() {
               View last report ↗
             </button>
           )}
+          {threatIntel && !threatOpen && (
+            <button
+              type="button"
+              onClick={() => setThreatOpen(true)}
+              className="text-11 text-ink-1 underline font-medium"
+            >
+              View threat intel ↗
+            </button>
+          )}
           {boardError && (
             <span className="text-11 text-red">{boardError}</span>
+          )}
+          {threatError && (
+            <span className="text-11 text-red">{threatError}</span>
           )}
         </div>
 
@@ -410,6 +527,176 @@ export default function EwraPage() {
             </div>
           </div>
         )}
+
+        {/* Threat Intel Panel */}
+        {threatOpen && threatIntel && (
+          <div className="mt-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2 bg-bg-1">
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">🌐 Threat Intelligence · Auto-Inject</div>
+                <div className="text-13 font-bold text-ink-0 mt-0.5">Current ML/TF Typologies & Regulatory Changes</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-10 font-mono text-ink-3">
+                  {new Date(threatIntel.generatedAt).toLocaleString("en-GB")}
+                </span>
+                <button type="button" onClick={() => setThreatOpen(false)} className="text-ink-3 hover:text-ink-0 text-16 px-1">✕</button>
+              </div>
+            </div>
+
+            <div className="px-5 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Active Typologies */}
+              {threatIntel.typologies?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Active ML/TF Typologies</div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {threatIntel.typologies.map((t, i) => (
+                      <div key={i} className="border border-hair-2 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-12 font-semibold text-ink-0">{t.name}</span>
+                          <span className={`inline-flex items-center gap-0.5 px-1.5 py-px rounded font-mono text-10 font-bold ml-auto ${
+                            t.trend === "rising" ? "bg-red-dim text-red" :
+                            t.trend === "stable" ? "bg-amber-dim text-amber" :
+                            "bg-green-dim text-green"
+                          }`}>
+                            {t.trend === "rising" ? "↑" : t.trend === "stable" ? "→" : "↓"} {t.trend}
+                          </span>
+                        </div>
+                        <p className="text-11 text-ink-2 mb-1.5">{t.description}</p>
+                        {t.fatfRef && (
+                          <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-bg-2 text-ink-3">{t.fatfRef}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Regulatory Changes Timeline */}
+              {threatIntel.regulatoryChanges?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Regulatory Changes (last 90 days)</div>
+                  <div className="relative pl-5">
+                    <div className="absolute left-1.5 top-1 bottom-1 w-px bg-hair-2" />
+                    {threatIntel.regulatoryChanges.map((rc, i) => (
+                      <div key={i} className="relative mb-4 last:mb-0">
+                        <div className="absolute -left-3.5 top-1 w-2 h-2 rounded-full bg-brand" />
+                        <div className="font-mono text-10 text-brand mb-0.5">{rc.effectiveDate}</div>
+                        <div className="text-12 font-semibold text-ink-0 mb-0.5">{rc.change}</div>
+                        <div className="text-11 text-ink-2">{rc.impact}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Score Adjustment Suggestions */}
+              {threatIntel.scoreAdjustments?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Recommended Score Adjustments</div>
+                  <div className="space-y-2">
+                    {threatIntel.scoreAdjustments.map((adj, i) => {
+                      const dim = state.dimensions.find((d) =>
+                        d.dimension.toLowerCase().includes(adj.dimension.toLowerCase()) ||
+                        adj.dimension.toLowerCase().includes(d.dimension.toLowerCase())
+                      );
+                      const alreadyApplied = dim ? dim.inherent === adj.suggestedScore : false;
+                      return (
+                        <div key={i} className="border border-hair-2 rounded-lg p-3 flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-12 font-semibold text-ink-0">{adj.dimension}</span>
+                              <span className="font-mono text-10 text-ink-3">
+                                {adj.currentScore} → <span className={adj.suggestedScore > adj.currentScore ? "text-red font-bold" : "text-green font-bold"}>{adj.suggestedScore}</span>
+                              </span>
+                            </div>
+                            <p className="text-11 text-ink-2">{adj.reason}</p>
+                          </div>
+                          {dim && !alreadyApplied && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const patch = { inherent: adj.suggestedScore };
+                                updateDim(dim.id, patch);
+                              }}
+                              className="shrink-0 text-11 font-semibold px-3 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                            >
+                              Apply
+                            </button>
+                          )}
+                          {alreadyApplied && (
+                            <span className="shrink-0 text-11 font-mono text-green px-3 py-1">Applied ✓</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Version History */}
+        <div className="mt-4 bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-2 transition-colors"
+          >
+            <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
+              🕓 Version History ({history.length} snapshot{history.length !== 1 ? "s" : ""})
+            </span>
+            <span className="text-ink-3 font-mono text-12">{historyOpen ? "▾" : "▸"}</span>
+          </button>
+          {historyOpen && (
+            <div className="border-t border-hair-2 divide-y divide-hair">
+              {history.length === 0 && (
+                <div className="px-4 py-4 text-12 text-ink-3 text-center">
+                  No snapshots yet. Click "Save Snapshot" to capture the current state.
+                </div>
+              )}
+              {history.map((snap, i) => (
+                <div key={snap.id} className="px-4 py-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="font-mono text-10 text-ink-3">{new Date(snap.timestamp).toLocaleString("en-GB")}</span>
+                    {i === 0 && <span className="text-10 font-mono bg-brand-dim text-brand px-1.5 py-px rounded">latest</span>}
+                    <div className="ml-auto flex items-center gap-3 text-11 font-mono">
+                      <span className={`px-1.5 py-px rounded text-10 font-semibold ${
+                        snap.overallInherent >= 4 ? "bg-red-dim text-red" :
+                        snap.overallInherent === 3 ? "bg-amber-dim text-amber" :
+                        "bg-green-dim text-green"
+                      }`}>
+                        Inherent {RISK_LABEL[snap.overallInherent] ?? snap.overallInherent}
+                      </span>
+                      <span className={`px-1.5 py-px rounded text-10 font-semibold ${
+                        snap.overallResidual >= 4 ? "bg-red-dim text-red" :
+                        snap.overallResidual === 3 ? "bg-amber-dim text-amber" :
+                        "bg-green-dim text-green"
+                      }`}>
+                        Residual {RISK_LABEL[snap.overallResidual] ?? snap.overallResidual}
+                      </span>
+                    </div>
+                  </div>
+                  {snap.keyChanges.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {snap.keyChanges.map((c, j) => (
+                        <span key={j} className="text-10 text-ink-3 bg-bg-1 px-1.5 py-px rounded font-mono">{c}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {snap.dimensions.map((d) => (
+                      <span key={d.id} className="text-10 font-mono text-ink-3">
+                        {d.dimension}: I={d.inherent} C={d.controls}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Approval metadata */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">

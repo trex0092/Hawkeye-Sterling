@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import type { CrossCorrelateResult, CrossCorrelateArticle } from "@/app/api/adverse-media/cross-correlate/route";
 
 interface AmAssessment {
   ok: boolean;
@@ -202,6 +203,9 @@ export default function AdverseMediaLookbackPage() {
   const [editDraft, setEditDraft] = useState(BLANK);
   const [assessment, setAssessment] = useState<Record<string, AmAssessment>>({});
   const [assessing, setAssessing] = useState<Record<string, boolean>>({});
+  const [correlations, setCorrelations] = useState<Record<string, CrossCorrelateResult>>({});
+  const [correlating, setCorrelating] = useState<Record<string, boolean>>({});
+  const [dismissedOpen, setDismissedOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => { setEntries(load()); }, []);
 
@@ -229,6 +233,32 @@ export default function AdverseMediaLookbackPage() {
       }
     } catch { /* non-fatal */ } finally {
       setAssessing((prev) => ({ ...prev, [subject]: false }));
+    }
+  };
+
+  const crossCorrelateSubject = async (subject: string) => {
+    if (correlating[subject]) return;
+    setCorrelating((prev) => ({ ...prev, [subject]: true }));
+    try {
+      const articles: CrossCorrelateArticle[] = entries
+        .filter((e) => e.subject === subject)
+        .map((e) => ({
+          source: e.source || "Unknown",
+          headline: e.headline,
+          date: e.articleDate,
+          snippet: `Category: ${CAT_LABELS[e.category] ?? e.category}. Severity: ${e.severity}.${e.url ? ` URL: ${e.url}` : ""}`,
+        }));
+      const res = await fetch("/api/adverse-media/cross-correlate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject, articles }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as CrossCorrelateResult;
+        setCorrelations((prev) => ({ ...prev, [subject]: data }));
+      }
+    } catch { /* non-fatal */ } finally {
+      setCorrelating((prev) => ({ ...prev, [subject]: false }));
     }
   };
 
@@ -400,21 +430,150 @@ export default function AdverseMediaLookbackPage() {
             {subjects.map((subject) => {
               const a = assessment[subject];
               const isAssessing = assessing[subject] === true;
+              const corr = correlations[subject];
+              const isCorrelating = correlating[subject] === true;
               const subjectCount = entries.filter((e) => e.subject === subject).length;
+              const isDismissedOpen = dismissedOpen[subject] === true;
+
+              const THEME_TONE: Record<string, string> = {
+                fraud: "bg-red-dim text-red",
+                sanctions: "bg-red-dim text-red",
+                corruption: "bg-red-dim text-red",
+                money_laundering: "bg-amber-dim text-amber",
+                terrorism: "bg-red-dim text-red",
+                regulatory: "bg-blue-dim text-blue",
+              };
+              const THEME_LABEL: Record<string, string> = {
+                fraud: "Fraud",
+                sanctions: "Sanctions",
+                corruption: "Corruption",
+                money_laundering: "ML",
+                terrorism: "Terrorism",
+                regulatory: "Regulatory",
+              };
+              const TREND_ICON: Record<string, string> = {
+                worsening: "↑",
+                stable: "→",
+                improving: "↓",
+              };
+              const TREND_TONE: Record<string, string> = {
+                worsening: "text-red",
+                stable: "text-amber",
+                improving: "text-green",
+              };
+              const RECOM_TONE: Record<string, string> = {
+                Clear: "bg-green-dim text-green",
+                Monitor: "bg-blue-dim text-blue",
+                EDD: "bg-amber-dim text-amber",
+                "Exit Relationship": "bg-red-dim text-red",
+                "File STR": "bg-red-dim text-red",
+              };
+              const scoreColor = corr
+                ? corr.score < 30
+                  ? "text-green"
+                  : corr.score <= 60
+                  ? "text-amber"
+                  : "text-red"
+                : "";
+
               return (
                 <div key={subject} className="bg-bg-panel border border-hair-2 rounded-lg p-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-12 font-semibold text-ink-0">{subject}</span>
                     <span className="text-10 text-ink-3 font-mono">{subjectCount} finding{subjectCount !== 1 ? "s" : ""}</span>
-                    <button
-                      type="button"
-                      disabled={isAssessing}
-                      onClick={() => void assessSubject(subject)}
-                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 ml-auto"
-                    >
-                      {isAssessing ? "Assessing…" : "AI Assess"}
-                    </button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isCorrelating}
+                        onClick={() => void crossCorrelateSubject(subject)}
+                        className="text-11 font-semibold px-3 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:bg-bg-2 disabled:opacity-40"
+                      >
+                        {isCorrelating ? "Correlating…" : "🔗 Cross-Correlate & Score"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isAssessing}
+                        onClick={() => void assessSubject(subject)}
+                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                      >
+                        {isAssessing ? "Assessing…" : "AI Assess"}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Cross-Correlate Result Panel */}
+                  {corr && (
+                    <div className="mt-3 border border-hair-2 rounded-lg overflow-hidden">
+                      <div className="bg-bg-1 px-3 py-2 border-b border-hair-2 flex items-center gap-3 flex-wrap">
+                        <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">Cross-Correlate Score</span>
+                        {/* Large score */}
+                        <span className={`font-mono text-24 font-bold leading-none ${scoreColor}`}>{corr.score}</span>
+                        <span className="text-10 text-ink-3 font-mono">/100</span>
+                        {/* Trend */}
+                        <span className={`font-mono text-16 font-bold ${TREND_TONE[corr.trend] ?? "text-ink-2"}`}>
+                          {TREND_ICON[corr.trend] ?? "→"} {corr.trend}
+                        </span>
+                        {/* Recommendation badge */}
+                        <span className={`ml-auto inline-flex items-center px-2.5 py-0.5 rounded font-mono text-11 font-bold uppercase ${RECOM_TONE[corr.recommendation] ?? "bg-bg-2 text-ink-2"}`}>
+                          {corr.recommendation}
+                        </span>
+                      </div>
+
+                      <div className="px-3 py-3 space-y-3">
+                        {/* Confirmed / dismissed counts */}
+                        <div className="flex gap-4 text-11 font-mono">
+                          <span className="text-green font-semibold">{corr.confirmed.length} confirmed</span>
+                          <span className="text-ink-3">{corr.dismissed.length} dismissed</span>
+                        </div>
+
+                        {/* Theme breakdown */}
+                        {Object.keys(corr.themes).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {Object.entries(corr.themes)
+                              .filter(([, arts]) => arts.length > 0)
+                              .map(([theme, arts]) => (
+                                <span key={theme} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-10 font-semibold ${THEME_TONE[theme] ?? "bg-bg-2 text-ink-2"}`}>
+                                  {THEME_LABEL[theme] ?? theme}
+                                  <span className="opacity-70">×{arts.length}</span>
+                                  {corr.themeScores[theme] !== undefined && (
+                                    <span className="opacity-70">· {corr.themeScores[theme]}</span>
+                                  )}
+                                </span>
+                              ))}
+                          </div>
+                        )}
+
+                        {/* Summary */}
+                        {corr.summary && (
+                          <p className="text-11 text-ink-1 leading-relaxed">{corr.summary}</p>
+                        )}
+
+                        {/* Dismissed articles (collapsed) */}
+                        {corr.dismissed.length > 0 && (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setDismissedOpen((prev) => ({ ...prev, [subject]: !prev[subject] }))}
+                              className="text-10 font-semibold text-ink-3 hover:text-ink-1 flex items-center gap-1"
+                            >
+                              {isDismissedOpen ? "▾" : "▸"} {corr.dismissed.length} excluded article{corr.dismissed.length !== 1 ? "s" : ""} (name-match only)
+                            </button>
+                            {isDismissedOpen && (
+                              <div className="mt-2 space-y-1 pl-3 border-l border-hair-2">
+                                {corr.dismissed.map((art, idx) => (
+                                  <div key={idx} className="text-10 text-ink-3">
+                                    <span className="font-mono">{art.date}</span> · <span className="text-ink-2">{art.headline}</span>
+                                    {art.source && <span className="text-ink-3"> ({art.source})</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {a && (
                     <div className="mt-3 space-y-2">
                       {/* Risk + Action badges */}
