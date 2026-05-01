@@ -483,17 +483,12 @@ export default function EntityGraphPage() {
             <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
               Jurisdiction
             </label>
-            <select
+            <input
               className={inputCls}
+              placeholder="e.g. UAE, UK, BVI…"
               value={jurisdiction}
               onChange={(e) => setJurisdiction(e.target.value)}
-            >
-              {JURISDICTIONS.map((j, idx) => (
-                <option key={`${j.code}-${idx}`} value={j.code}>
-                  {j.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
