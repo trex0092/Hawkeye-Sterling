@@ -538,8 +538,6 @@ export default function ScreeningPage() {
   // Subject IDs whose quick-screen call returned an error. Cleared on re-screen or delete.
   const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
-  // Page-level tab: "queue" | "adverse-media" | "bulk"
-  const [pageTab, setPageTab] = useState<"queue" | "adverse-media" | "bulk">("queue");
 
   // ── Bulk Re-Screen state ─────────────────────────────────────────────────────
   const [rescreenLoading, setRescreenLoading] = useState(false);
@@ -1167,10 +1165,6 @@ export default function ScreeningPage() {
       : 0;
 
   const amVerdict = amResult?.verdict;
-  const amTabCls = (active: boolean) =>
-    `px-3 py-2 text-12 font-medium border-b-2 transition-colors ${
-      active ? "border-brand text-brand" : "border-transparent text-ink-3 hover:text-ink-1"
-    }`;
 
   // Keyboard shortcuts. Compliance teams live in the keyboard.
   useKeyboardShortcuts({
@@ -1210,22 +1204,7 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
-      <div className="flex items-center gap-1 px-6 bg-bg-panel border-b border-hair-2">
-        <button type="button" onClick={() => setPageTab("queue")} className={amTabCls(pageTab === "queue")}>
-          Screening Queue
-        </button>
-        <button type="button" onClick={() => setPageTab("adverse-media")} className={amTabCls(pageTab === "adverse-media")}>
-          Adverse Media Intelligence
-        </button>
-        <button type="button" onClick={() => setPageTab("bulk")} className={amTabCls(pageTab === "bulk")}>
-          Batch
-        </button>
-        <div className="ml-auto py-2">
-          <AsanaReportButton payload={{ module: "screening", label: "Screening Queue", summary: "Screening queue status report from Hawkeye Sterling — sanctions, PEP and adverse media vectors reviewed." }} />
-        </div>
-      </div>
-
-      {pageTab === "queue" && <div
+      <div
         className="grid min-h-[calc(100vh-84px)]"
         style={{ gridTemplateColumns: "220px 1fr 480px" }}
       >
@@ -1468,7 +1447,7 @@ export default function ScreeningPage() {
             </aside>
           );
         })()}
-      </div>}
+      </div>
 
       <BulkImportDialog
         open={bulkImportOpen}
@@ -1512,9 +1491,7 @@ export default function ScreeningPage() {
         }}
       />
 
-      {pageTab === "bulk" && <BatchTab />}
-
-      {pageTab === "adverse-media" && (
+      {false && (
         <main className="max-w-5xl mx-auto px-10 py-8">
           <div className="mb-6">
             <h2 className="text-32 font-display font-normal text-ink-0 leading-tight">
