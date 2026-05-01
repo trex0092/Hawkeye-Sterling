@@ -11,6 +11,7 @@
     "test:reports": "tsx scripts/test-compliance-report.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
     "@netlify/blobs": "^10.7.4",
     "@netlify/functions": "^5.2.0",
     "@types/swagger-ui-react": "^5.18.0",
