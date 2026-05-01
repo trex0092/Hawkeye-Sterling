@@ -502,6 +502,7 @@ export default function AccessControlPage() {
   const [loadingLog, setLoadingLog] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({ name: "", email: "", role: "compliance" as UserRole, username: "", password: "" });
+  const [addForm, setAddForm] = useState({ name: "", email: "", role: "compliance" as UserRole });
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
@@ -585,6 +586,8 @@ export default function AccessControlPage() {
         setNewUserCreds({ username: data.user!.username ?? "", password: data.initialPassword ?? "" });
       }
       setAddForm({ name: "", email: "", role: "compliance", username: "", password: ""});
+      if (data.user) setUsers((prev) => [...prev, data.user!]);
+      setAddForm({ name: "", email: "", role: "compliance" });
       setShowAddForm(false);
       void fetchLog();
     } catch {
@@ -760,6 +763,7 @@ export default function AccessControlPage() {
                 <button
                   type="button"
                   onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance", username: "", password: ""}); }}
+                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance" }); }}
                   className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
                 >
                   Cancel
