@@ -1500,7 +1500,7 @@ export default function ResponsibleAIPage() {
                   {p.status}
                 </span>
               </div>
-              <div className="text-12 font-semibold text-ink-0 leading-snug">{p.name}</div>
+              <div className="text-11 font-semibold text-ink-0 leading-snug">{p.name}</div>
               <div className="text-10.5 text-ink-3 leading-relaxed">{p.detail}</div>
             </div>
           ))}
@@ -1593,17 +1593,6 @@ export default function ResponsibleAIPage() {
             <li>A human review of any AI-generated risk assessment</li>
             <li>Correction of inaccurate input data</li>
           </ul>
-          <div className="mt-4 pt-4 border-t border-hair-2 space-y-1">
-            <div className="text-11 text-ink-2">
-              <span className="font-semibold text-ink-1">Contact:</span>{" "}
-              <a href="mailto:compliance@hawkeyesterling.ae" className="text-brand underline">
-                compliance@hawkeyesterling.ae
-              </a>
-            </div>
-            <div className="text-10.5 text-ink-3">
-              Legal basis: FDL 10/2025 Art.10 · UAE PDPL Art.20 · UNESCO Ethics of AI Principle 7
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1628,12 +1617,6 @@ export default function ResponsibleAIPage() {
               <li>Model review and re-certification</li>
               <li>Incident escalation and response</li>
             </ul>
-          </div>
-          <div className="mb-4">
-            <div className="text-11 font-semibold text-ink-2 uppercase tracking-wide-2 mb-1">Contact for AI concerns</div>
-            <a href="mailto:compliance@hawkeyesterling.ae" className="text-12 text-brand underline">
-              compliance@hawkeyesterling.ae
-            </a>
           </div>
           {/* Editable RAO name */}
           <div className="border-t border-hair-2 pt-4">
