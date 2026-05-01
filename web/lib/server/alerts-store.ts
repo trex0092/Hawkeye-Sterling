@@ -110,6 +110,66 @@ export async function writeAlert(alert: DesignationAlert): Promise<void> {
   } catch { /* best effort */ }
 }
 
+// Demo seed shown when the Blobs store has never been written to (no cron
+// has fired yet). Gives operators a realistic view of the bell in action.
+const DEMO_ALERTS: DesignationAlert[] = [
+  {
+    id: "demo-001",
+    listId: "ofac_sdn",
+    listLabel: "OFAC SDN",
+    matchedEntry: "Al Rashid Trading LLC",
+    sourceRef: "SDN-20240318-UAE",
+    severity: "critical",
+    detectedAt: new Date(Date.now() - 25 * 60_000).toISOString(),
+    read: false,
+    firedRedlineId: "rl_ofac_sdn_confirmed",
+  },
+  {
+    id: "demo-002",
+    listId: "un_1267",
+    listLabel: "UN 1267",
+    matchedEntry: "Ibrahim Al-Zawari",
+    sourceRef: "QDe.152",
+    severity: "critical",
+    detectedAt: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+    read: false,
+    firedRedlineId: "rl_un_consolidated_confirmed",
+  },
+  {
+    id: "demo-003",
+    listId: "eu_consolidated",
+    listLabel: "EU CFSP",
+    matchedEntry: "Meridian Metals FZE",
+    sourceRef: "EU-2024/1234",
+    severity: "high",
+    detectedAt: new Date(Date.now() - 6 * 3_600_000).toISOString(),
+    read: false,
+    firedRedlineId: "rl_eu_cfsp_confirmed",
+  },
+  {
+    id: "demo-004",
+    listId: "uk_ofsi",
+    listLabel: "UK OFSI",
+    matchedEntry: "Volkov Commodities Ltd",
+    sourceRef: "RUS0278",
+    severity: "high",
+    detectedAt: new Date(Date.now() - 18 * 3_600_000).toISOString(),
+    read: true,
+    firedRedlineId: "rl_uk_ofsi_confirmed",
+  },
+  {
+    id: "demo-005",
+    listId: "uae_eocn",
+    listLabel: "UAE EOCN",
+    matchedEntry: "Gulf Star Jewellery Trading",
+    sourceRef: "EOCN-2024-0091",
+    severity: "medium",
+    detectedAt: new Date(Date.now() - 30 * 3_600_000).toISOString(),
+    read: true,
+    firedRedlineId: "rl_eocn_confirmed",
+  },
+];
+
 export async function listAlerts(onlyUnread = false): Promise<DesignationAlert[]> {
   try {
     const store = await getAlertStore();
@@ -124,9 +184,13 @@ export async function listAlerts(onlyUnread = false): Promise<DesignationAlert[]
         results.push(alert);
       } catch { /* skip corrupt */ }
     }
+    // Fall back to demo seed when store is empty (no cron has fired yet)
+    if (results.length === 0) {
+      return onlyUnread ? DEMO_ALERTS.filter((a) => !a.read) : DEMO_ALERTS;
+    }
     return results;
   } catch {
-    return [];
+    return onlyUnread ? DEMO_ALERTS.filter((a) => !a.read) : DEMO_ALERTS;
   }
 }
 
