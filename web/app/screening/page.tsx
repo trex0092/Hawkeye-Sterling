@@ -1218,7 +1218,7 @@ export default function ScreeningPage() {
           Adverse Media Intelligence
         </button>
         <button type="button" onClick={() => setPageTab("bulk")} className={amTabCls(pageTab === "bulk")}>
-          Bulk Screening
+          Batch
         </button>
         <div className="ml-auto py-2">
           <AsanaReportButton payload={{ module: "screening", label: "Screening Queue", summary: "Screening queue status report from Hawkeye Sterling — sanctions, PEP and adverse media vectors reviewed." }} />

@@ -14,7 +14,6 @@ import {
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
-  { key: "nav.batch", label: "⚡ Batch", href: "/batch" },
   { key: "nav.intel", label: "Live Intel", href: "/intel" },
   { key: "nav.cases", label: "Cases", href: "/cases" },
   { key: "nav.tm", label: "💸 Transaction Monitor", href: "/transaction-monitor" },
