@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface RealEstateMlResult {
   mlRisk: "critical" | "high" | "medium" | "low" | "clear";
@@ -109,16 +110,20 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        system: `You are a UAE real estate money laundering specialist with expertise in DLD/RERA transaction patterns, off-plan ML typologies, and FATF Recommendation 22 DNFBP obligations. Analyse real estate transactions for ML red flags including price manipulation, all-cash purchases, third-party payments, rapid flipping, and beneficial ownership opacity. Apply UAE FDL 10/2025 DNFBP requirements and FATF 2022 Real Estate Guidance. Respond ONLY with valid JSON matching the RealEstateMlResult interface — no markdown fences.`,
-        messages: [{
-          role: "user",
-          content: `Property Details: ${body.propertyDetails}
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE real estate money laundering specialist with expertise in DLD/RERA transaction patterns, off-plan ML typologies, and FATF Recommendation 22 DNFBP obligations. Analyse real estate transactions for ML red flags including price manipulation, all-cash purchases, third-party payments, rapid flipping, and beneficial ownership opacity. Apply UAE FDL 10/2025 DNFBP requirements and FATF 2022 Real Estate Guidance. Respond ONLY with valid JSON matching the RealEstateMlResult interface — no markdown fences.`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Property Details: ${body.propertyDetails}
 Buyer Name: ${body.buyerName ?? "not provided"}
 Buyer Nationality: ${body.buyerNationality ?? "not provided"}
 Payment Method: ${body.paymentMethod ?? "not specified"}
@@ -128,12 +133,9 @@ Agent/Broker Name: ${body.agentName ?? "not provided"}
 Additional Context: ${body.context ?? "none"}
 
 Assess this real estate transaction for money laundering risk indicators. Return complete RealEstateMlResult JSON.`,
-        }],
-      }),
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RealEstateMlResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {

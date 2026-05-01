@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface EnforcementExposureResult {
   violationCategory: string;
@@ -116,16 +117,20 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1450,
-        system: `You are a UAE AML enforcement specialist with expertise in CBUAE penalty framework, UAE FDL 10/2025 sanctions provisions, personal MLRO liability, criminal exposure thresholds, and self-reporting benefits. Assess AML compliance violations for penalty exposure (range in AED), mitigating and aggravating factors, precedent cases from UAE and comparable jurisdictions, criminal and personal liability exposure, and remedial action recommendations. Reference UAE FDL 10/2025 criminal penalty articles and CBUAE administrative sanctions framework. Respond ONLY with valid JSON matching the EnforcementExposureResult interface — no markdown fences.`,
-        messages: [{
-          role: "user",
-          content: `Violation Description: ${body.violation}
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1450,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML enforcement specialist with expertise in CBUAE penalty framework, UAE FDL 10/2025 sanctions provisions, personal MLRO liability, criminal exposure thresholds, and self-reporting benefits. Assess AML compliance violations for penalty exposure (range in AED), mitigating and aggravating factors, precedent cases from UAE and comparable jurisdictions, criminal and personal liability exposure, and remedial action recommendations. Reference UAE FDL 10/2025 criminal penalty articles and CBUAE administrative sanctions framework. Respond ONLY with valid JSON matching the EnforcementExposureResult interface — no markdown fences.`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Violation Description: ${body.violation}
 Institution Type: ${body.institutionType ?? "UAE licensed financial institution"}
 Violation Period: ${body.violationPeriod ?? "not specified"}
 Self-Reported: ${body.selfReported ?? "not yet"}
@@ -133,12 +138,9 @@ Prior Enforcement History: ${body.priorHistory ?? "none known"}
 Additional Context: ${body.context ?? "none"}
 
 Assess regulatory enforcement exposure for this AML violation. Return complete EnforcementExposureResult JSON.`,
-        }],
-      }),
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EnforcementExposureResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {

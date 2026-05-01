@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface CorrespondentBankResult {
   riskRating: "critical" | "high" | "medium" | "low";
@@ -51,43 +52,29 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const prompt = `You are a UAE AML/CFT compliance expert specialising in correspondent banking due diligence under FATF R.13 and UAE FDL 10/2025.
-
-Assess the following correspondent banking relationship:
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML/CFT compliance expert specialising in correspondent banking due diligence under FATF R.13 and UAE FDL 10/2025. Assess correspondent banking relationships and return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "kycStatus": "pass"|"conditional"|"fail", "amlProgrammeAssessment": string, "shellBankRisk": boolean, "payableThrough": boolean, "requiredEnhancements": string[], "regulatoryBasis": string }`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Assess the following correspondent banking relationship:
 - Bank Name: ${body.bankName}
 - Country: ${body.country}
 - Regulatory Body: ${body.regulatoryBody}
 - Last KYC Date: ${body.lastKycDate}
 - AML Programme Status: ${body.amlProgrammeStatus}
-- Additional Context: ${body.context}
-
-Return a JSON object with exactly these fields:
-{
-  "riskRating": "critical"|"high"|"medium"|"low",
-  "kycStatus": "pass"|"conditional"|"fail",
-  "amlProgrammeAssessment": string,
-  "shellBankRisk": boolean,
-  "payableThrough": boolean,
-  "requiredEnhancements": string[],
-  "regulatoryBasis": string
-}`;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+- Additional Context: ${body.context}`,
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
-    const text = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
 

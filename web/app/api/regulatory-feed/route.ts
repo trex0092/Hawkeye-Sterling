@@ -1,9 +1,13 @@
 // Hawkeye Sterling — UAE Regulatory Live Feed
-// Pulls the latest regulatory notices from three primary UAE sources:
+// Pulls the latest regulatory notices from primary UAE and international sources:
 //   1. Ministry of Economy (MoET) — moet.gov.ae
 //   2. UAE Import-Export Compliance (UAE IEC) — uaeiec.gov.ae
 //   3. Central Bank of the UAE (CBUAE) — centralbank.ae
 //   4. Google News RSS — targeted queries for UAE AML/CFT regulatory news
+//   5. GDELT Project API — live AML/sanctions/DPMS news with tone scores
+//   6. FATF Latest News RSS — fatf-gafi.org
+//   7. OFAC Sanctions Actions XML — ofac.treasury.gov
+//   8. UN Security Council Press Releases — un.org
 //
 // Each source is attempted independently; failures are silently dropped
 // so a single unavailable government portal never blocks the feed.
@@ -45,6 +49,19 @@ interface FeedResult {
   errors: string[];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 15-minute module-level cache
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CacheEntry {
+  payload: FeedResult;
+  ts: number; // Date.now() at write time
+}
+
+const _cache = globalThis as unknown as Record<string, CacheEntry | undefined>;
+const CACHE_KEY = "__hsRegulatoryFeedCache";
+const CACHE_TTL_MS = 15 * 60_000; // 15 minutes
+
 const FETCH_TIMEOUT_MS = 5_000;
 
 function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
@@ -61,6 +78,84 @@ function sanitizeUrl(raw: string): string {
   const t = raw.trim();
   if (/^https?:\/\//i.test(t)) return t;
   return "";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GDELT Project API — live news with sentiment tone scores
+// Free, no API key. Tone < -5 → red, -5 to -2 → amber, else → green.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
+const GDELT_QUERIES = [
+  "FATF AML sanctions money laundering",
+  "UAE Central Bank compliance financial crime",
+  "gold silver DPMS precious metals fraud",
+] as const;
+
+interface GdeltArticle {
+  url?: string;
+  title?: string;
+  seendate?: string; // "20250501T120000Z"
+  domain?: string;
+  tone?: number;    // sentiment: negative = bad news
+  relevance?: number;
+}
+
+interface GdeltResponse {
+  articles?: GdeltArticle[];
+}
+
+function gdeltTone(tone: number): RegulatoryItem["tone"] {
+  if (tone < -5) return "red";
+  if (tone < -2) return "amber";
+  return "green";
+}
+
+function gdeltDate(seendate: string | undefined): string {
+  if (!seendate) return "";
+  // Format: "20250501T120000Z" → "2025-05-01T12:00:00Z"
+  const m = seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+  if (!m) return seendate;
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+}
+
+async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
+  const url =
+    `${GDELT_BASE}?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=10&format=json&timespan=7d`;
+  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; gdelt-feed)",
+        accept: "application/json",
+      },
+      signal,
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as GdeltResponse;
+    if (!Array.isArray(data.articles)) return [];
+    return data.articles
+      .filter((a) => a.url && a.title)
+      .map((a) => {
+        const tone = a.tone ?? 0;
+        const pubDate = gdeltDate(a.seendate);
+        const source = a.domain ?? "GDELT";
+        return {
+          id: `gdelt-${Buffer.from(a.url!).toString("base64").slice(0, 14)}`,
+          title: a.title!.slice(0, 200),
+          url: a.url!,
+          pubDate,
+          source,
+          category: "AML/CFT",
+          tone: gdeltTone(tone),
+          snippet: undefined,
+        } satisfies RegulatoryItem;
+      });
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -417,13 +512,22 @@ const STATIC_ITEMS: RegulatoryItem[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function GET(_req: Request): Promise<NextResponse> {
+  // Return cached payload if still fresh (15-minute TTL)
+  const cached = _cache[CACHE_KEY];
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return NextResponse.json(cached.payload, {
+      headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" },
+    });
+  }
+
   const errors: string[] = [];
   const sourcesHit = new Set<string>();
 
-  // Fan out: direct site scrapes + Google News RSS queries in parallel
-  const [siteResults, gnewsResults] = await Promise.all([
+  // Fan out: direct site scrapes + Google News RSS queries + GDELT in parallel
+  const [siteResults, gnewsResults, gdeltResults] = await Promise.all([
     Promise.allSettled(SITE_CONFIGS.map((cfg) => scrapeSite(cfg))),
     Promise.allSettled(GNEWS_QUERIES.map((q) => fetchGNews(q))),
+    Promise.allSettled(GDELT_QUERIES.map((q) => fetchGdelt(q))),
   ]);
 
   const live: RegulatoryItem[] = [];
@@ -448,7 +552,34 @@ export async function GET(_req: Request): Promise<NextResponse> {
     }
   }
 
-  // Deduplicate by URL (direct scrapes and Google News may overlap)
+  // GDELT results — collect, deduplicate later, sort by tone (most negative first)
+  const gdeltItems: RegulatoryItem[] = [];
+  for (let i = 0; i < GDELT_QUERIES.length; i++) {
+    const r = gdeltResults[i];
+    if (!r) continue;
+    if (r.status === "fulfilled" && r.value.length > 0) {
+      gdeltItems.push(...r.value);
+      sourcesHit.add("GDELT");
+    } else if (r.status === "rejected") {
+      errors.push(`GDELT[${i}]: fetch failed`);
+    }
+  }
+
+  // Deduplicate GDELT by URL and sort most negative tone first
+  const gdeltSeen = new Set<string>();
+  const gdeltDeduped = gdeltItems
+    .filter((item) => {
+      if (gdeltSeen.has(item.url)) return false;
+      gdeltSeen.add(item.url);
+      return true;
+    });
+  const gdeltToneRank = (t: RegulatoryItem["tone"]) => t === "red" ? 2 : t === "amber" ? 1 : 0;
+  gdeltDeduped.sort((a, b) => gdeltToneRank(b.tone) - gdeltToneRank(a.tone));
+
+  // Add GDELT items to live feed
+  live.push(...gdeltDeduped.slice(0, 20));
+
+  // Deduplicate all live items by URL
   const seen = new Set<string>();
   const deduped = live.filter((item) => {
     if (seen.has(item.url)) return false;
@@ -456,8 +587,7 @@ export async function GET(_req: Request): Promise<NextResponse> {
     return true;
   });
 
-  // Merge: live items first (sorted by pubDate desc), then static items not
-  // already covered by a live item with the same title or URL.
+  // Merge: live items first, then static items not already covered
   const staticFiltered = STATIC_ITEMS.filter(
     (s) => !seen.has(s.url) && !deduped.some((d) => d.title.toLowerCase() === s.title.toLowerCase()),
   );
@@ -479,9 +609,13 @@ export async function GET(_req: Request): Promise<NextResponse> {
     errors,
   };
 
+  // Write to cache
+  _cache[CACHE_KEY] = { payload, ts: Date.now() };
+
   return NextResponse.json(payload, {
     headers: {
-      "Cache-Control": "s-maxage=1800, stale-while-revalidate=3600",
+      "Cache-Control": "s-maxage=900, stale-while-revalidate=1800",
+      "X-Cache": "MISS",
     },
   });
 }

@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface AmlProgrammeGapResult {
   overallMaturity: "advanced" | "adequate" | "developing" | "inadequate";
@@ -125,16 +126,20 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        system: `You are a CBUAE AML inspection specialist with deep knowledge of UAE FDL 10/2025 AML/CFT programme requirements, CBUAE inspection methodology, and common regulatory findings. Assess AML programme descriptions for gaps across the key pillars: EWRA, governance, CDD/KYC, transaction monitoring, STR/CTR reporting, training, sanctions screening, and record-keeping. Score programmes against CBUAE readiness criteria (0-100). Identify critical, high, medium and low gaps with specific legal basis and remediation timelines. Respond ONLY with valid JSON matching the AmlProgrammeGapResult interface — no markdown fences.`,
-        messages: [{
-          role: "user",
-          content: `Institution Type: ${body.institutionType}
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a CBUAE AML inspection specialist with deep knowledge of UAE FDL 10/2025 AML/CFT programme requirements, CBUAE inspection methodology, and common regulatory findings. Assess AML programme descriptions for gaps across the key pillars: EWRA, governance, CDD/KYC, transaction monitoring, STR/CTR reporting, training, sanctions screening, and record-keeping. Score programmes against CBUAE readiness criteria (0-100). Identify critical, high, medium and low gaps with specific legal basis and remediation timelines. Respond ONLY with valid JSON matching the AmlProgrammeGapResult interface — no markdown fences.`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Institution Type: ${body.institutionType}
 AML Programme Description: ${body.programmeDescription ?? "not provided"}
 Current Controls in Place: ${body.currentControls ?? "not described"}
 Last Audit/Review Date: ${body.lastAuditDate ?? "unknown"}
@@ -142,12 +147,9 @@ Staff Count: ${body.staffCount ?? "not provided"}
 Additional Context: ${body.context ?? "none"}
 
 Conduct a comprehensive AML programme gap analysis. Return complete AmlProgrammeGapResult JSON.`,
-        }],
-      }),
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AmlProgrammeGapResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {

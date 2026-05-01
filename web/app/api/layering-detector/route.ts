@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface LayeringResult {
   layeringRisk: "critical" | "high" | "medium" | "low" | "none";
@@ -112,28 +113,29 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        system: `You are a UAE money laundering specialist identifying placement, layering, and integration stages per FATF typologies and UAE Federal Decree-Law 10/2025 (FDL 10/2025). Analyse transaction descriptions for all three ML stages, account/jurisdiction hopping, round-trip structures, and structuring patterns. Apply FATF typology guidance on layering schemes including wire layering, corporate vehicle misuse, and real estate integration. Provide actionable recommendations referencing UAE AML legal obligations. Respond ONLY with valid JSON matching the LayeringResult interface — no markdown fences.`,
-        messages: [{
-          role: "user",
-          content: `Transaction Description: ${body.transactions}
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE money laundering specialist identifying placement, layering, and integration stages per FATF typologies and UAE Federal Decree-Law 10/2025 (FDL 10/2025). Analyse transaction descriptions for all three ML stages, account/jurisdiction hopping, round-trip structures, and structuring patterns. Apply FATF typology guidance on layering schemes including wire layering, corporate vehicle misuse, and real estate integration. Provide actionable recommendations referencing UAE AML legal obligations. Respond ONLY with valid JSON matching the LayeringResult interface — no markdown fences.`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Transaction Description: ${body.transactions}
 Subject Name: ${body.subjectName ?? "not provided"}
 Account References: ${body.accountRefs ?? "not provided"}
 Period Under Review: ${body.periodDays ? body.periodDays + " days" : "not specified"}
 Additional Context: ${body.context ?? "none"}
 
 Analyse for money laundering placement, layering, and integration stages. Return complete LayeringResult JSON.`,
-        }],
-      }),
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as LayeringResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {

@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface NpoRiskResult {
   riskRating: "critical" | "high" | "medium" | "low";
@@ -52,42 +53,29 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const prompt = `You are a UAE AML/CFT compliance expert specialising in NPO/charity sector risks under FATF Recommendation 8 and UAE Cabinet Decision 74/2020.
-
-Analyse the following NPO for money laundering and terrorist financing risks:
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML/CFT compliance expert specialising in NPO/charity sector risks under FATF Recommendation 8 and UAE Cabinet Decision 74/2020. Analyse NPOs for money laundering and terrorist financing risks. Return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "keyRedFlags": string[], "tfIndicators": string[], "dueDiligenceSteps": string[], "regulatoryBasis": string, "recommendedAction": string }`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Analyse the following NPO for money laundering and terrorist financing risks:
 - NPO Name: ${body.npoName}
 - Country of Operation: ${body.country}
 - Sector: ${body.sector}
 - Funding Source: ${body.fundingSource}
 - Beneficiary Region: ${body.beneficiaryRegion}
-- Additional Context: ${body.context}
-
-Return a JSON object with exactly these fields:
-{
-  "riskRating": "critical"|"high"|"medium"|"low",
-  "keyRedFlags": string[],
-  "tfIndicators": string[],
-  "dueDiligenceSteps": string[],
-  "regulatoryBasis": string,
-  "recommendedAction": string
-}`;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+- Additional Context: ${body.context}`,
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
-    const text = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
 

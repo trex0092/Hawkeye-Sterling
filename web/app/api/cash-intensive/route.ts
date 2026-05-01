@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface CashIntensiveResult {
   riskRating: "critical" | "high" | "medium" | "low";
@@ -70,44 +71,29 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const prompt = `You are a UAE AML/CFT compliance expert specialising in cash-intensive business risk assessment under MoE Circular 2/2024 and UAE FDL 10/2025.
-
-Assess the following cash-intensive business scenario:
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML/CFT compliance expert specialising in cash-intensive business risk assessment under MoE Circular 2/2024 and UAE FDL 10/2025. Assess cash-intensive business scenarios and return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "cashRiskScore": number (0-100), "redFlags": string[], "typologiesMatched": string[], "controlGaps": string[], "enhancedMeasures": string[], "reportingObligations": string[], "regulatoryBasis": string }`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Assess the following cash-intensive business scenario:
 - Business Name: ${body.businessName}
 - Business Type: ${body.businessType}
 - Monthly Revenue: ${body.monthlyRevenue}
 - Cash Percentage: ${body.cashPct}
 - Deposit Pattern: ${body.depositPattern}
-- Additional Context: ${body.context}
-
-Return a JSON object with exactly these fields:
-{
-  "riskRating": "critical"|"high"|"medium"|"low",
-  "cashRiskScore": number (0-100),
-  "redFlags": string[],
-  "typologiesMatched": string[],
-  "controlGaps": string[],
-  "enhancedMeasures": string[],
-  "reportingObligations": string[],
-  "regulatoryBasis": string
-}`;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+- Additional Context: ${body.context}`,
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
-    const text = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
 
