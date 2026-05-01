@@ -343,6 +343,7 @@ interface OversightOverlay {
   customApprovals: Approval[];
   customMinutes: Minute[];
   customCirculars: Circular[];
+  standaloneActionItems: ActionItem[];
   // Approval sign-off patches: id -> partial Approval
   approvalPatches: Record<string, Partial<Approval>>;
   // Action item status patches: actionId -> closed bool
@@ -356,6 +357,7 @@ const EMPTY_OVERLAY: OversightOverlay = {
   customApprovals: [],
   customMinutes: [],
   customCirculars: [],
+  standaloneActionItems: [],
   approvalPatches: {},
   actionPatches: {},
 };
@@ -473,7 +475,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
         <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Title *</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Approval request title" className={iCls} />
       </div>
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requested by *</label>
           <input value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} placeholder="Name (Role)" className={iCls} />
@@ -486,12 +488,12 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">SLA hours</label>
           <input value={slaHours} onChange={(e) => setSlaHours(e.target.value)} placeholder="24" className={iCls} />
         </div>
-      </div>
-      <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">First reviewer</label>
           <input value={firstReviewer} onChange={(e) => setFirstReviewer(e.target.value)} placeholder="Compliance Officer" className={iCls} />
         </div>
+      </div>
+      <div className="grid grid-cols-4 gap-3 mb-4">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Second reviewer</label>
           <input value={secondReviewer} onChange={(e) => setSecondReviewer(e.target.value)} placeholder="Managing Director" className={iCls} />
@@ -500,11 +502,11 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount (optional)</label>
           <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="AED 850,000" className={iCls} />
         </div>
-      </div>
-      <div className="mb-4">
-        <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-          className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
+        <div className="col-span-2">
+          <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes</label>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={1}
+            className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
+        </div>
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
@@ -748,6 +750,10 @@ export default function OversightPage() {
   const [showAddCircular, setShowAddCircular] = useState(false);
   const [showAddApproval, setShowAddApproval] = useState(false);
   const [showAddMinute, setShowAddMinute] = useState(false);
+  const [showAddAction, setShowAddAction] = useState(false);
+  const [newActionText, setNewActionText] = useState("");
+  const [newActionOwner, setNewActionOwner] = useState("");
+  const [newActionDue, setNewActionDue] = useState("");
 
   // Inline edit state
   const [editingApprovalId, setEditingApprovalId] = useState<string | null>(null);
@@ -841,10 +847,20 @@ export default function OversightPage() {
 
   // ── Action item toggle ─────────────────────────────────────────────────────
   const toggleAction = (aiId: string, currentlyClosed: boolean) => {
-    updateOverlay({
-      ...overlay,
-      actionPatches: { ...overlay.actionPatches, [aiId]: !currentlyClosed },
-    });
+    const standalone = overlay.standaloneActionItems ?? [];
+    if (standalone.some((ai) => ai.id === aiId)) {
+      updateOverlay({ ...overlay, standaloneActionItems: standalone.map((ai) => ai.id === aiId ? { ...ai, closed: !currentlyClosed } : ai) });
+    } else {
+      updateOverlay({ ...overlay, actionPatches: { ...overlay.actionPatches, [aiId]: !currentlyClosed } });
+    }
+  };
+
+  const addStandaloneAction = () => {
+    if (!newActionText.trim()) return;
+    const id = `AI-STANDALONE-${Date.now()}`;
+    const newItem: ActionItem = { id, action: newActionText.trim(), owner: newActionOwner.trim() || "—", due: newActionDue || "—", closed: false };
+    updateOverlay({ ...overlay, standaloneActionItems: [...(overlay.standaloneActionItems ?? []), newItem] });
+    setNewActionText(""); setNewActionOwner(""); setNewActionDue(""); setShowAddAction(false);
   };
 
   const toggleActionItem = (minuteId: string, actionId: string, currentlyClosed: boolean) => {
@@ -940,11 +956,13 @@ export default function OversightPage() {
 
   // ── KPI calculations ──────────────────────────────────────────────────────
   const allActionItems = useMemo(
-    () =>
-      liveMinutes.flatMap((m) =>
+    () => [
+      ...liveMinutes.flatMap((m) =>
         m.actionItems.map((ai) => ({ ...ai, meetingTitle: m.title, meetingId: m.id })),
       ),
-    [liveMinutes],
+      ...(overlay.standaloneActionItems ?? []).map((ai) => ({ ...ai, meetingTitle: "—", meetingId: "standalone" })),
+    ],
+    [liveMinutes, overlay.standaloneActionItems],
   );
 
   const openActionsCount = allActionItems.filter((ai) => !ai.closed).length;
@@ -1585,6 +1603,13 @@ export default function OversightPage() {
                 {openActionsCount} open · {allActionItems.length - openActionsCount} closed · {allActionItems.length} total
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowAddAction((v) => !v)}
+              className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
+            >
+              {showAddAction ? "Cancel" : "+ Add Action Item"}
+            </button>
           </div>
 
           <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
@@ -1636,6 +1661,31 @@ export default function OversightPage() {
               </tbody>
             </table>
           </div>
+
+          {showAddAction && (
+            <div className="mt-3 bg-bg-panel border border-hair-2 rounded-lg p-4">
+              <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">New action item</div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="col-span-1">
+                  <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner</label>
+                  <input value={newActionOwner} onChange={(e) => setNewActionOwner(e.target.value)} placeholder="Name (Role)" className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" />
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Due date</label>
+                  <input type="date" value={newActionDue} onChange={(e) => setNewActionDue(e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" />
+                </div>
+                <div className="col-span-1" />
+              </div>
+              <div className="mb-3">
+                <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Action *</label>
+                <textarea value={newActionText} onChange={(e) => setNewActionText(e.target.value)} rows={2} placeholder="Describe the action required…" className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" />
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={addStandaloneAction} disabled={!newActionText.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40 transition-colors">Add</button>
+                <button type="button" onClick={() => setShowAddAction(false)} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

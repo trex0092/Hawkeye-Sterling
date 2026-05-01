@@ -135,14 +135,14 @@ function SupplierList({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Supplier name"
-          className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
+          className="flex-[3] bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
         <input
           value={country}
           onChange={(e) => setCountry(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-          placeholder="Country"
-          className="w-36 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
+          placeholder="Country (ISO-2)"
+          className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
         <button type="button" onClick={add} className="px-3 py-1.5 text-12 font-semibold bg-brand text-white rounded hover:bg-brand/90">
           Add

@@ -237,29 +237,31 @@ export default function UboDeclarationPage() {
           onSubmit={submit}
           className="bg-bg-panel border border-hair-2 rounded-lg p-5 mt-6 space-y-4"
         >
-          <div>
-            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
-              Registered entity name *
-            </label>
-            <input
-              required
-              value={entity}
-              onChange={(e) => setEntity(e.target.value)}
-              placeholder="e.g. Fine Gold LLC"
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
-              Country of registration *
-            </label>
-            <input
-              required
-              value={registered}
-              onChange={(e) => setRegistered(e.target.value)}
-              placeholder="e.g. UAE"
-              className={inputCls}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
+                Registered entity name *
+              </label>
+              <input
+                required
+                value={entity}
+                onChange={(e) => setEntity(e.target.value)}
+                placeholder="e.g. Fine Gold LLC"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
+                Country of registration *
+              </label>
+              <input
+                required
+                value={registered}
+                onChange={(e) => setRegistered(e.target.value)}
+                placeholder="e.g. UAE"
+                className={inputCls}
+              />
+            </div>
           </div>
 
           <hr className="border-hair" />
@@ -290,47 +292,39 @@ export default function UboDeclarationPage() {
                   />
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex gap-2">
                 <input
                   value={u.name}
                   onChange={(e) => update(idx, "name", e.target.value)}
                   placeholder="Full legal name"
-                  className={`${inputCls} col-span-2`}
-                />
-                <input
-                  value={u.nationality}
-                  onChange={(e) => update(idx, "nationality", e.target.value)}
-                  placeholder="Nationality"
-                  className={inputCls}
+                  className={`${inputCls} flex-[2]`}
                 />
                 <DateParts
                   value={u.dob}
                   onChange={(v) => update(idx, "dob", v)}
-                  className={inputCls}
+                  className={`${inputCls} flex-1`}
                 />
                 <select
                   value={u.gender}
                   onChange={(e) => update(idx, "gender", e.target.value)}
-                  className={inputCls}
+                  className={`${inputCls} flex-1`}
                 >
                   <option value="">Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                 </select>
-                <div className="flex gap-2">
-                  <input
-                    value={u.ownershipPct}
-                    onChange={(e) => update(idx, "ownershipPct", e.target.value.replace(/[^\d.]/g, ""))}
-                    placeholder="%"
-                    className={inputCls}
-                  />
-                  <input
-                    value={u.role}
-                    onChange={(e) => update(idx, "role", e.target.value)}
-                    placeholder="Role (director / signatory / etc.)"
-                    className={`${inputCls} flex-1`}
-                  />
-                </div>
+                <input
+                  value={u.nationality}
+                  onChange={(e) => update(idx, "nationality", e.target.value)}
+                  placeholder="Nationality"
+                  className={`${inputCls} flex-1`}
+                />
+                <input
+                  value={u.ownershipPct}
+                  onChange={(e) => update(idx, "ownershipPct", e.target.value.replace(/[^\d.]/g, ""))}
+                  placeholder="%"
+                  className={`${inputCls} w-16 flex-none`}
+                />
               </div>
             </div>
           ))}

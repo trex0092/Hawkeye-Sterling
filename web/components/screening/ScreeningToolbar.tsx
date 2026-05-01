@@ -150,18 +150,6 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
         </button>
 
         <div className="flex gap-2 items-center">
-          {/* AI search button / clear */}
-          {onNLSearch && !nlSearchActive && (
-            <button
-              type="button"
-              onClick={() => { if (query.trim()) onNLSearch(query.trim()); }}
-              disabled={nlSearchLoading || !query.trim()}
-              title="Natural language AI search — describe the case in plain English"
-              className="inline-flex items-center gap-1 px-2.5 py-[5px] text-11.5 font-medium rounded border border-amber/40 text-amber bg-amber-dim hover:bg-amber-dim/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-            >
-              {nlSearchLoading ? "Thinking…" : "✦ AI search"}
-            </button>
-          )}
           {nlSearchActive && onNLSearchClear && (
             <button
               type="button"

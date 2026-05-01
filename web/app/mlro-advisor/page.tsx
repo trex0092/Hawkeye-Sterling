@@ -1829,6 +1829,7 @@ export default function MlroAdvisorPage() {
   const [flagText, setFlagText] = useState("");
   const [flagResult, setFlagResult] = useState<FlagResult | null>(null);
   const [flagLoading, setFlagLoading] = useState(false);
+  const [flagError, setFlagError] = useState<string | null>(null);
 
   // Case patterns
   const [patternResult, setPatternResult] = useState<PatternResult | null>(null);
@@ -2995,16 +2996,18 @@ export default function MlroAdvisorPage() {
     if (!flagText.trim()) return;
     setFlagLoading(true);
     setFlagResult(null);
+    setFlagError(null);
     try {
       const res = await fetch("/api/mlro-advisor/extract-flags", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: flagText }),
       });
-      if (!res.ok) return;
-      const data = await res.json() as { ok: boolean } & FlagResult;
+      if (!res.ok) { setFlagError(`API error ${res.status} — check server logs`); return; }
+      const data = await res.json() as { ok: boolean; error?: string } & FlagResult;
       if (data.ok) setFlagResult(data);
-    } catch { /* silent */ }
+      else setFlagError(data.error ?? "Extraction failed");
+    } catch (err) { setFlagError(err instanceof Error ? err.message : "Network error"); }
     finally { setFlagLoading(false); }
   };
 
@@ -3946,31 +3949,42 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {flagLoading ? "Extracting…" : "Extract Red Flags"}
                 </button>
+                {flagError && (
+                  <div className="text-11 text-red font-medium px-3 py-2 rounded bg-red-dim border border-red/20">
+                    ⚠ {flagError}
+                  </div>
+                )}
                 {flagResult && (() => {
                   const f = flagResult;
                   const riskCls = f.overallRisk === "critical" ? "bg-red text-white" : f.overallRisk === "high" ? "bg-red-dim text-red" : f.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
                   return (
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className={`font-mono text-11 font-bold px-2 py-px rounded uppercase ${riskCls}`}>{f.overallRisk} risk</span>
                         <span className="font-mono text-11 px-2 py-px rounded bg-brand-dim text-brand-deep">{f.recommendedDisposition.replace(/_/g, " ")}</span>
                         <span className="text-11 text-ink-2 italic">{f.summary}</span>
                       </div>
-                      <div className="space-y-2">
-                        {f.flags.map((flag, i) => {
-                          const sevCls = flag.severity === "critical" ? "bg-red text-white" : flag.severity === "high" ? "bg-red-dim text-red" : flag.severity === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
-                          return (
-                            <div key={i} className="border border-hair-2 rounded-lg p-3 bg-bg-1">
-                              <div className="flex items-start gap-2 mb-1">
-                                <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${sevCls}`}>{flag.severity}</span>
-                                <span className="text-12 font-medium text-ink-0">{flag.indicator}</span>
+                      {f.flags.length === 0 ? (
+                        <div className="text-11 text-ink-3 italic px-3 py-2 rounded border border-hair-2 bg-bg-1">
+                          No FATF red flags detected in the provided text. If you expected results, verify your ANTHROPIC_API_KEY is configured on the server.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {f.flags.map((flag, i) => {
+                            const sevCls = flag.severity === "critical" ? "bg-red text-white" : flag.severity === "high" ? "bg-red-dim text-red" : flag.severity === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                            return (
+                              <div key={i} className="border border-hair-2 rounded-lg p-3 bg-bg-1">
+                                <div className="flex items-start gap-2 mb-1">
+                                  <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${sevCls}`}>{flag.severity}</span>
+                                  <span className="text-12 font-medium text-ink-0">{flag.indicator}</span>
+                                </div>
+                                <div className="text-10 font-mono text-ink-3 mb-1">{flag.fatfReference} · {flag.uaeReference}</div>
+                                <div className="text-11 text-amber italic">{flag.actionRequired}</div>
                               </div>
-                              <div className="text-10 font-mono text-ink-3 mb-1">{flag.fatfReference} · {flag.uaeReference}</div>
-                              <div className="text-11 text-amber italic">{flag.actionRequired}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
