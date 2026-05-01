@@ -1811,7 +1811,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -2249,6 +2249,67 @@ export default function MlroAdvisorPage() {
   const [examPrepInput, setExamPrepInput] = useState({ examArea: "", institutionType: "", context: "" });
   const [examPrepResult, setExamPrepResult] = useState<Record<string, unknown> | null>(null);
   const [examPrepLoading, setExamPrepLoading] = useState(false);
+
+  // Wave 4 tools
+  const [npoInput, setNpoInput] = useState({ npoName: "", country: "", sector: "", fundingSource: "", beneficiaryRegion: "", context: "" });
+  const [npoResult, setNpoResult] = useState<Record<string, unknown> | null>(null);
+  const [npoLoading, setNpoLoading] = useState(false);
+
+  const [corrBankInput, setCorrBankInput] = useState({ bankName: "", country: "", regulatoryBody: "", lastKycDate: "", amlProgrammeStatus: "", context: "" });
+  const [corrBankResult, setCorrBankResult] = useState<Record<string, unknown> | null>(null);
+  const [corrBankLoading, setCorrBankLoading] = useState(false);
+
+  const [mixedFundsInput, setMixedFundsInput] = useState({ accountHolder: "", totalBalance: "", suspectedProceedsAmount: "", legitimateFundsAmount: "", mixingPeriod: "", context: "" });
+  const [mixedFundsResult, setMixedFundsResult] = useState<Record<string, unknown> | null>(null);
+  const [mixedFundsLoading, setMixedFundsLoading] = useState(false);
+
+  const [sanctionsBreachInput, setSanctionsBreachInput] = useState({ counterparty: "", transactionAmount: "", sanctionsList: "", discoveryDate: "", breachDuration: "", context: "" });
+  const [sanctionsBreachResult, setSanctionsBreachResult] = useState<Record<string, unknown> | null>(null);
+  const [sanctionsBreachLoading, setSanctionsBreachLoading] = useState(false);
+
+  const [freezeSeizureInput, setFreezeSeizureInput] = useState({ subjectName: "", assetDescription: "", legalBasisCited: "", estimatedValue: "", jurisdictions: "", context: "" });
+  const [freezeSeizureResult, setFreezeSeizureResult] = useState<Record<string, unknown> | null>(null);
+  const [freezeSeizureLoading, setFreezeSeizureLoading] = useState(false);
+
+  const [auditResponseInput, setAuditResponseInput] = useState({ auditorName: "", auditDate: "", findings: "", institutionType: "", context: "" });
+  const [auditResponseResult, setAuditResponseResult] = useState<Record<string, unknown> | null>(null);
+  const [auditResponseLoading, setAuditResponseLoading] = useState(false);
+
+  const [hnwInput, setHnwInput] = useState({ subjectName: "", nationality: "", wealthEstimateAed: "", wealthSources: "", pepStatus: "", jurisdictions: "", context: "" });
+  const [hnwResult, setHnwResult] = useState<Record<string, unknown> | null>(null);
+  const [hnwLoading, setHnwLoading] = useState(false);
+
+  const [cashIntensiveInput, setCashIntensiveInput] = useState({ businessName: "", businessType: "", monthlyRevenue: "", cashPct: "", depositPattern: "", context: "" });
+  const [cashIntensiveResult, setCashIntensiveResult] = useState<Record<string, unknown> | null>(null);
+  const [cashIntensiveLoading, setCashIntensiveLoading] = useState(false);
+
+  const [trustStructInput, setTrustStructInput] = useState({ entityName: "", structureType: "", jurisdictions: "", layerCount: "", purposeStated: "", context: "" });
+  const [trustStructResult, setTrustStructResult] = useState<Record<string, unknown> | null>(null);
+  const [trustStructLoading, setTrustStructLoading] = useState(false);
+
+  const [crossBorderInput, setCrossBorderInput] = useState({ originatorName: "", beneficiaryName: "", amount: "", currency: "", originCountry: "", destinationCountry: "", purpose: "", context: "" });
+  const [crossBorderResult, setCrossBorderResult] = useState<Record<string, unknown> | null>(null);
+  const [crossBorderLoading, setCrossBorderLoading] = useState(false);
+
+  const [fiuFeedbackInput, setFiuFeedbackInput] = useState({ fiuRef: "", feedbackDate: "", feedbackContent: "", originalStrRef: "", context: "" });
+  const [fiuFeedbackResult, setFiuFeedbackResult] = useState<Record<string, unknown> | null>(null);
+  const [fiuFeedbackLoading, setFiuFeedbackLoading] = useState(false);
+
+  const [deriskingInput, setDeriskingInput] = useState({ customerSegment: "", affectedCount: "", riskJustification: "", institutionType: "", context: "" });
+  const [deriskingResult, setDeriskingResult] = useState<Record<string, unknown> | null>(null);
+  const [deriskingLoading, setDeriskingLoading] = useState(false);
+
+  const [legalPrivInput, setLegalPrivInput] = useState({ subjectType: "", communicationType: "", context: "", legalRelationship: "" });
+  const [legalPrivResult, setLegalPrivResult] = useState<Record<string, unknown> | null>(null);
+  const [legalPrivLoading, setLegalPrivLoading] = useState(false);
+
+  const [mlScenarioInput, setMlScenarioInput] = useState({ subjectName: "", predicateOffence: "", estimatedAmount: "", jurisdictions: "", sectors: "", context: "" });
+  const [mlScenarioResult, setMlScenarioResult] = useState<Record<string, unknown> | null>(null);
+  const [mlScenarioLoading, setMlScenarioLoading] = useState(false);
+
+  const [staffAlertInput, setStaffAlertInput] = useState({ alertSource: "", employeeName: "", employeeRole: "", allegation: "", evidenceDescribed: "", context: "" });
+  const [staffAlertResult, setStaffAlertResult] = useState<Record<string, unknown> | null>(null);
+  const [staffAlertLoading, setStaffAlertLoading] = useState(false);
 
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
@@ -2691,6 +2752,22 @@ export default function MlroAdvisorPage() {
     } catch { /* noop */ }
     finally { setExamPrepLoading(false); }
   };
+
+  const runNpoRisk = async () => { setNpoLoading(true); try { const r = await fetch("/api/npo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(npoInput) }); setNpoResult(await r.json()); } catch { setNpoResult({ ok: false, error: "Network error" }); } finally { setNpoLoading(false); } };
+  const runCorrBank = async () => { setCorrBankLoading(true); try { const r = await fetch("/api/correspondent-bank", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corrBankInput) }); setCorrBankResult(await r.json()); } catch { setCorrBankResult({ ok: false, error: "Network error" }); } finally { setCorrBankLoading(false); } };
+  const runMixedFunds = async () => { setMixedFundsLoading(true); try { const r = await fetch("/api/mixed-funds", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(mixedFundsInput) }); setMixedFundsResult(await r.json()); } catch { setMixedFundsResult({ ok: false, error: "Network error" }); } finally { setMixedFundsLoading(false); } };
+  const runSanctionsBreach = async () => { setSanctionsBreachLoading(true); try { const r = await fetch("/api/sanctions-breach", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsBreachInput) }); setSanctionsBreachResult(await r.json()); } catch { setSanctionsBreachResult({ ok: false, error: "Network error" }); } finally { setSanctionsBreachLoading(false); } };
+  const runFreezeSeizure = async () => { setFreezeSeizureLoading(true); try { const r = await fetch("/api/freeze-seizure", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(freezeSeizureInput) }); setFreezeSeizureResult(await r.json()); } catch { setFreezeSeizureResult({ ok: false, error: "Network error" }); } finally { setFreezeSeizureLoading(false); } };
+  const runAuditResponse = async () => { setAuditResponseLoading(true); try { const r = await fetch("/api/audit-response", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(auditResponseInput) }); setAuditResponseResult(await r.json()); } catch { setAuditResponseResult({ ok: false, error: "Network error" }); } finally { setAuditResponseLoading(false); } };
+  const runHnw = async () => { setHnwLoading(true); try { const r = await fetch("/api/high-net-worth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(hnwInput) }); setHnwResult(await r.json()); } catch { setHnwResult({ ok: false, error: "Network error" }); } finally { setHnwLoading(false); } };
+  const runCashIntensive = async () => { setCashIntensiveLoading(true); try { const r = await fetch("/api/cash-intensive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cashIntensiveInput) }); setCashIntensiveResult(await r.json()); } catch { setCashIntensiveResult({ ok: false, error: "Network error" }); } finally { setCashIntensiveLoading(false); } };
+  const runTrustStruct = async () => { setTrustStructLoading(true); try { const r = await fetch("/api/trust-structures", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(trustStructInput) }); setTrustStructResult(await r.json()); } catch { setTrustStructResult({ ok: false, error: "Network error" }); } finally { setTrustStructLoading(false); } };
+  const runCrossBorder = async () => { setCrossBorderLoading(true); try { const r = await fetch("/api/cross-border-wire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(crossBorderInput) }); setCrossBorderResult(await r.json()); } catch { setCrossBorderResult({ ok: false, error: "Network error" }); } finally { setCrossBorderLoading(false); } };
+  const runFiuFeedback = async () => { setFiuFeedbackLoading(true); try { const r = await fetch("/api/fiu-feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(fiuFeedbackInput) }); setFiuFeedbackResult(await r.json()); } catch { setFiuFeedbackResult({ ok: false, error: "Network error" }); } finally { setFiuFeedbackLoading(false); } };
+  const runDerisking = async () => { setDeriskingLoading(true); try { const r = await fetch("/api/derisking-impact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(deriskingInput) }); setDeriskingResult(await r.json()); } catch { setDeriskingResult({ ok: false, error: "Network error" }); } finally { setDeriskingLoading(false); } };
+  const runLegalPriv = async () => { setLegalPrivLoading(true); try { const r = await fetch("/api/legal-privilege", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(legalPrivInput) }); setLegalPrivResult(await r.json()); } catch { setLegalPrivResult({ ok: false, error: "Network error" }); } finally { setLegalPrivLoading(false); } };
+  const runMlScenario = async () => { setMlScenarioLoading(true); try { const r = await fetch("/api/ml-scenario", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(mlScenarioInput) }); setMlScenarioResult(await r.json()); } catch { setMlScenarioResult({ ok: false, error: "Network error" }); } finally { setMlScenarioLoading(false); } };
+  const runStaffAlert = async () => { setStaffAlertLoading(true); try { const r = await fetch("/api/staff-alert", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(staffAlertInput) }); setStaffAlertResult(await r.json()); } catch { setStaffAlertResult({ ok: false, error: "Network error" }); } finally { setStaffAlertLoading(false); } };
 
   const runEscalation = async () => {
     if (!escSubject.trim()) return;
