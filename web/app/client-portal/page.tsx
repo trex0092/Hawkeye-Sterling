@@ -398,7 +398,7 @@ export default function ClientPortalPage() {
             <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
               Entity
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className={labelCls}>Registered entity name *</label>
                 <input required value={entity.name} onChange={setE("name")}
