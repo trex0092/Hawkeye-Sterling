@@ -4,13 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
 import { AlertBell } from "./AlertBell";
-import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
-import {
-  loadOperatorRole,
-  saveOperatorRole,
-  ROLE_LABEL,
-  type OperatorRole,
-} from "@/lib/data/operator-role";
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
@@ -118,24 +111,15 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 const THEME_KEY = "hawkeye.theme";
-const LOCALE_KEY = "hawkeye.locale";
 
 function applyTheme(theme: "light" | "dark"): void {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme", theme);
 }
 
-function applyDir(locale: Locale): void {
-  if (typeof document === "undefined") return;
-  const entry = LOCALES.find((l) => l.code === locale);
-  document.documentElement.setAttribute("dir", entry?.dir ?? "ltr");
-  document.documentElement.setAttribute("lang", locale);
-}
-
 export function Header() {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [locale, setLocale] = useState<Locale>("en");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLDivElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
@@ -145,14 +129,8 @@ export function Header() {
       (typeof localStorage !== "undefined" &&
         (localStorage.getItem(THEME_KEY) as "light" | "dark" | null)) ||
       "light";
-    const storedLocale =
-      (typeof localStorage !== "undefined" &&
-        (localStorage.getItem(LOCALE_KEY) as Locale | null)) ||
-      "en";
     setTheme(storedTheme);
-    setLocale(storedLocale);
     applyTheme(storedTheme);
-    applyDir(storedLocale);
   }, []);
 
   const toggleTheme = () => {
@@ -160,12 +138,6 @@ export function Header() {
     setTheme(next);
     applyTheme(next);
     if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next);
-  };
-
-  const pickLocale = (code: Locale) => {
-    setLocale(code);
-    applyDir(code);
-    if (typeof localStorage !== "undefined") localStorage.setItem(LOCALE_KEY, code);
   };
 
   return (
@@ -187,7 +159,6 @@ export function Header() {
         <div className="flex gap-0.5 ml-2 md:ml-8">
           {NAV_TABS.map((tab) => {
             const active = isActive(pathname, tab.href);
-            const label = STRINGS[tab.key] ? t(tab.key, locale) : tab.label;
             return (
               <a
                 key={tab.href}
@@ -198,7 +169,7 @@ export function Header() {
                     : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
                 }`}
               >
-                {label}
+                {tab.label}
               </a>
             );
           })}
@@ -265,7 +236,6 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
           <AlertBell />
-          <HeaderUserCard />
           <button
             type="button"
             onClick={toggleTheme}
@@ -283,120 +253,6 @@ export function Header() {
   );
 }
 
-function HeaderUserCard() {
-  const [name, setName] = useState("");
-  const [role, setRole] = useState<OperatorRole>("mlro");
-  const [open, setOpen] = useState(false);
-  const [draftName, setDraftName] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      const n = localStorage.getItem("hawkeye.operator");
-      if (n) setName(n);
-    } catch { /* localStorage disabled */ }
-    setRole(loadOperatorRole());
-    const sync = () => {
-      setRole(loadOperatorRole());
-      try {
-        const n = localStorage.getItem("hawkeye.operator");
-        setName(n ?? "");
-      } catch { /* ignore */ }
-    };
-    window.addEventListener("hawkeye:operator-role-updated", sync);
-    window.addEventListener("hawkeye:operator-updated", sync);
-    return () => {
-      window.removeEventListener("hawkeye:operator-role-updated", sync);
-      window.removeEventListener("hawkeye:operator-updated", sync);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const saveName = () => {
-    const n = draftName.trim();
-    setName(n);
-    try {
-      n
-        ? localStorage.setItem("hawkeye.operator", n)
-        : localStorage.removeItem("hawkeye.operator");
-      window.dispatchEvent(new CustomEvent("hawkeye:operator-updated"));
-    } catch { /* localStorage disabled */ }
-    setOpen(false);
-  };
-
-  const selectRole = (r: OperatorRole) => {
-    saveOperatorRole(r);
-    setRole(r);
-  };
-
-  return (
-    <div className="relative shrink-0" ref={ref}>
-      <button
-        type="button"
-        onClick={() => {
-          setDraftName(name);
-          setOpen((v) => !v);
-        }}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-hair-2 hover:border-hair text-ink-1 hover:text-ink-0 transition-colors"
-        title="Edit profile"
-      >
-        <span className="hidden lg:flex flex-col leading-none gap-[1px] text-left">
-          <span className="text-[11px] font-semibold text-ink-0">
-            {ROLE_LABEL[role]}
-          </span>
-          <span className="text-[8.5px] font-mono uppercase tracking-[0.1em] text-ink-3">
-            ✎ Edit profile
-          </span>
-        </span>
-        <span className="lg:hidden text-10 font-mono">✎</span>
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-50 w-52 bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3">
-          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
-            Name
-          </div>
-          <input
-            autoFocus
-            value={draftName}
-            onChange={(e) => setDraftName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") saveName();
-              if (e.key === "Escape") setOpen(false);
-            }}
-            placeholder="Full name"
-            className="w-full bg-bg-1 border border-hair-2 rounded px-2 py-1 text-12 text-ink-0 outline-none focus:border-brand mb-3"
-          />
-          <button
-            type="button"
-            onClick={saveName}
-            className="w-full text-11 font-semibold bg-brand text-white px-2 py-1 rounded hover:bg-brand/90 mb-1.5"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              window.location.href = "/login";
-            }}
-            className="w-full text-11 font-medium border border-hair-2 text-ink-2 px-2 py-1 rounded hover:border-red hover:text-red transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function LiveBadge() {
   const [time, setTime] = useState<string>("");
