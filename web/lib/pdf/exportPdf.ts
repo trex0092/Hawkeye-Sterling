@@ -98,7 +98,8 @@ export function exportToPdf(options: PdfExportOptions): void {
       const colors: Record<string, [number, number, number]> = {
         red: [220, 50, 50], amber: [245, 158, 11], green: [34, 197, 94], neutral: [100, 100, 120],
       };
-      const [r, g, b] = colors[section.tone ?? "neutral"];
+      const rgb = colors[section.tone ?? "neutral"] ?? ([100, 100, 120] as [number, number, number]);
+      const [r, g, b] = rgb;
       doc.setFillColor(r, g, b);
       doc.roundedRect(14, y - 4, 40, 7, 1.5, 1.5, "F");
       doc.setTextColor(255, 255, 255);

@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface LegalPrivilegeResult {
   privilegeApplies: boolean;
@@ -48,40 +49,27 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const prompt = `You are a UAE AML/CFT legal expert specialising in legal professional privilege, tipping-off prohibition, and confidentiality obligations under UAE FDL 10/2025 Art.30.
-
-Analyse the following legal privilege and tipping-off scenario:
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML/CFT legal expert specialising in legal professional privilege, tipping-off prohibition, and confidentiality obligations under UAE FDL 10/2025 Art.30. Analyse legal privilege and tipping-off scenarios and return a JSON object with exactly these fields: { "privilegeApplies": boolean, "tippingOffRisk": "high"|"medium"|"low", "disclosurePermitted": boolean, "safeProcedureSteps": string[], "legalCounselRequired": boolean, "regulatoryBasis": string }`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Analyse the following legal privilege and tipping-off scenario:
 - Subject Type: ${body.subjectType}
 - Communication Type: ${body.communicationType}
 - Legal Relationship: ${body.legalRelationship}
-- Additional Context: ${body.context}
-
-Return a JSON object with exactly these fields:
-{
-  "privilegeApplies": boolean,
-  "tippingOffRisk": "high"|"medium"|"low",
-  "disclosurePermitted": boolean,
-  "safeProcedureSteps": string[],
-  "legalCounselRequired": boolean,
-  "regulatoryBasis": string
-}`;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+- Additional Context: ${body.context}`,
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
-    const text = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
+import { exportEwraBoardReport } from "@/lib/pdf/exporters";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
 // Required annually under FDL 10/2025 Art.4 and FATF R.1.
@@ -373,7 +374,15 @@ export default function EwraPage() {
 
             <div className="px-5 py-3 border-t border-hair-2 bg-bg-panel flex justify-between items-center">
               <span className="text-10 text-ink-3 font-mono">Draft narrative — MLRO review required before Board presentation</span>
-              <button
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => exportEwraBoardReport(boardReport, state.dimensions)}
+                  className="text-11 font-mono text-brand hover:text-brand/80"
+                >
+                  ↓ Export PDF
+                </button>
+                <button
                 type="button"
                 onClick={() => {
                   const text = [
@@ -394,6 +403,7 @@ export default function EwraPage() {
               >
                 Copy to clipboard
               </button>
+              </div>
             </div>
           </div>
         )}

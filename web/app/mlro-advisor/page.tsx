@@ -7266,6 +7266,455 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
+            {/* STR Quality Scorer */}
+            {superToolsTab === "str-quality" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">STR Quality Scorer</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.15 · FATF R.20 · goAML quality gate — score your STR narrative before submission</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={strQualityInput.subjectName} onChange={e => setStrQualityInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Reporting subject" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Amount</label><input value={strQualityInput.totalAmount} onChange={e => setStrQualityInput(p => ({...p, totalAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 500,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Count</label><input value={strQualityInput.transactionCount} onChange={e => setStrQualityInput(p => ({...p, transactionCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of transactions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Suspected Offence</label><input value={strQualityInput.suspectedOffence} onChange={e => setStrQualityInput(p => ({...p, suspectedOffence: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ML, fraud, structuring…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Text</label><textarea value={strQualityInput.narrativeText} onChange={e => setStrQualityInput(p => ({...p, narrativeText: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Paste the STR narrative text to be scored…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={strQualityInput.context} onChange={e => setStrQualityInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runStrQuality()} disabled={strQualityLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{strQualityLoading ? "◌ Scoring…" : "Score STR Quality"}</button>
+                {strQualityResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(strQualityResult["qualityScore"]) && <div className="text-center"><div className="text-32 font-bold text-brand">{String(strQualityResult["qualityScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Quality Score</div></div>}
+                      {Boolean(strQualityResult["grade"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(strQualityResult["grade"]) === "A" ? "bg-green-dim text-green" : String(strQualityResult["grade"]) === "B" ? "bg-brand-dim text-brand" : String(strQualityResult["grade"]) === "C" ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>Grade {String(strQualityResult["grade"])}</span>}
+                    </div>
+                    {Boolean(strQualityResult["deficiencies"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Deficiencies</div><ul className="space-y-1">{(strQualityResult["deficiencies"] as string[]).map((d,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{d}</li>)}</ul></div>}
+                    {Boolean(strQualityResult["improvements"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommended Improvements</div><ul className="space-y-1">{(strQualityResult["improvements"] as string[]).map((imp,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{imp}</li>)}</ul></div>}
+                    {Boolean(strQualityResult["summary"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Summary</div><p className="text-12 text-ink-1 leading-relaxed">{String(strQualityResult["summary"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hawala Detector */}
+            {superToolsTab === "hawala-detector" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Hawala / Informal Value Transfer Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.14 · UAE FDL 10/2025 · Informal value transfer typology indicators and risk assessment</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={hawalaInput.subjectName} onChange={e => setHawalaInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or business" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Type</label><input value={hawalaInput.businessType} onChange={e => setHawalaInput(p => ({...p, businessType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Exchange, trading, retail…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash Volume</label><input value={hawalaInput.cashVolume} onChange={e => setHawalaInput(p => ({...p, cashVolume: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Monthly cash turnover" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparties</label><input value={hawalaInput.counterparties} onChange={e => setHawalaInput(p => ({...p, counterparties: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries or names of counterparts" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Pattern</label><textarea value={hawalaInput.transactionPattern} onChange={e => setHawalaInput(p => ({...p, transactionPattern: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe the observed transaction patterns…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={hawalaInput.context} onChange={e => setHawalaInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runHawala()} disabled={hawalaLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{hawalaLoading ? "◌ Detecting…" : "Detect Hawala Risk"}</button>
+                {hawalaResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(hawalaResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(hawalaResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(hawalaResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(hawalaResult["riskRating"])} Risk</span>}
+                      {Boolean(hawalaResult["hawalaLikelihood"]) && <div className="text-center"><div className="text-32 font-bold text-amber">{String(hawalaResult["hawalaLikelihood"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Hawala Likelihood</div></div>}
+                    </div>
+                    {Boolean(hawalaResult["indicators"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Indicators Detected</div><ul className="space-y-1">{(hawalaResult["indicators"] as string[]).map((ind,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">▸</span>{ind}</li>)}</ul></div>}
+                    {Boolean(hawalaResult["recommendedActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommended Actions</div><ul className="space-y-1">{(hawalaResult["recommendedActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{a}</li>)}</ul></div>}
+                    {Boolean(hawalaResult["regulatoryBasis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Basis</div><p className="text-12 text-ink-1 leading-relaxed">{String(hawalaResult["regulatoryBasis"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Nominee Risk */}
+            {superToolsTab === "nominee-risk" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Nominee Director / Shareholder Risk Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · UAE Commercial Companies Law · Nominee arrangement risk and beneficial ownership assessment</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={nomineeInput.companyName} onChange={e => setNomineeInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Director Name</label><input value={nomineeInput.directorName} onChange={e => setNomineeInput(p => ({...p, directorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nominee director name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Incorporation Date</label><input value={nomineeInput.incorporationDate} onChange={e => setNomineeInput(p => ({...p, incorporationDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 2021-03-15" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Activity</label><input value={nomineeInput.businessActivity} onChange={e => setNomineeInput(p => ({...p, businessActivity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated business activity" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Controller Details</label><textarea value={nomineeInput.controllerDetails} onChange={e => setNomineeInput(p => ({...p, controllerDetails: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Known or suspected controller information…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={nomineeInput.context} onChange={e => setNomineeInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runNominee()} disabled={nomineeLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{nomineeLoading ? "◌ Analysing…" : "Analyse Nominee Risk"}</button>
+                {nomineeResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(nomineeResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(nomineeResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(nomineeResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(nomineeResult["riskRating"])} Risk</span>}
+                      {Boolean(nomineeResult["nomineeConfidence"]) && <div className="text-center"><div className="text-32 font-bold text-red">{String(nomineeResult["nomineeConfidence"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Nominee Confidence</div></div>}
+                    </div>
+                    {Boolean(nomineeResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(nomineeResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{f}</li>)}</ul></div>}
+                    {Boolean(nomineeResult["requiredActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Actions</div><ul className="space-y-1">{(nomineeResult["requiredActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{a}</li>)}</ul></div>}
+                    {Boolean(nomineeResult["analysis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Analysis</div><p className="text-12 text-ink-1 leading-relaxed">{String(nomineeResult["analysis"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PEP Corporate */}
+            {superToolsTab === "pep-corporate" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">PEP Corporate Nexus Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · PEP-linked corporate ownership risk and enhanced due diligence requirements</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={pepCorpInput.companyName} onChange={e => setPepCorpInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corporate entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Name</label><input value={pepCorpInput.pepName} onChange={e => setPepCorpInput(p => ({...p, pepName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Politically exposed person" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Role</label><input value={pepCorpInput.pepRole} onChange={e => setPepCorpInput(p => ({...p, pepRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Minister, MP, senior official…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership %</label><input value={pepCorpInput.ownershipPct} onChange={e => setPepCorpInput(p => ({...p, ownershipPct: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 25%" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Industry Context</label><textarea value={pepCorpInput.industryContext} onChange={e => setPepCorpInput(p => ({...p, industryContext: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Industry, sector, and relevant government contracts…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={pepCorpInput.context} onChange={e => setPepCorpInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runPepCorp()} disabled={pepCorpLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{pepCorpLoading ? "◌ Analysing…" : "Analyse PEP Corporate Nexus"}</button>
+                {pepCorpResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(pepCorpResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(pepCorpResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(pepCorpResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(pepCorpResult["riskRating"])} Risk</span>}
+                      {Boolean(pepCorpResult["eddRequired"]) && <span className={`font-mono text-11 px-2 py-0.5 rounded ${pepCorpResult["eddRequired"] ? "bg-red-dim text-red" : "bg-bg-2 text-ink-2"}`}>EDD: {pepCorpResult["eddRequired"] ? "REQUIRED" : "Not required"}</span>}
+                    </div>
+                    {Boolean(pepCorpResult["riskFactors"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Risk Factors</div><ul className="space-y-1">{(pepCorpResult["riskFactors"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{f}</li>)}</ul></div>}
+                    {Boolean(pepCorpResult["eddMeasures"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">EDD Measures</div><ul className="space-y-1">{(pepCorpResult["eddMeasures"] as string[]).map((m,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{m}</li>)}</ul></div>}
+                    {Boolean(pepCorpResult["conclusion"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Conclusion</div><p className="text-12 text-ink-1 leading-relaxed">{String(pepCorpResult["conclusion"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Crypto Mixing */}
+            {superToolsTab === "crypto-mixing" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Crypto Mixing / Obfuscation Detector</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.15 · VA Guidance · Cryptocurrency mixing, tumbling, and chain-hopping typology detection</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label><input value={cryptoMixInput.walletAddress} onChange={e => setCryptoMixInput(p => ({...p, walletAddress: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Blockchain wallet address" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crypto Type</label><input value={cryptoMixInput.cryptoType} onChange={e => setCryptoMixInput(p => ({...p, cryptoType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="BTC, ETH, XMR…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount (USD)</label><input value={cryptoMixInput.amountUsd} onChange={e => setCryptoMixInput(p => ({...p, amountUsd: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated USD value" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exchange Context</label><input value={cryptoMixInput.exchangeContext} onChange={e => setCryptoMixInput(p => ({...p, exchangeContext: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="VASP or DEX name" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Hashes</label><textarea value={cryptoMixInput.transactionHashes} onChange={e => setCryptoMixInput(p => ({...p, transactionHashes: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Known transaction hashes (comma-separated)…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={cryptoMixInput.context} onChange={e => setCryptoMixInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runCryptoMix()} disabled={cryptoMixLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{cryptoMixLoading ? "◌ Detecting…" : "Detect Mixing Activity"}</button>
+                {cryptoMixResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(cryptoMixResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(cryptoMixResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(cryptoMixResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(cryptoMixResult["riskRating"])} Risk</span>}
+                      {Boolean(cryptoMixResult["mixingProbability"]) && <div className="text-center"><div className="text-32 font-bold text-red">{String(cryptoMixResult["mixingProbability"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Mixing Probability</div></div>}
+                    </div>
+                    {Boolean(cryptoMixResult["obfuscationTechniques"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Obfuscation Techniques</div><ul className="space-y-1">{(cryptoMixResult["obfuscationTechniques"] as string[]).map((t,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{t}</li>)}</ul></div>}
+                    {Boolean(cryptoMixResult["recommendedActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommended Actions</div><ul className="space-y-1">{(cryptoMixResult["recommendedActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{a}</li>)}</ul></div>}
+                    {Boolean(cryptoMixResult["analysis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Analysis</div><p className="text-12 text-ink-1 leading-relaxed">{String(cryptoMixResult["analysis"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Ghost Company */}
+            {superToolsTab === "ghost-company" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Ghost / Shell Company Identifier</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · UAE Commercial Companies Law · Ghost company indicators and substance evaluation</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={ghostCoInput.companyName} onChange={e => setGhostCoInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Incorporation Date</label><input value={ghostCoInput.incorporationDate} onChange={e => setGhostCoInput(p => ({...p, incorporationDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 2020-01-10" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Count</label><input value={ghostCoInput.employeeCount} onChange={e => setGhostCoInput(p => ({...p, employeeCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Known or stated headcount" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Physical Address</label><input value={ghostCoInput.physicalAddress} onChange={e => setGhostCoInput(p => ({...p, physicalAddress: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Registered / operating address" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trade Activity</label><textarea value={ghostCoInput.tradeActivity} onChange={e => setGhostCoInput(p => ({...p, tradeActivity: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Described trade or business activity…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={ghostCoInput.context} onChange={e => setGhostCoInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runGhostCo()} disabled={ghostCoLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ghostCoLoading ? "◌ Analysing…" : "Identify Ghost Company"}</button>
+                {ghostCoResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(ghostCoResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(ghostCoResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(ghostCoResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(ghostCoResult["riskRating"])} Risk</span>}
+                      {Boolean(ghostCoResult["ghostScore"]) && <div className="text-center"><div className="text-32 font-bold text-red">{String(ghostCoResult["ghostScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Ghost Score</div></div>}
+                    </div>
+                    {Boolean(ghostCoResult["substanceDeficiencies"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Substance Deficiencies</div><ul className="space-y-1">{(ghostCoResult["substanceDeficiencies"] as string[]).map((d,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{d}</li>)}</ul></div>}
+                    {Boolean(ghostCoResult["requiredEvidence"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Evidence</div><ul className="space-y-1">{(ghostCoResult["requiredEvidence"] as string[]).map((e,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{e}</li>)}</ul></div>}
+                    {Boolean(ghostCoResult["conclusion"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Conclusion</div><p className="text-12 text-ink-1 leading-relaxed">{String(ghostCoResult["conclusion"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* pKYC Planner */}
+            {superToolsTab === "pkeyc-planner" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Periodic KYC Review Planner</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.13 · FATF R.10 · Periodic CDD review cycle planning and overdue queue prioritisation</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={pKycInput.institutionType} onChange={e => setPKycInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank, DNFBP, VASP…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Customer Count</label><input value={pKycInput.customerCount} onChange={e => setPKycInput(p => ({...p, customerCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 12,000" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">High-Risk Count</label><input value={pKycInput.highRiskCount} onChange={e => setPKycInput(p => ({...p, highRiskCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of high-risk customers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Count</label><input value={pKycInput.pepCount} onChange={e => setPKycInput(p => ({...p, pepCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of PEP customers" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Overdue Reviews</label><input value={pKycInput.overdueCount} onChange={e => setPKycInput(p => ({...p, overdueCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Count of overdue pKYC reviews" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={pKycInput.context} onChange={e => setPKycInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runPKyc()} disabled={pKycLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{pKycLoading ? "◌ Planning…" : "Generate pKYC Plan"}</button>
+                {pKycResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    {Boolean(pKycResult["reviewSchedule"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Review Schedule</div><p className="text-12 text-ink-1 leading-relaxed">{String(pKycResult["reviewSchedule"])}</p></div>}
+                    {Boolean(pKycResult["priorityQueue"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Priority Queue</div><ul className="space-y-1">{(pKycResult["priorityQueue"] as string[]).map((q,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{q}</li>)}</ul></div>}
+                    {Boolean(pKycResult["complianceGaps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Compliance Gaps</div><ul className="space-y-1">{(pKycResult["complianceGaps"] as string[]).map((g,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{g}</li>)}</ul></div>}
+                    {Boolean(pKycResult["recommendation"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Recommendation</div><p className="text-12 text-ink-1 leading-relaxed">{String(pKycResult["recommendation"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Whistleblower */}
+            {superToolsTab === "whistleblower" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Whistleblower Report Handler</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.24 · FATF R.18 · Whistleblower allegation triage, credibility assessment, and MLRO response protocol</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Report Source</label><input value={whistleInput.reportSource} onChange={e => setWhistleInput(p => ({...p, reportSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anonymous, employee, regulator…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Accused Role</label><input value={whistleInput.accusedRole} onChange={e => setWhistleInput(p => ({...p, accusedRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Director, compliance officer, teller…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Affected Customers</label><input value={whistleInput.affectedCustomers} onChange={e => setWhistleInput(p => ({...p, affectedCustomers: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number or names of affected customers" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Allegation</label><textarea value={whistleInput.allegation} onChange={e => setWhistleInput(p => ({...p, allegation: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Nature and details of the allegation…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Described</label><textarea value={whistleInput.evidenceDescribed} onChange={e => setWhistleInput(p => ({...p, evidenceDescribed: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe any evidence mentioned…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={whistleInput.context} onChange={e => setWhistleInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runWhistle()} disabled={whistleLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{whistleLoading ? "◌ Triaging…" : "Triage Whistleblower Report"}</button>
+                {whistleResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(whistleResult["credibilityScore"]) && <div className="text-center"><div className="text-32 font-bold text-amber">{String(whistleResult["credibilityScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Credibility Score</div></div>}
+                      {Boolean(whistleResult["urgencyLevel"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(whistleResult["urgencyLevel"]) === "critical" ? "bg-red-dim text-red" : String(whistleResult["urgencyLevel"]) === "high" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(whistleResult["urgencyLevel"])} Urgency</span>}
+                    </div>
+                    {Boolean(whistleResult["mlroActions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">MLRO Actions</div><ul className="space-y-1">{(whistleResult["mlroActions"] as string[]).map((a,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">⚠</span>{a}</li>)}</ul></div>}
+                    {Boolean(whistleResult["verificationSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Verification Steps</div><ul className="space-y-1">{(whistleResult["verificationSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                    {Boolean(whistleResult["protectionMeasures"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Protection Measures</div><p className="text-12 text-ink-1 leading-relaxed">{String(whistleResult["protectionMeasures"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Trade Finance RF */}
+            {superToolsTab === "trade-finance-rf" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Trade Finance Red Flag Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML Guidance · UAE FDL 10/2025 · Trade-based money laundering indicators in trade finance transactions</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Type</label><input value={tradeFinRfInput.transactionType} onChange={e => setTradeFinRfInput(p => ({...p, transactionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="LC, documentary collection, open account…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Commodity</label><input value={tradeFinRfInput.commodity} onChange={e => setTradeFinRfInput(p => ({...p, commodity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Goods being traded" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Importer Name</label><input value={tradeFinRfInput.importerName} onChange={e => setTradeFinRfInput(p => ({...p, importerName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Importing party" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exporter Name</label><input value={tradeFinRfInput.exporterName} onChange={e => setTradeFinRfInput(p => ({...p, exporterName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Exporting party" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice Value</label><input value={tradeFinRfInput.invoiceValue} onChange={e => setTradeFinRfInput(p => ({...p, invoiceValue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated invoice value" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Market Value</label><input value={tradeFinRfInput.marketValue} onChange={e => setTradeFinRfInput(p => ({...p, marketValue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fair market value estimate" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Shipping Route</label><input value={tradeFinRfInput.shippingRoute} onChange={e => setTradeFinRfInput(p => ({...p, shippingRoute: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin → transit → destination countries" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={tradeFinRfInput.context} onChange={e => setTradeFinRfInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runTradeFinRf()} disabled={tradeFinRfLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{tradeFinRfLoading ? "◌ Analysing…" : "Analyse Trade Finance Risk"}</button>
+                {tradeFinRfResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(tradeFinRfResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(tradeFinRfResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(tradeFinRfResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(tradeFinRfResult["riskRating"])} Risk</span>}
+                      {Boolean(tradeFinRfResult["pricingVariance"]) && <div className="text-center"><div className="text-24 font-bold text-amber">{String(tradeFinRfResult["pricingVariance"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Pricing Variance</div></div>}
+                    </div>
+                    {Boolean(tradeFinRfResult["redFlags"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Red Flags</div><ul className="space-y-1">{(tradeFinRfResult["redFlags"] as string[]).map((f,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{f}</li>)}</ul></div>}
+                    {Boolean(tradeFinRfResult["requiredDocuments"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Required Documents</div><ul className="space-y-1">{(tradeFinRfResult["requiredDocuments"] as string[]).map((d,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{d}</li>)}</ul></div>}
+                    {Boolean(tradeFinRfResult["conclusion"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Conclusion</div><p className="text-12 text-ink-1 leading-relaxed">{String(tradeFinRfResult["conclusion"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sanctions Exposure Calc */}
+            {superToolsTab === "sanctions-exposure-calc" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Sanctions Exposure Calculator</div>
+                  <div className="text-11 text-ink-2 mt-0.5">OFAC · UN · EU · UAE SFO — Quantify entity sanctions exposure across multiple regimes and jurisdictions</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={sanctionsExpInput.entityName} onChange={e => setSanctionsExpInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or corporate entity" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={sanctionsExpInput.entityType} onChange={e => setSanctionsExpInput(p => ({...p, entityType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual, corporate, vessel, aircraft…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={sanctionsExpInput.jurisdictions} onChange={e => setSanctionsExpInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries of nexus (comma-separated)" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Count</label><input value={sanctionsExpInput.transactionCount} onChange={e => setSanctionsExpInput(p => ({...p, transactionCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of transactions" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Value (USD)</label><input value={sanctionsExpInput.totalValueUsd} onChange={e => setSanctionsExpInput(p => ({...p, totalValueUsd: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total USD equivalent" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={sanctionsExpInput.context} onChange={e => setSanctionsExpInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runSanctionsExp()} disabled={sanctionsExpLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{sanctionsExpLoading ? "◌ Calculating…" : "Calculate Sanctions Exposure"}</button>
+                {sanctionsExpResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(sanctionsExpResult["exposureLevel"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(sanctionsExpResult["exposureLevel"]) === "critical" ? "bg-red-dim text-red" : String(sanctionsExpResult["exposureLevel"]) === "high" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(sanctionsExpResult["exposureLevel"])} Exposure</span>}
+                      {Boolean(sanctionsExpResult["estimatedPenalty"]) && <div className="text-center"><div className="text-24 font-bold text-red">{String(sanctionsExpResult["estimatedPenalty"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Est. Penalty Range</div></div>}
+                    </div>
+                    {Boolean(sanctionsExpResult["regimesTriggered"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Regimes Triggered</div><ul className="space-y-1">{(sanctionsExpResult["regimesTriggered"] as string[]).map((r,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{r}</li>)}</ul></div>}
+                    {Boolean(sanctionsExpResult["mitigationSteps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Mitigation Steps</div><ul className="space-y-1">{(sanctionsExpResult["mitigationSteps"] as string[]).map((s,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{s}</li>)}</ul></div>}
+                    {Boolean(sanctionsExpResult["conclusion"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Conclusion</div><p className="text-12 text-ink-1 leading-relaxed">{String(sanctionsExpResult["conclusion"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Customer Lifecycle */}
+            {superToolsTab === "customer-lifecycle" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Customer Lifecycle Risk Monitor</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.13 · FATF R.10 · Ongoing monitoring and risk rating evolution throughout the customer lifecycle</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Name</label><input value={custLifeInput.customerName} onChange={e => setCustLifeInput(p => ({...p, customerName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer or entity name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Onboarding Date</label><input value={custLifeInput.onboardingDate} onChange={e => setCustLifeInput(p => ({...p, onboardingDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 2022-06-01" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Current Risk Rating</label><input value={custLifeInput.currentRiskRating} onChange={e => setCustLifeInput(p => ({...p, currentRiskRating: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Low, medium, high" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Volume</label><input value={custLifeInput.transactionVolume} onChange={e => setCustLifeInput(p => ({...p, transactionVolume: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Monthly or annual volume" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recent Changes</label><textarea value={custLifeInput.recentChanges} onChange={e => setCustLifeInput(p => ({...p, recentChanges: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Changes in behaviour, ownership, activity…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={custLifeInput.context} onChange={e => setCustLifeInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runCustLife()} disabled={custLifeLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{custLifeLoading ? "◌ Monitoring…" : "Monitor Customer Lifecycle"}</button>
+                {custLifeResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(custLifeResult["revisedRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(custLifeResult["revisedRating"]) === "high" ? "bg-red-dim text-red" : String(custLifeResult["revisedRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>Revised: {String(custLifeResult["revisedRating"])}</span>}
+                      {Boolean(custLifeResult["reviewRequired"]) && <span className={`font-mono text-11 px-2 py-0.5 rounded ${custLifeResult["reviewRequired"] ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>Review: {custLifeResult["reviewRequired"] ? "REQUIRED" : "Not required"}</span>}
+                    </div>
+                    {Boolean(custLifeResult["triggers"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Risk Triggers</div><ul className="space-y-1">{(custLifeResult["triggers"] as string[]).map((t,i) => <li key={i} className="text-12 text-amber flex gap-2"><span className="shrink-0">▸</span>{t}</li>)}</ul></div>}
+                    {Boolean(custLifeResult["actions"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommended Actions</div><ul className="space-y-1">{(custLifeResult["actions"] as string[]).map((a,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{a}</li>)}</ul></div>}
+                    {Boolean(custLifeResult["summary"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Summary</div><p className="text-12 text-ink-1 leading-relaxed">{String(custLifeResult["summary"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PEP Enhanced Screening */}
+            {superToolsTab === "pep-screening-enhance" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Enhanced PEP Screening</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · Enhanced due diligence for politically exposed persons including wealth and connections analysis</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={pepEnhInput.subjectName} onChange={e => setPepEnhInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="PEP full name" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Current Role</label><input value={pepEnhInput.currentRole} onChange={e => setPepEnhInput(p => ({...p, currentRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Current political or senior position" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={pepEnhInput.jurisdiction} onChange={e => setPepEnhInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of political position" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wealth Estimate</label><input value={pepEnhInput.wealthEstimate} onChange={e => setPepEnhInput(p => ({...p, wealthEstimate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Known or estimated net worth" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Known Connections</label><textarea value={pepEnhInput.knownConnections} onChange={e => setPepEnhInput(p => ({...p, knownConnections: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Family members, associates, business interests…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={pepEnhInput.context} onChange={e => setPepEnhInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runPepEnh()} disabled={pepEnhLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{pepEnhLoading ? "◌ Screening…" : "Run Enhanced PEP Screening"}</button>
+                {pepEnhResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(pepEnhResult["riskRating"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(pepEnhResult["riskRating"]) === "high" ? "bg-red-dim text-red" : String(pepEnhResult["riskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{String(pepEnhResult["riskRating"])} Risk</span>}
+                      {Boolean(pepEnhResult["eddRequired"]) && <span className={`font-mono text-11 px-2 py-0.5 rounded ${pepEnhResult["eddRequired"] ? "bg-red-dim text-red" : "bg-bg-2 text-ink-2"}`}>EDD: {pepEnhResult["eddRequired"] ? "REQUIRED" : "Not required"}</span>}
+                    </div>
+                    {Boolean(pepEnhResult["concernAreas"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Areas of Concern</div><ul className="space-y-1">{(pepEnhResult["concernAreas"] as string[]).map((c,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">▸</span>{c}</li>)}</ul></div>}
+                    {Boolean(pepEnhResult["eddChecklist"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">EDD Checklist</div><ul className="space-y-1">{(pepEnhResult["eddChecklist"] as string[]).map((item,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{item}</li>)}</ul></div>}
+                    {Boolean(pepEnhResult["analysis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Analysis</div><p className="text-12 text-ink-1 leading-relaxed">{String(pepEnhResult["analysis"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AML Training Gap */}
+            {superToolsTab === "aml-training-gap" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">AML Training Gap Analyser</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.19 · FATF R.18 · Identify AML/CFT training gaps and build a remediation programme</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Staff Count</label><input value={amlTrainInput.staffCount} onChange={e => setAmlTrainInput(p => ({...p, staffCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total number of staff" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Completion Rate (%)</label><input value={amlTrainInput.completionRate} onChange={e => setAmlTrainInput(p => ({...p, completionRate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 72%" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">High-Risk Roles</label><input value={amlTrainInput.highRiskRoles} onChange={e => setAmlTrainInput(p => ({...p, highRiskRoles: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Roles requiring priority training" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Overdue Count</label><input value={amlTrainInput.overdueCount} onChange={e => setAmlTrainInput(p => ({...p, overdueCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Staff with overdue training" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last Training Date</label><input value={amlTrainInput.lastTrainingDate} onChange={e => setAmlTrainInput(p => ({...p, lastTrainingDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last institution-wide training" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={amlTrainInput.context} onChange={e => setAmlTrainInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runAmlTrain()} disabled={amlTrainLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{amlTrainLoading ? "◌ Analysing…" : "Analyse Training Gaps"}</button>
+                {amlTrainResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(amlTrainResult["complianceStatus"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(amlTrainResult["complianceStatus"]) === "non-compliant" ? "bg-red-dim text-red" : String(amlTrainResult["complianceStatus"]) === "partial" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(amlTrainResult["complianceStatus"])}</span>}
+                    </div>
+                    {Boolean(amlTrainResult["gaps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Training Gaps</div><ul className="space-y-1">{(amlTrainResult["gaps"] as string[]).map((g,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{g}</li>)}</ul></div>}
+                    {Boolean(amlTrainResult["remediationPlan"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Remediation Plan</div><ul className="space-y-1">{(amlTrainResult["remediationPlan"] as string[]).map((step,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{step}</li>)}</ul></div>}
+                    {Boolean(amlTrainResult["regulatoryRisk"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Risk</div><p className="text-12 text-ink-1 leading-relaxed">{String(amlTrainResult["regulatoryRisk"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* UBO Verify */}
+            {superToolsTab === "beneficial-owner-verify" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">Beneficial Owner Verification</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.24/R.25 · UAE Federal Law 32 of 2021 · Verify and document ultimate beneficial ownership through complex structures</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={uboVerifyInput.entityName} onChange={e => setUboVerifyInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corporate entity to investigate" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">UBO Name</label><input value={uboVerifyInput.uboName} onChange={e => setUboVerifyInput(p => ({...p, uboName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Claimed ultimate beneficial owner" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={uboVerifyInput.jurisdictions} onChange={e => setUboVerifyInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries in the structure" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Layer Count</label><input value={uboVerifyInput.layerCount} onChange={e => setUboVerifyInput(p => ({...p, layerCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of ownership layers" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership Structure</label><textarea value={uboVerifyInput.ownershipStructure} onChange={e => setUboVerifyInput(p => ({...p, ownershipStructure: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe the ownership chain and percentages…" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={uboVerifyInput.context} onChange={e => setUboVerifyInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runUboVerify()} disabled={uboVerifyLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{uboVerifyLoading ? "◌ Verifying…" : "Verify Beneficial Owner"}</button>
+                {uboVerifyResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(uboVerifyResult["verificationStatus"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(uboVerifyResult["verificationStatus"]) === "failed" ? "bg-red-dim text-red" : String(uboVerifyResult["verificationStatus"]) === "partial" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(uboVerifyResult["verificationStatus"])}</span>}
+                      {Boolean(uboVerifyResult["complexityRating"]) && <span className={`font-mono text-11 px-2 py-0.5 rounded bg-bg-2 text-ink-2`}>Complexity: {String(uboVerifyResult["complexityRating"])}</span>}
+                    </div>
+                    {Boolean(uboVerifyResult["gaps"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Verification Gaps</div><ul className="space-y-1">{(uboVerifyResult["gaps"] as string[]).map((g,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{g}</li>)}</ul></div>}
+                    {Boolean(uboVerifyResult["additionalDocuments"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Additional Documents Required</div><ul className="space-y-1">{(uboVerifyResult["additionalDocuments"] as string[]).map((d,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{d}</li>)}</ul></div>}
+                    {Boolean(uboVerifyResult["conclusion"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Conclusion</div><p className="text-12 text-ink-1 leading-relaxed">{String(uboVerifyResult["conclusion"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AML KPI Dashboard */}
+            {superToolsTab === "aml-kpi-dashboard" && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-13 font-semibold text-ink-0">AML KPI Dashboard Generator</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 · FATF R.33 · Generate a comprehensive AML programme KPI assessment for board and regulator reporting</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={amlKpiInput.institutionType} onChange={e => setAmlKpiInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank, DNFBP, VASP, insurer…" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">STR Count (Annual)</label><input value={amlKpiInput.strCount} onChange={e => setAmlKpiInput(p => ({...p, strCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Annual STR filings" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">False Positive Rate (%)</label><input value={amlKpiInput.falsePositiveRate} onChange={e => setAmlKpiInput(p => ({...p, falsePositiveRate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 85%" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Training Completion (%)</label><input value={amlKpiInput.trainingCompletion} onChange={e => setAmlKpiInput(p => ({...p, trainingCompletion: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 78%" /></div>
+                  <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Open Findings</label><input value={amlKpiInput.openFindings} onChange={e => setAmlKpiInput(p => ({...p, openFindings: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Outstanding audit or exam findings" /></div>
+                  <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={amlKpiInput.context} onChange={e => setAmlKpiInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runAmlKpi()} disabled={amlKpiLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{amlKpiLoading ? "◌ Generating…" : "Generate AML KPI Report"}</button>
+                {amlKpiResult && (
+                  <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {Boolean(amlKpiResult["overallScore"]) && <div className="text-center"><div className="text-32 font-bold text-brand">{String(amlKpiResult["overallScore"])}</div><div className="text-10 font-mono text-ink-3 uppercase">Overall AML Score</div></div>}
+                      {Boolean(amlKpiResult["programmeHealth"]) && <span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(amlKpiResult["programmeHealth"]) === "poor" ? "bg-red-dim text-red" : String(amlKpiResult["programmeHealth"]) === "adequate" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(amlKpiResult["programmeHealth"])} Health</span>}
+                    </div>
+                    {Boolean(amlKpiResult["kpis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Key Performance Indicators</div><ul className="space-y-1">{(amlKpiResult["kpis"] as string[]).map((kpi,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">▸</span>{kpi}</li>)}</ul></div>}
+                    {Boolean(amlKpiResult["redAreas"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Areas Requiring Attention</div><ul className="space-y-1">{(amlKpiResult["redAreas"] as string[]).map((area,i) => <li key={i} className="text-12 text-red flex gap-2"><span className="shrink-0">✗</span>{area}</li>)}</ul></div>}
+                    {Boolean(amlKpiResult["recommendations"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Recommendations</div><ul className="space-y-1">{(amlKpiResult["recommendations"] as string[]).map((rec,i) => <li key={i} className="text-12 text-ink-1 flex gap-2"><span className="text-brand shrink-0">{i+1}.</span>{rec}</li>)}</ul></div>}
+                    {Boolean(amlKpiResult["boardSummary"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Board Summary</div><p className="text-12 text-ink-1 leading-relaxed">{String(amlKpiResult["boardSummary"])}</p></div>}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ import { DateParts } from "@/components/ui/DateParts";
 import { formatDMY } from "@/lib/utils/dateFormat";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
+import { exportGapAnalysis } from "@/lib/pdf/exporters";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -1175,6 +1176,15 @@ export default function OversightPage() {
             {gapResult.summary && (
               <div className="border-t border-hair-2 pt-4 text-12 text-ink-2 italic">{gapResult.summary}</div>
             )}
+            <div className="border-t border-hair-2 pt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => exportGapAnalysis(gapResult, "Hawkeye Sterling DPMS")}
+                className="text-11 font-mono text-brand hover:text-brand/80"
+              >
+                ↓ Export PDF
+              </button>
+            </div>
           </div>
         )}
       </div>

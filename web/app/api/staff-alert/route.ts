@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export interface StaffAlertResult {
   credibilityScore: number;
@@ -60,44 +61,29 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
 
   try {
-    const prompt = `You are a UAE AML/CFT compliance expert specialising in insider threat assessment and staff whistleblower alert handling under UAE FDL 10/2025 Art.21 and CBUAE AML Standards §6.4.
-
-Assess the following staff alert/whistleblower report:
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: [
+        {
+          type: "text",
+          text: `You are a UAE AML/CFT compliance expert specialising in insider threat assessment and staff whistleblower alert handling under UAE FDL 10/2025 Art.21 and CBUAE AML Standards §6.4. Assess staff alerts and whistleblower reports and return a JSON object with exactly these fields: { "credibilityScore": number (0-100), "urgencyLevel": "critical"|"high"|"medium"|"low", "verificationSteps": string[], "mlroActions": string[], "hrCoordinationRequired": boolean, "regulatoryReportingRequired": boolean, "confidentialityProtocol": string, "regulatoryBasis": string }`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{
+        role: "user",
+        content: `Assess the following staff alert/whistleblower report:
 - Alert Source: ${body.alertSource}
 - Employee Name: ${body.employeeName}
 - Employee Role: ${body.employeeRole}
 - Allegation: ${body.allegation}
 - Evidence Described: ${body.evidenceDescribed}
-- Additional Context: ${body.context}
-
-Return a JSON object with exactly these fields:
-{
-  "credibilityScore": number (0-100),
-  "urgencyLevel": "critical"|"high"|"medium"|"low",
-  "verificationSteps": string[],
-  "mlroActions": string[],
-  "hrCoordinationRequired": boolean,
-  "regulatoryReportingRequired": boolean,
-  "confidentialityProtocol": string,
-  "regulatoryBasis": string
-}`;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+- Additional Context: ${body.context}`,
+      }],
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
-    const data = await response.json() as { content: Array<{ type: string; text: string }> };
-    const text = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
 
