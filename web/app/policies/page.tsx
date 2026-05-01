@@ -945,9 +945,9 @@ export default function PoliciesPage() {
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="flex items-center gap-1.5 text-11 font-mono text-ink-2 hover:text-brand transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors"
             >
-              <span className="text-14 leading-none">+</span> add policy
+              <span className="text-14 leading-none">+</span> Add policy
             </button>
           )}
         </div>
