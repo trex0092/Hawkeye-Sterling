@@ -66,7 +66,7 @@ const FALLBACK: ThreatProfile = {
   threatScore: 0,
   threatLevel: "clear",
   subjectType: "individual",
-  keyFindings: ["AI analysis unavailable — check ANTHROPIC_API_KEY"],
+  keyFindings: ["API key not configured"],
   redFlags: [],
   jurisdictionExposure: [],
   sanctionsRelevance: "",

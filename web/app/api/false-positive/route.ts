@@ -84,7 +84,7 @@ const FALLBACK: FalsePositiveResponse = {
   verdict: "possible_match",
   confidence: "low",
   confidenceScore: 50,
-  reasoning: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  reasoning: "API key not configured — manual review required.",
   matchingFactors: [],
   differentiatingFactors: [],
   additionalChecksRequired: ["Manual review required"],

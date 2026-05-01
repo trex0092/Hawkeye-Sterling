@@ -40,7 +40,7 @@ const FALLBACK: ExtractFlagsResult = {
   flags: [],
   overallRisk: "low",
   recommendedDisposition: "MONITOR",
-  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY",
+  summary: "API key not configured",
 };
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -108,7 +108,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: true, ...FALLBACK });
+      return NextResponse.json(
+        { ok: false, error: `Anthropic API error ${res.status}` },
+        { status: 502 },
+      );
     }
 
     const data = (await res.json()) as {
@@ -117,8 +120,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = data?.content?.[0]?.text ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as ExtractFlagsResult;
-  } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : "Failed to extract flags",
+      },
+      { status: 502 },
+    );
   }
 
   try {

@@ -65,6 +65,7 @@ import { SnoozeButton } from "@/components/screening/SnoozeButton";
 import { ReScreenDiff } from "@/components/screening/ReScreenDiff";
 import { CrossSubjectLinks } from "@/components/screening/CrossSubjectLinks";
 import { ConfidenceBand } from "@/components/screening/ConfidenceBand";
+import { AIDecisionEngine } from "@/components/screening/AIDecisionEngine";
 import { writeAuditEvent } from "@/lib/audit";
 import {
   canPerform,
@@ -1091,6 +1092,29 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           <span className="text-ink-3">·</span>
           <ConfidenceBand score={effectiveScore} basis="brain calibration" />
         </div>
+      </Section>
+
+      {/* AI Decision Engine — auto-analyses subject and decides disposition */}
+      <Section title="AI decision engine">
+        <AIDecisionEngine
+          subject={subject}
+          screeningTopScore={
+            screening.status === "success" ? screening.result.topScore : undefined
+          }
+          screeningSeverity={
+            screening.status === "success" ? screening.result.severity : undefined
+          }
+          sanctionsHits={
+            screening.status === "success"
+              ? screening.result.hits.map((h) => ({
+                  list: h.listId,
+                  score: h.score,
+                  details: h.candidateName,
+                }))
+              : []
+          }
+          adverseMediaText={adverseMediaText}
+        />
       </Section>
 
       {/* Cross-subject edges + re-screen history live above the tabs so

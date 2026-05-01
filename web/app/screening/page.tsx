@@ -27,7 +27,6 @@ import { AmLanguageBreakdown } from "@/components/screening/AmLanguageBreakdown"
 import { ComparePanel } from "@/components/screening/ComparePanel";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
-import { BatchPanel } from "@/components/screening/BatchPanel";
 
 // ── Bulk Re-Screen types ──────────────────────────────────────────────────────
 
@@ -539,7 +538,7 @@ export default function ScreeningPage() {
   const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
   // Page-level tab: "queue" shows the normal screening queue; "adverse-media" shows the media intel search
-  const [pageTab, setPageTab] = useState<"queue" | "adverse-media" | "batch">("queue");
+  const [pageTab, setPageTab] = useState<"queue" | "adverse-media">("queue");
 
   // ── Bulk Re-Screen state ─────────────────────────────────────────────────────
   const [rescreenLoading, setRescreenLoading] = useState(false);
@@ -1217,9 +1216,6 @@ export default function ScreeningPage() {
         <button type="button" onClick={() => setPageTab("adverse-media")} className={amTabCls(pageTab === "adverse-media")}>
           Adverse Media Intelligence
         </button>
-        <button type="button" onClick={() => setPageTab("batch")} className={amTabCls(pageTab === "batch")}>
-          ⚡ Bulk CSV
-        </button>
         <div className="ml-auto py-2">
           <AsanaReportButton payload={{ module: "screening", label: "Screening Queue", summary: "Screening queue status report from Hawkeye Sterling — sanctions, PEP and adverse media vectors reviewed." }} />
         </div>
@@ -1251,7 +1247,7 @@ export default function ScreeningPage() {
               <button
                 type="button"
                 onClick={() => { void runBulkRescreen(); }}
-                disabled={rescreenLoading || subjects.filter((s) => s.status !== "cleared").length === 0}
+                disabled={rescreenLoading}
                 className="px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
               >
                 {rescreenLoading ? "Re-screening…" : "🔄 Re-screen portfolio"}
@@ -1735,21 +1731,6 @@ export default function ScreeningPage() {
               No adverse media found for <span className="font-medium text-ink-1">{amSubject}</span>
             </div>
           )}
-        </main>
-      )}
-
-      {pageTab === "batch" && (
-        <main className="max-w-6xl mx-auto px-10 py-8">
-          <div className="mb-6">
-            <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">BULK SCREENING</div>
-            <h2 className="font-display font-normal text-36 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
-              Bulk CSV <em className="italic text-brand">screening.</em>
-            </h2>
-            <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
-              <strong>Drop a CSV · screen up to 500 subjects at once.</strong> Live streaming progress, severity chart, sortable/filterable results. Export as CSV or PDF audit report.
-            </p>
-          </div>
-          <BatchPanel />
         </main>
       )}
     </>

@@ -128,8 +128,7 @@ function projectGidForModule(module: string): string {
 
     // 15 · MLRO Workbench
     // Primary nav: MLRO Advisor, Intel
-    // Intelligence: Workbench, Investigation, Brain, OSINT, Heatmap, Telemetry, Red-Team,
-    //               Geopolitical, News Intel, FP Optimizer
+    // Intelligence: Workbench, Investigation, Brain, OSINT, Heatmap, Telemetry, Red-Team
     case "mlro-advisor":
     case "workbench":
     case "investigation":
@@ -139,17 +138,12 @@ function projectGidForModule(module: string): string {
     case "heatmap":
     case "telemetry":
     case "red-team":
-    case "geopolitical":
-    case "news-intel":
-    case "fp-optimizer":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
     // 16 · Supply Chain, ESG & LBMA Gold
-    // Enrichment: Vessel Check · Governance: RMI / RMAP · Intelligence: ESG Risk, Supply Chain
+    // Enrichment: Vessel Check · Governance: RMI / RMAP (Responsible Minerals)
     case "vessel-check":
     case "rmi":
-    case "esg-risk":
-    case "supply-chain":
       return process.env["ASANA_SUPPLYCHAIN_PROJECT_GID"] ?? inbox;
 
     // 17 · Export Control & Dual-Use

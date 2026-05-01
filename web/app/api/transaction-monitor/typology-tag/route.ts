@@ -57,7 +57,7 @@ function buildFallback(transactions: TxInput[]): TypologyTagResult {
   return {
     tagged,
     highRiskCount: 0,
-    summary: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+    summary: "Typology tagging unavailable — API key not configured.",
   };
 }
 

@@ -121,7 +121,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: true, ...FALLBACK });
+      return NextResponse.json(
+        { ok: false, error: `Anthropic API error ${res.status}` },
+        { status: 502 },
+      );
     }
 
     const data = (await res.json()) as {
@@ -130,8 +133,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = data?.content?.[0]?.text ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as CasePatternsResult;
-  } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : "Failed to analyze case patterns",
+      },
+      { status: 502 },
+    );
   }
 
   try {

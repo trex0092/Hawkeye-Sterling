@@ -162,7 +162,7 @@ async function parseQuery(query: string): Promise<ParseResult> {
       filters: {},
       interpretation: query,
       confidence: 0,
-      reasoning: "AI analysis unavailable — check ANTHROPIC_API_KEY",
+      reasoning: "API key not configured — returning unfiltered results",
     };
   }
 

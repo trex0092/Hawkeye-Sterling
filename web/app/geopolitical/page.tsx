@@ -194,7 +194,7 @@ export default function GeopoliticalPage() {
   }
 
   return (
-    <ModuleLayout engineLabel="Geopolitical intelligence" asanaModule="geopolitical" asanaLabel="Geopolitical">
+    <ModuleLayout engineLabel="Geopolitical intelligence">
       <ModuleHero
         eyebrow="Intelligence · AML · Sanctions"
         title="Geopolitical"

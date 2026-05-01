@@ -30,7 +30,7 @@ interface CryptoThreat {
 
 const FALLBACK: CryptoThreat = {
   complianceVerdict: "monitor",
-  fatfR15Exposure: "AI analysis unavailable — check ANTHROPIC_API_KEY",
+  fatfR15Exposure: "API key not configured",
   varaUaeRelevance: "",
   sanctionsNexus: "",
   typologies: [],

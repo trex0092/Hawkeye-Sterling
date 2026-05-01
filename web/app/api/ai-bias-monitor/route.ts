@@ -75,7 +75,7 @@ Output JSON (ONLY valid JSON, no markdown):
 
 const FALLBACK: BiasMonitorResponse = {
   biasRisk: "low",
-  biasNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  biasNarrative: "API key not configured — manual bias review required.",
   nationalityDistribution: [],
   potentialBiasIndicators: [],
   falsePositiveRisk: "",

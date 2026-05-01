@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { STRINGS, t, type Locale } from "@/lib/server/i18n";
+import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 import {
   loadOperatorRole,
   saveOperatorRole,
@@ -14,9 +14,9 @@ import {
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
-
-  { key: "nav.intel", label: "📡 Live Intel", href: "/intel" },
-  { key: "nav.cases", label: "🗂️ Cases", href: "/cases" },
+  { key: "nav.batch", label: "⚡ Batch", href: "/batch" },
+  { key: "nav.intel", label: "Live Intel", href: "/intel" },
+  { key: "nav.cases", label: "Cases", href: "/cases" },
   { key: "nav.tm", label: "💸 Transaction Monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "📁 STR Cases", href: "/str-cases" },
   { key: "nav.monitor", label: "👁️ Ongoing Monitor", href: "/ongoing-monitor" },
@@ -31,15 +31,15 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Client lifecycle: intake → KYC → ongoing CDD → data quality
     title: "Onboarding & CDD",
     items: [
-      { label: "🧩 Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
-      { label: "👤 Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
-      { label: "🏛️ UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
-      { label: "🤝 Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
+      { label: "Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
+      { label: "Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
+      { label: "UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
+      { label: "Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
       { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
       { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
-      { label: "👥 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
-      { label: "🎓 Training", href: "/training", hint: "Staff AML certification tracker" },
-      { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
+      { label: "Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
+      { label: "Training", href: "/training", hint: "Staff AML certification tracker" },
+      { label: "Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
     ],
   },
   {
@@ -47,15 +47,15 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Risk & AML Ops",
     items: [
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
-      { label: "✅ SAR QA", href: "/sar-qa", hint: "Four-eyes STR/SAR quality review" },
+      { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes STR/SAR quality review" },
       { label: "🔗 Supply Chain", href: "/supply-chain", hint: "Geographic concentration · sanctions · CSDDD · UFLPA" },
       { label: "📋 Reg Changes", href: "/reg-change", hint: "Regulatory change roadmap · AI implementation calendar" },
       { label: "📦 Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
       { label: "🏭 RMI / RMAP", href: "/rmi", hint: "Responsible Minerals + AI supply chain assessment" },
-      { label: "🎯 EOCN", href: "/eocn", hint: "UAE targeted financial sanctions list" },
-      { label: "⚠️ Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
+      { label: "EOCN", href: "/eocn", hint: "UAE targeted financial sanctions list" },
+      { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
       { label: "⚖️ Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
-      { label: "📰 Adverse Media", href: "/adverse-media-live", hint: "Live GDELT search · 10-year audit trail · FDL Art.19" },
+      { label: "📰 Live Adverse Media", href: "/adverse-media-live", hint: "GDELT real-time news feed" },
       { label: "📤 goAML Export", href: "/goaml-export", hint: "UAE FIU STR XML wizard" },
     ],
   },
@@ -65,9 +65,10 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
       { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan" },
-      { label: "🔍 Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
+      { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year adverse media archive · FDL Art.19" },
+      { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
       { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
-      { label: "📄 Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
+      { label: "Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
       { label: "📖 Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
@@ -79,7 +80,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Enrichment",
     items: [
       { label: "🌐 OSINT", href: "/osint", hint: "Subject enrichment · SpiderFoot · AI threat synthesis" },
-      { label: "🏷️ GLEIF / LEI", href: "/gleif", hint: "Global LEI · beneficial ownership chain" },
+      { label: "GLEIF / LEI", href: "/gleif", hint: "Global LEI · beneficial ownership chain" },
       { label: "🕸️ Entity Graph", href: "/entity-graph", hint: "UBO · officers · OpenCorporates" },
       { label: "🌍 Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security analysis" },
       { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
@@ -98,15 +99,16 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
       { label: "🌍 Country Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk" },
-      { label: "🗺️ Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
+      { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
       { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live risk events · portfolio impact · regional map" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
+      { label: "⚔️ Weaponized Brain", href: "/weaponized-brain", hint: "Multi-mode AI reasoning · counterfactual · steelman" },
       { label: "🔧 Workbench Brain", href: "/workbench", hint: "Brain inspector · live reasoning · manifest" },
-      { label: "📡 Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
-      { label: "🔴 Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
-      { label: "💚 Status", href: "/status", hint: "Live endpoint & watchlist health" },
+      { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
+      { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
+      { label: "Status", href: "/status", hint: "Live endpoint & watchlist health" },
       { label: "📊 Eval KPIs", href: "/eval-kpi", hint: "ML model evaluation · KPI metrics · performance tracking" },
-      { label: "📘 API Docs", href: "/api-docs", hint: "OpenAPI reference" },
+      { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
   },
 ];
@@ -117,27 +119,41 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 const THEME_KEY = "hawkeye.theme";
+const LOCALE_KEY = "hawkeye.locale";
 
 function applyTheme(theme: "light" | "dark"): void {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme", theme);
 }
 
+function applyDir(locale: Locale): void {
+  if (typeof document === "undefined") return;
+  const entry = LOCALES.find((l) => l.code === locale);
+  document.documentElement.setAttribute("dir", entry?.dir ?? "ltr");
+  document.documentElement.setAttribute("lang", locale);
+}
+
 export function Header() {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [locale, setLocale] = useState<Locale>("en");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLDivElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
-  const locale: Locale = "en";
 
   useEffect(() => {
     const storedTheme =
       (typeof localStorage !== "undefined" &&
         (localStorage.getItem(THEME_KEY) as "light" | "dark" | null)) ||
       "light";
+    const storedLocale =
+      (typeof localStorage !== "undefined" &&
+        (localStorage.getItem(LOCALE_KEY) as Locale | null)) ||
+      "en";
     setTheme(storedTheme);
+    setLocale(storedLocale);
     applyTheme(storedTheme);
+    applyDir(storedLocale);
   }, []);
 
   const toggleTheme = () => {
@@ -145,6 +161,12 @@ export function Header() {
     setTheme(next);
     applyTheme(next);
     if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next);
+  };
+
+  const pickLocale = (code: Locale) => {
+    setLocale(code);
+    applyDir(code);
+    if (typeof localStorage !== "undefined") localStorage.setItem(LOCALE_KEY, code);
   };
 
   return (
@@ -245,6 +267,18 @@ export function Header() {
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
           <NotificationBell />
           <HeaderUserCard />
+          <select
+            value={locale}
+            onChange={(e) => pickLocale(e.target.value as Locale)}
+            className="bg-transparent border border-hair-2 rounded px-1.5 py-0.5 text-10.5 text-ink-1"
+            title="Language"
+          >
+            {LOCALES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={toggleTheme}
@@ -264,35 +298,19 @@ export function Header() {
 
 function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ right: number; top: number } | null>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const [alerts, setAlerts] = useState([
-    { id: 1, text: "SLA breach — APV-2025-0081 awaiting second sign-off", time: "2m ago", read: false, href: "/sar-qa" },
-    { id: 2, text: "EWRA annual review due — FDL 10/2025 Art.4", time: "1h ago", read: false, href: "/ewra" },
-    { id: 3, text: "New FATF grey-list update — 3 jurisdictions affected", time: "3h ago", read: true, href: "/country-risk" },
-    { id: 4, text: "goAML submission window closes in 12 days", time: "5h ago", read: true, href: "/goaml-export" },
-  ]);
+  const alerts = [
+    { id: 1, text: "SLA breach — APV-2025-0081 awaiting second sign-off", time: "2m ago", read: false },
+    { id: 2, text: "EWRA annual review due — FDL 10/2025 Art.4", time: "1h ago", read: false },
+    { id: 3, text: "New FATF grey-list update — 3 jurisdictions affected", time: "3h ago", read: true },
+    { id: 4, text: "goAML submission window closes in 12 days", time: "5h ago", read: true },
+  ];
   const unread = alerts.filter((a) => !a.read).length;
-
-  const handleOpen = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      setPos({ right: window.innerWidth - rect.right, top: rect.bottom + 6 });
-    }
-    setOpen((v) => !v);
-  };
-
-  const markAllRead = () => {
-    setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
-    setOpen(false);
-  };
 
   return (
     <div className="relative">
       <button
-        ref={btnRef}
         type="button"
-        onClick={handleOpen}
+        onClick={() => setOpen((v) => !v)}
         className="relative p-1 rounded hover:bg-bg-2 transition-colors"
         aria-label="Notifications"
         title="Notifications"
@@ -307,13 +325,10 @@ function NotificationBell() {
           </span>
         )}
       </button>
-      {open && pos && (
+      {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div
-            className="fixed z-50 w-72 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden"
-            style={{ right: pos.right, top: pos.top }}
-          >
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1.5 z-50 w-72 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden">
             <div className="px-3 py-2 border-b border-hair-2 flex items-center justify-between">
               <span className="text-11 font-semibold text-ink-0">Notifications</span>
               {unread > 0 && (
@@ -322,15 +337,7 @@ function NotificationBell() {
             </div>
             <div className="divide-y divide-hair">
               {alerts.map((a) => (
-                <a
-                  key={a.id}
-                  href={a.href}
-                  onClick={() => {
-                    setAlerts((prev) => prev.map((x) => x.id === a.id ? { ...x, read: true } : x));
-                    setOpen(false);
-                  }}
-                  className={`block px-3 py-2.5 hover:bg-bg-1 transition-colors cursor-pointer ${a.read ? "opacity-60" : ""}`}
-                >
+                <div key={a.id} className={`px-3 py-2.5 ${a.read ? "opacity-60" : ""}`}>
                   <div className="flex items-start gap-2">
                     {!a.read && (
                       <span className="w-1.5 h-1.5 rounded-full bg-[#ff2d92] shrink-0 mt-1.5" />
@@ -338,14 +345,14 @@ function NotificationBell() {
                     {a.read && <span className="w-1.5 shrink-0" />}
                     <div>
                       <div className="text-11 text-ink-0 leading-snug">{a.text}</div>
-                      <div className="text-10 text-ink-3 font-mono mt-0.5">{a.time} · tap to open →</div>
+                      <div className="text-10 text-ink-3 font-mono mt-0.5">{a.time}</div>
                     </div>
                   </div>
-                </a>
+                </div>
               ))}
             </div>
             <div className="px-3 py-2 border-t border-hair-2 bg-bg-1">
-              <button type="button" onClick={markAllRead} className="text-10 text-ink-3 hover:text-brand underline">
+              <button type="button" onClick={() => setOpen(false)} className="text-10 text-ink-3 hover:text-brand underline">
                 Mark all read
               </button>
             </div>
@@ -470,9 +477,19 @@ function HeaderUserCard() {
           <button
             type="button"
             onClick={saveName}
-            className="w-full text-11 font-semibold bg-brand text-white px-2 py-1 rounded hover:bg-brand/90"
+            className="w-full text-11 font-semibold bg-brand text-white px-2 py-1 rounded hover:bg-brand/90 mb-1.5"
           >
             Save
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              window.location.href = "/login";
+            }}
+            className="w-full text-11 font-medium border border-hair-2 text-ink-2 px-2 py-1 rounded hover:border-red hover:text-red transition-colors"
+          >
+            Sign out
           </button>
         </div>
       )}

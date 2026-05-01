@@ -23,7 +23,7 @@ interface MlroBriefing {
 }
 
 const EMPTY_BRIEFING: MlroBriefing = {
-  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY",
+  summary: "API key not configured",
   priorityCases: [],
   duplicateRisk: null,
   actionItems: [],

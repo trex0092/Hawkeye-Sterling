@@ -1,7 +1,6 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { Header } from "@/components/layout/Header";
 import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
@@ -243,10 +242,6 @@ export default function WorkbenchPage() {
               inline on every queued subject (Screening → subject row → Live reasoning
               tab) — or on a hypothetical via the button below.</span>
             </p>
-          </div>
-
-          <div className="mt-4 mb-2">
-            <AsanaReportButton payload={{ module: "workbench", label: "Workbench Brain", summary: "Brain workbench report — mode configuration, reasoning manifest, and pipeline telemetry reviewed." }} />
           </div>
 
           {/* Tab strip */}
