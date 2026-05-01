@@ -15,8 +15,6 @@ interface RelatedParty {
   name: string;
   kind: PartyKind;
   relationship: string;
-  aiDiscovered?: boolean;
-  confidence?: number;
 }
 
 interface TimelineEvent {
@@ -102,7 +100,6 @@ export default function InvestigationPage() {
   const [allCases, setAllCases] = useState<CaseRecord[]>([]);
   const [showSug, setShowSug] = useState(false);
 
-  const [discovering, setDiscovering] = useState(false);
   const [brainLoading, setBrainLoading] = useState(false);
   const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
   const [exportingPack, setExportingPack] = useState(false);
@@ -163,42 +160,6 @@ export default function InvestigationPage() {
     setNewDate(""); setNewDesc(""); setAddingEvent(false);
   }
 
-  const runDiscover = useCallback(async () => {
-    if (!committed) return;
-    setDiscovering(true);
-    try {
-      const res = await fetch("/api/investigation-expand", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          subject: committed,
-          knownNodes: [committed, ...parties.map((p) => p.name)],
-          knownEdges: parties.map((p) => ({ from: committed, to: p.name, label: p.relationship })),
-        }),
-      });
-      if (!res.ok) return;
-      const data = await res.json() as {
-        ok: boolean;
-        discovered?: Array<{ label: string; kind: string; relationship: string; confidence: number }>;
-      };
-      if (!data.ok || !data.discovered?.length) return;
-      const existing = new Set([committed.toLowerCase(), ...parties.map((p) => p.name.toLowerCase())]);
-      const validKinds: PartyKind[] = ["ubo","director","counterparty","nominee","agent","vehicle"];
-      const fresh: RelatedParty[] = data.discovered
-        .filter((d) => !existing.has(d.label.toLowerCase()))
-        .map((d, i) => ({
-          id: `ai-${Date.now()}-${i}`,
-          name: d.label,
-          kind: validKinds.includes(d.kind as PartyKind) ? d.kind as PartyKind : "counterparty",
-          relationship: d.relationship,
-          aiDiscovered: true,
-          confidence: d.confidence,
-        }));
-      setParties((prev) => [...prev, ...fresh]);
-    } catch { /* silent */ }
-    finally { setDiscovering(false); }
-  }, [committed, parties]);
-
   const runBrain = useCallback(async () => {
     if (!committed) return;
     setBrainLoading(true); setBrainAnalysis(null);
@@ -244,9 +205,9 @@ export default function InvestigationPage() {
           caseTitle: `Investigation: ${committed}`,
           entities: [
             { id: "subject", name: committed, kind: "subject", riskScore: 80 },
-            ...parties.map((p) => ({ id: p.id, name: p.name, kind: p.kind, riskScore: p.confidence ?? 60 })),
+            ...parties.map((p) => ({ id: p.id, name: p.name, kind: p.kind, riskScore: 60 })),
           ],
-          links: parties.map((p) => ({ from: committed, to: p.name, label: p.relationship, suggested: p.aiDiscovered ?? false })),
+          links: parties.map((p) => ({ from: committed, to: p.name, label: p.relationship, suggested: false })),
           narrative: brainAnalysis?.narrative ?? "",
           analyst: "Hawkeye Sterling Analyst",
         }),
@@ -276,7 +237,7 @@ export default function InvestigationPage() {
         titleEm="canvas."
         intro={
           <>
-            <strong>Build the network, surface the connections.</strong> Add the subject, related parties, and key timeline events on the left. The network graph updates live on the right — click any node to highlight its connections. Hit <em>AI Discover</em> to let Claude surface linked entities automatically.
+            <strong>Build the network, surface the connections.</strong> Add the subject, related parties, and key timeline events on the left. The network graph updates live on the right — click any node to highlight its connections.
           </>
         }
       />
@@ -383,13 +344,9 @@ export default function InvestigationPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-11 font-semibold text-ink-0 truncate">{p.name}</span>
-                        {p.aiDiscovered && (
-                          <span className="text-9 font-mono text-green shrink-0 border border-green/30 px-1 rounded">AI</span>
-                        )}
                       </div>
                       <div className="text-10 text-ink-3 font-mono">
                         {PARTY_LABEL[p.kind]} · {p.relationship}
-                        {p.confidence != null && <span className="ml-1 text-ink-4">{p.confidence}%</span>}
                       </div>
                     </div>
                     <button type="button"
@@ -400,11 +357,6 @@ export default function InvestigationPage() {
               })}
             </div>
 
-            <button type="button" onClick={() => void runDiscover()}
-              disabled={discovering || !committed}
-              className="mt-3 w-full text-11 font-semibold py-1.5 rounded border border-green/40 bg-green/10 text-green hover:bg-green/20 disabled:opacity-40 transition-colors">
-              {discovering ? "Discovering…" : "✦ AI Discover Parties"}
-            </button>
           </div>
 
           {/* Timeline */}
@@ -594,8 +546,7 @@ export default function InvestigationPage() {
                     )}
                     <rect x={pos.x - W / 2} y={pos.y - H / 2} width={W} height={H} rx={7}
                       fill={cfg.fill} stroke={cfg.stroke}
-                      strokeWidth={isSel ? 2.5 : 1.5}
-                      strokeDasharray={p.aiDiscovered ? "5 3" : ""} />
+                      strokeWidth={isSel ? 2.5 : 1.5} />
                     <text x={pos.x - W / 2 + 12} y={pos.y + 4}
                       style={{ fontSize: 12, fill: cfg.stroke, fontFamily: "monospace" }}>
                       {PARTY_ICON[p.kind]}
@@ -604,10 +555,6 @@ export default function InvestigationPage() {
                       style={{ fontSize: 10.5, fill: cfg.text, fontWeight: 600, fontFamily: "system-ui, sans-serif" }}>
                       {p.name.length > 15 ? p.name.slice(0, 13) + "…" : p.name}
                     </text>
-                    {p.aiDiscovered && (
-                      <text x={pos.x + W / 2 - 5} y={pos.y - H / 2 + 10} textAnchor="end"
-                        style={{ fontSize: 8, fill: "#34d399", fontFamily: "monospace" }}>AI</text>
-                    )}
                   </g>
                 );
               })}
