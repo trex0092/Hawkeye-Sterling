@@ -526,12 +526,6 @@ export default function RmiPage() {
         </div>
       )}
 
-      {deletedIds.length > 0 && (
-        <div className="mb-4 px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">
-          <span className="text-amber font-semibold">{deletedIds.length} entr{deletedIds.length === 1 ? "y" : "ies"} hidden</span>
-          <button type="button" onClick={restoreAll} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
-        </div>
-      )}
 
       {/* Add smelter button */}
       <div className="flex justify-end mb-3">
@@ -612,13 +606,15 @@ export default function RmiPage() {
                         />
                       </label>
                       <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
-                        ISO-2
+                        Annual Volume (KG)
                         <input
-                          type="text"
-                          maxLength={2}
-                          value={editDraft.countryCode ?? ""}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, countryCode: e.target.value.toUpperCase() }))}
-                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono uppercase text-ink-0"
+                          type="number"
+                          value={editDraft.annualVolumeKg ?? ""}
+                          onChange={(e) => setEditDraft((d) => ({
+                            ...d,
+                            ...(e.target.value === "" ? { annualVolumeKg: undefined } : { annualVolumeKg: Number(e.target.value) }),
+                          }))}
+                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
                         />
                       </label>
                       <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
@@ -695,18 +691,6 @@ export default function RmiPage() {
                           onChange={(e) => setEditDraft((d) => ({ ...d, activeSupplier: e.target.checked }))}
                         />
                         Active supplier
-                      </label>
-                      <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
-                        Annual volume (kg)
-                        <input
-                          type="number"
-                          value={editDraft.annualVolumeKg ?? ""}
-                          onChange={(e) => setEditDraft((d) => ({
-                            ...d,
-                            ...(e.target.value === "" ? { annualVolumeKg: undefined } : { annualVolumeKg: Number(e.target.value) }),
-                          }))}
-                          className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
-                        />
                       </label>
                     </div>
                     <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2 block mb-3">
@@ -787,43 +771,6 @@ export default function RmiPage() {
         </table>
       </div>
 
-      {/* RMAP Audit log */}
-      <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setShowAuditLog((v) => !v)}
-          className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
-        >
-          <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
-            RMAP audit log ({AUDIT_LOG.length} entries)
-          </span>
-          <span className="text-ink-3 text-12">{showAuditLog ? "▲" : "▾"}</span>
-        </button>
-        {showAuditLog && (
-          <div className="border-t border-hair-2">
-            <table className="w-full text-12">
-              <thead className="bg-bg-1 border-b border-hair-2">
-                <tr>
-                  {["Date", "Smelter", "Action", "Auditor", "Outcome"].map((h) => (
-                    <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {AUDIT_LOG.map((e, i) => (
-                  <tr key={i} className={i < AUDIT_LOG.length - 1 ? "border-b border-hair" : ""}>
-                    <td className="px-3 py-2 font-mono text-10 text-ink-3 whitespace-nowrap">{e.date}</td>
-                    <td className="px-3 py-2 font-medium text-ink-0">{e.smelterName}</td>
-                    <td className="px-3 py-2 text-ink-1">{e.action}</td>
-                    <td className="px-3 py-2 text-ink-2">{e.auditor}</td>
-                    <td className="px-3 py-2 text-ink-1">{e.outcome}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
       <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
         RMAP (Responsible Minerals Assurance Process) — RMI standard for 3TG and cobalt smelters/refiners.

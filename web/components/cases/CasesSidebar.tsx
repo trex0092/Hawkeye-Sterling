@@ -29,17 +29,7 @@ export function CasesSidebar({
         />
       </SidebarSection>
 
-      <SidebarSection title="Report">
-        <AsanaReportButton
-          payload={{
-            module: "cases",
-            label: "Cases",
-            summary: "Module report submitted from Hawkeye Sterling dashboard — Cases.",
-          }}
-        />
-      </SidebarSection>
-
-      <SidebarSection title="Evidence vault">
+<SidebarSection title="Evidence vault">
         <div className="text-12 text-ink-1 px-2">
           <div className="mb-2">
             <div className="font-medium text-ink-0">2,847 documents</div>

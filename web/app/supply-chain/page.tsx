@@ -94,9 +94,6 @@ function TagInput({
           placeholder={placeholder}
           className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
-        <button type="button" onClick={add} className="px-3 py-1.5 text-12 font-semibold bg-brand text-white rounded hover:bg-brand/90">
-          Add
-        </button>
       </div>
       {values.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
@@ -144,9 +141,6 @@ function SupplierList({
           placeholder="Country (ISO-2)"
           className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
-        <button type="button" onClick={add} className="px-3 py-1.5 text-12 font-semibold bg-brand text-white rounded hover:bg-brand/90">
-          Add
-        </button>
       </div>
       {suppliers.length > 0 && (
         <div className="flex flex-col gap-1">

@@ -107,35 +107,7 @@ export default function CorrectionsPage() {
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Row label="Subject name on the record *">
-                <input
-                  required
-                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
-                  value={form.subjectName}
-                  onChange={update("subjectName")}
-                />
-              </Row>
-              <div className="grid grid-cols-2 gap-3">
-                <Row label="List ID">
-                  <input
-                    className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
-                    placeholder="OFAC-SDN"
-                    value={form.listId}
-                    onChange={update("listId")}
-                  />
-                </Row>
-                <Row label="List reference">
-                  <input
-                    className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
-                    placeholder="OFAC-12345"
-                    value={form.listRef}
-                    onChange={update("listRef")}
-                  />
-                </Row>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Row label="Your name *">
                 <input
                   required
@@ -153,20 +125,20 @@ export default function CorrectionsPage() {
                   onChange={update("requesterEmail")}
                 />
               </Row>
+              <Row label="Filing as *">
+                <select
+                  required
+                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
+                  value={form.requesterCapacity}
+                  onChange={update("requesterCapacity")}
+                >
+                  <option value="subject">The subject of the record</option>
+                  <option value="legal_representative">Legal representative</option>
+                  <option value="data_controller">Data controller</option>
+                  <option value="other">Other</option>
+                </select>
+              </Row>
             </div>
-            <Row label="Filing as *">
-              <select
-                required
-                className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
-                value={form.requesterCapacity}
-                onChange={update("requesterCapacity")}
-              >
-                <option value="subject">The subject of the record</option>
-                <option value="legal_representative">Legal representative</option>
-                <option value="data_controller">Data controller</option>
-                <option value="other">Other</option>
-              </select>
-            </Row>
             <Row label="Claim / rationale *">
               <textarea
                 required

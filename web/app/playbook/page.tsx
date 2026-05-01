@@ -5930,18 +5930,21 @@ export default function PlaybookPage() {
         ]}
       />
 
-      {/* ── Scenario Simulator ── */}
+      {/* ── Scenario Simulator + Ask the Playbook (merged) ── */}
       <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-2">
+        <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-3">
           <span className="text-14">🎯</span>
           <span className="text-13 font-semibold text-ink-0">Scenario Simulator</span>
-          <span className="text-10 font-mono text-ink-3 ml-1">AI-powered AML scenario analysis</span>
+          <span className="text-10 font-mono text-ink-3">AML scenario analysis</span>
+          <span className="text-ink-3 text-12 mx-1">·</span>
+          <span className="text-13 font-semibold text-ink-0">Ask the Playbook</span>
+          <span className="text-10 font-mono text-ink-3">compliance Q&amp;A</span>
         </div>
         <div className="p-4 space-y-3">
           <textarea
             value={simScenario}
-            onChange={(e) => setSimScenario(e.target.value)}
-            placeholder="Describe a transaction scenario or client behaviour… e.g. 'A new corporate client from the UAE requests to wire USD 500,000 to a counterparty in a free-trade zone. The UBO is a government official from West Africa. The funds are described as consulting fees but no invoice is provided.'"
+            onChange={(e) => { setSimScenario(e.target.value); setQaQuestion(e.target.value); }}
+            placeholder="Describe a scenario or ask a compliance question… e.g. 'A new corporate client from the UAE requests to wire USD 500,000 to a free-trade zone counterparty. The UBO is a government official from West Africa.' — or — 'What do I do if a customer is a Tier-1 PEP from a sanctioned country?'"
             rows={4}
             className="w-full text-12 px-3 py-2.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none leading-relaxed"
           />
@@ -5995,8 +5998,16 @@ export default function PlaybookPage() {
             >
               {simLoading ? "Analysing…" : "Simulate →"}
             </button>
-            {simResult && (
-              <button type="button" onClick={() => setSimResult(null)} className="text-11 text-ink-3 hover:text-ink-1 px-2 py-1.5">Clear</button>
+            <button
+              type="button"
+              onClick={() => void askPlaybook()}
+              disabled={qaLoading || !simScenario.trim()}
+              className="text-12 font-semibold px-5 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 transition-colors"
+            >
+              {qaLoading ? "Asking…" : "Ask"}
+            </button>
+            {(simResult || qaAnswer) && (
+              <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); }} className="text-11 text-ink-3 hover:text-ink-1 px-2 py-1.5">Clear</button>
             )}
           </div>
 
@@ -6298,45 +6309,6 @@ export default function PlaybookPage() {
         </>
       )}
 
-        <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-2">
-            <span className="text-12 font-semibold text-ink-0">Ask the Playbook</span>
-            <span className="text-10 font-mono text-ink-3">AI-powered compliance Q&amp;A</span>
-          </div>
-          <div className="p-4">
-            <div className="flex gap-2 mb-4">
-              <input
-                value={qaQuestion}
-                onChange={(e) => setQaQuestion(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void askPlaybook(); } }}
-                placeholder="What do I do if a customer is a Tier-1 PEP from a sanctioned country?"
-                className="flex-1 text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
-              />
-              <button type="button" onClick={() => void askPlaybook()} disabled={qaLoading || !qaQuestion.trim()}
-                className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-                {qaLoading ? "Asking…" : "Ask"}
-              </button>
-            </div>
-            {qaAnswer && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-10 font-mono px-1.5 py-px rounded ${qaAnswer.confidence >= 0.8 ? "bg-green-dim text-green" : qaAnswer.confidence >= 0.5 ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>
-                    {(qaAnswer.confidence * 100).toFixed(0)}% confident
-                  </span>
-                  {qaAnswer.citations.map((c) => (
-                    <span key={c} className="text-9 font-mono px-1.5 py-px rounded bg-brand-dim text-brand-deep">{c}</span>
-                  ))}
-                </div>
-                <div className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{qaAnswer.answer}</div>
-                {qaAnswer.relatedPlaybooks.length > 0 && (
-                  <div className="text-10 text-ink-3">Related: {qaAnswer.relatedPlaybooks.join(" · ")}</div>
-                )}
-                <button type="button" onClick={() => { setQaAnswer(null); setQaQuestion(""); }}
-                  className="text-10 text-ink-3 hover:text-ink-1">Clear</button>
-              </div>
-            )}
-          </div>
-        </div>
     </ModuleLayout>
   );
 }

@@ -530,34 +530,6 @@ export default function TypologyLibraryPage() {
               ))}
             </div>
 
-            {/* Quick search suggestions */}
-            <div className="mt-8">
-              <h3 className="font-mono text-11 uppercase tracking-wide-4 text-ink-3 mb-3">Quick searches</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "real estate shell company PEP",
-                  "cryptocurrency mixer layering",
-                  "trade invoice fraud gold",
-                  "hawala informal value transfer",
-                  "structuring smurfing cash",
-                  "sanctions evasion front company",
-                  "loan-back scheme",
-                  "mirror trading correspondent bank",
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => {
-                      setQuery(suggestion);
-                      void handleSearch(suggestion, "all");
-                    }}
-                    className="px-3 py-1.5 rounded-full bg-bg-1 border border-hair text-12 text-ink-2 hover:border-brand/30 hover:text-brand transition-colors"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
           </section>
         </>
       )}

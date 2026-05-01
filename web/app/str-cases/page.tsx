@@ -597,9 +597,9 @@ export default function StrCasesPage() {
                       <div><label className={lCls}>goAML reference</label><input value={goamlRef} onChange={(e) => setGoamlRef(e.target.value)} placeholder="e.g. RPT-2026-0001" className={iCls} /></div>
                       <div><label className={lCls}>MLRO (preparer)</label><input value={mlro} onChange={(e) => setMlro(e.target.value)} placeholder="MLRO name" className={iCls} /></div>
                     </div>
-                    <div className={`${row} grid-cols-3`}>
+                    <div className={`${row} grid-cols-2`}>
                       <div><label className={lCls}>Four-eyes approver</label><input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Second approver" className={iCls} /></div>
-                      <div className="col-span-2"><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
+                      <div><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
                     </div>
                     <div className="mb-2"><label className={lCls}>Suspicion narrative</label><textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} placeholder="Who, what, when, where, why it is suspicious. Do NOT tip off the subject (FDL Art. 29)." className={taCls} /></div>
                     {entityOptions.length > 1 && (

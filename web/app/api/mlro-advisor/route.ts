@@ -65,6 +65,7 @@ interface ContextPair { q: string; a: string }
 interface Body {
   question: string;
   subjectName: string;
+  redTeamMode?: boolean;
   entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
   jurisdiction?: string;
   listsChecked?: string[];
@@ -214,11 +215,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // Shared input gate — refuses empty / oversize / prompt-injection
-  // inputs before they hit Claude. Topic-scope filtering is off; the
-  // Advisor must answer every compliance question, even when the
-  // keyword classifier doesn't recognise specific terms.
+  // inputs before they hit Claude. redTeamMode bypasses injection check
+  // so adversarial test prompts can reach the model for refusal testing.
   const gateResult = gateMlroQuestion(body.question, {
-    maxChars: 2000,
+    maxChars: body.redTeamMode ? 4000 : 2000,
+    allowInjectionPatterns: body.redTeamMode === true,
   });
   if (!gateResult.ok) {
     return NextResponse.json(

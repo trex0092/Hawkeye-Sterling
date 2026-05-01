@@ -3859,15 +3859,99 @@ export default function MlroAdvisorPage() {
         {/* ── Super Tools tab ───────────────────────────────────────────────── */}
         {pageTab === "super-tools" && (
           <div className="mt-6 space-y-4">
-            {/* Sub-tab bar */}
-            <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","trade-finance-risk","insider-threat","crypto-tracing"] as const).map((t) => (
-                <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
-                  className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "trade-finance-risk" ? "🚢 Trade Finance Risk" : t === "insider-threat" ? "👤 Insider Threat" : "🔗 Crypto Tracing"}
-                </button>
-              ))}
-            </div>
+            {/* Tool selector */}
+            <select
+              value={superToolsTab}
+              onChange={(e) => setSuperToolsTab(e.target.value as typeof superToolsTab)}
+              className="w-full text-13 border border-hair-2 bg-bg-panel text-ink-0 rounded-lg px-3 py-2 focus:border-brand focus:outline-none"
+            >
+              <option value="escalation">⚡ Escalation Decision Engine</option>
+              <option value="flags">🚩 Red Flag Extractor</option>
+              <option value="patterns">📊 Case Patterns</option>
+              <option value="brief">📋 Subject Brief</option>
+              <option value="pep-network">🕸 PEP Network</option>
+              <option value="sanctions-nexus">🔒 Sanctions Nexus</option>
+              <option value="typology-match">🎯 Typology Match</option>
+              <option value="txn-narrative">📝 Transaction Analyzer</option>
+              <option value="edd-questionnaire">📑 EDD Generator</option>
+              <option value="tbml">🚢 TBML Analyzer</option>
+              <option value="str-narrative">✍️ STR Drafter</option>
+              <option value="wire-r16">🔁 Wire R.16 Checker</option>
+              <option value="pf-screener">☢️ Proliferation Finance Screener</option>
+              <option value="mlro-memo">📂 MLRO Decision Memo</option>
+              <option value="tf-screener">💣 Terrorist Financing Screener</option>
+              <option value="shell-detector">🏚 Shell Company Detector</option>
+              <option value="adverse-classify">📰 Adverse Media Classifier</option>
+              <option value="case-timeline">📅 Case Timeline Builder</option>
+              <option value="ml-predicate">⚖️ ML Predicate Analyser</option>
+              <option value="client-risk">👤 Client Risk Scorer</option>
+              <option value="jurisdiction-intel">🌍 Jurisdiction Intelligence</option>
+              <option value="ubo-risk">🏛 UBO Risk Assessment</option>
+              <option value="benford">📐 Benford Forensics</option>
+              <option value="crypto-wallet">₿ Crypto Wallet Analyser</option>
+              <option value="onboarding-tier">🎛 Onboarding Tier Selector</option>
+              <option value="prolif-finance">☣️ Proliferation Finance</option>
+              <option value="sar-triage">🔍 SAR Triage</option>
+              <option value="doc-fraud">🪪 Document Fraud Detector</option>
+              <option value="ctr-structuring">💰 CTR / Structuring Analyser</option>
+              <option value="dnfbp-obligations">🏪 DNFBP Obligations</option>
+              <option value="cdd-refresh">🔄 CDD Refresh Planner</option>
+              <option value="vasp-risk">🔗 VASP Risk Scorer</option>
+              <option value="goaml-validator">📤 goAML Field Validator</option>
+              <option value="pep-edd">🎖 PEP EDD Questionnaire</option>
+              <option value="sanctions-mapper">🗺 Sanctions Mapper</option>
+              <option value="layering-detector">🔀 Layering Detector</option>
+              <option value="real-estate-ml">🏠 Real Estate ML Risk</option>
+              <option value="asset-tracer">🔎 Asset Tracer</option>
+              <option value="sow-calculator">💼 Source of Wealth Calculator</option>
+              <option value="insider-threat-screen">🕵️ Insider Threat Screen</option>
+              <option value="board-aml-report">📊 Board AML Report</option>
+              <option value="enforcement-exposure">⚠️ Enforcement Exposure</option>
+              <option value="inter-agency-referral">📨 Inter-Agency Referral</option>
+              <option value="policy-reviewer">📃 Policy Reviewer</option>
+              <option value="compliance-test-planner">🧪 Compliance Test Planner</option>
+              <option value="swift-lc-analyzer">🏦 SWIFT / LC Analyser</option>
+              <option value="regulatory-calendar">📅 Regulatory Calendar</option>
+              <option value="ewra-generator">📋 EWRA Generator</option>
+              <option value="aml-programme-gap">🔍 AML Programme Gap</option>
+              <option value="trade-invoice-analyzer">🧾 Trade Invoice Analyser</option>
+              <option value="network-mapper">🕸 Network Mapper</option>
+              <option value="risk-appetite-builder">🎯 Risk Appetite Builder</option>
+              <option value="regulatory-exam-prep">📚 Regulatory Exam Prep</option>
+              <option value="npo-risk">🏛 NPO Risk</option>
+              <option value="correspondent-bank">🏦 Correspondent Bank Risk</option>
+              <option value="mixed-funds">🌀 Mixed Funds Analyser</option>
+              <option value="sanctions-breach">🚨 Sanctions Breach Response</option>
+              <option value="freeze-seizure">❄️ Freeze / Seizure Guide</option>
+              <option value="audit-response">📋 Audit Response Builder</option>
+              <option value="high-net-worth">💎 HNW Client Profile</option>
+              <option value="cash-intensive">💵 Cash-Intensive Business</option>
+              <option value="trust-structures">🔐 Trust Structures</option>
+              <option value="cross-border-wire">🌐 Cross-Border Wire Risk</option>
+              <option value="fiu-feedback">📬 FIU Feedback Handler</option>
+              <option value="derisking-impact">⚖️ De-Risking Impact</option>
+              <option value="legal-privilege">🔏 Legal Privilege Checker</option>
+              <option value="ml-scenario">🎭 ML Scenario Builder</option>
+              <option value="staff-alert">🚨 Staff Alert Generator</option>
+              <option value="str-quality">📝 STR Quality Checker</option>
+              <option value="hawala-detector">💱 Hawala Detector</option>
+              <option value="nominee-risk">🎭 Nominee Risk</option>
+              <option value="pep-corporate">🏢 PEP Corporate Screen</option>
+              <option value="crypto-mixing">🌀 Crypto Mixing Detector</option>
+              <option value="ghost-company">👻 Ghost Company Detector</option>
+              <option value="pkeyc-planner">🔄 pKYC Planner</option>
+              <option value="whistleblower">🔔 Whistleblower Assessment</option>
+              <option value="trade-finance-rf">🚢 Trade Finance Red Flags</option>
+              <option value="sanctions-exposure-calc">💥 Sanctions Exposure Calculator</option>
+              <option value="customer-lifecycle">🔁 Customer Lifecycle</option>
+              <option value="pep-screening-enhance">🎖 PEP Enhanced Screening</option>
+              <option value="aml-training-gap">🎓 AML Training Gap</option>
+              <option value="beneficial-owner-verify">🔍 UBO Verification</option>
+              <option value="aml-kpi-dashboard">📊 AML KPI Dashboard</option>
+              <option value="trade-finance-risk">🚢 Trade Finance Risk</option>
+              <option value="insider-threat">👤 Insider Threat</option>
+              <option value="crypto-tracing">🔗 Crypto Tracing</option>
+            </select>
 
             {/* Escalation Engine */}
             {superToolsTab === "escalation" && (

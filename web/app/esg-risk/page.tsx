@@ -15,7 +15,7 @@ interface FormData {
   operations: string;
   supplierCountries: string;
   employeeCount: string;
-  publiclyListed: boolean;
+  notes: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ const EMPTY_FORM: FormData = {
   operations: "",
   supplierCountries: "",
   employeeCount: "",
-  publiclyListed: false,
+  notes: "",
 };
 
 const SECTOR_OPTIONS = [
@@ -243,7 +243,7 @@ export default function EsgRiskPage() {
             .map((s) => s.trim())
             .filter(Boolean),
           employeeCount: form.employeeCount ? parseInt(form.employeeCount, 10) : undefined,
-          publiclyListed: form.publiclyListed,
+          notes: form.notes || undefined,
         }),
       });
       const data = (await res.json()) as EsgRiskResult;
@@ -272,7 +272,7 @@ export default function EsgRiskPage() {
       {/* Input Form */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">
         <h2 className="text-14 font-semibold text-ink-0 mb-4">Entity Details</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-11 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">
               Entity Name *
@@ -323,10 +323,11 @@ export default function EsgRiskPage() {
               Employee Count
             </label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               placeholder="e.g. 250"
               value={form.employeeCount}
-              onChange={(e) => setField("employeeCount", e.target.value)}
+              onChange={(e) => setField("employeeCount", e.target.value.replace(/[^0-9]/g, ""))}
               className="w-full bg-bg-1 border border-hair-2 rounded-lg px-3 py-2 text-13 text-ink-0 outline-none focus:border-brand"
             />
           </div>
@@ -357,24 +358,17 @@ export default function EsgRiskPage() {
           />
         </div>
 
-        <div className="flex items-center gap-3 mb-5">
-          <button
-            type="button"
-            onClick={() => setField("publiclyListed", !form.publiclyListed)}
-            className={`w-10 h-5.5 rounded-full border transition-colors relative ${
-              form.publiclyListed
-                ? "bg-brand border-brand"
-                : "bg-bg-2 border-hair-2"
-            }`}
-            aria-pressed={form.publiclyListed}
-          >
-            <span
-              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                form.publiclyListed ? "translate-x-5" : "translate-x-0.5"
-              }`}
-            />
-          </button>
-          <label className="text-12.5 text-ink-1">Publicly listed entity</label>
+        <div className="mb-5">
+          <label className="block text-11 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">
+            Notes
+          </label>
+          <textarea
+            rows={2}
+            placeholder="Any additional notes or context..."
+            value={form.notes}
+            onChange={(e) => setField("notes", e.target.value)}
+            className="w-full bg-bg-1 border border-hair-2 rounded-lg px-3 py-2 text-13 text-ink-0 outline-none focus:border-brand resize-none"
+          />
         </div>
 
         {error && (

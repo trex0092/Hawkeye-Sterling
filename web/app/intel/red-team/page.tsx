@@ -44,7 +44,7 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
     const res = await fetch("/api/mlro-advisor", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ question: p.prompt, subjectName: "Red-Team Probe" }),
+      body: JSON.stringify({ question: p.prompt, subjectName: "Red-Team Probe", redTeamMode: true }),
       signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) {

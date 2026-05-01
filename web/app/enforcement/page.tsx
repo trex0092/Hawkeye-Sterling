@@ -746,37 +746,25 @@ export default function EnforcementPage() {
 
   return (
     <ModuleLayout asanaModule="enforcement" asanaLabel="Enforcement">
-        <ModuleHero
-          moduleNumber={25}
-          eyebrow="Module 18 · Regulatory calendar"
-          title="Enforcement"
-          titleEm="tracker."
-          intro={
-            <>
-              <strong>Every regulator-mandated deadline in one place.</strong>{" "}
-              MoE annual reports, FIU quarterly reconciliations, LBMA Step-4
-              audits, internal EDD sweeps — sorted by due date, colour-coded
-              by urgency.
-            </>
-          }
-        />
-
-        {overlay.deletedIds.length > 0 && (
-          <div className="mt-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">
-            <div className="font-mono text-10 text-amber">
-              {overlay.deletedIds.length} deadline
-              {overlay.deletedIds.length === 1 ? "" : "s"} hidden from the
-              regulator-seeded list
-            </div>
-            <button
-              type="button"
-              onClick={onResetDeletes}
-              className="font-mono text-10 uppercase tracking-wide-3 px-2 py-1 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors"
-            >
-              Restore all
-            </button>
+        <div className="flex items-start justify-between gap-4">
+          <ModuleHero
+            moduleNumber={25}
+            eyebrow="Module 18 · Regulatory calendar"
+            title="Enforcement"
+            titleEm="tracker."
+            intro={
+              <>
+                <strong>Every regulator-mandated deadline in one place.</strong>{" "}
+                MoE annual reports, FIU quarterly reconciliations, LBMA Step-4
+                audits, internal EDD sweeps — sorted by due date, colour-coded
+                by urgency.
+              </>
+            }
+          />
+          <div className="shrink-0 pt-6">
+            <AddDeadlineForm onAdd={onAdd} />
           </div>
-        )}
+        </div>
 
         <div className="mt-6 space-y-2">
           {sorted.map((d) => {
@@ -881,7 +869,6 @@ export default function EnforcementPage() {
           })}
         </div>
 
-        <AddDeadlineForm onAdd={onAdd} />
     </ModuleLayout>
   );
 }
@@ -932,15 +919,13 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
 
   if (!open) {
     return (
-      <div className="mt-8 flex justify-center">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="font-mono text-11 uppercase tracking-wide-3 px-4 py-2 rounded-lg border border-brand-line bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
-        >
-          + Add a deadline
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="font-mono text-11 uppercase tracking-wide-3 px-4 py-2 rounded-lg border border-brand-line bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
+      >
+        + Add a deadline
+      </button>
     );
   }
 
@@ -951,7 +936,7 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
   return (
     <form
       onSubmit={submit}
-      className="mt-8 bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3"
+      className="bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3 w-80"
     >
       <div className="flex items-baseline justify-between mb-1">
         <h4 className="text-12 font-semibold text-ink-0 m-0">

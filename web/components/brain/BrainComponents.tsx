@@ -625,16 +625,6 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
           {running && <div className="text-12 text-ink-2 font-mono">Composing reasoning chain…</div>}
           {result && (
             <>
-              {result.composite?.score === 0 && !narrative.trim() && (
-                <div className="mb-3 px-3 py-2 bg-amber-dim border border-amber/30 rounded text-11 text-amber font-medium">
-                  ⚠ Composite 0/100 because the <strong>Narrative field is empty</strong> — adverse-media scoring was not applied. Paste OSINT, news headlines, or adverse media text and re-run for an accurate score.
-                </div>
-              )}
-              {result.composite?.score === 0 && !jurisdiction.trim() && (
-                <div className="mb-3 px-3 py-2 bg-amber-dim border border-amber/30 rounded text-11 text-amber">
-                  ⚠ <strong>Jurisdiction field is empty</strong> — no jurisdiction penalty applied. Enter the subject's country (e.g. "RU" or "Russia") for a complete assessment.
-                </div>
-              )}
               <BrainResult r={result} />
             </>
           )}
