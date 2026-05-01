@@ -5,6 +5,8 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { DateParts } from "@/components/ui/DateParts";
 import { formatDMY } from "@/lib/utils/dateFormat";
+import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
+import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -134,6 +136,53 @@ const APPROVALS: Approval[] = [
     category: "Screening Override",
     notes: "MLRO disagreed — media article deemed relevant. Customer placed on enhanced monitoring.",
   },
+  // 3 additional seed approvals
+  {
+    id: "APV-2025-0073",
+    title: "PEP annual re-approval — Al-Mansouri Trading LLC",
+    requestedBy: "N. Patel (KYC Officer)",
+    requestedAt: "2025-04-10 09:00",
+    slaHours: 48,
+    elapsedHours: 44,
+    status: "approved",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
+    firstSignedAt: "2025-04-10 14:30",
+    secondReviewer: "Managing Director",
+    secondSignedAt: "2025-04-11 10:00",
+    category: "PEP Re-Approval",
+    notes: "Annual senior management re-approval for PEP customer. EDD updated. No adverse media. Approved within SLA.",
+  },
+  {
+    id: "APV-2025-0068",
+    title: "Transaction monitoring rule change — Rule TM-044 threshold update",
+    requestedBy: "K. Tan (CFO)",
+    requestedAt: "2025-04-05 11:00",
+    slaHours: 72,
+    elapsedHours: 48,
+    status: "approved",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
+    firstSignedAt: "2025-04-06 09:00",
+    secondReviewer: "Managing Director",
+    secondSignedAt: "2025-04-07 10:30",
+    category: "TM Rule Change",
+    notes: "Rule TM-044 threshold raised from AED 50,000 to AED 75,000 following calibration analysis. Board Risk Committee notified.",
+  },
+  {
+    id: "APV-2025-0060",
+    title: "High-value client onboarding — Refiners International FZC",
+    requestedBy: "F. Yusuf (Relationship Manager)",
+    requestedAt: "2025-03-28 10:00",
+    slaHours: 72,
+    elapsedHours: 96,
+    status: "approved",
+    firstReviewer: "Luisa Fernanda (Compliance Officer)",
+    firstSignedAt: "2025-03-29 09:00",
+    secondReviewer: "Managing Director",
+    secondSignedAt: "2025-04-01 11:00",
+    category: "High-Value Onboarding",
+    amount: "AED 2,400,000",
+    notes: "Full EDD completed. UBO identified. SLA breached by 24h due to additional document collection. Approved.",
+  },
 ];
 
 const MINUTES: Minute[] = [
@@ -237,6 +286,29 @@ const CIRCULARS: Circular[] = [
     dueDate: "31/03/2025",
     notes: "OVERDUE — Declaration not yet filed. Escalated to MLRO 01/04/2025.",
   },
+  // 2 additional seed circulars
+  {
+    id: "CIR-006",
+    ref: "NAMLCFTC Mar-2025",
+    date: "01/03/2025",
+    issuer: "NAMLCFTC",
+    title: "National AML/CFT Strategy 2025–2027 — DNFBP Implementation Requirements",
+    disposition: "in-progress",
+    owner: "Luisa Fernanda (Compliance Officer)",
+    dueDate: "30/06/2025",
+    notes: "Strategy reviewed. Action plan drafted. Policy update in progress. Presentation to Board Risk scheduled.",
+  },
+  {
+    id: "CIR-007",
+    ref: "CBUAE 4/2025",
+    date: "15/03/2025",
+    issuer: "CBUAE",
+    title: "Proliferation Financing Risk Assessment — Guidance for DNFBPs",
+    disposition: "gap-identified",
+    owner: "S. Okafor",
+    dueDate: "30/06/2025",
+    notes: "Gap identified: PF risk assessment not yet integrated into EWRA. Working group formed. External consultant engaged.",
+  },
 ];
 
 const APPROVAL_TONE: Record<ApprovalStatus, string> = {
@@ -269,6 +341,10 @@ interface OversightOverlay {
   customApprovals: Approval[];
   customMinutes: Minute[];
   customCirculars: Circular[];
+  // Approval sign-off patches: id -> partial Approval
+  approvalPatches: Record<string, Partial<Approval>>;
+  // Action item status patches: actionId -> closed bool
+  actionPatches: Record<string, boolean>;
 }
 
 const EMPTY_OVERLAY: OversightOverlay = {
@@ -278,6 +354,8 @@ const EMPTY_OVERLAY: OversightOverlay = {
   customApprovals: [],
   customMinutes: [],
   customCirculars: [],
+  approvalPatches: {},
+  actionPatches: {},
 };
 
 function loadOversightOverlay(): OversightOverlay {
@@ -292,7 +370,12 @@ function saveOversightOverlay(o: OversightOverlay): void {
   try { localStorage.setItem(OVERSIGHT_KEY, JSON.stringify(o)); } catch { /* ignore */ }
 }
 
-type Tab = "approvals" | "minutes" | "circulars";
+function nowTs(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+type Tab = "approvals" | "minutes" | "circulars" | "actions" | "kpis";
 
 function SlaBar({ elapsed, sla }: { elapsed: number; sla: number }) {
   const pct = Math.min((elapsed / sla) * 100, 100);
@@ -362,8 +445,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
 
   const submit = () => {
     if (!title.trim() || !requestedBy.trim()) { setErr("Title and Requested by are required."); return; }
-    const now = new Date();
-    const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const ts = nowTs();
     onAdd({
       id: `APV-CUSTOM-${Date.now()}`,
       title: title.trim(),
@@ -590,6 +672,71 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; on
   );
 }
 
+// ── KPI metric card ──────────────────────────────────────────────────────────
+function KpiCard({
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  tone?: "green" | "amber" | "red" | "blue" | "neutral";
+}) {
+  const barColor =
+    tone === "green"
+      ? "bg-green"
+      : tone === "amber"
+      ? "bg-amber"
+      : tone === "red"
+      ? "bg-red"
+      : tone === "blue"
+      ? "bg-blue"
+      : "bg-ink-3";
+  const textColor =
+    tone === "green"
+      ? "text-green"
+      : tone === "amber"
+      ? "text-amber"
+      : tone === "red"
+      ? "text-red"
+      : tone === "blue"
+      ? "text-blue"
+      : "text-ink-0";
+
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 flex flex-col gap-1.5">
+      <div className={`h-1 w-8 rounded-full ${barColor}`} />
+      <div className={`text-28 font-bold font-mono leading-none ${textColor}`}>{value}</div>
+      <div className="text-11 font-semibold text-ink-1">{label}</div>
+      {sub && <div className="text-10 text-ink-3">{sub}</div>}
+    </div>
+  );
+}
+
+// ── Gap analysis severity badge ──────────────────────────────────────────────
+const SEV_TONE: Record<string, string> = {
+  critical: "bg-red-dim text-red",
+  high: "bg-amber-dim text-amber",
+  medium: "bg-blue-dim text-blue",
+  low: "bg-bg-2 text-ink-2",
+};
+
+const PRI_TONE: Record<string, string> = {
+  immediate: "bg-red-dim text-red",
+  "short-term": "bg-amber-dim text-amber",
+  "medium-term": "bg-blue-dim text-blue",
+};
+
+const GRADE_TONE: Record<string, string> = {
+  A: "text-green",
+  B: "text-blue",
+  C: "text-amber",
+  D: "text-amber",
+  F: "text-red",
+};
+
 export default function OversightPage() {
   const [tab, setTab] = useState<Tab>("approvals");
   const [expandedMinute, setExpandedMinute] = useState<string | null>(MINUTES[0]?.id ?? null);
@@ -609,6 +756,16 @@ export default function OversightPage() {
   const [editCircularOwner, setEditCircularOwner] = useState("");
   const [editCircularDue, setEditCircularDue] = useState("");
 
+  // AI Gap Analysis state
+  const [gapLoading, setGapLoading] = useState(false);
+  const [gapResult, setGapResult] = useState<GovernanceGapResult | null>(null);
+  const [gapError, setGapError] = useState("");
+
+  // Board Report state
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardResult, setBoardResult] = useState<(BoardAmlReportResult & { ok: boolean }) | null>(null);
+  const [boardError, setBoardError] = useState("");
+
   useEffect(() => { setOverlay(loadOversightOverlay()); }, []);
 
   const updateOverlay = (next: OversightOverlay) => { setOverlay(next); saveOversightOverlay(next); };
@@ -620,6 +777,36 @@ export default function OversightPage() {
   const addMinute = (m: Minute) => { updateOverlay({ ...overlay, customMinutes: [...overlay.customMinutes, m] }); setShowAddMinute(false); };
   const addCircular = (c: Circular) => { updateOverlay({ ...overlay, customCirculars: [...overlay.customCirculars, c] }); setShowAddCircular(false); };
   const restoreAll = () => { updateOverlay(EMPTY_OVERLAY); };
+
+  // ── Sign-off actions ───────────────────────────────────────────────────────
+  const patchApproval = (id: string, patch: Partial<Approval>) => {
+    const existing = overlay.approvalPatches[id] ?? {};
+    updateOverlay({
+      ...overlay,
+      approvalPatches: { ...overlay.approvalPatches, [id]: { ...existing, ...patch } },
+    });
+  };
+
+  const handleFirstSign = (a: Approval) => {
+    patchApproval(a.id, { firstSignedAt: nowTs() });
+  };
+
+  const handleSecondSign = (a: Approval) => {
+    const signer = mdName.trim() || a.secondReviewer;
+    patchApproval(a.id, { secondSignedAt: nowTs(), status: "approved", secondReviewer: signer });
+  };
+
+  const handleReject = (a: Approval) => {
+    patchApproval(a.id, { status: "rejected" });
+  };
+
+  // ── Action item toggle ─────────────────────────────────────────────────────
+  const toggleAction = (aiId: string, currentlyClosed: boolean) => {
+    updateOverlay({
+      ...overlay,
+      actionPatches: { ...overlay.actionPatches, [aiId]: !currentlyClosed },
+    });
+  };
 
   const startEditApproval = (a: Approval) => { setEditingApprovalId(a.id); setEditApprovalNotes(a.notes); };
   const saveEditApproval = (id: string) => {
@@ -660,21 +847,138 @@ export default function OversightPage() {
     setEditingCircularId(null);
   };
 
-  const liveApprovals = useMemo(() => [...APPROVALS.filter((a) => !overlay.deletedApprovalIds.includes(a.id)), ...overlay.customApprovals], [overlay]);
-  const liveMinutes = useMemo(() => [...MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), ...overlay.customMinutes], [overlay]);
-  const liveCirculars = useMemo(() => [...CIRCULARS.filter((c) => !overlay.deletedCircularIds.includes(c.id)), ...overlay.customCirculars], [overlay]);
+  // ── Live data (seed + custom, with patches applied) ────────────────────────
+  const applyApprovalPatch = (a: Approval): Approval => {
+    const p = overlay.approvalPatches[a.id];
+    return p ? { ...a, ...p } : a;
+  };
+
+  const applyActionPatch = (ai: ActionItem): ActionItem => {
+    const p = overlay.actionPatches[ai.id];
+    return p !== undefined ? { ...ai, closed: p } : ai;
+  };
+
+  const liveApprovals = useMemo(
+    () =>
+      [
+        ...APPROVALS.filter((a) => !overlay.deletedApprovalIds.includes(a.id)),
+        ...overlay.customApprovals,
+      ].map(applyApprovalPatch),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [overlay],
+  );
+
+  const liveMinutes = useMemo(
+    () =>
+      [...MINUTES.filter((m) => !overlay.deletedMinuteIds.includes(m.id)), ...overlay.customMinutes].map(
+        (m) => ({
+          ...m,
+          actionItems: m.actionItems.map(applyActionPatch),
+        }),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [overlay],
+  );
+
+  const liveCirculars = useMemo(
+    () => [...CIRCULARS.filter((c) => !overlay.deletedCircularIds.includes(c.id)), ...overlay.customCirculars],
+    [overlay],
+  );
+
+  // ── KPI calculations ──────────────────────────────────────────────────────
+  const allActionItems = useMemo(
+    () =>
+      liveMinutes.flatMap((m) =>
+        m.actionItems.map((ai) => ({ ...ai, meetingTitle: m.title, meetingId: m.id })),
+      ),
+    [liveMinutes],
+  );
+
+  const openActionsCount = allActionItems.filter((ai) => !ai.closed).length;
 
   const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
 
   const pendingApprovals = liveApprovals.filter((a) => a.status === "pending").length;
   const slaBreached = liveApprovals.filter((a) => a.status === "pending" && a.elapsedHours > a.slaHours).length;
-  const openActions = liveMinutes.flatMap((m) => m.actionItems).filter((ai) => !ai.closed).length;
   const gaps = liveCirculars.filter((c) => c.disposition === "gap-identified").length;
+
+  // SLA compliance: approved within SLA (elapsedHours <= slaHours)
+  const approvedTotal = liveApprovals.filter((a) => a.status === "approved").length;
+  const approvedWithinSla = liveApprovals.filter(
+    (a) => a.status === "approved" && a.elapsedHours <= a.slaHours,
+  ).length;
+  const slaPct = approvedTotal > 0 ? Math.round((approvedWithinSla / approvedTotal) * 100) : 0;
+
+  // Meetings this quarter (Q2 2025: Apr–Jun)
+  const meetingsThisQuarter = liveMinutes.filter((m) => {
+    const parts = m.date.split("/");
+    if (parts.length < 3) return false;
+    const month = parseInt(parts[1] ?? "0", 10);
+    return month >= 4 && month <= 6;
+  }).length;
+
+  // ── AI Gap Analysis ───────────────────────────────────────────────────────
+  const runGapAnalysis = async () => {
+    setGapLoading(true);
+    setGapError("");
+    try {
+      const res = await fetch("/api/governance-gap", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          approvals: liveApprovals,
+          minutes: liveMinutes,
+          circulars: liveCirculars,
+          institutionName: "Hawkeye Sterling DMCC",
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as GovernanceGapResult;
+      setGapResult(data);
+    } catch (e) {
+      setGapError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setGapLoading(false);
+    }
+  };
+
+  // ── Board Report ──────────────────────────────────────────────────────────
+  const generateBoardReport = async () => {
+    setBoardLoading(true);
+    setBoardError("");
+    try {
+      const res = await fetch("/api/board-aml-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          institutionName: "Hawkeye Sterling DMCC",
+          reportingPeriod: "Q2 2025",
+          context: `Pending approvals: ${pendingApprovals}. SLA breaches: ${slaBreached}. Open action items: ${openActionsCount}. Regulatory gaps: ${gaps}. SLA compliance: ${slaPct}%. Meetings this quarter: ${meetingsThisQuarter}.`,
+          strCount: liveApprovals.filter((a) => a.category === "STR Filing").length.toString(),
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as BoardAmlReportResult & { ok: boolean };
+      setBoardResult(data);
+    } catch (e) {
+      setBoardError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setBoardLoading(false);
+    }
+  };
+
+  const TAB_LABELS: Record<Tab, string> = {
+    approvals: "Approvals",
+    minutes: "Meeting minutes",
+    circulars: "Circulars",
+    actions: `Action tracker${openActionsCount > 0 ? ` (${openActionsCount})` : ""}`,
+    kpis: "KPI Dashboard",
+  };
 
   return (
     <ModuleLayout asanaModule="oversight" asanaLabel="Oversight" engineLabel="Governance engine">
       <ModuleHero
-        eyebrow="Module 25 · Governance"
+        eyebrow="Module 26 · Governance"
         title="Management"
         titleEm="oversight."
         intro={
@@ -687,26 +991,167 @@ export default function OversightPage() {
         kpis={[
           { value: String(pendingApprovals), label: "pending approvals", tone: pendingApprovals > 0 ? "amber" : undefined },
           { value: String(slaBreached), label: "SLA breached", tone: slaBreached > 0 ? "red" : undefined },
-          { value: String(openActions), label: "open action items", tone: openActions > 0 ? "amber" : undefined },
+          { value: String(openActionsCount), label: "open action items", tone: openActionsCount > 0 ? "amber" : undefined },
           { value: String(gaps), label: "regulatory gaps", tone: gaps > 0 ? "red" : undefined },
           { value: String(liveCirculars.filter((c) => c.disposition === "implemented").length), label: "circulars closed" },
         ]}
       />
 
+      {/* AI Gap Analysis panel */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            type="button"
+            onClick={runGapAnalysis}
+            disabled={gapLoading}
+            className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+          >
+            {gapLoading ? (
+              <>
+                <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Analysing…
+              </>
+            ) : (
+              "Run AI Gap Analysis"
+            )}
+          </button>
+          {gapResult && !gapLoading && (
+            <span className="text-11 text-ink-3">
+              Overall grade:{" "}
+              <span className={`font-bold font-mono text-14 ${GRADE_TONE[gapResult.overallGrade] ?? "text-ink-0"}`}>
+                {gapResult.overallGrade}
+              </span>
+            </span>
+          )}
+        </div>
+
+        {gapError && (
+          <div className="text-11 text-red bg-red-dim border border-red/20 rounded-lg px-4 py-2 mb-3">{gapError}</div>
+        )}
+
+        {gapResult && (
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 flex flex-col gap-5">
+            {/* Grade + rationale */}
+            <div className="flex gap-4 items-start">
+              <div className={`text-48 font-bold font-mono leading-none ${GRADE_TONE[gapResult.overallGrade] ?? "text-ink-0"}`}>
+                {gapResult.overallGrade}
+              </div>
+              <div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Overall governance grade</div>
+                <div className="text-12 text-ink-1 leading-relaxed">{gapResult.gradeRationale}</div>
+              </div>
+            </div>
+
+            {/* Critical gaps */}
+            {gapResult.criticalGaps.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-4 text-red mb-2">Critical gaps</div>
+                <ul className="flex flex-col gap-1.5">
+                  {gapResult.criticalGaps.map((g, i) => (
+                    <li key={i} className="flex gap-2 text-12 text-ink-1">
+                      <span className="shrink-0 text-red font-mono text-10 mt-0.5">!</span>
+                      {g}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Findings table */}
+            {gapResult.findings.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Findings</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-11">
+                    <thead className="bg-bg-1 border-b border-hair-2">
+                      <tr>
+                        {["Area", "Finding", "Severity", "Regulatory ref"].map((h) => (
+                          <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gapResult.findings.map((f, i) => (
+                        <tr key={i} className="border-b border-hair last:border-0">
+                          <td className="px-3 py-2 font-medium text-ink-0 whitespace-nowrap">{f.area}</td>
+                          <td className="px-3 py-2 text-ink-1 max-w-xs">{f.finding}</td>
+                          <td className="px-3 py-2">
+                            <span className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${SEV_TONE[f.severity] ?? ""}`}>
+                              {f.severity}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-10 text-ink-3">{f.regulatoryRef}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {gapResult.recommendations.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Recommendations</div>
+                <div className="flex flex-col gap-2">
+                  {gapResult.recommendations.map((r, i) => (
+                    <div key={i} className="flex gap-3 text-12">
+                      <span className={`shrink-0 font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm h-fit mt-0.5 ${PRI_TONE[r.priority] ?? ""}`}>
+                        {r.priority}
+                      </span>
+                      <div>
+                        <div className="text-ink-1">{r.action}</div>
+                        <div className="text-10 text-ink-3 font-mono mt-0.5">{r.owner} · {r.deadline}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Regulatory risks */}
+            {gapResult.regulatoryRisks.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Regulatory risks</div>
+                <div className="flex flex-col gap-2">
+                  {gapResult.regulatoryRisks.map((r, i) => (
+                    <div key={i} className="bg-bg-1 rounded p-3 text-11">
+                      <div className="flex gap-2 items-start mb-1">
+                        <span className={`shrink-0 font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${SEV_TONE[r.likelihood] ?? ""}`}>
+                          {r.likelihood}
+                        </span>
+                        <span className="text-ink-1">{r.risk}</span>
+                      </div>
+                      <div className="text-10 text-ink-3 pl-0">{r.mitigant}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gapResult.summary && (
+              <div className="border-t border-hair-2 pt-4 text-12 text-ink-2 italic">{gapResult.summary}</div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-hair-2">
-        {(["approvals", "minutes", "circulars"] as Tab[]).map((t) => (
+      <div className="flex gap-1 mb-6 border-b border-hair-2 overflow-x-auto">
+        {(["approvals", "minutes", "circulars", "actions", "kpis"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-12 font-medium capitalize rounded-t border-b-2 transition-colors ${
+            className={`px-4 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
               tab === t
                 ? "border-brand text-brand bg-brand-dim"
                 : "border-transparent text-ink-2 hover:text-ink-0 hover:bg-bg-1"
             }`}
           >
-            {t === "approvals" ? "Approvals" : t === "minutes" ? "Meeting minutes" : "Circulars"}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -790,26 +1235,42 @@ export default function OversightPage() {
                 />
               </div>
 
-              <div className="text-12 text-ink-2 border-l-2 border-hair-2 pl-3">
+              <div className="text-12 text-ink-2 border-l-2 border-hair-2 pl-3 mb-3">
                 {a.notes}
               </div>
 
               {a.status === "pending" && !a.firstSignedAt && (
-                <div className="mt-3 flex gap-2">
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">
+                <div className="mt-1 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleFirstSign(a)}
+                    className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+                  >
                     Approve (Sign)
                   </button>
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim">
+                  <button
+                    type="button"
+                    onClick={() => handleReject(a)}
+                    className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim"
+                  >
                     Reject
                   </button>
                 </div>
               )}
               {a.status === "pending" && a.firstSignedAt && !a.secondSignedAt && (
-                <div className="mt-3 flex gap-2">
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">
+                <div className="mt-1 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSecondSign(a)}
+                    className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+                  >
                     Second sign-off
                   </button>
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim">
+                  <button
+                    type="button"
+                    onClick={() => handleReject(a)}
+                    className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim"
+                  >
                     Reject
                   </button>
                 </div>
@@ -1014,6 +1475,306 @@ export default function OversightPage() {
             </button>
           )}
         </>
+      )}
+
+      {/* ACTION TRACKER TAB */}
+      {tab === "actions" && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-14 font-semibold text-ink-0">All action items</div>
+              <div className="text-11 text-ink-3 mt-0.5">
+                {openActionsCount} open · {allActionItems.length - openActionsCount} closed · {allActionItems.length} total
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+            <table className="w-full text-12">
+              <thead className="bg-bg-1 border-b border-hair-2">
+                <tr>
+                  {["ID", "Action", "Owner", "Due", "Meeting", "Status", ""].map((h) => (
+                    <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {allActionItems.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-6 text-center text-11 text-ink-3">No action items found.</td>
+                  </tr>
+                )}
+                {allActionItems.map((ai, i) => (
+                  <tr key={ai.id} className={i < allActionItems.length - 1 ? "border-b border-hair" : ""}>
+                    <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{ai.id}</td>
+                    <td className="px-3 py-2.5 text-ink-1 max-w-[260px]">{ai.action}</td>
+                    <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{ai.owner}</td>
+                    <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{ai.due}</td>
+                    <td className="px-3 py-2.5 text-11 text-ink-2 max-w-[160px]">
+                      <span className="truncate block" title={ai.meetingTitle}>{ai.meetingTitle}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className={`font-mono text-10 px-1.5 py-px rounded-sm font-semibold uppercase ${ai.closed ? "bg-green-dim text-green" : "bg-amber-dim text-amber"}`}>
+                        {ai.closed ? "Closed" : "Open"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleAction(ai.id, ai.closed)}
+                        className={`text-10 font-semibold px-2 py-0.5 rounded border transition-colors ${
+                          ai.closed
+                            ? "border-amber text-amber hover:bg-amber-dim"
+                            : "border-green text-green hover:bg-green-dim"
+                        }`}
+                      >
+                        {ai.closed ? "Reopen" : "Close"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* KPI DASHBOARD TAB */}
+      {tab === "kpis" && (
+        <div className="flex flex-col gap-6">
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <KpiCard
+              label="Approval SLA compliance"
+              value={`${slaPct}%`}
+              sub={`${approvedWithinSla} of ${approvedTotal} approved within SLA`}
+              tone={slaPct >= 90 ? "green" : slaPct >= 70 ? "amber" : "red"}
+            />
+            <KpiCard
+              label="Open action items"
+              value={openActionsCount}
+              sub={`${allActionItems.length - openActionsCount} closed of ${allActionItems.length} total`}
+              tone={openActionsCount === 0 ? "green" : openActionsCount <= 3 ? "amber" : "red"}
+            />
+            <KpiCard
+              label="Circulars with gaps"
+              value={gaps}
+              sub={`${liveCirculars.filter((c) => c.disposition === "implemented").length} fully implemented`}
+              tone={gaps === 0 ? "green" : gaps === 1 ? "amber" : "red"}
+            />
+            <KpiCard
+              label="Meetings this quarter"
+              value={meetingsThisQuarter}
+              sub="Q2 2025 (Apr–Jun) · target ≥2"
+              tone={meetingsThisQuarter >= 2 ? "green" : meetingsThisQuarter === 1 ? "amber" : "red"}
+            />
+          </div>
+
+          {/* Secondary row */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <KpiCard
+              label="Pending approvals"
+              value={pendingApprovals}
+              sub="Awaiting sign-off"
+              tone={pendingApprovals === 0 ? "green" : pendingApprovals <= 2 ? "amber" : "red"}
+            />
+            <KpiCard
+              label="SLA breaches (pending)"
+              value={slaBreached}
+              sub="Active breaches — escalate immediately"
+              tone={slaBreached === 0 ? "green" : "red"}
+            />
+            <KpiCard
+              label="Total approvals"
+              value={liveApprovals.length}
+              sub={`${approvedTotal} approved · ${liveApprovals.filter((a) => a.status === "rejected").length} rejected`}
+              tone="neutral"
+            />
+            <KpiCard
+              label="Circulars tracked"
+              value={liveCirculars.length}
+              sub={`${liveCirculars.filter((c) => c.disposition === "in-progress").length} in progress`}
+              tone="blue"
+            />
+          </div>
+
+          {/* SLA compliance visual indicator */}
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Approval SLA compliance breakdown</div>
+            <div className="flex gap-2 flex-wrap mb-3">
+              {liveApprovals.filter((a) => a.status === "approved").map((a) => (
+                <div
+                  key={a.id}
+                  title={`${a.id} — ${a.elapsedHours}h / ${a.slaHours}h SLA`}
+                  className={`w-6 h-6 rounded flex items-center justify-center text-8 font-mono font-bold ${
+                    a.elapsedHours <= a.slaHours ? "bg-green-dim text-green" : "bg-red-dim text-red"
+                  }`}
+                >
+                  {a.elapsedHours <= a.slaHours ? "✓" : "!"}
+                </div>
+              ))}
+              {liveApprovals.filter((a) => a.status === "pending").map((a) => (
+                <div
+                  key={a.id}
+                  title={`${a.id} — pending — ${a.elapsedHours}h / ${a.slaHours}h SLA`}
+                  className="w-6 h-6 rounded bg-amber-dim text-amber flex items-center justify-center text-8 font-mono font-bold"
+                >
+                  ?
+                </div>
+              ))}
+              {liveApprovals.filter((a) => a.status === "rejected" || a.status === "escalated").map((a) => (
+                <div
+                  key={a.id}
+                  title={`${a.id} — ${a.status}`}
+                  className="w-6 h-6 rounded bg-bg-2 text-ink-3 flex items-center justify-center text-8 font-mono font-bold"
+                >
+                  —
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-4 text-10 text-ink-3">
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-green-dim text-green text-center leading-3 font-bold">✓</span> Within SLA</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-red-dim text-red text-center leading-3 font-bold">!</span> Breached</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-amber-dim text-amber text-center leading-3 font-bold">?</span> Pending</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-bg-2 text-ink-3 text-center leading-3 font-bold">—</span> Rejected/Escalated</span>
+            </div>
+          </div>
+
+          {/* Generate Board Report */}
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">Generate Board Report</div>
+                <div className="text-11 text-ink-3 mt-0.5">
+                  Produces a quarterly Board AML/CFT MIS report using live oversight data.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={generateBoardReport}
+                disabled={boardLoading}
+                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+              >
+                {boardLoading ? (
+                  <>
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  "Generate Board Report"
+                )}
+              </button>
+            </div>
+
+            {boardError && (
+              <div className="text-11 text-red bg-red-dim border border-red/20 rounded-lg px-4 py-2 mb-3">{boardError}</div>
+            )}
+
+            {boardResult && (
+              <div className="flex flex-col gap-5 border-t border-hair-2 pt-4 mt-2">
+                {/* Executive summary */}
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Executive Summary</div>
+                  <div className="text-12 text-ink-1 leading-relaxed whitespace-pre-wrap">{boardResult.executiveSummary}</div>
+                </div>
+
+                {/* Key metrics */}
+                {boardResult.keyMetrics?.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Key Metrics</div>
+                    <div className="flex flex-col gap-2">
+                      {boardResult.keyMetrics.map((m, i) => {
+                        const trendColor = m.trend === "improving" ? "text-green" : m.trend === "deteriorating" ? "text-red" : "text-ink-3";
+                        return (
+                          <div key={i} className="bg-bg-1 rounded p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="text-12 font-semibold text-ink-0">{m.metric}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-11 text-ink-0">{m.value}</span>
+                                <span className={`text-10 font-mono uppercase ${trendColor}`}>{m.trend}</span>
+                              </div>
+                            </div>
+                            <div className="text-11 text-ink-2">{m.commentary}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* MLRO update */}
+                {boardResult.mlroUpdate && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">MLRO Update</div>
+                    <div className="text-12 text-ink-1 leading-relaxed">{boardResult.mlroUpdate}</div>
+                  </div>
+                )}
+
+                {/* Regulatory highlights */}
+                {boardResult.regulatoryHighlights?.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Regulatory Highlights</div>
+                    <ul className="flex flex-col gap-1.5">
+                      {boardResult.regulatoryHighlights.map((h, i) => (
+                        <li key={i} className="flex gap-2 text-12 text-ink-1">
+                          <span className="shrink-0 text-brand font-mono text-10 mt-0.5">·</span>
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Open findings */}
+                {boardResult.openAuditFindings?.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Open Audit Findings</div>
+                    <div className="flex flex-col gap-2">
+                      {boardResult.openAuditFindings.map((f, i) => (
+                        <div key={i} className="bg-bg-1 rounded p-3 flex gap-3 text-12">
+                          <span className={`shrink-0 font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm h-fit mt-0.5 ${SEV_TONE[f.severity] ?? ""}`}>{f.severity}</span>
+                          <div>
+                            <div className="text-ink-1">{f.finding}</div>
+                            <div className="text-10 text-ink-3 font-mono mt-0.5">{f.status} · due {f.dueDate}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Board recommendations */}
+                {boardResult.boardRecommendations?.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Board Recommendations</div>
+                    <ul className="flex flex-col gap-1.5">
+                      {boardResult.boardRecommendations.map((r, i) => (
+                        <li key={i} className="flex gap-2 text-12 text-ink-1">
+                          <span className="shrink-0 font-mono text-10 text-brand font-bold mt-0.5">{i + 1}.</span>
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Attestation */}
+                {boardResult.attestationStatement && (
+                  <div className="border border-hair-2 rounded p-4 bg-bg-1">
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Attestation</div>
+                    <div className="text-11 text-ink-2 font-mono whitespace-pre-wrap leading-relaxed">{boardResult.attestationStatement}</div>
+                  </div>
+                )}
+
+                {boardResult.regulatoryBasis && (
+                  <div className="text-10 text-ink-3 border-t border-hair-2 pt-3">{boardResult.regulatoryBasis}</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </ModuleLayout>
   );
