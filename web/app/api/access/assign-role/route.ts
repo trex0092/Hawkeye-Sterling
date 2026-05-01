@@ -34,8 +34,14 @@ export async function POST(req: Request) {
   const user = USERS[userIdx]!;
   const oldRole = user.role;
 
-  USERS[userIdx] = { ...user, role: newRole, modules: ROLE_MODULES[newRole] ?? user.modules };
+  // Update user role and modules
+  USERS[userIdx] = {
+    ...user,
+    role: newRole,
+    modules: ROLE_MODULES[newRole] ?? user.modules,
+  };
 
+  // Log the change
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
     timestamp: new Date().toISOString(),
@@ -49,6 +55,7 @@ export async function POST(req: Request) {
   };
   PERMISSION_LOG.push(logEntry);
 
+  // Generate AI impact assessment with prompt caching
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   let impactAssessment = FALLBACK_ASSESSMENT[`${oldRole}→${newRole}`] ?? FALLBACK_ASSESSMENT["default"]!;
 
@@ -79,5 +86,10 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, user: USERS[userIdx], logEntry, impactAssessment });
+  return NextResponse.json({
+    ok: true,
+    user: USERS[userIdx],
+    logEntry,
+    impactAssessment,
+  });
 }

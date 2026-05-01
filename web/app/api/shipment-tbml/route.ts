@@ -48,7 +48,7 @@ interface TbmlResult {
 
 const FALLBACK: TbmlResult = {
   portfolioTbmlRisk: "medium",
-  portfolioNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  portfolioNarrative: "API key not configured — manual review required.",
   flaggedShipments: [],
   systemicRisks: [],
   lbmaGaps: [],

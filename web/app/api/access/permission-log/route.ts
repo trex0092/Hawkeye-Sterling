@@ -17,7 +17,10 @@ export async function POST(req: Request) {
   }
 
   if (!body.actor || !body.action || !body.targetUserId || !body.targetUserName || !body.reason) {
-    return NextResponse.json({ ok: false, error: "actor, action, targetUserId, targetUserName and reason are required" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "actor, action, targetUserId, targetUserName and reason are required" },
+      { status: 400 },
+    );
   }
 
   const entry: PermissionLogEntry = {

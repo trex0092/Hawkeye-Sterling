@@ -79,7 +79,7 @@ const FALLBACK: CddAdequacyResponse = {
   assessments: [],
   portfolioStatus: "attention_required",
   criticalSubjects: [],
-  summary: "AI analysis unavailable — check ANTHROPIC_API_KEY",
+  summary: "API key not configured — manual review required",
 };
 
 export async function POST(req: Request): Promise<NextResponse> {

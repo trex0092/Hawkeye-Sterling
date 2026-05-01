@@ -50,7 +50,7 @@ const FALLBACK: TypologyMatchResult = {
     name: "Unknown",
     fatfReference: "",
     matchStrength: "weak",
-    matchRationale: "AI analysis unavailable.",
+    matchRationale: "API key not configured.",
   },
   secondaryTypologies: [],
   keyIndicators: [],

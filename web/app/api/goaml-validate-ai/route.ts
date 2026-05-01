@@ -26,7 +26,7 @@ interface ValidationResult {
 const FALLBACK: ValidationResult = {
   score: 0,
   grade: "FAIL",
-  missingElements: ["AI analysis unavailable — check ANTHROPIC_API_KEY"],
+  missingElements: ["API key not configured"],
   tippingOffRisk: false,
   tippingOffFlags: [],
   suggestions: [],
@@ -104,10 +104,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const data = (await res.json()) as {
-      content?: { type: string; text?: string }[];
+      content?: { type: string; text: string }[];
     };
-    const first = data?.content?.[0];
-    const text = (first?.type === "text" ? first.text : undefined) ?? "";
+    const text = data?.content?.[0]?.text ?? "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as ValidationResult;
   } catch {

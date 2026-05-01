@@ -726,7 +726,7 @@ export default function NewsIntelPage() {
   ];
 
   return (
-    <ModuleLayout engineLabel="News intelligence engine" asanaModule="news-intel" asanaLabel="News Intelligence">
+    <ModuleLayout engineLabel="News intelligence engine">
       <ModuleHero
         moduleNumber={40}
         eyebrow="Hawkeye Sterling · Financial Crime Intelligence"

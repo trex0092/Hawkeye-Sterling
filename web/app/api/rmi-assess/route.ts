@@ -43,7 +43,7 @@ interface RmiAssessmentResult {
 
 const FALLBACK: RmiAssessmentResult = {
   portfolioRisk: "medium",
-  portfolioNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  portfolioNarrative: "API key not configured — manual review required.",
   criticalSmelters: [],
   oecdGaps: [],
   cahraExposure: "",

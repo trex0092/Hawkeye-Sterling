@@ -23,6 +23,7 @@ interface AccessUser {
   lastLogin: string;
   active: boolean;
   modules: string[];
+  username?: string;
 }
 
 interface PermissionLogEntry {
@@ -210,6 +211,34 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<RoleRecommendation | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [newUsername, setNewUsername] = useState(user.username ?? "");
+  const [newPassword, setNewPassword] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const handleSetPassword = async () => {
+    if (!newPassword.trim()) return;
+    setPwSaving(true);
+    setPwMsg(null);
+    try {
+      const resp = await fetch("/api/access/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, newPassword: newPassword.trim(), username: newUsername.trim() || undefined }),
+      });
+      const data = (await resp.json()) as { ok: boolean; error?: string };
+      if (data.ok) {
+        setPwMsg({ ok: true, text: "Credentials updated successfully." });
+        setNewPassword("");
+      } else {
+        setPwMsg({ ok: false, text: data.error ?? "Failed to update credentials." });
+      }
+    } catch {
+      setPwMsg({ ok: false, text: "Network error — please try again." });
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   // AI Recommend
   const handleAiRecommend = async () => {
@@ -416,6 +445,45 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
               </div>
             )}
           </div>
+
+          {/* Credentials management */}
+          <div className="border border-hair-2 rounded-md p-4 flex flex-col gap-3 bg-bg-2">
+            <div className="text-11 font-mono uppercase tracking-wide-4 text-ink-2">
+              🔐 Login credentials
+            </div>
+            <div>
+              <label className="block text-10 font-mono uppercase tracking-wide text-ink-2 mb-1">Username</label>
+              <input
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder={user.username ?? "e.g. j.smith"}
+                className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-2 text-12 text-ink-0 font-mono placeholder:text-ink-3 focus:outline-none focus:border-brand"
+              />
+            </div>
+            <div>
+              <label className="block text-10 font-mono uppercase tracking-wide text-ink-2 mb-1">New password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Min. 8 characters"
+                className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-2 text-12 text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-brand"
+              />
+            </div>
+            {pwMsg && (
+              <div className={`text-12 px-3 py-2 rounded border ${pwMsg.ok ? "bg-green-dim text-green border-green/20" : "bg-red-dim text-red border-red/20"}`}>
+                {pwMsg.text}
+              </div>
+            )}
+            <button
+              onClick={() => { void handleSetPassword(); }}
+              disabled={pwSaving || !newPassword.trim()}
+              className="py-2 rounded bg-bg-panel border border-hair-2 text-ink-1 text-12 font-semibold hover:border-brand hover:text-brand disabled:opacity-40 transition-colors"
+            >
+              {pwSaving ? "Saving…" : "Update credentials"}
+            </button>
+          </div>
         </div>
       </aside>
     </div>
@@ -433,9 +501,10 @@ export default function AccessControlPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", email: "", role: "compliance" as UserRole });
+  const [addForm, setAddForm] = useState({ name: "", email: "", role: "compliance" as UserRole, username: "", password: "" });
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
+  const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
 
   // Load from localStorage or API
   const fetchUsers = useCallback(async () => {
@@ -509,10 +578,13 @@ export default function AccessControlPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(addForm),
       });
-      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string };
+      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
       if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
-      if (data.user) setUsers((prev) => [...prev, data.user!]);
-      setAddForm({ name: "", email: "", role: "compliance" });
+      if (data.user) {
+        setUsers((prev) => [...prev, data.user!]);
+        setNewUserCreds({ username: data.user!.username ?? "", password: data.initialPassword ?? "" });
+      }
+      setAddForm({ name: "", email: "", role: "compliance", username: "", password: ""});
       setShowAddForm(false);
       void fetchLog();
     } catch {
@@ -595,11 +667,32 @@ export default function AccessControlPage() {
             </button>
           </div>
 
+          {/* Credentials display after adding a user */}
+          {newUserCreds && (
+            <div className="mb-5 border border-green/30 rounded-md p-4 bg-green-dim flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-11 font-mono uppercase tracking-wide text-green font-semibold">✓ User created — save these credentials</span>
+                <button onClick={() => setNewUserCreds(null)} className="text-green/60 hover:text-green text-14 leading-none">✕</button>
+              </div>
+              <div className="flex gap-6 text-12 font-mono">
+                <div>
+                  <span className="text-green/60 text-10 uppercase block mb-0.5">Username</span>
+                  <span className="text-green font-semibold">{newUserCreds.username}</span>
+                </div>
+                <div>
+                  <span className="text-green/60 text-10 uppercase block mb-0.5">Temporary password</span>
+                  <span className="text-green font-semibold">{newUserCreds.password}</span>
+                </div>
+              </div>
+              <p className="text-11 text-green/70">Share these credentials securely with the user. They can change their password from their profile.</p>
+            </div>
+          )}
+
           {/* Add User form */}
           {showAddForm && (
             <form onSubmit={(e) => { void handleAddUser(e); }} className="mb-5 border border-hair-2 rounded-md p-4 bg-bg-1">
               <h3 className="text-13 font-semibold text-ink-0 mb-3">Add new user</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Full name</label>
                   <input
@@ -623,6 +716,26 @@ export default function AccessControlPage() {
                   />
                 </div>
                 <div>
+                  <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Username <span className="text-ink-3 normal-case">(auto if blank)</span></label>
+                  <input
+                    type="text"
+                    value={addForm.username}
+                    onChange={(e) => setAddForm((f) => ({ ...f, username: e.target.value }))}
+                    placeholder="e.g. s.almaktoum"
+                    className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-1.5 text-12 text-ink-0 font-mono placeholder:text-ink-3 focus:outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Initial password <span className="text-ink-3 normal-case">(auto if blank)</span></label>
+                  <input
+                    type="text"
+                    value={addForm.password}
+                    onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))}
+                    placeholder={`Hawkeye@${new Date().getFullYear()}!`}
+                    className="w-full bg-bg-panel border border-hair-2 rounded px-3 py-1.5 text-12 text-ink-0 font-mono placeholder:text-ink-3 focus:outline-none focus:border-brand"
+                  />
+                </div>
+                <div className="md:col-span-2">
                   <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Role</label>
                   <select
                     value={addForm.role}
@@ -646,7 +759,7 @@ export default function AccessControlPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance" }); }}
+                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance", username: "", password: ""}); }}
                   className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
                 >
                   Cancel
@@ -659,21 +772,12 @@ export default function AccessControlPage() {
             <table className="w-full text-12">
               <thead>
                 <tr className="border-b border-hair bg-bg-2">
-                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">
-                    Name
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">
-                    Email
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">
-                    Role
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">
-                    Last login
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">
-                    Status
-                  </th>
+                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Name</th>
+                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Username</th>
+                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Email</th>
+                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Role</th>
+                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Last login</th>
+                  <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -686,6 +790,7 @@ export default function AccessControlPage() {
                     }`}
                   >
                     <td className="px-4 py-3 font-medium text-ink-0">{u.name}</td>
+                    <td className="px-4 py-3 text-ink-1 font-mono text-11">{u.username ?? <span className="text-ink-3">—</span>}</td>
                     <td className="px-4 py-3 text-ink-2 font-mono text-11">{u.email}</td>
                     <td className="px-4 py-3">
                       <RoleBadge role={u.role} />
@@ -707,7 +812,7 @@ export default function AccessControlPage() {
                 ))}
                 {users.length === 0 && !loadingUsers && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-ink-2 text-12">
+                    <td colSpan={6} className="px-4 py-8 text-center text-ink-2 text-12">
                       No users found.
                     </td>
                   </tr>

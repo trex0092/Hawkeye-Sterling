@@ -45,7 +45,7 @@ const FALLBACK: SanctionsNexusResult = {
   directExposure: "none",
   indirectExposure: "possible",
   overallSanctionsRisk: "medium",
-  exposureNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  exposureNarrative: "API key not configured — manual review required.",
   directRisks: [],
   indirectRisks: [],
   jurisdictionalExposure: [],

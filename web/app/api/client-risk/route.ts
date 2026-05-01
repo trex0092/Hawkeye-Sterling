@@ -52,7 +52,7 @@ interface ClientRiskResult {
 
 const FALLBACK: ClientRiskResult = {
   overallRisk: "medium",
-  riskNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  riskNarrative: "API key not configured — manual assessment required.",
   jurisdictionalRisk: "",
   ownershipRisk: "",
   pepExposure: { detected: false, pepNames: [], mitigants: "" },

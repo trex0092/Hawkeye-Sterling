@@ -12,9 +12,9 @@ export interface RoleRecommendation {
 }
 
 const FALLBACK: RoleRecommendation = {
-  recommendedRole: "compliance",
-  rationale: "Based on the provided responsibilities, the Compliance Department role provides full access to all AML modules. For other departments, restrict access to Screening and Audit Trail only, following the principle of least privilege under UAE FDL 10/2025 Art.20.",
-  suggestedModules: ["Screening", "Audit Trail"],
+  recommendedRole: "analyst",
+  rationale: "Based on the provided responsibilities, the Analyst role provides appropriate access to Screening, STR Cases and Investigation modules while maintaining the principle of least privilege. The role supports day-to-day compliance operations without granting administrative or MLRO-level capabilities.",
+  suggestedModules: ["Screening", "STR Cases", "Investigation", "Audit Trail"],
   risks: [
     "Ensure mandatory AML/CFT training is completed before activation.",
     "Confirm separation of duties — the user should not approve their own STR submissions.",
@@ -58,13 +58,13 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are an AML access-control specialist for Hawkeye Sterling, a UAE-regulated gold trading firm. The platform has five department-based access roles: compliance (full access to all modules), management (Screening, STR Cases, MLRO Advisor read, Oversight, EWRA, Audit Trail), logistics (Screening, Investigation read, Audit Trail), trading (Screening, Audit Trail), accounts (Screening, Audit Trail). Available modules: ${ALL_MODULES.join(", ")}.
+          text: `You are an AML access-control specialist for Hawkeye Sterling, a UAE-regulated gold trading firm. The platform has five roles: viewer (read-only screening + audit trail), analyst (+ STR Cases, Investigation), supervisor (+ MLRO Advisor, Oversight, EWRA, Playbook), mlro (all except Access Control), admin (all modules including Access Control). Available modules: ${ALL_MODULES.join(", ")}.
 
-Given a new user's department and responsibilities, recommend the most appropriate department role and modules, following the principle of least privilege and UAE FDL 10/2025 Art.20 segregation-of-duties requirements.
+Given a new user's details, recommend the most appropriate role and modules, following the principle of least privilege and UAE FDL 10/2025 segregation-of-duties requirements.
 
 Return ONLY valid JSON (no markdown fences):
 {
-  "recommendedRole": "compliance|management|logistics|trading|accounts",
+  "recommendedRole": "viewer|analyst|supervisor|mlro|admin",
   "rationale": "2-3 sentence explanation",
   "suggestedModules": ["module names"],
   "risks": ["risk 1", "risk 2"]

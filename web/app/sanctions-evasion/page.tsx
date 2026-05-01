@@ -191,7 +191,6 @@ export default function SanctionsEvasionPage() {
           transactions,
         }),
       });
-      if (!res.ok) throw new Error(`Server ${res.status}`);
       const json = (await res.json()) as SanctionsEvasionResult;
       setResult(json);
     } catch {

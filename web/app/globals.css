@@ -208,41 +208,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   pointer-events: none;
 }
 
-/* ── Global form input sizing ──────────────────────────────────────────────
- * Inputs and selects must never stretch across the full content area when
- * used standalone. Inside a grid column they fill the cell (which is already
- * the right size). Textareas get a wider cap because they hold longer text.
- *
- * Specificity: element-only rule (0,0,1) is intentionally low so that
- * component-level overrides still win. The grid rule (0,1,2) beats it for
- * anything living inside a Tailwind .grid container.
- */
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]) {
-  max-width: 520px;
-}
-select {
-  max-width: 520px;
-}
-textarea {
-  max-width: 720px;
-}
-
-/* Inside a grid cell, fill the column completely */
-.grid > * input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-.grid > * select,
-.grid > * textarea {
-  max-width: 100%;
-}
-
-/* Search inputs and flex-grow wrappers always fill their container */
-input[type="search"],
-.flex-1 > input,
-.flex-1 > select,
-.flex-1 > textarea,
-.w-full.max-w-none {
-  max-width: 100%;
-}
-
 @keyframes ticker-scroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }

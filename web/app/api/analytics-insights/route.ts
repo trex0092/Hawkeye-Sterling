@@ -78,7 +78,7 @@ urgency must be one of: "immediate", "this_month", "quarterly".
 Provide exactly 3 boardTalkingPoints and 2-4 insights.`;
 
 const FALLBACK: AnalyticsInsightsResponse = {
-  headline: "AI analysis unavailable — check ANTHROPIC_API_KEY",
+  headline: "API key not configured",
   riskTrend: "stable",
   insights: [],
   regulatoryExposure: "",

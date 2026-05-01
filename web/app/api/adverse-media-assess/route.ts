@@ -30,7 +30,7 @@ interface AmAssessmentResult {
 
 const FALLBACK: AmAssessmentResult = {
   overallRisk: "medium",
-  threatNarrative: "AI analysis unavailable — check ANTHROPIC_API_KEY.",
+  threatNarrative: "API key not configured — manual review required.",
   topConcerns: [],
   fatfTypologies: [],
   regulatoryLinks: "",

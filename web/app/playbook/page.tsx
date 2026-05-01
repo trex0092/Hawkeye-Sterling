@@ -5824,39 +5824,6 @@ const REC_TONE: Record<ScenarioSimulateResult["recommendation"], string> = {
   "Escalate to MLRO": "text-brand",
 };
 
-interface GapResult {
-  riskRating: "critical" | "high" | "medium" | "low";
-  gapSummary: string;
-  criticalGaps: Array<{ check: string; risk: string; consequence: string }>;
-  regulatoryExposure: string[];
-  canFileSAR: boolean;
-  canFileReason: string;
-  priorityActions: string[];
-}
-
-interface STRNarrativeResult {
-  narrative: string;
-  suspiciousBehaviours: string[];
-  regulatoryBasis: string[];
-  recommendedDisposition: "FILE_STR" | "ESCALATE" | "ENHANCED_CDD" | "MONITOR";
-  confidence: number;
-  missingElements: string[];
-}
-
-const GAP_RATING_CLS: Record<string, string> = {
-  critical: "bg-red text-white",
-  high: "bg-red-dim text-red",
-  medium: "bg-amber-dim text-amber",
-  low: "bg-green-dim text-green",
-};
-
-const DISP_CLS: Record<string, string> = {
-  FILE_STR: "bg-red text-white",
-  ESCALATE: "bg-orange-dim text-orange",
-  ENHANCED_CDD: "bg-amber-dim text-amber",
-  MONITOR: "bg-bg-2 text-ink-2",
-};
-
 export default function PlaybookPage() {
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -5865,13 +5832,6 @@ export default function PlaybookPage() {
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<{ answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] } | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
-
-  // Drawer power tools
-  const [strResult, setStrResult] = useState<STRNarrativeResult | null>(null);
-  const [strLoading, setStrLoading] = useState(false);
-  const [gapResult, setGapResult] = useState<GapResult | null>(null);
-  const [gapLoading, setGapLoading] = useState(false);
-  const [drawerTab, setDrawerTab] = useState<"checklist" | "str" | "gap">("checklist");
 
   // Scenario Simulator state
   const [simScenario, setSimScenario] = useState("");
@@ -5905,13 +5865,6 @@ export default function PlaybookPage() {
   };
 
   const pb = PLAYBOOKS.find((p) => p.id === drawerOpen) ?? null;
-
-  const openDrawer = (id: string) => {
-    setDrawerOpen(id);
-    setDrawerTab("checklist");
-    setStrResult(null);
-    setGapResult(null);
-  };
 
   const totalChecks = pb ? pb.steps.reduce((a, s) => a + s.checks.length, 0) : 0;
   const doneChecks = pb
@@ -5952,108 +5905,6 @@ export default function PlaybookPage() {
       if (data.ok) setQaAnswer(data);
     } catch { /* silent */ }
     finally { setQaLoading(false); }
-  };
-
-  const getCheckLists = (pb: Playbook) => {
-    const completed: string[] = [];
-    const incomplete: string[] = [];
-    const requiredMissing: string[] = [];
-    pb.steps.forEach((step, si) => {
-      step.checks.forEach((c, ci) => {
-        if (checked[`${pb.id}:${si}:${ci}`]) completed.push(c);
-        else {
-          incomplete.push(c);
-          if (step.required) requiredMissing.push(c);
-        }
-      });
-    });
-    return { completed, incomplete, requiredMissing };
-  };
-
-  const runStrNarrative = async (pb: Playbook) => {
-    setStrLoading(true);
-    setStrResult(null);
-    setDrawerTab("str");
-    const { completed, incomplete } = getCheckLists(pb);
-    try {
-      const res = await fetch("/api/playbook/str-narrative", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ playbookTitle: pb.title, typology: pb.typology, completedChecks: completed, incompleteChecks: incomplete }),
-      });
-      const data = await res.json() as { ok: boolean } & STRNarrativeResult;
-      if (data.ok) setStrResult(data);
-    } catch { /* silent */ }
-    finally { setStrLoading(false); }
-  };
-
-  const runGapAnalysis = async (pb: Playbook) => {
-    setGapLoading(true);
-    setGapResult(null);
-    setDrawerTab("gap");
-    const { completed, incomplete, requiredMissing } = getCheckLists(pb);
-    try {
-      const res = await fetch("/api/playbook/gap-analysis", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ playbookTitle: pb.title, typology: pb.typology, completedChecks: completed, incompleteChecks: incomplete, requiredStepsMissing: requiredMissing }),
-      });
-      const data = await res.json() as { ok: boolean } & GapResult;
-      if (data.ok) setGapResult(data);
-    } catch { /* silent */ }
-    finally { setGapLoading(false); }
-  };
-
-  const exportChecklistPdf = async (pb: Playbook) => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-
-    doc.setFillColor(12, 12, 14);
-    doc.rect(0, 0, 210, 297, "F");
-    doc.setTextColor(242, 242, 245);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("HAWKEYE STERLING", 14, 16);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(236, 72, 153);
-    doc.text(`Playbook: ${pb.title}`, 14, 23);
-    doc.setTextColor(136, 136, 148);
-    doc.setFontSize(8);
-    doc.text(`Generated: ${dateStr}  ·  Typology: ${pb.typology}  ·  Family: ${pb.family}`, 14, 29);
-
-    let y = 38;
-    pb.steps.forEach((step, si) => {
-      if (y > 270) { doc.addPage(); doc.setFillColor(12,12,14); doc.rect(0,0,210,297,"F"); y = 20; }
-      doc.setTextColor(242, 242, 245);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text(step.title + (step.required ? " [REQUIRED]" : ""), 14, y);
-      y += 6;
-      step.checks.forEach((c, ci) => {
-        const done = Boolean(checked[`${pb.id}:${si}:${ci}`]);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(done ? 34 : 136, done ? 197 : 136, done ? 94 : 148);
-        const prefix = done ? "✓ " : "○ ";
-        const lines = doc.splitTextToSize(prefix + c, 175);
-        if (y + lines.length * 4.5 > 275) { doc.addPage(); doc.setFillColor(12,12,14); doc.rect(0,0,210,297,"F"); y = 20; }
-        doc.text(lines as string[], 18, y);
-        y += lines.length * 4.5 + 1;
-      });
-      y += 4;
-    });
-
-    doc.setTextColor(82, 82, 94);
-    doc.setFontSize(7);
-    const pages = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
-    for (let i = 1; i <= pages; i++) {
-      doc.setPage(i);
-      doc.text(`CONFIDENTIAL — FDL 10/2025 · CR 134/2025 — Page ${i}/${pages}`, 14, 291);
-    }
-    doc.save(`hawkeye-playbook-${pb.id}-${dateStr}.pdf`);
   };
 
   return (
@@ -6171,7 +6022,7 @@ export default function PlaybookPage() {
                       <button
                         key={ch}
                         type="button"
-                        onClick={() => { if (match) { openDrawer(match.id); } }}
+                        onClick={() => { if (match) { setDrawerOpen(match.id); } }}
                         className={`text-11 font-semibold px-2.5 py-1 rounded-full border transition-colors ${match ? "bg-brand-dim text-brand border-brand/30 hover:bg-brand hover:text-white hover:border-brand" : "bg-bg-2 text-ink-2 border-hair-2"}`}
                         title={match ? `Open ${ch} playbook` : ch}
                       >
@@ -6262,7 +6113,7 @@ export default function PlaybookPage() {
             <button
               key={p.id}
               type="button"
-              onClick={() => openDrawer(p.id)}
+              onClick={() => setDrawerOpen(p.id)}
               className="text-left px-3 py-2.5 rounded border border-hair-2 bg-bg-panel hover:border-brand hover:bg-brand-dim transition-colors group"
             >
               <div className="flex items-center justify-between mb-1">
@@ -6295,17 +6146,24 @@ export default function PlaybookPage() {
           />
 
           {/* Drawer panel */}
-          <div className="fixed top-0 right-0 h-full w-[680px] bg-bg-0 border-l border-hair-2 z-50 flex flex-col shadow-2xl">
+          <div className="fixed top-0 right-0 h-full w-[640px] bg-bg-0 border-l border-hair-2 z-50 flex flex-col shadow-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-hair-2 bg-bg-panel shrink-0">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-hair-2 bg-bg-panel shrink-0">
               <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded-sm ${getFamilyColor(pb.family)}`}>{pb.family}</span>
+                  <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded-sm ${getFamilyColor(pb.family)}`}>
+                    {pb.family}
+                  </span>
                   <span className="font-mono text-10 text-ink-3">{pb.typology}</span>
                 </div>
                 <h2 className="text-18 font-bold text-ink-0 leading-tight m-0">{pb.title}</h2>
               </div>
-              <button type="button" onClick={() => setDrawerOpen(null)} className="text-ink-3 hover:text-ink-0 text-20 leading-none mt-0.5 px-1" aria-label="Close">✕</button>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(null)}
+                className="text-ink-3 hover:text-ink-0 text-20 leading-none mt-0.5 px-1"
+                aria-label="Close"
+              >✕</button>
             </div>
 
             {/* Progress bar */}
@@ -6317,228 +6175,86 @@ export default function PlaybookPage() {
               <div className="h-2 bg-bg-2 rounded-full overflow-hidden">
                 <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${pct}%` }} />
               </div>
-              {pct === 100 && <div className="mt-1.5 text-11 text-green font-semibold">✓ All checks complete — ready for sign-off</div>}
-            </div>
-
-            {/* Power-tool tab bar */}
-            <div className="flex items-center gap-0 border-b border-hair-2 bg-bg-1 shrink-0 px-2">
-              {([
-                { key: "checklist", label: "☑ Checklist" },
-                { key: "str", label: "📝 STR Narrative" },
-                { key: "gap", label: "🔴 Gap Analysis" },
-              ] as const).map((t) => (
-                <button key={t.key} type="button" onClick={() => setDrawerTab(t.key)}
-                  className={`px-4 py-2 text-11 font-semibold border-b-2 -mb-px transition-colors ${drawerTab === t.key ? "border-brand text-brand" : "border-transparent text-ink-3 hover:text-ink-1"}`}>
-                  {t.label}
-                </button>
-              ))}
-              <div className="ml-auto flex items-center gap-1.5 px-2">
-                <button type="button" onClick={() => void exportChecklistPdf(pb)} title="Export PDF checklist"
-                  className="px-2.5 py-1 text-10 font-semibold rounded border border-hair-2 text-ink-2 hover:text-ink-0 hover:border-ink-2 transition-colors">
-                  ⎁ PDF
-                </button>
-                <button type="button" onClick={() => void runGapAnalysis(pb)} disabled={gapLoading}
-                  title="AI stress-test — identify regulatory gaps"
-                  className="px-2.5 py-1 text-10 font-semibold rounded border border-red/40 text-red bg-red-dim hover:bg-red/20 disabled:opacity-40 transition-colors">
-                  {gapLoading ? "…" : "🔴 Gap"}
-                </button>
-                <button type="button" onClick={() => void runStrNarrative(pb)} disabled={strLoading || pct === 0}
-                  title="Generate STR narrative from completed checks"
-                  className="px-2.5 py-1 text-10 font-semibold rounded border border-brand/40 bg-brand-dim text-brand hover:bg-brand/20 disabled:opacity-40 transition-colors">
-                  {strLoading ? "…" : "📝 STR"}
-                </button>
-              </div>
+              {pct === 100 && (
+                <div className="mt-2 text-11 text-green font-semibold">✓ All checks complete — playbook ready for sign-off</div>
+              )}
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-
-              {/* ── CHECKLIST TAB ── */}
-              {drawerTab === "checklist" && <>
-                {pb.description && (
-                  <div className="bg-brand-dim border border-brand/20 rounded-lg px-4 py-3">
-                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-1.5">About this playbook</div>
-                    <p className="text-12 text-ink-1 leading-relaxed m-0">{pb.description}</p>
-                  </div>
-                )}
-                {pb.citations && pb.citations.length > 0 && (
-                  <div>
-                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Regulatory basis</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {pb.citations.map((c) => (
-                        <span key={c} className="text-10 font-mono px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1">{c}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-4">
-                  {pb.steps.map((step, si) => {
-                    const stepDone = step.checks.filter((_, ci) => checked[`${pb.id}:${si}:${ci}`]).length;
-                    const stepTotal = step.checks.length;
-                    return (
-                      <div key={si} className="border border-hair-2 rounded-lg overflow-hidden">
-                        <div className={`px-4 py-2.5 flex items-center justify-between border-b border-hair-2 ${stepDone === stepTotal ? "bg-green-dim" : "bg-bg-panel"}`}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-12 font-semibold text-ink-0">{step.title}</span>
-                            {step.required && <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold bg-red-dim text-red">required</span>}
-                            {stepDone === stepTotal && stepTotal > 0 && <span className="font-mono text-10 text-green font-semibold">✓ done</span>}
-                          </div>
-                          <span className="font-mono text-10 text-ink-3">{stepDone}/{stepTotal}</span>
-                        </div>
-                        <ul className="list-none p-0 m-0 divide-y divide-hair">
-                          {step.checks.map((c, ci) => {
-                            const k = `${pb.id}:${si}:${ci}`;
-                            const done = Boolean(checked[k]);
-                            return (
-                              <li key={ci}>
-                                <label className={`flex items-start gap-3 px-4 py-2.5 cursor-pointer hover:bg-bg-1 transition-colors ${done ? "bg-green-dim/30" : ""}`}>
-                                  <input type="checkbox" checked={done} onChange={() => toggle(pb.id, si, ci)} className="mt-0.5 accent-brand shrink-0" />
-                                  <span className={`text-12 leading-relaxed ${done ? "text-ink-3 line-through" : "text-ink-1"}`}>{c}</span>
-                                </label>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                        {step.citation && <div className="px-4 py-1.5 bg-bg-1 border-t border-hair text-10 text-ink-3 font-mono">{step.citation}</div>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>}
-
-              {/* ── STR NARRATIVE TAB ── */}
-              {drawerTab === "str" && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-12 font-semibold text-ink-0">STR Narrative Generator</span>
-                    <span className="text-10 text-ink-3">AI drafts a goAML-ready STR from your completed checks</span>
-                  </div>
-                  {!strResult && !strLoading && (
-                    <div className="border border-hair-2 rounded-lg p-6 text-center">
-                      <p className="text-12 text-ink-2 mb-4">Complete checklist items then generate an STR narrative based on your findings.</p>
-                      <button type="button" onClick={() => void runStrNarrative(pb)} disabled={pct === 0}
-                        className="px-5 py-2 bg-brand text-white rounded text-12 font-semibold hover:bg-brand-hover disabled:opacity-40 transition-colors">
-                        📝 Generate STR Narrative
-                      </button>
-                    </div>
-                  )}
-                  {strLoading && <div className="py-12 text-center text-12 text-ink-2 animate-pulse">Generating STR narrative…</div>}
-                  {strResult && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className={`font-mono text-10 font-semibold px-2.5 py-1 rounded uppercase ${DISP_CLS[strResult.recommendedDisposition] ?? "bg-bg-2 text-ink-2"}`}>
-                          {strResult.recommendedDisposition}
-                        </span>
-                        <span className={`text-10 font-mono px-2 py-0.5 rounded ${strResult.confidence >= 0.7 ? "bg-green-dim text-green" : strResult.confidence >= 0.4 ? "bg-amber-dim text-amber" : "bg-red-dim text-red"}`}>
-                          {(strResult.confidence * 100).toFixed(0)}% confidence
-                        </span>
-                        <button type="button" onClick={() => void runStrNarrative(pb)} disabled={strLoading}
-                          className="ml-auto text-10 font-semibold px-2.5 py-1 rounded border border-brand/40 text-brand bg-brand-dim hover:bg-brand/20 disabled:opacity-40">
-                          Regenerate
-                        </button>
-                      </div>
-                      <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-                        <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">STR Narrative</div>
-                        <div className="text-12 text-ink-0 leading-relaxed whitespace-pre-wrap">{strResult.narrative}</div>
-                        <button type="button" onClick={() => void navigator.clipboard.writeText(strResult.narrative)}
-                          className="mt-3 text-10 text-ink-3 hover:text-brand underline">Copy to clipboard</button>
-                      </div>
-                      {strResult.suspiciousBehaviours.length > 0 && (
-                        <div>
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Suspicious Behaviours</div>
-                          <ul className="space-y-1">{strResult.suspiciousBehaviours.map((b, i) => <li key={i} className="flex items-start gap-2 text-12 text-red"><span className="shrink-0">•</span>{b}</li>)}</ul>
-                        </div>
-                      )}
-                      {strResult.regulatoryBasis.length > 0 && (
-                        <div>
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Regulatory Basis</div>
-                          <div className="flex flex-wrap gap-1.5">{strResult.regulatoryBasis.map((r) => <span key={r} className="font-mono text-10 px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1">{r}</span>)}</div>
-                        </div>
-                      )}
-                      {strResult.missingElements.length > 0 && (
-                        <div className="bg-amber-dim/40 border border-amber/20 rounded-lg px-3 py-2">
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-amber mb-1.5">Strengthen Your Case — Missing Elements</div>
-                          <ul className="space-y-0.5">{strResult.missingElements.map((m, i) => <li key={i} className="text-11 text-ink-1">◦ {m}</li>)}</ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+              {/* Description */}
+              {pb.description && (
+                <div className="bg-brand-dim border border-brand/20 rounded-lg px-4 py-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-1.5">About this playbook</div>
+                  <p className="text-12 text-ink-1 leading-relaxed m-0">{pb.description}</p>
                 </div>
               )}
 
-              {/* ── GAP ANALYSIS TAB ── */}
-              {drawerTab === "gap" && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-12 font-semibold text-ink-0">Gap Analysis / Stress Test</span>
-                    <span className="text-10 text-ink-3">AI identifies regulatory exposure from incomplete checks</span>
+              {/* Regulatory citations */}
+              {pb.citations && pb.citations.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Regulatory basis</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {pb.citations.map((c) => (
+                      <span key={c} className="text-10 font-mono px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1">
+                        {c}
+                      </span>
+                    ))}
                   </div>
-                  {!gapResult && !gapLoading && (
-                    <div className="border border-hair-2 rounded-lg p-6 text-center">
-                      <p className="text-12 text-ink-2 mb-4">Run the AI stress test to identify which uncompleted checks create regulatory exposure.</p>
-                      <button type="button" onClick={() => void runGapAnalysis(pb)}
-                        className="px-5 py-2 bg-red-dim text-red border border-red/30 rounded text-12 font-semibold hover:bg-red/20 transition-colors">
-                        🔴 Run Gap Analysis
-                      </button>
-                    </div>
-                  )}
-                  {gapLoading && <div className="py-12 text-center text-12 text-ink-2 animate-pulse">Stress-testing checklist…</div>}
-                  {gapResult && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className={`font-mono text-10 font-semibold px-2.5 py-1 rounded uppercase ${GAP_RATING_CLS[gapResult.riskRating] ?? "bg-bg-2 text-ink-2"}`}>
-                          {gapResult.riskRating} risk
-                        </span>
-                        <span className={`text-11 font-semibold ${gapResult.canFileSAR ? "text-green" : "text-amber"}`}>
-                          {gapResult.canFileSAR ? "✓ Evidence sufficient to file STR" : "⚠ Insufficient evidence for STR filing"}
-                        </span>
-                        <button type="button" onClick={() => void runGapAnalysis(pb)} disabled={gapLoading}
-                          className="ml-auto text-10 font-semibold px-2.5 py-1 rounded border border-red/40 text-red bg-red-dim hover:bg-red/20 disabled:opacity-40">
-                          Rerun
-                        </button>
-                      </div>
-                      <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3">
-                        <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Gap Summary</div>
-                        <p className="text-12 text-ink-0 leading-relaxed">{gapResult.gapSummary}</p>
-                        <p className="text-11 text-ink-2 mt-1">{gapResult.canFileReason}</p>
-                      </div>
-                      {gapResult.criticalGaps.length > 0 && (
-                        <div>
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-2">Critical Gaps</div>
-                          <div className="space-y-2">
-                            {gapResult.criticalGaps.map((g, i) => (
-                              <div key={i} className="border border-red/20 rounded-lg px-3 py-2.5 bg-red-dim/30">
-                                <div className="text-11 font-semibold text-ink-0 mb-1">◦ {g.check}</div>
-                                <div className="text-11 text-red mb-0.5">Risk: {g.risk}</div>
-                                <div className="text-10 text-ink-3">Consequence: {g.consequence}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {gapResult.regulatoryExposure.length > 0 && (
-                        <div>
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Regulatory Exposure</div>
-                          <div className="flex flex-wrap gap-1.5">{gapResult.regulatoryExposure.map((r) => <span key={r} className="font-mono text-10 px-2 py-0.5 rounded border border-amber/30 bg-amber-dim text-amber">{r}</span>)}</div>
-                        </div>
-                      )}
-                      {gapResult.priorityActions.length > 0 && (
-                        <div>
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Priority Actions</div>
-                          <ol className="space-y-1.5">
-                            {gapResult.priorityActions.map((a, i) => (
-                              <li key={i} className="flex items-start gap-2 text-12 text-ink-0">
-                                <span className="font-mono text-10 bg-bg-2 px-1.5 py-px rounded shrink-0 mt-0.5">{i + 1}</span>
-                                {a}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
+
+              {/* Steps */}
+              <div className="space-y-5">
+                {pb.steps.map((step, si) => {
+                  const stepDone = step.checks.filter((_, ci) => checked[`${pb.id}:${si}:${ci}`]).length;
+                  const stepTotal = step.checks.length;
+                  return (
+                    <div key={si} className="border border-hair-2 rounded-lg overflow-hidden">
+                      <div className={`px-4 py-2.5 flex items-center justify-between border-b border-hair-2 ${stepDone === stepTotal ? "bg-green-dim" : "bg-bg-panel"}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-12 font-semibold text-ink-0">{step.title}</span>
+                          {step.required && (
+                            <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold bg-red-dim text-red">
+                              required
+                            </span>
+                          )}
+                          {stepDone === stepTotal && stepTotal > 0 && (
+                            <span className="font-mono text-10 text-green font-semibold">✓ done</span>
+                          )}
+                        </div>
+                        <span className="font-mono text-10 text-ink-3">{stepDone}/{stepTotal}</span>
+                      </div>
+                      <ul className="list-none p-0 m-0 divide-y divide-hair">
+                        {step.checks.map((c, ci) => {
+                          const k = `${pb.id}:${si}:${ci}`;
+                          const done = Boolean(checked[k]);
+                          return (
+                            <li key={ci}>
+                              <label className={`flex items-start gap-3 px-4 py-2.5 cursor-pointer hover:bg-bg-1 transition-colors ${done ? "bg-green-dim/30" : ""}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={done}
+                                  onChange={() => toggle(pb.id, si, ci)}
+                                  className="mt-0.5 accent-brand shrink-0"
+                                />
+                                <span className={`text-12 leading-relaxed ${done ? "text-ink-3 line-through" : "text-ink-1"}`}>
+                                  {c}
+                                </span>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {step.citation && (
+                        <div className="px-4 py-1.5 bg-bg-1 border-t border-hair text-10 text-ink-3 font-mono">
+                          {step.citation}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Footer */}
