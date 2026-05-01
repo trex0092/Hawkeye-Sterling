@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
 // Required annually under FDL 10/2025 Art.4 and FATF R.1.
@@ -129,12 +130,50 @@ function ScoreSelector({ value, onChange }: { value: number; onChange: (n: numbe
   );
 }
 
+const RISK_OVERALL: Record<number, EwraBoardReportResult["overallRisk"]> = {
+  1: "low", 2: "low", 3: "medium", 4: "high", 5: "critical",
+};
+
 export default function EwraPage() {
   const [state, setState] = useState<EwraState>(DEFAULT_STATE);
+  const [boardReport, setBoardReport] = useState<EwraBoardReportResult | null>(null);
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardError, setBoardError] = useState<string | null>(null);
+  const [boardOpen, setBoardOpen] = useState(false);
 
   useEffect(() => { setState(load()); }, []);
 
   const update = (updated: EwraState) => { setState(updated); save(updated); };
+
+  const runBoardReport = async () => {
+    setBoardLoading(true);
+    setBoardError(null);
+    try {
+      const res = await fetch("/api/ewra-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          dimensions: state.dimensions.map((d) => ({
+            dimension: d.dimension,
+            inherent: d.inherent,
+            controls: d.controls,
+            notes: d.notes,
+          })),
+          institutionName: "Hawkeye Sterling DPMS",
+          reportingPeriod: new Date().getFullYear().toString(),
+          context: `Last approved: ${state.lastApproved || "not recorded"}. Approved by: ${state.approvedBy || "pending"}. Board minutes ref: ${state.boardMinutes || "none"}.`,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string } & EwraBoardReportResult;
+      if (!data.ok) { setBoardError(data.error ?? "Report generation failed"); return; }
+      setBoardReport(data);
+      setBoardOpen(true);
+    } catch {
+      setBoardError("Network error — try again");
+    } finally {
+      setBoardLoading(false);
+    }
+  };
 
   const updateDim = (id: string, patch: Partial<RiskDimension>) => {
     update({
@@ -183,6 +222,181 @@ export default function EwraPage() {
             },
           ]}
         />
+
+        {/* AI Board Report button */}
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => { void runBoardReport(); }}
+            disabled={boardLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
+          >
+            {boardLoading ? (
+              <>
+                <span className="animate-spin font-mono">◌</span>
+                Generating…
+              </>
+            ) : (
+              <>
+                <span>✦</span>
+                Generate AI Board Report
+              </>
+            )}
+          </button>
+          {boardReport && !boardOpen && (
+            <button
+              type="button"
+              onClick={() => setBoardOpen(true)}
+              className="text-11 text-brand underline font-medium"
+            >
+              View last report ↗
+            </button>
+          )}
+          {boardError && (
+            <span className="text-11 text-red">{boardError}</span>
+          )}
+        </div>
+
+        {/* Board Report Panel */}
+        {boardOpen && boardReport && (
+          <div className="mt-4 bg-bg-panel border border-brand/30 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2 bg-brand-dim">
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand">✦ AI Board Report · FDL 10/2025 Art.4</div>
+                <div className="text-13 font-bold text-ink-0 mt-0.5">Enterprise-Wide Risk Assessment — Board Narrative</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded-sm font-mono text-11 font-bold uppercase ${
+                  boardReport.overallRisk === "critical" ? "bg-red text-white" :
+                  boardReport.overallRisk === "high" ? "bg-red-dim text-red" :
+                  boardReport.overallRisk === "medium" ? "bg-amber-dim text-amber" :
+                  "bg-green-dim text-green"
+                }`}>
+                  {boardReport.overallRisk} risk
+                </span>
+                <button type="button" onClick={() => setBoardOpen(false)} className="text-ink-3 hover:text-ink-0 text-16 px-1">✕</button>
+              </div>
+            </div>
+
+            <div className="px-5 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Executive Summary */}
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Executive Summary</div>
+                <p className="text-12 text-ink-1 leading-relaxed whitespace-pre-wrap">{boardReport.executiveSummary}</p>
+              </div>
+
+              {/* Key Findings */}
+              {boardReport.keyFindings?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Key Findings</div>
+                  <ul className="space-y-1.5">
+                    {boardReport.keyFindings.map((f, i) => (
+                      <li key={i} className="flex gap-2 text-12 text-ink-1">
+                        <span className="text-brand font-mono shrink-0">•</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Dimension Narratives */}
+              {boardReport.dimensionNarratives?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Dimension Narratives</div>
+                  <div className="space-y-3">
+                    {boardReport.dimensionNarratives.map((dn, i) => (
+                      <div key={i} className="border border-hair-2 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-12 font-semibold text-ink-0">{dn.dimension}</div>
+                          <div className="flex gap-2">
+                            <span className="text-10 font-mono px-1.5 py-px rounded bg-bg-2 text-ink-2">Inherent: {dn.inherentRisk}</span>
+                            <span className="text-10 font-mono px-1.5 py-px rounded bg-bg-2 text-ink-2">Residual: {dn.residualRisk}</span>
+                          </div>
+                        </div>
+                        <p className="text-11 text-ink-1 mb-2">{dn.narrative}</p>
+                        {dn.controlGaps?.length > 0 && (
+                          <div className="text-10 text-red font-semibold mb-1">Control gaps:</div>
+                        )}
+                        {dn.controlGaps?.map((g, j) => (
+                          <div key={j} className="text-11 text-red ml-2">• {g}</div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Board Recommendations */}
+              {boardReport.boardRecommendations?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Board Recommendations</div>
+                  <ol className="space-y-1.5 list-decimal pl-5">
+                    {boardReport.boardRecommendations.map((r, i) => (
+                      <li key={i} className="text-12 text-ink-1">{r}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Regulatory Context */}
+              {boardReport.regulatoryContext && (
+                <div className="bg-bg-1 border border-hair-2 rounded p-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">Regulatory Context</div>
+                  <p className="text-11 text-ink-2 leading-relaxed">{boardReport.regulatoryContext}</p>
+                </div>
+              )}
+
+              {/* Approval Statement */}
+              {boardReport.approvalStatement && (
+                <div className="bg-brand-dim border border-brand/20 rounded p-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-1.5">Approval Statement</div>
+                  <p className="text-11 text-ink-1 leading-relaxed">{boardReport.approvalStatement}</p>
+                </div>
+              )}
+
+              {/* Next Steps */}
+              {boardReport.nextSteps?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Next Steps</div>
+                  <ul className="space-y-1">
+                    {boardReport.nextSteps.map((s, i) => (
+                      <li key={i} className="flex gap-2 text-12 text-ink-1">
+                        <span className="font-mono text-10 text-brand shrink-0 mt-0.5">{i + 1}.</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-hair-2 bg-bg-panel flex justify-between items-center">
+              <span className="text-10 text-ink-3 font-mono">Draft narrative — MLRO review required before Board presentation</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const text = [
+                    `EWRA BOARD REPORT — ${new Date().toLocaleDateString("en-GB")}`,
+                    `Overall Risk: ${boardReport.overallRisk.toUpperCase()}`,
+                    "",
+                    "EXECUTIVE SUMMARY",
+                    boardReport.executiveSummary,
+                    "",
+                    "BOARD RECOMMENDATIONS",
+                    ...(boardReport.boardRecommendations?.map((r, i) => `${i + 1}. ${r}`) ?? []),
+                    "",
+                    boardReport.approvalStatement,
+                  ].join("\n");
+                  void navigator.clipboard.writeText(text);
+                }}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
+              >
+                Copy to clipboard
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Approval metadata */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">

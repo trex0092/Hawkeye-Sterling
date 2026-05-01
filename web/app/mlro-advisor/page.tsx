@@ -1635,7 +1635,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1982,6 +1982,98 @@ export default function MlroAdvisorPage() {
   const [sanctionsMapResult, setSanctionsMapResult] = useState<SanctionsExposureResult | null>(null);
   const [sanctionsMapLoading, setSanctionsMapLoading] = useState(false);
 
+  // ── Wave 3 tool state ──────────────────────────────────────────────────────
+
+  // Layering Detector
+  const [layeringInput, setLayeringInput] = useState({ transactions: "", subjectName: "", accountRefs: "", periodDays: "", context: "" });
+  const [layeringResult, setLayeringResult] = useState<Record<string, unknown> | null>(null);
+  const [layeringLoading, setLayeringLoading] = useState(false);
+
+  // Real Estate ML
+  const [realEstateMlInput, setRealEstateMlInput] = useState({ propertyDetails: "", buyerName: "", buyerNationality: "", paymentMethod: "", purchasePrice: "", marketValue: "", agentName: "", context: "" });
+  const [realEstateMlResult, setRealEstateMlResult] = useState<Record<string, unknown> | null>(null);
+  const [realEstateMlLoading, setRealEstateMlLoading] = useState(false);
+
+  // Asset Tracer
+  const [assetTracerInput, setAssetTracerInput] = useState({ initialFunds: "", suspectedSource: "", tracingPeriod: "", subjectName: "", jurisdictions: "", context: "" });
+  const [assetTracerResult, setAssetTracerResult] = useState<Record<string, unknown> | null>(null);
+  const [assetTracerLoading, setAssetTracerLoading] = useState(false);
+
+  // SOW Calculator
+  const [sowInput, setSowInput] = useState({ subjectName: "", declaredIncome: "", declaredAssets: "", periodYears: "", knownExpenditures: "", context: "" });
+  const [sowResult, setSowResult] = useState<Record<string, unknown> | null>(null);
+  const [sowLoading, setSowLoading] = useState(false);
+
+  // Insider Threat Screen
+  const [insiderInput, setInsiderInput] = useState({ employeeName: "", employeeRole: "", observedBehaviours: "", accessLevel: "", financialCircumstances: "", context: "" });
+  const [insiderResult, setInsiderResult] = useState<Record<string, unknown> | null>(null);
+  const [insiderLoading, setInsiderLoading] = useState(false);
+
+  // Board AML Report
+  const [boardAmlInput, setBoardAmlInput] = useState({ institutionName: "", reportingPeriod: "", strCount: "", ctrCount: "", trainingCompletion: "", openFindings: "", context: "" });
+  const [boardAmlResult, setBoardAmlResult] = useState<Record<string, unknown> | null>(null);
+  const [boardAmlLoading, setBoardAmlLoading] = useState(false);
+
+  // Enforcement Exposure
+  const [enforcementInput, setEnforcementInput] = useState({ violation: "", institutionType: "", violationPeriod: "", selfReported: "", priorHistory: "", context: "" });
+  const [enforcementResult, setEnforcementResult] = useState<Record<string, unknown> | null>(null);
+  const [enforcementLoading, setEnforcementLoading] = useState(false);
+
+  // Inter-Agency Referral
+  const [referralInput, setReferralInput] = useState({ caseDescription: "", suspectedOffence: "", subjectName: "", subjectId: "", evidenceSummary: "", context: "" });
+  const [referralResult, setReferralResult] = useState<Record<string, unknown> | null>(null);
+  const [referralLoading, setReferralLoading] = useState(false);
+
+  // Policy Reviewer
+  const [policyInput, setPolicyInput] = useState({ policyText: "", policyType: "", institutionType: "", lastReviewDate: "", context: "" });
+  const [policyResult, setPolicyResult] = useState<Record<string, unknown> | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+
+  // Compliance Test Planner
+  const [compTestInput, setCompTestInput] = useState({ institutionType: "", testingArea: "", riskFocus: "", staffCount: "", context: "" });
+  const [compTestResult, setCompTestResult] = useState<Record<string, unknown> | null>(null);
+  const [compTestLoading, setCompTestLoading] = useState(false);
+
+  // SWIFT LC Analyzer
+  const [swiftLcInput, setSwiftLcInput] = useState({ swiftMessage: "", messageType: "", beneficiaryCountry: "", applicantCountry: "", goodsDescription: "", context: "" });
+  const [swiftLcResult, setSwiftLcResult] = useState<Record<string, unknown> | null>(null);
+  const [swiftLcLoading, setSwiftLcLoading] = useState(false);
+
+  // Regulatory Calendar
+  const [regCalInput, setRegCalInput] = useState({ institutionType: "" });
+  const [regCalResult, setRegCalResult] = useState<Record<string, unknown> | null>(null);
+  const [regCalLoading, setRegCalLoading] = useState(false);
+
+  // EWRA Generator
+  const [ewraInput, setEwraInput] = useState({ institutionType: "", productsServices: "", customerBase: "", geographicFootprint: "", transactionVolume: "", context: "" });
+  const [ewraResult, setEwraResult] = useState<Record<string, unknown> | null>(null);
+  const [ewraLoading, setEwraLoading] = useState(false);
+
+  // AML Programme Gap
+  const [amlGapInput, setAmlGapInput] = useState({ institutionType: "", programmeDescription: "", currentControls: "", lastAuditDate: "", staffCount: "", context: "" });
+  const [amlGapResult, setAmlGapResult] = useState<Record<string, unknown> | null>(null);
+  const [amlGapLoading, setAmlGapLoading] = useState(false);
+
+  // Trade Invoice Analyzer
+  const [tradeInvoiceInput, setTradeInvoiceInput] = useState({ invoiceDetails: "", commodityType: "", hsCode: "", exporterCountry: "", importerCountry: "", context: "" });
+  const [tradeInvoiceResult, setTradeInvoiceResult] = useState<Record<string, unknown> | null>(null);
+  const [tradeInvoiceLoading, setTradeInvoiceLoading] = useState(false);
+
+  // Network Mapper
+  const [networkMapInput, setNetworkMapInput] = useState({ entities: "", sharedAddresses: "", sharedDirectors: "", sharedAccounts: "", transactionLinks: "", context: "" });
+  const [networkMapResult, setNetworkMapResult] = useState<Record<string, unknown> | null>(null);
+  const [networkMapLoading, setNetworkMapLoading] = useState(false);
+
+  // Risk Appetite Builder
+  const [riskAppInput, setRiskAppInput] = useState({ institutionType: "", riskProfile: "", boardPosition: "", keyProducts: "", context: "" });
+  const [riskAppResult, setRiskAppResult] = useState<Record<string, unknown> | null>(null);
+  const [riskAppLoading, setRiskAppLoading] = useState(false);
+
+  // Regulatory Exam Prep
+  const [examPrepInput, setExamPrepInput] = useState({ examArea: "", institutionType: "", context: "" });
+  const [examPrepResult, setExamPrepResult] = useState<Record<string, unknown> | null>(null);
+  const [examPrepLoading, setExamPrepLoading] = useState(false);
+
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
     setTfLoading(true); setTfResult(null);
@@ -2223,6 +2315,205 @@ export default function MlroAdvisorPage() {
       setSanctionsMapResult(data);
     } catch { /* noop */ }
     finally { setSanctionsMapLoading(false); }
+  };
+
+  // ── Wave 3 handlers ────────────────────────────────────────────────────────
+
+  const runLayeringDetector = async () => {
+    if (!layeringInput.transactions.trim()) return;
+    setLayeringLoading(true); setLayeringResult(null);
+    try {
+      const res = await fetch("/api/layering-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(layeringInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setLayeringResult(data);
+    } catch { /* noop */ }
+    finally { setLayeringLoading(false); }
+  };
+
+  const runRealEstateMl = async () => {
+    if (!realEstateMlInput.propertyDetails.trim()) return;
+    setRealEstateMlLoading(true); setRealEstateMlResult(null);
+    try {
+      const res = await fetch("/api/real-estate-ml", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(realEstateMlInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setRealEstateMlResult(data);
+    } catch { /* noop */ }
+    finally { setRealEstateMlLoading(false); }
+  };
+
+  const runAssetTracer = async () => {
+    if (!assetTracerInput.initialFunds.trim()) return;
+    setAssetTracerLoading(true); setAssetTracerResult(null);
+    try {
+      const res = await fetch("/api/asset-tracer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(assetTracerInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setAssetTracerResult(data);
+    } catch { /* noop */ }
+    finally { setAssetTracerLoading(false); }
+  };
+
+  const runSowCalculator = async () => {
+    if (!sowInput.declaredIncome.trim()) return;
+    setSowLoading(true); setSowResult(null);
+    try {
+      const res = await fetch("/api/sow-calculator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sowInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setSowResult(data);
+    } catch { /* noop */ }
+    finally { setSowLoading(false); }
+  };
+
+  const runInsiderThreat = async () => {
+    if (!insiderInput.observedBehaviours.trim() && !insiderInput.employeeRole.trim()) return;
+    setInsiderLoading(true); setInsiderResult(null);
+    try {
+      const res = await fetch("/api/insider-threat-screen", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(insiderInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setInsiderResult(data);
+    } catch { /* noop */ }
+    finally { setInsiderLoading(false); }
+  };
+
+  const runBoardAmlReport = async () => {
+    if (!boardAmlInput.reportingPeriod.trim() && !boardAmlInput.institutionName.trim()) return;
+    setBoardAmlLoading(true); setBoardAmlResult(null);
+    try {
+      const res = await fetch("/api/board-aml-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(boardAmlInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setBoardAmlResult(data);
+    } catch { /* noop */ }
+    finally { setBoardAmlLoading(false); }
+  };
+
+  const runEnforcementExposure = async () => {
+    if (!enforcementInput.violation.trim()) return;
+    setEnforcementLoading(true); setEnforcementResult(null);
+    try {
+      const res = await fetch("/api/enforcement-exposure", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(enforcementInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setEnforcementResult(data);
+    } catch { /* noop */ }
+    finally { setEnforcementLoading(false); }
+  };
+
+  const runInterAgencyReferral = async () => {
+    if (!referralInput.caseDescription.trim()) return;
+    setReferralLoading(true); setReferralResult(null);
+    try {
+      const res = await fetch("/api/inter-agency-referral", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(referralInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setReferralResult(data);
+    } catch { /* noop */ }
+    finally { setReferralLoading(false); }
+  };
+
+  const runPolicyReviewer = async () => {
+    if (!policyInput.policyText.trim()) return;
+    setPolicyLoading(true); setPolicyResult(null);
+    try {
+      const res = await fetch("/api/policy-reviewer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(policyInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setPolicyResult(data);
+    } catch { /* noop */ }
+    finally { setPolicyLoading(false); }
+  };
+
+  const runComplianceTestPlanner = async () => {
+    if (!compTestInput.institutionType.trim()) return;
+    setCompTestLoading(true); setCompTestResult(null);
+    try {
+      const res = await fetch("/api/compliance-test-planner", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(compTestInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setCompTestResult(data);
+    } catch { /* noop */ }
+    finally { setCompTestLoading(false); }
+  };
+
+  const runSwiftLcAnalyzer = async () => {
+    if (!swiftLcInput.swiftMessage.trim()) return;
+    setSwiftLcLoading(true); setSwiftLcResult(null);
+    try {
+      const res = await fetch("/api/swift-lc-analyzer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(swiftLcInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setSwiftLcResult(data);
+    } catch { /* noop */ }
+    finally { setSwiftLcLoading(false); }
+  };
+
+  const runRegulatoryCalendar = async () => {
+    setRegCalLoading(true); setRegCalResult(null);
+    try {
+      const res = await fetch("/api/regulatory-calendar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(regCalInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setRegCalResult(data);
+    } catch { /* noop */ }
+    finally { setRegCalLoading(false); }
+  };
+
+  const runEwraGenerator = async () => {
+    if (!ewraInput.institutionType.trim()) return;
+    setEwraLoading(true); setEwraResult(null);
+    try {
+      const res = await fetch("/api/ewra-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ewraInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setEwraResult(data);
+    } catch { /* noop */ }
+    finally { setEwraLoading(false); }
+  };
+
+  const runAmlProgrammeGap = async () => {
+    if (!amlGapInput.institutionType.trim()) return;
+    setAmlGapLoading(true); setAmlGapResult(null);
+    try {
+      const res = await fetch("/api/aml-programme-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlGapInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setAmlGapResult(data);
+    } catch { /* noop */ }
+    finally { setAmlGapLoading(false); }
+  };
+
+  const runTradeInvoiceAnalyzer = async () => {
+    if (!tradeInvoiceInput.invoiceDetails.trim()) return;
+    setTradeInvoiceLoading(true); setTradeInvoiceResult(null);
+    try {
+      const res = await fetch("/api/trade-invoice-analyzer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tradeInvoiceInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setTradeInvoiceResult(data);
+    } catch { /* noop */ }
+    finally { setTradeInvoiceLoading(false); }
+  };
+
+  const runNetworkMapper = async () => {
+    if (!networkMapInput.entities.trim()) return;
+    setNetworkMapLoading(true); setNetworkMapResult(null);
+    try {
+      const res = await fetch("/api/network-mapper", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(networkMapInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setNetworkMapResult(data);
+    } catch { /* noop */ }
+    finally { setNetworkMapLoading(false); }
+  };
+
+  const runRiskAppetiteBuilder = async () => {
+    if (!riskAppInput.institutionType.trim()) return;
+    setRiskAppLoading(true); setRiskAppResult(null);
+    try {
+      const res = await fetch("/api/risk-appetite-builder", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(riskAppInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setRiskAppResult(data);
+    } catch { /* noop */ }
+    finally { setRiskAppLoading(false); }
+  };
+
+  const runRegulatoryExamPrep = async () => {
+    if (!examPrepInput.examArea.trim()) return;
+    setExamPrepLoading(true); setExamPrepResult(null);
+    try {
+      const res = await fetch("/api/regulatory-exam-prep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(examPrepInput) });
+      const data = await res.json() as Record<string, unknown>;
+      setExamPrepResult(data);
+    } catch { /* noop */ }
+    finally { setExamPrepLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -3101,10 +3392,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper"] as const).map((t) => (
+              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : "🗺 Sanctions Mapper"}
+                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : "📚 Exam Prep"}
                 </button>
               ))}
             </div>
