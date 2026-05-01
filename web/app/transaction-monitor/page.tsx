@@ -424,7 +424,7 @@ export default function TransactionMonitorPage() {
                 const row = "grid gap-3 mb-2";
                 return (
                   <>
-                    <div className={`${row} grid-cols-3`}>
+                    <div className={`${row}`} style={{ gridTemplateColumns: "180px 1fr 140px" }}>
                       <div><label className={lCls}>Transaction reference</label><input value={ref} onChange={(e) => setRef(e.target.value)} className={iCls} /></div>
                       <div><label className={lCls}>Counterparty</label><input ref={counterpartyRef} value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Customer / entity name" className={iCls} /></div>
                       <div><label className={lCls}>Amount</label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
