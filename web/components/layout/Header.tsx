@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
+import { AlertBell } from "./AlertBell";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 import {
   loadOperatorRole,
   saveOperatorRole,
   ROLE_LABEL,
-  CARD_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 
@@ -234,7 +234,7 @@ export function Header() {
                 >
                   {MORE_GROUPS.map((g) => (
                     <div key={g.title}>
-                      <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1.5 px-2">
+                      <div className="text-10 uppercase tracking-wide-3 text-brand font-semibold mb-1.5 px-2">
                         {g.title}
                       </div>
                       <ul className="list-none p-0 m-0">
@@ -264,7 +264,7 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <NotificationBell />
+          <AlertBell />
           <HeaderUserCard />
           <button
             type="button"
@@ -280,73 +280,6 @@ export function Header() {
       </nav>
       <RegulatoryTicker />
     </header>
-  );
-}
-
-function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const alerts = [
-    { id: 1, text: "SLA breach — APV-2025-0081 awaiting second sign-off", time: "2m ago", read: false },
-    { id: 2, text: "EWRA annual review due — FDL 10/2025 Art.4", time: "1h ago", read: false },
-    { id: 3, text: "New FATF grey-list update — 3 jurisdictions affected", time: "3h ago", read: true },
-    { id: 4, text: "goAML submission window closes in 12 days", time: "5h ago", read: true },
-  ];
-  const unread = alerts.filter((a) => !a.read).length;
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="relative p-1 rounded hover:bg-bg-2 transition-colors"
-        aria-label="Notifications"
-        title="Notifications"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff2d92" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
-        {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#ff2d92] flex items-center justify-center text-[8px] font-bold text-white leading-none">
-            {unread}
-          </span>
-        )}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1.5 z-50 w-72 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden">
-            <div className="px-3 py-2 border-b border-hair-2 flex items-center justify-between">
-              <span className="text-11 font-semibold text-ink-0">Notifications</span>
-              {unread > 0 && (
-                <span className="text-10 font-mono text-[#ff2d92] font-semibold">{unread} unread</span>
-              )}
-            </div>
-            <div className="divide-y divide-hair">
-              {alerts.map((a) => (
-                <div key={a.id} className={`px-3 py-2.5 ${a.read ? "opacity-60" : ""}`}>
-                  <div className="flex items-start gap-2">
-                    {!a.read && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff2d92] shrink-0 mt-1.5" />
-                    )}
-                    {a.read && <span className="w-1.5 shrink-0" />}
-                    <div>
-                      <div className="text-11 text-ink-0 leading-snug">{a.text}</div>
-                      <div className="text-10 text-ink-3 font-mono mt-0.5">{a.time}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="px-3 py-2 border-t border-hair-2 bg-bg-1">
-              <button type="button" onClick={() => setOpen(false)} className="text-10 text-ink-3 hover:text-brand underline">
-                Mark all read
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
   );
 }
 
@@ -442,25 +375,6 @@ function HeaderUserCard() {
             placeholder="Full name"
             className="w-full bg-bg-1 border border-hair-2 rounded px-2 py-1 text-12 text-ink-0 outline-none focus:border-brand mb-3"
           />
-          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">
-            Role
-          </div>
-          <div className="flex flex-col gap-1 mb-3">
-            {CARD_ROLES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => selectRole(r)}
-                className={`text-left px-2 py-1 rounded text-12 font-medium transition-colors ${
-                  r === role
-                    ? "bg-brand text-white"
-                    : "hover:bg-bg-2 text-ink-1"
-                }`}
-              >
-                {ROLE_LABEL[r]}
-              </button>
-            ))}
-          </div>
           <button
             type="button"
             onClick={saveName}

@@ -9,17 +9,27 @@ import type { CountryCompareResult } from "@/app/api/country-risk/compare/route"
 // Covers Basel AML Index, TI CPI, FATF grey/black lists, OFAC/EU/UN/UK sanctions,
 // political stability, ML/TF risk typologies.
 
-const POPULAR_COUNTRIES = [
-  "UAE",
-  "United Kingdom",
-  "USA",
-  "Russia",
-  "China",
-  "Iran",
-  "North Korea",
-  "Venezuela",
-  "Afghanistan",
-  "Nigeria",
+const ALL_COUNTRIES = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria",
+  "Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan",
+  "Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia",
+  "Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica",
+  "Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","DR Congo","Ecuador",
+  "Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France",
+  "Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau",
+  "Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland",
+  "Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kosovo","Kuwait",
+  "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg",
+  "Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico",
+  "Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru",
+  "Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman",
+  "Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+  "Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe",
+  "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+  "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+  "Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey",
+  "Turkmenistan","Tuvalu","UAE","Uganda","Ukraine","United Kingdom","Uruguay","USA","Uzbekistan","Vanuatu",
+  "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe",
 ];
 
 const RISK_COLORS = {
@@ -479,22 +489,6 @@ export default function CountryRiskPage() {
         </button>
       </div>
 
-      {/* Popular country chips */}
-      <div className="mb-5">
-        <div className="text-10 uppercase tracking-wide-4 text-ink-3 font-semibold mb-2">Quick Select</div>
-        <div className="flex flex-wrap gap-2">
-          {POPULAR_COUNTRIES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => handleChip(c)}
-              className="px-3 py-1 rounded-full text-11 font-medium border border-hair-2 text-ink-1 hover:border-brand hover:text-brand transition-colors bg-bg-1"
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* ── SINGLE MODE ── */}
       {mode === "single" && (
@@ -504,12 +498,16 @@ export default function CountryRiskPage() {
             <div className="flex-1 relative">
               <input
                 type="text"
+                list="all-countries-list"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Enter country name (e.g. Nigeria, Russia, Singapore)…"
+                placeholder="Enter or select a country…"
                 className="w-full bg-bg-1 border border-hair-2 rounded-lg px-4 py-2.5 text-13 text-ink-0 outline-none focus:border-brand transition-colors placeholder:text-ink-3"
               />
+              <datalist id="all-countries-list">
+                {ALL_COUNTRIES.map((c) => <option key={c} value={c} />)}
+              </datalist>
             </div>
             <select
               value={depth}
