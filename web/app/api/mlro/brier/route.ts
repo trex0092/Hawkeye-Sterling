@@ -50,7 +50,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   await hydrateJournalFromBlobs();
 
-  const all = getJournal().list().filter((r) => {
+  const all = getJournal().list().filter((r: { at: string; groundTruth: string; modeIds?: string[]; mlConfidence?: number; reviewerDecision?: string; weight?: number }) => {
     const t = Date.parse(r.at);
     if (Number.isNaN(t)) return true;
     return t >= since && t <= until;

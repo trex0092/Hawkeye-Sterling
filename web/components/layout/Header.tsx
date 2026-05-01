@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { AlertBell } from "./AlertBell";
 import { LOCALES, STRINGS, t, type Locale } from "@/lib/server/i18n";
 import {
   loadOperatorRole,
@@ -14,14 +13,14 @@ import {
 } from "@/lib/data/operator-role";
 
 const NAV_TABS = [
-  { key: "nav.screening", label: "Screening", href: "/screening" },
-  { key: "nav.batch", label: "Batch", href: "/batch" },
+  { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
+  { key: "nav.batch", label: "⚡ Batch", href: "/batch" },
   { key: "nav.intel", label: "Live Intel", href: "/intel" },
   { key: "nav.cases", label: "Cases", href: "/cases" },
-  { key: "nav.tm", label: "Transaction monitor", href: "/transaction-monitor" },
-  { key: "nav.str", label: "STR / SAR", href: "/str-cases" },
-  { key: "nav.monitor", label: "Monitoring", href: "/ongoing-monitor" },
-  { key: "nav.mlro", label: "MLRO Advisor", href: "/mlro-advisor" },
+  { key: "nav.tm", label: "💸 Transaction Monitor", href: "/transaction-monitor" },
+  { key: "nav.str", label: "📁 STR Cases", href: "/str-cases" },
+  { key: "nav.monitor", label: "👁️ Ongoing Monitor", href: "/ongoing-monitor" },
+  { key: "nav.mlro", label: "🧠 MLRO Advisor", href: "/mlro-advisor" },
 ] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
@@ -36,8 +35,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
       { label: "UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
       { label: "Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
-      { label: "CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
-      { label: "Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
+      { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
+      { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
       { label: "Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
       { label: "Training", href: "/training", hint: "Staff AML certification tracker" },
       { label: "Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
@@ -47,54 +46,68 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // AML/CFT operational modules: risk assessment, STR workflow, supply chain, oversight
     title: "Risk & AML Ops",
     items: [
-      { label: "EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
+      { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes STR/SAR quality review" },
-      { label: "Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
-      { label: "RMI / RMAP", href: "/rmi", hint: "Responsible Minerals + AI supply chain assessment" },
+      { label: "🔗 Supply Chain", href: "/supply-chain", hint: "Geographic concentration · sanctions · CSDDD · UFLPA" },
+      { label: "📋 Reg Changes", href: "/reg-change", hint: "Regulatory change roadmap · AI implementation calendar" },
+      { label: "📦 Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
+      { label: "🏭 RMI / RMAP", href: "/rmi", hint: "Responsible Minerals + AI supply chain assessment" },
       { label: "EOCN", href: "/eocn", hint: "UAE targeted financial sanctions list" },
       { label: "Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
-      { label: "Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
-      { label: "Live Adverse Media", href: "/adverse-media-live", hint: "GDELT real-time news feed" },
-      { label: "goAML Submission", href: "/goaml-submission", hint: "UAE FIU STR XML wizard" },
+      { label: "⚖️ Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
+      { label: "📰 Live Adverse Media", href: "/adverse-media-live", hint: "GDELT real-time news feed" },
+      { label: "📤 goAML Export", href: "/goaml-export", hint: "UAE FIU STR XML wizard" },
     ],
   },
   {
     // Regulatory record-keeping, audit trail, reference library
     title: "Governance & Audit",
     items: [
-      { label: "Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
-      { label: "Audit Trail", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan" },
+      { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
+      { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan" },
       { label: "AM Lookback", href: "/adverse-media-lookback", hint: "10-year adverse media archive · FDL Art.19" },
       { label: "Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
-      { label: "Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
+      { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
       { label: "Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
-      { label: "Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
+      { label: "📖 Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
+      { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
+      { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
+      { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
     ],
   },
   {
     // Subject & entity enrichment: external data lookups, forensic tools, OSINT
     title: "Enrichment",
     items: [
-      { label: "OSINT", href: "/osint", hint: "Subject enrichment · SpiderFoot · AI threat synthesis" },
+      { label: "🌐 OSINT", href: "/osint", hint: "Subject enrichment · SpiderFoot · AI threat synthesis" },
       { label: "GLEIF / LEI", href: "/gleif", hint: "Global LEI · beneficial ownership chain" },
-      { label: "Entity Graph", href: "/entity-graph", hint: "UBO · officers · OpenCorporates" },
-      { label: "Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security analysis" },
-      { label: "Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
-      { label: "Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
-      { label: "Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
+      { label: "🕸️ Entity Graph", href: "/entity-graph", hint: "UBO · officers · OpenCorporates" },
+      { label: "🌍 Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security analysis" },
+      { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
+      { label: "🚢 Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
+      { label: "🔢 Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
     ],
   },
   {
     // Analytics, AI brain internals, investigation tools, system health
     title: "Intelligence",
     items: [
-      { label: "Analytics", href: "/analytics", hint: "MLRO KPI digest + AI board insights" },
-      { label: "Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
+      { label: "📰 News Intelligence", href: "/news-intel", hint: "Entity news analysis · sentiment · risk themes" },
+      { label: "🌱 ESG Risk", href: "/esg-risk", hint: "ESG scoring · ML risk overlay · regulatory exposure" },
+      { label: "📈 Analytics", href: "/analytics", hint: "MLRO KPI digest + AI board insights" },
+      { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
+      { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
+      { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
+      { label: "🌍 Country Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk" },
       { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
-      { label: "Workbench Brain", href: "/workbench", hint: "Brain inspector · live reasoning · manifest" },
+      { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live risk events · portfolio impact · regional map" },
+      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
+      { label: "⚔️ Weaponized Brain", href: "/weaponized-brain", hint: "Multi-mode AI reasoning · counterfactual · steelman" },
+      { label: "🔧 Workbench Brain", href: "/workbench", hint: "Brain inspector · live reasoning · manifest" },
       { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
       { label: "Status", href: "/status", hint: "Live endpoint & watchlist health" },
+      { label: "📊 Eval KPIs", href: "/eval-kpi", hint: "ML model evaluation · KPI metrics · performance tracking" },
       { label: "API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
   },
@@ -252,7 +265,6 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <AlertBell />
           <NotificationBell />
           <HeaderUserCard />
           <select

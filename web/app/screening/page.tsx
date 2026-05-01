@@ -28,6 +28,30 @@ import { ComparePanel } from "@/components/screening/ComparePanel";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 
+// ── Bulk Re-Screen types ──────────────────────────────────────────────────────
+
+interface NewHit {
+  subjectId: string;
+  subjectName: string;
+  hitType: string;
+  severity: "critical" | "high" | "medium" | "low";
+}
+
+interface BulkRescreenResult {
+  ok: true;
+  rescreened: number;
+  newHits: NewHit[];
+  cleared: Array<{ subjectId: string; subjectName: string }>;
+  summary: string;
+}
+
+const RESCREEN_SEV_STYLE: Record<NewHit["severity"], string> = {
+  critical: "bg-red-dim text-red border border-red/30",
+  high:     "bg-red-dim text-red border border-red/30",
+  medium:   "bg-amber-dim text-amber border border-amber/30",
+  low:      "bg-amber-dim text-amber border border-amber/30",
+};
+
 // ── Adverse Media types ───────────────────────────────────────────────────────
 
 type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical";
@@ -515,6 +539,11 @@ export default function ScreeningPage() {
 
   // Page-level tab: "queue" shows the normal screening queue; "adverse-media" shows the media intel search
   const [pageTab, setPageTab] = useState<"queue" | "adverse-media">("queue");
+
+  // ── Bulk Re-Screen state ─────────────────────────────────────────────────────
+  const [rescreenLoading, setRescreenLoading] = useState(false);
+  const [rescreenResult, setRescreenResult] = useState<BulkRescreenResult | null>(null);
+  const [rescreenError, setRescreenError] = useState<string | null>(null);
 
   // Adverse Media state
   const [amSubject, setAmSubject] = useState("");
@@ -1094,6 +1123,35 @@ export default function ScreeningPage() {
     }).then((r) => { if (!r.ok) console.warn("[audit-sign] subject_removed failed", r.status, r.error); });
   };
 
+  const runBulkRescreen = async () => {
+    setRescreenLoading(true);
+    setRescreenError(null);
+    setRescreenResult(null);
+    try {
+      const payload = subjects
+        .filter((s) => s.status !== "cleared")
+        .map((s) => ({ id: s.id, name: s.name, nationality: s.country || undefined }));
+      const res = await fetch("/api/screening/bulk-rescreen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjects: payload, listVersion: new Date().toISOString().slice(0, 10) }),
+      });
+      if (!res.ok) {
+        setRescreenError(`Re-screen failed — server ${res.status}`);
+        return;
+      }
+      const data = (await res.json()) as BulkRescreenResult;
+      if (data.ok) {
+        setRescreenResult(data);
+        writeAuditEvent("analyst", "bulk.rescreened", `${data.rescreened} subjects — ${data.newHits.length} new hits, ${data.cleared.length} cleared`);
+      }
+    } catch (err) {
+      setRescreenError(err instanceof Error ? err.message : "Request failed");
+    } finally {
+      setRescreenLoading(false);
+    }
+  };
+
   const criticalCount = subjects.filter((s) => s.riskScore >= CRITICAL_THRESHOLD).length;
   const slaCount = subjects.filter(
     (s) => parseSlaHours(s.slaNotify) <= SLA_BREACH_THRESHOLD_H,
@@ -1180,6 +1238,107 @@ export default function ScreeningPage() {
             slaRisk={slaCount}
             avgRisk={avgRisk}
           />
+
+          {/* ── Bulk Re-Screen Banner ─────────────────────────────────────── */}
+          <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-12 font-semibold text-ink-0">📋 Sanctions List Update</span>
+              <span className="text-12 text-ink-2 flex-1">Re-screen portfolio against latest list version</span>
+              <button
+                type="button"
+                onClick={() => { void runBulkRescreen(); }}
+                disabled={rescreenLoading}
+                className="px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+              >
+                {rescreenLoading ? "Re-screening…" : "🔄 Re-screen portfolio"}
+              </button>
+              {rescreenResult && (
+                <button
+                  type="button"
+                  onClick={() => setRescreenResult(null)}
+                  className="text-11 text-ink-3 hover:text-ink-0"
+                >
+                  ✕ dismiss
+                </button>
+              )}
+            </div>
+
+            {rescreenLoading && (
+              <div className="mt-3 flex items-center gap-2 text-12 text-ink-2">
+                <span className="animate-pulse font-mono text-brand">●</span>
+                Running portfolio re-screen — checking {subjects.filter((s) => s.status !== "cleared").length} subjects…
+              </div>
+            )}
+
+            {rescreenError && (
+              <div className="mt-3 bg-red-dim border border-red/30 rounded-lg px-3 py-2 text-12 text-red">
+                <span className="font-semibold">Error:</span> {rescreenError}
+              </div>
+            )}
+
+            {rescreenResult && (
+              <div className="mt-3 space-y-3">
+                {/* Summary pill strip */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-mono bg-bg-1 border border-hair-2 rounded px-2 py-1 text-ink-0">
+                    {rescreenResult.rescreened} subjects rescreened
+                  </span>
+                  <span className={`text-11 font-mono rounded px-2 py-1 border font-semibold ${rescreenResult.newHits.length > 0 ? "bg-red-dim text-red border-red/30" : "bg-green-dim text-green border-green/30"}`}>
+                    {rescreenResult.newHits.length} new hit{rescreenResult.newHits.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-11 font-mono bg-green-dim text-green border border-green/30 rounded px-2 py-1 font-semibold">
+                    {rescreenResult.cleared.length} cleared
+                  </span>
+                  <span className="text-11 text-ink-2 flex-1 leading-snug">{rescreenResult.summary}</span>
+                </div>
+
+                {/* New hits table */}
+                {rescreenResult.newHits.length > 0 && (
+                  <div className="bg-bg-1 border border-hair-2 rounded-lg overflow-hidden">
+                    <div className="px-3 py-2 border-b border-hair-2 text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
+                      New Hits — {rescreenResult.newHits.length}
+                    </div>
+                    <table className="w-full text-12">
+                      <thead className="bg-bg-panel">
+                        <tr>
+                          <th className="text-left px-3 py-2 text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Subject</th>
+                          <th className="text-left px-3 py-2 text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Hit Type</th>
+                          <th className="text-left px-3 py-2 text-10 font-semibold uppercase tracking-wide-3 text-ink-3 w-[90px]">Severity</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-hair">
+                        {rescreenResult.newHits.map((h) => (
+                          <tr key={h.subjectId} className="hover:bg-bg-panel transition-colors">
+                            <td className="px-3 py-2 font-medium text-ink-0">{h.subjectName}</td>
+                            <td className="px-3 py-2 text-ink-2">{h.hitType}</td>
+                            <td className="px-3 py-2">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-bold uppercase border ${RESCREEN_SEV_STYLE[h.severity]}`}>
+                                {h.severity}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Cleared subjects */}
+                {rescreenResult.cleared.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-10 uppercase tracking-wide-3 text-ink-3 self-center mr-1">Cleared:</span>
+                    {rescreenResult.cleared.map((c) => (
+                      <span key={c.subjectId} className="text-11 bg-green-dim text-green border border-green/30 rounded px-2 py-0.5 font-mono">
+                        {c.subjectName}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {/* ─────────────────────────────────────────────────────────────── */}
+
           <ScreeningToolbar
             ref={searchInputRef}
             query={query}

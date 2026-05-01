@@ -21,3 +21,4 @@ data/eval/kpi-snapshot.json
 Thumbs.db
 .vscode/
 .idea/
+.claude/worktrees/

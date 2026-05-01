@@ -56,6 +56,22 @@ interface ApiResponse {
   results?: VesselCheckResult[];
 }
 
+type RiskTier = "Low" | "Medium" | "High" | "Critical";
+
+interface VesselRiskProfile {
+  ok: boolean;
+  riskScore: number;
+  riskTier: RiskTier;
+  flagRisk: number;
+  ownershipRisk: number;
+  portRisk: number;
+  cargoRisk: number;
+  anomalies: string[];
+  recommendation: string;
+  regulatoryBasis: string;
+  summary: string;
+}
+
 const RISK_TONE: Record<string, string> = {
   blocked:  "bg-red-dim text-red border border-red/30",
   high:     "bg-red-dim text-red border border-red/30",
@@ -80,6 +96,39 @@ export default function VesselCheckPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [riskProfile, setRiskProfile] = useState<VesselRiskProfile | null>(null);
+  const [riskProfileLoading, setRiskProfileLoading] = useState(false);
+  const [rpFlag, setRpFlag] = useState("");
+  const [rpOwner, setRpOwner] = useState("");
+  const [rpOperator, setRpOperator] = useState("");
+  const [rpPorts, setRpPorts] = useState("");
+  const [rpCargo, setRpCargo] = useState("");
+  const [rpSanctioned, setRpSanctioned] = useState(false);
+
+  async function generateRiskProfile() {
+    setRiskProfileLoading(true);
+    setRiskProfile(null);
+    try {
+      const vessel = result?.vessel;
+      const res = await fetch("/api/vessel-check/risk-profile", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          vesselName: vessel?.vesselName,
+          imo: (result?.imoNumber ?? imoNumber.trim()) || undefined,
+          flag: rpFlag || vessel?.flag || undefined,
+          owner: rpOwner || vessel?.owners?.[0]?.name || undefined,
+          operator: rpOperator || undefined,
+          lastPorts: rpPorts ? rpPorts.split(/[,\n]+/).map((s) => s.trim()).filter(Boolean) : undefined,
+          cargoTypes: rpCargo ? rpCargo.split(/[,\n]+/).map((s) => s.trim()).filter(Boolean) : undefined,
+          sanctionedConnections: rpSanctioned || (vessel?.sanctionHits?.length ?? 0) > 0,
+        }),
+      });
+      const data = (await res.json()) as VesselRiskProfile;
+      if (data.ok) setRiskProfile(data);
+    } catch { /* silent */ }
+    finally { setRiskProfileLoading(false); }
+  }
 
   async function check() {
     setLoading(true); setError(null); setResult(null);
@@ -240,6 +289,149 @@ export default function VesselCheckPage() {
             {result.vessel.lastUpdated && (
               <p className="text-11 text-ink-3">Last updated: {result.vessel.lastUpdated.slice(0, 10)}</p>
             )}
+          </div>
+        )}
+
+        {/* AI Risk Profile — single mode */}
+        {result && mode === "single" && (
+          <div className="mt-4 border border-hair-2 rounded-xl p-5 space-y-4">
+            <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AI Vessel Risk Profile</div>
+            <p className="text-11 text-ink-3">
+              Optionally enrich with additional details, then generate an AI risk assessment across four dimensions.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3">Flag State</label>
+                <input value={rpFlag} onChange={(e) => setRpFlag(e.target.value)} placeholder={result.vessel?.flag ?? "e.g. Panama"} className={`w-full ${inputCls}`} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3">Registered Owner</label>
+                <input value={rpOwner} onChange={(e) => setRpOwner(e.target.value)} placeholder={result.vessel?.owners?.[0]?.name ?? "Owner name"} className={`w-full ${inputCls}`} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3">Operator</label>
+                <input value={rpOperator} onChange={(e) => setRpOperator(e.target.value)} placeholder="Operator / manager" className={`w-full ${inputCls}`} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3">Last Known Ports (comma separated)</label>
+                <input value={rpPorts} onChange={(e) => setRpPorts(e.target.value)} placeholder="e.g. Dubai, Bandar Abbas, Khor Fakkan" className={`w-full ${inputCls}`} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3">Cargo Types (comma separated)</label>
+                <input value={rpCargo} onChange={(e) => setRpCargo(e.target.value)} placeholder="e.g. Crude Oil, Chemicals" className={`w-full ${inputCls}`} />
+              </div>
+              <div className="flex items-center gap-2 pt-4">
+                <input type="checkbox" id="rp-sanctioned" checked={rpSanctioned} onChange={(e) => setRpSanctioned(e.target.checked)} className="w-4 h-4 accent-red" />
+                <label htmlFor="rp-sanctioned" className="text-12 text-ink-1 cursor-pointer">Sanctioned connections identified</label>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void generateRiskProfile()}
+              disabled={riskProfileLoading}
+              className={btnCls}
+            >
+              {riskProfileLoading ? "Analysing…" : "🚢 Generate Risk Profile"}
+            </button>
+
+            {riskProfile && (() => {
+              const tierColor: Record<string, string> = {
+                Critical: "text-red",
+                High: "text-red",
+                Medium: "text-amber",
+                Low: "text-green",
+              };
+              const tierBadge: Record<string, string> = {
+                Critical: "bg-red text-white",
+                High: "bg-red-dim text-red border border-red/40",
+                Medium: "bg-amber-dim text-amber border border-amber/40",
+                Low: "bg-green-dim text-green border border-green/40",
+              };
+              const recBadge: Record<string, string> = {
+                "File STR": "bg-red text-white",
+                "Block": "bg-red-dim text-red border border-red/40",
+                "Enhanced Monitoring": "bg-amber-dim text-amber border border-amber/40",
+                "Clear": "bg-green-dim text-green border border-green/40",
+              };
+              const scoreColor = tierColor[riskProfile.riskTier] ?? "text-ink-0";
+              const dims = [
+                { label: "Flag Risk", value: riskProfile.flagRisk },
+                { label: "Ownership Risk", value: riskProfile.ownershipRisk },
+                { label: "Port Risk", value: riskProfile.portRisk },
+                { label: "Cargo Risk", value: riskProfile.cargoRisk },
+              ];
+              return (
+                <div className="mt-2 space-y-5 print:space-y-4">
+                  <div className="flex items-center gap-5 flex-wrap">
+                    <div className="text-center">
+                      <div className={`text-48 font-mono font-bold leading-none ${scoreColor}`}>{riskProfile.riskScore}</div>
+                      <div className="text-10 uppercase tracking-wide-3 text-ink-3">Risk Score</div>
+                    </div>
+                    <span className={`text-14 font-bold px-4 py-2 rounded-lg uppercase ${tierBadge[riskProfile.riskTier] ?? "bg-bg-2 text-ink-2"}`}>
+                      {riskProfile.riskTier}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {dims.map(({ label, value }) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-11 mb-1">
+                          <span className="text-ink-2">{label}</span>
+                          <span className="font-mono text-ink-0">{value}/100</span>
+                        </div>
+                        <div className="h-2 bg-hair rounded-full overflow-hidden">
+                          <div
+                            className={`h-2 rounded-full transition-all ${value >= 75 ? "bg-red" : value >= 50 ? "bg-amber" : "bg-green"}`}
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {riskProfile.anomalies.length > 0 && (
+                    <div>
+                      <div className="text-10 uppercase tracking-wide-3 text-amber mb-2">AIS / Behavioural Anomalies</div>
+                      <ul className="space-y-1">
+                        {riskProfile.anomalies.map((a, i) => (
+                          <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                            <span className="text-amber mt-px shrink-0">⚠</span>
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Compliance Recommendation</div>
+                    <span className={`inline-block px-4 py-2 rounded-lg text-13 font-bold ${recBadge[riskProfile.recommendation] ?? "bg-bg-2 text-ink-2 border border-hair-2"}`}>
+                      {riskProfile.recommendation}
+                    </span>
+                  </div>
+
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Basis</div>
+                    <p className="text-11 text-ink-2">{riskProfile.regulatoryBasis}</p>
+                  </div>
+
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Summary</div>
+                    <p className="text-12 text-ink-1 leading-relaxed">{riskProfile.summary}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-hair-2">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+                    >
+                      ↓ Export Vessel Report
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 

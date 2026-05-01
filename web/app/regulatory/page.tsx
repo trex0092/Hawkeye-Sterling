@@ -8,6 +8,8 @@ import type { CalendarEvent, RegCalendarLiveResult } from "@/app/api/regulatory-
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
+type FeedUrgency = "critical" | "high" | "medium" | "low";
+
 interface LiveItem {
   id: string;
   title: string;
@@ -19,6 +21,8 @@ interface LiveItem {
   tone: "green" | "amber" | "red";
   snippet?: string;
   summary?: string;
+  urgency?: FeedUrgency;
+  urgencyReason?: string;
 }
 
 interface FeedResult {
@@ -43,6 +47,13 @@ const TONE_BORDER: Record<LiveItem["tone"], string> = {
   red: "border-l-red bg-red/5",
   amber: "border-l-amber bg-amber/5",
   green: "border-l-green bg-green/5",
+};
+
+const FEED_URGENCY_BADGE: Record<FeedUrgency, string> = {
+  critical: "bg-red text-white",
+  high: "bg-amber text-white",
+  medium: "bg-blue-dim text-blue",
+  low: "bg-bg-2 text-ink-3",
 };
 
 const URGENCY_CARD: Record<CalendarEvent["urgency"], string> = {
@@ -550,6 +561,14 @@ function FeedItem({ item }: { item: LiveItem }) {
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
+              {item.urgency && (
+                <span
+                  className={`font-mono text-10 px-1.5 py-px rounded-sm font-semibold uppercase tracking-wide-2 ${FEED_URGENCY_BADGE[item.urgency]}`}
+                  title={item.urgencyReason}
+                >
+                  {item.urgency}
+                </span>
+              )}
               <span className="font-mono text-10 px-1.5 py-px rounded-sm bg-bg-2 text-ink-2">
                 {item.category}
               </span>
@@ -583,17 +602,28 @@ function FeedItem({ item }: { item: LiveItem }) {
   );
 }
 
+const URGENCY_FILTER_LABELS: Array<FeedUrgency | "all"> = ["all", "critical", "high", "medium", "low"];
+
 function FeedPanel({
   items,
   status,
   fetchedAt,
   onRefresh,
+  classifyStatus,
 }: {
   items: LiveItem[];
   status: "idle" | "loading" | "ok" | "error";
   fetchedAt: string | null;
   onRefresh: () => void;
+  classifyStatus?: "idle" | "loading" | "ok" | "error";
 }) {
+  const [urgencyFilter, setUrgencyFilter] = useState<FeedUrgency | "all">("all");
+
+  const criticalCount = items.filter((i) => i.urgency === "critical").length;
+
+  const filteredItems =
+    urgencyFilter === "all" ? items : items.filter((i) => i.urgency === urgencyFilter);
+
   return (
     <div className="flex flex-col min-h-0">
       <div className="flex items-center justify-between mb-3 gap-2">
@@ -603,6 +633,9 @@ function FeedPanel({
         <div className="flex items-center gap-3">
           {status === "loading" && (
             <span className="font-mono text-10 text-ink-3 animate-pulse">fetching…</span>
+          )}
+          {classifyStatus === "loading" && (
+            <span className="font-mono text-10 text-ink-3 animate-pulse">classifying…</span>
           )}
           {status === "ok" && fetchedAt && (
             <span className="font-mono text-10 text-ink-3">
@@ -623,6 +656,46 @@ function FeedPanel({
         </div>
       </div>
 
+      {/* Critical banner */}
+      {criticalCount > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-red/10 border border-red/30">
+          <span className="text-red font-semibold text-11">
+            🔴 {criticalCount} critical item{criticalCount !== 1 ? "s" : ""}
+          </span>
+          <span className="text-11 text-red/80">— immediate review required</span>
+        </div>
+      )}
+
+      {/* Urgency filter bar */}
+      {(status === "ok" || status === "error") && items.some((i) => i.urgency) && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {URGENCY_FILTER_LABELS.map((u) => {
+            const count = u === "all" ? items.length : items.filter((i) => i.urgency === u).length;
+            const active = urgencyFilter === u;
+            const cls =
+              u === "critical"
+                ? active ? "bg-red text-white border-red" : "bg-red/10 text-red border-red/30 hover:bg-red/20"
+                : u === "high"
+                ? active ? "bg-amber text-white border-amber" : "bg-amber/10 text-amber border-amber/30 hover:bg-amber/20"
+                : u === "medium"
+                ? active ? "bg-blue text-white border-blue" : "bg-blue-dim text-blue border-blue/30 hover:bg-blue/10"
+                : u === "low"
+                ? active ? "bg-bg-2 text-ink-0 border-hair-2" : "bg-bg-1 text-ink-3 border-hair-2 hover:bg-bg-2"
+                : active ? "bg-brand text-white border-brand" : "bg-bg-1 text-ink-2 border-hair-2 hover:bg-bg-2";
+            return (
+              <button
+                key={u}
+                type="button"
+                onClick={() => setUrgencyFilter(u)}
+                className={`font-mono text-10 px-2 py-0.5 rounded border capitalize transition-colors ${cls}`}
+              >
+                {u === "all" ? `All (${count})` : `${u} (${count})`}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {status === "loading" && (
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
@@ -633,11 +706,11 @@ function FeedPanel({
 
       {(status === "ok" || status === "error") && (
         <div className="space-y-1.5 overflow-y-auto max-h-[600px] pr-1">
-          {items.length > 0 ? (
-            items.map((item) => <FeedItem key={item.id} item={item} />)
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => <FeedItem key={item.id} item={item} />)
           ) : (
             <div className="text-12 text-ink-2 py-6 text-center border border-hair-2 rounded-lg">
-              No items available.
+              {urgencyFilter === "all" ? "No items available." : `No ${urgencyFilter} items.`}
             </div>
           )}
         </div>
@@ -792,6 +865,9 @@ export default function RegulatoryPage() {
   const [feedStatus, setFeedStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
+  // Urgency classification state
+  const [classifyStatus, setClassifyStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+
   // Calendar state
   const [calData, setCalData] = useState<RegCalendarLiveResult | null>(null);
   const [calStatus, setCalStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -803,17 +879,53 @@ export default function RegulatoryPage() {
   // Auto-refresh timer ref
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const classifyItems = useCallback((items: LiveItem[]) => {
+    if (items.length === 0) return;
+    setClassifyStatus("loading");
+    fetch("/api/regulatory/classify-urgency", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((i) => ({
+          title: i.title,
+          summary: i.summary ?? i.snippet ?? "",
+          date: i.publishedAt ?? i.pubDate ?? "",
+          source: i.source,
+        })),
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { ok: boolean; classified?: Array<{ urgency: FeedUrgency; reason: string }> }) => {
+        if (data.ok && data.classified) {
+          setFeedItems((prev) =>
+            prev.map((item, i) => ({
+              ...item,
+              urgency: data.classified![i]?.urgency ?? undefined,
+              urgencyReason: data.classified![i]?.reason ?? undefined,
+            })),
+          );
+          setClassifyStatus("ok");
+        } else {
+          setClassifyStatus("error");
+        }
+      })
+      .catch(() => setClassifyStatus("error"));
+  }, []);
+
   const loadFeed = useCallback(() => {
     setFeedStatus("loading");
+    setClassifyStatus("idle");
     fetch("/api/regulatory-feed")
       .then((r) => r.json())
       .then((data: FeedResult) => {
-        setFeedItems(data.items ?? []);
+        const items = data.items ?? [];
+        setFeedItems(items);
         setFetchedAt(data.fetchedAt ?? null);
         setFeedStatus("ok");
+        classifyItems(items);
       })
       .catch(() => setFeedStatus("error"));
-  }, []);
+  }, [classifyItems]);
 
   const loadCalendar = useCallback(() => {
     setCalStatus("loading");
@@ -893,6 +1005,7 @@ export default function RegulatoryPage() {
             status={feedStatus}
             fetchedAt={fetchedAt}
             onRefresh={loadFeed}
+            classifyStatus={classifyStatus}
           />
         </div>
 

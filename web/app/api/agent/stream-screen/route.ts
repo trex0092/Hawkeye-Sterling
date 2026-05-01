@@ -69,7 +69,7 @@ export async function GET(req: Request): Promise<Response> {
         const keywords = [subject.name, ...(subject.aliases ?? [])]
           .join(" ").toLowerCase().split(/\W+/).filter((t) => t.length >= 3);
         const redlines = evaluateRedlines(keywords);
-        send({ phase: "redlines", fired: redlines.fired.map((r) => r.id), action: redlines.action }, "phase");
+        send({ phase: "redlines", fired: redlines.fired.map((r: { id: string }) => r.id), action: redlines.action }, "phase");
 
         // Phase 4 — cross-regime
         const REGIMES = ["un_1267", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;

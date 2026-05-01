@@ -129,7 +129,7 @@ export function KpiGrid({
   cols = 4,
   children,
 }: {
-  cols?: 3 | 4;
+  cols?: 3 | 4 | 5;
   children: ReactNode;
 }) {
   return (
@@ -137,6 +137,8 @@ export function KpiGrid({
       className={`grid gap-2 mb-5 ${
         cols === 3
           ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+          : cols === 5
+          ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-5"
           : "grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
       }`}
     >

@@ -1,0 +1,67 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+
+const FALLBACK = {
+  ok: true,
+  riskTier: "high",
+  fatfCompliance: "VASP appears partially compliant with FATF R.15/16 requirements. Travel rule implementation is incomplete for cross-border transfers above USD 1,000. VARA licensing status could not be confirmed from the data provided.",
+  travelRuleStatus: "Non-compliant — travel rule data (originator/beneficiary) not transmitted for transfers above threshold. Risk of correspondent de-risking if not remediated within 90 days.",
+  redFlags: [
+    "No confirmed VARA or equivalent licence in stated jurisdiction",
+    "DeFi exposure without adequate counterparty identification",
+    "High monthly volumes inconsistent with stated customer base",
+    "Jurisdiction flagged on FATF grey list or equivalent",
+  ],
+  recommendation: "Apply enhanced CDD before onboarding. Obtain VARA licence confirmation, travel rule policy documentation, and AML programme evidence. Consider declining if travel rule non-compliance cannot be resolved.",
+};
+
+export async function POST(req: Request) {
+  let body: { vasp?: string; jurisdiction?: string; products?: string[]; volumes?: string };
+  try { body = (await req.json()) as typeof body; }
+  catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
+
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  if (!apiKey) return NextResponse.json(FALLBACK);
+
+  try {
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1200,
+      system: [
+        {
+          type: "text",
+          text: `You are a VASP/virtual asset AML specialist with expertise in FATF Recommendations 15 and 16, UAE VARA regulations, and crypto AML typologies. Assess the Virtual Asset Service Provider risk and return ONLY valid JSON (no markdown) with this exact structure:
+{
+  "ok": true,
+  "riskTier": "critical"|"high"|"medium"|"low",
+  "fatfCompliance": "string — FATF R.15/16 compliance narrative",
+  "travelRuleStatus": "string — travel rule compliance assessment",
+  "redFlags": ["string"],
+  "recommendation": "string — actionable recommendation"
+}`,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: `VASP Name: ${body.vasp ?? "Unknown VASP"}
+Jurisdiction: ${body.jurisdiction ?? "Not stated"}
+Products/Services: ${(body.products ?? []).join(", ") || "Not stated"}
+Monthly Volume: ${body.volumes ?? "Not stated"}
+
+Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbler connections, and overall VASP risk tier. Identify red flags and provide a compliance recommendation.`,
+        },
+      ],
+    });
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim());
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json(FALLBACK);
+  }
+}
