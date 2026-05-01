@@ -1247,7 +1247,7 @@ export default function ScreeningPage() {
               <button
                 type="button"
                 onClick={() => { void runBulkRescreen(); }}
-                disabled={rescreenLoading}
+                disabled={rescreenLoading || subjects.filter((s) => s.status !== "cleared").length === 0}
                 className="px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
               >
                 {rescreenLoading ? "Re-screening…" : "🔄 Re-screen portfolio"}

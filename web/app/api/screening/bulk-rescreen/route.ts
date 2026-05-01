@@ -87,10 +87,13 @@ export async function POST(req: Request) {
 
   const subjects = body.subjects ?? [];
   if (subjects.length === 0) {
-    return NextResponse.json(
-      { ok: false, error: "subjects array is required and must not be empty" },
-      { status: 400 },
-    );
+    return NextResponse.json({
+      ok: true,
+      rescreened: 0,
+      newHits: [],
+      cleared: [],
+      summary: "No active subjects in portfolio to re-screen. Add subjects via New Screening first.",
+    } satisfies BulkRescreenResult);
   }
 
   const listVersion = body.listVersion ?? "latest";
