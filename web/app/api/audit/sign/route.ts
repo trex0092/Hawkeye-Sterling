@@ -47,6 +47,7 @@ const ALLOWED_ACTIONS = new Set([
   "subject_added",
   "screening_completed",
   "ongoing_enrolled",
+  "subject_removed",
 ]);
 
 const ACTION_MIN_ROLE: Record<string, string> = {
@@ -60,6 +61,7 @@ const ACTION_MIN_ROLE: Record<string, string> = {
   subject_added:       "analyst",
   screening_completed: "analyst",
   ongoing_enrolled:    "analyst",
+  subject_removed:     "analyst",
 };
 
 // Must mirror operator-role.ts ROLE_POWER. All 5 roles must be present —
