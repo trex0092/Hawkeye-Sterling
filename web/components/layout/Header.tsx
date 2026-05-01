@@ -102,6 +102,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
       { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live risk events · portfolio impact · regional map" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
+      { label: "⚔️ Weaponized Brain", href: "/weaponized-brain", hint: "Multi-mode AI reasoning · counterfactual · steelman" },
       { label: "🔧 Workbench Brain", href: "/workbench", hint: "Brain inspector · live reasoning · manifest" },
       { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
