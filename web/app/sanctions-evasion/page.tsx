@@ -218,44 +218,44 @@ export default function SanctionsEvasionPage() {
         intro="AI-powered sanctions evasion detection using pattern analysis across corporate structures, jurisdictional layering, name variations, payment splitting, and third-party intermediary networks. Powered by Claude with comprehensive FATF and OFAC/EU typology knowledge."
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="space-y-8">
         {/* Input Form */}
         <div>
           <h2 className="font-display text-20 font-normal text-ink-0 mb-4">
             Entity <em className="italic text-brand">assessment</em>
           </h2>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             {/* Entity Name */}
-            <div>
+            <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
                 Entity Name <span className="text-red">*</span>
               </label>
-              <input
-                type="text"
+              <textarea
                 value={entity}
                 onChange={(e) => setEntity(e.target.value)}
                 placeholder="e.g. Russ-Intl Trading LLC"
-                className="w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13.5 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors"
+                rows={3}
+                className="flex-1 w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
               />
             </div>
 
             {/* Jurisdiction */}
-            <div>
+            <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
                 Primary Jurisdiction
               </label>
-              <input
-                type="text"
+              <textarea
                 value={jurisdiction}
                 onChange={(e) => setJurisdiction(e.target.value)}
                 placeholder="e.g. UAE, BVI, Cayman Islands, Marshall Islands"
-                className="w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13.5 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors"
+                rows={3}
+                className="flex-1 w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
               />
             </div>
 
             {/* Counterparties */}
-            <div>
+            <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
                 Counterparties / Network
               </label>
@@ -264,26 +264,26 @@ export default function SanctionsEvasionPage() {
                 onChange={(e) => setCounterparties(e.target.value)}
                 placeholder="List counterparties, correspondent banks, and known network connections. One per line or comma-separated."
                 rows={3}
-                className="w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
+                className="flex-1 w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
               />
             </div>
 
             {/* Commodities */}
-            <div>
+            <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
                 Commodities / Products
               </label>
-              <input
-                type="text"
+              <textarea
                 value={commodities}
                 onChange={(e) => setCommodities(e.target.value)}
                 placeholder="e.g. Gold bullion, crude oil, arms, dual-use goods"
-                className="w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13.5 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors"
+                rows={3}
+                className="flex-1 w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
               />
             </div>
 
             {/* Ownership Structure */}
-            <div>
+            <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
                 Ownership Structure
               </label>
@@ -292,12 +292,12 @@ export default function SanctionsEvasionPage() {
                 onChange={(e) => setOwnershipStructure(e.target.value)}
                 placeholder="Describe the ownership chain, directors, UBOs, and corporate layers."
                 rows={3}
-                className="w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
+                className="flex-1 w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
               />
             </div>
 
             {/* Transaction Summary */}
-            <div>
+            <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
                 Transaction Summary
               </label>
@@ -306,67 +306,39 @@ export default function SanctionsEvasionPage() {
                 onChange={(e) => setTransactions(e.target.value)}
                 placeholder="Describe transaction patterns, values, frequencies, and any unusual characteristics."
                 rows={3}
-                className="w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
+                className="flex-1 w-full px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg text-13 text-ink-0 placeholder-ink-3 outline-none focus:border-brand transition-colors resize-none"
               />
             </div>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-red-dim border border-red/30 text-12 text-red">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => void handleDetect()}
-              disabled={loading || !entity.trim()}
-              className="w-full py-3 rounded-lg bg-brand text-white text-14 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full shrink-0"
-                    style={{ animation: "spin 0.8s linear infinite" }}
-                  />
-                  Detecting evasion patterns…
-                </>
-              ) : (
-                <>🔍 Detect Evasion</>
-              )}
-            </button>
           </div>
-        </div>
 
-        {/* Results Panel */}
-        <div>
-          {!result && !loading && (
-            <div className="h-full flex flex-col items-center justify-center text-center py-16 px-4">
-              <div className="text-48 mb-4">🚫</div>
-              <h3 className="font-display text-20 font-normal text-ink-0 mb-2">
-                Sanctions Evasion <em className="italic text-brand">Detector</em>
-              </h3>
-              <p className="text-13 text-ink-2 max-w-sm">
-                Enter entity details on the left to run a comprehensive sanctions evasion pattern analysis powered by Claude AI.
-              </p>
-              <div className="mt-6 grid grid-cols-2 gap-3 text-left w-full max-w-sm">
-                {[
-                  { icon: "🏢", label: "Front Company Detection" },
-                  { icon: "🌐", label: "Jurisdiction Layering" },
-                  { icon: "📝", label: "Name Variation Flags" },
-                  { icon: "💳", label: "Payment Splitting" },
-                  { icon: "🔗", label: "Intermediary Networks" },
-                  { icon: "🚢", label: "Vessel Flag Hopping" },
-                ].map((feature) => (
-                  <div key={feature.label} className="flex items-center gap-2 p-2.5 rounded-lg bg-bg-1 border border-hair">
-                    <span>{feature.icon}</span>
-                    <span className="text-11.5 text-ink-2 font-medium">{feature.label}</span>
-                  </div>
-                ))}
-              </div>
+          {error && (
+            <div className="mt-4 p-3 rounded-lg bg-red-dim border border-red/30 text-12 text-red">
+              {error}
             </div>
           )}
 
-          {result && !loading && (
+          <button
+            type="button"
+            onClick={() => void handleDetect()}
+            disabled={loading || !entity.trim()}
+            className="mt-4 w-full py-3 rounded-lg bg-brand text-white text-14 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div
+                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full shrink-0"
+                  style={{ animation: "spin 0.8s linear infinite" }}
+                />
+                Detecting evasion patterns…
+              </>
+            ) : (
+              <>🔍 Detect Evasion</>
+            )}
+          </button>
+        </div>
+
+        {/* Results Panel */}
+        {result && !loading && (
             <div className="space-y-6">
               {/* Risk Score + Tier */}
               <div className="rounded-xl border border-hair p-5 bg-bg-panel">
