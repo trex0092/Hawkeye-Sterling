@@ -580,6 +580,21 @@ interface OnboardingRiskResult {
   jurisdictionHits: Array<{list: string; label: string; stale: boolean; classification?: "grey"|"black"}>;
 }
 
+interface PfIndicator { indicator: string; severity: "critical"|"high"|"medium"|"low"; category: "dual_use"|"sanctions_evasion"|"financing_pattern"|"entity"|"jurisdiction"|"trade"|"other"; unscr: string; detail: string }
+interface ProlifFinanceResult { pfRisk: "critical"|"high"|"medium"|"low"|"clear"; wmdNexus: "confirmed"|"possible"|"unlikely"|"none"; sanctionedEntityHit: boolean; dualUseGoodsDetected: boolean; dualUseCategories: string[]; indicators: PfIndicator[]; primaryConcern: string; mandatoryFreeze: boolean; freezeBasis?: string; recommendedAction: "freeze_and_report_immediately"|"file_str"|"escalate_mlro"|"enhanced_dd"|"monitor"|"clear"; actionRationale: string; requiredActions: string[]; applicableRegime: string[]; regulatoryBasis: string; pfObligations: string[] }
+interface SarTriageResult { decision: "file_str"|"no_file"|"more_info"|"escalate_mlro"; confidenceLevel: "high"|"medium"|"low"; suspicionTest: "met"|"not_met"|"borderline"; suspicionBasis: string; thresholdAnalysis: string; tippingOffRisk: boolean; tippingOffWarning?: string; fatfR20Assessment: string; strDeadline?: string; strDeadlineBasis?: string; requiredFields: Array<{field: string; status: "available"|"missing"|"partial"; note?: string}>; missingInformation: string[]; narrativeQuality: "sufficient"|"needs_expansion"|"insufficient"; narrativeSuggestions: string[]; predetermination: string; supervisoryDisclosure?: string; regulatoryBasis: string; decisionRationale: string }
+interface DocFraudIndicator { indicator: string; severity: "critical"|"high"|"medium"|"low"; documentType: string; detail: string }
+interface DocumentFraudResult { fraudRisk: "critical"|"high"|"medium"|"low"|"clear"; fraudProbability: number; documentAssessments: Array<{docType: string; authentic: "likely"|"suspect"|"counterfeit"|"unknown"; redFlags: string[]; verificationRequired: string[]}>; indicators: DocFraudIndicator[]; identityConsistency: "consistent"|"inconsistent"|"partially_inconsistent"|"unknown"; kycImpact: "reject"|"re_verify"|"enhanced_verification"|"acceptable"; recommendedAction: "reject_onboarding"|"escalate_mlro"|"re_verify_documents"|"enhanced_dd"|"clear"; actionRationale: string; requiredVerificationSteps: string[]; externalVerificationSources: string[]; regulatoryBasis: string }
+interface CtrStructuringResult { structuringDetected: boolean; structuringRisk: "critical"|"high"|"medium"|"low"|"none"; ctrRequired: boolean; ctrCount: number; ctrThresholdAed: number; smurfingPattern: boolean; patternDescription: string; totalValueAed: number; periodDays: number; averageTransactionAed: number; thresholdProximityPct: number; transactions: Array<{amount: number; date?: string; type?: string; proximityToCtrPct: number; flag: boolean}>; structuringBands: Array<{band: string; count: number; totalAed: number}>; recommendedAction: "file_ctr_and_str"|"file_str"|"file_ctr"|"escalate_mlro"|"monitor"|"clear"; actionRationale: string; ctrDeadline?: string; strBasis?: string; regulatoryBasis: string }
+interface DnfbpObligationsResult { dnfbpCategory: string; dnfbpSubType: string; regulatoryAuthority: string; isRegulated: boolean; obligationTriggered: boolean; triggerThreshold?: string; triggerActivity?: string; cddRequired: boolean; cddLevel: "standard"|"simplified"|"enhanced"|"n/a"; strRequired: boolean; strBasis?: string; ctrRequired: boolean; ctrThreshold?: string; registrationRequired: boolean; registrationBody?: string; keyObligations: Array<{obligation: string; legalBasis: string; deadline?: string; notes?: string}>; prohibitedActivities: string[]; recordKeepingYears: number; supervisoryBody: string; sanctionsForNonCompliance: string; regulatoryBasis: string; practicalGuidance: string }
+interface CddRefreshTriggerResult { refreshRequired: boolean; urgency: "immediate"|"within_30_days"|"within_90_days"|"scheduled"|"none"; triggerEvents: Array<{event: string; triggered: boolean; legalBasis: string; deadline?: string; severity: "mandatory"|"recommended"|"advisory"}>; currentRiskTier: "high"|"medium"|"low"|"unknown"; recommendedCddLevel: "full_edd"|"standard_cdd"|"simplified_cdd"; eddRequired: boolean; eddReason?: string; riskReviewRequired: boolean; fieldsToReverify: string[]; additionalDocumentsRequired: string[]; accountActionPending?: string; actionRationale: string; reviewDeadline?: string; regulatoryBasis: string }
+interface VaspRiskResult { overallRisk: "critical"|"high"|"medium"|"low"; varaLicensed: boolean; travelRuleCompliant: boolean; travelRuleAssessment: string; custodyModel: "self_custody"|"custodial"|"non_custodial"|"hybrid"|"unknown"; exchangeType: string; geographicExposure: "high"|"medium"|"low"; highRiskJurisdictions: string[]; sanctionedExposure: boolean; darknetExposure: "confirmed"|"possible"|"unlikely"|"none"; mixingServiceExposure: "confirmed"|"possible"|"unlikely"|"none"; amlProgramAssessment: string; cddApproach: "robust"|"adequate"|"weak"|"unknown"; riskIndicators: Array<{indicator: string; severity: "critical"|"high"|"medium"|"low"; detail: string}>; recommendedAction: "reject"|"escalate_mlro"|"enhanced_dd"|"verify_and_monitor"|"onboard_standard"; actionRationale: string; requiredDocumentation: string[]; regulatoryObligations: string[]; regulatoryBasis: string }
+interface GoAmlFieldCheck { field: string; section: "header"|"subject"|"transactions"|"narrative"|"reporting_entity"; status: "complete"|"incomplete"|"missing"|"invalid"; currentValue?: string; requiredFormat?: string; issue?: string; recommendation?: string }
+interface GoAmlValidatorResult { overallStatus: "ready_to_file"|"needs_corrections"|"incomplete"|"rejected"; completenessScore: number; narrativeQuality: "excellent"|"good"|"adequate"|"poor"|"insufficient"; fieldChecks: GoAmlFieldCheck[]; criticalIssues: string[]; warnings: string[]; narrativeFeedback: string; narrativeStrengths: string[]; narrativeWeaknesses: string[]; goAmlSpecificRequirements: string[]; improvedNarrativeSuggestion?: string; filingDeadlineAssessment?: string; regulatoryBasis: string }
+interface PepEddResult { pepClassification: "domestic_pep"|"foreign_pep"|"international_organisation_pep"|"former_pep"|"pep_family"|"pep_associate"|"not_pep"; pepRole: string; pepJurisdiction: string; riskRating: "very_high"|"high"|"medium"; seniorManagementApproval: boolean; approvalLevel: string; eddQuestionnaire: Array<{category: string; question: string; purpose: string; documentaryEvidence?: string}>; sourceOfWealthAssessment: string; sourceOfFundsAssessment: string; requiredDocumentation: string[]; ongoingMonitoringFrequency: string; ongoingMonitoringMeasures: string[]; screeningRequirements: string[]; pepMemo: string; recommendedAction: "onboard_with_enhanced_measures"|"refer_senior_management"|"decline"|"exit_relationship"; actionRationale: string; regulatoryBasis: string }
+interface SanctionsListHit { list: string; listAuthority: string; hitType: "confirmed"|"possible"|"name_match"|"none"; designationDate?: string; designationBasis?: string; assetFreezeRequired: boolean; freezeTimeline?: string; dealingProhibition: boolean; reportingObligation?: string }
+interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"medium"|"low"|"none"; immediateFreeze: boolean; freezeBasis?: string; listHits: SanctionsListHit[]; assetFreezeRequired: boolean; dealingProhibition: boolean; tippingOffRisk: boolean; recommendedAction: "freeze_immediately"|"file_str"|"escalate_mlro"|"enhanced_screening"|"clear"; actionRationale: string; frozenAssetReportingDeadline?: string; applicableRegime: string[]; complianceObligations: string[]; regulatoryBasis: string }
+
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
 // repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
@@ -892,6 +907,116 @@ const SUGGESTED_GROUPS = [
       "What does FATF R.10 require on ongoing monitoring and risk-based customer classification?",
       "What are the minimum risk factors for a PEP customer risk rating under UAE rules?",
       "What documentation must support a downgrade of a customer from high to medium risk?",
+    ],
+  },
+  {
+    label: "Virtual Assets & VASP Onboarding",
+    questions: [
+      "What licence must a UAE VASP obtain before offering virtual asset services under VARA?",
+      "What Travel Rule requirements apply to UAE virtual asset transfers under FATF R.16?",
+      "When must a UAE FI apply enhanced CDD to a VASP correspondent relationship?",
+      "What are the UAE CBUAE requirements for FIs dealing with unhosted wallet transactions?",
+      "How does VARA's technology governance framework apply to VASP AML programmes?",
+      "What blockchain analytics tools are considered adequate for UAE VASP CDD?",
+    ],
+  },
+  {
+    label: "Proliferation Financing (PF)",
+    questions: [
+      "What is the UAE's legal framework for countering proliferation financing under FDL 10/2025?",
+      "Which UNSC resolutions impose immediate asset freeze obligations in UAE for PF?",
+      "What goods are considered dual-use under UAE Federal Decree-Law 26/2021 Strategic Goods Control?",
+      "What is the UAE CBUAE PF Circular 2023 and what does it require from financial institutions?",
+      "How does FATF R.7 differ from FATF R.6 in terms of targeted financial sanctions?",
+      "What is the end-user certificate requirement for trade finance involving controlled goods?",
+    ],
+  },
+  {
+    label: "PEP Enhanced Due Diligence",
+    questions: [
+      "What is the definition of a Politically Exposed Person under UAE FDL 10/2025 Art.14(2)?",
+      "What senior management approval is required for a PEP relationship under UAE law?",
+      "What is the difference between source of wealth and source of funds in PEP EDD?",
+      "How should a UAE FI handle a customer who becomes a PEP during an existing relationship?",
+      "What ongoing monitoring frequency is required for foreign PEPs under UAE law?",
+      "Does the UAE define a time limit after which a former PEP ceases to be treated as a PEP?",
+    ],
+  },
+  {
+    label: "Cross-Border Correspondent Banking",
+    questions: [
+      "What FATF R.13 requirements apply to UAE banks establishing correspondent relationships?",
+      "What is a payable-through account and why is it prohibited without additional controls?",
+      "What is the UAE CBUAE requirement for nested correspondent account relationships?",
+      "What due diligence must a UAE correspondent bank perform on a respondent bank's AML programme?",
+      "How should a UAE FI handle a correspondent bank in a FATF grey-list jurisdiction?",
+      "What is the 'shell bank' prohibition under UAE FDL 10/2025 and FATF R.13?",
+    ],
+  },
+  {
+    label: "High-Risk Customer Remediation",
+    questions: [
+      "What triggers a mandatory CDD refresh for a high-risk customer under UAE FDL 10/2025 Art.15?",
+      "What account restrictions can a UAE FI impose pending completion of refresh CDD?",
+      "When must a UAE FI terminate a business relationship under FDL 10/2025 Art.15(3)?",
+      "Should a UAE FI file an exit STR when terminating a high-risk relationship?",
+      "What documentation is required to support a decision to continue a high-risk relationship?",
+      "What is the remediation timeline for a customer classified as high-risk after post-onboarding monitoring?",
+    ],
+  },
+  {
+    label: "Sanctions Compliance Programme",
+    questions: [
+      "What sanctions lists must a UAE financial institution screen against under UAE law?",
+      "What is the UAE EOCN and what obligations does Cabinet Decision 74/2020 impose?",
+      "What is the timeline for reporting frozen assets to UAE EOCN after a designation hit?",
+      "How does secondary sanctions risk from OFAC affect UAE financial institutions?",
+      "What is the tipping-off prohibition in the context of sanctions screening under FDL 10/2025?",
+      "What is the difference between a designated entity hit and a PEP hit in terms of legal obligations?",
+    ],
+  },
+  {
+    label: "Transaction Monitoring Calibration",
+    questions: [
+      "What is the CBUAE expectation for transaction monitoring system calibration documentation?",
+      "What alert-to-SAR conversion rate benchmarks are considered adequate by UAE regulators?",
+      "How should a UAE FI document the rationale for transaction monitoring thresholds?",
+      "What is the risk of over-suppression of transaction monitoring alerts from a regulatory perspective?",
+      "How should typology changes identified by the UAE FIU be incorporated into TM rules?",
+      "What does FATF R.10 require specifically for ongoing transaction monitoring?",
+    ],
+  },
+  {
+    label: "Annual AML Programme Self-Assessment",
+    questions: [
+      "What are the required components of an annual AML/CFT programme review under UAE FDL 10/2025?",
+      "What must a UAE FI's annual enterprise-wide risk assessment (EWRA) cover?",
+      "What is the CBUAE inspection framework for AML/CFT programmes and what are common findings?",
+      "What governance documentation must a UAE MLRO maintain for the annual AML programme review?",
+      "What training requirements must be satisfied annually under UAE FDL 10/2025 Art.19(3)?",
+      "What are the penalties for an inadequate AML programme under UAE FDL 10/2025?",
+    ],
+  },
+  {
+    label: "Board & Senior Management AML Oversight",
+    questions: [
+      "What are the AML/CFT governance obligations of the Board of Directors under UAE FDL 10/2025?",
+      "What management information (MIS) must be reported to the Board on AML performance?",
+      "What is the personal liability of senior management for AML failures under UAE law?",
+      "How should a UAE FI document Board approval of the AML/CFT risk appetite statement?",
+      "What is the MLRO's reporting line and independence requirement under UAE AML rules?",
+      "What is the three lines of defence model in the context of UAE AML/CFT governance?",
+    ],
+  },
+  {
+    label: "goAML Filing Quality & FIU Engagement",
+    questions: [
+      "What are the mandatory fields in a UAE FIU goAML STR submission?",
+      "What is the 2-business-day STR filing deadline and when does it start running under UAE FDL 10/2025 Art.26?",
+      "What is the tipping-off prohibition and how does it interact with the STR filing process?",
+      "What voluntary disclosure obligations exist under UAE FDL 10/2025 beyond STRs?",
+      "How should a UAE MLRO handle a goAML STR that was filed in error?",
+      "What feedback does the UAE FIU provide to reporting entities after an STR is filed?",
     ],
   },
 ];
@@ -1510,7 +1635,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1805,6 +1930,58 @@ export default function MlroAdvisorPage() {
   const [onboardResult, setOnboardResult] = useState<OnboardingRiskResult | null>(null);
   const [onboardLoading, setOnboardLoading] = useState(false);
 
+  // Prolif Finance
+  const [prolifInput, setProlifInput] = useState({ subject: "", subjectCountry: "", counterparty: "", counterpartyCountry: "", goods: "", transactionType: "", amount: "", currency: "AED", endUser: "", endUserCountry: "", context: "" });
+  const [prolifResult, setProlifResult] = useState<ProlifFinanceResult | null>(null);
+  const [prolifLoading, setProlifLoading] = useState(false);
+
+  // SAR Triage
+  const [sarInput, setSarInput] = useState({ suspiciousActivity: "", subjectName: "", subjectType: "", accountRef: "", transactionSummary: "", existingCddNotes: "", mlroNotes: "", context: "" });
+  const [sarTriageResult, setSarTriageResult] = useState<SarTriageResult | null>(null);
+  const [sarTriageLoading, setSarTriageLoading] = useState(false);
+
+  // Document Fraud
+  const [docFraudInput, setDocFraudInput] = useState({ documentTypes: "", documentDetails: "", subjectName: "", subjectNationality: "", occupationClaimed: "", incomeClaimedAed: "", inconsistenciesObserved: "", context: "" });
+  const [docFraudResult, setDocFraudResult] = useState<DocumentFraudResult | null>(null);
+  const [docFraudLoading, setDocFraudLoading] = useState(false);
+
+  // CTR / Structuring
+  const [ctrAmounts, setCtrAmounts] = useState("");
+  const [ctrPeriodDays, setCtrPeriodDays] = useState("30");
+  const [ctrSubject, setCtrSubject] = useState("");
+  const [ctrResult, setCtrResult] = useState<CtrStructuringResult | null>(null);
+  const [ctrLoading, setCtrLoading] = useState(false);
+
+  // DNFBP Obligations
+  const [dnfbpInput, setDnfbpInput] = useState({ dnfbpType: "", transactionType: "", transactionAmount: "", currency: "AED", customerType: "", jurisdiction: "UAE", context: "" });
+  const [dnfbpResult, setDnfbpResult] = useState<DnfbpObligationsResult | null>(null);
+  const [dnfbpLoading, setDnfbpLoading] = useState(false);
+
+  // CDD Refresh Trigger
+  const [cddRefreshInput, setCddRefreshInput] = useState({ customerName: "", customerType: "", currentRiskTier: "", lastCddDate: "", triggerEvents: "", transactionPatternChange: "", adverseMediaHit: "", ownershipChange: "", context: "" });
+  const [cddRefreshResult, setCddRefreshResult] = useState<CddRefreshTriggerResult | null>(null);
+  const [cddRefreshLoading, setCddRefreshLoading] = useState(false);
+
+  // VASP Risk
+  const [vaspInput, setVaspInput] = useState({ vaspName: "", vaspJurisdiction: "", exchangeType: "", custodyModel: "", supportedAssets: "", travelRuleProtocol: "", licenceNumber: "", geographicReach: "", amlPolicyAvailable: "", blockchainAnalyticsTool: "", context: "" });
+  const [vaspResult, setVaspResult] = useState<VaspRiskResult | null>(null);
+  const [vaspLoading, setVaspLoading] = useState(false);
+
+  // goAML Validator
+  const [goAmlInput, setGoAmlInput] = useState({ narrative: "", subjectName: "", subjectIdNumber: "", subjectDob: "", subjectNationality: "", subjectAddress: "", accountNumbers: "", transactionSummary: "", reportingEntityName: "", mlroName: "", context: "" });
+  const [goAmlResult, setGoAmlResult] = useState<GoAmlValidatorResult | null>(null);
+  const [goAmlLoading, setGoAmlLoading] = useState(false);
+
+  // PEP EDD Generator
+  const [pepEddInput, setPepEddInput] = useState({ pepName: "", pepRole: "", pepJurisdiction: "", pepClassification: "", relationshipType: "", proposedProducts: "", knownWealth: "", context: "" });
+  const [pepEddResult, setPepEddResult] = useState<PepEddResult | null>(null);
+  const [pepEddLoading, setPepEddLoading] = useState(false);
+
+  // Sanctions Exposure Mapper
+  const [sanctionsMapInput, setSanctionsMapInput] = useState({ entityName: "", entityType: "", nationality: "", dob: "", passportNumber: "", aliases: "", jurisdiction: "", context: "" });
+  const [sanctionsMapResult, setSanctionsMapResult] = useState<SanctionsExposureResult | null>(null);
+  const [sanctionsMapLoading, setSanctionsMapLoading] = useState(false);
+
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
     setTfLoading(true); setTfResult(null);
@@ -1936,6 +2113,116 @@ export default function MlroAdvisorPage() {
       setOnboardResult(data);
     } catch { /* silent */ }
     finally { setOnboardLoading(false); }
+  };
+
+  const runProlifFinance = async () => {
+    if (!prolifInput.subject.trim()) return;
+    setProlifLoading(true); setProlifResult(null);
+    try {
+      const res = await fetch("/api/proliferation-finance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(prolifInput) });
+      const data = await res.json() as ProlifFinanceResult;
+      setProlifResult(data);
+    } catch { /* noop */ }
+    finally { setProlifLoading(false); }
+  };
+
+  const runSarTriage = async () => {
+    if (!sarInput.suspiciousActivity.trim()) return;
+    setSarTriageLoading(true); setSarTriageResult(null);
+    try {
+      const res = await fetch("/api/sar-triage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sarInput) });
+      const data = await res.json() as SarTriageResult;
+      setSarTriageResult(data);
+    } catch { /* noop */ }
+    finally { setSarTriageLoading(false); }
+  };
+
+  const runDocFraud = async () => {
+    if (!docFraudInput.documentTypes.trim()) return;
+    setDocFraudLoading(true); setDocFraudResult(null);
+    try {
+      const res = await fetch("/api/document-fraud", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(docFraudInput) });
+      const data = await res.json() as DocumentFraudResult;
+      setDocFraudResult(data);
+    } catch { /* noop */ }
+    finally { setDocFraudLoading(false); }
+  };
+
+  const runCtrStructuring = async () => {
+    if (!ctrAmounts.trim()) return;
+    setCtrLoading(true); setCtrResult(null);
+    try {
+      const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays) || 30, subjectName: ctrSubject }) });
+      const data = await res.json() as CtrStructuringResult;
+      setCtrResult(data);
+    } catch { /* noop */ }
+    finally { setCtrLoading(false); }
+  };
+
+  const runDnfbpObligations = async () => {
+    if (!dnfbpInput.dnfbpType.trim()) return;
+    setDnfbpLoading(true); setDnfbpResult(null);
+    try {
+      const res = await fetch("/api/dnfbp-obligations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(dnfbpInput) });
+      const data = await res.json() as DnfbpObligationsResult;
+      setDnfbpResult(data);
+    } catch { /* noop */ }
+    finally { setDnfbpLoading(false); }
+  };
+
+  const runCddRefresh = async () => {
+    if (!cddRefreshInput.triggerEvents.trim() && !cddRefreshInput.adverseMediaHit.trim() && !cddRefreshInput.transactionPatternChange.trim()) return;
+    setCddRefreshLoading(true); setCddRefreshResult(null);
+    try {
+      const res = await fetch("/api/cdd-refresh-trigger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cddRefreshInput) });
+      const data = await res.json() as CddRefreshTriggerResult;
+      setCddRefreshResult(data);
+    } catch { /* noop */ }
+    finally { setCddRefreshLoading(false); }
+  };
+
+  const runVaspRisk = async () => {
+    if (!vaspInput.vaspName.trim()) return;
+    setVaspLoading(true); setVaspResult(null);
+    try {
+      const res = await fetch("/api/vasp-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(vaspInput) });
+      const data = await res.json() as VaspRiskResult;
+      setVaspResult(data);
+    } catch { /* noop */ }
+    finally { setVaspLoading(false); }
+  };
+
+  const runGoAmlValidator = async () => {
+    if (!goAmlInput.narrative.trim()) return;
+    setGoAmlLoading(true); setGoAmlResult(null);
+    try {
+      const res = await fetch("/api/goaml-validator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(goAmlInput) });
+      const data = await res.json() as GoAmlValidatorResult;
+      setGoAmlResult(data);
+    } catch { /* noop */ }
+    finally { setGoAmlLoading(false); }
+  };
+
+  const runPepEdd = async () => {
+    if (!pepEddInput.pepName.trim()) return;
+    setPepEddLoading(true); setPepEddResult(null);
+    try {
+      const res = await fetch("/api/pep-edd-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepEddInput) });
+      const data = await res.json() as PepEddResult;
+      setPepEddResult(data);
+    } catch { /* noop */ }
+    finally { setPepEddLoading(false); }
+  };
+
+  const runSanctionsMapper = async () => {
+    if (!sanctionsMapInput.entityName.trim()) return;
+    setSanctionsMapLoading(true); setSanctionsMapResult(null);
+    try {
+      const res = await fetch("/api/sanctions-exposure-mapper", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsMapInput) });
+      const data = await res.json() as SanctionsExposureResult;
+      setSanctionsMapResult(data);
+    } catch { /* noop */ }
+    finally { setSanctionsMapLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -2814,10 +3101,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier"] as const).map((t) => (
+              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : "🎛 Onboarding Tier"}
+                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : "🗺 Sanctions Mapper"}
                 </button>
               ))}
             </div>
@@ -4878,6 +5165,411 @@ export default function MlroAdvisorPage() {
                           <div className="flex flex-wrap gap-1.5">{or.jurisdictionHits.map((jh, i) => <span key={i} className={`text-10 font-mono px-2 py-px rounded ${jh.classification === "black" ? "bg-red text-white" : jh.classification === "grey" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2"}`}>{jh.list}: {jh.label}</span>)}</div>
                         </div>
                       )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "prolif-finance" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Proliferation Finance Screener · FATF R.7 · UNSCR 1718/1737/2397</div>
+                <p className="text-11 text-ink-3">Assess transactions and entities for WMD proliferation financing risk. Covers dual-use goods, DPRK/Iran/Syria sanctions corridors, front company structures, and Strategic Goods Control List (SGCL) obligations under UAE Federal Decree-Law 26/2021.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">Subject / Buyer *</label><input value={prolifInput.subject} onChange={(e) => setProlifInput((p) => ({...p, subject: e.target.value}))} placeholder="Entity or individual name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Subject Country</label><input value={prolifInput.subjectCountry} onChange={(e) => setProlifInput((p) => ({...p, subjectCountry: e.target.value}))} placeholder="Country of incorporation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Counterparty / Seller</label><input value={prolifInput.counterparty} onChange={(e) => setProlifInput((p) => ({...p, counterparty: e.target.value}))} placeholder="Counterparty name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Counterparty Country</label><input value={prolifInput.counterpartyCountry} onChange={(e) => setProlifInput((p) => ({...p, counterpartyCountry: e.target.value}))} placeholder="Country" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Goods / Services</label><input value={prolifInput.goods} onChange={(e) => setProlifInput((p) => ({...p, goods: e.target.value}))} placeholder="e.g. CNC machine tools, precision instruments, electronic components" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">End User / Destination</label><input value={prolifInput.endUser} onChange={(e) => setProlifInput((p) => ({...p, endUser: e.target.value}))} placeholder="Stated end user name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">End User Country</label><input value={prolifInput.endUserCountry} onChange={(e) => setProlifInput((p) => ({...p, endUserCountry: e.target.value}))} placeholder="Final destination country" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Amount + Currency</label><div className="flex gap-2"><input value={prolifInput.amount} onChange={(e) => setProlifInput((p) => ({...p, amount: e.target.value}))} placeholder="Amount" className="flex-1 text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /><input value={prolifInput.currency} onChange={(e) => setProlifInput((p) => ({...p, currency: e.target.value}))} placeholder="USD" className="w-20 text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div></div>
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><textarea value={prolifInput.context} onChange={(e) => setProlifInput((p) => ({...p, context: e.target.value}))} rows={2} placeholder="e.g. transshipment route, payment method, intermediaries" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runProlifFinance()} disabled={prolifLoading || !prolifInput.subject.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{prolifLoading ? "Assessing…" : "Screen for PF Risk"}</button>
+                {prolifResult && (() => {
+                  const pf = prolifResult as ProlifFinanceResult;
+                  const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-amber-dim text-amber" : pf.pfRisk === "medium" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>PF Risk: {pf.pfRisk}</span>
+                        {pf.mandatoryFreeze && <span className="font-mono text-11 px-3 py-1 rounded bg-red text-white font-bold">⚠️ MANDATORY FREEZE</span>}
+                        {pf.wmdNexus !== "none" && <span className={`font-mono text-11 px-2 py-px rounded ${pf.wmdNexus === "confirmed" ? "bg-red text-white" : "bg-amber-dim text-amber"}`}>WMD Nexus: {pf.wmdNexus}</span>}
+                      </div>
+                      <p className="text-12 text-ink-0 font-medium">{pf.primaryConcern}</p>
+                      {pf.dualUseGoodsDetected && pf.dualUseCategories.length > 0 && <div className="flex flex-wrap gap-1.5">{pf.dualUseCategories.map((c, i) => <span key={i} className="text-10 font-mono px-2 py-px rounded bg-amber-dim text-amber">Dual-use: {c}</span>)}</div>}
+                      {pf.indicators.length > 0 && <div className="space-y-1.5">{pf.indicators.map((ind, i) => <div key={i} className={`border rounded p-2 text-11 ${ind.severity === "critical" ? "border-red bg-red-dim" : ind.severity === "high" ? "border-amber bg-amber-dim" : "border-hair-2 bg-bg-panel"}`}><div className="font-semibold text-ink-0">{ind.indicator}</div><div className="text-10 text-ink-3 mt-0.5">{ind.detail}</div><div className="text-10 font-mono text-ink-3 mt-0.5">{ind.unscr}</div></div>)}</div>}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{pf.actionRationale}</div>
+                      {pf.requiredActions.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Actions</div><ol className="space-y-1">{pf.requiredActions.map((a, i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="font-mono text-ink-3 w-4">{i+1}.</span>{a}</li>)}</ol></div>}
+                      <div className="text-10 font-mono text-ink-3">{pf.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "sar-triage" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">SAR/STR Triage Decision Engine · UAE FDL 10/2025 Art.26 · FATF R.20</div>
+                <p className="text-11 text-ink-3">File or no-file? Applies the UAE 'reasonable grounds to suspect' standard (no monetary threshold) and the 2-business-day filing deadline. Checks narrative completeness, missing fields, and tipping-off risk before generating an MLRO decision memorandum.</p>
+                <div className="space-y-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">Suspicious Activity Description *</label><textarea value={sarInput.suspiciousActivity} onChange={(e) => setSarInput((p) => ({...p, suspiciousActivity: e.target.value}))} rows={4} placeholder="Describe the suspicious activity in detail — what happened, when, amounts, patterns, customer behaviour..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={sarInput.subjectName} onChange={(e) => setSarInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Subject Type</label><input value={sarInput.subjectType} onChange={(e) => setSarInput((p) => ({...p, subjectType: e.target.value}))} placeholder="e.g. individual, corporate, DPMS" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Account Reference</label><input value={sarInput.accountRef} onChange={(e) => setSarInput((p) => ({...p, accountRef: e.target.value}))} placeholder="Account number or IBAN" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Transaction Summary</label><input value={sarInput.transactionSummary} onChange={(e) => setSarInput((p) => ({...p, transactionSummary: e.target.value}))} placeholder="e.g. 6 cash deposits AED 52,000–54,000 over 6 weeks" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">MLRO Notes</label><textarea value={sarInput.mlroNotes} onChange={(e) => setSarInput((p) => ({...p, mlroNotes: e.target.value}))} rows={2} placeholder="Any MLRO notes or preliminary assessment..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runSarTriage()} disabled={sarTriageLoading || !sarInput.suspiciousActivity.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sarTriageLoading ? "Triaging…" : "Run STR Triage"}</button>
+                {sarTriageResult && (() => {
+                  const st = sarTriageResult;
+                  const decCls = st.decision === "file_str" ? "bg-red text-white" : st.decision === "more_info" ? "bg-amber-dim text-amber" : st.decision === "escalate_mlro" ? "bg-yellow-dim text-yellow-700" : "bg-green-dim text-green";
+                  const decLabel = st.decision === "file_str" ? "FILE STR NOW" : st.decision === "more_info" ? "MORE INFO NEEDED" : st.decision === "escalate_mlro" ? "ESCALATE TO MLRO" : "NO FILE";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-13 font-bold px-4 py-1.5 rounded uppercase ${decCls}`}>{decLabel}</span>
+                        <span className={`font-mono text-11 px-2 py-px rounded ${st.suspicionTest === "met" ? "bg-red-dim text-red" : st.suspicionTest === "borderline" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>Suspicion test: {st.suspicionTest}</span>
+                        <span className="font-mono text-11 text-ink-3">Confidence: {st.confidenceLevel}</span>
+                      </div>
+                      {st.tippingOffRisk && <div className="bg-red text-white rounded p-3 text-11 font-semibold">⚠️ TIPPING-OFF WARNING: {st.tippingOffWarning}</div>}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 space-y-2">
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3">Suspicion Basis</div>
+                        <p className="text-12 text-ink-1">{st.suspicionBasis}</p>
+                      </div>
+                      {st.strDeadline && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Filing Deadline:</span><span className="font-mono text-11 text-red font-bold">{st.strDeadline}</span></div>}
+                      {st.requiredFields.length > 0 && (
+                        <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">goAML Field Checklist</div>
+                        <div className="grid grid-cols-2 gap-1.5">{st.requiredFields.map((f, i) => <div key={i} className={`text-11 px-2 py-1 rounded border ${f.status === "available" ? "border-green bg-green-dim text-green" : f.status === "missing" ? "border-red bg-red-dim text-red" : "border-amber bg-amber-dim text-amber"}`}>{f.status === "available" ? "✓" : f.status === "missing" ? "✗" : "~"} {f.field}{f.note ? ` — ${f.note}` : ""}</div>)}</div></div>
+                      )}
+                      {st.narrativeSuggestions.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Improvements</div><ul className="space-y-1">{st.narrativeSuggestions.map((s, i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="text-amber">→</span>{s}</li>)}</ul></div>}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">MLRO Predetermination</div>{st.predetermination}</div>
+                      <div className="text-10 font-mono text-ink-3">{st.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "doc-fraud" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Document Fraud Detector · UAE FDL 10/2025 Art.14 · KYC Authenticity</div>
+                <p className="text-11 text-ink-3">Assess identity documents and KYC supporting documents for fraud indicators. Checks Emirates ID format, salary certificate consistency, trade licence format, attestation chains, and income plausibility. Outputs verification steps and regulatory implications.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">Document Types Presented *</label><input value={docFraudInput.documentTypes} onChange={(e) => setDocFraudInput((p) => ({...p, documentTypes: e.target.value}))} placeholder="e.g. Emirates ID, salary certificate, trade licence, bank statement" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={docFraudInput.subjectName} onChange={(e) => setDocFraudInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full name on documents" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Subject Nationality</label><input value={docFraudInput.subjectNationality} onChange={(e) => setDocFraudInput((p) => ({...p, subjectNationality: e.target.value}))} placeholder="e.g. Pakistani, Egyptian, Indian" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Occupation Claimed</label><input value={docFraudInput.occupationClaimed} onChange={(e) => setDocFraudInput((p) => ({...p, occupationClaimed: e.target.value}))} placeholder="Stated occupation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Income Claimed (AED/month)</label><input value={docFraudInput.incomeClaimedAed} onChange={(e) => setDocFraudInput((p) => ({...p, incomeClaimedAed: e.target.value}))} placeholder="Monthly income in AED" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Inconsistencies Observed</label><input value={docFraudInput.inconsistenciesObserved} onChange={(e) => setDocFraudInput((p) => ({...p, inconsistenciesObserved: e.target.value}))} placeholder="e.g. font differences, date mismatch" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Document Details / Observations</label><textarea value={docFraudInput.documentDetails} onChange={(e) => setDocFraudInput((p) => ({...p, documentDetails: e.target.value}))} rows={2} placeholder="Describe any unusual features, quality issues, or specific concerns..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runDocFraud()} disabled={docFraudLoading || !docFraudInput.documentTypes.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{docFraudLoading ? "Analysing…" : "Assess Document Authenticity"}</button>
+                {docFraudResult && (() => {
+                  const df = docFraudResult;
+                  const riskCls = df.fraudRisk === "critical" ? "bg-red text-white" : df.fraudRisk === "high" ? "bg-amber-dim text-amber" : df.fraudRisk === "medium" ? "bg-yellow-dim text-yellow-600" : df.fraudRisk === "clear" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>Fraud Risk: {df.fraudRisk} ({df.fraudProbability}%)</span>
+                        <span className={`font-mono text-11 px-2 py-px rounded ${df.identityConsistency === "consistent" ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>Identity: {df.identityConsistency}</span>
+                      </div>
+                      {df.documentAssessments.map((da, i) => (
+                        <div key={i} className="border border-hair-2 rounded p-3 space-y-1.5">
+                          <div className="flex items-center gap-2"><span className="text-11 font-semibold text-ink-0">{da.docType}</span><span className={`text-10 font-mono px-2 py-px rounded ${da.authentic === "likely" ? "bg-green-dim text-green" : da.authentic === "counterfeit" ? "bg-red text-white" : "bg-amber-dim text-amber"}`}>{da.authentic}</span></div>
+                          {da.redFlags.length > 0 && <ul className="space-y-0.5">{da.redFlags.map((f, j) => <li key={j} className="text-11 text-red flex gap-1.5"><span>⚠</span>{f}</li>)}</ul>}
+                          {da.verificationRequired.length > 0 && <div className="text-10 text-ink-3">Verify: {da.verificationRequired.join(" · ")}</div>}
+                        </div>
+                      ))}
+                      {df.indicators.length > 0 && <div className="space-y-1.5">{df.indicators.map((ind, i) => <div key={i} className={`border rounded p-2 text-11 ${ind.severity === "critical" ? "border-red bg-red-dim" : "border-amber bg-amber-dim"}`}><div className="font-semibold">{ind.indicator}</div><div className="text-10 text-ink-3 mt-0.5">{ind.detail}</div></div>)}</div>}
+                      {df.requiredVerificationSteps.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Verification Steps</div><ol className="space-y-1">{df.requiredVerificationSteps.map((s, i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="font-mono text-ink-3 w-4">{i+1}.</span>{s}</li>)}</ol></div>}
+                      <div className="text-10 font-mono text-ink-3">{df.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "ctr-structuring" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CTR / Structuring Detector · UAE FDL 10/2025 Art.17 · Deterministic Engine</div>
+                <p className="text-11 text-ink-3">Deterministic engine — no AI. Paste a list of cash transaction amounts. Instantly detects structuring (smurfing) patterns, identifies CTR-required transactions (≥ AED 55,000), computes Benford-style band distribution, and outputs filing obligations.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Cash Transaction Amounts (AED) *</label><textarea value={ctrAmounts} onChange={(e) => setCtrAmounts(e.target.value)} rows={3} placeholder="Paste amounts separated by commas, newlines, or semicolons&#10;e.g. 52000, 54500, 53200, 51800, 55000, 49000" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 font-mono resize-none focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Period (days)</label><input type="number" value={ctrPeriodDays} onChange={(e) => setCtrPeriodDays(e.target.value)} placeholder="30" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={ctrSubject} onChange={(e) => setCtrSubject(e.target.value)} placeholder="Account holder name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                </div>
+                <button type="button" onClick={() => void runCtrStructuring()} disabled={ctrLoading || !ctrAmounts.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ctrLoading ? "Analysing…" : "Analyse CTR & Structuring"}</button>
+                {ctrResult && (() => {
+                  const ct = ctrResult;
+                  const riskCls = ct.structuringRisk === "critical" ? "bg-red text-white" : ct.structuringRisk === "high" ? "bg-amber-dim text-amber" : ct.structuringRisk === "medium" ? "bg-yellow-dim text-yellow-600" : ct.structuringRisk === "low" ? "bg-bg-2 text-ink-2" : "bg-green-dim text-green";
+                  const actionCls = ct.recommendedAction === "file_ctr_and_str" || ct.recommendedAction === "file_str" ? "bg-red text-white" : ct.recommendedAction === "file_ctr" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>Structuring: {ct.structuringRisk}</span>
+                        <span className={`font-mono text-11 font-bold px-3 py-1 rounded uppercase ${actionCls}`}>{ct.recommendedAction.replace(/_/g, " ")}</span>
+                        {ct.ctrRequired && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">{ct.ctrCount} CTR(s) required</span>}
+                        {ct.smurfingPattern && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Smurfing pattern</span>}
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">AED {ct.totalValueAed.toLocaleString()}</div><div className="text-10 text-ink-3">Total Value</div></div>
+                        <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">{ct.transactions.length}</div><div className="text-10 text-ink-3">Transactions</div></div>
+                        <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className={`font-mono text-13 font-bold ${ct.thresholdProximityPct >= 90 ? "text-red" : ct.thresholdProximityPct >= 80 ? "text-amber" : "text-ink-0"}`}>{ct.thresholdProximityPct}%</div><div className="text-10 text-ink-3">Max threshold proximity</div></div>
+                      </div>
+                      <p className="text-12 text-ink-1">{ct.patternDescription}</p>
+                      <div className="border border-hair-2 rounded overflow-hidden"><table className="w-full text-11"><thead><tr className="bg-bg-panel border-b border-hair-2"><th className="text-left px-2 py-1 text-10 text-ink-3">Band</th><th className="text-right px-2 py-1 text-10 text-ink-3">Count</th><th className="text-right px-2 py-1 text-10 text-ink-3">Total AED</th></tr></thead><tbody>{ct.structuringBands.map((b, i) => <tr key={i} className={`border-b border-hair-2 ${b.band.includes("sub-threshold") ? "bg-amber-dim" : b.band.includes("CTR required") ? "bg-red-dim" : ""}`}><td className="px-2 py-1 font-mono text-ink-1">{b.band}</td><td className="px-2 py-1 text-right font-mono">{b.count}</td><td className="px-2 py-1 text-right font-mono">{b.totalAed.toLocaleString()}</td></tr>)}</tbody></table></div>
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{ct.actionRationale}</div>
+                      {ct.strBasis && <div className="text-10 font-mono text-red">{ct.strBasis}</div>}
+                      <div className="text-10 font-mono text-ink-3">{ct.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "dnfbp-obligations" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">DNFBP Obligation Mapper · UAE FDL 10/2025 · FATF R.22-23</div>
+                <p className="text-11 text-ink-3">Maps exact AML/CFT obligations by DNFBP type — gold dealers, real estate agents, lawyers, accountants, TCSPs, MSBs, VASPs — under UAE FDL 10/2025 and FATF Recommendations 22-23. Identifies triggered obligations, thresholds, and regulatory authority.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">DNFBP Type *</label><input value={dnfbpInput.dnfbpType} onChange={(e) => setDnfbpInput((p) => ({...p, dnfbpType: e.target.value}))} placeholder="e.g. gold dealer, real estate agent, lawyer, accountant, TCSP" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Transaction Type</label><input value={dnfbpInput.transactionType} onChange={(e) => setDnfbpInput((p) => ({...p, transactionType: e.target.value}))} placeholder="e.g. gold purchase, property sale, corporate formation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Transaction Amount (AED)</label><input value={dnfbpInput.transactionAmount} onChange={(e) => setDnfbpInput((p) => ({...p, transactionAmount: e.target.value}))} placeholder="Amount" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Customer Type</label><input value={dnfbpInput.customerType} onChange={(e) => setDnfbpInput((p) => ({...p, customerType: e.target.value}))} placeholder="e.g. individual, corporate, foreign entity" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={dnfbpInput.context} onChange={(e) => setDnfbpInput((p) => ({...p, context: e.target.value}))} placeholder="Any specific scenario details..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                </div>
+                <button type="button" onClick={() => void runDnfbpObligations()} disabled={dnfbpLoading || !dnfbpInput.dnfbpType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{dnfbpLoading ? "Mapping…" : "Map DNFBP Obligations"}</button>
+                {dnfbpResult && (() => {
+                  const dn = dnfbpResult;
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="font-mono text-12 font-bold px-3 py-1 rounded bg-brand text-white">{dn.dnfbpCategory}</span>
+                        {!dn.isRegulated && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">NOT REGULATED</span>}
+                        {dn.cddRequired && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">CDD: {dn.cddLevel}</span>}
+                        {dn.ctrRequired && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">CTR required</span>}
+                      </div>
+                      <div className="text-11 text-ink-1"><span className="font-semibold">Supervisor:</span> {dn.supervisoryBody}</div>
+                      {dn.triggerThreshold && <div className="text-11 text-ink-1"><span className="font-semibold">Trigger:</span> {dn.triggerThreshold}</div>}
+                      {dn.keyObligations.length > 0 && (
+                        <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Key Obligations</div>
+                        <div className="space-y-1.5">{dn.keyObligations.map((ob, i) => <div key={i} className="border border-hair-2 rounded p-2 text-11"><div className="font-semibold text-ink-0">{ob.obligation}</div><div className="text-10 font-mono text-ink-3 mt-0.5">{ob.legalBasis}{ob.deadline ? ` · ${ob.deadline}` : ""}</div>{ob.notes && <div className="text-10 text-ink-3">{ob.notes}</div>}</div>)}</div></div>
+                      )}
+                      {dn.prohibitedActivities.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Prohibited Activities</div><ul className="space-y-0.5">{dn.prohibitedActivities.map((p, i) => <li key={i} className="text-11 text-red flex gap-1.5"><span>✗</span>{p}</li>)}</ul></div>}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{dn.practicalGuidance}</div>
+                      <div className="text-11 text-ink-2"><span className="font-semibold">Non-compliance:</span> {dn.sanctionsForNonCompliance}</div>
+                      <div className="text-10 font-mono text-ink-3">{dn.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "cdd-refresh" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CDD Refresh Trigger Analyzer · UAE FDL 10/2025 Art.15 · Ongoing Monitoring</div>
+                <p className="text-11 text-ink-3">Determine whether a CDD refresh is legally required and at what urgency. Evaluates all mandatory and advisory trigger events under UAE FDL 10/2025 Art.15, FATF R.10, and CBUAE review frequency guidelines. Outputs EDD requirement, field list, and account action.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">Customer Name</label><input value={cddRefreshInput.customerName} onChange={(e) => setCddRefreshInput((p) => ({...p, customerName: e.target.value}))} placeholder="Customer full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Current Risk Tier</label><input value={cddRefreshInput.currentRiskTier} onChange={(e) => setCddRefreshInput((p) => ({...p, currentRiskTier: e.target.value}))} placeholder="high / medium / low" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Last CDD Date</label><input value={cddRefreshInput.lastCddDate} onChange={(e) => setCddRefreshInput((p) => ({...p, lastCddDate: e.target.value}))} placeholder="DD/MM/YYYY" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Customer Type</label><input value={cddRefreshInput.customerType} onChange={(e) => setCddRefreshInput((p) => ({...p, customerType: e.target.value}))} placeholder="individual / corporate / DPMS" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Trigger Events *</label><textarea value={cddRefreshInput.triggerEvents} onChange={(e) => setCddRefreshInput((p) => ({...p, triggerEvents: e.target.value}))} rows={2} placeholder="Describe what triggered this review — e.g. adverse media hit, transaction spike, annual review due, ownership change..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Transaction Pattern Change</label><input value={cddRefreshInput.transactionPatternChange} onChange={(e) => setCddRefreshInput((p) => ({...p, transactionPatternChange: e.target.value}))} placeholder="e.g. volume 3x expected, new international wires" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Adverse Media Hit</label><input value={cddRefreshInput.adverseMediaHit} onChange={(e) => setCddRefreshInput((p) => ({...p, adverseMediaHit: e.target.value}))} placeholder="Describe adverse media if any" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                </div>
+                <button type="button" onClick={() => void runCddRefresh()} disabled={cddRefreshLoading || (!cddRefreshInput.triggerEvents.trim() && !cddRefreshInput.adverseMediaHit.trim() && !cddRefreshInput.transactionPatternChange.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{cddRefreshLoading ? "Analysing…" : "Determine CDD Refresh Requirement"}</button>
+                {cddRefreshResult && (() => {
+                  const cr = cddRefreshResult;
+                  const urgCls = cr.urgency === "immediate" ? "bg-red text-white" : cr.urgency === "within_30_days" ? "bg-amber-dim text-amber" : cr.urgency === "within_90_days" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${cr.refreshRequired ? "bg-red text-white" : "bg-green-dim text-green"}`}>{cr.refreshRequired ? "REFRESH REQUIRED" : "NO REFRESH NEEDED"}</span>
+                        {cr.refreshRequired && <span className={`font-mono text-11 px-3 py-1 rounded uppercase ${urgCls}`}>{cr.urgency.replace(/_/g, " ")}</span>}
+                        {cr.eddRequired && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">EDD required</span>}
+                      </div>
+                      {cr.eddReason && <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1"><span className="font-semibold">EDD Reason: </span>{cr.eddReason}</div>}
+                      {cr.triggerEvents.length > 0 && (
+                        <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Trigger Analysis</div>
+                        <div className="space-y-1.5">{cr.triggerEvents.map((te, i) => <div key={i} className={`border rounded p-2 text-11 flex gap-2 ${te.triggered ? (te.severity === "mandatory" ? "border-red bg-red-dim" : "border-amber bg-amber-dim") : "border-hair-2 bg-bg-panel opacity-60"}`}><span>{te.triggered ? "✓" : "○"}</span><div><div className="font-semibold text-ink-0">{te.event}</div><div className="text-10 font-mono text-ink-3">{te.legalBasis}{te.deadline ? ` · ${te.deadline}` : ""}</div></div></div>)}</div></div>
+                      )}
+                      {cr.fieldsToReverify.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fields to Re-verify</div><ul className="space-y-0.5">{cr.fieldsToReverify.map((f, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-amber">→</span>{f}</li>)}</ul></div>}
+                      {cr.accountActionPending && <div className="bg-amber-dim border border-amber rounded p-3 text-11 text-amber font-semibold">⚠ Account Action: {cr.accountActionPending}</div>}
+                      {cr.reviewDeadline && <div className="text-11 text-ink-1"><span className="font-semibold">Review Deadline:</span> <span className="font-mono text-red">{cr.reviewDeadline}</span></div>}
+                      <div className="text-10 font-mono text-ink-3">{cr.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "vasp-risk" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">VASP Risk Classifier · VARA · FATF R.15 · Travel Rule</div>
+                <p className="text-11 text-ink-3">Assess Virtual Asset Service Provider (VASP) onboarding or correspondent risk. Evaluates VARA licensing, Travel Rule compliance, custody model, geographic exposure, darknet and mixer exposure, and AML programme quality against FATF R.15 and UAE CBUAE VASP guidance.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">VASP Name *</label><input value={vaspInput.vaspName} onChange={(e) => setVaspInput((p) => ({...p, vaspName: e.target.value}))} placeholder="Name of exchange or platform" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">VASP Jurisdiction</label><input value={vaspInput.vaspJurisdiction} onChange={(e) => setVaspInput((p) => ({...p, vaspJurisdiction: e.target.value}))} placeholder="Where incorporated/licensed" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Exchange Type</label><input value={vaspInput.exchangeType} onChange={(e) => setVaspInput((p) => ({...p, exchangeType: e.target.value}))} placeholder="CEX / DEX / P2P / OTC desk" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Custody Model</label><input value={vaspInput.custodyModel} onChange={(e) => setVaspInput((p) => ({...p, custodyModel: e.target.value}))} placeholder="custodial / non-custodial / hybrid" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Travel Rule Protocol</label><input value={vaspInput.travelRuleProtocol} onChange={(e) => setVaspInput((p) => ({...p, travelRuleProtocol: e.target.value}))} placeholder="e.g. TRISA, OpenVASP, Notabene, none" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Licence Number</label><input value={vaspInput.licenceNumber} onChange={(e) => setVaspInput((p) => ({...p, licenceNumber: e.target.value}))} placeholder="VARA / ADGM licence ref if known" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Blockchain Analytics Tool</label><input value={vaspInput.blockchainAnalyticsTool} onChange={(e) => setVaspInput((p) => ({...p, blockchainAnalyticsTool: e.target.value}))} placeholder="Chainalysis / Elliptic / TRM Labs / none" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Geographic Reach</label><input value={vaspInput.geographicReach} onChange={(e) => setVaspInput((p) => ({...p, geographicReach: e.target.value}))} placeholder="Countries served, high-risk jurisdictions" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                </div>
+                <button type="button" onClick={() => void runVaspRisk()} disabled={vaspLoading || !vaspInput.vaspName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{vaspLoading ? "Assessing…" : "Assess VASP Risk"}</button>
+                {vaspResult && (() => {
+                  const vr = vaspResult;
+                  const riskCls = vr.overallRisk === "critical" ? "bg-red text-white" : vr.overallRisk === "high" ? "bg-amber-dim text-amber" : vr.overallRisk === "medium" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>VASP Risk: {vr.overallRisk}</span>
+                        <span className={`font-mono text-11 px-2 py-px rounded ${vr.varaLicensed ? "bg-green-dim text-green" : "bg-red text-white"}`}>{vr.varaLicensed ? "VARA Licensed" : "Not VARA Licensed"}</span>
+                        <span className={`font-mono text-11 px-2 py-px rounded ${vr.travelRuleCompliant ? "bg-green-dim text-green" : "bg-red-dim text-red"}`}>{vr.travelRuleCompliant ? "Travel Rule ✓" : "Travel Rule ✗"}</span>
+                        {vr.sanctionedExposure && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Sanctions exposure</span>}
+                      </div>
+                      <p className="text-12 text-ink-1">{vr.travelRuleAssessment}</p>
+                      {vr.highRiskJurisdictions.length > 0 && <div className="flex flex-wrap gap-1.5">{vr.highRiskJurisdictions.map((j, i) => <span key={i} className="text-10 font-mono px-2 py-px rounded bg-amber-dim text-amber">⚠ {j}</span>)}</div>}
+                      {vr.riskIndicators.length > 0 && <div className="space-y-1.5">{vr.riskIndicators.map((ri, i) => <div key={i} className={`border rounded p-2 text-11 ${ri.severity === "critical" ? "border-red bg-red-dim" : ri.severity === "high" ? "border-amber bg-amber-dim" : "border-hair-2 bg-bg-panel"}`}><div className="font-semibold text-ink-0">{ri.indicator}</div><div className="text-10 text-ink-3 mt-0.5">{ri.detail}</div></div>)}</div>}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{vr.actionRationale}</div>
+                      {vr.requiredDocumentation.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Documentation</div><ul className="space-y-0.5">{vr.requiredDocumentation.map((d, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{d}</li>)}</ul></div>}
+                      <div className="text-10 font-mono text-ink-3">{vr.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "goaml-validator" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">goAML STR Validator · UAE FIU · FDL 10/2025 Art.26</div>
+                <p className="text-11 text-ink-3">Validates an STR draft against UAE FIU goAML schema requirements before filing. Checks field completeness, narrative quality, and suspicion crystallisation date. Outputs a corrected narrative, critical issues, and an improved draft paragraph ready for submission.</p>
+                <div className="space-y-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">STR Narrative Draft *</label><textarea value={goAmlInput.narrative} onChange={(e) => setGoAmlInput((p) => ({...p, narrative: e.target.value}))} rows={5} placeholder="Paste your draft STR narrative here for validation..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={goAmlInput.subjectName} onChange={(e) => setGoAmlInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Subject full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Subject ID Number</label><input value={goAmlInput.subjectIdNumber} onChange={(e) => setGoAmlInput((p) => ({...p, subjectIdNumber: e.target.value}))} placeholder="Emirates ID / passport number" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Account Numbers</label><input value={goAmlInput.accountNumbers} onChange={(e) => setGoAmlInput((p) => ({...p, accountNumbers: e.target.value}))} placeholder="All relevant account numbers" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Reporting Entity</label><input value={goAmlInput.reportingEntityName} onChange={(e) => setGoAmlInput((p) => ({...p, reportingEntityName: e.target.value}))} placeholder="Your institution name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">MLRO Name</label><input value={goAmlInput.mlroName} onChange={(e) => setGoAmlInput((p) => ({...p, mlroName: e.target.value}))} placeholder="MLRO full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                    <div><label className="block text-10 text-ink-3 mb-1">Transaction Summary</label><input value={goAmlInput.transactionSummary} onChange={(e) => setGoAmlInput((p) => ({...p, transactionSummary: e.target.value}))} placeholder="Brief transaction summary" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => void runGoAmlValidator()} disabled={goAmlLoading || !goAmlInput.narrative.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{goAmlLoading ? "Validating…" : "Validate STR for goAML"}</button>
+                {goAmlResult && (() => {
+                  const gv = goAmlResult;
+                  const statusCls = gv.overallStatus === "ready_to_file" ? "bg-green-dim text-green" : gv.overallStatus === "rejected" ? "bg-red text-white" : "bg-amber-dim text-amber";
+                  const nqCls = gv.narrativeQuality === "excellent" || gv.narrativeQuality === "good" ? "text-green" : gv.narrativeQuality === "adequate" ? "text-amber" : "text-red";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${statusCls}`}>{gv.overallStatus.replace(/_/g, " ")}</span>
+                        <span className="font-mono text-11 text-ink-2">Completeness: {gv.completenessScore}%</span>
+                        <span className={`font-mono text-11 ${nqCls}`}>Narrative: {gv.narrativeQuality}</span>
+                      </div>
+                      {gv.criticalIssues.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-red mb-1">Critical Issues ({gv.criticalIssues.length})</div><ul className="space-y-0.5">{gv.criticalIssues.map((i, idx) => <li key={idx} className="text-11 text-red flex gap-1.5"><span>✗</span>{i}</li>)}</ul></div>}
+                      {gv.warnings.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-amber mb-1">Warnings</div><ul className="space-y-0.5">{gv.warnings.map((w, i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span>⚠</span>{w}</li>)}</ul></div>}
+                      {gv.fieldChecks.length > 0 && (
+                        <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Field Checklist</div>
+                        <div className="grid grid-cols-2 gap-1">{gv.fieldChecks.map((fc, i) => <div key={i} className={`text-10 px-2 py-1 rounded ${fc.status === "complete" ? "bg-green-dim text-green" : fc.status === "missing" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>{fc.status === "complete" ? "✓" : fc.status === "missing" ? "✗" : "~"} {fc.field}</div>)}</div></div>
+                      )}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Feedback</div>{gv.narrativeFeedback}</div>
+                      {gv.narrativeWeaknesses.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Weaknesses</div><ul className="space-y-0.5">{gv.narrativeWeaknesses.map((w, i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span>→</span>{w}</li>)}</ul></div>}
+                      {gv.improvedNarrativeSuggestion && <div className="bg-bg-0 border border-brand rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-brand mb-1">Improved Narrative Draft</div><p className="text-11 text-ink-1 leading-relaxed">{gv.improvedNarrativeSuggestion}</p></div>}
+                      <div className="text-10 font-mono text-ink-3">{gv.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "pep-edd" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP EDD Package Generator · UAE FDL 10/2025 Art.14(2) · FATF R.12</div>
+                <p className="text-11 text-ink-3">Generates a complete Politically Exposed Person EDD package: classification, risk rating, full EDD questionnaire, SOW/SOF assessment, required documentation list, ongoing monitoring plan, and a signed MLRO memo template. Senior management approval requirements automatically flagged.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">PEP Name *</label><input value={pepEddInput.pepName} onChange={(e) => setPepEddInput((p) => ({...p, pepName: e.target.value}))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">PEP Role / Position</label><input value={pepEddInput.pepRole} onChange={(e) => setPepEddInput((p) => ({...p, pepRole: e.target.value}))} placeholder="e.g. Minister of Finance, Ambassador, CEO of SOE" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">PEP Jurisdiction</label><input value={pepEddInput.pepJurisdiction} onChange={(e) => setPepEddInput((p) => ({...p, pepJurisdiction: e.target.value}))} placeholder="Country of political role" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">PEP Classification</label><input value={pepEddInput.pepClassification} onChange={(e) => setPepEddInput((p) => ({...p, pepClassification: e.target.value}))} placeholder="domestic / foreign / IO / former / family / associate" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Proposed Relationship</label><input value={pepEddInput.relationshipType} onChange={(e) => setPepEddInput((p) => ({...p, relationshipType: e.target.value}))} placeholder="e.g. current account, trade finance, investment" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Known Wealth / Income</label><input value={pepEddInput.knownWealth} onChange={(e) => setPepEddInput((p) => ({...p, knownWealth: e.target.value}))} placeholder="e.g. declared salary, known business interests" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><textarea value={pepEddInput.context} onChange={(e) => setPepEddInput((p) => ({...p, context: e.target.value}))} rows={2} placeholder="Any additional relevant context..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
+                </div>
+                <button type="button" onClick={() => void runPepEdd()} disabled={pepEddLoading || !pepEddInput.pepName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{pepEddLoading ? "Generating…" : "Generate PEP EDD Package"}</button>
+                {pepEddResult && (() => {
+                  const pe = pepEddResult;
+                  const riskCls = pe.riskRating === "very_high" ? "bg-red text-white" : pe.riskRating === "high" ? "bg-amber-dim text-amber" : "bg-yellow-dim text-yellow-600";
+                  const actionCls = pe.recommendedAction === "decline" || pe.recommendedAction === "exit_relationship" ? "bg-red text-white" : pe.recommendedAction === "refer_senior_management" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>{pe.riskRating.replace("_", " ")} RISK</span>
+                        <span className={`font-mono text-11 px-3 py-1 rounded uppercase ${actionCls}`}>{pe.recommendedAction.replace(/_/g, " ")}</span>
+                        {pe.seniorManagementApproval && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Senior mgmt approval required</span>}
+                      </div>
+                      <div className="text-11 text-ink-1"><span className="font-semibold">Classification:</span> {pe.pepClassification.replace(/_/g, " ")} · {pe.pepRole} · {pe.pepJurisdiction}</div>
+                      <div className="text-11 text-amber font-semibold">{pe.approvalLevel}</div>
+                      {pe.eddQuestionnaire.length > 0 && (
+                        <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">EDD Questionnaire ({pe.eddQuestionnaire.length} questions)</div>
+                        <div className="space-y-2">{pe.eddQuestionnaire.map((q, i) => <div key={i} className="border border-hair-2 rounded p-2.5 bg-bg-panel"><div className="text-10 font-semibold text-brand uppercase">{q.category}</div><div className="text-11 text-ink-0 mt-1">{q.question}</div><div className="text-10 text-ink-3 mt-1">{q.purpose}</div>{q.documentaryEvidence && <div className="text-10 font-mono text-ink-3">Evidence: {q.documentaryEvidence}</div>}</div>)}</div></div>
+                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">SOW Assessment</div><p className="text-11 text-ink-1">{pe.sourceOfWealthAssessment}</p></div>
+                        <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">SOF Assessment</div><p className="text-11 text-ink-1">{pe.sourceOfFundsAssessment}</p></div>
+                      </div>
+                      {pe.requiredDocumentation.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Required Documentation</div><ul className="space-y-0.5">{pe.requiredDocumentation.map((d, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{d}</li>)}</ul></div>}
+                      <div className="bg-bg-0 border border-brand rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-brand mb-1">MLRO Memo Template</div><pre className="text-10 text-ink-1 font-mono whitespace-pre-wrap leading-relaxed">{pe.pepMemo}</pre></div>
+                      <div className="text-11 text-ink-1"><span className="font-semibold">Monitoring:</span> {pe.ongoingMonitoringFrequency}</div>
+                      <div className="text-10 font-mono text-ink-3">{pe.regulatoryBasis}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {superToolsTab === "sanctions-mapper" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Sanctions Exposure Mapper · EOCN · OFAC · UN · EU · HMT</div>
+                <p className="text-11 text-ink-3">Multi-list sanctions exposure map for a named entity. Assesses exposure across UAE EOCN, OFAC SDN, UN Consolidated List, EU, HMT, and DFAT with per-list hit status, asset freeze obligations, dealing prohibitions, and reporting deadlines. Immediate freeze triggered for EOCN/UN hits.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={sanctionsMapInput.entityName} onChange={(e) => setSanctionsMapInput((p) => ({...p, entityName: e.target.value}))} placeholder="Full name to screen" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Entity Type</label><input value={sanctionsMapInput.entityType} onChange={(e) => setSanctionsMapInput((p) => ({...p, entityType: e.target.value}))} placeholder="individual / corporate / vessel / aircraft" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Nationality / Country</label><input value={sanctionsMapInput.nationality} onChange={(e) => setSanctionsMapInput((p) => ({...p, nationality: e.target.value}))} placeholder="Nationality or country of incorporation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Date of Birth</label><input value={sanctionsMapInput.dob} onChange={(e) => setSanctionsMapInput((p) => ({...p, dob: e.target.value}))} placeholder="DD/MM/YYYY (individuals)" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Passport / ID Number</label><input value={sanctionsMapInput.passportNumber} onChange={(e) => setSanctionsMapInput((p) => ({...p, passportNumber: e.target.value}))} placeholder="Document number" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div><label className="block text-10 text-ink-3 mb-1">Known Aliases</label><input value={sanctionsMapInput.aliases} onChange={(e) => setSanctionsMapInput((p) => ({...p, aliases: e.target.value}))} placeholder="Alternative names, transliterations" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                  <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={sanctionsMapInput.context} onChange={(e) => setSanctionsMapInput((p) => ({...p, context: e.target.value}))} placeholder="Jurisdiction of activity, transaction context, counterparties..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
+                </div>
+                <button type="button" onClick={() => void runSanctionsMapper()} disabled={sanctionsMapLoading || !sanctionsMapInput.entityName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sanctionsMapLoading ? "Mapping…" : "Map Sanctions Exposure"}</button>
+                {sanctionsMapResult && (() => {
+                  const sm = sanctionsMapResult;
+                  const expCls = sm.overallExposure === "confirmed_hit" ? "bg-red text-white" : sm.overallExposure === "high" ? "bg-amber-dim text-amber" : sm.overallExposure === "medium" ? "bg-yellow-dim text-yellow-600" : sm.overallExposure === "none" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
+                  return (
+                    <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${expCls}`}>Exposure: {sm.overallExposure.replace("_", " ")}</span>
+                        {sm.immediateFreeze && <span className="font-mono text-11 px-3 py-1 rounded bg-red text-white font-bold animate-pulse">⚠️ FREEZE NOW</span>}
+                        {sm.dealingProhibition && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Dealing prohibited</span>}
+                        {sm.tippingOffRisk && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">Tipping-off risk</span>}
+                      </div>
+                      {sm.immediateFreeze && <div className="bg-red text-white rounded p-3 text-11 font-semibold">{sm.freezeBasis}</div>}
+                      <div className="border border-hair-2 rounded overflow-hidden">
+                        <table className="w-full text-11">
+                          <thead><tr className="bg-bg-panel border-b border-hair-2"><th className="text-left px-2 py-1.5 text-10 text-ink-3">List</th><th className="text-left px-2 py-1.5 text-10 text-ink-3">Authority</th><th className="text-center px-2 py-1.5 text-10 text-ink-3">Hit</th><th className="text-center px-2 py-1.5 text-10 text-ink-3">Freeze</th></tr></thead>
+                          <tbody>{sm.listHits.map((lh, i) => <tr key={i} className={`border-b border-hair-2 ${lh.hitType === "confirmed" ? "bg-red-dim" : lh.hitType === "possible" ? "bg-amber-dim" : ""}`}><td className="px-2 py-1.5 font-mono text-10 font-semibold">{lh.list}</td><td className="px-2 py-1.5 text-10 text-ink-3">{lh.listAuthority}</td><td className="px-2 py-1.5 text-center"><span className={`text-10 font-mono px-1.5 py-px rounded ${lh.hitType === "confirmed" ? "bg-red text-white" : lh.hitType === "possible" ? "bg-amber-dim text-amber" : lh.hitType === "name_match" ? "bg-yellow-dim text-yellow-700" : "bg-green-dim text-green"}`}>{lh.hitType}</span></td><td className="px-2 py-1.5 text-center font-mono text-10">{lh.assetFreezeRequired ? <span className="text-red font-bold">FREEZE</span> : "—"}</td></tr>)}</tbody>
+                        </table>
+                      </div>
+                      {sm.complianceObligations.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Compliance Obligations</div><ul className="space-y-0.5">{sm.complianceObligations.map((ob, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-brand">→</span>{ob}</li>)}</ul></div>}
+                      <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{sm.actionRationale}</div>
+                      {sm.frozenAssetReportingDeadline && <div className="text-11 text-red font-semibold">Frozen Asset Report Deadline: {sm.frozenAssetReportingDeadline}</div>}
+                      <div className="text-10 font-mono text-ink-3">{sm.regulatoryBasis}</div>
                     </div>
                   );
                 })()}
