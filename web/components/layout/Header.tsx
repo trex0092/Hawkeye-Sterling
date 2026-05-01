@@ -48,6 +48,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
       { label: "SAR QA", href: "/sar-qa", hint: "Four-eyes STR/SAR quality review" },
+      { label: "🔗 Supply Chain", href: "/supply-chain", hint: "Geographic concentration · sanctions · CSDDD · UFLPA" },
+      { label: "📋 Reg Changes", href: "/reg-change", hint: "Regulatory change roadmap · AI implementation calendar" },
       { label: "📦 Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
       { label: "🏭 RMI / RMAP", href: "/rmi", hint: "Responsible Minerals + AI supply chain assessment" },
       { label: "EOCN", href: "/eocn", hint: "UAE targeted financial sanctions list" },
@@ -68,6 +70,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
       { label: "Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
       { label: "📖 Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
+      { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
+      { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
     ],
   },
   {
@@ -87,9 +91,16 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Analytics, AI brain internals, investigation tools, system health
     title: "Intelligence",
     items: [
+      { label: "📰 News Intelligence", href: "/news-intel", hint: "Entity news analysis · sentiment · risk themes" },
+      { label: "🌱 ESG Risk", href: "/esg-risk", hint: "ESG scoring · ML risk overlay · regulatory exposure" },
       { label: "📈 Analytics", href: "/analytics", hint: "MLRO KPI digest + AI board insights" },
       { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
+      { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
+      { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
+      { label: "🌍 Country Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk" },
       { label: "Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
+      { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live risk events · portfolio impact · regional map" },
+      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
       { label: "🔧 Workbench Brain", href: "/workbench", hint: "Brain inspector · live reasoning · manifest" },
       { label: "Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },

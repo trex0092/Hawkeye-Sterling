@@ -1812,7 +1812,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat"|"crypto-tracing">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -2406,6 +2406,21 @@ export default function MlroAdvisorPage() {
   const [itResult, setItResult] = useState<Record<string, unknown> | null>(null);
   const [itLoading, setItLoading] = useState(false);
 
+  // ── Crypto Tracing ──────────────────────────────────────────────────────────
+  const [cryptoTracingInput, setCryptoTracingInput] = useState({
+    walletAddress: "",
+    blockchain: "bitcoin" as "bitcoin"|"ethereum"|"tron"|"monero"|"litecoin"|"bnb"|"solana"|"other",
+    transactionHistory: "",
+    entityName: "",
+    exchangeOrigin: "",
+    transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false },
+    riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false },
+    context: "",
+  });
+  const [cryptoTracingResult, setCryptoTracingResult] = useState<Record<string, unknown> | null>(null);
+  const [cryptoTracingLoading, setCryptoTracingLoading] = useState(false);
+  const [cryptoTracingOpenObligation, setCryptoTracingOpenObligation] = useState<number | null>(null);
+
   const runTfScreener = async () => {
     if (!tfInput.subject.trim()) return;
     setTfLoading(true); setTfResult(null);
@@ -2878,6 +2893,7 @@ export default function MlroAdvisorPage() {
   const runAmlTrain = async () => { setAmlTrainLoading(true); try { const r = await fetch("/api/aml-training-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlTrainInput) }); setAmlTrainResult(await r.json()); } catch { setAmlTrainResult({ ok: false, error: "Network error" }); } finally { setAmlTrainLoading(false); } };
   const runUboVerify = async () => { setUboVerifyLoading(true); try { const r = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(uboVerifyInput) }); setUboVerifyResult(await r.json()); } catch { setUboVerifyResult({ ok: false, error: "Network error" }); } finally { setUboVerifyLoading(false); } };
   const runAmlKpi = async () => { setAmlKpiLoading(true); try { const r = await fetch("/api/aml-kpi-dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlKpiInput) }); setAmlKpiResult(await r.json()); } catch { setAmlKpiResult({ ok: false, error: "Network error" }); } finally { setAmlKpiLoading(false); } };
+  const runCryptoTracing = async () => { setCryptoTracingLoading(true); try { const r = await fetch("/api/crypto-tracing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cryptoTracingInput) }); setCryptoTracingResult(await r.json()); } catch { setCryptoTracingResult({ ok: false, error: "Network error" }); } finally { setCryptoTracingLoading(false); } };
 
   const runTradeFinRisk = async () => {
     if (!tradeFinRiskInput.exporterName.trim() && !tradeFinRiskInput.goods.trim()) return;
@@ -3842,10 +3858,10 @@ export default function MlroAdvisorPage() {
           <div className="mt-6 space-y-4">
             {/* Sub-tab bar */}
             <div className="flex gap-2 flex-wrap">
-              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","trade-finance-risk","insider-threat"] as const).map((t) => (
+              {(["escalation","flags","patterns","brief","pep-network","sanctions-nexus","typology-match","txn-narrative","edd-questionnaire","tbml","str-narrative","wire-r16","pf-screener","mlro-memo","tf-screener","shell-detector","adverse-classify","case-timeline","ml-predicate","client-risk","jurisdiction-intel","ubo-risk","benford","crypto-wallet","onboarding-tier","prolif-finance","sar-triage","doc-fraud","ctr-structuring","dnfbp-obligations","cdd-refresh","vasp-risk","goaml-validator","pep-edd","sanctions-mapper","layering-detector","real-estate-ml","asset-tracer","sow-calculator","insider-threat-screen","board-aml-report","enforcement-exposure","inter-agency-referral","policy-reviewer","compliance-test-planner","swift-lc-analyzer","regulatory-calendar","ewra-generator","aml-programme-gap","trade-invoice-analyzer","network-mapper","risk-appetite-builder","regulatory-exam-prep","npo-risk","correspondent-bank","mixed-funds","sanctions-breach","freeze-seizure","audit-response","high-net-worth","cash-intensive","trust-structures","cross-border-wire","fiu-feedback","derisking-impact","legal-privilege","ml-scenario","staff-alert","str-quality","hawala-detector","nominee-risk","pep-corporate","crypto-mixing","ghost-company","pkeyc-planner","whistleblower","trade-finance-rf","sanctions-exposure-calc","customer-lifecycle","pep-screening-enhance","aml-training-gap","beneficial-owner-verify","aml-kpi-dashboard","trade-finance-risk","insider-threat","crypto-tracing"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setSuperToolsTab(t)}
                   className={superTabCls(superToolsTab === t)}>
-                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "trade-finance-risk" ? "🚢 Trade Finance Risk" : "👤 Insider Threat"}
+                  {t === "escalation" ? "⚡ Escalation" : t === "flags" ? "🚩 Red Flags" : t === "patterns" ? "📊 Case Patterns" : t === "brief" ? "📋 Subject Brief" : t === "pep-network" ? "🕸 PEP Network" : t === "sanctions-nexus" ? "🔒 Sanctions Nexus" : t === "typology-match" ? "🎯 Typology Match" : t === "txn-narrative" ? "📝 Txn Analyzer" : t === "edd-questionnaire" ? "📑 EDD Generator" : t === "tbml" ? "🚢 TBML Analyzer" : t === "str-narrative" ? "✍️ STR Drafter" : t === "wire-r16" ? "🔁 Wire R.16" : t === "pf-screener" ? "☢️ PF Screener" : t === "mlro-memo" ? "📂 MLRO Memo" : t === "tf-screener" ? "💣 TF Screener" : t === "shell-detector" ? "🏚 Shell Detector" : t === "adverse-classify" ? "📰 Adverse Classify" : t === "case-timeline" ? "📅 Case Timeline" : t === "ml-predicate" ? "⚖️ ML Predicate" : t === "client-risk" ? "👤 Client Risk" : t === "jurisdiction-intel" ? "🌍 Jurisdiction Intel" : t === "ubo-risk" ? "🏛 UBO Risk" : t === "benford" ? "📐 Benford Forensics" : t === "crypto-wallet" ? "₿ Crypto Wallet" : t === "onboarding-tier" ? "🎛 Onboarding Tier" : t === "prolif-finance" ? "☣️ Prolif Finance" : t === "sar-triage" ? "🔍 SAR Triage" : t === "doc-fraud" ? "🪪 Doc Fraud" : t === "ctr-structuring" ? "💰 CTR/Structuring" : t === "dnfbp-obligations" ? "🏪 DNFBP Obligations" : t === "cdd-refresh" ? "🔄 CDD Refresh" : t === "vasp-risk" ? "🔗 VASP Risk" : t === "goaml-validator" ? "📤 goAML Validator" : t === "pep-edd" ? "🎖 PEP EDD" : t === "sanctions-mapper" ? "🗺 Sanctions Mapper" : t === "layering-detector" ? "🔀 Layering Detector" : t === "real-estate-ml" ? "🏠 Real Estate ML" : t === "asset-tracer" ? "🔎 Asset Tracer" : t === "sow-calculator" ? "💼 SOW Calculator" : t === "insider-threat-screen" ? "🕵️ Insider Threat" : t === "board-aml-report" ? "📊 Board AML Report" : t === "enforcement-exposure" ? "⚠️ Enforcement Exposure" : t === "inter-agency-referral" ? "📨 Inter-Agency Referral" : t === "policy-reviewer" ? "📃 Policy Reviewer" : t === "compliance-test-planner" ? "🧪 Compliance Test Planner" : t === "swift-lc-analyzer" ? "🏦 SWIFT/LC Analyzer" : t === "regulatory-calendar" ? "📅 Regulatory Calendar" : t === "ewra-generator" ? "📋 EWRA Generator" : t === "aml-programme-gap" ? "🔍 AML Programme Gap" : t === "trade-invoice-analyzer" ? "🧾 Trade Invoice Analyzer" : t === "network-mapper" ? "🕸 Network Mapper" : t === "risk-appetite-builder" ? "🎯 Risk Appetite Builder" : t === "regulatory-exam-prep" ? "📚 Exam Prep" : t === "npo-risk" ? "🏛 NPO Risk" : t === "correspondent-bank" ? "🏦 Correspondent Bank" : t === "mixed-funds" ? "🌀 Mixed Funds" : t === "sanctions-breach" ? "🚨 Sanctions Breach" : t === "freeze-seizure" ? "❄️ Freeze / Seizure" : t === "audit-response" ? "📋 Audit Response" : t === "high-net-worth" ? "💎 HNW Profile" : t === "cash-intensive" ? "💵 Cash-Intensive" : t === "trust-structures" ? "🔐 Trust Structures" : t === "cross-border-wire" ? "🌐 Cross-Border Wire" : t === "fiu-feedback" ? "📬 FIU Feedback" : t === "derisking-impact" ? "⚖️ De-Risking Impact" : t === "legal-privilege" ? "🔏 Legal Privilege" : t === "ml-scenario" ? "🎭 ML Scenario" : t === "staff-alert" ? "🚨 Staff Alert" : t === "str-quality" ? "📝 STR Quality" : t === "hawala-detector" ? "💱 Hawala Detector" : t === "nominee-risk" ? "🎭 Nominee Risk" : t === "pep-corporate" ? "🏢 PEP Corporate" : t === "crypto-mixing" ? "🌀 Crypto Mixing" : t === "ghost-company" ? "👻 Ghost Company" : t === "pkeyc-planner" ? "🔄 pKYC Planner" : t === "whistleblower" ? "🔔 Whistleblower" : t === "trade-finance-rf" ? "🚢 Trade Finance RF" : t === "sanctions-exposure-calc" ? "💥 Sanctions Exposure" : t === "customer-lifecycle" ? "🔁 Customer Lifecycle" : t === "pep-screening-enhance" ? "🎖 PEP Enhanced" : t === "aml-training-gap" ? "🎓 Training Gap" : t === "beneficial-owner-verify" ? "🔍 UBO Verify" : t === "aml-kpi-dashboard" ? "📊 AML KPIs" : t === "trade-finance-risk" ? "🚢 Trade Finance Risk" : t === "insider-threat" ? "👤 Insider Threat" : "🔗 Crypto Tracing"}
                 </button>
               ))}
             </div>
@@ -8317,6 +8333,486 @@ export default function MlroAdvisorPage() {
                       {Boolean(r["summary"]) && (
                         <div>
                           <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Assessment Summary</div>
+                          <p className="text-12 text-ink-1 leading-relaxed">{String(r["summary"])}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── 🔗 Crypto Tracing / Blockchain Forensics ─────────────────── */}
+            {superToolsTab === "crypto-tracing" && (
+              <div className="space-y-5">
+                {/* Header */}
+                <div>
+                  <div className="text-14 font-bold text-ink-0">🔗 Crypto Tracing / Blockchain Forensics</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.15/16 · Mixer/tumbler detection · Peeling chains · DeFi layering · Darknet market links · Ransomware wallet proximity · OFAC SDN screening · Travel Rule compliance · UAE VARA / CBUAE / MiCA</div>
+                </div>
+
+                {/* Input Form */}
+                <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-4">
+                  {/* Row 1: Wallet + Blockchain */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label>
+                      <input
+                        value={cryptoTracingInput.walletAddress}
+                        onChange={e => setCryptoTracingInput(p => ({...p, walletAddress: e.target.value}))}
+                        className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand font-mono"
+                        placeholder="0x… or bc1… or T… or 4… (XMR)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Blockchain</label>
+                      <select
+                        value={cryptoTracingInput.blockchain}
+                        onChange={e => setCryptoTracingInput(p => ({...p, blockchain: e.target.value as typeof p.blockchain}))}
+                        className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                      >
+                        <option value="bitcoin">₿ Bitcoin (BTC)</option>
+                        <option value="ethereum">⟠ Ethereum (ETH)</option>
+                        <option value="tron">Ⓣ Tron (TRX)</option>
+                        <option value="monero">ꭗ Monero (XMR) — PRIVACY COIN</option>
+                        <option value="litecoin">Ⓛ Litecoin (LTC)</option>
+                        <option value="bnb">Ⓑ BNB Chain (BNB)</option>
+                        <option value="solana">◎ Solana (SOL)</option>
+                        <option value="other">? Other / Cross-chain</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Entity + Exchange */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name (if known)</label>
+                      <input
+                        value={cryptoTracingInput.entityName}
+                        onChange={e => setCryptoTracingInput(p => ({...p, entityName: e.target.value}))}
+                        className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                        placeholder="Individual or entity name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Exchange of Origin</label>
+                      <input
+                        value={cryptoTracingInput.exchangeOrigin}
+                        onChange={e => setCryptoTracingInput(p => ({...p, exchangeOrigin: e.target.value}))}
+                        className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                        placeholder="e.g. Binance, Kraken, unhosted, unknown"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Transaction History */}
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction History / Counterparties</label>
+                    <textarea
+                      value={cryptoTracingInput.transactionHistory}
+                      onChange={e => setCryptoTracingInput(p => ({...p, transactionHistory: e.target.value}))}
+                      rows={4}
+                      className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none font-mono"
+                      placeholder="Paste transaction hashes, counterparty addresses, or describe observed patterns and volumes…"
+                    />
+                  </div>
+
+                  {/* Checkboxes */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2 font-semibold">Transaction Patterns</div>
+                      <div className="space-y-1.5">
+                        {([
+                          ["highFrequency", "High-frequency transactions"],
+                          ["largeSingleTx", "Large single transaction"],
+                          ["mixerUsed", "Mixer / tumbler used"],
+                          ["privacyCoinConversion", "Privacy coin conversion (XMR/ZEC)"],
+                          ["peeling", "Peeling chain pattern"],
+                          ["consolidation", "Consolidation (many → one)"],
+                          ["layering", "Layering (DeFi/bridge/DEX)"],
+                        ] as [keyof typeof cryptoTracingInput.transactionPatterns, string][]).map(([key, label]) => (
+                          <label key={key} className="flex items-center gap-2 text-11 text-ink-1 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={cryptoTracingInput.transactionPatterns[key]}
+                              onChange={e => setCryptoTracingInput(p => ({...p, transactionPatterns: {...p.transactionPatterns, [key]: e.target.checked}}))}
+                              className="accent-brand"
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-10 uppercase tracking-wide-3 text-red mb-2 font-semibold">Risk Flags</div>
+                      <div className="space-y-1.5">
+                        {([
+                          ["darknetMarket", "Darknet market association"],
+                          ["ransomware", "Ransomware payment"],
+                          ["scam", "Scam / fraud proceeds"],
+                          ["sanctions", "Sanctions exposure (OFAC/UN/EU)"],
+                          ["childExploitation", "Child exploitation material"],
+                          ["terroristFinancing", "Terrorist financing"],
+                        ] as [keyof typeof cryptoTracingInput.riskFlags, string][]).map(([key, label]) => (
+                          <label key={key} className="flex items-center gap-2 text-11 text-ink-1 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={cryptoTracingInput.riskFlags[key]}
+                              onChange={e => setCryptoTracingInput(p => ({...p, riskFlags: {...p.riskFlags, [key]: e.target.checked}}))}
+                              className="accent-red"
+                            />
+                            <span className={cryptoTracingInput.riskFlags[key] ? "text-red font-semibold" : ""}>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Context */}
+                  <div>
+                    <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label>
+                    <textarea
+                      value={cryptoTracingInput.context}
+                      onChange={e => setCryptoTracingInput(p => ({...p, context: e.target.value}))}
+                      rows={2}
+                      className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none"
+                      placeholder="Business relationship context, customer profile, any other relevant information…"
+                    />
+                  </div>
+
+                  {/* Run Button */}
+                  <button
+                    type="button"
+                    onClick={() => void runCryptoTracing()}
+                    disabled={cryptoTracingLoading}
+                    className="w-full px-4 py-2.5 rounded bg-brand text-white text-13 font-bold hover:bg-brand/90 disabled:opacity-60 transition-colors"
+                  >
+                    {cryptoTracingLoading ? "◌ Running Blockchain Forensics…" : "🔗 Run Crypto Trace"}
+                  </button>
+                </div>
+
+                {/* Results */}
+                {cryptoTracingResult && (() => {
+                  const r = cryptoTracingResult as Record<string, unknown>;
+                  const score = Number(r["overallRiskScore"] ?? r["riskScore"] ?? 0);
+                  const tier = String(r["riskTier"] ?? "medium");
+                  const tierCls = tier === "severe" ? "bg-red text-white" : tier === "critical" ? "bg-red-dim text-red border border-red/40" : tier === "high" ? "bg-amber-dim text-amber border border-amber/40" : tier === "medium" ? "bg-yellow-100 text-yellow-800 border border-yellow-300" : "bg-green-dim text-green border border-green/40";
+                  const scoreCls = score >= 81 ? "text-red" : score >= 61 ? "text-red" : score >= 41 ? "text-amber" : score >= 21 ? "text-yellow-600" : "text-green";
+                  const ba = r["blockchainAnalysis"] as Record<string, unknown> | undefined;
+                  const mx = r["mixerExposure"] as Record<string, unknown> | undefined;
+                  const dn = r["darknetExposure"] as Record<string, unknown> | undefined;
+                  const rw = r["ransomwareLinks"] as Record<string, unknown> | undefined;
+                  const sa = r["sanctionsExposure"] as Record<string, unknown> | undefined;
+                  const tr = r["travelRuleCompliance"] as Record<string, unknown> | undefined;
+                  const ex = r["exchangeRisk"] as Record<string, unknown> | undefined;
+                  const typs = (r["typologyAnalysis"] as Array<Record<string, unknown>> | undefined) ?? [];
+                  const crimes = (r["financialCrimeLinks"] as Array<Record<string, unknown>> | undefined) ?? [];
+                  const obligations = (r["regulatoryObligations"] as Array<Record<string, unknown>> | undefined) ?? [];
+                  const redFlags = (r["redFlags"] as string[] | undefined) ?? [];
+                  const immediateActions = (r["immediateActions"] as string[] | undefined) ?? [];
+                  const nextSteps = (r["investigativeNextSteps"] as string[] | undefined) ?? [];
+                  const tools = (r["blockchainForensicsTools"] as string[] | undefined) ?? [];
+                  const recommendation = String(r["recommendation"] ?? "monitor");
+                  const recCls = recommendation === "report_to_law_enforcement" || recommendation === "freeze_assets" ? "bg-red-dim border border-red/40" : recommendation === "file_str" ? "bg-amber-dim border border-amber/40" : recommendation === "enhanced_monitoring" ? "bg-yellow-50 border border-yellow-300" : "bg-bg-panel border border-hair-2";
+                  const recLabel = recommendation === "clear" ? "✓ Clear — No Action Required" : recommendation === "monitor" ? "👁 Monitor — Standard Surveillance" : recommendation === "request_wallet_verification" ? "🔍 Request Wallet Verification" : recommendation === "enhanced_monitoring" ? "⚠️ Enhanced Monitoring" : recommendation === "file_str" ? "📋 File STR with FIU" : recommendation === "freeze_assets" ? "❄️ Freeze Assets" : "🚔 Report to Law Enforcement";
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Risk Score Header */}
+                      <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <div>
+                            <div className={`text-48 font-black leading-none ${scoreCls}`}>{score}</div>
+                            <div className="text-10 font-mono text-ink-3 uppercase mt-0.5">Risk Score / 100</div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <span className={`text-12 font-bold uppercase tracking-wide px-3 py-1 rounded-full ${tierCls}`}>
+                              {tier.toUpperCase()} RISK
+                            </span>
+                            {ba && (
+                              <div>
+                                <div className="text-10 text-ink-3 mb-1">Traceability Score</div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-32 h-2 bg-bg-2 rounded overflow-hidden">
+                                    <div
+                                      className={`h-2 ${Number(ba["traceabilityScore"]) >= 70 ? "bg-green" : Number(ba["traceabilityScore"]) >= 40 ? "bg-amber" : "bg-red"}`}
+                                      style={{ width: `${Math.min(100, Number(ba["traceabilityScore"]))}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-11 font-mono text-ink-1">{String(ba["traceabilityScore"])}/100</span>
+                                  <span className="text-10 text-ink-3">({String(ba["privacyLevel"])})</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {ba && (
+                            <div className="flex-1 min-w-0">
+                              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Blockchain</div>
+                              <div className="text-12 font-semibold text-ink-0">{String(ba["blockchain"])}</div>
+                              {(ba["analysisLimitations"] as string[] | undefined)?.length ? (
+                                <div className="mt-1 space-y-0.5">
+                                  {(ba["analysisLimitations"] as string[]).slice(0,2).map((lim, i) => (
+                                    <div key={i} className="text-10 text-ink-3 font-mono leading-snug">⚠ {lim}</div>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 6 Exposure Cards Grid */}
+                      <div className="grid grid-cols-3 gap-3">
+                        {mx && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Mixer Exposure</div>
+                              <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${mx["detected"] ? "bg-red-dim text-red" : "bg-green-dim text-green"}`}>
+                                {mx["detected"] ? "DETECTED" : "NONE"}
+                              </span>
+                            </div>
+                            {mx["detected"] && (
+                              <>
+                                <div className="text-11 text-ink-0 font-semibold">{String(mx["mixerType"])}</div>
+                                <div className="text-10 text-ink-2">{String(mx["estimatedTaintedFunds"])}</div>
+                                <div className="text-10 font-mono text-ink-3">{Number(mx["hopsFromMixer"])} hops{mx["indirectExposure"] ? " · indirect" : ""}</div>
+                              </>
+                            )}
+                            {!mx["detected"] && <div className="text-10 text-ink-3">No mixer activity detected</div>}
+                          </div>
+                        )}
+                        {dn && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Darknet</div>
+                              <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${dn["detected"] ? "bg-red-dim text-red" : "bg-green-dim text-green"}`}>
+                                {dn["detected"] ? "DETECTED" : "NONE"}
+                              </span>
+                            </div>
+                            {dn["detected"] && (
+                              <>
+                                {(dn["marketplaces"] as string[] | undefined)?.map((m, i) => (
+                                  <div key={i} className="text-10 text-amber font-mono">{m}</div>
+                                ))}
+                                <div className="text-10 text-ink-2">{String(dn["transactionVolume"])}</div>
+                                <div className="text-10 font-mono text-ink-3">Confidence: {Number(dn["confidence"])}%</div>
+                              </>
+                            )}
+                            {!dn["detected"] && <div className="text-10 text-ink-3">No darknet market links</div>}
+                          </div>
+                        )}
+                        {rw && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Ransomware</div>
+                              <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${rw["detected"] ? "bg-red-dim text-red" : "bg-green-dim text-green"}`}>
+                                {rw["detected"] ? "DETECTED" : "NONE"}
+                              </span>
+                            </div>
+                            {rw["detected"] && (
+                              <>
+                                {(rw["knownGroups"] as string[] | undefined)?.map((g, i) => (
+                                  <div key={i} className="text-10 text-red font-mono font-semibold">{g}</div>
+                                ))}
+                                <div className="text-10 text-ink-2 capitalize">Role: {String(rw["paymentRole"])}</div>
+                              </>
+                            )}
+                            {!rw["detected"] && <div className="text-10 text-ink-3">No ransomware wallet links</div>}
+                          </div>
+                        )}
+                        {sa && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Sanctions</div>
+                              <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${(sa["ofacSdn"] || sa["euSanctions"] || sa["unSanctions"]) ? "bg-red-dim text-red" : sa["indirectExposure"] ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
+                                {(sa["ofacSdn"] || sa["euSanctions"] || sa["unSanctions"]) ? "HIT" : sa["indirectExposure"] ? "INDIRECT" : "CLEAR"}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                              {sa["ofacSdn"] && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">OFAC SDN</span>}
+                              {sa["euSanctions"] && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">EU</span>}
+                              {sa["unSanctions"] && <span className="text-10 font-mono px-1 rounded bg-red-dim text-red">UN</span>}
+                            </div>
+                            {(sa["matchedAddresses"] as string[] | undefined)?.slice(0,1).map((a, i) => (
+                              <div key={i} className="text-10 font-mono text-red leading-snug break-all">{a}</div>
+                            ))}
+                            {!sa["ofacSdn"] && !sa["euSanctions"] && !sa["unSanctions"] && !sa["indirectExposure"] && <div className="text-10 text-ink-3">No sanctions matches</div>}
+                          </div>
+                        )}
+                        {tr && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Travel Rule</div>
+                              <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${String(tr["status"]) === "compliant" ? "bg-green-dim text-green" : String(tr["status"]) === "non_compliant" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>
+                                {String(tr["status"]).replace("_", " ").toUpperCase()}
+                              </span>
+                            </div>
+                            {tr["required"] && <div className="text-10 text-ink-3">Required: Yes (FATF R.16)</div>}
+                            {(tr["missingInformation"] as string[] | undefined)?.slice(0,2).map((m, i) => (
+                              <div key={i} className="text-10 text-amber">⚠ {m}</div>
+                            ))}
+                          </div>
+                        )}
+                        {ex && (
+                          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Exchange Risk</div>
+                              <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${String(ex["exchangeRiskRating"]) === "unregulated" || String(ex["exchangeRiskRating"]) === "high" ? "bg-red-dim text-red" : String(ex["exchangeRiskRating"]) === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
+                                {String(ex["exchangeRiskRating"]).toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="text-11 text-ink-0 font-semibold">{String(ex["originExchange"])}</div>
+                            <div className="text-10 text-ink-2">KYC: {String(ex["kycStrength"])} · {String(ex["jurisdiction"])}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Typology Analysis Table */}
+                      {typs.length > 0 && (
+                        <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+                          <div className="px-3 py-2 border-b border-hair-2 flex items-center gap-2">
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Typology Analysis</div>
+                            <span className="text-10 font-mono text-ink-3">({typs.filter(t => t["detected"]).length} detected of {typs.length})</span>
+                          </div>
+                          <div className="divide-y divide-hair-2">
+                            {typs.map((typ, i) => (
+                              <div key={i} className={`px-3 py-2.5 ${typ["detected"] ? "" : "opacity-60"}`}>
+                                <div className="flex items-start gap-3">
+                                  <span className={`shrink-0 text-10 font-mono font-semibold uppercase px-1.5 py-px rounded mt-0.5 ${typ["detected"] ? "bg-red-dim text-red" : "bg-bg-2 text-ink-3"}`}>
+                                    {typ["detected"] ? "✓ DETECTED" : "✗ NONE"}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <div className="text-12 font-semibold text-ink-0">{String(typ["typology"])}</div>
+                                      <div className="flex items-center gap-1">
+                                        <div className="w-20 h-1.5 bg-bg-2 rounded overflow-hidden">
+                                          <div
+                                            className={`h-1.5 ${Number(typ["confidence"]) >= 80 ? "bg-red" : Number(typ["confidence"]) >= 60 ? "bg-amber" : Number(typ["confidence"]) >= 40 ? "bg-yellow-400" : "bg-green"}`}
+                                            style={{ width: `${Math.min(100, Number(typ["confidence"]))}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-10 font-mono text-ink-3">{Number(typ["confidence"])}%</span>
+                                      </div>
+                                    </div>
+                                    <p className="text-11 text-ink-2 leading-snug mt-0.5">{String(typ["description"])}</p>
+                                    {typ["evidence"] && <p className="text-10 font-mono text-ink-3 mt-1 leading-snug">Evidence: {String(typ["evidence"])}</p>}
+                                    {typ["fatfRef"] && <p className="text-10 text-violet mt-0.5">📌 {String(typ["fatfRef"])}</p>}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Financial Crime Links */}
+                      {crimes.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Financial Crime Links</div>
+                          <div className="flex flex-wrap gap-2">
+                            {crimes.map((c, i) => (
+                              <div
+                                key={i}
+                                title={String(c["description"])}
+                                className={`text-11 font-mono px-2.5 py-1 rounded-full border cursor-default ${Number(c["confidence"]) >= 80 ? "bg-red-dim text-red border-red/30" : Number(c["confidence"]) >= 60 ? "bg-amber-dim text-amber border-amber/30" : "bg-bg-2 text-ink-1 border-hair-2"}`}
+                              >
+                                {String(c["crimeType"])} <span className="opacity-60">{Number(c["confidence"])}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Regulatory Obligations Accordion */}
+                      {obligations.length > 0 && (
+                        <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+                          <div className="px-3 py-2 border-b border-hair-2">
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Regulatory Obligations ({obligations.length})</div>
+                          </div>
+                          {obligations.map((ob, i) => (
+                            <div key={i} className="border-b border-hair-2 last:border-b-0">
+                              <button
+                                type="button"
+                                onClick={() => setCryptoTracingOpenObligation(cryptoTracingOpenObligation === i ? null : i)}
+                                className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-bg-1 transition-colors"
+                              >
+                                <span className="text-11 text-ink-0 font-medium truncate">{String(ob["obligation"]).slice(0, 80)}{String(ob["obligation"]).length > 80 ? "…" : ""}</span>
+                                <span className="text-10 font-mono text-ink-3 ml-2 shrink-0">{cryptoTracingOpenObligation === i ? "▲" : "▼"}</span>
+                              </button>
+                              {cryptoTracingOpenObligation === i && (
+                                <div className="px-3 pb-3 space-y-1.5 bg-bg-1">
+                                  <p className="text-12 text-ink-1 leading-relaxed">{String(ob["obligation"])}</p>
+                                  <div className="flex flex-wrap gap-3 text-10 font-mono text-ink-3">
+                                    <span>📋 {String(ob["regulation"])}</span>
+                                    <span>🏛 {String(ob["authority"])}</span>
+                                    <span className="text-red">⏰ {String(ob["deadline"])}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Red Flags */}
+                      {redFlags.length > 0 && (
+                        <div className="bg-red-dim border border-red/20 rounded-lg p-3">
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-2">Red Flags ({redFlags.length})</div>
+                          <ul className="space-y-1">
+                            {redFlags.map((f, i) => (
+                              <li key={i} className="flex gap-2 text-12 text-ink-0">
+                                <span className="text-red shrink-0">✗</span>{f}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Recommendation Card */}
+                      <div className={`rounded-lg p-4 space-y-3 ${recCls}`}>
+                        <div className="text-14 font-bold text-ink-0">{recLabel}</div>
+                        {immediateActions.length > 0 && (
+                          <div>
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Immediate Actions</div>
+                            <ol className="space-y-1.5 list-decimal pl-5">
+                              {immediateActions.map((a, i) => (
+                                <li key={i} className="text-12 text-ink-0 leading-relaxed">{a}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                        {nextSteps.length > 0 && (
+                          <details className="group">
+                            <summary className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 cursor-pointer hover:text-ink-1 select-none">
+                              Investigative Next Steps ({nextSteps.length}) ▶
+                            </summary>
+                            <ol className="mt-2 space-y-1 list-decimal pl-5">
+                              {nextSteps.map((s, i) => (
+                                <li key={i} className="text-11 text-ink-1 leading-relaxed">{s}</li>
+                              ))}
+                            </ol>
+                          </details>
+                        )}
+                      </div>
+
+                      {/* Forensics Tools Chips */}
+                      {tools.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Recommended Forensics Tools</div>
+                          <div className="flex flex-wrap gap-2">
+                            {tools.map((tool, i) => (
+                              <span key={i} className="text-11 font-mono px-2.5 py-1 rounded border border-violet/30 bg-violet-dim text-violet">
+                                🔬 {tool}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Summary */}
+                      {r["summary"] && (
+                        <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1.5">Summary</div>
                           <p className="text-12 text-ink-1 leading-relaxed">{String(r["summary"])}</p>
                         </div>
                       )}
