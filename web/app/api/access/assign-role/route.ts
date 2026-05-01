@@ -6,10 +6,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
-  "viewer→analyst": "Promotion to Analyst grants read/write access to STR Cases and Investigation modules. The user can now draft and submit STR filings. Risk: ensure the user has completed mandatory AML training before activation.",
-  "analyst→supervisor": "Supervisor role adds MLRO Advisor, Oversight, EWRA and Playbook access. The user gains authority to approve analyst submissions. Risk: validate that four-eyes controls are still in place for STR sign-offs.",
-  "supervisor→mlro": "MLRO role grants full access to all operational modules including Responsible AI oversight. This is a regulated function under UAE FDL 10/2025 Art.8. Risk: confirm regulatory registration and notify the CBUAE of the MLRO appointment.",
-  "default": "Role change modifies the user's module access profile. Review the Permission Matrix to confirm the new access scope is appropriate for the user's responsibilities. Ensure separation of duties is maintained.",
+  "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
+  "accounts→compliance": "Upgrading from Accounts to Compliance Department grants full platform access. Verify mandatory AML/CFT training completion and ensure separation-of-duties controls are documented.",
+  "logistics→management": "Management access adds Oversight, EWRA, and MLRO Advisor read access. The user can now review board-level compliance reports. Risk: ensure the user understands their read-only advisory access to the MLRO module.",
+  "compliance→management": "Downgrading to Management Department removes Access Control and advanced investigation modules. Confirm the user no longer needs MLRO-level access before applying this change.",
+  "default": "Department role change modifies the user's module access profile. Review the Permission Matrix to confirm the new access scope is appropriate for the user's responsibilities. Ensure separation of duties is maintained per UAE FDL 10/2025 Art.20.",
 };
 
 export async function POST(req: Request) {

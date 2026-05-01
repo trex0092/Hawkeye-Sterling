@@ -249,7 +249,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
           userId: user.id,
           newRole: selectedRole,
           reason: reason.trim(),
-          assignedBy: "System Administrator",
+          assignedBy: "Luisa Fernanda",
         }),
       });
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; impactAssessment?: string };
@@ -433,7 +433,7 @@ export default function AccessControlPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", email: "", role: "analyst" as UserRole });
+  const [addForm, setAddForm] = useState({ name: "", email: "", role: "compliance" as UserRole });
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
 
@@ -512,7 +512,7 @@ export default function AccessControlPage() {
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string };
       if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
       if (data.user) setUsers((prev) => [...prev, data.user!]);
-      setAddForm({ name: "", email: "", role: "analyst" });
+      setAddForm({ name: "", email: "", role: "compliance"});
       setShowAddForm(false);
       void fetchLog();
     } catch {
@@ -646,7 +646,7 @@ export default function AccessControlPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "analyst" }); }}
+                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance"}); }}
                   className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
                 >
                   Cancel
