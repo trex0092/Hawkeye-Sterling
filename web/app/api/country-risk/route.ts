@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
+import { getAnthropicClient } from "@/lib/server/llm";
 export interface CountryRiskDimensions {
   amlRisk: number;
   baselScore: number;
@@ -116,7 +115,7 @@ export async function POST(req: Request) {
       : "Provide a concise but complete analysis covering all required fields.";
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient(apiKey);
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: depth === "full" ? 3000 : 2000,

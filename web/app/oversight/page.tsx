@@ -792,7 +792,6 @@ export default function OversightPage() {
   const addApproval = (a: Approval) => { updateOverlay({ ...overlay, customApprovals: [...overlay.customApprovals, a] }); setShowAddApproval(false); };
   const addMinute = (m: Minute) => { updateOverlay({ ...overlay, customMinutes: [...overlay.customMinutes, m] }); setShowAddMinute(false); };
   const addCircular = (c: Circular) => { updateOverlay({ ...overlay, customCirculars: [...overlay.customCirculars, c] }); setShowAddCircular(false); };
-  const restoreAll = () => { updateOverlay(EMPTY_OVERLAY); };
 
   // ── Sign-off actions ───────────────────────────────────────────────────────
   const patchApproval = (id: string, patch: Partial<Approval>) => {
@@ -968,7 +967,6 @@ export default function OversightPage() {
   const openActionsCount = allActionItems.filter((ai) => !ai.closed).length;
   const openActions = openActionsCount;
 
-  const anyDeleted = overlay.deletedApprovalIds.length + overlay.deletedMinuteIds.length + overlay.deletedCircularIds.length > 0;
 
   const pendingApprovals = liveApprovals.filter((a) => a.status === "pending").length;
   const slaBreached = liveApprovals.filter((a) => a.status === "pending" && a.elapsedHours > a.slaHours).length;
@@ -1271,13 +1269,6 @@ export default function OversightPage() {
           </button>
         ))}
       </div>
-
-      {anyDeleted && (
-        <div className="mb-4 px-4 py-2.5 bg-amber-dim border border-amber/20 rounded-lg flex items-center justify-between text-12">
-          <span className="text-amber font-semibold">Some entries are hidden</span>
-          <button type="button" onClick={restoreAll} className="text-11 font-mono underline text-amber hover:text-amber/80">Restore all</button>
-        </div>
-      )}
 
       {/* APPROVALS TAB */}
       {tab === "approvals" && (

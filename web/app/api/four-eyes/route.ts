@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
+import { getAnthropicClient } from "@/lib/server/llm";
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -67,30 +68,15 @@ async function generateApprovalSummary(
     `Initiated by: ${initiatedBy}`,
   ].join("\n");
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 600,
-      system:
-        'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'FDL 10/2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.',
-      messages: [{ role: "user", content: userContent }],
-    }),
+  const client = getAnthropicClient(apiKey);
+  const msg = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 600,
+    system: 'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'FDL 10/2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.',
+    messages: [{ role: "user", content: userContent }],
   });
 
-  if (!res.ok) return null;
-
-  const data = (await res.json()) as {
-    content?: { type: string; text: string }[];
-  };
-  const text = data?.content?.[0]?.text ?? "";
-
-  // Strip markdown fences before parsing
+  const text = msg.content[0]?.type === "text" ? msg.content[0].text : "";
   const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   return JSON.parse(stripped) as ApprovalSummary;
 }
@@ -162,6 +148,73 @@ async function handlePost(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, item: enrichedItem });
 }
 
+const ACTION_LABEL_MAP: Record<FourEyesAction, string> = {
+  str: "STR draft",
+  freeze: "Freeze relationship",
+  decline: "Decline onboarding",
+  "edd-uplift": "Uplift to EDD",
+  escalate: "Escalate to MLRO",
+};
+
+async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject", operator: string): Promise<string | null> {
+  const token = process.env["ASANA_TOKEN"];
+  if (!token) return null;
+
+  const projectGid =
+    process.env["ASANA_FOUR_EYES_PROJECT_GID"] ??
+    process.env["ASANA_PROJECT_GID"] ??
+    "1214148630166524";
+
+  const date = new Date().toISOString().slice(0, 10);
+  const decisionLabel = decision === "approve" ? "APPROVED" : "REJECTED";
+  const actionLabel = ACTION_LABEL_MAP[item.action];
+
+  const taskName = `[FOUR-EYES ${decisionLabel}] ${item.subjectName} — ${actionLabel} · ${date}`;
+
+  const lines = [
+    `FOUR-EYES DECISION RECORD`,
+    ``,
+    `Subject         : ${item.subjectName}`,
+    `Subject ID      : ${item.subjectId}`,
+    `Action          : ${actionLabel}`,
+    `Decision        : ${decisionLabel}`,
+    `Signed by       : ${operator}`,
+    `Initiated by    : ${item.initiatedBy}`,
+    `Initiated at    : ${item.initiatedAt}`,
+    `Decided at      : ${new Date().toISOString()}`,
+  ];
+  if (item.reason) lines.push(`Reason          : ${item.reason}`);
+  if (decision === "reject" && item.rejectionReason) lines.push(`Rejection reason: ${item.rejectionReason}`);
+  if (item.contextUrl) lines.push(`Context URL     : ${item.contextUrl}`);
+  lines.push(``);
+  lines.push(`Legal basis     : FATF R.28 · FDL 10/2025 Art.22 · four-eyes principle`);
+
+  try {
+    const res = await fetch("https://app.asana.com/api/1.0/tasks", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        data: {
+          name: taskName,
+          notes: lines.join("\n"),
+          projects: [projectGid],
+          workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
+          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+        },
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    const payload = (await res.json().catch(() => null)) as { data?: { permalink_url?: string } } | null;
+    return payload?.data?.permalink_url ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function handlePatch(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
@@ -194,7 +247,11 @@ async function handlePatch(req: Request): Promise<NextResponse> {
       : { ...existing, status: "rejected", rejectedBy: operator, rejectedAt: now,
           ...(stringField(raw["rejectionReason"]) ? { rejectionReason: stringField(raw["rejectionReason"])! } : {}) };
   await setJson(`four-eyes/${id}`, updated);
-  return NextResponse.json({ ok: true, item: updated });
+
+  // Report to Asana Four-Eyes board — non-blocking, best effort
+  const asanaTaskUrl = await reportToAsana(updated, action, operator).catch(() => null);
+
+  return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) });
 }
 
 async function handleDelete(req: Request): Promise<NextResponse> {

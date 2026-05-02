@@ -46,6 +46,8 @@ interface Body {
   };
   narrative: string;
   amountAed?: number;
+  amount?: number;
+  currency?: string;
   counterparty?: string;
   reportingEntity?: string;
   /** Slug of the reporting entity from HAWKEYE_ENTITIES. When omitted,
@@ -185,18 +187,18 @@ async function handleGoaml(req: Request): Promise<Response> {
       phoneNumber: mlroPhone,
     },
     submissionCode: "E",
-    currencyCodeLocal: "AED",
+    currencyCodeLocal: body.currency ?? "AED",
     reason: body.narrative.slice(0, 4000),
     ...(involvedPersons.length > 0 ? { involvedPersons } : {}),
     ...(involvedEntities.length > 0 ? { involvedEntities } : {}),
-    ...(body.amountAed && body.amountAed > 0
+    ...((body.amount ?? body.amountAed ?? 0) > 0
       ? {
           transactions: [
             {
               transactionNumber: `${reportRef}-TXN-1`,
               date: iso,
-              amountLocal: body.amountAed,
-              currency: "AED",
+              amountLocal: body.amount ?? body.amountAed,
+              currency: body.currency ?? "AED",
               type: "cash",
               ...(body.counterparty ? { counterpartyName: body.counterparty } : {}),
             },
