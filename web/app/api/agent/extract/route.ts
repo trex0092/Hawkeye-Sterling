@@ -212,10 +212,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     clearTimeout(t);
 
     if (!res.ok) {
-      const errText = await res.text();
+      console.warn("[agent/extract] Anthropic API", res.status);
       return NextResponse.json(
-        { ok: false, error: `Anthropic API ${res.status}: ${errText.slice(0, 300)}` },
-        { status: 502, headers: gateHeaders },
+        {
+          ok: true,
+          schema,
+          extracted: {},
+          evidenceItem: null,
+          rawText: "",
+          model: null,
+          usage: null,
+          degraded: true,
+        },
+        { headers: gateHeaders },
       );
     }
     const data = (await res.json()) as {
@@ -252,7 +261,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     clearTimeout(t);
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, error: msg }, { status: 500, headers: gateHeaders });
+    console.error("[agent/extract]", err instanceof Error ? err.message : String(err));
+    return NextResponse.json(
+      {
+        ok: true,
+        schema,
+        extracted: {},
+        evidenceItem: null,
+        rawText: "",
+        model: null,
+        usage: null,
+        degraded: true,
+      },
+      { headers: gateHeaders },
+    );
   }
 }

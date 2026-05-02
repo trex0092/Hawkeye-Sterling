@@ -468,11 +468,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     clearTimeout(timeout);
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[agent/screen]", msg);
+    console.error("[agent/screen]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: msg, transcript, iterations: transcript.length },
-      { status: 500, headers: gateHeaders },
+      {
+        ok: true,
+        finalText: "Analysis unavailable",
+        stopReason: "error",
+        model: null,
+        usage: null,
+        transcript,
+        iterations: transcript.length,
+        budgetMs: DEFAULT_BUDGET_MS,
+        maxIterations,
+        degraded: true,
+      },
+      { headers: gateHeaders },
     );
   }
 }

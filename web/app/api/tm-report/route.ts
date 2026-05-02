@@ -94,18 +94,8 @@ async function classifyTransaction(
 
 async function handleTmReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
-  const asanaEnabled = !!token;
-  const projectGid = process.env["ASANA_TM_PROJECT_GID"];
-  if (!projectGid) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana_not_configured",
-        detail: "Set ASANA_TM_PROJECT_GID in Netlify env for the Transaction Monitor board.",
-      },
-      { status: 503 },
-    );
-  }
+  const asanaEnabled = !!token && !!process.env["ASANA_TM_PROJECT_GID"];
+  const projectGid = process.env["ASANA_TM_PROJECT_GID"] ?? "";
 
   let body: Body;
   try {

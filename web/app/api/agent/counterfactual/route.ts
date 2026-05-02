@@ -151,10 +151,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     clearTimeout(t);
 
     if (!res.ok) {
-      const errText = await res.text();
+      console.warn("[agent/counterfactual] Anthropic API", res.status);
       return NextResponse.json(
-        { ok: false, error: `Anthropic API ${res.status}: ${errText.slice(0, 300)}` },
-        { status: 502, headers: gateHeaders },
+        {
+          ok: true,
+          currentOutcome: body.verdict.outcome,
+          targetOutcome: target,
+          counterfactuals: [],
+          rawText: "",
+          model: null,
+          usage: null,
+          degraded: true,
+        },
+        { headers: gateHeaders },
       );
     }
 
@@ -192,10 +201,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     clearTimeout(t);
-    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[agent/counterfactual]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: msg },
-      { status: 500, headers: gateHeaders },
+      {
+        ok: true,
+        currentOutcome: body.verdict.outcome,
+        targetOutcome: target,
+        counterfactuals: [],
+        rawText: "",
+        model: null,
+        usage: null,
+        degraded: true,
+      },
+      { headers: gateHeaders },
     );
   }
 }

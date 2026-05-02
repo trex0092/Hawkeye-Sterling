@@ -145,10 +145,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     clearTimeout(t);
 
     if (!res.ok) {
-      const errText = await res.text();
+      console.warn("[agent/premortem] Anthropic API", res.status);
       return NextResponse.json(
-        { ok: false, error: `Anthropic API ${res.status}: ${errText.slice(0, 300)}` },
-        { status: 502, headers: gateHeaders },
+        {
+          ok: true,
+          verdictOutcome: body.verdict.outcome,
+          horizonMonths: horizon,
+          scenarios: [],
+          mitigations: [],
+          rawText: "",
+          model: null,
+          usage: null,
+          degraded: true,
+        },
+        { headers: gateHeaders },
       );
     }
 
@@ -188,7 +198,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     clearTimeout(t);
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, error: msg }, { status: 500, headers: gateHeaders });
+    console.error("[agent/premortem]", err instanceof Error ? err.message : String(err));
+    return NextResponse.json(
+      {
+        ok: true,
+        verdictOutcome: body.verdict.outcome,
+        horizonMonths: horizon,
+        scenarios: [],
+        mitigations: [],
+        rawText: "",
+        model: null,
+        usage: null,
+        degraded: true,
+      },
+      { headers: gateHeaders },
+    );
   }
 }
