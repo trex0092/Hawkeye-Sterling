@@ -120,14 +120,34 @@ async function triageBatch(
   });
 }
 
+function ruleBasedTriage(cases: CaseInput[]): TriageResult[] {
+  return cases.map((c) => {
+    const text = `${c.subject} ${c.meta}`.toLowerCase();
+    const typologies: string[] = [];
+    if (/structur|smurfing|cash/.test(text)) typologies.push("ML-TF-01 Structuring");
+    if (/sanction|ofac|sdn|un\s?1267|eu\s?cfsp|eocn/.test(text)) typologies.push("ML-TF-06 Sanctions Exposure");
+    if (/pep|politic|government|minister/.test(text)) typologies.push("ML-TF-09 PEP Risk");
+    if (/terror|extremi|isis|al.qaeda/.test(text)) typologies.push("ML-TF-02 TF Indicators");
+    if (/shell|nominee|beneficial.owner|layering/.test(text)) typologies.push("ML-TF-03 Layering");
+    if (/crypto|virtual.asset|bitcoin|usdt/.test(text)) typologies.push("ML-TF-07 Virtual Asset Risk");
+    if (/gold|precious|metal|jewel/.test(text)) typologies.push("ML-TF-10 DPMS Risk");
+    if (typologies.length === 0) typologies.push("ML-TF-00 General Suspicious Activity");
+    const hasSanctions = typologies.some((t) => t.includes("Sanction"));
+    const hasTF = typologies.some((t) => t.includes("TF"));
+    const escalation: TriageResult["escalation"] = hasSanctions || hasTF ? "immediate" : c.status === "OPEN" ? "within_24h" : "routine";
+    return {
+      id: c.id,
+      typologies,
+      narrative: `Case requires review: ${typologies[0] ?? "suspicious activity"} indicators detected.`,
+      mostSerious: typologies[0] ?? "General Suspicious Activity",
+      escalation,
+      similarityGroup: typologies[0]?.split(" ")[0]?.toLowerCase() ?? "general",
+    };
+  });
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) {
-    return NextResponse.json(
-      { ok: false, error: "ANTHROPIC_API_KEY not configured on this server." },
-      { status: 503 },
-    );
-  }
 
   let body: { cases?: CaseInput[] };
   try {
@@ -148,6 +168,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const allCases = body.cases;
 
+  if (!apiKey) {
+    return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true });
+  }
+
   // Split into batches of BATCH_SIZE and process sequentially
   const batches: CaseInput[][] = [];
   for (let i = 0; i < allCases.length; i += BATCH_SIZE) {
@@ -160,14 +184,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       const results = await triageBatch(batch, apiKey);
       triaged.push(...results);
     }
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : "triage pipeline failed",
-      },
-      { status: 502 },
-    );
+  } catch {
+    return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true });
   }
 
   // Audit trail — triage decisions are compliance-relevant.

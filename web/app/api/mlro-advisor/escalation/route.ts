@@ -120,26 +120,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Anthropic API error ${res.status}` },
-        { status: 502 },
-      );
+      decision = { ...FALLBACK, primaryTrigger: `AI unavailable (API ${res.status})`, rationale: "Manual escalation review required." };
+    } else {
+      const data = (await res.json()) as {
+        content?: { type: string; text: string }[];
+      };
+      const raw = data?.content?.[0]?.text ?? "";
+      const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+      try {
+        decision = JSON.parse(cleaned) as EscalationDecision;
+      } catch {
+        decision = { ...FALLBACK, primaryTrigger: "Parse error", rationale: "AI response could not be parsed — manual review required." };
+      }
     }
-
-    const data = (await res.json()) as {
-      content?: { type: string; text: string }[];
-    };
-    const raw = data?.content?.[0]?.text ?? "";
-    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-    decision = JSON.parse(cleaned) as EscalationDecision;
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : "Failed to generate escalation decision",
-      },
-      { status: 502 },
-    );
+  } catch {
+    decision = { ...FALLBACK, primaryTrigger: "AI temporarily unavailable", rationale: "Manual escalation review required." };
   }
 
   try {

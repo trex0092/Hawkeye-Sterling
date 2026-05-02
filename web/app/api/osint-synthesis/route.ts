@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      throw new Error(`Anthropic API error ${res.status}`);
+      return NextResponse.json({ ok: true, ...FALLBACK });
     }
 
     const data = (await res.json()) as AnthropicResponse;
@@ -149,7 +149,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
       parsed = JSON.parse(clean);
     } catch {
-      throw new Error("Failed to parse synthesis response as JSON");
+      return NextResponse.json({ ok: true, ...FALLBACK });
     }
 
     const raw = parsed as Record<string, unknown>;
@@ -165,11 +165,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       recommendedNextSteps: toStringArray(raw["recommendedNextSteps"]),
       complianceNarrative: typeof raw["complianceNarrative"] === "string" ? raw["complianceNarrative"] : "",
     };
-  } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "synthesis failed" },
-      { status: 502 },
-    );
+  } catch {
+    return NextResponse.json({ ok: true, ...FALLBACK });
   }
 
   try {

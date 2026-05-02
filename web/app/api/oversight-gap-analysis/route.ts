@@ -32,10 +32,16 @@ interface AnthropicResponse {
   content: AnthropicTextBlock[];
 }
 
+const GAP_FALLBACK = {
+  gaps: [] as string[],
+  summary: "AI analysis unavailable — manual gap review required.",
+  fallback: true,
+};
+
 export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
   }
 
   let body: unknown;
@@ -45,33 +51,42 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const anthropicRes = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 600,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(body) }],
-    }),
-  });
+  let anthropicRes: Response;
+  try {
+    anthropicRes = await fetch(ANTHROPIC_API_URL, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": ANTHROPIC_VERSION,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 600,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: JSON.stringify(body) }],
+      }),
+    });
+  } catch {
+    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+  }
 
   if (!anthropicRes.ok) {
-    const errText = await anthropicRes.text();
-    return NextResponse.json({ ok: false, error: errText }, { status: 502 });
+    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
   }
 
-  const data = (await anthropicRes.json()) as AnthropicResponse;
-  const text = data.content.find((b) => b.type === "text")?.text ?? "{}";
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    return NextResponse.json({ ok: false, error: "No JSON in response" }, { status: 502 });
+  let result: GapAnalysisResult;
+  try {
+    const data = (await anthropicRes.json()) as AnthropicResponse;
+    const text = data.content.find((b) => b.type === "text")?.text ?? "{}";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+    }
+    result = JSON.parse(jsonMatch[0]) as GapAnalysisResult;
+  } catch {
+    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
   }
 
-  const result = JSON.parse(jsonMatch[0]) as GapAnalysisResult;
   return NextResponse.json({ ok: true, result });
 }

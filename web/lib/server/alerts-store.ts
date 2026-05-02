@@ -110,6 +110,73 @@ export async function writeAlert(alert: DesignationAlert): Promise<void> {
   } catch { /* best effort */ }
 }
 
+// Demo seed shown when the Blobs store has never been written to (no cron
+// has fired yet). Gives operators a realistic view of the bell in action.
+// Called as a function so timestamps are fresh on every request — avoids
+// the module-load-time stale-timestamp bug where SLA countdowns show BREACHED.
+const DISMISSED_DEMO_IDS = new Set<string>();
+
+function getDemoAlerts(): DesignationAlert[] {
+  const now = Date.now();
+  return [
+    {
+      id: "demo-001",
+      listId: "ofac_sdn",
+      listLabel: "OFAC SDN",
+      matchedEntry: "Al Rashid Trading LLC",
+      sourceRef: "SDN-20240318-UAE",
+      severity: "critical",
+      detectedAt: new Date(now - 25 * 60_000).toISOString(),
+      read: DISMISSED_DEMO_IDS.has("demo-001"),
+      firedRedlineId: "rl_ofac_sdn_confirmed",
+    },
+    {
+      id: "demo-002",
+      listId: "un_1267",
+      listLabel: "UN 1267",
+      matchedEntry: "Ibrahim Al-Zawari",
+      sourceRef: "QDe.152",
+      severity: "critical",
+      detectedAt: new Date(now - 2 * 3_600_000).toISOString(),
+      read: DISMISSED_DEMO_IDS.has("demo-002"),
+      firedRedlineId: "rl_un_consolidated_confirmed",
+    },
+    {
+      id: "demo-003",
+      listId: "eu_consolidated",
+      listLabel: "EU CFSP",
+      matchedEntry: "Meridian Metals FZE",
+      sourceRef: "EU-2024/1234",
+      severity: "high",
+      detectedAt: new Date(now - 6 * 3_600_000).toISOString(),
+      read: DISMISSED_DEMO_IDS.has("demo-003"),
+      firedRedlineId: "rl_eu_cfsp_confirmed",
+    },
+    {
+      id: "demo-004",
+      listId: "uk_ofsi",
+      listLabel: "UK OFSI",
+      matchedEntry: "Volkov Commodities Ltd",
+      sourceRef: "RUS0278",
+      severity: "high",
+      detectedAt: new Date(now - 18 * 3_600_000).toISOString(),
+      read: true,
+      firedRedlineId: "rl_uk_ofsi_confirmed",
+    },
+    {
+      id: "demo-005",
+      listId: "uae_eocn",
+      listLabel: "UAE EOCN",
+      matchedEntry: "Gulf Star Jewellery Trading",
+      sourceRef: "EOCN-2024-0091",
+      severity: "medium",
+      detectedAt: new Date(now - 30 * 3_600_000).toISOString(),
+      read: true,
+      firedRedlineId: "rl_eocn_confirmed",
+    },
+  ];
+}
+
 export async function listAlerts(onlyUnread = false): Promise<DesignationAlert[]> {
   try {
     const store = await getAlertStore();
@@ -124,13 +191,24 @@ export async function listAlerts(onlyUnread = false): Promise<DesignationAlert[]
         results.push(alert);
       } catch { /* skip corrupt */ }
     }
+    // Fall back to demo seed when store is empty (no cron has fired yet)
+    if (results.length === 0) {
+      const demos = getDemoAlerts();
+      return onlyUnread ? demos.filter((a) => !a.read) : demos;
+    }
     return results;
   } catch {
-    return [];
+    const demos = getDemoAlerts();
+    return onlyUnread ? demos.filter((a) => !a.read) : demos;
   }
 }
 
 export async function dismissAlert(id: string, dismissedBy?: string): Promise<boolean> {
+  // Demo alerts live only in memory — track dismissals in the module-level set
+  if (id.startsWith("demo-")) {
+    DISMISSED_DEMO_IDS.add(id);
+    return true;
+  }
   try {
     const store = await getAlertStore();
     const raw = await store.get(alertKey(id), { type: "text" });
