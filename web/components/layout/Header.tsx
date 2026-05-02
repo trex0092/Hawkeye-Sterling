@@ -236,6 +236,13 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
           <AlertBell />
+          <a
+            href="/profile"
+            title="My profile & password"
+            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0 transition-colors no-underline"
+          >
+            👤 Profile
+          </a>
           <button
             type="button"
             onClick={toggleTheme}
