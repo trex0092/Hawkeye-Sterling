@@ -177,6 +177,8 @@ function getDemoAlerts(): DesignationAlert[] {
   ];
 }
 
+export { getDemoAlerts };
+
 export async function listAlerts(onlyUnread = false): Promise<DesignationAlert[]> {
   try {
     const store = await getAlertStore();

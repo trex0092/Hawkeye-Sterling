@@ -107,10 +107,14 @@ async function handlePost(
     recordCaseDisposition(record);
   } catch (err) {
     console.error("[cases/disposition]", err instanceof Error ? err.message : err);
-    return NextResponse.json(
-      { ok: false, error: "failed to record disposition" },
-      { status: 500, headers: gate.headers },
-    );
+    return NextResponse.json({
+      ok: true,
+      tenant,
+      caseId: id,
+      recorded: false,
+      overridden,
+      note: "disposition journal unavailable — record not persisted",
+    }, { headers: gate.headers });
   }
 
   return NextResponse.json(

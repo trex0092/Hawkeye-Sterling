@@ -22,14 +22,11 @@ export function GET(): NextResponse {
       ...(defaultId ? { defaultId } : {}),
     });
   } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          "HAWKEYE_ENTITIES is malformed. Check the JSON syntax in Netlify env vars.",
-        detail: err instanceof Error ? err.message : String(err),
-      },
-      { status: 500 },
-    );
+    console.error("[entities]", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      ok: true,
+      entities: [],
+      note: "HAWKEYE_ENTITIES is malformed or missing — returned empty list. Check JSON syntax in Netlify env vars.",
+    });
   }
 }

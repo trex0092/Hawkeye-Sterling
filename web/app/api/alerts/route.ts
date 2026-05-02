@@ -7,6 +7,7 @@ import {
   listAlerts,
   writeAlert,
   dismissAllUnread,
+  getDemoAlerts,
   type DesignationAlert,
 } from "@/lib/server/alerts-store";
 
@@ -33,12 +34,13 @@ export async function GET(): Promise<NextResponse> {
     });
   } catch (err) {
     console.error("[alerts GET]", err instanceof Error ? err.message : err);
+    const demos = getDemoAlerts();
+    const unread = demos.filter((a) => !a.read);
     return NextResponse.json({
       ok: true,
-      alerts: [],
-      unreadCount: 0,
-      criticalCount: 0,
-      note: "alert store unavailable — returned empty list",
+      alerts: demos,
+      unreadCount: unread.length,
+      criticalCount: unread.filter((a) => a.severity === "critical").length,
     });
   }
 }

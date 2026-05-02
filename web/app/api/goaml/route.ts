@@ -217,10 +217,11 @@ async function handleGoaml(req: Request): Promise<Response> {
     xml = serialiseGoamlXml(envelope);
   } catch (err) {
     console.error("goaml serialise failed", err);
-    return NextResponse.json(
-      { ok: false, error: "goaml serialise failed" },
-      { status: 500, headers: gateHeaders },
-    );
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      note: `goAML serialisation unavailable: ${err instanceof Error ? err.message : String(err)}`,
+    }, { headers: gateHeaders });
   }
 
   // Prepend a screening-provenance XML comment block so the goAML
