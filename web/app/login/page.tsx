@@ -226,10 +226,28 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* Forgot password */}
+        <div
+          style={{
+            marginTop: "18px",
+            textAlign: "center",
+            fontSize: "12px",
+            color: "rgba(255,255,255,0.35)",
+          }}
+        >
+          Forgotten your password?{" "}
+          <a
+            href="mailto:compliance@hawkeye-sterling.ae?subject=Password%20Reset%20Request"
+            style={{ color: "#e91e8c", textDecoration: "none" }}
+          >
+            Contact your MLRO
+          </a>
+        </div>
+
         {/* Footer */}
         <div
           style={{
-            marginTop: "28px",
+            marginTop: "20px",
             paddingTop: "18px",
             borderTop: "1px solid rgba(255,255,255,0.06)",
             textAlign: "center",

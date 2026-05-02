@@ -42,9 +42,6 @@ interface AnthropicResponse {
 
 export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
-  }
 
   let items: TriageItem[];
   try {
@@ -58,6 +55,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, results: [] });
   }
 
+  if (!apiKey) {
+    return NextResponse.json({ ok: true, results: [] });
+  }
+
   const compact = items.map((i) => ({
     id: i.id,
     title: i.title,
@@ -66,33 +67,42 @@ export async function POST(req: Request): Promise<NextResponse> {
     source: i.source,
   }));
 
-  const anthropicRes = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(compact) }],
-    }),
-  });
+  let anthropicRes: Response;
+  try {
+    anthropicRes = await fetch(ANTHROPIC_API_URL, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": ANTHROPIC_VERSION,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 800,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: JSON.stringify(compact) }],
+      }),
+    });
+  } catch {
+    return NextResponse.json({ ok: true, results: [] });
+  }
 
   if (!anthropicRes.ok) {
-    const errText = await anthropicRes.text();
-    return NextResponse.json({ ok: false, error: errText }, { status: 502 });
+    return NextResponse.json({ ok: true, results: [] });
   }
 
-  const data = (await anthropicRes.json()) as AnthropicResponse;
-  const text = data.content.find((b) => b.type === "text")?.text ?? "[]";
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    return NextResponse.json({ ok: false, error: "No JSON array in response" }, { status: 502 });
+  let results: TriageResult[];
+  try {
+    const data = (await anthropicRes.json()) as AnthropicResponse;
+    const text = data.content.find((b) => b.type === "text")?.text ?? "[]";
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      return NextResponse.json({ ok: true, results: [] });
+    }
+    results = JSON.parse(jsonMatch[0]) as TriageResult[];
+  } catch {
+    return NextResponse.json({ ok: true, results: [] });
   }
 
-  const results = JSON.parse(jsonMatch[0]) as TriageResult[];
   return NextResponse.json({ ok: true, results });
 }

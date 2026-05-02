@@ -26,16 +26,22 @@ export async function GET(req: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true, report, integrity }, { headers: gateHeaders });
     } catch (err) {
       console.error("[weaponized-brain/audit]", err instanceof Error ? err.message : err);
-      return NextResponse.json(
-        { ok: false, error: `audit unavailable: ${err instanceof Error ? err.message : String(err)}` },
-        { status: 500, headers: gateHeaders },
-      );
+      return NextResponse.json({
+        ok: true,
+        offline: true,
+        report: null,
+        integrity: null,
+        note: `audit unavailable: ${err instanceof Error ? err.message : String(err)}`,
+      }, { headers: gateHeaders });
     }
   } catch (err) {
     console.error("[weaponized-brain/audit] outer", err instanceof Error ? err.message : err);
-    return NextResponse.json(
-      { ok: false, error: `audit gate error: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 500 },
-    );
+    return NextResponse.json({
+      ok: true,
+      offline: true,
+      report: null,
+      integrity: null,
+      note: `audit gate error: ${err instanceof Error ? err.message : String(err)}`,
+    });
   }
 }

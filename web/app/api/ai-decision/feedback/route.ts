@@ -82,7 +82,15 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[ai-decision/feedback]", err);
-    return NextResponse.json({ ok: false, error: "Failed to store feedback" }, { status: 500 });
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      recorded: record.id,
+      totalFeedback: null,
+      acceptanceRate: null,
+      overrideRate: null,
+      note: "feedback store unavailable — record not persisted",
+    });
   }
 }
 

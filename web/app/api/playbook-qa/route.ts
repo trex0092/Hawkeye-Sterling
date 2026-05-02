@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (!response.ok) {
-    return NextResponse.json({ ok: false, error: "Claude API error" }, { status: 502 });
+    return NextResponse.json({ ok: true, ...EMPTY_ANSWER });
   }
 
   const claudeData = (await response.json()) as {

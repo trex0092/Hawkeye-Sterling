@@ -753,10 +753,16 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     report = buildComplianceReport(body);
   } catch (err) {
     console.error("compliance-report failed to build", err);
-    return NextResponse.json(
-      { ok: false, error: "report generation failed" },
-      { status: 500, headers: gateHeaders },
-    );
+    // Return a minimal valid report rather than a 500 so the MLRO can still
+    // download something actionable and the UI does not show a broken state.
+    report = [
+      `HAWKEYE STERLING — COMPLIANCE REPORT`,
+      `Subject: ${body.subject.name}`,
+      `Generated: ${new Date().toUTCString()}`,
+      ``,
+      `NOTE: Full report generation encountered an error. Please review manually.`,
+      `Error: ${err instanceof Error ? err.message : String(err)}`,
+    ].join("\n");
   }
 
   // Structured JSON sidecar — same provenance and hashes as the text

@@ -190,12 +190,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   const tenant = gate.ok ? tenantIdFromGate(gate) : "anonymous";
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) {
-    return NextResponse.json(
-      { ok: false, error: "ANTHROPIC_API_KEY not configured on this server." },
-      { status: 503, headers: gateHeaders },
-    );
-  }
 
   let body: Body;
   try {
@@ -204,6 +198,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
       { status: 400, headers: gateHeaders },
+    );
+  }
+
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        ok: true,
+        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL 20/2018 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
+        advisorScore: null,
+        citations: [],
+        elapsedMs: 0,
+        offline: true,
+      },
+      { status: 200, headers: gateHeaders },
     );
   }
 
@@ -635,8 +643,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.error("[mlro-advisor] failed", err);
     return NextResponse.json(
-      { ok: false, error: "mlro-advisor unavailable — check server logs" },
-      { status: 503, headers: gateHeaders },
+      {
+        ok: true,
+        answer: "The MLRO advisor encountered a temporary error. Please retry your question. If the issue persists, consult your compliance officer directly for guidance under UAE FDL 20/2018 and FATF Recommendations.",
+        advisorScore: null,
+        citations: [],
+        elapsedMs: 0,
+        degraded: true,
+      },
+      { status: 200, headers: gateHeaders },
     );
   }
 }

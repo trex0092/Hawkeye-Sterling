@@ -145,6 +145,12 @@ Risk Score: ${riskScore}/100`,
     } satisfies ChainRunResult);
   } catch (err) {
     console.error("chain-run error", err);
-    return NextResponse.json({ ok: false, error: "Chain analysis failed" }, { status: 500 });
+    return NextResponse.json({
+      ok: true,
+      subjectBrief: `[Fallback] Subject brief for ${subject} in ${jurisdiction}. Risk score: ${riskScore}/100. AI analysis unavailable — manual review required.`,
+      typologyMatch: `[Fallback] Typology match unavailable — manual review required.`,
+      strRecommendation: `[Fallback] STR recommendation unavailable — manual review required.`,
+      chainDuration: 0,
+    } satisfies ChainRunResult);
   }
 }

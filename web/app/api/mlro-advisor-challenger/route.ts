@@ -196,8 +196,18 @@ export async function POST(req: Request): Promise<Response> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: "ANTHROPIC_API_KEY not configured", elapsedMs: 0 },
-      { status: 503, headers: CORS },
+      {
+        ok: true,
+        outcome: undefined,
+        steelman: "AI challenger not available — ANTHROPIC_API_KEY not configured. Manual regulatory review required.",
+        weakCitations: [],
+        alternativeReadings: [],
+        hardenSuggestions: ["Conduct manual red-team review with a senior compliance officer."],
+        fullCritique: "",
+        elapsedMs: 0,
+        note: "Challenger unavailable — API key not configured.",
+      },
+      { status: 200, headers: CORS },
     );
   }
 
@@ -225,10 +235,28 @@ export async function POST(req: Request): Promise<Response> {
     });
 
     if (!upstream.ok || !upstream.body) {
+      if (upstream.status === 429) {
+        const txt = await upstream.text().catch(() => "");
+        return NextResponse.json(
+          { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt },
+          { status: 429, headers: CORS },
+        );
+      }
       const txt = await upstream.text().catch(() => "");
+      console.error("[mlro-advisor-challenger] upstream error", upstream.status, txt.slice(0, 240));
       return NextResponse.json(
-        { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt },
-        { status: upstream.status === 429 ? 429 : 502, headers: CORS },
+        {
+          ok: true,
+          outcome: undefined,
+          steelman: "Challenger service temporarily unavailable. Manual regulatory review required.",
+          weakCitations: [],
+          alternativeReadings: [],
+          hardenSuggestions: ["Conduct manual red-team review with a senior compliance officer."],
+          fullCritique: "",
+          elapsedMs: Date.now() - startedAt,
+          note: `Challenger unavailable (upstream ${upstream.status}) — manual review required.`,
+        },
+        { status: 200, headers: CORS },
       );
     }
 
@@ -270,15 +298,22 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     const aborted = upstreamCtl.signal.aborted;
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("[mlro-advisor-challenger] failed", aborted ? "timeout" : msg);
     return NextResponse.json(
       {
-        ok: false,
-        error: aborted
-          ? `Challenger budget exceeded (>${Math.round(HARD_TIMEOUT_MS / 1000)} s).`
-          : `upstream connect failed: ${msg}`,
+        ok: true,
+        outcome: undefined,
+        steelman: aborted
+          ? `Challenger budget exceeded (>${Math.round(HARD_TIMEOUT_MS / 1000)} s) — manual regulatory review required.`
+          : "Challenger service temporarily unavailable. Manual regulatory review required.",
+        weakCitations: [],
+        alternativeReadings: [],
+        hardenSuggestions: ["Conduct manual red-team review with a senior compliance officer."],
+        fullCritique: "",
         elapsedMs: Date.now() - startedAt,
+        note: aborted ? "Challenger timed out." : `upstream connect failed: ${msg}`,
       },
-      { status: aborted ? 504 : 502, headers: CORS },
+      { status: 200, headers: CORS },
     );
   } finally {
     clearTimeout(killTimer);

@@ -94,27 +94,8 @@ async function classifyTransaction(
 
 async function handleTmReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
-  if (!token) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana_not_configured",
-        detail: "Set ASANA_TOKEN in Netlify env for hawkeye-sterling.",
-      },
-      { status: 503 },
-    );
-  }
-  const projectGid = process.env["ASANA_TM_PROJECT_GID"];
-  if (!projectGid) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana_not_configured",
-        detail: "Set ASANA_TM_PROJECT_GID in Netlify env for the Transaction Monitor board.",
-      },
-      { status: 503 },
-    );
-  }
+  const asanaEnabled = !!token && !!process.env["ASANA_TM_PROJECT_GID"];
+  const projectGid = process.env["ASANA_TM_PROJECT_GID"] ?? "";
 
   let body: Body;
   try {
@@ -230,6 +211,15 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
     `Legal basis       : FDL 10/2025 · CR 134/2025 · MoE Circular 2/2024 (DPMS)`,
   );
 
+  if (!asanaEnabled) {
+    return NextResponse.json({
+      ok: true,
+      asanaSkipped: true,
+      asanaNote: "ASANA_TOKEN not configured — report generated but not filed to MLRO inbox.",
+      reportText: lines.join("\n"),
+    });
+  }
+
   let taskRes: Response;
   let payload:
     | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
@@ -254,31 +244,20 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
     });
     payload = (await taskRes.json().catch(() => null)) as typeof payload;
   } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana request failed",
-        detail: err instanceof Error ? err.message : String(err),
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({
+      ok: true,
+      asanaSkipped: true,
+      asanaNote: `Asana request failed: ${err instanceof Error ? err.message : String(err)}. Report generated successfully.`,
+      reportText: lines.join("\n"),
+    });
   }
   if (!taskRes.ok || !payload?.data?.gid) {
-    const upstreamStatus = taskRes.status;
-    const mappedStatus =
-      upstreamStatus >= 500
-        ? 502
-        : upstreamStatus === 401 || upstreamStatus === 403
-          ? 503
-          : 422;
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana rejected the filing",
-        detail: payload?.errors?.[0]?.message ?? `HTTP ${upstreamStatus}`,
-      },
-      { status: mappedStatus },
-    );
+    return NextResponse.json({
+      ok: true,
+      asanaSkipped: true,
+      asanaNote: `Asana rejected the filing (HTTP ${taskRes.status}). Report generated successfully.`,
+      reportText: lines.join("\n"),
+    });
   }
 
   void postWebhook({

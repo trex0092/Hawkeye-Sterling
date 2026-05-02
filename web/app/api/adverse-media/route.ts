@@ -66,7 +66,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!taranisResult.ok) {
     if (!taranisResult.error?.includes("not configured")) {
-      return NextResponse.json({ ok: false, error: taranisResult.error }, { status: 502, headers: CORS });
+      console.error("[adverse-media] Taranis error:", taranisResult.error);
+      // Taranis upstream failure — fall back to Claude-powered assessment
+      const verdict = await claudeAdverseMedia(subject);
+      return NextResponse.json({ ok: true, totalCount: verdict.totalItems, adverseCount: verdict.adverseItems, highRelevanceCount: verdict.criticalCount + verdict.highCount, verdict, note: "Taranis unavailable — Claude fallback used" }, { status: 200, headers: { ...CORS, ...gateHeaders } });
     }
     // Taranis not configured — fall back to Claude-powered adverse media assessment
     const verdict = await claudeAdverseMedia(subject);

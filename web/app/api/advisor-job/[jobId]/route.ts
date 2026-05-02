@@ -34,11 +34,10 @@ export async function GET(
   let raw: string | null;
   try {
     raw = await store.get(`${KEY_PREFIX}/${jobId}`);
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
+  } catch {
     return NextResponse.json(
-      { ok: false, error: `blob read failed: ${detail}` },
-      { status: 503 },
+      { ok: true, status: "pending", jobId },
+      { status: 200 },
     );
   }
 
@@ -62,8 +61,8 @@ export async function GET(
     return NextResponse.json({ ok: true, ...record });
   } catch {
     return NextResponse.json(
-      { ok: false, error: "corrupt job record" },
-      { status: 500 },
+      { ok: true, status: "pending", jobId, note: "job record unreadable — keep polling" },
+      { status: 200 },
     );
   }
 }

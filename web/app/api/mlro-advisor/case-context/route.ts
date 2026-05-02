@@ -81,33 +81,26 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Anthropic API error ${res.status}` },
-        { status: 502 },
-      );
+      contextBlock = `AI case context unavailable (API ${res.status}). ${cases.length} case(s) pending manual review.`;
+      priorityIds = [];
+    } else {
+      const data = (await res.json()) as {
+        content?: { type: string; text: string }[];
+      };
+      const text = data?.content?.[0]?.text ?? "";
+
+      // Extract priority IDs line and clean the context block
+      const priorityMatch = /PRIORITY_IDS:\s*([^\n]*)/i.exec(text);
+      const rawPriorityIds = priorityMatch?.[1]?.trim() ?? "";
+      priorityIds = rawPriorityIds
+        ? rawPriorityIds.split(",").map((id) => id.trim()).filter((id) => id.length > 0)
+        : [];
+
+      contextBlock = text.replace(/PRIORITY_IDS:[^\n]*/i, "").trim();
     }
-
-    const data = (await res.json()) as {
-      content?: { type: string; text: string }[];
-    };
-    const text = data?.content?.[0]?.text ?? "";
-
-    // Extract priority IDs line and clean the context block
-    const priorityMatch = /PRIORITY_IDS:\s*([^\n]*)/i.exec(text);
-    const rawPriorityIds = priorityMatch?.[1]?.trim() ?? "";
-    priorityIds = rawPriorityIds
-      ? rawPriorityIds.split(",").map((id) => id.trim()).filter((id) => id.length > 0)
-      : [];
-
-    contextBlock = text.replace(/PRIORITY_IDS:[^\n]*/i, "").trim();
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : "Failed to generate case context",
-      },
-      { status: 502 },
-    );
+  } catch {
+    contextBlock = `AI case context temporarily unavailable. ${cases.length} case(s) require manual review.`;
+    priorityIds = [];
   }
 
   try {

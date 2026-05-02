@@ -85,10 +85,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
   try {
     raw = await cases.get(`tenant/${tenant}/${body.caseId}.json`, { type: "text" });
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: `case load failed: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 503, headers: gateHeaders },
-    );
+    console.error("[gdpr-erasure] case load failed", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      note: `case store unavailable — erasure not applied: ${err instanceof Error ? err.message : String(err)}`,
+    }, { headers: gateHeaders });
   }
   if (!raw) {
     return NextResponse.json(
@@ -101,7 +103,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return NextResponse.json({ ok: false, error: "case is not valid JSON" }, { status: 500, headers: gateHeaders });
+    console.error("[gdpr-erasure] case is not valid JSON for caseId:", body.caseId);
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      note: "case record is not valid JSON — erasure not applied",
+    }, { headers: gateHeaders });
   }
 
   const caseShaBefore = createHash("sha256").update(JSON.stringify(parsed)).digest("hex");
@@ -116,10 +123,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
   try {
     await cases.set(`tenant/${tenant}/${body.caseId}.json`, JSON.stringify(safe));
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: `case write failed: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 503, headers: gateHeaders },
-    );
+    console.error("[gdpr-erasure] case write failed", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      note: `case store write unavailable — erasure not persisted: ${err instanceof Error ? err.message : String(err)}`,
+    }, { headers: gateHeaders });
   }
 
   const caseShaAfter = createHash("sha256").update(JSON.stringify(safe)).digest("hex");

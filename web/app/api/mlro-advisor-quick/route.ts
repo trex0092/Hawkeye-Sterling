@@ -335,7 +335,16 @@ export async function POST(req: Request): Promise<Response> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503, headers: CORS });
+    return NextResponse.json({
+      ok: true,
+      answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Based on the UAE AML/CFT framework and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance on this matter. All compliance decisions must be documented and filed in accordance with FDL 20/2018 and Cabinet Resolution 134/2025.`,
+      elapsedMs: Date.now() - startedAt,
+      advisorScore: null,
+      citationReport: null,
+      suggestedFollowUps: ["Consult your designated MLRO", "Review applicable CBUAE guidance", "Check FATF Recommendations R.6-R.25"],
+      verification: { passed: false, defects: ["offline-mode"] },
+      offline: true,
+    }, { status: 200, headers: CORS });
   }
 
   const analysis = classifyMlroQuestion(question);
@@ -425,13 +434,23 @@ export async function POST(req: Request): Promise<Response> {
       answer = await callHaiku(userPrompt);
     } catch (err) {
       const status = (err as Error & { upstreamStatus?: number }).upstreamStatus;
-      if (typeof status === "number") {
+      if (typeof status === "number" && status === 429) {
         return NextResponse.json(
-          { ok: false, error: (err as Error).message, elapsedMs: Date.now() - startedAt },
-          { status: status === 429 ? 429 : 502, headers: CORS },
+          { ok: false, error: "Rate limited — please try again in a moment", elapsedMs: Date.now() - startedAt },
+          { status: 429, headers: CORS },
         );
       }
-      throw err;
+      // API error — return offline response instead of 502
+      return NextResponse.json({
+        ok: true,
+        answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is temporarily unavailable. Based on established UAE AML/CFT principles under FDL 20/2018 and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance. All compliance decisions must be documented in accordance with FDL 10/2025 Art.26-27.`,
+        elapsedMs: Date.now() - startedAt,
+        advisorScore: null,
+        citationReport: null,
+        suggestedFollowUps: ["Consult your designated MLRO", "Review applicable CBUAE guidance", "Check FATF Recommendations"],
+        verification: { passed: false, defects: ["offline-mode"] },
+        offline: true,
+      }, { status: 200, headers: CORS });
     }
 
     let citationReport = verifyCitations(answer);

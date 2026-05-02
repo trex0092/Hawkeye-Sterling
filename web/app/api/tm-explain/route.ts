@@ -99,10 +99,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Anthropic API error ${res.status}` },
-        { status: 502 },
-      );
+      return NextResponse.json({
+        ok: true,
+        explanation: "AI explanation unavailable — manual review required.",
+        disposition: "monitor" as const,
+        dispositionReason: "Manual review required",
+        regulatoryBasis: "",
+        typologies: [],
+      });
     }
 
     const data = (await res.json()) as {
@@ -114,14 +118,15 @@ export async function POST(req: Request): Promise<NextResponse> {
       .replace(/\s*```$/i, "")
       .trim();
     result = JSON.parse(stripped) as ExplanationResult;
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : "Failed to get AI explanation",
-      },
-      { status: 502 },
-    );
+  } catch {
+    return NextResponse.json({
+      ok: true,
+      explanation: "AI explanation unavailable — manual review required.",
+      disposition: "monitor" as const,
+      dispositionReason: "Manual review required",
+      regulatoryBasis: "",
+      typologies: [],
+    });
   }
 
   try {

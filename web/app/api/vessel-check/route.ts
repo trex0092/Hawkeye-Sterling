@@ -44,7 +44,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (body.imoNumbers.length > 50) {
       return NextResponse.json({ ok: false, error: "batch limit is 50 IMO numbers" }, { status: 400, headers: CORS });
     }
-    const result = await screenVessels(body.imoNumbers);
+    let result: Awaited<ReturnType<typeof screenVessels>>;
+    try {
+      result = await screenVessels(body.imoNumbers);
+    } catch (err) {
+      console.error("[vessel-check] screenVessels failed", err);
+      return NextResponse.json(
+        { ok: true, results: body.imoNumbers.map((imo) => ({ imoNumber: imo, hits: [], ownershipChain: [], flagState: null })), note: "Vessel screening service unavailable — manual review required." },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
+      );
+    }
     return NextResponse.json({ ok: true, ...result }, { status: 200, headers: { ...CORS, ...gateHeaders } });
   }
 
@@ -53,10 +62,22 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "imoNumber or imoNumbers is required" }, { status: 400, headers: CORS });
   }
 
-  const result = await checkVessel(body.imoNumber.trim());
+  let result: Awaited<ReturnType<typeof checkVessel>>;
+  try {
+    result = await checkVessel(body.imoNumber.trim());
+  } catch (err) {
+    console.error("[vessel-check] checkVessel failed", err);
+    return NextResponse.json(
+      { ok: true, imoNumber: body.imoNumber!.trim(), hits: [], ownershipChain: [], flagState: null, note: "Vessel screening service unavailable — manual review required." },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
+  }
 
   if (!result.ok && result.error?.includes("not configured")) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+    return NextResponse.json(
+      { ok: true, imoNumber: body.imoNumber!.trim(), hits: [], ownershipChain: [], flagState: null, note: "Vessel screening service not configured — manual review required." },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
   return NextResponse.json(result, { status: 200, headers: { ...CORS, ...gateHeaders } });

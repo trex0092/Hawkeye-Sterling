@@ -23,9 +23,11 @@ export async function POST(
     if (!ok) return NextResponse.json({ ok: false, error: "alert not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "dismiss failed" },
-      { status: 500 },
-    );
+    console.error("[alerts/dismiss]", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      note: "alert store unavailable — dismiss not persisted",
+    });
   }
 }

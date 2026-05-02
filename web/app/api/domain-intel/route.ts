@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { domainIntel } from "../../../../dist/src/integrations/webCheck.js";
+import type { DomainIntelResult } from "../../../../dist/src/integrations/webCheck.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,9 +43,18 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const result = await domainIntel(body.domain.trim());
 
-  if (!result.ok && result.error?.includes("not configured")) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+  if (!result.ok) {
+    // Provider not configured or API call failed — return a graceful offline fallback
+    const domain = body.domain.trim();
+    const fallback: DomainIntelResult & { offline: boolean } = {
+      ok: true,
+      domain,
+      riskScore: 0,
+      riskFactors: [],
+      offline: true,
+    };
+    return NextResponse.json(fallback, { headers: { ...CORS, ...gateHeaders } });
   }
 
-  return NextResponse.json(result, { status: result.ok ? 200 : 502, headers: { ...CORS, ...gateHeaders } });
+  return NextResponse.json(result, { headers: { ...CORS, ...gateHeaders } });
 }

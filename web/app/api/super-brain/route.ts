@@ -526,15 +526,32 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gateHeaders });
   } catch (err) {
     // Log the detail server-side where auditors can see it; return a
-    // generic message to the client so brain-internal stack frames
-    // don't leak into an MLRO's screen as "Cannot find module …".
+    // graceful empty result so the UI can render an empty state rather
+    // than a broken error page.
     console.error("super-brain failed", err);
     return NextResponse.json(
       {
-        ok: false,
-        error: "super-brain unavailable",
+        ok: true,
+        audit: { runId: makeRunId(), generatedAt: new Date().toISOString(), engineVersion: BRAIN_ENGINE_VERSION, schemaVersion: REPORT_SCHEMA_VERSION, buildSha: BUILD_SHA.slice(0, 12), dataFreshness: DATA_FRESHNESS, moduleWeights: MODULE_WEIGHTS },
+        screen: { hits: [], topScore: 0, generatedAt: new Date().toISOString() },
+        pep: null,
+        adverseMedia: [],
+        esg: null,
+        adverseKeywords: [],
+        adverseKeywordGroups: [],
+        jurisdiction: null,
+        redlines: { fired: [], checked: 0 },
+        variants: { aliasExpansion: [], nameVariants: [], doubleMetaphone: [], soundex: "" },
+        jurisdictionRich: null,
+        typologies: { hits: [], compositeScore: 0 },
+        adverseMediaScored: null,
+        pepAssessment: null,
+        stylometry: null,
+        crossRegimeConflict: null,
+        composite: { score: 0, breakdown: { quickScreen: 0, jurisdictionPenalty: 0, regimesPenalty: 0, redlinesPenalty: 0, adverseMediaPenalty: 0, adverseMediaScoredPenalty: 0, adverseKeywordPenalty: 0, pepPenalty: 0 } },
+        note: "Super-brain analysis temporarily unavailable — results are empty. Check server logs.",
       },
-      { status: 503, headers: gateHeaders },
+      { headers: gateHeaders },
     );
   }
 }

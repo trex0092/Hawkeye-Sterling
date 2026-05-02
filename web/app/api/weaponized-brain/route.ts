@@ -114,10 +114,14 @@ async function handleWeaponizedBrain(): Promise<NextResponse> {
     return NextResponse.json({ ok: true, manifest, integrity, enhanced });
   } catch (err) {
     console.error("[weaponized-brain]", err instanceof Error ? err.message : err);
-    return NextResponse.json(
-      { ok: false, error: "failed to load weaponized brain" },
-      { status: 500 },
-    );
+    return NextResponse.json({
+      ok: true,
+      offline: true,
+      manifest: null,
+      integrity: null,
+      enhanced: null,
+      note: "weaponized brain unavailable — dist not built or corrupted",
+    });
   }
 }
 

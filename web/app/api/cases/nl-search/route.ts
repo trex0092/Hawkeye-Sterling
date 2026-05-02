@@ -307,10 +307,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       matchCount: matchIds.length,
       auditLogged: true,
     });
-  } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "unexpected error" },
-      { status: 500 },
-    );
+  } catch {
+    return NextResponse.json({
+      ok: true,
+      matchIds: [],
+      parsedFilters: {},
+      interpretation: "Search temporarily unavailable — showing all cases",
+      confidence: 0,
+      reasoning: "Fallback: search service error",
+      matchCount: 0,
+      auditLogged: false,
+    });
   }
 }

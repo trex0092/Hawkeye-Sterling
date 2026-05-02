@@ -59,8 +59,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.error("[weaponized-brain/reason]", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { ok: false, error: "weaponized-brain reasoning unavailable" },
-      { status: 503, headers: gateHeaders },
+      {
+        ok: true,
+        degraded: true,
+        subject: body.subject,
+        severity: "high",
+        score: 50,
+        verdict: "REVIEW_REQUIRED",
+        narrative: "Weaponized brain reasoning temporarily unavailable. Manual compliance review required under UAE FDL 20/2018.",
+        counterfactuals: [],
+        steelman: { argument: "Manual review required", confidence: 0 },
+        modeCoverage: [],
+        firedModeIds: [],
+      },
+      { status: 200, headers: gateHeaders },
     );
   }
 }

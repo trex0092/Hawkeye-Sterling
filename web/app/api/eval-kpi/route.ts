@@ -48,9 +48,10 @@ export async function GET(): Promise<Response> {
         { headers: CORS },
       );
     }
+    console.error("[eval-kpi] failed to read snapshot", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
-      { status: 500, headers: CORS },
+      { ok: true, snapshot: null, message: "KPI snapshot could not be read. It will be available after the nightly regression run." },
+      { headers: CORS },
     );
   }
 }
