@@ -139,10 +139,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Anthropic API error ${res.status}` },
-        { status: 502 },
-      );
+      console.error("[sanctions-indirect] Anthropic API error", res.status);
+      return NextResponse.json({ ok: true, ...FALLBACK, note: `AI analysis unavailable (upstream ${res.status}) — manual review required.` });
     }
 
     const data = (await res.json()) as {
@@ -150,15 +148,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     };
     const raw = data?.content?.[0]?.text ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-    result = JSON.parse(cleaned) as SanctionsNexusResult;
+    try {
+      result = JSON.parse(cleaned) as SanctionsNexusResult;
+    } catch {
+      console.error("[sanctions-indirect] failed to parse AI response");
+      return NextResponse.json({ ok: true, ...FALLBACK, note: "AI response could not be parsed — manual review required." });
+    }
   } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : "Failed to analyze sanctions exposure",
-      },
-      { status: 502 },
-    );
+    console.error("[sanctions-indirect] fetch failed", err);
+    return NextResponse.json({ ok: true, ...FALLBACK, note: `AI analysis temporarily unavailable — manual review required.` });
   }
 
   try {

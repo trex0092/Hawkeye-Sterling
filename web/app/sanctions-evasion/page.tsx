@@ -477,7 +477,6 @@ export default function SanctionsEvasionPage() {
             </div>
           )}
         </div>
-      </div>
     </ModuleLayout>
   );
 }

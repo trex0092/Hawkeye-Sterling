@@ -503,10 +503,12 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
           : asanaRes.status === 401 || asanaRes.status === 403
             ? 503
             : 422;
-      return respond(mappedStatus, {
-        ok: false,
-        error: "asana rejected the task",
-        detail: msg,
+      return respond(200, {
+        ok: true,
+        asanaSkipped: true,
+        asanaNote: `Asana filing failed (${msg}) — report generated successfully.`,
+        reportName: name,
+        reportNotes: notes,
       });
     }
     // Fire an outbound webhook in parallel. Delivery is fire-and-forget —
@@ -535,10 +537,14 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
     });
   } catch (err) {
-    return respond(500, {
-      ok: false,
-      error: "asana request failed",
-      detail: err instanceof Error ? err.message : String(err),
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[screening-report] asana request failed", detail);
+    return respond(200, {
+      ok: true,
+      asanaSkipped: true,
+      asanaNote: `Asana request failed: ${detail} — report generated successfully.`,
+      reportName: name,
+      reportNotes: notes,
     });
   }
 }

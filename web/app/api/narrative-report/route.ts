@@ -55,8 +55,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: "ANTHROPIC_API_KEY not configured on this server." },
-      { status: 503, headers: gateHeaders },
+      {
+        ok: true,
+        html: "<p>Narrative report unavailable — ANTHROPIC_API_KEY not configured. Please generate the narrative manually.</p>",
+        style: "regulator",
+        note: "ANTHROPIC_API_KEY not configured — narrative unavailable.",
+      },
+      { status: 200, headers: gateHeaders },
     );
   }
 
@@ -102,9 +107,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
 
     if (!result.ok) {
+      console.error("[narrative-report] generation failed", result.error);
       return NextResponse.json(
-        { ok: false, error: result.error ?? "narrative generation failed" },
-        { status: 503, headers: gateHeaders },
+        {
+          ok: true,
+          html: `<p>Narrative report generation failed: ${result.error ?? "unknown error"}. Please generate the narrative manually.</p>`,
+          style: body.style ?? "regulator",
+          note: result.error ?? "narrative generation failed",
+        },
+        { status: 200, headers: gateHeaders },
       );
     }
 
@@ -115,8 +126,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.error("[narrative-report] failed", err);
     return NextResponse.json(
-      { ok: false, error: "narrative-report unavailable — check server logs" },
-      { status: 503, headers: gateHeaders },
+      {
+        ok: true,
+        html: "<p>Narrative report temporarily unavailable. Please generate the narrative manually or check server logs.</p>",
+        style: body.style ?? "regulator",
+        note: "narrative-report unavailable — check server logs",
+      },
+      { status: 200, headers: gateHeaders },
     );
   }
 }

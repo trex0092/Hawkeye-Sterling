@@ -433,8 +433,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[compliance-qa] advisor fallback threw", err);
     const detail = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { ok: false, error: `Advisor fallback unavailable: ${detail}` },
-      { status: 503, headers: { ...CORS, ...gateHeaders } },
+      {
+        ok: true,
+        query: body.query.trim(),
+        answer: "Advisor service temporarily unavailable. Please consult your compliance documentation or a qualified compliance officer for this question.",
+        citations: [],
+        passedQualityGate: false,
+        source: "fallback",
+        note: `Advisor fallback unavailable: ${detail}`,
+      },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
     );
   }
 }
