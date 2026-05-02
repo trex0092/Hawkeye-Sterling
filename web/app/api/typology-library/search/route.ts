@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
+import { getAnthropicClient } from "@/lib/server/llm";
 export interface TypologyResult {
   id: string;
   name: string;
@@ -322,7 +321,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(FALLBACK);
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient(apiKey);
 
     const filterStr = body.filters
       ? `Filters: sector=${body.filters.sector ?? "any"}, jurisdiction=${body.filters.jurisdictionType ?? "any"}, riskLevel=${body.filters.riskLevel ?? "any"}, fatfCategory=${body.filters.fatfCategory ?? "any"}`

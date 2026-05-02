@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
+import { getAnthropicClient } from "@/lib/server/llm";
 interface InputItem {
   title: string;
   summary?: string;
@@ -87,7 +86,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient(apiKey);
 
     const itemsList = items
       .map(

@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
+import { getAnthropicClient } from "@/lib/server/llm";
 // ── Request Body ──────────────────────────────────────────────────────────────
 
 export interface CryptoTracingBody {
@@ -692,7 +691,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(FALLBACK);
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient(apiKey);
 
     const tp = body.transactionPatterns ?? {};
     const rf = body.riskFlags ?? {};

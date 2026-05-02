@@ -12,7 +12,7 @@
 // Body: { subject: string, dateFrom?: string, dateTo?: string, limit?: number, minRelevance?: number }
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult } from "../../../../dist/src/brain/adverse-media-analyser.js";
@@ -96,7 +96,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 async function claudeAdverseMedia(subject: string) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
-  const client = new Anthropic({ apiKey });
+  const client = getAnthropicClient(apiKey);
   const now = new Date().toISOString();
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",

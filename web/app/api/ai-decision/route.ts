@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 25;
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicClient } from "@/lib/server/llm";
 import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
 
@@ -270,7 +270,7 @@ export async function POST(req: Request) {
 
   if (apiKey) {
     try {
-      const client = new Anthropic({ apiKey });
+      const client = getAnthropicClient(apiKey);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 800,

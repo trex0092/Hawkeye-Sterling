@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
+import { getAnthropicClient } from "@/lib/server/llm";
 export interface TaxEvasionRequest {
   entity: string;
   entityType: "individual" | "corporate" | "trust" | "foundation";
@@ -147,7 +146,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(FALLBACK);
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient(apiKey);
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",

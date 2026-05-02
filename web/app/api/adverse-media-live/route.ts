@@ -9,8 +9,7 @@
 // Body: { subjectName: string; entityType?: string; jurisdiction?: string }
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
+import { getAnthropicClient } from "@/lib/server/llm";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;
@@ -214,7 +213,7 @@ async function enrichWithClaude(
     return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles };
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = getAnthropicClient(apiKey);
 
   const articleSummaries = articles
     .slice(0, 8)

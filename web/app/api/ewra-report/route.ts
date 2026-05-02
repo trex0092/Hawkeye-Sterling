@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditEvent } from "@/lib/audit";
 
 export interface EwraBoardReportResult {
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     .join("\n") ?? "No dimension data provided";
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient(apiKey);
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2000,
