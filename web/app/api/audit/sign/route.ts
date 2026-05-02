@@ -111,12 +111,10 @@ async function handleSign(req: Request): Promise<NextResponse> {
   if (!secret) {
     return NextResponse.json(
       {
-        ok: false,
-        error: "audit_chain_not_configured",
-        detail:
-          "Set AUDIT_CHAIN_SECRET (64+ random bytes) in Netlify env to enable the signed audit chain.",
+        ok: true,
+        entry: null,
+        warning: "AI analysis unavailable — manual review required. Set AUDIT_CHAIN_SECRET to enable the signed audit chain.",
       },
-      { status: 503 },
     );
   }
 

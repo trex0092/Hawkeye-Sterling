@@ -167,6 +167,11 @@ async function handleGoaml(req: Request): Promise<Response> {
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
   const reportingEntity = getEntity(body.entityId);
 
+  const mlroName = process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda";
+  const mlroEmail = process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae";
+  const mlroPhone = process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000";
+  const usingPlaceholderMlro = !process.env["GOAML_MLRO_FULL_NAME"] || !process.env["GOAML_MLRO_EMAIL"];
+
   const envelope: GoAmlEnvelope = {
     reportCode: body.reportCode,
     rentityId: reportingEntity.goamlRentityId,
@@ -174,10 +179,10 @@ async function handleGoaml(req: Request): Promise<Response> {
       ? { rentityBranch: reportingEntity.goamlBranch }
       : {}),
     reportingPerson: {
-      fullName: process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda",
+      fullName: mlroName,
       occupation: "MLRO",
-      email: process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae",
-      phoneNumber: process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000",
+      email: mlroEmail,
+      phoneNumber: mlroPhone,
     },
     submissionCode: "E",
     currencyCodeLocal: "AED",
@@ -254,10 +259,14 @@ async function handleGoaml(req: Request): Promise<Response> {
   }
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
+  const warningHeaders: Record<string, string> = usingPlaceholderMlro
+    ? { "X-Hawkeye-Warning": "GOAML_MLRO_FULL_NAME/GOAML_MLRO_EMAIL not set — placeholder MLRO values used. Set env vars before FIU submission." }
+    : {};
   return new Response(xml, {
     status: 200,
     headers: {
       ...gateHeaders,
+      ...warningHeaders,
       "content-type": "application/xml; charset=utf-8",
       "content-disposition": `attachment; filename="${filename}"`,
       "cache-control": "no-store",

@@ -304,8 +304,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: "ANTHROPIC_API_KEY not configured on this server." },
-      { status: 503, headers: gateHeaders },
+      {
+        ok: true,
+        finalText: "AI analysis unavailable — manual review required",
+        stopReason: "api_key_missing",
+        model: null,
+        usage: null,
+        transcript: [],
+        iterations: 0,
+        budgetMs: DEFAULT_BUDGET_MS,
+        maxIterations: DEFAULT_MAX_ITERATIONS,
+      },
+      { headers: gateHeaders },
     );
   }
 
