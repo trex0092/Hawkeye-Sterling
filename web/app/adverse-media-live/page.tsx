@@ -659,8 +659,9 @@ export default function AdverseMediaLivePage() {
               </div>
               <p className="text-12 text-ink-2 m-0">
                 No articles retrieved from GDELT for &ldquo;{result.subject}
-                &rdquo; in the last 7 days. Document this negative finding in
-                the 10-year lookback log (Art.19).
+                &rdquo; across the full 10-year Art.19 lookback window
+                (today minus 10 years → today, UTC). Document this negative
+                finding in the Art.19 audit log.
               </p>
             </div>
           )}

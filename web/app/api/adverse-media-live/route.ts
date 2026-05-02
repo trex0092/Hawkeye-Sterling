@@ -52,6 +52,13 @@ interface AdverseMediaLiveBody {
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
 const FETCH_TIMEOUT_MS = 10_000;
 
+// FDL 10/2025 Art.19 mandates a 10-year adverse-media lookback for every
+// CDD/EDD screening event. The window is rolling — anchored to the moment
+// the screening request lands on the server, not to a fixed cutoff — so
+// "today minus ten years" shifts forward each calendar day.
+const ART19_LOOKBACK_YEARS = 10;
+const GDELT_MAX_RECORDS = 75; // 7d→10y window expands result volume; cap at 75
+
 function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
@@ -79,6 +86,28 @@ function gdeltDate(seendate: string | undefined): string {
   return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
 }
 
+// GDELT DOC 2.0 startdatetime / enddatetime expect YYYYMMDDHHMMSS in UTC.
+function gdeltDateTime(d: Date): string {
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mi = String(d.getUTCMinutes()).padStart(2, "0");
+  const ss = String(d.getUTCSeconds()).padStart(2, "0");
+  return `${yyyy}${mm}${dd}${hh}${mi}${ss}`;
+}
+
+// Returns { start, end } where end is "now" and start is exactly N years
+// earlier on the same calendar date. Calendar arithmetic (setUTCFullYear)
+// handles leap years correctly — Feb 29 → Feb 28 / Mar 1 transitions are
+// resolved by the JS Date object the same way regulators expect.
+function art19Window(years = ART19_LOOKBACK_YEARS): { start: Date; end: Date } {
+  const end = new Date();
+  const start = new Date(end);
+  start.setUTCFullYear(start.getUTCFullYear() - years);
+  return { start, end };
+}
+
 // Infer broad categories from title/domain text
 function inferCategories(title: string, domain: string): string[] {
   const text = (title + " " + domain).toLowerCase();
@@ -98,7 +127,21 @@ function inferCategories(title: string, domain: string): string[] {
 
 async function queryGdelt(subjectName: string): Promise<GdeltArticle[]> {
   const rawQuery = `"${subjectName}" AND (sanctions OR fraud OR "money laundering" OR corruption OR crime OR arrest OR investigation)`;
-  const url = `${GDELT_BASE}?query=${encodeURIComponent(rawQuery)}&mode=artlist&maxrecords=10&format=json&timespan=7d`;
+  // Art.19 rolling 10-year window — anchored to "now" at request time
+  // so the lookback advances day-by-day. Earlier revisions hard-coded
+  // timespan=7d, which silently scored decade-old prosecutions as CLEAR
+  // (e.g. the Reuters Istanbul Gold Refinery arrest reporting).
+  const { start, end } = art19Window();
+  const params = new URLSearchParams({
+    query: rawQuery,
+    mode: "artlist",
+    maxrecords: String(GDELT_MAX_RECORDS),
+    format: "json",
+    sort: "DateDesc",
+    startdatetime: gdeltDateTime(start),
+    enddatetime: gdeltDateTime(end),
+  });
+  const url = `${GDELT_BASE}?${params.toString()}`;
   const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
@@ -242,7 +285,7 @@ function buildFallbackSummary(
   riskRating: string,
 ): string {
   if (articles.length === 0) {
-    return `No adverse media identified for "${subjectName}" in the GDELT 7-day index. Ongoing monitoring per FATF R.10 and FDL 10/2025 Art.10 should continue.`;
+    return `No adverse media identified for "${subjectName}" across the GDELT 10-year corpus (FDL 10/2025 Art.19 lookback). Ongoing monitoring per FATF R.10 and FDL 10/2025 Art.10 continues; document this negative finding to the Art.19 audit log.`;
   }
   const sourceList = [...new Set(articles.slice(0, 3).map((a) => a.source))].join(", ");
   return `Adverse media search for "${subjectName}" returned ${articles.length} article(s) (risk score: ${riskScore}/100 — ${riskRating}). ` +
