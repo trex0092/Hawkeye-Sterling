@@ -153,7 +153,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
-  if (!body?.subject?.name || body.subject.name.length > 500) {
+  if (!body?.subject?.name?.trim() || body.subject.name.length > 500) {
     return NextResponse.json(
       { ok: false, error: "subject.name required (max 500 chars)" },
       { status: 400, headers: gateHeaders },

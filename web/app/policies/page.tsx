@@ -805,9 +805,13 @@ export default function PoliciesPage() {
               <strong>One source of truth for every rule the brain cites.</strong>{" "}
               Charter, redlines, risk appetite, sector policies — versioned
               and click-to-edit. Every disposition in the audit chain binds
-              to the policy revision in effect when the decision was made.
+              to the policy revision in effect when the decision was made per FDL 10/2025 Art.24.
             </>
           }
+          kpis={[
+            { value: String(policies.length), label: "policies" },
+            { value: String(sections.length), label: "sections" },
+          ]}
         />
 
         <div className="mt-6 space-y-6">

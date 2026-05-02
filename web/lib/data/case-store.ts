@@ -58,24 +58,27 @@ async function pushToServer(): Promise<void> {
   if (!isBrowser()) return;
   try {
     const cases = loadCases();
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     const r = await fetch("/api/cases", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         accept: "application/json",
-        ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
       },
       body: JSON.stringify({ cases }),
     });
     if (!r.ok) return;
     const body = (await r.json()) as { ok?: boolean; cases?: CaseRecord[] };
     if (body.ok && Array.isArray(body.cases)) {
-      // Server returned merged state (it may include cases written by
-      // another device since our last sync). Mirror it locally without
-      // re-triggering scheduleServerSync — that would loop forever.
+      // Merge server state with any local writes that landed while the
+      // request was in-flight. Server cases win on id-collision (they may
+      // carry richer merged state from another device); purely-local
+      // cases (ids not in the server set) are preserved.
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(body.cases));
+        const serverIds = new Set(body.cases.map((c) => c.id));
+        const localNow = loadCases();
+        const localOnly = localNow.filter((c) => !serverIds.has(c.id));
+        const merged = [...localOnly, ...body.cases];
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
       } catch {
         /* quota / disabled */
@@ -93,7 +96,6 @@ export async function syncFromServer(): Promise<void> {
   if (!isBrowser()) return;
   try {
     const local = loadCases();
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     // POST not GET so the server merges what we have with what it
     // has and returns the combined state in one round-trip.
     const r = await fetch("/api/cases", {
@@ -101,7 +103,6 @@ export async function syncFromServer(): Promise<void> {
       headers: {
         "content-type": "application/json",
         accept: "application/json",
-        ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
       },
       body: JSON.stringify({ cases: local }),
     });
@@ -157,13 +158,9 @@ export function deleteCase(id: string): void {
 
 async function deleteCaseOnServer(id: string): Promise<void> {
   try {
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     await fetch(`/api/cases/${encodeURIComponent(id)}`, {
       method: "DELETE",
-      headers: {
-        accept: "application/json",
-        ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
-      },
+      headers: { accept: "application/json" },
     });
   } catch {
     /* offline — server will pick up the deletion on the next merge */

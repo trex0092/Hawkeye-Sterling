@@ -746,25 +746,54 @@ export default function EnforcementPage() {
 
   return (
     <ModuleLayout asanaModule="enforcement" asanaLabel="Enforcement">
-        <div className="flex items-start justify-between gap-4">
-          <ModuleHero
-            moduleNumber={25}
-            eyebrow="Module 18 · Regulatory calendar"
-            title="Enforcement"
-            titleEm="tracker."
-            intro={
-              <>
-                <strong>Every regulator-mandated deadline in one place.</strong>{" "}
-                MoE annual reports, FIU quarterly reconciliations, LBMA Step-4
-                audits, internal EDD sweeps — sorted by due date, colour-coded
-                by urgency.
-              </>
-            }
-          />
-          <div className="shrink-0 pt-6">
-            <AddDeadlineForm onAdd={onAdd} />
-          </div>
+        <ModuleHero
+          moduleNumber={25}
+          eyebrow="Module 18 · Regulatory calendar"
+          title="Enforcement"
+          titleEm="tracker."
+          intro={
+            <>
+              <strong>Every regulator-mandated deadline in one place.</strong>{" "}
+              MoE annual reports, FIU quarterly reconciliations, LBMA Step-4
+              audits, internal EDD sweeps — sorted by due date, colour-coded
+              by urgency. Overdue items require MLRO escalation under FDL 10/2025 Art.15.
+            </>
+          }
+          kpis={[
+            {
+              value: String(sorted.filter((d) => daysUntil(d.due) < 0).length),
+              label: "overdue",
+              tone: sorted.some((d) => daysUntil(d.due) < 0) ? "red" : undefined,
+            },
+            {
+              value: String(sorted.filter((d) => daysUntil(d.due) >= 0 && daysUntil(d.due) <= 30).length),
+              label: "due in 30 days",
+              tone: sorted.some((d) => daysUntil(d.due) >= 0 && daysUntil(d.due) <= 30) ? "amber" : undefined,
+            },
+            { value: String(sorted.length), label: "total deadlines" },
+          ]}
+        />
+
+        <div className="mt-4 flex justify-end">
+          <AddDeadlineForm onAdd={onAdd} />
         </div>
+
+        {overlay.deletedIds.length > 0 && (
+          <div className="mt-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">
+            <div className="font-mono text-10 text-amber">
+              {overlay.deletedIds.length} deadline
+              {overlay.deletedIds.length === 1 ? "" : "s"} hidden from the
+              regulator-seeded list
+            </div>
+            <button
+              type="button"
+              onClick={onResetDeletes}
+              className="font-mono text-10 uppercase tracking-wide-3 px-2 py-1 rounded border border-amber/40 text-amber hover:bg-amber/10 transition-colors"
+            >
+              Restore all
+            </button>
+          </div>
+        )}
 
         <div className="mt-6 space-y-2">
           {sorted.map((d) => {

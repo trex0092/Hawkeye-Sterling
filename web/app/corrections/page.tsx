@@ -70,16 +70,14 @@ export default function CorrectionsPage() {
       <div>
         <ModuleHero
           moduleNumber={19}
-          eyebrow="Public-facing form"
+          eyebrow="Module · Data Subject Rights · FDL Art.30"
           title="Record correction"
           titleEm="request."
           intro={
             <>
-              Dispute or request correction of a watchlist or adverse-media
-              record that mentions you. Reviewed within 30 days of receipt.
-              Appeals can be escalated via{" "}
-              <code>/api/corrections/&lt;id&gt;</code> using the receipt ID
-              you&apos;ll receive on submission.
+              <strong>Dispute or request correction of a watchlist or adverse-media record.</strong>{" "}
+              Reviewed within 30 calendar days of receipt per FDL 10/2025 Art.30 and GDPR Art.16 (Rectification).
+              You will receive a receipt ID to track status and escalate if needed.
             </>
           }
         />

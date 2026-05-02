@@ -237,9 +237,15 @@ export default function InvestigationPage() {
         titleEm="canvas."
         intro={
           <>
-            <strong>Build the network, surface the connections.</strong> Add the subject, related parties, and key timeline events on the left. The network graph updates live on the right — click any node to highlight its connections.
+            <strong>Build the network, surface the connections.</strong> Add the subject, related parties, and key timeline events on the left. The network graph updates live on the right — click any node to highlight its connections. Fulfils FDL 10/2025 Art.19 UBO identification and FATF R.24 beneficial-ownership transparency requirements.
           </>
         }
+        kpis={[
+          { value: String(allCases.length), label: "cases in vault" },
+          { value: String(parties.length + (committed ? 1 : 0)), label: "graph nodes" },
+          { value: String(parties.length), label: "connections" },
+          { value: String(events.length), label: "timeline events" },
+        ]}
       />
 
       <div className="mt-4 grid grid-cols-[360px_1fr] gap-4 items-start">

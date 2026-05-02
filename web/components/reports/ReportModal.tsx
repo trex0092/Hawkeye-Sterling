@@ -60,13 +60,11 @@ export function ReportModal({
     const ctl = new AbortController();
     (async () => {
       try {
-        const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
         const res = await fetch("/api/compliance-report", {
           method: "POST",
           headers: {
             "content-type": "application/json",
             accept: "text/plain, application/json",
-            ...(token ? { authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(payload),
           signal: ctl.signal,
@@ -102,13 +100,11 @@ export function ReportModal({
     const ctl = new AbortController();
     (async () => {
       try {
-        const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
         const res = await fetch(asanaFile.endpoint, {
           method: "POST",
           headers: {
             "content-type": "application/json",
             accept: "application/json",
-            ...(token ? { authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(asanaFile.body),
           signal: ctl.signal,
