@@ -187,19 +187,19 @@ async function handleGoaml(req: Request): Promise<Response> {
       phoneNumber: mlroPhone,
     },
     submissionCode: "E",
-    currencyCodeLocal: body.currency ?? "AED",
+    currencyCodeLocal: "AED",
     reason: body.narrative.slice(0, 4000),
     ...(involvedPersons.length > 0 ? { involvedPersons } : {}),
     ...(involvedEntities.length > 0 ? { involvedEntities } : {}),
-    ...((body.amount ?? body.amountAed ?? 0) > 0
+    ...(((body.amount ?? body.amountAed) ?? 0) > 0
       ? {
           transactions: [
             {
               transactionNumber: `${reportRef}-TXN-1`,
               date: iso,
-              amountLocal: body.amount ?? body.amountAed,
+              amountLocal: (body.amount ?? body.amountAed) as number,
               currency: body.currency ?? "AED",
-              type: "cash",
+              type: "cash" as const,
               ...(body.counterparty ? { counterpartyName: body.counterparty } : {}),
             },
           ],
