@@ -106,16 +106,41 @@ export function AlertBell(): JSX.Element {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center w-8 h-8 rounded hover:bg-bg-2 transition-colors"
+        className={`relative flex items-center justify-center w-9 h-9 rounded-md border transition-colors ${
+          open
+            ? "bg-bg-2 border-hair-1 text-ink-0"
+            : unreadCount > 0
+              ? "border-red/30 text-red hover:bg-red-dim"
+              : "border-hair-2 text-ink-1 hover:bg-bg-2 hover:text-ink-0"
+        }`}
         title={unreadCount > 0 ? `${unreadCount} new designation alert${unreadCount === 1 ? "" : "s"}` : "No new alerts"}
         aria-label="Designation alerts"
+        aria-expanded={open}
+        aria-haspopup="menu"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-ink-2">
-          <path d="M8 1a1 1 0 0 1 1 1v.5A4.5 4.5 0 0 1 12.5 7v2.5l1 1.5H2.5l1-1.5V7A4.5 4.5 0 0 1 7 2.5V2a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-          <path d="M6.5 12.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3a1.25 1.25 0 0 1 1.25 1.25v.6A6.25 6.25 0 0 1 18.5 11v3.1l1.4 2.1a.75.75 0 0 1-.62 1.17H4.72a.75.75 0 0 1-.62-1.17l1.4-2.1V11A6.25 6.25 0 0 1 10.75 4.85v-.6A1.25 1.25 0 0 1 12 3Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+            fill={unreadCount > 0 ? "currentColor" : "none"}
+            fillOpacity={unreadCount > 0 ? "0.18" : "0"}
+          />
+          <path
+            d="M9.75 19.25a2.25 2.25 0 0 0 4.5 0"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
         </svg>
         {unreadCount > 0 && (
-          <span className={`absolute top-0.5 right-0.5 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold leading-none flex items-center justify-center px-0.5 ${criticalUnread > 0 ? "bg-red animate-pulse" : "bg-red"}`}>
+          <span
+            className={`absolute -top-1 -right-1 min-w-[16px] h-[16px] rounded-full bg-red text-white text-[10px] font-bold leading-none flex items-center justify-center px-1 ring-2 ring-bg-0 ${
+              criticalUnread > 0 ? "animate-pulse" : ""
+            }`}
+            aria-label={`${unreadCount} unread`}
+          >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
