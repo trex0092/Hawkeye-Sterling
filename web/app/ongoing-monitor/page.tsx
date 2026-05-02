@@ -216,10 +216,7 @@ export default function OngoingMonitorPage() {
     setSubjects(load());
     (async () => {
       try {
-        const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
-        const res = await fetch("/api/ongoing", {
-          headers: { ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
-        });
+        const res = await fetch("/api/ongoing");
         if (!res.ok) return;
         const data = (await res.json()) as {
           ok: boolean;
@@ -283,10 +280,9 @@ export default function OngoingMonitorPage() {
     save(next); setSubjects(next); setDraft(BLANK);
     writeAuditEvent(draft.enrolledBy || "analyst", "ongoing.enrolled", `${subject.name} — ${subject.cadence} cadence`);
     try {
-      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       await fetch("/api/ongoing", {
         method: "POST",
-        headers: { "content-type": "application/json", ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: subject.id, name: subject.name, ...(subject.caseId ? { caseId: subject.caseId } : {}), cadence: subject.cadence }),
       });
     } catch { /* non-fatal */ }
@@ -303,10 +299,8 @@ export default function OngoingMonitorPage() {
     const next = subjects.filter((s) => s.id !== id);
     save(next); setSubjects(next);
     try {
-      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
-        headers: { ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
       });
     } catch { /* non-fatal */ }
   };

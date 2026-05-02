@@ -162,9 +162,26 @@ export default function SarQaPage() {
               <strong>Every filed STR / SAR gets a second pair of eyes.</strong>{" "}
               The MLRO who filed the report is not the one who signs off; an
               independent reviewer confirms the disposition rationale before
-              the goAML package ships to the FIU.
+              the goAML package ships to the FIU. SLA: 48 hours per CBUAE Notice 2021/8.
             </>
           }
+          kpis={[
+            {
+              value: String(cases.filter((c) => !reviews[c.id]).length),
+              label: "awaiting review",
+              tone: cases.some((c) => !reviews[c.id]) ? "amber" : undefined,
+            },
+            {
+              value: String(Object.values(reviews).filter((r) => r.state === "challenged").length),
+              label: "challenged",
+              tone: Object.values(reviews).some((r) => r.state === "challenged") ? "red" : undefined,
+            },
+            {
+              value: String(Object.values(reviews).filter((r) => r.state === "approved").length),
+              label: "approved",
+            },
+            { value: String(cases.length), label: "total filed" },
+          ]}
         />
 
         {role !== "mlro" && (

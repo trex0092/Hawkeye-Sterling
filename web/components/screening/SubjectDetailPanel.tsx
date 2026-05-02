@@ -578,14 +578,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       return;
     }
     const payload = buildReportPayload();
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     try {
       const res = await fetch("/api/compliance-report?format=html", {
         method: "POST",
         headers: {
           "content-type": "application/json",
           accept: "text/html, application/json",
-          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -641,7 +639,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       `${composite}/100. Jurisdiction: ${subject.country || "—"}. ` +
       `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
       `MLRO to review before goAML submission.`;
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     // Pre-fetch the JSON sidecar so the goAML envelope carries the
     // same payload + report SHA-256 (and signature, if signing is on)
     // as the .txt / PDF the operator just downloaded. Lets a regulator
@@ -668,7 +665,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         headers: {
           "content-type": "application/json",
           accept: "application/json",
-          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify(sidecarPayload),
       });
@@ -723,7 +719,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         headers: {
           "content-type": "application/json",
           accept: "application/xml, application/json",
-          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify({
           reportCode: "STR",
@@ -924,14 +919,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 15_000);
       try {
-        const adminTokenTxt = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
         const res = await fetch("/api/compliance-report", {
           method: "POST",
           headers: {
             "content-type": "application/json",
             accept: "application/json, text/plain, */*",
             "user-agent": "hawkeye-screening-client/1.0",
-            ...(adminTokenTxt ? { authorization: `Bearer ${adminTokenTxt}` } : {}),
           },
           body: JSON.stringify(payload),
           signal: ctl.signal,
@@ -982,7 +975,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   };
 
   return (
-    <aside className="bg-bg-panel border-l border-[#ec4899] p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-hair-2 p-6 overflow-y-auto">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
