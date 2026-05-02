@@ -131,7 +131,7 @@ const AUDIT_TRAIL = [
     decisionType: "Adverse media classification",
     inputHash: "9b1d...aa3f",
     outputHash: "2e7c...c81b",
-    reviewer: "A. Rahman",
+    reviewer: "—",
     outcome: "Overridden",
   },
   {
@@ -140,7 +140,7 @@ const AUDIT_TRAIL = [
     decisionType: "Entity screening",
     inputHash: "f2a1...7d4c",
     outputHash: "4b9e...12a7",
-    reviewer: "Auto",
+    reviewer: "—",
     outcome: "Approved",
   },
   {
@@ -149,7 +149,7 @@ const AUDIT_TRAIL = [
     decisionType: "EDD questionnaire generation",
     inputHash: "c5f3...8b2d",
     outputHash: "9a4c...f33e",
-    reviewer: "N. Patel",
+    reviewer: "—",
     outcome: "Approved",
   },
   {
@@ -158,7 +158,7 @@ const AUDIT_TRAIL = [
     decisionType: "Name matching",
     inputHash: "7d8a...2c1f",
     outputHash: "1e5b...9d3c",
-    reviewer: "Auto",
+    reviewer: "—",
     outcome: "Approved",
   },
 ];
