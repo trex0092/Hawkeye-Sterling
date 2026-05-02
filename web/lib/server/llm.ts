@@ -90,14 +90,15 @@ export class AnthropicGuard {
         const response = await inner.messages.create(safe, requestOptions);
 
         // Rehydrate response text blocks
-        const rehydratedContent = response.content.map((block: { type: string; text?: string; [k: string]: unknown }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rehydratedContent = (response.content as any[]).map((block: any) => {
           if (block.type === "text" && typeof block.text === "string") {
             return { ...block, text: rehydrate(block.text, map) };
           }
           return block;
         });
 
-        return { ...response, content: rehydratedContent };
+        return { ...response, content: rehydratedContent } as Anthropic.Message;
       },
     };
   }
