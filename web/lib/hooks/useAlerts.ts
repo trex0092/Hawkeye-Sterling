@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DesignationAlert } from "@/lib/server/alerts-store";
 import { loadBellEvents, markBellEventRead } from "@/lib/bell-events";
+import { pushToast } from "@/lib/toast-bus";
 
 const POLL_INTERVAL_MS = 60_000;
 const CACHE_KEY = "hawkeye.alerts.cache.v1";
@@ -161,7 +162,6 @@ export function useAlerts(): UseAlertsReturn {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set());
   const seenRef = useRef<Set<string>>(new Set());
-  const firstLoadRef = useRef<boolean>(true);
 
   const unreadCount = alerts.filter((a) => !a.read).length;
 
@@ -171,20 +171,30 @@ export function useAlerts(): UseAlertsReturn {
     setAlerts(merged);
     saveCache(apiAlerts);
 
-    // Detect newly arrived unread alerts (not seen on a prior poll)
-    // and fire side-effects: chime + browser notification.
-    if (!firstLoadRef.current) {
-      const newUnread = merged.filter((a) => !a.read && !seenRef.current.has(a.id));
-      if (newUnread.length > 0) {
-        const mostSerious = newUnread.reduce((acc, a) => {
-          const order = { critical: 0, high: 1, medium: 2 } as const;
-          return order[a.severity] < order[acc.severity] ? a : acc;
-        }, newUnread[0]!);
-        playChime(mostSerious.severity);
-        for (const a of newUnread.slice(0, 3)) showBrowserNotification(a);
+    // Fire side-effects for newly arrived unread alerts:
+    //   1. In-app toast popup (always — no permission needed)
+    //   2. Audio chime (if AudioContext available)
+    //   3. Browser desktop notification (if permission granted)
+    // First load also fires the toast/chime so the operator immediately
+    // knows there are pending designation alerts after a fresh page load.
+    const newUnread = merged.filter((a) => !a.read && !seenRef.current.has(a.id));
+    if (newUnread.length > 0) {
+      const mostSerious = newUnread.reduce((acc, a) => {
+        const order = { critical: 0, high: 1, medium: 2 } as const;
+        return order[a.severity] < order[acc.severity] ? a : acc;
+      }, newUnread[0]!);
+      playChime(mostSerious.severity);
+      for (const a of newUnread.slice(0, 3)) {
+        pushToast({
+          id: a.id,
+          severity: a.severity,
+          title: `${a.matchedEntry}`,
+          body: `${a.listLabel} · ${a.sourceRef || "designation hit"}`,
+          href: `/screening?q=${encodeURIComponent(a.matchedEntry)}`,
+        });
+        showBrowserNotification(a);
       }
     }
-    firstLoadRef.current = false;
 
     // Mark every current id as seen
     for (const a of merged) seenRef.current.add(a.id);
