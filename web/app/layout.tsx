@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
 import { AlertToast } from "@/components/layout/AlertToast";
@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   description: "Regulator-grade AML/CFT screening engine",
   applicationName: "Hawkeye Sterling",
   manifest: "/manifest.webmanifest",
-  themeColor: "#0b1320",
   appleWebApp: {
     capable: true,
     title: "Hawkeye",
@@ -22,6 +21,10 @@ export const metadata: Metadata = {
     apple: [{ url: "/icon-512.svg" }],
   },
   formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b1320",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
