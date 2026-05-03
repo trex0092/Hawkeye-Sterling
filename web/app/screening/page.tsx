@@ -1220,17 +1220,16 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
-      <div
-        className="grid min-h-[calc(100vh-84px)]"
-        style={{ gridTemplateColumns: "220px 1fr 480px" }}
-      >
-        <Sidebar
-          filters={dynamicFilters}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
+      <div className="grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_480px]">
+        <div className="hidden md:block">
+          <Sidebar
+            filters={dynamicFilters}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+        </div>
 
-        <main className="px-10 py-8 overflow-y-auto">
+        <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           <ScreeningHero
             inQueue={subjects.filter((s) => s.status !== "cleared").length}
             critical={criticalCount}
@@ -1431,38 +1430,40 @@ export default function ScreeningPage() {
           />
         </main>
 
-        {(() => {
-          if (compareIds.size === 2) {
-            const [idA, idB] = [...compareIds];
-            const subA = idA !== undefined ? subjects.find((s) => s.id === idA) : undefined;
-            const subB = idB !== undefined ? subjects.find((s) => s.id === idB) : undefined;
-            if (subA && subB) {
+        <div className="hidden lg:block">
+          {(() => {
+            if (compareIds.size === 2) {
+              const [idA, idB] = [...compareIds];
+              const subA = idA !== undefined ? subjects.find((s) => s.id === idA) : undefined;
+              const subB = idB !== undefined ? subjects.find((s) => s.id === idB) : undefined;
+              if (subA && subB) {
+                return (
+                  <ComparePanel
+                    subjectA={subA}
+                    subjectB={subB}
+                    onClose={() => setCompareIds(new Set())}
+                    onSelect={(id) => { setSelectedId(id); setCompareIds(new Set()); }}
+                  />
+                );
+              }
+            }
+            if (selected && !formOpen) {
               return (
-                <ComparePanel
-                  subjectA={subA}
-                  subjectB={subB}
-                  onClose={() => setCompareIds(new Set())}
-                  onSelect={(id) => { setSelectedId(id); setCompareIds(new Set()); }}
+                <SubjectDetailPanel
+                  subject={selected}
+                  onUpdate={handleUpdateSubject}
+                  allSubjects={subjects}
+                  onSelectSubject={setSelectedId}
                 />
               );
             }
-          }
-          if (selected && !formOpen) {
             return (
-              <SubjectDetailPanel
-                subject={selected}
-                onUpdate={handleUpdateSubject}
-                allSubjects={subjects}
-                onSelectSubject={setSelectedId}
-              />
+              <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
+                <ActivityFeed />
+              </aside>
             );
-          }
-          return (
-            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
-              <ActivityFeed />
-            </aside>
-          );
-        })()}
+          })()}
+        </div>
       </div>
 
       <BulkImportDialog

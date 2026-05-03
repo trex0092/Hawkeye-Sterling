@@ -47,49 +47,50 @@ export function ModuleLayout<K extends string = string>({
   return (
     <>
       <Header />
-      <div
-        className="grid min-h-[calc(100vh-84px)] print:block"
-        style={{ gridTemplateColumns: "220px 1fr 360px" }}
-      >
-        <SidebarShell>
-          <SidebarSection title="Regulatory">
-            <SidebarMLROCard />
-          </SidebarSection>
-
-          {filters && activeFilter !== undefined && onFilterChange && (
-            <SidebarSection title={filtersTitle}>
-              <SidebarFilterList
-                items={filters}
-                activeKey={activeFilter}
-                onSelect={onFilterChange}
-              />
+      <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px]">
+        <div className="hidden md:block">
+          <SidebarShell>
+            <SidebarSection title="Regulatory">
+              <SidebarMLROCard />
             </SidebarSection>
-          )}
 
-          {sidebarExtra}
+            {filters && activeFilter !== undefined && onFilterChange && (
+              <SidebarSection title={filtersTitle}>
+                <SidebarFilterList
+                  items={filters}
+                  activeKey={activeFilter}
+                  onSelect={onFilterChange}
+                />
+              </SidebarSection>
+            )}
 
-          {asanaModule && (
-            <SidebarSection title="Report">
-              <AsanaReportButton
-                payload={{
-                  module: asanaModule,
-                  label: asanaLabel ?? asanaModule,
-                  summary: `Module report submitted from Hawkeye Sterling dashboard — ${asanaLabel ?? asanaModule}.`,
-                }}
-              />
-            </SidebarSection>
-          )}
-        </SidebarShell>
+            {sidebarExtra}
 
-        <main className="px-10 py-8 overflow-y-auto">
+            {asanaModule && (
+              <SidebarSection title="Report">
+                <AsanaReportButton
+                  payload={{
+                    module: asanaModule,
+                    label: asanaLabel ?? asanaModule,
+                    summary: `Module report submitted from Hawkeye Sterling dashboard — ${asanaLabel ?? asanaModule}.`,
+                  }}
+                />
+              </SidebarSection>
+            )}
+          </SidebarShell>
+        </div>
+
+        <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           {children}
         </main>
 
-        {detailPanel ?? (
-          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
-            <ActivityFeed label={engineLabel} />
-          </aside>
-        )}
+        <div className="hidden lg:block">
+          {detailPanel ?? (
+            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
+              <ActivityFeed label={engineLabel} />
+            </aside>
+          )}
+        </div>
       </div>
     </>
   );
@@ -131,7 +132,7 @@ export function ModuleHero({
       <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
         {eyebrow}
       </div>
-      <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
+      <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
         {title}
         {titleEm && (
           <>
