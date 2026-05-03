@@ -65,7 +65,7 @@ function dedupAlerts(alerts: DesignationAlert[]): DesignationAlert[] {
 }
 
 export function AlertBell(): JSX.Element {
-  const { alerts, unreadCount, dismiss } = useAlerts();
+  const { alerts, unreadCount, dismiss, requestNotificationPermission, notificationPermission } = useAlerts();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -251,9 +251,35 @@ export function AlertBell(): JSX.Element {
             </ul>
           )}
 
+          {/* Browser-notification CTA — only shown when supported & not yet granted */}
+          {notificationPermission === "default" && (
+            <div className="px-4 py-2 border-t border-hair-2 bg-bg-2/50 flex items-center justify-between gap-2">
+              <span className="text-10 text-ink-2">
+                🔔 Enable desktop notifications for new designation alerts
+              </span>
+              <button
+                type="button"
+                onClick={() => { void requestNotificationPermission(); }}
+                className="text-10 font-semibold border border-brand/40 text-brand rounded px-2 py-0.5 hover:bg-brand/10 shrink-0"
+              >
+                Enable
+              </button>
+            </div>
+          )}
+          {notificationPermission === "denied" && (
+            <div className="px-4 py-1.5 border-t border-hair-2 bg-bg-2/30">
+              <span className="text-10 text-ink-3">
+                Desktop notifications blocked — enable in browser settings to be notified when away.
+              </span>
+            </div>
+          )}
+
           {/* Footer */}
           <div className="px-4 py-2 border-t border-hair-2 flex items-center justify-between">
-            <span className="text-10 text-ink-3 font-mono">Polls every 60s · FATF R.20</span>
+            <span className="text-10 text-ink-3 font-mono">
+              Polls every 60s · FATF R.20
+              {notificationPermission === "granted" && " · 🔔 on"}
+            </span>
             <a
               href="/screening"
               className="text-11 text-brand hover:underline"
