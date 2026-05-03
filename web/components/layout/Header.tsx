@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { AlertBell } from "./AlertBell";
+import { InstallAppButton } from "./InstallAppButton";
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
@@ -235,7 +235,7 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <AlertBell />
+          <InstallAppButton />
           <a
             href="/profile"
             title="My profile & password"

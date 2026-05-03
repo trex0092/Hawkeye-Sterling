@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
-import { AlertToast } from "@/components/layout/AlertToast";
+import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
   title: "Hawkeye Sterling",
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <CaseVaultSyncer />
-        <AlertToast />
+        <ServiceWorkerRegistrar />
         {children}
       </body>
     </html>
