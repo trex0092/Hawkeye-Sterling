@@ -14,7 +14,7 @@ const OPERATOR_STORAGE_KEY = "hawkeye.operator";
 
 export function SidebarShell({ children }: { children: ReactNode }) {
   return (
-    <aside className="bg-bg-panel border-r border-[#ec4899] px-4 py-5 overflow-y-auto print:hidden">
+    <aside className="bg-bg-panel border-r border-hair-2 px-4 py-5 overflow-y-auto print:hidden">
       {children}
     </aside>
   );

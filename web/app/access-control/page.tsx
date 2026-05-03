@@ -584,7 +584,7 @@ export default function AccessControlPage() {
         setUsers((prev) => [...prev, data.user!]);
         setNewUserCreds({ username: data.user!.username ?? "", password: data.initialPassword ?? "" });
       }
-      setAddForm({ name: "", email: "", role: "compliance", username: "", password: ""});
+      setAddForm({ name: "", email: "", role: "compliance", username: "", password: "" });
       setShowAddForm(false);
       void fetchLog();
     } catch {
@@ -759,7 +759,7 @@ export default function AccessControlPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance", username: "", password: ""}); }}
+                  onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance", username: "", password: "" }); }}
                   className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
                 >
                   Cancel

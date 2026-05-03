@@ -1458,7 +1458,7 @@ export default function ScreeningPage() {
             );
           }
           return (
-            <aside className="border-l border-[#ec4899] overflow-y-auto px-5 py-6">
+            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
               <ActivityFeed />
             </aside>
           );
@@ -1727,7 +1727,7 @@ export default function ScreeningPage() {
             );
           })()}
 
-          {amResult?.ok && (amVerdict?.findings?.length ?? 0) === 0 && !amLoading && (
+          {amResult?.ok && !amVerdict && !amLoading && (
             <div className="border border-hair-2 rounded-xl p-8 text-center text-12 text-ink-3">
               No adverse media found for <span className="font-medium text-ink-1">{amSubject}</span>
             </div>

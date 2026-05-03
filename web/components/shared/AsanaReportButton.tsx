@@ -65,7 +65,7 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
       }
       setState({ status: "sent", ...(json.taskUrl ? { taskUrl: json.taskUrl } : {}) });
     } catch {
-      setState({ status: "disabled" });
+      setState({ status: "error" });
     }
   };
 

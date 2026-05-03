@@ -5919,7 +5919,7 @@ export default function PlaybookPage() {
             <strong>One walk-through per typology.</strong> Pick a playbook,
             work through the mandated checks in order. The brain cites the
             specific FATF / LBMA / FDL articles behind each step so nothing
-            gets skipped.
+            gets skipped. Each required step generates an audit-chain entry.
           </>
         }
         kpis={[

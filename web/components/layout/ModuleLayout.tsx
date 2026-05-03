@@ -86,7 +86,7 @@ export function ModuleLayout<K extends string = string>({
         </main>
 
         {detailPanel ?? (
-          <aside className="border-l border-[#ec4899] overflow-y-auto px-5 py-6 print:hidden">
+          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
             <ActivityFeed label={engineLabel} />
           </aside>
         )}

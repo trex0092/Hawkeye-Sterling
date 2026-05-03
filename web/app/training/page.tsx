@@ -300,6 +300,20 @@ export default function TrainingPage() {
               sessions.
             </>
           }
+          kpis={[
+            {
+              value: String(rows.filter((r) => r.status === "expired").length),
+              label: "expired",
+              tone: rows.some((r) => r.status === "expired") ? "red" : undefined,
+            },
+            {
+              value: String(rows.filter((r) => r.status === "expiring").length),
+              label: "expiring soon",
+              tone: rows.some((r) => r.status === "expiring") ? "amber" : undefined,
+            },
+            { value: String(rows.filter((r) => r.status === "current").length), label: "current" },
+            { value: `${PROG_COMPLETED}/${ANNUAL_PROGRAMME.length}`, label: "sessions 2026" },
+          ]}
         />
 
         {/* Tab switcher */}
