@@ -81,7 +81,7 @@ export function ReScreenDiff({ subjectId }: Props) {
 
   return (
     <div className="text-11 space-y-2">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div className="bg-bg-1 border border-hair-2 rounded p-2">
           <div className="text-10 uppercase tracking-wide-3 text-ink-3">Previous</div>
           <div className="font-mono text-12 text-ink-0">{prev.topScore} · {prev.severity}</div>

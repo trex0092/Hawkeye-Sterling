@@ -475,7 +475,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
         <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Title *</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Approval request title" className={iCls} />
       </div>
-      <div className="grid grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requested by *</label>
           <input value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} placeholder="Name (Role)" className={iCls} />
@@ -493,7 +493,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
           <input value={firstReviewer} onChange={(e) => setFirstReviewer(e.target.value)} placeholder="Compliance Officer" className={iCls} />
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Second reviewer</label>
           <input value={secondReviewer} onChange={(e) => setSecondReviewer(e.target.value)} placeholder="Managing Director" className={iCls} />
@@ -561,7 +561,7 @@ function AddMinuteForm({ onAdd, onCancel }: { onAdd: (m: Minute) => void; onCanc
     <div className="mt-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New meeting minutes</div>
       {err && <p className="text-11 text-red mb-2">{err}</p>}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Date *</label>
           <input value={date} onChange={(e) => setDate(e.target.value)} placeholder="2025-04-26" className={iCls} />
@@ -627,7 +627,7 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; on
     <div className="mt-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">New circular / report</div>
       {err && <p className="text-11 text-red mb-2">{err}</p>}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ref *</label>
           <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. CBUAE 3/2025" className={iCls} />
@@ -645,7 +645,7 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; on
         <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Title *</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Circular or report title" className={iCls} />
       </div>
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disposition</label>
           <select value={disposition} onChange={(e) => setDisposition(e.target.value as CircularDisposition)} className={iCls}>
@@ -1331,7 +1331,7 @@ export default function OversightPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                 <SignBox label="First reviewer" signer={a.firstReviewer} signedAt={a.firstSignedAt} />
                 <SignBox
                   label="Second reviewer"
@@ -1455,7 +1455,7 @@ export default function OversightPage() {
 
                 {expanded && (
                   <div className="border-t border-hair-2 px-4 py-4">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Topics */}
                       <div>
                         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Topics discussed</div>
@@ -1656,7 +1656,7 @@ export default function OversightPage() {
           {showAddAction && (
             <div className="mt-3 bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">New action item</div>
-              <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 <div className="col-span-1">
                   <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner</label>
                   <input value={newActionOwner} onChange={(e) => setNewActionOwner(e.target.value)} placeholder="Name (Role)" className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" />
@@ -1684,7 +1684,7 @@ export default function OversightPage() {
       {tab === "kpi" && (
         <div className="flex flex-col gap-6">
           {/* KPI cards */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:grid-cols-4">
             <KpiCard
               label="Approval SLA compliance"
               value={`${slaPct}%`}
@@ -1712,7 +1712,7 @@ export default function OversightPage() {
           </div>
 
           {/* Secondary row */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:grid-cols-4">
             <KpiCard
               label="Pending approvals"
               value={pendingApprovals}

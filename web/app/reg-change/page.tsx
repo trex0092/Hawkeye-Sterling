@@ -396,7 +396,7 @@ export default function RegChangePage() {
         </div>
 
         {/* Products + client types */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
           <div>
             <label className="block text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">Products / Services</label>
             <div className="flex gap-2 mb-2">
@@ -560,7 +560,7 @@ export default function RegChangePage() {
                 ↓ Export Roadmap PDF
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:grid-cols-3">
               {result.complianceRoadmap.map((m) => (
                 <div key={m.month} className="bg-bg-1 border border-hair rounded-lg p-3">
                   <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-2 font-mono">{m.month}</div>

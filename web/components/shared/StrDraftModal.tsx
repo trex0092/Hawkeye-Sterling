@@ -189,7 +189,7 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
 
         <div className="space-y-3">
           {/* Report code + Subject type */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <label className="block">
               <span className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">Report code</span>
               <select value={reportCode} onChange={(e) => setReportCode(e.target.value as ReportCode)}
@@ -219,7 +219,7 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
           </label>
 
           {/* Jurisdiction + ID */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <label className="block">
               <span className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">Jurisdiction</span>
               <select value={jurisdiction} onChange={(e) => setJurisdiction(e.target.value)}
@@ -238,7 +238,7 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
           </div>
 
           {/* Case ID + Amount with currency */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <label className="block">
               <span className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">Case ID</span>
               <input value={caseId} onChange={(e) => setCaseId(e.target.value)}

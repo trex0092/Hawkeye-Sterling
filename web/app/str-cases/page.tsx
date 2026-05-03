@@ -582,22 +582,22 @@ export default function StrCasesPage() {
                 const row = "grid gap-3 mb-2";
                 return (
                   <>
-                    <div className={`${row} grid-cols-3`}>
+                    <div className={`${row} grid-cols-1 md:grid-cols-3`}>
                       <div><label className={lCls}>Case title</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short case descriptor" className={iCls} /></div>
                       <div><label className={lCls}>Report kind</label><SingleSelect options={STR_REPORT_KINDS} value={reportKind} onChange={setReportKind} /></div>
                       <div><label className={lCls}>Subject / entity</label><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Customer, counterparty, or entity" className={iCls} /></div>
                     </div>
-                    <div className={`${row} grid-cols-3`}>
+                    <div className={`${row} grid-cols-1 md:grid-cols-3`}>
                       <div><label className={lCls}>Subject country</label><input value={subjectCountry} onChange={(e) => setSubjectCountry(e.target.value)} placeholder="e.g. UAE, IN, RU" className={iCls} /></div>
                       <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED, USD, EUR)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                       <div><label className={lCls}>Detected on</label><DateParts value={detectedOn} onChange={setDetectedOn} className={iCls} /></div>
                     </div>
-                    <div className={`${row} grid-cols-3`}>
+                    <div className={`${row} grid-cols-1 md:grid-cols-3`}>
                       <div><label className={lCls}>Filing deadline <span className="normal-case font-normal">FDL Art. 26–27</span></label><DateParts value={deadline} onChange={setDeadline} className={iCls} /></div>
                       <div><label className={lCls}>goAML reference</label><input value={goamlRef} onChange={(e) => setGoamlRef(e.target.value)} placeholder="e.g. RPT-2026-0001" className={iCls} /></div>
                       <div><label className={lCls}>MLRO (preparer)</label><input value={mlro} onChange={(e) => setMlro(e.target.value)} placeholder="MLRO name" className={iCls} /></div>
                     </div>
-                    <div className={`${row} grid-cols-2`}>
+                    <div className={`${row} grid-cols-1 md:grid-cols-2`}>
                       <div><label className={lCls}>Four-eyes approver</label><input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Second approver" className={iCls} /></div>
                       <div><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
                     </div>
@@ -748,7 +748,7 @@ export default function StrCasesPage() {
                     editingCaseId === c.id ? (
                       <tr key={c.id} className="border-b border-hair last:border-0 bg-bg-1">
                         <td colSpan={7} className="px-3 py-2">
-                          <div className="grid grid-cols-3 gap-2 mb-1.5">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-1.5">
                             <div>
                               <label className="block text-10 text-ink-3 mb-0.5">Title / Case name</label>
                               <input value={editCaseDraft.title} onChange={(e) => setEditCaseDraft((d) => ({ ...d, title: e.target.value }))}

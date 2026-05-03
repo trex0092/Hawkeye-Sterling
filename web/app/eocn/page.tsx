@@ -329,7 +329,7 @@ export default function EocnPage() {
                       {isExpanded && (
                         <tr className={i < LIST_UPDATES.length - 1 ? "border-b border-hair" : ""}>
                           <td colSpan={7} className="px-4 py-3 bg-bg-1">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-3 gap-3 mb-3">
                               <DetailField label="Version" value={u.version} mono />
                               <DetailField label="Published" value={`${u.date} ${u.time} UTC`} mono />
                               <DetailField label="Re-screen completed" value={u.screeningCompletedAt ?? "—"} mono />
@@ -415,7 +415,7 @@ export default function EocnPage() {
               {editingMatchId === m.id && (
                 <div className="mb-4 bg-bg-1 rounded-lg p-3 border border-brand/30">
                   <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Edit match</div>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                     <div>
                       <label className="block text-10 text-ink-3 mb-0.5">Disposition</label>
                       <select value={editMatchDraft.disposition} onChange={(e) => setEditMatchDraft((d) => ({ ...d, disposition: e.target.value as MatchDisposition }))}
@@ -474,7 +474,7 @@ export default function EocnPage() {
                 <div className="text-ink-0">{m.listEntry}</div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-3 text-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 text-12">
                 <div className="bg-bg-1 rounded p-2">
                   <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-0.5">MLRO sign-off</div>
                   <div className={m.mlroSignedOff ? "text-green font-semibold" : "text-amber font-semibold"}>

@@ -631,7 +631,7 @@ export default function OnboardingWizardPage() {
               The wizard onboards entities only — legal persons, organisations,
               vessels, refiners. Not natural persons.
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field
                 label="Name *"
                 value={draft.fullName}
@@ -643,7 +643,7 @@ export default function OnboardingWizardPage() {
                 onChange={(next) => setDraft((prev) => ({ ...prev, relationshipTypes: next }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field
                 label="Registered country *"
                 value={draft.registeredCountry}

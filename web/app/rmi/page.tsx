@@ -379,7 +379,7 @@ export default function RmiPage() {
         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
           OECD Due Diligence Guidance — 5-step framework status
         </div>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           {OECD_STEPS.map((s) => (
             <div key={s.n} className="bg-bg-1 border border-hair-2 rounded p-2.5">
               <div className="flex items-center gap-1.5 mb-1">

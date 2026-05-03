@@ -542,7 +542,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
               className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Jurisdiction">
               <input
                 type="text"
@@ -812,7 +812,7 @@ function BrainResult({ r }: { r: ReasonResponse }) {
       {/* Variants */}
       {r.variants && (
         <ResultSection title="Name-variant index">
-          <div className="grid grid-cols-2 gap-2 text-10 font-mono">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-10 font-mono">
             <div>
               <div className="text-ink-3 uppercase tracking-wide-3 text-9">Phonetic</div>
               <div className="text-ink-1">

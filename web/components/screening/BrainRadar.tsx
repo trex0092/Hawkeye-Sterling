@@ -149,7 +149,7 @@ export function BrainRadar({ result, size = 220 }: BrainRadarProps) {
           </g>
         ))}
       </svg>
-      <div className="grid grid-cols-3 gap-x-3 gap-y-1 mt-2 text-10 font-mono">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-3 gap-y-1 mt-2 text-10 font-mono">
         {axes.map((a) => (
           <div key={a.axis} className="flex justify-between">
             <span className="text-ink-2">{a.axis}</span>

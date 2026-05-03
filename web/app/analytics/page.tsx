@@ -658,7 +658,7 @@ export default function AnalyticsPage() {
 
           {/* Section 1 — Headline metrics */}
           <Section label="Headline metrics">
-            <div className="grid grid-cols-5 gap-6 print:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 print:gap-4">
               <Headline
                 value={screeningsTotal.toLocaleString()}
                 caption="Screenings processed"
@@ -698,7 +698,7 @@ export default function AnalyticsPage() {
 
           {/* Section 4 — Regulatory filings */}
           <Section label={`Regulatory filings · month to date`}>
-            <div className="grid grid-cols-6 gap-4 print:gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 print:gap-2">
               {FILING_TYPES.map((t) => (
                 <FilingTile key={t} code={t} count={filingCounts[t]} />
               ))}
@@ -739,7 +739,7 @@ export default function AnalyticsPage() {
           {/* Section 6 — Monitoring coverage */}
           <Section label="Monitoring coverage">
             {data ? (
-              <div className="grid grid-cols-3 gap-6 print:gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:gap-3">
                 <Metric
                   label="Enrolled in ongoing screening"
                   value={String(data.monitoring.enrolledSubjects)}
@@ -761,7 +761,7 @@ export default function AnalyticsPage() {
           {/* Section 7 — DPMS KPI catalogue */}
           {data && (
             <Section label={`DPMS KPI catalogue · ${data.kpis.defined} indicators`}>
-              <ul className="text-11 text-ink-1 grid grid-cols-2 gap-x-6 gap-y-0.5 list-none p-0 m-0 font-mono">
+              <ul className="text-11 text-ink-1 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0.5 list-none p-0 m-0 font-mono">
                 {data.kpis.sample.map((k, i) => (
                   <li key={String((k as { name?: unknown; id?: unknown }).name ?? (k as { id?: unknown }).id ?? i)} className="truncate">
                     {String(

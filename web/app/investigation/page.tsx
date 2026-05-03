@@ -313,7 +313,7 @@ export default function InvestigationPage() {
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") addParty(); if (e.key === "Escape") setAddingParty(false); }}
                   placeholder="Name…" className={inputCls} />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <select value={newKind} onChange={(e) => setNewKind(e.target.value as PartyKind)} className={selectCls}>
                     {(Object.keys(PARTY_LABEL) as PartyKind[]).map((k) => (
                       <option key={k} value={k}>{PARTY_LABEL[k]}</option>
@@ -380,7 +380,7 @@ export default function InvestigationPage() {
 
             {addingEvent && (
               <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className={inputCls} />
                   <select value={newEvKind} onChange={(e) => setNewEvKind(e.target.value as EventKind)} className={selectCls}>
                     {(Object.keys(EVENT_LABEL) as EventKind[]).map((k) => (
@@ -598,7 +598,7 @@ export default function InvestigationPage() {
                     ))}
                   </div>
                   <p className="text-12 text-ink-1 leading-relaxed">{brainAnalysis.narrative}</p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Key Relationships</div>
                       <ul className="text-11 text-ink-2 space-y-0.5 list-disc list-inside">

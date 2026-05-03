@@ -374,7 +374,7 @@ export default function GeopoliticalPage() {
           {impactResult && (
             <>
               {/* Summary bar */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border border-hair-2 rounded-lg p-4 bg-bg-1 text-center">
                   <div className="text-28 font-semibold text-ink-0">{impactResult.exposedClients.length}</div>
                   <div className="text-11 text-ink-3 font-mono uppercase tracking-wide">Exposed clients</div>

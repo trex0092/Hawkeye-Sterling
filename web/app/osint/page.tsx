@@ -237,7 +237,7 @@ export default function OsintPage() {
 
           {/* Domain harvest */}
           {domainResult && (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <ResultSection title="Email addresses" items={domainResult.emails} />
               <ResultSection title="Hosts / subdomains" items={domainResult.hosts} />
               <ResultSection title="IP addresses" items={domainResult.ips} />
@@ -251,7 +251,7 @@ export default function OsintPage() {
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Sherlock — social profiles</div>
                 <span className="font-mono text-11 text-brand">{sherlockResult.totalFound} found</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {sherlockResult.profiles.filter((p) => p.exists).map((p) => (
                   <a
                     key={p.site}

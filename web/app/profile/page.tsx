@@ -106,7 +106,7 @@ export default function ProfilePage() {
           )}
 
           {profile && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1">Full name</div>
                 <div className="text-14 text-ink-0 font-medium">{profile.name}</div>

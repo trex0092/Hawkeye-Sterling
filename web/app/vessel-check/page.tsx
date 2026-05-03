@@ -238,7 +238,7 @@ export default function VesselCheckPage() {
                 </span>
               </div>
               <p className="text-12 text-ink-2 mb-4">{result.riskDetail}</p>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-12">
                 {result.vessel.flag && <div><div className="text-ink-3">Flag State</div><div className="font-medium text-ink-0">{result.vessel.flag}</div></div>}
                 {result.vessel.type && <div><div className="text-ink-3">Vessel Type</div><div className="font-medium text-ink-0">{result.vessel.type}</div></div>}
                 {result.vessel.grossTonnage && <div><div className="text-ink-3">Gross Tonnage</div><div className="font-medium text-ink-0">{result.vessel.grossTonnage.toLocaleString()} GT</div></div>}
@@ -299,7 +299,7 @@ export default function VesselCheckPage() {
             <p className="text-11 text-ink-3">
               Optionally enrich with additional details, then generate an AI risk assessment across four dimensions.
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-10 uppercase tracking-wide-3 text-ink-3">Flag State</label>
                 <input value={rpFlag} onChange={(e) => setRpFlag(e.target.value)} placeholder={result.vessel?.flag ?? "e.g. Panama"} className={`w-full ${inputCls}`} />
@@ -448,7 +448,7 @@ export default function VesselCheckPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border border-hair-2 rounded-lg p-4 text-center">
                   <div className="text-20 font-mono font-semibold text-ink-0">{result.total}</div>
                   <div className="text-11 text-ink-3 uppercase tracking-wide-3">Screened</div>

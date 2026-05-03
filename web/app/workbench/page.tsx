@@ -220,8 +220,8 @@ export default function WorkbenchPage() {
     <>
       <Header />
       <div
-        className="grid min-h-[calc(100vh-54px)]"
-        style={{ gridTemplateColumns: showFacultySidebar ? "220px 1fr" : "0px 1fr" }}
+        className="grid min-h-[calc(100vh-54px)] grid-cols-1 md:grid-cols-[var(--workbench-sidebar)_1fr]"
+        style={{ ["--workbench-sidebar" as never]: showFacultySidebar ? "220px" : "0px" }}
       >
         {showFacultySidebar ? (
           <WorkbenchSidebar
@@ -395,7 +395,7 @@ export default function WorkbenchPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 mb-4 text-11.5">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 text-11.5">
                         {Object.entries(brainResult.composite.breakdown).map(([k, v]) =>
                           v > 0 ? (
                             <div key={k} className="flex justify-between bg-bg-1 rounded px-2.5 py-1.5 border border-hair-1">

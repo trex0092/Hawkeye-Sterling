@@ -65,7 +65,7 @@ export function EvidenceCorroborationCard({ data }: Props): JSX.Element | null {
         </button>
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
+      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
         <div><span className="opacity-60">items </span><span className="font-medium tabular-nums">{data.items}</span></div>
         <div><span className="opacity-60">sources </span><span className="font-medium tabular-nums">{data.independentSources}</span></div>
         <div><span className="opacity-60">kinds </span><span className="font-medium tabular-nums">{data.kinds.length}</span></div>

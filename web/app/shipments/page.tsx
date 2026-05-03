@@ -503,7 +503,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         {/* Status & metrics */}
         <div className="mb-4">
           <div className={sectCls}>Status &amp; metrics</div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className={lCls}>Status</label>
               <select value={draft.status} onChange={(e) => set("status", e.target.value as ShipmentStatus)} className={iCls}>
@@ -555,7 +555,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
               <input value={draft.lotNumber} onChange={(e) => set("lotNumber", e.target.value)} className={iCls} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <div>
               <label className={lCls}>Flags (comma-separated)</label>
               <input value={flagsText} onChange={(e) => set("flags", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className={iCls} placeholder="e.g. SANCTION-MATCH, PRICE-VARIANCE" />
@@ -580,7 +580,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         {/* §1 Origin */}
         <div className="mb-4 pt-3 border-t border-hair-2">
           <div className={sectCls}>§1 Origin</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className={lCls}>Mine of origin</label>
               <input value={draft.mineOfOrigin} onChange={(e) => set("mineOfOrigin", e.target.value)} className={iCls} />
@@ -615,7 +615,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         {/* §2 Refinery */}
         <div className="mb-4 pt-3 border-t border-hair-2">
           <div className={sectCls}>§2 Refinery</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className={lCls}>Supplier *</label>
               <input value={draft.refinery} onChange={(e) => set("refinery", e.target.value)} className={iCls} />
@@ -649,7 +649,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         {/* §3 Counterparty */}
         <div className="mb-4 pt-3 border-t border-hair-2">
           <div className={sectCls}>§3 Counterparty</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className={lCls}>Counterparty (Supplier)</label>
               <input value={draft.counterparty} onChange={(e) => set("counterparty", e.target.value)} className={iCls} />
@@ -676,7 +676,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         {/* §4 Logistics */}
         <div className="mb-4 pt-3 border-t border-hair-2">
           <div className={sectCls}>§4 Logistics &amp; vault</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className={lCls}>Direction</label>
               <select value={draft.direction} onChange={(e) => set("direction", e.target.value as "Import" | "Export")} className={iCls}>
@@ -825,7 +825,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       {err && <p className="text-11 text-red mb-2">{err}</p>}
 
       {/* Row 1 */}
-      <div className="grid grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reference *</label>
           <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="SHP-2025-0042" className={iCls} />
@@ -845,7 +845,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       </div>
 
       {/* Row 2 */}
-      <div className="grid grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Direction</label>
           <select value={direction} onChange={(e) => setDirection(e.target.value as "Import" | "Export")} className={iCls}>
@@ -875,7 +875,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       </div>
 
       {/* Row 3 */}
-      <div className="grid grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bars</label>
           <input value={bars} onChange={(e) => setBars(e.target.value)} placeholder="10" className={iCls} />
@@ -895,7 +895,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       </div>
 
       {/* Row 4 */}
-      <div className="grid grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label>
           <input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Buyer / consignee" className={iCls} />
@@ -934,7 +934,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
       </div>
 
       {/* Row 5 */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice no.</label>
           <input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="INV-2025-0042" className={iCls} />
@@ -1355,7 +1355,7 @@ export default function ShipmentsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-12">
                 {/* §1 Supply-chain origin */}
                 <div>
                   <div className="text-10 font-mono uppercase tracking-wide-3 text-brand mb-1.5">§1 Origin</div>

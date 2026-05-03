@@ -692,7 +692,7 @@ export default function AccessControlPage() {
           {showAddForm && (
             <form onSubmit={(e) => { void handleAddUser(e); }} className="mb-5 border border-hair-2 rounded-md p-4 bg-bg-1">
               <h3 className="text-13 font-semibold text-ink-0 mb-3">Add new user</h3>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="block text-10 font-mono uppercase tracking-wide-4 text-ink-2 mb-1">Full name</label>
                   <input

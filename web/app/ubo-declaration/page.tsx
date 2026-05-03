@@ -236,7 +236,7 @@ export default function UboDeclarationPage() {
           onSubmit={submit}
           className="bg-bg-panel border border-hair-2 rounded-lg p-5 mt-6 space-y-4"
         >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">
                 Registered entity name *
