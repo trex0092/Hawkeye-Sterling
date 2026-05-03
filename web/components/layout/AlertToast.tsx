@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { subscribeToasts, type ToastPayload } from "@/lib/toast-bus";
+import { useAlerts } from "@/lib/hooks/useAlerts";
 
 interface ActiveToast extends ToastPayload {
   expiresAt: number;
@@ -25,6 +26,12 @@ function severityLabel(s: ToastPayload["severity"]): string {
 }
 
 export function AlertToast(): JSX.Element | null {
+  // Run the alert poller from the layout root so toasts fire on EVERY
+  // page, not just pages that mount the Header (and therefore AlertBell).
+  // The hook publishes via the toast bus; AlertBell may also call useAlerts
+  // independently — toast-bus dedupes by id so duplicate pushes are no-ops.
+  useAlerts();
+
   const [toasts, setToasts] = useState<ActiveToast[]>([]);
 
   const dismiss = useCallback((id: string) => {
