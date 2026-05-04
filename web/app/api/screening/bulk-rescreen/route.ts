@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 export interface BulkRescreenSubject {
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(buildFallback(subjects));
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     // Slim the payload to keep tokens reasonable — names and nationalities
     // are the only differentiators the engine needs for a realistic simulation.

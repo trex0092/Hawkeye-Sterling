@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 export interface ChainRunResult {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   const chainStart = Date.now();
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     // ── Step 1: Subject Brief ──────────────────────────────────────────────
     const step1 = await client.messages.create({

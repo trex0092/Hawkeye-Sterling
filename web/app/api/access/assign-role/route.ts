@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
 
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey);
+      const client = getAnthropicClient(apiKey, 55_000);
       const response = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 300,

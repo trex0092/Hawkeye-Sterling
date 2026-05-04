@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 
 export interface TransactionAnalysis {
@@ -86,7 +86,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
+      signal: AbortSignal.timeout(55_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,

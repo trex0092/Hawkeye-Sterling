@@ -96,7 +96,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 async function claudeAdverseMedia(subject: string) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
-  const client = getAnthropicClient(apiKey);
+  const client = getAnthropicClient(apiKey, 55_000);
   const now = new Date().toISOString();
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
