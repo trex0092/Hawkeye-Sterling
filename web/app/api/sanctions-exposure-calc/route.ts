@@ -78,6 +78,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,

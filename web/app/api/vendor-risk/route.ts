@@ -90,6 +90,7 @@ DGD (Dubai Good Delivery) Listed: ${supplier.dgdListed ? "Yes" : "No"}
 Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"}`;
 
   const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
     method: "POST",
     headers: {
       "x-api-key": apiKey,

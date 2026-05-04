@@ -110,6 +110,7 @@ Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the cus
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,
