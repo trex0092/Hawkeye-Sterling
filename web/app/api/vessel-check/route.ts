@@ -50,8 +50,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch (err) {
       console.error("[vessel-check] screenVessels failed", err);
       return NextResponse.json(
-        { ok: true, results: body.imoNumbers.map((imo) => ({ imoNumber: imo, hits: [], ownershipChain: [], flagState: null })), note: "Vessel screening service unavailable — manual review required." },
-        { status: 200, headers: { ...CORS, ...gateHeaders } },
+        { ok: false, error: "Vessel screening service unavailable — please retry. Do not treat absence of results as a clean screen." },
+        { status: 503, headers: { ...CORS, ...gateHeaders } },
       );
     }
     return NextResponse.json({ ok: true, ...result }, { status: 200, headers: { ...CORS, ...gateHeaders } });
@@ -68,15 +68,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.error("[vessel-check] checkVessel failed", err);
     return NextResponse.json(
-      { ok: true, imoNumber: body.imoNumber!.trim(), hits: [], ownershipChain: [], flagState: null, note: "Vessel screening service unavailable — manual review required." },
-      { status: 200, headers: { ...CORS, ...gateHeaders } },
+      { ok: false, error: "Vessel screening service unavailable — please retry. Do not treat absence of results as a clean screen." },
+      { status: 503, headers: { ...CORS, ...gateHeaders } },
     );
   }
 
   if (!result.ok && result.error?.includes("not configured")) {
     return NextResponse.json(
-      { ok: true, imoNumber: body.imoNumber!.trim(), hits: [], ownershipChain: [], flagState: null, note: "Vessel screening service not configured — manual review required." },
-      { status: 200, headers: { ...CORS, ...gateHeaders } },
+      { ok: false, error: "Vessel screening service is not configured on the server. Do not treat absence of results as a clean screen." },
+      { status: 503, headers: { ...CORS, ...gateHeaders } },
     );
   }
 
