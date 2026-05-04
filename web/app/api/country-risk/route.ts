@@ -137,7 +137,10 @@ export async function POST(req: Request) {
       // emit a complete JSON object — too low a ceiling truncates mid-object,
       // JSON.parse fails, and the catch surfaces a misleading "service
       // unavailable" 503 even though the API call itself succeeded.
-      model: depth === "full" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001",
+      // Both modes now use Haiku 4.5 — Sonnet 4.6 with 4000 tokens for full
+      // mode reliably exceeded Netlify's 30s edge gateway "Inactivity Timeout"
+      // and 504-ed. Haiku at 2500–4000 tokens fits inside the window.
+      model: "claude-haiku-4-5-20251001",
       max_tokens: depth === "full" ? 4000 : 2500,
       system: [
         {

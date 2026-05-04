@@ -32,7 +32,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 // Module-level safety net — see /api/compliance-qa for rationale.
 const REJECTION_GUARD_KEY = "__hsMlroChallengerRejectionGuard";
@@ -46,12 +46,13 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
   });
 }
 
-// Sonnet 4.6 — same model the existing Deep-mode challenger uses
-// (src/integrations/mlroAdvisor.ts). Critiquing requires strong reasoning;
-// Haiku is too shallow to spot weak citations reliably.
-const MODEL = "claude-sonnet-4-6";
+// Haiku 4.5 — Sonnet 4.6 with 1500 tokens routinely brushed up against
+// Netlify's 30 s edge "Inactivity Timeout" causing 504s in production.
+// Haiku 4.5 is materially faster and reasons well enough for citation-
+// adequacy critiques on STR drafts.
+const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 1500;
-const HARD_TIMEOUT_MS = 22_000;
+const HARD_TIMEOUT_MS = 25_000;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
