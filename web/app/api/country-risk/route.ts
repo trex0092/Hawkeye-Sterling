@@ -109,7 +109,12 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ...FALLBACK, country });
+  if (!apiKey) {
+    return NextResponse.json(
+      { ok: false, error: "Country risk unavailable — ANTHROPIC_API_KEY not configured on server." },
+      { status: 503 },
+    );
+  }
 
   const depth = body.analysisDepth ?? "quick";
   const detailInstruction =

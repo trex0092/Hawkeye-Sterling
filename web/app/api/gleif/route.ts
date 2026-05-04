@@ -47,8 +47,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch (err) {
       console.error("[gleif] searchGleif failed", err);
       return NextResponse.json(
-        { ok: true, results: [], note: "GLEIF search unavailable — manual lookup required." },
-        { status: 200, headers: { ...CORS, ...gateHeaders } },
+        { ok: false, error: "GLEIF search unavailable — please retry. An empty result here is not a 'no matches' finding." },
+        { status: 503, headers: { ...CORS, ...gateHeaders } },
       );
     }
     return NextResponse.json({ ok: true, results }, { status: 200, headers: { ...CORS, ...gateHeaders } });
@@ -65,8 +65,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.error("[gleif] lookupLei failed", err);
     return NextResponse.json(
-      { ok: true, lei: body.lei.trim(), entity: null, ownershipChain: [], note: "GLEIF lookup unavailable — manual review required." },
-      { status: 200, headers: { ...CORS, ...gateHeaders } },
+      { ok: false, error: "GLEIF lookup unavailable — please retry. A null entity here is not a 'not registered' finding." },
+      { status: 503, headers: { ...CORS, ...gateHeaders } },
     );
   }
 
