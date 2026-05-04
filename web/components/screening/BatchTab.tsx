@@ -195,7 +195,7 @@ async function exportPdf(results: RowResult[], summary: Summary) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 19).replace("T", " ") + " UTC";
+  const dateStr = now.toLocaleString("en-GB", { timeZone: "Asia/Dubai", hour12: false }) + " GST";
   const reportId = `HWK-BATCH-${now.getUTCFullYear()}${String(now.getUTCMonth()+1).padStart(2,"0")}${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}`;
 
   doc.setFillColor(12, 12, 14);
@@ -489,7 +489,8 @@ export function BatchTab() {
     const blob = new Blob(["﻿" + toCsv(results)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `hawkeye-batch-${Date.now()}.csv`; a.click();
+    const _d = new Date(); const _dd = String(_d.getDate()).padStart(2,"0"); const _mm = String(_d.getMonth()+1).padStart(2,"0"); const _yy = _d.getFullYear();
+    a.href = url; a.download = `hawkeye-batch-${_dd}-${_mm}-${_yy}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 

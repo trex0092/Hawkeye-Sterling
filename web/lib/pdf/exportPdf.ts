@@ -153,5 +153,9 @@ export function exportToPdf(options: PdfExportOptions): void {
     doc.text(`Page ${i} of ${pageCount}`, 196, 291.5, { align: "right" });
   }
 
-  doc.save(`${options.reportRef}-${Date.now()}.pdf`);
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  doc.save(`${options.reportRef}-${dd}-${mm}-${yyyy}.pdf`);
 }
