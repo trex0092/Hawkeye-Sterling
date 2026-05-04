@@ -59,22 +59,22 @@ function redactSystem(
 
 // ── Guarded client ────────────────────────────────────────────────────────────
 
-// Netlify sync function ceiling is ~26 s. Cap every Anthropic call below that
-// so a slow upstream surfaces as an SDK error (which existing route catches
-// already turn into a graceful FALLBACK) instead of a Lambda 504.
-const ANTHROPIC_REQUEST_TIMEOUT_MS = 22_000;
+// Default for routes on Netlify's standard Lambda budget (~26 s ceiling on
+// Pro). Routes that opt into `export const maxDuration = 60` can pass a
+// larger `timeoutMs` to getAnthropicClient and get up to ~55 s of budget.
+const DEFAULT_ANTHROPIC_TIMEOUT_MS = 22_000;
 
 export class AnthropicGuard {
   private inner: Anthropic;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, timeoutMs: number = DEFAULT_ANTHROPIC_TIMEOUT_MS) {
     this.inner = new Anthropic({
       apiKey,
-      timeout: ANTHROPIC_REQUEST_TIMEOUT_MS,
-      // SDK default is 2 retries — under our Lambda ceiling that means a single
-      // slow first attempt blows the whole 26 s budget. Cap at 1 retry so the
-      // worst case is ~22 s + a fast fail.
-      maxRetries: 1,
+      timeout: timeoutMs,
+      // No automatic retries: a slow first attempt + a retry can blow even
+      // a 60 s Lambda budget. Routes that need retries should implement
+      // their own logic with explicit per-call timeouts.
+      maxRetries: 0,
     });
   }
 
@@ -119,7 +119,12 @@ export class AnthropicGuard {
 /**
  * Returns a PII-guarded Anthropic client with the same interface as `new Anthropic({ apiKey })`.
  * Swap every `new Anthropic({ apiKey })` call for `getAnthropicClient(apiKey)`.
+ *
+ * @param apiKey   - Anthropic API key.
+ * @param timeoutMs - Optional per-client request timeout. Defaults to 22 s for
+ *                   routes on the standard Netlify Lambda budget. Routes that
+ *                   set `export const maxDuration = 60` should pass ~55_000.
  */
-export function getAnthropicClient(apiKey: string): AnthropicGuard {
-  return new AnthropicGuard(apiKey);
+export function getAnthropicClient(apiKey: string, timeoutMs?: number): AnthropicGuard {
+  return new AnthropicGuard(apiKey, timeoutMs);
 }

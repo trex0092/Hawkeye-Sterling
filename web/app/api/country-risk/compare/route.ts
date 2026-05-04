@@ -38,10 +38,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 6000,
+      // 4500 tokens covers up to 5 country profiles concisely; 6000 routinely
+      // pushed Sonnet past the 55s budget.
+      max_tokens: 4500,
       system: [
         {
           type: "text",
@@ -89,7 +91,7 @@ Countries: ${countries.join(", ")}
 For each country provide complete risk scoring, FATF status, sanctions profile (OFAC, EU, UN, UK), key risks, recent developments, regulatory obligations applicable to a UAE-based DNFBP, and recommendation. Keep summaries concise (2-3 sentences each) to fit the comparison format.`,
         },
       ],
-    }, { timeout: 50_000 });
+    });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "[]";
     const results = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult[];

@@ -117,17 +117,20 @@ export async function POST(req: Request) {
       ? "Provide comprehensive analysis with detailed context for each dimension, full regulatory obligations list, and at least 5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
-  // We extended this route to maxDuration=60. Override the SDK's global 22s
-  // default with a per-call ceiling that fits inside that budget.
-  const requestTimeoutMs = depth === "full" ? 50_000 : 25_000;
+  // We extended this route to maxDuration=60. Construct an Anthropic client
+  // with a matching per-instance timeout (the default 22s would fire before
+  // our budget runs out and force fallback even on slowly-completing
+  // jurisdictions like Iran/Russia which routinely take 25-40s).
+  const sdkTimeoutMs = depth === "full" ? 55_000 : 30_000;
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, sdkTimeoutMs);
     const response = await client.messages.create({
       // Quick mode (default) uses Haiku for sub-Lambda-timeout latency;
-      // full mode keeps Sonnet for richer analysis.
+      // full mode keeps Sonnet for richer analysis. Token budgets sized so
+      // even slow Anthropic responses fit inside the SDK timeout above.
       model: depth === "full" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001",
-      max_tokens: depth === "full" ? 3000 : 1500,
+      max_tokens: depth === "full" ? 2500 : 1200,
       system: [
         {
           type: "text",
@@ -204,7 +207,7 @@ Analysis depth: ${depth}
 Provide a complete country risk intelligence assessment covering AML/CFT risk, FATF status, sanctions exposure (OFAC, EU, UN, UK), political stability, TF risk, and all regulatory obligations that would apply to a UAE-based DNFBP (gold trader/refinery) engaging with counterparties in or from this country.`,
         },
       ],
-    }, { timeout: requestTimeoutMs });
+    });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult;
