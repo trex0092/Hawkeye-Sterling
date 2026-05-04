@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "news-intel/analyze temporarily unavailable - please retry." }, { status: 503 });
 
   const { subject = "Unknown subject", articles = [] } = body;
 
@@ -145,6 +145,6 @@ Perform comprehensive news intelligence analysis for "${subject}". Disambiguate 
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as NewsIntelResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "news-intel/analyze temporarily unavailable - please retry." }, { status: 503 });
   }
 }

@@ -106,7 +106,7 @@ export async function POST(req: Request) {
   if (!body.propertyDetails?.trim()) return NextResponse.json({ ok: false, error: "propertyDetails required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "real-estate-ml temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -138,6 +138,6 @@ Assess this real estate transaction for money laundering risk indicators. Return
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RealEstateMlResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "real-estate-ml temporarily unavailable - please retry." }, { status: 503 });
   }
 }

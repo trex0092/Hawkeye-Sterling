@@ -109,7 +109,7 @@ export async function POST(req: Request) {
   if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -138,6 +138,6 @@ Analyse for money laundering placement, layering, and integration stages. Return
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as LayeringResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 });
   }
 }

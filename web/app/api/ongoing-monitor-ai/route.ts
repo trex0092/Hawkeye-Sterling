@@ -104,13 +104,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (subjects.length === 0) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", "no subjects — skipped");
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", `no-api-key — ${subjects.length} subjects skipped`);
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
@@ -156,6 +156,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", `error — ${msg}`);
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 });
   }
 }

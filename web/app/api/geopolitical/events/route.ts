@@ -195,7 +195,7 @@ const FALLBACK_EVENTS: GeopoliticalEvent[] = [
 
 export async function GET() {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, events: FALLBACK_EVENTS });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -246,6 +246,6 @@ Include a mix of: 2-3 critical events, 5-6 high events, 3-4 medium events. Make 
     ) as { ok: boolean; events: GeopoliticalEvent[] };
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ ok: true, events: FALLBACK_EVENTS });
+    return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
   }
 }

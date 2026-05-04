@@ -95,13 +95,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (results.length === 0) {
     writeAuditEvent("analyst", "batch.ai-priority-ranking", "no results — skipped");
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("analyst", "batch.ai-priority-ranking", `no-api-key — ${results.length} results skipped`);
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
@@ -147,6 +147,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "batch.ai-priority-ranking", `error — ${msg}`);
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 });
   }
 }

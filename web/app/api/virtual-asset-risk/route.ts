@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -61,6 +61,6 @@ Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbl
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim());
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 }

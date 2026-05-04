@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 });
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       signal: AbortSignal.timeout(22_000),
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         ],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 });
     const data = (await response.json()) as {
       content: Array<{ type: string; text: string }>;
     };
@@ -91,6 +91,6 @@ export async function POST(req: Request) {
     ) as BeneficialOwnerVerifyResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 });
   }
 }

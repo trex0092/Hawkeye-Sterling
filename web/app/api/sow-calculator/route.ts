@@ -125,7 +125,7 @@ export async function POST(req: Request) {
   if (!body.declaredIncome?.trim()) return NextResponse.json({ ok: false, error: "declaredIncome required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -155,6 +155,6 @@ Conduct a source of wealth reconciliation analysis. Return complete SowCalculato
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SowCalculatorResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 });
   }
 }

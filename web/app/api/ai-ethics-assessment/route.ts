@@ -104,7 +104,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 });
 
   const modelSummary = (body.models ?? [])
     .map((m) => `${m.name} (${m.riskTier} risk, purpose: ${m.purpose}, bias audit: ${m.biasAuditStatus})`)
@@ -148,6 +148,6 @@ Return complete EthicsAssessmentResult JSON with overallScore (0-100), rating, u
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EthicsAssessmentResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 });
   }
 }

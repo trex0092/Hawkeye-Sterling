@@ -124,6 +124,6 @@ Analyse and prioritise these subjects for AML re-screening urgency. Flag immedia
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PrioritizeResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 });
   }
 }

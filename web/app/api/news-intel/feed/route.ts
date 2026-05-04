@@ -235,7 +235,7 @@ const FALLBACK: NewsFeedResult = {
 
 export async function GET() {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "news-intel/feed temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -286,6 +286,6 @@ Return ONLY valid JSON (no markdown fences):
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as NewsFeedResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "news-intel/feed temporarily unavailable - please retry." }, { status: 503 });
   }
 }

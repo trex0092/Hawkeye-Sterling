@@ -143,7 +143,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "esg-risk temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -210,6 +210,6 @@ Generate a comprehensive ESG risk assessment with ML risk overlay for this entit
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EsgRiskResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "esg-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 }

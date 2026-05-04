@@ -132,7 +132,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ...FALLBACK, generatedAt: new Date().toISOString() });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ewra/threat-intel temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -191,6 +191,6 @@ Generate threat intelligence for the EWRA. Focus on the top 5 current ML/TF typo
     };
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ ...FALLBACK, generatedAt: new Date().toISOString() });
+    return NextResponse.json({ ok: false, error: "ewra/threat-intel temporarily unavailable - please retry." }, { status: 503 });
   }
 }

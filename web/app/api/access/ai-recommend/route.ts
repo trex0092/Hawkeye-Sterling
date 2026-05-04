@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -83,6 +83,6 @@ Return ONLY valid JSON (no markdown fences):
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RoleRecommendation;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 });
   }
 }

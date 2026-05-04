@@ -134,11 +134,11 @@ export async function POST(req: Request) {
 
   const decisions = body.decisions ?? [];
   if (!decisions.length) {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -200,6 +200,6 @@ Analyse these decisions to identify false positive patterns, suggest threshold o
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as FpAnalysisResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 });
   }
 }

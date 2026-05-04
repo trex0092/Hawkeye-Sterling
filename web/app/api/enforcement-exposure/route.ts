@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   if (!body.violation?.trim()) return NextResponse.json({ ok: false, error: "violation required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -143,6 +143,6 @@ Assess regulatory enforcement exposure for this AML violation. Return complete E
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EnforcementExposureResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });
   }
 }

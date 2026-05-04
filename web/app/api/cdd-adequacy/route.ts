@@ -95,7 +95,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("mlro", "cdd.ai-adequacy-check", `no-api-key — ${reviews.length} subjects skipped`);
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
@@ -141,6 +141,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "cdd.ai-adequacy-check", `error — ${msg}`);
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 });
   }
 }

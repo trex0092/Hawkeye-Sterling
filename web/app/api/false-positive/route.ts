@@ -113,7 +113,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "false-positive temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const userMessage = [
@@ -163,6 +163,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.false-positive-assess.error", `${screenedName} — ${msg}`);
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "false-positive temporarily unavailable - please retry." }, { status: 503 });
   }
 }

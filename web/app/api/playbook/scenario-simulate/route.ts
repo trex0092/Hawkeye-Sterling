@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -127,6 +127,6 @@ Identify the relevant playbook chapters, red flags present, step-by-step recomme
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ScenarioSimulateResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 });
   }
 }

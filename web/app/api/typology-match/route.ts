@@ -100,7 +100,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503 });
   }
 
   let body: Body;
@@ -142,7 +142,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: true, ...FALLBACK });
+      return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503 });
     }
 
     const data = (await res.json()) as {
@@ -152,7 +152,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as TypologyMatchResult;
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
