@@ -12,13 +12,13 @@ const NOW   = "04/05/2026 10:32:41 GST";
 function ReportShell({
   title,
   module: mod,
-  ref: reportRef,
+  reportRef,
   basis,
   children,
 }: {
   title: string;
   module: string;
-  ref: string;
+  reportRef: string;
   basis: string;
   children: React.ReactNode;
 }) {
@@ -123,7 +123,7 @@ function EwraPreview() {
     <ReportShell
       title="EWRA / BWRA Board Report"
       module="Module 23 · Risk Assessment"
-      ref="EWRA-2026-BOARD"
+      reportRef="EWRA-2026-BOARD"
       basis="UAE FDL 10/2025 Art.4 · FATF R.1 · CBUAE AML Standards"
     >
       <RHeader>Enterprise-Wide Risk Assessment — Board Report</RHeader>
@@ -168,7 +168,7 @@ function StrPreview() {
     <ReportShell
       title="Suspicious Transaction Report — Draft"
       module="STR Workbench"
-      ref="STR-DRAFT-04-05-2026"
+      reportRef="STR-DRAFT-04-05-2026"
       basis="UAE FDL 10/2025 Art.14 · CBUAE AML Standards §8 · FATF R.20"
     >
       <RHeader>Suspicious Transaction Report — Draft</RHeader>
@@ -218,7 +218,7 @@ function GapPreview() {
     <ReportShell
       title="Governance Gap Analysis"
       module="Management Oversight"
-      ref="GAP-2026-05"
+      reportRef="GAP-2026-05"
       basis="UAE FDL 10/2025 Art.20 · CBUAE AML Standards §6"
     >
       <RHeader>Governance Gap Analysis Report</RHeader>
@@ -267,7 +267,7 @@ function ScreeningPreview() {
     <ReportShell
       title="Customer Screening Report"
       module="Name Screening"
-      ref="SCR-04052026-001"
+      reportRef="SCR-04052026-001"
       basis="UAE FDL 10/2025 Art.9 · FATF R.10 · CBUAE AML Standards §4"
     >
       <RHeader>Customer Screening Report</RHeader>
@@ -314,7 +314,7 @@ function MlroMemoPreview() {
     <ReportShell
       title="MLRO Internal Memorandum"
       module="MLRO Office"
-      ref="MLRO-MEMO-04052026"
+      reportRef="MLRO-MEMO-04052026"
       basis="UAE FDL 10/2025 Art.14 · FATF R.20 · CBUAE AML Standards §8"
     >
       <RHeader>MLRO Internal Memorandum</RHeader>
@@ -357,7 +357,7 @@ function BatchPreview() {
     <ReportShell
       title="Batch Screening Audit Report"
       module="Batch Screening Engine"
-      ref="HWK-BATCH-04052026"
+      reportRef="HWK-BATCH-04052026"
       basis="UAE FDL 10/2025 Art.9 · FATF R.10 · CBUAE AML Standards §4"
     >
       <RHeader>Batch Screening Audit Report</RHeader>
@@ -399,7 +399,7 @@ function EvidencePackPreview() {
     <ReportShell
       title="MLRO Advisor Evidence Pack"
       module="MLRO Advisor — Multi-Modal AI"
-      ref="EVIDENCE-04052026-001"
+      reportRef="EVIDENCE-04052026-001"
       basis="UAE FDL 10/2025 · FATF R.1–40 · CBUAE AML Standards"
     >
       <RHeader>MLRO Advisor Evidence Pack</RHeader>
