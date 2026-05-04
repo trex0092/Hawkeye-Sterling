@@ -123,7 +123,7 @@ export default function PepProfilePage() {
           Subject Information
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
               Full Name <span className="text-red">*</span>
@@ -146,7 +146,7 @@ export default function PepProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Position / Title</label>
             <input
@@ -167,7 +167,7 @@ export default function PepProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Political Party</label>
             <input
@@ -201,7 +201,7 @@ export default function PepProfilePage() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Source of Wealth</label>
             <textarea
@@ -240,7 +240,7 @@ export default function PepProfilePage() {
       {result && tierCfg && recCfg && (
         <div className="flex flex-col gap-5">
           {/* Tier badge + risk score + recommendation */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* PEP Tier */}
             <div className={`bg-bg-panel border rounded-xl p-5 flex flex-col gap-2 ${tierCfg.bg}`}>
               <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">PEP Tier</div>
@@ -313,7 +313,7 @@ export default function PepProfilePage() {
             <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">
               Political Network Map
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {result.networkMap.map((node, i) => (
                 <div key={i} className="bg-bg-1 border border-hair rounded-lg p-3 flex items-start gap-3">
                   <div className="shrink-0 w-8 h-8 rounded-full bg-bg-2 border border-hair-2 flex items-center justify-center text-14">
@@ -376,7 +376,7 @@ export default function PepProfilePage() {
           </div>
 
           {/* Asset disclosure risk + adverse media + sanctions */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
               <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-2">
                 Asset Disclosure Risk

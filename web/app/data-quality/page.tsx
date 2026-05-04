@@ -165,7 +165,7 @@ export default function DataQualityPage() {
               <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-4">
                 Completeness dimensions scored per case
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-3 gap-3">
                 {[
                   { field: "Subject name", note: "Full legal name on file" },
                   { field: "Meta / tags", note: "Risk category or sector tag" },
@@ -215,7 +215,7 @@ export default function DataQualityPage() {
               <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
                 Re-screening policy
               </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 {[
                   { label: "High risk", cadence: "Every 30 days", tone: "text-red" },
                   { label: "Standard risk", cadence: "Every 90 days", tone: "text-amber" },

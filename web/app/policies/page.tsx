@@ -893,7 +893,7 @@ export default function PoliciesPage() {
           {adding ? (
             <div className="bg-bg-panel border border-brand/40 rounded-lg p-4">
               <h3 className="text-12 font-semibold text-ink-0 mb-3">New policy</h3>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="text-10 uppercase tracking-wide-4 text-ink-3 block mb-1">Title</label>
                   <input

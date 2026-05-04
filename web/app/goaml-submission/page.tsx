@@ -366,7 +366,7 @@ export default function GoAmlSubmissionPage() {
               Enter the MLRO who is authorising this filing and the FIU-registered
               entity ID. The institution name is pre-filled.
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Inp
                 label="MLRO Full Name"
                 value={form.mlroName}
@@ -430,7 +430,7 @@ export default function GoAmlSubmissionPage() {
               </div>
             </FieldWrap>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Inp
                 label="Subject Full Name"
                 value={form.subjectName}
@@ -653,7 +653,7 @@ export default function GoAmlSubmissionPage() {
             <StepHeading>Review &amp; Generate XML</StepHeading>
 
             {/* Data summary */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <SummaryCard title="Reporting Entity">
                 <SummaryRow label="MLRO" value={form.mlroName} />
                 <SummaryRow label="Email" value={form.mlroEmail} />

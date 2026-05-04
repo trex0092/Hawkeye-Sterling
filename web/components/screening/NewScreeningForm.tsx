@@ -177,11 +177,10 @@ export function NewScreeningForm({
 
   return (
     <div
-      className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden grid"
-      style={{ gridTemplateColumns: "240px 1fr" }}
+      className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-[240px_1fr]"
     >
       {/* ── Left: Screening settings ─────────────────────────────── */}
-      <aside className="bg-transparent border-r border-hair p-4">
+      <aside className="bg-transparent border-b md:border-b-0 md:border-r border-hair p-4">
         <SettingsHeading>Screening settings</SettingsHeading>
 
         <SettingsGroup label="Entity type">
@@ -267,7 +266,7 @@ export function NewScreeningForm({
       <section className="bg-bg-panel p-6">
         <SettingsHeading>Single screening</SettingsHeading>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Name" required>
             <input
               autoFocus
@@ -312,7 +311,7 @@ export function NewScreeningForm({
         {/* Alternate names + License/Register share a row on the
             organisation tab; on the individual tab Alternate names
             spans full width as before. */}
-        <div className={form.entityType === "organisation" ? "grid grid-cols-2 gap-4" : ""}>
+        <div className={form.entityType === "organisation" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : ""}>
           <Field label="Alternate name(s)">
             <div className="flex gap-2">
               <input
@@ -361,7 +360,7 @@ export function NewScreeningForm({
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field label="Case ID">
             <input
               value={form.caseId}
@@ -424,7 +423,7 @@ export function NewScreeningForm({
           <>
             {/* DOB + Place of birth come first — sanctions-list disambig
                 relies on DOB before any other identity attribute. */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Date of birth">
                 <input
                   type="text"
@@ -448,7 +447,7 @@ export function NewScreeningForm({
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Country / location">
                 <input
                   value={form.countryLocation ?? ""}
@@ -529,7 +528,7 @@ export function NewScreeningForm({
           <summary className="px-3 py-2 text-12 font-semibold cursor-pointer select-none">
             Identification document
           </summary>
-          <div className="grid grid-cols-3 gap-3 p-3 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 pt-2">
             <Field label="ID number">
               <input
                 value={form.identification?.number ?? ""}

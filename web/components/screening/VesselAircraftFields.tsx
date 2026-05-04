@@ -22,7 +22,7 @@ export function VesselAircraftFields({ entityType, imo, mmsi, tail, patch }: Pro
     const imoOk = !imo || /^\d{7}$/.test(imo);
     const mmsiOk = !mmsi || /^\d{9}$/.test(mmsi);
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="block">
           <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1 block">IMO number</span>
           <input

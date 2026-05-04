@@ -171,7 +171,7 @@ export function BrainCapabilityAudit({ result }: { result: SuperBrainResult }) {
   const firedCount = ran.filter((r) => r.active).length;
   return (
     <Card title={`Modules executed (${firedCount}/${ran.length})`}>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-10 font-mono">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-1 text-10 font-mono">
         {ran.map((r) => (
           <div key={r.name} className="flex items-center gap-1.5">
             <span className={r.active ? "text-green" : "text-ink-3"}>
@@ -1518,7 +1518,7 @@ export function BrainTemporalPattern({ result }: { result: SuperBrainResult }) {
           Inferred trajectory across the ongoing-monitoring window.
         </span>
       </div>
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
         {snapshots.map((s, i) => (
           <div key={s.label} className="text-center">
             <div className="h-10 bg-bg-2 rounded-sm flex items-end justify-center pb-0.5">
@@ -1822,7 +1822,7 @@ export function BrainContextualEnrichment({ result }: { result: SuperBrainResult
           No enrichment data available for this subject.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-1">
           {enrichments.map((e) => (
             <div key={`${e.category}-${e.value}`} className="flex items-start gap-1.5 text-11">
               <span className="text-10 text-ink-3 shrink-0 pt-px w-24 truncate">

@@ -192,7 +192,7 @@ function ArticleRow({
           Remove
         </button>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         <input
           placeholder="Source (e.g. Reuters)"
           value={article.source ?? ""}
@@ -335,7 +335,7 @@ function AnalysisTab() {
       {result && (
         <div className="space-y-4">
           {/* Overview Cards */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">
                 Overall Risk Score

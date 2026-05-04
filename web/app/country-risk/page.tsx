@@ -162,7 +162,7 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
       </div>
 
       {/* Two-column grid: dimensions + sanctions */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Dimension scores */}
         <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 space-y-3">
           <div className="text-11 uppercase tracking-wide-4 text-ink-2 font-semibold mb-3 pb-2 border-b border-hair">
@@ -218,7 +218,7 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
       </div>
 
       {/* Key risks + recent developments */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-bg-1 border border-hair-2 rounded-lg p-4">
           <div className="text-11 uppercase tracking-wide-4 text-ink-2 font-semibold mb-3 pb-2 border-b border-hair">
             Key Risks

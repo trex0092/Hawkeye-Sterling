@@ -179,7 +179,13 @@ export function Header() {
               onClick={() => {
                 if (!moreOpen && moreButtonRef.current) {
                   const rect = moreButtonRef.current.getBoundingClientRect();
-                  setDropdownPos({ left: rect.left, top: rect.bottom + 4 });
+                  // On mobile (<768px), anchor to left edge of viewport so
+                  // the dropdown never overflows off-screen.
+                  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+                  setDropdownPos({
+                    left: isMobile ? 8 : rect.left,
+                    top: rect.bottom + 4,
+                  });
                 }
                 setMoreOpen((v) => !v);
               }}
@@ -200,7 +206,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[900px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-5 gap-4"
+                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[900px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (

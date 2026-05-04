@@ -1584,7 +1584,7 @@ export default function ScreeningPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-5 gap-3 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                   {[
                     { label: "Total", value: v.totalItems ?? 0 },
                     { label: "Adverse", value: v.adverseItems ?? 0 },

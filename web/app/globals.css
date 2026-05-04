@@ -9,6 +9,12 @@
 html {
   color-scheme: light;
 }
+/* Prevent any rogue wide element from forcing a horizontal scroll on
+ * the whole page (mobile). Individual scrollable containers (tables,
+ * dropdowns) opt back into overflow-x: auto on themselves. */
+html, body {
+  overflow-x: hidden;
+}
 html[data-theme="dark"] {
   color-scheme: dark;
 }

@@ -139,7 +139,7 @@ function ShareholderCard({
       </div>
 
       {/* Row 1: Designation / Name / Shares % */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className={labelCls}>Designation</label>
           <select value={sh.designation} onChange={set("designation")} className={inputCls}>
@@ -160,7 +160,7 @@ function ShareholderCard({
       </div>
 
       {/* Row 2: Individual / Corporate + Nationality + ID Number */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className={labelCls}>Type</label>
           <div className="flex gap-1">
@@ -193,7 +193,7 @@ function ShareholderCard({
       </div>
 
       {/* Row 3: ID Expiry + Gender (individual) / DOB or Reg Date */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className={labelCls}>ID Expiry Date</label>
           <input value={sh.idExpiry} onChange={set("idExpiry")}
@@ -220,7 +220,7 @@ function ShareholderCard({
       </div>
 
       {/* Row 4: Emirates ID + Emirates ID Expiry + PEP Status */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className={labelCls}>Emirates ID</label>
           <input value={sh.emiratesId} onChange={set("emiratesId")}
@@ -398,7 +398,7 @@ export default function ClientPortalPage() {
             <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
               Entity
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className={labelCls}>Registered entity name *</label>
                 <input required value={entity.name} onChange={setE("name")}

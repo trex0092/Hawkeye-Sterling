@@ -132,7 +132,7 @@ export default function DomainIntelPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {result.whois && (
                 <div className={cardCls}>
                   <p className="text-10 font-semibold text-ink-2 uppercase tracking-wide-3 mb-3">WHOIS</p>

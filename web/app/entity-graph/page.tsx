@@ -97,7 +97,7 @@ function RegistrationCards({ registrations }: { registrations: EntityGraphResult
             <span className="font-semibold text-13 text-ink-0">{reg.jurisdiction}</span>
             <StatusBadge status={reg.status} />
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-12">
             <div>
               <span className="text-ink-3">Number</span>
               <div className="font-mono text-11 text-ink-1">{reg.companyNumber}</div>
@@ -310,7 +310,7 @@ function LeiPanel({ record }: { record: LeiLookupResult }) {
         </div>
         <StatusBadge status={record.status} />
       </div>
-      <div className="grid grid-cols-2 gap-3 text-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-12">
         <div>
           <div className="text-ink-3 mb-0.5">Jurisdiction</div>
           <div className="font-medium text-ink-0">{record.jurisdiction}</div>

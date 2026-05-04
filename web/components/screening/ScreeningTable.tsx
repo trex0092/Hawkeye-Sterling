@@ -65,8 +65,8 @@ export function ScreeningTable({
   const allRowIds = subjects.map((s) => s.id);
   const allSelected = showCheckboxes && allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds?.has(id));
   return (
-    <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-      <table className="w-full border-collapse text-12.5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
+      <table className="w-full border-collapse text-12.5 min-w-[640px]">
         <thead className="bg-bg-1 border-b border-hair-2">
           <tr>
             {showCheckboxes && (

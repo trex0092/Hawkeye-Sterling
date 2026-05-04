@@ -175,17 +175,16 @@ export default function CasesPage() {
   return (
     <>
       <Header />
-      <div
-        className="grid min-h-[calc(100vh-54px)]"
-        style={{ gridTemplateColumns: "220px 1fr 360px" }}
-      >
-        <CasesSidebar
-          filters={filtersWithCounts}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
+      <div className="grid min-h-[calc(100vh-54px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px]">
+        <div className="hidden md:block">
+          <CasesSidebar
+            filters={filtersWithCounts}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+        </div>
 
-        <main className="px-10 py-8 overflow-y-auto">
+        <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           <div className="flex items-start justify-between mb-0">
             <CasesHero />
             <div className="mt-1 flex items-center gap-2">
@@ -236,17 +235,19 @@ export default function CasesPage() {
           />
         </main>
 
-        {selected ? (
-          <CaseDetailPanel
-            record={selected}
-            onExport={() => setReportCase(selected)}
-            onViewTimeline={() => setTimelineOpen(true)}
-          />
-        ) : (
-          <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
-            <ActivityFeed label="Compliance engine" />
-          </aside>
-        )}
+        <div className="hidden lg:block">
+          {selected ? (
+            <CaseDetailPanel
+              record={selected}
+              onExport={() => setReportCase(selected)}
+              onViewTimeline={() => setTimelineOpen(true)}
+            />
+          ) : (
+            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
+              <ActivityFeed label="Compliance engine" />
+            </aside>
+          )}
+        </div>
       </div>
       <ReportModal
         open={reportCase !== null}

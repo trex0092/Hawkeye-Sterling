@@ -207,7 +207,7 @@ export default function SupplierDdPage() {
         <div className="mb-5 bg-bg-panel border border-hair-2 rounded-lg p-4">
           <div className="text-11 uppercase tracking-wide-4 text-ink-3 mb-3 font-semibold">New supplier</div>
           <div className="space-y-3 mb-3">
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="col-span-2">
                 <label className="block text-10 text-ink-3 mb-1">Supplier name *</label>
                 <input
@@ -240,7 +240,7 @@ export default function SupplierDdPage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-3 items-end">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
               <div>
                 <label className="block text-10 text-ink-3 mb-1">Last review date</label>
                 <IsoDateInput
@@ -297,7 +297,7 @@ export default function SupplierDdPage() {
           <div key={v.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
             {editingId === v.id ? (
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     className="text-12 px-2 py-1.5 rounded border border-brand bg-bg-0 text-ink-0 col-span-2"
                     value={editForm.name}
@@ -367,7 +367,7 @@ export default function SupplierDdPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-5 gap-4 text-11 font-mono mt-2">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-11 font-mono mt-2">
                   <div><span className="text-ink-3">Jurisdiction: </span><span className="text-ink-0">{v.jurisdiction}</span></div>
                   <div><span className="text-ink-3">LBMA: </span><span className={v.lbmaListed ? "text-green" : "text-amber"}>{v.lbmaListed ? "Good Delivery" : "not listed"}</span></div>
                   <div><span className="text-ink-3">DGD: </span><span className={(v.dgdListed ?? false) ? "text-green" : "text-amber"}>{(v.dgdListed ?? false) ? "Listed" : "not listed"}</span></div>

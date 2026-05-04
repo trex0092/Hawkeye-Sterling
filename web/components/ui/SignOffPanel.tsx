@@ -26,7 +26,7 @@ export function SignOffPanel() {
       <div className="text-9 font-mono font-semibold uppercase tracking-wide-4 text-ink-2 mb-4">
         Filing authorisation
       </div>
-      <div className="grid grid-cols-3 gap-px bg-hair-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-hair-2">
         {signers.map((s) => (
           <SignerColumn
             key={s.role}
