@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
   loadOperatorRole,
@@ -49,37 +49,138 @@ interface SidebarFilterListProps<K extends string> {
   onSelect: (key: K) => void;
 }
 
+// --- Filter metadata: icon paths + semantic badge colors ---
+
+const FILTER_ICON: Record<string, JSX.Element> = {
+  all: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <line x1="1" y1="3" x2="11" y2="3" /><line x1="1" y1="6" x2="11" y2="6" /><line x1="1" y1="9" x2="11" y2="9" />
+    </svg>
+  ),
+  critical: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 1L11 10H1L6 1Z" /><line x1="6" y1="5" x2="6" y2="7.5" /><circle cx="6" cy="9" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  sanctions: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <path d="M6 1L11 3.5V6C11 8.8 8.8 10.8 6 11.5C3.2 10.8 1 8.8 1 6V3.5L6 1Z" />
+      <line x1="4" y1="4" x2="8" y2="8" /><line x1="8" y1="4" x2="4" y2="8" />
+    </svg>
+  ),
+  edd: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="5" cy="5" r="4" /><line x1="8" y1="8" x2="11" y2="11" />
+    </svg>
+  ),
+  pep: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="6" cy="4" r="2.5" /><path d="M1 11C1 8.8 3.2 7 6 7C8.8 7 11 8.8 11 11" />
+    </svg>
+  ),
+  sla: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="6" cy="6" r="5" /><polyline points="6,3 6,6 8.5,6" />
+    </svg>
+  ),
+  a24: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <rect x="1" y="2" width="10" height="9" rx="1.5" /><line x1="4" y1="1" x2="4" y2="3" /><line x1="8" y1="1" x2="8" y2="3" /><line x1="1" y1="5" x2="11" y2="5" />
+    </svg>
+  ),
+  closed: (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="6" r="5" /><polyline points="3.5,6 5.2,7.8 8.5,4.2" />
+    </svg>
+  ),
+};
+
+type FilterBadgeStyle = {
+  icon: string;
+  badge: string;
+  pulse?: boolean;
+};
+
+function getFilterStyle(key: string, count: number): FilterBadgeStyle {
+  if (count === 0) return { icon: "text-ink-3", badge: "bg-bg-2 text-ink-3" };
+  switch (key) {
+    case "critical": return { icon: "text-red-400", badge: "bg-red-500/15 text-red-400", pulse: true };
+    case "sanctions": return { icon: "text-orange-400", badge: "bg-orange-500/15 text-orange-400", pulse: true };
+    case "sla":       return { icon: "text-red-400",    badge: "bg-red-500/15 text-red-400", pulse: true };
+    case "edd":       return { icon: "text-violet-400", badge: "bg-violet-500/15 text-violet-400" };
+    case "pep":       return { icon: "text-amber-400",  badge: "bg-amber-500/15 text-amber-400" };
+    case "a24":       return { icon: "text-sky-400",    badge: "bg-sky-500/15 text-sky-400" };
+    case "closed":    return { icon: "text-emerald-400",badge: "bg-emerald-500/15 text-emerald-400" };
+    default:          return { icon: "text-ink-2",      badge: "bg-bg-2 text-ink-2" };
+  }
+}
+
+const ALL_CLEAR_KEYS = ["critical", "sanctions", "edd", "pep", "sla", "a24"];
+
 export function SidebarFilterList<K extends string>({
   items,
   activeKey,
   onSelect,
 }: SidebarFilterListProps<K>) {
+  const allClear = items
+    .filter((i) => ALL_CLEAR_KEYS.includes(i.key))
+    .every((i) => parseInt(i.count, 10) === 0);
+
   return (
-    <ul className="list-none p-0 m-0">
-      {items.map((item) => {
-        const isActive = item.key === activeKey;
-        return (
-          <li
-            key={item.key}
-            onClick={() => onSelect(item.key)}
-            className={`flex justify-between items-center px-2 py-1.5 rounded text-12.5 cursor-pointer mb-0.5 ${
-              isActive
-                ? "bg-brand-dim text-brand-deep font-medium"
-                : "hover:bg-bg-2"
-            }`}
-          >
-            <span>{item.label}</span>
-            <span
-              className={`font-mono text-11 px-1.5 py-px rounded-sm ${
-                isActive ? "bg-brand text-white" : "bg-bg-2 text-ink-3"
-              }`}
-            >
-              {item.count}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+    <div>
+      {allClear && (
+        <div className="flex items-center gap-1.5 px-2 py-1.5 mb-1 rounded bg-emerald-500/10 text-emerald-400 text-11 font-medium">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="2,6 4.5,8.5 10,3.5" />
+          </svg>
+          Queue clear
+        </div>
+      )}
+      <ul className="list-none p-0 m-0">
+        {items.map((item, idx) => {
+          const isActive = item.key === activeKey;
+          const count = parseInt(item.count, 10);
+          const style = getFilterStyle(item.key, count);
+          const icon = FILTER_ICON[item.key];
+          const isClosed = item.key === "closed";
+          const prevKey = items[idx - 1]?.key;
+          const showDivider = isClosed && prevKey !== undefined;
+
+          return (
+            <li key={item.key}>
+              {showDivider && (
+                <div className="my-1.5 border-t border-hair-2" />
+              )}
+              <div
+                onClick={() => onSelect(item.key)}
+                className={`flex justify-between items-center px-2 py-1.5 rounded text-12.5 cursor-pointer mb-0.5 group ${
+                  isActive
+                    ? "bg-brand-dim text-brand-deep font-medium"
+                    : "hover:bg-bg-2"
+                }`}
+              >
+                <span className={`flex items-center gap-1.5 ${isActive ? "text-brand-deep" : style.icon}`}>
+                  {icon}
+                  <span className={isActive ? "text-brand-deep" : "text-ink-1"}>{item.label}</span>
+                </span>
+                <span
+                  className={`relative font-mono text-11 px-1.5 py-px rounded-sm transition-colors ${
+                    isActive
+                      ? "bg-brand text-white"
+                      : style.badge
+                  }`}
+                >
+                  {style.pulse && count > 0 && !isActive && (
+                    <span className="absolute inset-0 rounded-sm animate-ping opacity-30 bg-current" />
+                  )}
+                  {item.count}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
