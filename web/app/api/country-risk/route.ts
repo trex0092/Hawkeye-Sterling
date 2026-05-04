@@ -127,10 +127,13 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, sdkTimeoutMs);
     const response = await client.messages.create({
       // Quick mode (default) uses Haiku for sub-Lambda-timeout latency;
-      // full mode keeps Sonnet for richer analysis. Token budgets sized so
-      // even slow Anthropic responses fit inside the SDK timeout above.
+      // full mode keeps Sonnet for richer analysis. Token budgets need to be
+      // generous enough that high-risk jurisdictions (Iran/Russia/etc) can
+      // emit a complete JSON object — too low a ceiling truncates mid-object,
+      // JSON.parse fails, and the catch surfaces a misleading "service
+      // unavailable" 503 even though the API call itself succeeded.
       model: depth === "full" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001",
-      max_tokens: depth === "full" ? 2500 : 1200,
+      max_tokens: depth === "full" ? 4000 : 2500,
       system: [
         {
           type: "text",
