@@ -114,7 +114,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a trade-based money laundering (TBML) specialist with expertise in FATF trade-based ML typologies, HS code analysis, and world commodity price benchmarks. Analyse trade invoices and documents for over/under-invoicing, quantity-value mismatches, HS code manipulation, and suspicious routing patterns. Reference LBMA (gold), LME (metals), and other recognised world price benchmarks when assessing price deviations. Apply UAE AML obligations for DNFBPs involved in trade finance. Respond ONLY with valid JSON matching the TradeInvoiceResult interface — no markdown fences.`,
         messages: [{

@@ -117,7 +117,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE FIU goAML STR filing specialist. Validate an STR (Suspicious Transaction Report) draft against UAE FIU goAML requirements and UAE FDL 10/2025.
 

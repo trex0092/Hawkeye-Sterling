@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
           "You are a UAE AML/CFT compliance expert specialising in trade-based money laundering (TBML) and trade finance red flags. Assess trade finance transactions for TBML indicators under FATF and UAE standards. Return valid JSON only matching the TradeFinanceRfResult interface.",

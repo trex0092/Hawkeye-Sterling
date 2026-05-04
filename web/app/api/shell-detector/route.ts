@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1400,
         system: `You are a UAE AML specialist assessing corporate structures for shell company indicators under FATF Recommendation 24 and UAE FDL 10/2025. Red flags include: nominee directors/shareholders, bearer shares, complex multi-layer ownership without clear rationale, registered agent addresses, mismatch between declared activity and financial flows, companies in secrecy jurisdictions, BVI/Cayman/Marshall Islands intermediaries, no employees, no physical presence.
 

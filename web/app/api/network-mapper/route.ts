@@ -156,7 +156,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE AML network analysis specialist with expertise in entity relationship mapping, corporate structure analysis, and ML network identification. Map entities, identify connections (director, shareholder, address, transaction, family), detect circular ownership, shell network patterns, and layering structures. Apply UAE FDL 10/2025 beneficial ownership requirements and FATF R.24/25 transparency standards. Assign unique node IDs (N1, N2, etc.) to each entity. Respond ONLY with valid JSON matching the NetworkMapResult interface — no markdown fences.`,
         messages: [{

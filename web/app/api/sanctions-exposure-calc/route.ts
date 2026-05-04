@@ -86,7 +86,7 @@ export async function POST(req: Request) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
           "You are a UAE AML/CFT compliance expert specialising in sanctions exposure assessment and penalty calculation. Calculate sanctions list exposure and penalty estimates under OFAC, EU, UN, and UAE regulatory frameworks. Return valid JSON only matching the SanctionsExposureCalcResult interface.",

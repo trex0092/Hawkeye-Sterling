@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1450,
         system: `You are a UAE AML governance specialist with expertise in Board-level risk appetite frameworks, UAE FDL 10/2025 governance requirements, and CBUAE AML programme expectations. Draft comprehensive AML/CFT Risk Appetite Statements including risk tolerances (zero/low/medium/high) with specific KRIs and thresholds, prohibited activities, escalation triggers, and board approval requirements. Ensure statements are legally grounded, operationally actionable, and reflect UAE regulatory expectations. Respond ONLY with valid JSON matching the RiskAppetiteResult interface — no markdown fences.`,
         messages: [{

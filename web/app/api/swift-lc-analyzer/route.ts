@@ -131,7 +131,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a trade finance TBML specialist with expertise in SWIFT MT700/710/720 field-by-field analysis, FATF trade-based money laundering guidance, documentary credit structures, and world commodity price benchmarking. Analyse SWIFT messages and LC terms for TBML indicators including vague goods descriptions, over/under-invoicing, suspicious routing, amendment patterns, and beneficiary/applicant risk. Apply ICC UCP 600 standards and FATF 2021 trade finance risk guidance. Reference specific SWIFT field numbers in your analysis. Respond ONLY with valid JSON matching the SwiftLcResult interface — no markdown fences.`,
         messages: [{

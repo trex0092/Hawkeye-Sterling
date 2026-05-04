@@ -113,7 +113,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE proliferation financing (PF) specialist. Assess transactions/entities for weapons of mass destruction proliferation financing risk under FATF R.7, UAE FDL 10/2025, and UN WMD sanctions regimes.
 

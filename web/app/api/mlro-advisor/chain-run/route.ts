@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
     // ── Step 1: Subject Brief ──────────────────────────────────────────────
     const step1 = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 600,
       system: [
         {
@@ -77,7 +77,7 @@ Respond in plain prose only — no bullet points, no headers.`,
 
     // ── Step 2: Typology Match ─────────────────────────────────────────────
     const step2 = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 600,
       system: [
         {
@@ -105,7 +105,7 @@ Transaction Pattern: ${transactionPattern || "Not provided"}`,
 
     // ── Step 3: STR Recommendation ────────────────────────────────────────
     const step3 = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 700,
       system: [
         {

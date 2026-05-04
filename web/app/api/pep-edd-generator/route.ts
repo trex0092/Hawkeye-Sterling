@@ -114,7 +114,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1800,
         system: `You are a UAE PEP (Politically Exposed Person) EDD specialist. Generate a comprehensive PEP enhanced due diligence package under UAE FDL 10/2025 Art.14(2) and FATF R.12.
 

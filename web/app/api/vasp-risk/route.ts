@@ -96,7 +96,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1300,
         system: `You are a UAE VASP (Virtual Asset Service Provider) AML/CFT risk specialist. Assess VASPs for onboarding/relationship risk under VARA, UAE FDL 10/2025, and FATF R.15.
 

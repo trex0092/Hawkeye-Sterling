@@ -102,7 +102,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1400,
         system: `You are a UAE AML legal specialist mapping case facts to applicable predicate offences under UAE Federal Law No. 10/2025 (FDL), UAE Penal Code (Federal Law No. 3/1987 as amended), and FATF Recommendation 3's 23 designated predicate offences. Identify the primary predicate offence, secondary predicates, maximum penalties, and whether self-laundering applies. The ML offence in the UAE is codified in FDL 10/2025 Art.3 (previously UAE ML Law 20/2014).
 

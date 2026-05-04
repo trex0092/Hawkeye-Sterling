@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       // 4500 tokens covers up to 5 country profiles concisely; 6000 routinely
       // pushed Sonnet past the 55s budget.
       max_tokens: 4500,

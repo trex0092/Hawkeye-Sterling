@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
           "You are a UAE AML/CFT compliance expert specialising in PEP exposure for corporate customers. Assess PEP-linked corporate risk and EDD requirements under UAE FDL and FATF standards. Return valid JSON only matching the PepCorporateResult interface.",

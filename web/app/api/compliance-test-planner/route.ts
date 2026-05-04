@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE AML compliance testing specialist with expertise in CBUAE testing expectations, FATF R.18 independent testing requirements, and sector-specific AML compliance testing methodologies. Design comprehensive compliance test plans with specific objectives, methodologies, sample sizes, frequencies, and output requirements. Plans should be practical and actionable for the institution's size and complexity. Reference UAE FDL 10/2025 and CBUAE Guidelines legal basis for each test. Respond ONLY with valid JSON matching the ComplianceTestPlanResult interface — no markdown fences.`,
         messages: [{

@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE Enterprise-Wide Risk Assessment (EWRA) specialist with expertise in CBUAE guidelines, FATF Recommendation 1 risk-based approach, and sector-specific ML/TF risk profiling. Generate comprehensive EWRAs assessing four risk dimensions: customer, product/service, geographic, and channel risks. Apply UAE national risk assessment findings, FATF grey-list/blacklist status, sector typologies, and CBUAE-specific requirements. Determine inherent risk, control effectiveness, and residual risk. Include realistic mitigation measures and Board approval requirements. Respond ONLY with valid JSON matching the EwraResult interface — no markdown fences.`,
         messages: [{

@@ -118,7 +118,7 @@ Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the cus
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 2000,
         system: systemPrompt,
         messages: [{
