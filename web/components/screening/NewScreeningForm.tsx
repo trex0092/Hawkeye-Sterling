@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CDDPosture } from "@/lib/types";
+import type { PepMatchHit, PepMatchResponse } from "@/app/api/pep-match/route";
 import { CryptoWalletField } from "@/components/screening/CryptoWalletField";
 import { VesselAircraftFields } from "@/components/screening/VesselAircraftFields";
 
@@ -107,6 +108,54 @@ export function NewScreeningForm({
   const [form, setForm] = useState<ScreeningFormData>(EMPTY_FORM(suggestedCaseId));
   const [altInput, setAltInput] = useState("");
   const [dobError, setDobError] = useState<string | null>(null);
+
+  // Live PEP lookup via OpenSanctions (debounced, individual only).
+  type PepStatus = "idle" | "loading" | "hit" | "clear" | "error";
+  const [pepStatus, setPepStatus] = useState<PepStatus>("idle");
+  const [pepHits, setPepHits] = useState<PepMatchHit[]>([]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (form.entityType !== "individual" || form.name.trim().length < 3) {
+      setPepStatus("idle");
+      setPepHits([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setPepStatus("loading");
+      try {
+        const res = await fetch("/api/pep-match", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            ...(form.dob ? { birthYear: form.dob.split("/")[2] } : {}),
+            ...(form.alternateNames.length > 0 ? { aliases: form.alternateNames } : {}),
+          }),
+        });
+        const data = (await res.json()) as PepMatchResponse;
+        if (data.ok && data.hits.length > 0) {
+          setPepHits(data.hits);
+          setPepStatus("hit");
+          // Auto-bump to EDD when a high-confidence PEP is found and
+          // the analyst hasn't already set a stronger posture.
+          if (data.hits[0]!.score >= 0.85 && form.cddPosture === "CDD") {
+            patch({ cddPosture: "EDD" });
+          }
+        } else {
+          setPepHits([]);
+          setPepStatus(data.source === "none" ? "idle" : "clear");
+        }
+      } catch {
+        setPepStatus("error");
+      }
+    }, 600);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.name, form.entityType, form.dob]);
 
   const valid = form.name.trim().length >= 2;
 
@@ -307,6 +356,11 @@ export function NewScreeningForm({
             </select>
           </Field>
         </div>
+
+        {/* Live OpenSanctions PEP lookup banner — individual only */}
+        {form.entityType === "individual" && pepStatus !== "idle" && (
+          <PepLookupBanner status={pepStatus} hits={pepHits} />
+        )}
 
         {/* Alternate names + License/Register share a row on the
             organisation tab; on the individual tab Alternate names
@@ -595,6 +649,86 @@ export function NewScreeningForm({
     </div>
   );
 }
+
+// ── PEP lookup banner ─────────────────────────────────────────────────────────
+
+function PepLookupBanner({ status, hits }: { status: "loading" | "hit" | "clear" | "error"; hits: PepMatchHit[] }) {
+  if (status === "loading") {
+    return (
+      <div className="flex items-center gap-2 mt-1 mb-3 px-3 py-2 rounded-lg bg-bg-2 border border-hair text-12 text-ink-2 animate-pulse">
+        <svg className="w-3.5 h-3.5 animate-spin text-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round" />
+        </svg>
+        Checking OpenSanctions PEP database…
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex items-center gap-2 mt-1 mb-3 px-3 py-2 rounded-lg bg-bg-2 border border-hair text-12 text-ink-3">
+        <svg className="w-3.5 h-3.5 text-ink-3" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.75 4a.75.75 0 00-1.5 0v4a.75.75 0 001.5 0V5zm-.75 6.5a.875.875 0 110 1.75.875.875 0 010-1.75z" />
+        </svg>
+        OpenSanctions unreachable — static lookup active
+      </div>
+    );
+  }
+
+  if (status === "clear") {
+    return (
+      <div className="flex items-center gap-2 mt-1 mb-3 px-3 py-2 rounded-lg bg-green-dim border border-green/20 text-12 text-green">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+          <path fillRule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.78 5.03a.75.75 0 00-1.06-1.06L7 8.69 5.28 6.97a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l4.25-4.25z" />
+        </svg>
+        No PEP match in OpenSanctions
+      </div>
+    );
+  }
+
+  // status === "hit"
+  const top = hits[0];
+  if (!top) return null;
+  const isHighConf = top.score >= 0.85;
+  const isMedConf = top.score >= 0.55;
+
+  const bannerCls = isHighConf
+    ? "bg-red-dim border-red/30 text-red"
+    : isMedConf
+    ? "bg-amber-dim border-amber/30 text-amber"
+    : "bg-bg-2 border-hair text-ink-1";
+
+  const iconCls = isHighConf ? "text-red" : "text-amber";
+
+  return (
+    <div className={`mt-1 mb-3 px-3 py-2 rounded-lg border text-12 ${bannerCls}`}>
+      <div className="flex items-start gap-2">
+        <svg className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${iconCls}`} viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.75 4a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0V5zm-.75 6a.875.875 0 110 1.75A.875.875 0 017.25 11z" />
+        </svg>
+        <div className="min-w-0 flex-1">
+          <span className="font-semibold">
+            {isHighConf ? "PEP match — EDD required" : "Possible PEP match"}
+          </span>
+          <span className="ml-2 opacity-70 font-mono text-10.5">{Math.round(top.score * 100)}% confidence</span>
+          <div className="mt-1 text-11 opacity-90 leading-relaxed">
+            <span className="font-medium">{top.caption}</span>
+            {top.positions[0] && <span className="ml-1">· {top.positions[0]}</span>}
+            {top.countries[0] && <span className="ml-1">· {top.countries[0].toUpperCase()}</span>}
+            {top.datasets[0] && <span className="ml-1 opacity-60">· {top.datasets[0]}</span>}
+          </div>
+          {hits.length > 1 && (
+            <div className="mt-1 text-10.5 opacity-60">
+              +{hits.length - 1} additional match{hits.length - 1 > 1 ? "es" : ""} in OpenSanctions
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Input / layout helpers ─────────────────────────────────────────────────────
 
 const inputCls =
   "w-full bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-13 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand focus:bg-bg-panel";
