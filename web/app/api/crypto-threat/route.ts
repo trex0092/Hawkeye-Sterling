@@ -95,6 +95,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let result: CryptoThreat;
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,
