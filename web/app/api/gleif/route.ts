@@ -72,8 +72,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!result.ok && result.error?.includes("not configured")) {
     return NextResponse.json(
-      { ok: true, lei: body.lei.trim(), entity: null, ownershipChain: [], note: "GLEIF service not configured — manual review required." },
-      { status: 200, headers: { ...CORS, ...gateHeaders } },
+      { ok: false, error: "GLEIF service is not configured on the server. A null entity here is not a 'not registered' finding." },
+      { status: 503, headers: { ...CORS, ...gateHeaders } },
     );
   }
 

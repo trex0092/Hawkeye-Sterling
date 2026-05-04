@@ -75,8 +75,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!result.ok && result.error?.includes("not configured")) {
     return NextResponse.json(
-      { ok: true, imoNumber: body.imoNumber!.trim(), hits: [], ownershipChain: [], flagState: null, note: "Vessel screening service not configured — manual review required." },
-      { status: 200, headers: { ...CORS, ...gateHeaders } },
+      { ok: false, error: "Vessel screening service is not configured on the server. Do not treat absence of results as a clean screen." },
+      { status: 503, headers: { ...CORS, ...gateHeaders } },
     );
   }
 
