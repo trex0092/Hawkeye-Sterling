@@ -114,11 +114,19 @@ export async function POST(req: Request) {
       ? "Provide comprehensive analysis with detailed context for each dimension, full regulatory obligations list, and at least 5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
+  // Netlify sync function ceiling is ~26s; abort the Anthropic call before that
+  // so we return the FALLBACK with a 200 instead of letting the Lambda 504.
+  const controller = new AbortController();
+  const timeoutMs = depth === "full" ? 22000 : 18000;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const client = getAnthropicClient(apiKey);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: depth === "full" ? 3000 : 2000,
+      // Quick mode (default) uses Haiku for sub-Lambda-timeout latency;
+      // full mode keeps Sonnet for richer analysis.
+      model: depth === "full" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001",
+      max_tokens: depth === "full" ? 3000 : 1500,
       system: [
         {
           type: "text",
@@ -195,12 +203,14 @@ Analysis depth: ${depth}
 Provide a complete country risk intelligence assessment covering AML/CFT risk, FATF status, sanctions exposure (OFAC, EU, UN, UK), political stability, TF risk, and all regulatory obligations that would apply to a UAE-based DNFBP (gold trader/refinery) engaging with counterparties in or from this country.`,
         },
       ],
-    });
+    }, { signal: controller.signal });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult;
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ...FALLBACK, country });
+  } finally {
+    clearTimeout(timer);
   }
 }

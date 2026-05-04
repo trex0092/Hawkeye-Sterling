@@ -4185,7 +4185,7 @@ export default function MlroAdvisorPage() {
                       </div>
                       {f.flags.length === 0 ? (
                         <div className="text-11 text-ink-3 italic px-3 py-2 rounded border border-hair-2 bg-bg-1">
-                          No FATF red flags detected in the provided text. If you expected results, verify your ANTHROPIC_API_KEY is configured on the server.
+                          No FATF red flags detected in the provided text. Paste raw analyst notes, transaction descriptions, or case context — questions or general prose will not match a red-flag indicator.
                         </div>
                       ) : (
                         <div className="space-y-2">
