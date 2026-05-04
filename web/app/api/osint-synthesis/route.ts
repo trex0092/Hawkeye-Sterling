@@ -93,7 +93,7 @@ function toStringArray(val: unknown): string[] {
 export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   let body: RequestBody;
@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: true, ...FALLBACK });
+      return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 });
     }
 
     const data = (await res.json()) as AnthropicResponse;
@@ -149,7 +149,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
       parsed = JSON.parse(clean);
     } catch {
-      return NextResponse.json({ ok: true, ...FALLBACK });
+      return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 });
     }
 
     const raw = parsed as Record<string, unknown>;
@@ -166,7 +166,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       complianceNarrative: typeof raw["complianceNarrative"] === "string" ? raw["complianceNarrative"] : "",
     };
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {

@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 export interface RealEstateMlResult {
@@ -106,12 +106,12 @@ export async function POST(req: Request) {
   if (!body.propertyDetails?.trim()) return NextResponse.json({ ok: false, error: "propertyDetails required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "real-estate-ml temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       system: [
         {
@@ -138,6 +138,6 @@ Assess this real estate transaction for money laundering risk indicators. Return
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RealEstateMlResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "real-estate-ml temporarily unavailable - please retry." }, { status: 503 });
   }
 }

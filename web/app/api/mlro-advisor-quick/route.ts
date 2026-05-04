@@ -81,6 +81,10 @@ interface ContextPair { q: string; a: string }
 interface Body {
   question?: string;
   context?: ContextPair[];
+  /** When true, the input gate's prompt-injection pattern check is
+   *  skipped so adversarial red-team probes can reach the model for
+   *  refusal testing. The model is still expected to refuse. */
+  redTeamMode?: boolean;
 }
 
 const SYSTEM_PROMPT_BASE =
@@ -277,7 +281,8 @@ export async function POST(req: Request): Promise<Response> {
   // inputs before we burn a Haiku call. Topic-scope filtering is off;
   // the Advisor must answer every compliance question.
   const gateResult = gateMlroQuestion(body.question ?? "", {
-    maxChars: 2000,
+    maxChars: body.redTeamMode ? 4000 : 2000,
+    allowInjectionPatterns: body.redTeamMode === true,
   });
   if (!gateResult.ok) {
     return NextResponse.json(

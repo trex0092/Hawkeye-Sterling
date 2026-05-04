@@ -443,7 +443,7 @@ function AddModelForm({ onAdd, onCancel }: { onAdd: (m: AIModel) => void; onCanc
     <div className="mt-4 bg-bg-panel border border-brand/20 rounded-xl p-5">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-3">Register new model</div>
       {err && <p className="text-11 text-red mb-2">{err}</p>}
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Model name *</label>
           <input
@@ -463,7 +463,7 @@ function AddModelForm({ onAdd, onCancel }: { onAdd: (m: AIModel) => void; onCanc
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk tier</label>
           <select
@@ -660,7 +660,7 @@ function AddIncidentForm({
           className={iCls}
         />
       </div>
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Severity</label>
           <select
@@ -915,7 +915,7 @@ function BiasTab() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {BIAS_SEGMENTS.map((seg) => {
           const isSanctionLike = seg.target >= 90;
           const isOver = !isSanctionLike && seg.fprPct > seg.target;
@@ -1291,7 +1291,7 @@ function EthicsAssessmentPanel({
         </div>
 
         {/* Strengths & Priorities */}
-        <div className="grid grid-cols-2 gap-5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
           <div>
             <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">Strengths</div>
             <ul className="space-y-1.5">
@@ -1488,7 +1488,7 @@ export default function ResponsibleAIPage() {
         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
           Section 1 · UNESCO Alignment Status
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {PRINCIPLES.map((p) => (
             <div
               key={p.num}

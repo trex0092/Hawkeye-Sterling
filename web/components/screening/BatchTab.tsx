@@ -192,6 +192,7 @@ function toCsv(results: RowResult[]): string {
 
 function exportPdf(results: RowResult[], summary: Summary) {
   const now = new Date();
+
   const reportId = `HWK-BATCH-${now.getUTCFullYear()}${String(now.getUTCMonth()+1).padStart(2,"0")}${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}`;
 
   exportToPdf({
@@ -459,7 +460,8 @@ export function BatchTab() {
     const blob = new Blob(["﻿" + toCsv(results)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `hawkeye-batch-${Date.now()}.csv`; a.click();
+    const _d = new Date(); const _dd = String(_d.getDate()).padStart(2,"0"); const _mm = String(_d.getMonth()+1).padStart(2,"0"); const _yy = _d.getFullYear();
+    a.href = url; a.download = `hawkeye-batch-${_dd}-${_mm}-${_yy}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -586,7 +588,7 @@ export function BatchTab() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {nameVars.variants.length > 0 && (
                 <div>
                   <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Variants</div>

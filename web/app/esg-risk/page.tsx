@@ -272,7 +272,7 @@ export default function EsgRiskPage() {
       {/* Input Form */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">
         <h2 className="text-14 font-semibold text-ink-0 mb-4">Entity Details</h2>
-        <div className="grid grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-11 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">
               Entity Name *
@@ -424,7 +424,7 @@ export default function EsgRiskPage() {
           </div>
 
           {/* E / S / G Dimension Cards */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <DimensionCard
               icon="🌍"
               label="Environmental"

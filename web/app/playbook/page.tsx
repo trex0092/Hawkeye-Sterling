@@ -6117,7 +6117,7 @@ export default function PlaybookPage() {
       <div className="text-11 text-ink-3 mb-3">{filtered.length} playbooks · click any to open</div>
 
       {/* Grid */}
-      <div className="grid grid-cols-4 gap-2 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
         {filtered.map((p) => {
           const prog = getProgress(p.id, p.steps);
           return (

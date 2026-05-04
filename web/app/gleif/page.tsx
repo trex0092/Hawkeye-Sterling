@@ -190,7 +190,7 @@ export default function GleifPage() {
                 }} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-12">
               <div>
                 <div className="text-ink-3 mb-0.5">Jurisdiction</div>
                 <div className="font-medium text-ink-0">{leiResult.record.jurisdiction || "—"}</div>

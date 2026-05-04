@@ -218,7 +218,7 @@ export default function GoAmlExportPage() {
               suspicion; FFR is reserved for funds-freeze actions arising from
               UN/Cabinet 74/2020 designations.
             </p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {REPORT_CODES.map((code) => (
                 <button
                   key={code}
@@ -241,7 +241,7 @@ export default function GoAmlExportPage() {
         {step === 2 && (
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Subject</h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Field label="Entity type">
                 <select
                   value={draft.subject.entityType}
@@ -327,7 +327,7 @@ export default function GoAmlExportPage() {
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <FieldNumber
                 label="Amount (AED, optional)"
                 value={typeof draft.amountAed === "number" ? draft.amountAed : ""}

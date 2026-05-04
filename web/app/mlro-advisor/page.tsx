@@ -4092,7 +4092,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "escalation" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Escalation Decision Engine</div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-10 text-ink-3 mb-1">Subject name *</label>
                     <input value={escSubject} onChange={(e) => setEscSubject(e.target.value)} placeholder="Full subject name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -4185,7 +4185,7 @@ export default function MlroAdvisorPage() {
                       </div>
                       {f.flags.length === 0 ? (
                         <div className="text-11 text-ink-3 italic px-3 py-2 rounded border border-hair-2 bg-bg-1">
-                          No FATF red flags detected in the provided text. If you expected results, verify your ANTHROPIC_API_KEY is configured on the server.
+                          No FATF red flags detected in the provided text. Paste raw analyst notes, transaction descriptions, or case context — questions or general prose will not match a red-flag indicator.
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -4261,7 +4261,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Subject Intelligence Brief</div>
                 <p className="text-11 text-ink-3">Pre-screening intelligence brief — risk profile, likely typologies, key compliance questions to ask, and document checklist.</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="col-span-2">
                     <label className="block text-10 text-ink-3 mb-1">Subject name *</label>
                     <input value={briefSubject} onChange={(e) => setBriefSubject(e.target.value)} placeholder="Full name or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -4338,7 +4338,7 @@ export default function MlroAdvisorPage() {
                       className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Subject type</label>
                       <input
@@ -4490,7 +4490,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP Network Intelligence</div>
                 <p className="text-11 text-ink-3">Full network enumeration of persons and entities requiring screening — beyond static PEP profiles. Powered by FATF R.12 and FDL 10/2025 Art.12.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-10 text-ink-3 mb-1">PEP name *</label>
                     <input value={pepInput.name} onChange={(e) => setPepInput((p) => ({ ...p, name: e.target.value }))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -4605,7 +4605,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AI Indirect Sanctions Exposure Analyzer</div>
                 <p className="text-11 text-ink-3">Reasons about indirect sanctions exposure through ownership chains, jurisdictions, and financial intermediaries — beyond direct SDN name hits.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-10 text-ink-3 mb-1">Subject *</label>
                     <input value={sanctionsNexusInput.subject} onChange={(e) => setSanctionsNexusInput((p) => ({ ...p, subject: e.target.value }))} placeholder="Person or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -4737,7 +4737,7 @@ export default function MlroAdvisorPage() {
                     placeholder="Paste transaction narrative or monitoring alert text here — e.g. 'Customer conducted 12 cash deposits across 3 branches over 2 weeks, each just below AED 55,000, followed by a same-day international wire to a UAE-listed counterparty in DRC…'"
                     className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none"
                   />
-                  <div className="grid grid-cols-3 gap-3 mt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Customer Type</label>
                       <input value={txnCustomerType} onChange={(e) => setTxnCustomerType(e.target.value)} placeholder="e.g. Gold trader, VASP, PEP" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
@@ -4828,7 +4828,7 @@ export default function MlroAdvisorPage() {
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">EDD Questionnaire Generator</div>
                   <p className="text-11 text-ink-3 mb-3">Input a customer profile and risk factors. AI generates a complete, tailored Enhanced Due Diligence questionnaire — with per-question regulatory basis, mandatory/optional classification, and documentation requirements.</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="col-span-2">
                       <label className="block text-10 text-ink-3 mb-1">Customer Type <span className="text-red">*</span></label>
                       <input value={eddCustomerType} onChange={(e) => setEddCustomerType(e.target.value)} placeholder="e.g. UAE gold refinery, Foreign DPMS dealer, VASP, PEP-owned LLC" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -4914,7 +4914,7 @@ export default function MlroAdvisorPage() {
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">TBML Trade Document Analyzer</div>
                   <p className="text-11 text-ink-3 mb-3">Input trade document details (invoice, bill of lading, shipment). AI identifies over/under-invoicing, phantom shipment risk, CAHRA routing anomalies, and counterparty exposure — grounded in FATF TBML typologies and OECD CAHRA 5-step guidance.</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="col-span-2">
                       <label className="block text-10 text-ink-3 mb-1">Invoice / Document Description <span className="text-red">*</span></label>
                       <textarea value={tbmlInput.invoiceDescription} onChange={(e) => setTbmlInput((p) => ({ ...p, invoiceDescription: e.target.value }))} rows={4} placeholder="Describe the trade document — invoice number, goods described, weight/quantity, unit price, total value, payment terms, parties, any anomalies noted…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
@@ -4965,7 +4965,7 @@ export default function MlroAdvisorPage() {
                         <div className="text-12 font-semibold text-ink-0">{tb.tbmlTypology}</div>
                         <div className="text-10 font-mono text-ink-3">{tb.tbmlTypologyRef}</div>
                       </div>
-                      <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
                         {[
                           { label: "Over-invoicing", val: tb.overInvoicingRisk },
                           { label: "Under-invoicing", val: tb.underInvoicingRisk },
@@ -5033,7 +5033,7 @@ export default function MlroAdvisorPage() {
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">STR Narrative Drafter</div>
                   <p className="text-11 text-ink-3 mb-3">Input key case facts. AI drafts a complete, goAML-ready STR narrative covering all FATF R.20 mandatory elements: WHO / WHAT / WHEN / WHERE / WHY. Includes quality score and missing element check before you file.</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Subject Name <span className="text-red">*</span></label>
                       <input value={strNarrInput.subjectName} onChange={(e) => setStrNarrInput((p) => ({ ...p, subjectName: e.target.value }))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -5099,7 +5099,7 @@ export default function MlroAdvisorPage() {
                       <div className="bg-bg-0 rounded-lg p-4 border border-hair-2">
                         <pre className="text-11 text-ink-0 whitespace-pre-wrap leading-relaxed font-mono">{s.narrative}</pre>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {s.fatfR20Coverage.length > 0 && (
                           <div>
                             <div className="text-10 uppercase tracking-wide-3 text-green mb-1">FATF R.20 Coverage</div>
@@ -5117,7 +5117,7 @@ export default function MlroAdvisorPage() {
                           </div>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-10 font-mono text-ink-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-10 font-mono text-ink-3">
                         <span>Filing: {s.goAmlFields.filingBasis}</span>
                         <span>Deadline: {s.goAmlFields.deadlineDate}</span>
                       </div>
@@ -5134,7 +5134,7 @@ export default function MlroAdvisorPage() {
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">Wire Transfer R.16 Checker</div>
                   <p className="text-11 text-ink-3 mb-3">Input originator and beneficiary details from a wire transfer. AI determines FATF R.16 compliance — whether mandatory information is present, what's missing, and whether to STP, hold, return, or freeze and report.</p>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="col-span-3 text-10 font-semibold uppercase tracking-wide-3 text-ink-2 pt-1">Originator</div>
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Name</label>
@@ -5210,7 +5210,7 @@ export default function MlroAdvisorPage() {
                         <span className={`font-mono text-10 px-2 py-px rounded uppercase ${complianceCls}`}>{w.complianceLevel.replace(/_/g, " ")}</span>
                       </div>
                       <p className="text-12 text-ink-1 leading-relaxed">{w.verdictRationale}</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="border border-hair-2 rounded p-3 bg-bg-0">
                           <div className="text-10 uppercase tracking-wide-3 text-ink-2 mb-2 font-semibold">Originator Fields</div>
                           <div className="space-y-1 text-11">
@@ -5254,7 +5254,7 @@ export default function MlroAdvisorPage() {
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">Proliferation Financing Screener</div>
                   <p className="text-11 text-ink-3 mb-3">Dedicated PF risk assessment beyond standard sanctions screening. Evaluates DPRK nexus (UNSCR 1718/2375), Iran nexus (UNSCR 2231), dual-use goods, and proliferator network exposure. Mandatory freeze obligations flagged automatically.</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Subject <span className="text-red">*</span></label>
                       <input value={pfInput.subject} onChange={(e) => setPfInput((p) => ({ ...p, subject: e.target.value }))} placeholder="Person or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -5310,7 +5310,7 @@ export default function MlroAdvisorPage() {
                           IMMEDIATE ACTION REQUIRED: Asset freeze mandatory under {pf.freezeBasis}. Do not process. Notify senior management and MLRO immediately.
                         </div>
                       )}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         {[
                           { label: "DPRK Nexus", val: pf.dprkNexus },
                           { label: "Iran Nexus", val: pf.iranNexus },
@@ -5374,7 +5374,7 @@ export default function MlroAdvisorPage() {
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">MLRO Decision Memo Generator</div>
                   <p className="text-11 text-ink-3 mb-3">Generate a formal, regulator-grade MLRO Decision Memorandum for your audit trail. Structured for MoE / CBUAE / FIU inspection — includes subject identification, facts, red flags, investigation record, legal analysis, and sign-off block.</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Subject Name <span className="text-red">*</span></label>
                       <input value={memoInput.subjectName} onChange={(e) => setMemoInput((p) => ({ ...p, subjectName: e.target.value }))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -5438,7 +5438,7 @@ export default function MlroAdvisorPage() {
                       <div className="bg-bg-0 rounded-lg p-4 border border-hair-2">
                         <pre className="text-11 text-ink-0 whitespace-pre-wrap leading-relaxed font-mono">{m.memo}</pre>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-10">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-10">
                         {Object.entries(m.auditElements).map(([k, v]) => (
                           <div key={k} className={`flex items-center gap-1.5 px-2 py-1 rounded border ${v ? "border-green/30 bg-green-dim text-green" : "border-red/30 bg-red-dim text-red"}`}>
                             <span className="font-bold">{v ? "✓" : "✗"}</span>
@@ -5461,7 +5461,7 @@ export default function MlroAdvisorPage() {
                   <p className="text-11 text-ink-3 mb-3">
                     <strong className="text-red">Distinct from PF Screener</strong> — this tool focuses on terrorist organisations, foreign fighters, and TF typologies (hawala, NPO abuse, crypto-TF, crowdfunding). Covers FATF R.5/R.6/R.8/R.14, UNSCR 1267/1373/2178, UAE CTF Law No. 7/2014. <strong>No monetary threshold applies to TF — suspicion alone triggers reporting.</strong>
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 text-ink-3 mb-1">Subject <span className="text-red">*</span></label>
                       <input value={tfInput.subject} onChange={(e) => setTfInput((p) => ({ ...p, subject: e.target.value }))} placeholder="Person or entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" />
@@ -5538,7 +5538,7 @@ export default function MlroAdvisorPage() {
                         <div className="text-12 font-semibold text-ink-0">{tf.primaryTypology}</div>
                         <div className="text-10 font-mono text-ink-3">{tf.primaryTypologyRef}</div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         {[
                           { label: "UNSCR 1373 Nexus", val: tf.unscr1373Nexus },
                           { label: "NPO Abuse Risk", val: tf.npOAbuseRisk },
@@ -5605,7 +5605,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Shell Company Detector — FATF R.24 · UBO Transparency</div>
                 <p className="text-11 text-ink-3">Input a corporate structure and detect shell company red flags: nominee directors, secrecy jurisdictions, layering, bearer shares, and no legitimate business purpose.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={shellInput.entityName} onChange={(e) => setShellInput((p) => ({...p, entityName: e.target.value}))} placeholder="Company name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Jurisdiction of Incorporation</label><input value={shellInput.jurisdictionOfIncorporation} onChange={(e) => setShellInput((p) => ({...p, jurisdictionOfIncorporation: e.target.value}))} placeholder="e.g. BVI, Cayman, UAE, UK" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Director Names</label><input value={shellInput.directorNames} onChange={(e) => setShellInput((p) => ({...p, directorNames: e.target.value}))} placeholder="Comma-separated director names" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -5727,7 +5727,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Case Timeline Builder — goAML STR Narrative · Suspicion Crystallisation</div>
                 <p className="text-11 text-ink-3">Input raw case notes, dates, and events in any order. AI structures them chronologically, identifies when suspicion crystallised (FATF R.20), calculates the STR deadline (FDL 10/2025 Art.26), and generates a goAML-ready narrative block.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={timelineSubject} onChange={(e) => setTimelineSubject(e.target.value)} placeholder="Subject / account holder" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Case / Account Reference</label><input value={timelineCaseRef} onChange={(e) => setTimelineCaseRef(e.target.value)} placeholder="e.g. CAS-2024-0041" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
@@ -5742,7 +5742,7 @@ export default function MlroAdvisorPage() {
                   const tl = timelineResult;
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-4 bg-bg-1">
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="px-3 py-2 bg-bg-panel border border-hair-2 rounded">
                           <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Date Range</div>
                           <div className="text-12 font-semibold text-ink-0">{tl.keyDateRange}</div>
@@ -5797,7 +5797,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">ML Predicate Mapper — UAE FDL 10/2025 · FATF R.3 · 23 Predicate Categories</div>
                 <p className="text-11 text-ink-3">Input case facts to identify applicable UAE predicate offences, maximum penalties, self-laundering applicability, and whether an STR is required. Maps to all 23 FATF R.3 designated predicate offence categories.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Suspected Activity (optional)</label><input value={predicateActivity} onChange={(e) => setPredicateActivity(e.target.value)} placeholder="e.g. corruption, fraud, tax evasion" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Jurisdiction (optional)</label><input value={predicateJurisdiction} onChange={(e) => setPredicateJurisdiction(e.target.value)} placeholder="e.g. UAE, offshore, multi-jurisdictional" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
@@ -5859,7 +5859,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Client Risk Scorer — Onboarding Risk Assessment · CDD Level</div>
                 <p className="text-11 text-ink-3">Input entity details and shareholders. AI produces a risk rating, determines CDD vs EDD, identifies PEP exposure, and recommends action per UAE FDL 10/2025 and FATF R.10.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={clientRiskEntity.name} onChange={(e) => setClientRiskEntity((p) => ({...p, name: e.target.value}))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Country of Incorporation</label><input value={clientRiskEntity.countryOfIncorporation} onChange={(e) => setClientRiskEntity((p) => ({...p, countryOfIncorporation: e.target.value}))} placeholder="e.g. UAE, BVI, UK" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Trade Licence / Registration No.</label><input value={clientRiskEntity.tradeLicence} onChange={(e) => setClientRiskEntity((p) => ({...p, tradeLicence: e.target.value}))} placeholder="e.g. DED-2024-00001" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -5867,7 +5867,7 @@ export default function MlroAdvisorPage() {
                 </div>
                 <div className="text-10 uppercase tracking-wide-3 text-ink-3 pt-2">Shareholders / UBOs</div>
                 {clientRiskShareholders.map((sh, idx) => (
-                  <div key={idx} className="grid grid-cols-3 gap-2 p-2 bg-bg-1 border border-hair-2 rounded">
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-2 bg-bg-1 border border-hair-2 rounded">
                     <input value={sh.name} onChange={(e) => setClientRiskShareholders((p) => p.map((s, i) => i === idx ? {...s, name: e.target.value} : s))} placeholder="Shareholder name" className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 col-span-2" />
                     <input value={sh.sharesPct} onChange={(e) => setClientRiskShareholders((p) => p.map((s, i) => i === idx ? {...s, sharesPct: e.target.value} : s))} placeholder="% ownership" className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel focus:outline-none focus:border-brand text-ink-0" />
                     <input value={sh.nationality} onChange={(e) => setClientRiskShareholders((p) => p.map((s, i) => i === idx ? {...s, nationality: e.target.value} : s))} placeholder="Nationality" className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel focus:outline-none focus:border-brand text-ink-0" />
@@ -5918,7 +5918,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Jurisdiction Intelligence — FATF Status · CAHRA · Sanctions Exposure</div>
                 <p className="text-11 text-ink-3">Get a full AML/CFT intelligence brief on any country: FATF status (grey/black list), CAHRA classification, sanctions exposure across UAE/UN/OFAC/EU/UK, DPMS-specific risks, and UAE regulatory requirements for that jurisdiction.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Country *</label><input value={jurisCountry} onChange={(e) => setJurisCountry(e.target.value)} placeholder="e.g. Nigeria, Russia, Iran, Afghanistan" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Context (optional)</label><input value={jurisContext} onChange={(e) => setJurisContext(e.target.value)} placeholder="e.g. gold trade, remittances, real estate" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
@@ -5937,7 +5937,7 @@ export default function MlroAdvisorPage() {
                       </div>
                       {jr.cahraStatus && <div className="px-3 py-1.5 bg-amber-dim border border-amber/30 rounded text-11 text-amber"><span className="font-semibold">CAHRA:</span> {jr.cahraStatus}</div>}
                       {jr.fatfDetail && <p className="text-12 text-ink-1">{jr.fatfDetail}</p>}
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                         {Object.entries(jr.sanctionsExposure).map(([k, v]) => v ? (
                           <div key={k} className="px-2 py-1.5 bg-red-dim border border-red/20 rounded text-center">
                             <div className="text-10 font-mono text-red uppercase">{k}</div>
@@ -5965,13 +5965,13 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">UBO Risk Analyzer — Beneficial Ownership · FATF R.24 · PEP Flags</div>
                 <p className="text-11 text-ink-3">Input the corporate entity and its ultimate beneficial owners. AI assesses ownership structure risk, PEP flags, nationality risks, CDD gaps, and sanctions screening requirements per FATF R.24 and UAE FDL 10/2025.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={uboEntity} onChange={(e) => setUboEntity(e.target.value)} placeholder="Legal name of entity" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Country of Registration</label><input value={uboRegistered} onChange={(e) => setUboRegistered(e.target.value)} placeholder="e.g. UAE, BVI, Cayman" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <div className="text-10 uppercase tracking-wide-3 text-ink-3">Ultimate Beneficial Owners (25%+ threshold)</div>
                 {uboEntries.map((ubo, idx) => (
-                  <div key={idx} className="grid grid-cols-3 gap-2 p-2 bg-bg-1 border border-hair-2 rounded">
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-2 bg-bg-1 border border-hair-2 rounded">
                     <input value={ubo.name} onChange={(e) => setUboEntries((p) => p.map((u, i) => i === idx ? {...u, name: e.target.value} : u))} placeholder="UBO full name" className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 col-span-2" />
                     <input value={ubo.ownershipPct} onChange={(e) => setUboEntries((p) => p.map((u, i) => i === idx ? {...u, ownershipPct: e.target.value} : u))} placeholder="% ownership" className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel focus:outline-none focus:border-brand text-ink-0" />
                     <input value={ubo.nationality} onChange={(e) => setUboEntries((p) => p.map((u, i) => i === idx ? {...u, nationality: e.target.value} : u))} placeholder="Nationality" className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel focus:outline-none focus:border-brand text-ink-0" />
@@ -6085,7 +6085,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Crypto Wallet Risk — Taint Analysis · Mixer Exposure · Darknet Links</div>
                 <p className="text-11 text-ink-3">AML taint analysis on crypto wallet addresses (ETH/BTC/TRX). Requires blockchain data service to be configured. Detects mixer exposure, darknet market links, exchange attribution, and high-risk counterparties.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Wallet Address *</label><input value={cryptoAddress} onChange={(e) => setCryptoAddress(e.target.value)} placeholder="0x… or bc1… or T…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 font-mono focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Chain</label>
                     <select value={cryptoChain} onChange={(e) => setCryptoChain(e.target.value as "ethereum"|"bitcoin"|"tron")} className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0">
@@ -6112,7 +6112,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Onboarding Risk Tier — Deterministic Scorer · FATF R.10 · Tier 1/2/3</div>
                 <p className="text-11 text-ink-3">Deterministic risk-tier classification for new customer onboarding. No AI — pure rule-based scoring on FATF-listed countries, PEP status, source-of-funds quality, occupation risk, and screening hits. Instant result.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Full Name *</label><input value={onboardInput.fullName} onChange={(e) => setOnboardInput((p) => ({...p, fullName: e.target.value}))} placeholder="Customer full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Nationality (ISO-2)</label><input value={onboardInput.nationalityIso2} onChange={(e) => setOnboardInput((p) => ({...p, nationalityIso2: e.target.value}))} placeholder="e.g. AE, PK, RU, IR" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Date of Birth</label><input value={onboardInput.dob} onChange={(e) => setOnboardInput((p) => ({...p, dob: e.target.value}))} placeholder="YYYY-MM-DD" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6165,7 +6165,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Proliferation Finance Screener · FATF R.7 · UNSCR 1718/1737/2397</div>
                 <p className="text-11 text-ink-3">Assess transactions and entities for WMD proliferation financing risk. Covers dual-use goods, DPRK/Iran/Syria sanctions corridors, front company structures, and Strategic Goods Control List (SGCL) obligations under UAE Federal Decree-Law 26/2021.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Subject / Buyer *</label><input value={prolifInput.subject} onChange={(e) => setProlifInput((p) => ({...p, subject: e.target.value}))} placeholder="Entity or individual name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Country</label><input value={prolifInput.subjectCountry} onChange={(e) => setProlifInput((p) => ({...p, subjectCountry: e.target.value}))} placeholder="Country of incorporation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Counterparty / Seller</label><input value={prolifInput.counterparty} onChange={(e) => setProlifInput((p) => ({...p, counterparty: e.target.value}))} placeholder="Counterparty name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6205,7 +6205,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">File or no-file? Applies the UAE 'reasonable grounds to suspect' standard (no monetary threshold) and the 2-business-day filing deadline. Checks narrative completeness, missing fields, and tipping-off risk before generating an MLRO decision memorandum.</p>
                 <div className="space-y-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Suspicious Activity Description *</label><textarea value={sarInput.suspiciousActivity} onChange={(e) => setSarInput((p) => ({...p, suspiciousActivity: e.target.value}))} rows={4} placeholder="Describe the suspicious activity in detail — what happened, when, amounts, patterns, customer behaviour..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={sarInput.subjectName} onChange={(e) => setSarInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Type</label><input value={sarInput.subjectType} onChange={(e) => setSarInput((p) => ({...p, subjectType: e.target.value}))} placeholder="e.g. individual, corporate, DPMS" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Account Reference</label><input value={sarInput.accountRef} onChange={(e) => setSarInput((p) => ({...p, accountRef: e.target.value}))} placeholder="Account number or IBAN" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6233,7 +6233,7 @@ export default function MlroAdvisorPage() {
                       {st.strDeadline && <div className="flex items-center gap-2"><span className="text-10 uppercase tracking-wide-3 text-ink-3">Filing Deadline:</span><span className="font-mono text-11 text-red font-bold">{st.strDeadline}</span></div>}
                       {st.requiredFields.length > 0 && (
                         <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">goAML Field Checklist</div>
-                        <div className="grid grid-cols-2 gap-1.5">{st.requiredFields.map((f, i) => <div key={i} className={`text-11 px-2 py-1 rounded border ${f.status === "available" ? "border-green bg-green-dim text-green" : f.status === "missing" ? "border-red bg-red-dim text-red" : "border-amber bg-amber-dim text-amber"}`}>{f.status === "available" ? "✓" : f.status === "missing" ? "✗" : "~"} {f.field}{f.note ? ` — ${f.note}` : ""}</div>)}</div></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">{st.requiredFields.map((f, i) => <div key={i} className={`text-11 px-2 py-1 rounded border ${f.status === "available" ? "border-green bg-green-dim text-green" : f.status === "missing" ? "border-red bg-red-dim text-red" : "border-amber bg-amber-dim text-amber"}`}>{f.status === "available" ? "✓" : f.status === "missing" ? "✗" : "~"} {f.field}{f.note ? ` — ${f.note}` : ""}</div>)}</div></div>
                       )}
                       {st.narrativeSuggestions.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Improvements</div><ul className="space-y-1">{st.narrativeSuggestions.map((s, i) => <li key={i} className="text-11 text-ink-1 flex gap-2"><span className="text-amber">→</span>{s}</li>)}</ul></div>}
                       <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">MLRO Predetermination</div>{st.predetermination}</div>
@@ -6248,7 +6248,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Document Fraud Detector · UAE FDL 10/2025 Art.14 · KYC Authenticity</div>
                 <p className="text-11 text-ink-3">Assess identity documents and KYC supporting documents for fraud indicators. Checks Emirates ID format, salary certificate consistency, trade licence format, attestation chains, and income plausibility. Outputs verification steps and regulatory implications.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Document Types Presented *</label><input value={docFraudInput.documentTypes} onChange={(e) => setDocFraudInput((p) => ({...p, documentTypes: e.target.value}))} placeholder="e.g. Emirates ID, salary certificate, trade licence, bank statement" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={docFraudInput.subjectName} onChange={(e) => setDocFraudInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full name on documents" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Nationality</label><input value={docFraudInput.subjectNationality} onChange={(e) => setDocFraudInput((p) => ({...p, subjectNationality: e.target.value}))} placeholder="e.g. Pakistani, Egyptian, Indian" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6287,7 +6287,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CTR / Structuring Detector · UAE FDL 10/2025 Art.17 · Deterministic Engine</div>
                 <p className="text-11 text-ink-3">Deterministic engine — no AI. Paste a list of cash transaction amounts. Instantly detects structuring (smurfing) patterns, identifies CTR-required transactions (≥ AED 55,000), computes Benford-style band distribution, and outputs filing obligations.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Cash Transaction Amounts (AED) *</label><textarea value={ctrAmounts} onChange={(e) => setCtrAmounts(e.target.value)} rows={3} placeholder="Paste amounts separated by commas, newlines, or semicolons&#10;e.g. 52000, 54500, 53200, 51800, 55000, 49000" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 font-mono resize-none focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Period (days)</label><input type="number" value={ctrPeriodDays} onChange={(e) => setCtrPeriodDays(e.target.value)} placeholder="30" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={ctrSubject} onChange={(e) => setCtrSubject(e.target.value)} placeholder="Account holder name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6305,7 +6305,7 @@ export default function MlroAdvisorPage() {
                         {ct.ctrRequired && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">{ct.ctrCount} CTR(s) required</span>}
                         {ct.smurfingPattern && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Smurfing pattern</span>}
                       </div>
-                      <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
                         <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">AED {ct.totalValueAed.toLocaleString()}</div><div className="text-10 text-ink-3">Total Value</div></div>
                         <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">{ct.transactions.length}</div><div className="text-10 text-ink-3">Transactions</div></div>
                         <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className={`font-mono text-13 font-bold ${ct.thresholdProximityPct >= 90 ? "text-red" : ct.thresholdProximityPct >= 80 ? "text-amber" : "text-ink-0"}`}>{ct.thresholdProximityPct}%</div><div className="text-10 text-ink-3">Max threshold proximity</div></div>
@@ -6325,7 +6325,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">DNFBP Obligation Mapper · UAE FDL 10/2025 · FATF R.22-23</div>
                 <p className="text-11 text-ink-3">Maps exact AML/CFT obligations by DNFBP type — gold dealers, real estate agents, lawyers, accountants, TCSPs, MSBs, VASPs — under UAE FDL 10/2025 and FATF Recommendations 22-23. Identifies triggered obligations, thresholds, and regulatory authority.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">DNFBP Type *</label><input value={dnfbpInput.dnfbpType} onChange={(e) => setDnfbpInput((p) => ({...p, dnfbpType: e.target.value}))} placeholder="e.g. gold dealer, real estate agent, lawyer, accountant, TCSP" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Type</label><input value={dnfbpInput.transactionType} onChange={(e) => setDnfbpInput((p) => ({...p, transactionType: e.target.value}))} placeholder="e.g. gold purchase, property sale, corporate formation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Amount (AED)</label><input value={dnfbpInput.transactionAmount} onChange={(e) => setDnfbpInput((p) => ({...p, transactionAmount: e.target.value}))} placeholder="Amount" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6363,7 +6363,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CDD Refresh Trigger Analyzer · UAE FDL 10/2025 Art.15 · Ongoing Monitoring</div>
                 <p className="text-11 text-ink-3">Determine whether a CDD refresh is legally required and at what urgency. Evaluates all mandatory and advisory trigger events under UAE FDL 10/2025 Art.15, FATF R.10, and CBUAE review frequency guidelines. Outputs EDD requirement, field list, and account action.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Customer Name</label><input value={cddRefreshInput.customerName} onChange={(e) => setCddRefreshInput((p) => ({...p, customerName: e.target.value}))} placeholder="Customer full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Current Risk Tier</label><input value={cddRefreshInput.currentRiskTier} onChange={(e) => setCddRefreshInput((p) => ({...p, currentRiskTier: e.target.value}))} placeholder="high / medium / low" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Last CDD Date</label><input value={cddRefreshInput.lastCddDate} onChange={(e) => setCddRefreshInput((p) => ({...p, lastCddDate: e.target.value}))} placeholder="DD/MM/YYYY" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6402,7 +6402,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">VASP Risk Classifier · VARA · FATF R.15 · Travel Rule</div>
                 <p className="text-11 text-ink-3">Assess Virtual Asset Service Provider (VASP) onboarding or correspondent risk. Evaluates VARA licensing, Travel Rule compliance, custody model, geographic exposure, darknet and mixer exposure, and AML programme quality against FATF R.15 and UAE CBUAE VASP guidance.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">VASP Name *</label><input value={vaspInput.vaspName} onChange={(e) => setVaspInput((p) => ({...p, vaspName: e.target.value}))} placeholder="Name of exchange or platform" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">VASP Jurisdiction</label><input value={vaspInput.vaspJurisdiction} onChange={(e) => setVaspInput((p) => ({...p, vaspJurisdiction: e.target.value}))} placeholder="Where incorporated/licensed" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Exchange Type</label><input value={vaspInput.exchangeType} onChange={(e) => setVaspInput((p) => ({...p, exchangeType: e.target.value}))} placeholder="CEX / DEX / P2P / OTC desk" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6442,7 +6442,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Validates an STR draft against UAE FIU goAML schema requirements before filing. Checks field completeness, narrative quality, and suspicion crystallisation date. Outputs a corrected narrative, critical issues, and an improved draft paragraph ready for submission.</p>
                 <div className="space-y-3">
                   <div><label className="block text-10 text-ink-3 mb-1">STR Narrative Draft *</label><textarea value={goAmlInput.narrative} onChange={(e) => setGoAmlInput((p) => ({...p, narrative: e.target.value}))} rows={5} placeholder="Paste your draft STR narrative here for validation..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={goAmlInput.subjectName} onChange={(e) => setGoAmlInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Subject full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Subject ID Number</label><input value={goAmlInput.subjectIdNumber} onChange={(e) => setGoAmlInput((p) => ({...p, subjectIdNumber: e.target.value}))} placeholder="Emirates ID / passport number" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Account Numbers</label><input value={goAmlInput.accountNumbers} onChange={(e) => setGoAmlInput((p) => ({...p, accountNumbers: e.target.value}))} placeholder="All relevant account numbers" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6467,7 +6467,7 @@ export default function MlroAdvisorPage() {
                       {gv.warnings.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-amber mb-1">Warnings</div><ul className="space-y-0.5">{gv.warnings.map((w, i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span>⚠</span>{w}</li>)}</ul></div>}
                       {gv.fieldChecks.length > 0 && (
                         <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Field Checklist</div>
-                        <div className="grid grid-cols-2 gap-1">{gv.fieldChecks.map((fc, i) => <div key={i} className={`text-10 px-2 py-1 rounded ${fc.status === "complete" ? "bg-green-dim text-green" : fc.status === "missing" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>{fc.status === "complete" ? "✓" : fc.status === "missing" ? "✗" : "~"} {fc.field}</div>)}</div></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">{gv.fieldChecks.map((fc, i) => <div key={i} className={`text-10 px-2 py-1 rounded ${fc.status === "complete" ? "bg-green-dim text-green" : fc.status === "missing" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>{fc.status === "complete" ? "✓" : fc.status === "missing" ? "✗" : "~"} {fc.field}</div>)}</div></div>
                       )}
                       <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Feedback</div>{gv.narrativeFeedback}</div>
                       {gv.narrativeWeaknesses.length > 0 && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Weaknesses</div><ul className="space-y-0.5">{gv.narrativeWeaknesses.map((w, i) => <li key={i} className="text-11 text-amber flex gap-1.5"><span>→</span>{w}</li>)}</ul></div>}
@@ -6483,7 +6483,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP EDD Package Generator · UAE FDL 10/2025 Art.14(2) · FATF R.12</div>
                 <p className="text-11 text-ink-3">Generates a complete Politically Exposed Person EDD package: classification, risk rating, full EDD questionnaire, SOW/SOF assessment, required documentation list, ongoing monitoring plan, and a signed MLRO memo template. Senior management approval requirements automatically flagged.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">PEP Name *</label><input value={pepEddInput.pepName} onChange={(e) => setPepEddInput((p) => ({...p, pepName: e.target.value}))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">PEP Role / Position</label><input value={pepEddInput.pepRole} onChange={(e) => setPepEddInput((p) => ({...p, pepRole: e.target.value}))} placeholder="e.g. Minister of Finance, Ambassador, CEO of SOE" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">PEP Jurisdiction</label><input value={pepEddInput.pepJurisdiction} onChange={(e) => setPepEddInput((p) => ({...p, pepJurisdiction: e.target.value}))} placeholder="Country of political role" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6510,7 +6510,7 @@ export default function MlroAdvisorPage() {
                         <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">EDD Questionnaire ({pe.eddQuestionnaire.length} questions)</div>
                         <div className="space-y-2">{pe.eddQuestionnaire.map((q, i) => <div key={i} className="border border-hair-2 rounded p-2.5 bg-bg-panel"><div className="text-10 font-semibold text-brand uppercase">{q.category}</div><div className="text-11 text-ink-0 mt-1">{q.question}</div><div className="text-10 text-ink-3 mt-1">{q.purpose}</div>{q.documentaryEvidence && <div className="text-10 font-mono text-ink-3">Evidence: {q.documentaryEvidence}</div>}</div>)}</div></div>
                       )}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">SOW Assessment</div><p className="text-11 text-ink-1">{pe.sourceOfWealthAssessment}</p></div>
                         <div className="bg-bg-panel border border-hair-2 rounded p-3"><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">SOF Assessment</div><p className="text-11 text-ink-1">{pe.sourceOfFundsAssessment}</p></div>
                       </div>
@@ -6528,7 +6528,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Sanctions Exposure Mapper · EOCN · OFAC · UN · EU · HMT</div>
                 <p className="text-11 text-ink-3">Multi-list sanctions exposure map for a named entity. Assesses exposure across UAE EOCN, OFAC SDN, UN Consolidated List, EU, HMT, and DFAT with per-list hit status, asset freeze obligations, dealing prohibitions, and reporting deadlines. Immediate freeze triggered for EOCN/UN hits.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={sanctionsMapInput.entityName} onChange={(e) => setSanctionsMapInput((p) => ({...p, entityName: e.target.value}))} placeholder="Full name to screen" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Type</label><input value={sanctionsMapInput.entityType} onChange={(e) => setSanctionsMapInput((p) => ({...p, entityType: e.target.value}))} placeholder="individual / corporate / vessel / aircraft" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Nationality / Country</label><input value={sanctionsMapInput.nationality} onChange={(e) => setSanctionsMapInput((p) => ({...p, nationality: e.target.value}))} placeholder="Nationality or country of incorporation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6575,7 +6575,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Analyses transaction descriptions to detect all three ML stages — placement, layering, and integration — including account hopping, round-trip structures, and structuring patterns per UAE FDL 10/2025 and FATF typologies.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Description *</label><textarea value={layeringInput.transactions} onChange={(e) => setLayeringInput((p) => ({...p, transactions: e.target.value}))} rows={4} placeholder="Describe the transaction pattern, amounts, account movements…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={layeringInput.subjectName} onChange={(e) => setLayeringInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full subject name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Account References</label><input value={layeringInput.accountRefs} onChange={(e) => setLayeringInput((p) => ({...p, accountRefs: e.target.value}))} placeholder="Account IDs involved" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Period (days)</label><input value={layeringInput.periodDays} onChange={(e) => setLayeringInput((p) => ({...p, periodDays: e.target.value}))} placeholder="e.g. 30" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6618,7 +6618,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Real Estate ML Analyzer · DLD / RERA / FATF R.22</div>
                 <p className="text-11 text-ink-3">Screens UAE real estate transactions for ML red flags: price manipulation, all-cash purchases, third-party payments, rapid flipping, off-plan structuring, and beneficial ownership opacity per FATF 2022 Real Estate Guidance and UAE FDL 10/2025 DNFBP requirements.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Property Details *</label><textarea value={realEstateMlInput.propertyDetails} onChange={(e) => setRealEstateMlInput((p) => ({...p, propertyDetails: e.target.value}))} rows={3} placeholder="Property type, location, development name, transaction structure…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Buyer Name</label><input value={realEstateMlInput.buyerName} onChange={(e) => setRealEstateMlInput((p) => ({...p, buyerName: e.target.value}))} placeholder="Full buyer name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Buyer Nationality</label><input value={realEstateMlInput.buyerNationality} onChange={(e) => setRealEstateMlInput((p) => ({...p, buyerNationality: e.target.value}))} placeholder="Nationality" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6666,7 +6666,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Traces fund flows through ML stages (placement → layering → integration), identifies traceable assets, assesses confiscation potential, and outlines investigative and MLAT requirements per UAE Federal Law 4/2002 and UNCAC asset recovery provisions.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Initial Funds Description *</label><textarea value={assetTracerInput.initialFunds} onChange={(e) => setAssetTracerInput((p) => ({...p, initialFunds: e.target.value}))} rows={3} placeholder="Describe the initial funds — origin, amount, form (cash, wire, crypto)…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Suspected Criminal Source</label><input value={assetTracerInput.suspectedSource} onChange={(e) => setAssetTracerInput((p) => ({...p, suspectedSource: e.target.value}))} placeholder="e.g. fraud, bribery, drug trafficking" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Tracing Period</label><input value={assetTracerInput.tracingPeriod} onChange={(e) => setAssetTracerInput((p) => ({...p, tracingPeriod: e.target.value}))} placeholder="e.g. Jan 2023 – Dec 2024" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={assetTracerInput.subjectName} onChange={(e) => setAssetTracerInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Subject / defendant name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6709,7 +6709,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Reconciles declared income streams against declared assets to identify unexplained wealth gaps and illicit enrichment risk per UNCAC Art.20, UAE FDL 10/2025 EDD requirements, and FATF R.12 PEP SOW/SOF standards.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Declared Income (description) *</label><textarea value={sowInput.declaredIncome} onChange={(e) => setSowInput((p) => ({...p, declaredIncome: e.target.value}))} rows={3} placeholder="Describe income sources — salary, business income, rental, investments, inheritance…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={sowInput.subjectName} onChange={(e) => setSowInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full subject name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Review Period (years)</label><input value={sowInput.periodYears} onChange={(e) => setSowInput((p) => ({...p, periodYears: e.target.value}))} placeholder="e.g. 7" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
@@ -6728,7 +6728,7 @@ export default function MlroAdvisorPage() {
                         {Boolean(r["illicitEnrichmentRisk"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Illicit Enrichment Risk</span>}
                         <span className="font-mono text-11 px-2 py-px rounded bg-bg-2 text-ink-2">Unexplained: AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString()} ({String(r["unexplainedWealthPct"] ?? 0)}%)</span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         <div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Declared Income</div><div className="font-mono text-12 font-semibold text-ink-0">AED {Number(r["totalDeclaredIncomeAed"] ?? 0).toLocaleString()}</div></div>
                         <div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Declared Assets</div><div className="font-mono text-12 font-semibold text-ink-0">AED {Number(r["totalDeclaredAssetsAed"] ?? 0).toLocaleString()}</div></div>
                         <div className={`border rounded p-2 text-center ${risk === "critical" || risk === "high" ? "border-red-dim bg-red-dim" : "border-hair-2"}`}><div className="text-10 text-ink-3 mb-0.5">Unexplained Gap</div><div className="font-mono text-12 font-semibold text-red">AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString()}</div></div>
@@ -6747,7 +6747,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Insider Threat Screen · Tipping-Off · Financial Crime Facilitation</div>
                 <p className="text-11 text-ink-3">Assesses employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat categories including financial crime facilitation, tipping off (FDL 10/2025 Art.20), fraud, and bribery. Provides coordinated HR and compliance action recommendations.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Employee Name</label><input value={insiderInput.employeeName} onChange={(e) => setInsiderInput((p) => ({...p, employeeName: e.target.value}))} placeholder="Full employee name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Employee Role *</label><input value={insiderInput.employeeRole} onChange={(e) => setInsiderInput((p) => ({...p, employeeRole: e.target.value}))} placeholder="e.g. Relationship Manager, MLRO" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Observed Behaviours *</label><textarea value={insiderInput.observedBehaviours} onChange={(e) => setInsiderInput((p) => ({...p, observedBehaviours: e.target.value}))} rows={3} placeholder="Describe observed behaviours, access anomalies, system logs, communications…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
@@ -6781,7 +6781,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Board AML Report Generator · Quarterly MIS · FDL 10/2025 Art.5(2)</div>
                 <p className="text-11 text-ink-3">Generates comprehensive quarterly Board AML/CFT reports including executive summaries, KPI commentary, MLRO updates, regulatory highlights, open audit findings, upcoming obligations, and board recommendations per CBUAE AML/CFT Guidelines §3.2.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Name</label><input value={boardAmlInput.institutionName} onChange={(e) => setBoardAmlInput((p) => ({...p, institutionName: e.target.value}))} placeholder="Institution / entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Reporting Period *</label><input value={boardAmlInput.reportingPeriod} onChange={(e) => setBoardAmlInput((p) => ({...p, reportingPeriod: e.target.value}))} placeholder="e.g. Q1 2026" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">STR Count</label><input value={boardAmlInput.strCount} onChange={(e) => setBoardAmlInput((p) => ({...p, strCount: e.target.value}))} placeholder="e.g. 8 STRs filed" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6810,7 +6810,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Enforcement Exposure Estimator · Penalties · Criminal Liability</div>
                 <p className="text-11 text-ink-3">Estimates regulatory enforcement exposure including penalty ranges, likely penalties, mitigating/aggravating factors, precedent cases, criminal exposure, MLRO personal liability, and self-reporting benefits per UAE FDL 10/2025 and CBUAE enforcement framework.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Violation Description *</label><textarea value={enforcementInput.violation} onChange={(e) => setEnforcementInput((p) => ({...p, violation: e.target.value}))} rows={3} placeholder="Describe the AML/CFT violation or compliance failure in detail…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={enforcementInput.institutionType} onChange={(e) => setEnforcementInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / real estate agent…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Violation Period</label><input value={enforcementInput.violationPeriod} onChange={(e) => setEnforcementInput((p) => ({...p, violationPeriod: e.target.value}))} placeholder="e.g. 6 months / 2 years" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6829,7 +6829,7 @@ export default function MlroAdvisorPage() {
                         {Boolean(r["criminalExposure"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Criminal Exposure</span>}
                         {Boolean(r["mlroPersonalLiability"]) && <span className="font-mono text-11 px-2 py-px rounded bg-amber-dim text-amber">MLRO Personal Liability</span>}
                       </div>
-                      {penRange && <div className="grid grid-cols-3 gap-2"><div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Min Penalty</div><div className="font-mono text-12 font-semibold text-ink-0">{penRange["min"]} {penRange["currency"]}</div></div><div className="border border-red-dim bg-red-dim rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Likely Penalty</div><div className="font-mono text-12 font-semibold text-red">{String(r["likelyPenalty"] ?? "")}</div></div><div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Max Penalty</div><div className="font-mono text-12 font-semibold text-ink-0">{penRange["max"]} {penRange["currency"]}</div></div></div>}
+                      {penRange && <div className="grid grid-cols-1 md:grid-cols-3 gap-2"><div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Min Penalty</div><div className="font-mono text-12 font-semibold text-ink-0">{penRange["min"]} {penRange["currency"]}</div></div><div className="border border-red-dim bg-red-dim rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Likely Penalty</div><div className="font-mono text-12 font-semibold text-red">{String(r["likelyPenalty"] ?? "")}</div></div><div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Max Penalty</div><div className="font-mono text-12 font-semibold text-ink-0">{penRange["max"]} {penRange["currency"]}</div></div></div>}
                       {Array.isArray(r["mitigatingFactors"]) && <div><div className="text-10 uppercase tracking-wide-3 text-green mb-1">Mitigating Factors</div><ul className="space-y-0.5">{(r["mitigatingFactors"] as string[]).map((f, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-green">+</span>{f}</li>)}</ul></div>}
                       {Array.isArray(r["aggravatingFactors"]) && <div><div className="text-10 uppercase tracking-wide-3 text-red mb-1">Aggravating Factors</div><ul className="space-y-0.5">{(r["aggravatingFactors"] as string[]).map((f, i) => <li key={i} className="text-11 text-ink-1 flex gap-1.5"><span className="text-red">−</span>{f}</li>)}</ul></div>}
                       <div className="bg-brand-dim rounded p-3 text-11 text-brand-deep">{String(r["selfReportingBenefit"] ?? "")}</div>
@@ -6847,7 +6847,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Generates structured inter-agency referrals and intelligence disclosures to UAE FIU, law enforcement, and regulatory bodies, with evidence summaries, legal basis, and recommended referral pathways per UAE FDL 10/2025 and international cooperation frameworks.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Case Description *</label><textarea value={referralInput.caseDescription} onChange={(e) => setReferralInput((p) => ({...p, caseDescription: e.target.value}))} rows={4} placeholder="Describe the case, suspicious activity, and grounds for referral…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Suspected Offence</label><input value={referralInput.suspectedOffence} onChange={(e) => setReferralInput((p) => ({...p, suspectedOffence: e.target.value}))} placeholder="e.g. money laundering, fraud, bribery" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={referralInput.subjectName} onChange={(e) => setReferralInput((p) => ({...p, subjectName: e.target.value}))} placeholder="Full subject name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Subject ID</label><input value={referralInput.subjectId} onChange={(e) => setReferralInput((p) => ({...p, subjectId: e.target.value}))} placeholder="Passport / Emirates ID / account" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6877,7 +6877,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Reviews AML/CFT policy documents against UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Identifies gaps, outdated provisions, missing mandatory elements, and drafts recommended amendments.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Policy Text *</label><textarea value={policyInput.policyText} onChange={(e) => setPolicyInput((p) => ({...p, policyText: e.target.value}))} rows={6} placeholder="Paste your AML/CFT policy text for review…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Policy Type</label><input value={policyInput.policyType} onChange={(e) => setPolicyInput((p) => ({...p, policyType: e.target.value}))} placeholder="e.g. CDD Policy, STR Policy, Training Policy" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={policyInput.institutionType} onChange={(e) => setPolicyInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Last Review Date</label><input value={policyInput.lastReviewDate} onChange={(e) => setPolicyInput((p) => ({...p, lastReviewDate: e.target.value}))} placeholder="e.g. January 2024" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6904,7 +6904,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Compliance Test Planner · AML Testing Programme Builder</div>
                 <p className="text-11 text-ink-3">Generates structured AML/CFT compliance testing programmes tailored to institution type, risk focus, and testing area. Covers transaction monitoring testing, CDD file reviews, STR quality reviews, training assessments, and controls testing per FATF R.18 and CBUAE requirements.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={compTestInput.institutionType} onChange={(e) => setCompTestInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Testing Area</label><input value={compTestInput.testingArea} onChange={(e) => setCompTestInput((p) => ({...p, testingArea: e.target.value}))} placeholder="e.g. CDD, TM, STR quality, training" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Risk Focus</label><input value={compTestInput.riskFocus} onChange={(e) => setCompTestInput((p) => ({...p, riskFocus: e.target.value}))} placeholder="e.g. PEP, high-risk jurisdictions, TBML" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6932,7 +6932,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Analyses SWIFT MT messages and Letters of Credit for AML/CFT red flags including TBML indicators, sanctions nexus, inconsistent documentation, correspondent banking risks, and regulatory obligations per FATF trade finance guidance and UAE AML requirements.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">SWIFT Message / LC Details *</label><textarea value={swiftLcInput.swiftMessage} onChange={(e) => setSwiftLcInput((p) => ({...p, swiftMessage: e.target.value}))} rows={5} placeholder="Paste SWIFT MT message text or LC details…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Message Type</label><input value={swiftLcInput.messageType} onChange={(e) => setSwiftLcInput((p) => ({...p, messageType: e.target.value}))} placeholder="e.g. MT103, MT202, MT700" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Goods Description</label><input value={swiftLcInput.goodsDescription} onChange={(e) => setSwiftLcInput((p) => ({...p, goodsDescription: e.target.value}))} placeholder="What goods / services are described" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Beneficiary Country</label><input value={swiftLcInput.beneficiaryCountry} onChange={(e) => setSwiftLcInput((p) => ({...p, beneficiaryCountry: e.target.value}))} placeholder="e.g. UAE, China, Turkey" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6984,7 +6984,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">EWRA Generator · Enterprise-Wide Risk Assessment</div>
                 <p className="text-11 text-ink-3">Generates a structured Enterprise-Wide Risk Assessment (EWRA) covering inherent ML/TF/PF risks, control effectiveness, residual risk ratings, and methodology per UAE FDL 10/2025, FATF guidance on national and institutional risk assessments, and CBUAE EWRA requirements.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={ewraInput.institutionType} onChange={(e) => setEwraInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Products & Services</label><input value={ewraInput.productsServices} onChange={(e) => setEwraInput((p) => ({...p, productsServices: e.target.value}))} placeholder="e.g. trade finance, retail banking, gold trading" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Customer Base</label><input value={ewraInput.customerBase} onChange={(e) => setEwraInput((p) => ({...p, customerBase: e.target.value}))} placeholder="e.g. retail, corporate, PEPs, DNFBPs" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7012,7 +7012,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AML Programme Gap Analyser · FATF R.18 · CBUAE Compliance</div>
                 <p className="text-11 text-ink-3">Conducts a structured gap analysis of an institution&apos;s AML/CFT programme against UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF R.18 internal control requirements. Identifies missing mandatory elements and prioritises remediation actions.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={amlGapInput.institutionType} onChange={(e) => setAmlGapInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Staff Count</label><input value={amlGapInput.staffCount} onChange={(e) => setAmlGapInput((p) => ({...p, staffCount: e.target.value}))} placeholder="e.g. 50" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Programme Description</label><textarea value={amlGapInput.programmeDescription} onChange={(e) => setAmlGapInput((p) => ({...p, programmeDescription: e.target.value}))} rows={2} placeholder="Describe current AML programme elements (policies, training, TM, CDD, reporting…)" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
@@ -7042,7 +7042,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Analyses trade invoices for TBML indicators including over/under-invoicing, phantom shipments, multiple invoicing, dual-use goods, and pricing anomalies. References FATF Trade-Based ML Guidance (2020), ICC guidance, and UAE AML requirements for trade finance.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Invoice Details *</label><textarea value={tradeInvoiceInput.invoiceDetails} onChange={(e) => setTradeInvoiceInput((p) => ({...p, invoiceDetails: e.target.value}))} rows={4} placeholder="Paste invoice data — line items, amounts, quantities, parties, payment terms…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Commodity Type</label><input value={tradeInvoiceInput.commodityType} onChange={(e) => setTradeInvoiceInput((p) => ({...p, commodityType: e.target.value}))} placeholder="e.g. electronics, chemicals, textiles, gold" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">HS Code</label><input value={tradeInvoiceInput.hsCode} onChange={(e) => setTradeInvoiceInput((p) => ({...p, hsCode: e.target.value}))} placeholder="e.g. 8541.10" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Exporter Country</label><input value={tradeInvoiceInput.exporterCountry} onChange={(e) => setTradeInvoiceInput((p) => ({...p, exporterCountry: e.target.value}))} placeholder="Country of export" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7074,7 +7074,7 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Maps relationships between entities using shared addresses, directors, accounts, and transaction links to identify ML network structures, conduit entities, and beneficial ownership chains per FATF R.24-25 and UAE UBO requirements.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Entities *</label><textarea value={networkMapInput.entities} onChange={(e) => setNetworkMapInput((p) => ({...p, entities: e.target.value}))} rows={3} placeholder="List entities / individuals in the network — names, types, countries…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div><label className="block text-10 text-ink-3 mb-1">Shared Addresses</label><input value={networkMapInput.sharedAddresses} onChange={(e) => setNetworkMapInput((p) => ({...p, sharedAddresses: e.target.value}))} placeholder="Common registered / business addresses" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Shared Directors</label><input value={networkMapInput.sharedDirectors} onChange={(e) => setNetworkMapInput((p) => ({...p, sharedDirectors: e.target.value}))} placeholder="Common directors / shareholders" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                     <div><label className="block text-10 text-ink-3 mb-1">Shared Accounts</label><input value={networkMapInput.sharedAccounts} onChange={(e) => setNetworkMapInput((p) => ({...p, sharedAccounts: e.target.value}))} placeholder="Linked bank accounts" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7103,7 +7103,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Risk Appetite Builder · Board-Approved AML/CFT Risk Appetite Statement</div>
                 <p className="text-11 text-ink-3">Generates a structured AML/CFT Risk Appetite Statement (RAS) for Board approval covering ML/TF/PF risk tolerance thresholds, prohibited activities, acceptable risk boundaries, and monitoring metrics per UAE FDL 10/2025 Art.5 Board accountability requirements and FATF governance guidance.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={riskAppInput.institutionType} onChange={(e) => setRiskAppInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Key Products</label><input value={riskAppInput.keyProducts} onChange={(e) => setRiskAppInput((p) => ({...p, keyProducts: e.target.value}))} placeholder="e.g. trade finance, private banking, crypto" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Risk Profile</label><input value={riskAppInput.riskProfile} onChange={(e) => setRiskAppInput((p) => ({...p, riskProfile: e.target.value}))} placeholder="conservative / moderate / higher-risk" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7130,7 +7130,7 @@ export default function MlroAdvisorPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Regulatory Exam Prep · CBUAE / FATF Inspection Readiness</div>
                 <p className="text-11 text-ink-3">Generates structured regulatory examination preparation packs covering common examiner questions, expected evidence, self-assessment checklists, and remediation priorities for CBUAE AML/CFT inspections and FATF mutual evaluation preparation per UAE FDL 10/2025 and FATF Recommendations.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Exam Area *</label><input value={examPrepInput.examArea} onChange={(e) => setExamPrepInput((p) => ({...p, examArea: e.target.value}))} placeholder="e.g. CDD, TM, STR quality, EWRA, PEP, sanctions…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={examPrepInput.institutionType} onChange={(e) => setExamPrepInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={examPrepInput.context} onChange={(e) => setExamPrepInput((p) => ({...p, context: e.target.value}))} placeholder="Upcoming inspection focus, known weaknesses, recent regulatory changes…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7158,7 +7158,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Non-Profit Organisation Risk Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.8 · UAE Cabinet Decision 74/2020 · NPO/NGO ML/TF vulnerability assessment</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">NPO Name</label><input value={npoInput.npoName} onChange={e => setNpoInput(p => ({...p, npoName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Organisation name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={npoInput.country} onChange={e => setNpoInput(p => ({...p, country: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Registration country" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sector / Activity</label><input value={npoInput.sector} onChange={e => setNpoInput(p => ({...p, sector: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Humanitarian, religious, education…" /></div>
@@ -7189,7 +7189,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Correspondent Bank Risk Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.13 · BCBS Guidelines · Correspondent banking ML/TF risk and shell-bank prohibition</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Bank Name</label><input value={corrBankInput.bankName} onChange={e => setCorrBankInput(p => ({...p, bankName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Correspondent bank name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={corrBankInput.country} onChange={e => setCorrBankInput(p => ({...p, country: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Jurisdiction of incorporation" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Body</label><input value={corrBankInput.regulatoryBody} onChange={e => setCorrBankInput(p => ({...p, regulatoryBody: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. OCC, FCA, SAMA" /></div>
@@ -7223,7 +7223,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Mixed Funds / Commingling Analysis</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · POCA 2002 (UK) · UAE AML Law Art.2 · Taint percentage and confiscation risk</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Account Holder</label><input value={mixedFundsInput.accountHolder} onChange={e => setMixedFundsInput(p => ({...p, accountHolder: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name or entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Balance</label><input value={mixedFundsInput.totalBalance} onChange={e => setMixedFundsInput(p => ({...p, totalBalance: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 5,000,000" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Suspected Proceeds Amount</label><input value={mixedFundsInput.suspectedProceedsAmount} onChange={e => setMixedFundsInput(p => ({...p, suspectedProceedsAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 2,000,000" /></div>
@@ -7258,7 +7258,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Sanctions Breach Response Advisor</div>
                   <div className="text-11 text-ink-2 mt-0.5">OFAC · EU Regulation 833/2014 · UAE Cabinet Decision 99/2024 · Voluntary disclosure strategy</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Counterparty</label><input value={sanctionsBreachInput.counterparty} onChange={e => setSanctionsBreachInput(p => ({...p, counterparty: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name of sanctioned entity/individual" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Amount</label><input value={sanctionsBreachInput.transactionAmount} onChange={e => setSanctionsBreachInput(p => ({...p, transactionAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 500,000" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sanctions List</label><input value={sanctionsBreachInput.sanctionsList} onChange={e => setSanctionsBreachInput(p => ({...p, sanctionsList: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="OFAC SDN, EU, UN, UAEI…" /></div>
@@ -7290,7 +7290,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Asset Freeze / Seizure Advisor</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE AML Law Art.14 · FATF R.4 · Egmont Group · Freeze order drafting and procedure</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={freezeSeizureInput.subjectName} onChange={e => setFreezeSeizureInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Description</label><input value={freezeSeizureInput.assetDescription} onChange={e => setFreezeSeizureInput(p => ({...p, assetDescription: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank accounts, property, vehicles…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis Cited</label><input value={freezeSeizureInput.legalBasisCited} onChange={e => setFreezeSeizureInput(p => ({...p, legalBasisCited: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. UAE AML Art.14, court order no." /></div>
@@ -7319,7 +7319,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Audit Response Generator</div>
                   <div className="text-11 text-ink-2 mt-0.5">CBUAE Notice 2023 · IIA Standards · Structured management responses to AML/CFT audit findings</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Auditor / Body Name</label><input value={auditResponseInput.auditorName} onChange={e => setAuditResponseInput(p => ({...p, auditorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Internal Audit, CBUAE, KPMG" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Audit Date</label><input value={auditResponseInput.auditDate} onChange={e => setAuditResponseInput(p => ({...p, auditDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="YYYY-MM-DD" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={auditResponseInput.institutionType} onChange={e => setAuditResponseInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="bank / DPMS / VASP…" /></div>
@@ -7355,7 +7355,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">High Net Worth Individual Profile</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · UAE AML Art.16 · EDD requirements for HNWI and source-of-wealth verification</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={hnwInput.subjectName} onChange={e => setHnwInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nationality</label><input value={hnwInput.nationality} onChange={e => setHnwInput(p => ({...p, nationality: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of nationality" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wealth Estimate (AED)</label><input value={hnwInput.wealthEstimateAed} onChange={e => setHnwInput(p => ({...p, wealthEstimateAed: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 500,000,000" /></div>
@@ -7388,7 +7388,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Cash-Intensive Business Risk Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · UAE AML Law Art.3 · Structuring typologies and cash deposit pattern analysis</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Name</label><input value={cashIntensiveInput.businessName} onChange={e => setCashIntensiveInput(p => ({...p, businessName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Type</label><input value={cashIntensiveInput.businessType} onChange={e => setCashIntensiveInput(p => ({...p, businessType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Restaurant, car wash, retail…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Monthly Revenue</label><input value={cashIntensiveInput.monthlyRevenue} onChange={e => setCashIntensiveInput(p => ({...p, monthlyRevenue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 200,000" /></div>
@@ -7420,7 +7420,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Trust & Complex Structure Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.25 · UAE FDL 10/2025 Art.7 · UBO identification and opacity risk in layered structures</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={trustStructInput.entityName} onChange={e => setTrustStructInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Trust / foundation / holding name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Structure Type</label><input value={trustStructInput.structureType} onChange={e => setTrustStructInput(p => ({...p, structureType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Discretionary trust, foundation, LLC chain…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={trustStructInput.jurisdictions} onChange={e => setTrustStructInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="BVI, Cayman, UAE, Jersey…" /></div>
@@ -7452,7 +7452,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Cross-Border Wire Transfer Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.16 · UAE Cabinet Decision 10/2019 · Travel Rule compliance and corridor risk</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originator Name</label><input value={crossBorderInput.originatorName} onChange={e => setCrossBorderInput(p => ({...p, originatorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sending party name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary Name</label><input value={crossBorderInput.beneficiaryName} onChange={e => setCrossBorderInput(p => ({...p, beneficiaryName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Receiving party name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount</label><input value={crossBorderInput.amount} onChange={e => setCrossBorderInput(p => ({...p, amount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 250,000" /></div>
@@ -7485,7 +7485,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">FIU Feedback Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FIU · Egmont Group · goAML feedback loop — structured response to FIU feedback on STRs</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">FIU Reference</label><input value={fiuFeedbackInput.fiuRef} onChange={e => setFiuFeedbackInput(p => ({...p, fiuRef: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FIU feedback reference number" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Feedback Date</label><input value={fiuFeedbackInput.feedbackDate} onChange={e => setFiuFeedbackInput(p => ({...p, feedbackDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="YYYY-MM-DD" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Original STR Reference</label><input value={fiuFeedbackInput.originalStrRef} onChange={e => setFiuFeedbackInput(p => ({...p, originalStrRef: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="STR / goAML reference" /></div>
@@ -7514,7 +7514,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">De-Risking Impact Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Guidance on De-Risking · Basel Committee · Proportionality and financial inclusion obligations</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Segment</label><input value={deriskingInput.customerSegment} onChange={e => setDeriskingInput(p => ({...p, customerSegment: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. MSBs, NPOs, crypto exchanges" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Affected Customer Count</label><input value={deriskingInput.affectedCount} onChange={e => setDeriskingInput(p => ({...p, affectedCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of affected customers" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={deriskingInput.institutionType} onChange={e => setDeriskingInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="bank / VASP / DPMS…" /></div>
@@ -7545,7 +7545,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Legal Professional Privilege Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.23 · UAE Federal Decree 26/2021 · LPP scope, tipping-off risk, and disclosure obligations</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Type</label><input value={legalPrivInput.subjectType} onChange={e => setLegalPrivInput(p => ({...p, subjectType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="law firm, in-house counsel, barrister…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Communication Type</label><input value={legalPrivInput.communicationType} onChange={e => setLegalPrivInput(p => ({...p, communicationType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="legal advice, litigation support, transactional…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Relationship</label><input value={legalPrivInput.legalRelationship} onChange={e => setLegalPrivInput(p => ({...p, legalRelationship: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Describe the client–lawyer relationship and instruction" /></div>
@@ -7575,7 +7575,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Money Laundering Scenario Builder</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF 40 Recommendations · UNODC · Placement / Layering / Integration typology mapping</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={mlScenarioInput.subjectName} onChange={e => setMlScenarioInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Predicate Offence</label><input value={mlScenarioInput.predicateOffence} onChange={e => setMlScenarioInput(p => ({...p, predicateOffence: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fraud, corruption, drug trafficking…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Amount</label><input value={mlScenarioInput.estimatedAmount} onChange={e => setMlScenarioInput(p => ({...p, estimatedAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 25,000,000" /></div>
@@ -7609,7 +7609,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Staff Alert / Internal Whistleblower Adviser</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.24 · FATF R.18 · Internal alert credibility and MLRO action protocol</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Alert Source</label><input value={staffAlertInput.alertSource} onChange={e => setStaffAlertInput(p => ({...p, alertSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anonymous tip, line manager, hotline…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Name</label><input value={staffAlertInput.employeeName} onChange={e => setStaffAlertInput(p => ({...p, employeeName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject employee (if known)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Role</label><input value={staffAlertInput.employeeRole} onChange={e => setStaffAlertInput(p => ({...p, employeeRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Relationship manager, teller, analyst…" /></div>
@@ -7643,7 +7643,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">STR Quality Scorer</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.15 · FATF R.20 · goAML quality gate — score your STR narrative before submission</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={strQualityInput.subjectName} onChange={e => setStrQualityInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Reporting subject" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Amount</label><input value={strQualityInput.totalAmount} onChange={e => setStrQualityInput(p => ({...p, totalAmount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. AED 500,000" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Count</label><input value={strQualityInput.transactionCount} onChange={e => setStrQualityInput(p => ({...p, transactionCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of transactions" /></div>
@@ -7673,7 +7673,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Hawala / Informal Value Transfer Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.14 · UAE FDL 10/2025 · Informal value transfer typology indicators and risk assessment</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={hawalaInput.subjectName} onChange={e => setHawalaInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or business" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Type</label><input value={hawalaInput.businessType} onChange={e => setHawalaInput(p => ({...p, businessType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Exchange, trading, retail…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash Volume</label><input value={hawalaInput.cashVolume} onChange={e => setHawalaInput(p => ({...p, cashVolume: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Monthly cash turnover" /></div>
@@ -7703,7 +7703,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Nominee Director / Shareholder Risk Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · UAE Commercial Companies Law · Nominee arrangement risk and beneficial ownership assessment</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={nomineeInput.companyName} onChange={e => setNomineeInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Director Name</label><input value={nomineeInput.directorName} onChange={e => setNomineeInput(p => ({...p, directorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nominee director name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Incorporation Date</label><input value={nomineeInput.incorporationDate} onChange={e => setNomineeInput(p => ({...p, incorporationDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 2021-03-15" /></div>
@@ -7733,7 +7733,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">PEP Corporate Nexus Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · PEP-linked corporate ownership risk and enhanced due diligence requirements</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={pepCorpInput.companyName} onChange={e => setPepCorpInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corporate entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Name</label><input value={pepCorpInput.pepName} onChange={e => setPepCorpInput(p => ({...p, pepName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Politically exposed person" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Role</label><input value={pepCorpInput.pepRole} onChange={e => setPepCorpInput(p => ({...p, pepRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Minister, MP, senior official…" /></div>
@@ -7763,7 +7763,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Crypto Mixing / Obfuscation Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.15 · VA Guidance · Cryptocurrency mixing, tumbling, and chain-hopping typology detection</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label><input value={cryptoMixInput.walletAddress} onChange={e => setCryptoMixInput(p => ({...p, walletAddress: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Blockchain wallet address" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crypto Type</label><input value={cryptoMixInput.cryptoType} onChange={e => setCryptoMixInput(p => ({...p, cryptoType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="BTC, ETH, XMR…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount (USD)</label><input value={cryptoMixInput.amountUsd} onChange={e => setCryptoMixInput(p => ({...p, amountUsd: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated USD value" /></div>
@@ -7793,7 +7793,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Ghost / Shell Company Identifier</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · UAE Commercial Companies Law · Ghost company indicators and substance evaluation</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={ghostCoInput.companyName} onChange={e => setGhostCoInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Incorporation Date</label><input value={ghostCoInput.incorporationDate} onChange={e => setGhostCoInput(p => ({...p, incorporationDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 2020-01-10" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Count</label><input value={ghostCoInput.employeeCount} onChange={e => setGhostCoInput(p => ({...p, employeeCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Known or stated headcount" /></div>
@@ -7823,7 +7823,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Periodic KYC Review Planner</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.13 · FATF R.10 · Periodic CDD review cycle planning and overdue queue prioritisation</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={pKycInput.institutionType} onChange={e => setPKycInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank, DNFBP, VASP…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Customer Count</label><input value={pKycInput.customerCount} onChange={e => setPKycInput(p => ({...p, customerCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 12,000" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">High-Risk Count</label><input value={pKycInput.highRiskCount} onChange={e => setPKycInput(p => ({...p, highRiskCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of high-risk customers" /></div>
@@ -7850,7 +7850,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Whistleblower Report Handler</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.24 · FATF R.18 · Whistleblower allegation triage, credibility assessment, and MLRO response protocol</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Report Source</label><input value={whistleInput.reportSource} onChange={e => setWhistleInput(p => ({...p, reportSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anonymous, employee, regulator…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Accused Role</label><input value={whistleInput.accusedRole} onChange={e => setWhistleInput(p => ({...p, accusedRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Director, compliance officer, teller…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Affected Customers</label><input value={whistleInput.affectedCustomers} onChange={e => setWhistleInput(p => ({...p, affectedCustomers: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number or names of affected customers" /></div>
@@ -7880,7 +7880,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Trade Finance Red Flag Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF TBML Guidance · UAE FDL 10/2025 · Trade-based money laundering indicators in trade finance transactions</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Type</label><input value={tradeFinRfInput.transactionType} onChange={e => setTradeFinRfInput(p => ({...p, transactionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="LC, documentary collection, open account…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Commodity</label><input value={tradeFinRfInput.commodity} onChange={e => setTradeFinRfInput(p => ({...p, commodity: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Goods being traded" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Importer Name</label><input value={tradeFinRfInput.importerName} onChange={e => setTradeFinRfInput(p => ({...p, importerName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Importing party" /></div>
@@ -7912,7 +7912,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Sanctions Exposure Calculator</div>
                   <div className="text-11 text-ink-2 mt-0.5">OFAC · UN · EU · UAE SFO — Quantify entity sanctions exposure across multiple regimes and jurisdictions</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={sanctionsExpInput.entityName} onChange={e => setSanctionsExpInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or corporate entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={sanctionsExpInput.entityType} onChange={e => setSanctionsExpInput(p => ({...p, entityType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual, corporate, vessel, aircraft…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={sanctionsExpInput.jurisdictions} onChange={e => setSanctionsExpInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries of nexus (comma-separated)" /></div>
@@ -7942,7 +7942,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Customer Lifecycle Risk Monitor</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.13 · FATF R.10 · Ongoing monitoring and risk rating evolution throughout the customer lifecycle</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Name</label><input value={custLifeInput.customerName} onChange={e => setCustLifeInput(p => ({...p, customerName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer or entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Onboarding Date</label><input value={custLifeInput.onboardingDate} onChange={e => setCustLifeInput(p => ({...p, onboardingDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 2022-06-01" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Current Risk Rating</label><input value={custLifeInput.currentRiskRating} onChange={e => setCustLifeInput(p => ({...p, currentRiskRating: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Low, medium, high" /></div>
@@ -7972,7 +7972,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Enhanced PEP Screening</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · Enhanced due diligence for politically exposed persons including wealth and connections analysis</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={pepEnhInput.subjectName} onChange={e => setPepEnhInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="PEP full name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Current Role</label><input value={pepEnhInput.currentRole} onChange={e => setPepEnhInput(p => ({...p, currentRole: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Current political or senior position" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={pepEnhInput.jurisdiction} onChange={e => setPepEnhInput(p => ({...p, jurisdiction: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of political position" /></div>
@@ -8002,7 +8002,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">AML Training Gap Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.19 · FATF R.18 · Identify AML/CFT training gaps and build a remediation programme</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Staff Count</label><input value={amlTrainInput.staffCount} onChange={e => setAmlTrainInput(p => ({...p, staffCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total number of staff" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Completion Rate (%)</label><input value={amlTrainInput.completionRate} onChange={e => setAmlTrainInput(p => ({...p, completionRate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 72%" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">High-Risk Roles</label><input value={amlTrainInput.highRiskRoles} onChange={e => setAmlTrainInput(p => ({...p, highRiskRoles: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Roles requiring priority training" /></div>
@@ -8031,7 +8031,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">Beneficial Owner Verification</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24/R.25 · UAE Federal Law 32 of 2021 · Verify and document ultimate beneficial ownership through complex structures</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={uboVerifyInput.entityName} onChange={e => setUboVerifyInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corporate entity to investigate" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">UBO Name</label><input value={uboVerifyInput.uboName} onChange={e => setUboVerifyInput(p => ({...p, uboName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Claimed ultimate beneficial owner" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={uboVerifyInput.jurisdictions} onChange={e => setUboVerifyInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries in the structure" /></div>
@@ -8061,7 +8061,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">AML KPI Dashboard Generator</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 · FATF R.33 · Generate a comprehensive AML programme KPI assessment for board and regulator reporting</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={amlKpiInput.institutionType} onChange={e => setAmlKpiInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank, DNFBP, VASP, insurer…" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">STR Count (Annual)</label><input value={amlKpiInput.strCount} onChange={e => setAmlKpiInput(p => ({...p, strCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Annual STR filings" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">False Positive Rate (%)</label><input value={amlKpiInput.falsePositiveRate} onChange={e => setAmlKpiInput(p => ({...p, falsePositiveRate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 85%" /></div>
@@ -8094,7 +8094,7 @@ export default function MlroAdvisorPage() {
                 </div>
 
                 {/* Transaction & Parties */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Type</label>
                     <select value={tradeFinRiskInput.transactionType} onChange={e => setTradeFinRiskInput(p => ({...p, transactionType: e.target.value as typeof p.transactionType}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand">
@@ -8114,7 +8114,7 @@ export default function MlroAdvisorPage() {
                 </div>
 
                 {/* Goods & Value */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Goods Description</label><input value={tradeFinRiskInput.goods} onChange={e => setTradeFinRiskInput(p => ({...p, goods: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. industrial precision components, gold bullion, consumer electronics" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">HS Code</label><input value={tradeFinRiskInput.hsCode} onChange={e => setTradeFinRiskInput(p => ({...p, hsCode: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 8487.90" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared Value</label><input value={tradeFinRiskInput.declaredValue} onChange={e => setTradeFinRiskInput(p => ({...p, declaredValue: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 3,450,000" /></div>
@@ -8126,7 +8126,7 @@ export default function MlroAdvisorPage() {
                 {/* Document Flags */}
                 <div>
                   <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Documentary Red Flags</div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {([
                       ["docMultipleInvoiceRevisions", "Multiple invoice revisions with material value changes"],
                       ["docValueMismatch", "Value mismatch across documentary set"],
@@ -8194,7 +8194,7 @@ export default function MlroAdvisorPage() {
                       {pa && (
                         <div className="border border-hair-2 rounded-lg p-3 space-y-2">
                           <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Price Analysis</div>
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div><div className="text-10 text-ink-3 mb-0.5">Declared Value</div><div className="text-12 font-semibold text-ink-0">{pa.declaredValue}</div></div>
                             <div><div className="text-10 text-ink-3 mb-0.5">Market Benchmark</div><div className="text-12 font-semibold text-ink-0">{pa.benchmarkRange}</div></div>
                             <div><div className="text-10 text-ink-3 mb-0.5">Variance</div><div className={`text-12 font-bold ${pa.anomalyScore >= 70 ? "text-red" : pa.anomalyScore >= 40 ? "text-amber" : "text-brand"}`}>{pa.variance}</div></div>
@@ -8229,7 +8229,7 @@ export default function MlroAdvisorPage() {
                       )}
 
                       {/* Goods & Counterparty side by side */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {gr && (
                           <div className="border border-hair-2 rounded-lg p-3 space-y-1.5">
                             <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Goods Risk Assessment</div>
@@ -8312,7 +8312,7 @@ export default function MlroAdvisorPage() {
                 </div>
 
                 {/* Employee basics */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Name / Identifier</label><input value={itInput.employee} onChange={e => setItInput(p => ({...p, employee: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Name or reference ID" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Role / Job Title</label><input value={itInput.role} onChange={e => setItInput(p => ({...p, role: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Senior Compliance Analyst" /></div>
                   <div>
@@ -8347,7 +8347,7 @@ export default function MlroAdvisorPage() {
                 {/* System Access Anomalies */}
                 <div>
                   <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">System Access Anomalies (UEBA / DLP)</div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {([
                       ["unusualHours", "Unusual hours access (off-hours, weekends)"],
                       ["bulkDataExport", "Bulk data export (DLP alert triggered)"],
@@ -8366,7 +8366,7 @@ export default function MlroAdvisorPage() {
                 {/* Financial Indicators */}
                 <div>
                   <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Financial Indicators (MICE — Money)</div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {([
                       ["lifestyleInflation", "Lifestyle inflation (luxury purchases vs salary)"],
                       ["unexplainedWealth", "Unexplained wealth / assets"],
@@ -8383,7 +8383,7 @@ export default function MlroAdvisorPage() {
                 </div>
 
                 {/* Compliance History */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Prior SARs (by or about subject)</label><input type="number" min={0} value={itInput.previousSARs} onChange={e => setItInput(p => ({...p, previousSARs: Number(e.target.value)}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disciplinary Actions on File</label><input type="number" min={0} value={itInput.disciplinaryActions} onChange={e => setItInput(p => ({...p, disciplinaryActions: Number(e.target.value)}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Breached Policies (comma-separated)</label><input value={itInput.breachedPoliciesRaw} onChange={e => setItInput(p => ({...p, breachedPoliciesRaw: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="data access policy, AML training requirement" /></div>
@@ -8444,7 +8444,7 @@ export default function MlroAdvisorPage() {
                       {mice && (
                         <div>
                           <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-2">MICE Analysis — Motivation Quadrants</div>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {(["money","ideology","coercion","ego"] as const).map(dim => {
                               const q = mice[dim];
                               const label = dim === "money" ? "Money (M)" : dim === "ideology" ? "Ideology (I)" : dim === "coercion" ? "Coercion (C)" : "Ego (E)";
@@ -8469,7 +8469,7 @@ export default function MlroAdvisorPage() {
 
                       {/* Behavioural profile */}
                       {beh && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {beh.stressors.length > 0 && (
                             <div className="border border-hair-2 rounded-lg p-3">
                               <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Stressors</div>
@@ -8499,7 +8499,7 @@ export default function MlroAdvisorPage() {
                       )}
 
                       {/* Financial & Compliance profiles */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {Boolean(r["financialProfile"]) && (
                           <div className="border border-hair-2 rounded-lg p-3">
                             <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Financial Profile</div>
@@ -8587,7 +8587,7 @@ export default function MlroAdvisorPage() {
                 {/* Input Form */}
                 <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-4">
                   {/* Row 1: Wallet + Blockchain */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label>
                       <input
@@ -8617,7 +8617,7 @@ export default function MlroAdvisorPage() {
                   </div>
 
                   {/* Row 2: Entity + Exchange */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name (if known)</label>
                       <input
@@ -8651,7 +8651,7 @@ export default function MlroAdvisorPage() {
                   </div>
 
                   {/* Checkboxes */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2 font-semibold">Transaction Patterns</div>
                       <div className="space-y-1.5">
@@ -8795,7 +8795,7 @@ export default function MlroAdvisorPage() {
                       </div>
 
                       {/* 6 Exposure Cards Grid */}
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {mx && (
                           <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 space-y-1.5">
                             <div className="flex items-center justify-between">
@@ -9061,7 +9061,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📈 Investment Fraud / Ponzi Screener</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · SEC guidance</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Scheme Type</label><input value={ntIn("schemeType")} onChange={e => { if (superToolsTab !== "investment-fraud") { setNt({}); setNtResult(null); } ntSet("schemeType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Ponzi, pyramid, HYIP" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Promoter Name</label><input value={ntIn("promoterName")} onChange={e => ntSet("promoterName", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Promoter / operator name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Return Promised</label><input value={ntIn("returnPromised")} onChange={e => ntSet("returnPromised", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 20% monthly" /></div>
@@ -9089,7 +9089,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📧 BEC / CEO Fraud Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · FBI IC3 · UAE CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Email Domain</label><input value={ntIn("emailDomain")} onChange={e => { if (superToolsTab !== "bec-fraud") { setNt({}); setNtResult(null); } ntSet("emailDomain", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Spoofed / lookalike domain" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Amount</label><input value={ntIn("paymentAmount")} onChange={e => ntSet("paymentAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD 250,000" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Invoice Date</label><input value={ntIn("invoiceDate")} onChange={e => ntSet("invoiceDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of fraudulent invoice" /></div>
@@ -9117,7 +9117,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💼 Bulk Cash Courier Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.32 · UAE FDL Art.15</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Route Origin</label><input value={ntIn("routeOrigin")} onChange={e => { if (superToolsTab !== "cash-courier") { setNt({}); setNtResult(null); } ntSet("routeOrigin", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin country / city" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Route Destination</label><input value={ntIn("routeDestination")} onChange={e => ntSet("routeDestination", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Destination country / city" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash Amount</label><input value={ntIn("cashAmount")} onChange={e => ntSet("cashAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Amount transported" /></div>
@@ -9145,7 +9145,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🖼 NFT Wash Trade Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.15 · VARA guidance</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Collection</label><input value={ntIn("collection")} onChange={e => { if (superToolsTab !== "nft-wash") { setNt({}); setNtResult(null); } ntSet("collection", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="NFT collection name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet A</label><input value={ntIn("walletA")} onChange={e => ntSet("walletA", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First wallet address" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet B</label><input value={ntIn("walletB")} onChange={e => ntSet("walletB", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Second wallet address" /></div>
@@ -9173,7 +9173,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌿 Carbon Credit Fraud Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">ICVCM · Article 6 Paris</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Project ID</label><input value={ntIn("projectId")} onChange={e => { if (superToolsTab !== "carbon-fraud") { setNt({}); setNtResult(null); } ntSet("projectId", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Carbon project identifier" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registry</label><input value={ntIn("registry")} onChange={e => ntSet("registry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Verra, Gold Standard" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Credit Volume</label><input value={ntIn("creditVolume")} onChange={e => ntSet("creditVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Credits issued / traded" /></div>
@@ -9201,7 +9201,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🕶 Darknet Market Exposure</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF VASP guidance · OFAC</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "darknet-exposure") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject / wallet / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => ntSet("platform", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Darknet market name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Hash</label><input value={ntIn("transactionHash")} onChange={e => ntSet("transactionHash", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Relevant tx hash" /></div>
@@ -9229,7 +9229,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💊 Drug Trafficking Financial Indicators</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · UN Convention</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "drug-trafficking") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Geography</label><input value={ntIn("geography")} onChange={e => ntSet("geography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries / regions involved" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cash Volume</label><input value={ntIn("cashVolume")} onChange={e => ntSet("cashVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated cash volume" /></div>
@@ -9257,7 +9257,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🚨 Human Trafficking Financial Patterns</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · IOM · UNODC</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "human-trafficking-fin") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recruitment Method</label><input value={ntIn("recruitmentMethod")} onChange={e => ntSet("recruitmentMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. online, agent" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Remittance Pattern</label><input value={ntIn("remittancePattern")} onChange={e => ntSet("remittancePattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remittance corridor / method" /></div>
@@ -9285,7 +9285,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚔️ Arms / Weapons Trafficking Indicators</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.7 · UN 1540</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "arms-trafficking") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Export Licence</label><input value={ntIn("exportLicense")} onChange={e => ntSet("exportLicense", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Licence number / status" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">End-User Certificate</label><input value={ntIn("endUserCert")} onChange={e => ntSet("endUserCert", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="EUC details" /></div>
@@ -9313,7 +9313,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🤝 Corruption &amp; Bribery Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · FCPA · UK Bribery Act</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "corruption-bribery") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Public Official</label><input value={ntIn("publicOfficial")} onChange={e => ntSet("publicOfficial", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Official involved" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Method</label><input value={ntIn("paymentMethod")} onChange={e => ntSet("paymentMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. wire, cash, gift" /></div>
@@ -9341,7 +9341,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💸 Tax Evasion Financial Indicators</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · OECD BEPS</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "tax-evasion-fin") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Tax jurisdiction" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Undeclared Income</label><input value={ntIn("undeclaredIncome")} onChange={e => ntSet("undeclaredIncome", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated undeclared amount" /></div>
@@ -9369,7 +9369,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💻 Cybercrime Proceeds Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · Budapest Convention</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "cybercrime-proceeds") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject / wallet / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crime Type</label><input value={ntIn("crimeType")} onChange={e => ntSet("crimeType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. ransomware, fraud, hacking" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crypto Involved</label><input value={ntIn("cryptoInvolved")} onChange={e => ntSet("cryptoInvolved", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Crypto assets / wallets" /></div>
@@ -9397,7 +9397,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📊 Market Manipulation Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · IOSCO · UAE SCA</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "market-manipulation") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject / trader name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset</label><input value={ntIn("asset")} onChange={e => ntSet("asset", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Security / crypto asset" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trading Pattern</label><input value={ntIn("tradingPattern")} onChange={e => ntSet("tradingPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. wash trades, layering" /></div>
@@ -9425,7 +9425,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🛡 Insurance Fraud Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · UAE IA</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "insurance-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Policyholder / claimant name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Policy Type</label><input value={ntIn("policyType")} onChange={e => ntSet("policyType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. life, property, marine" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Claim Amount</label><input value={ntIn("claimAmount")} onChange={e => ntSet("claimAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Claimed amount (USD)" /></div>
@@ -9453,7 +9453,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏠 Mortgage Fraud Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Real Estate 2022 · UAE RERA</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "mortgage-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicant / entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Property Value</label><input value={ntIn("propertyValue")} onChange={e => ntSet("propertyValue", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated property value" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Loan Amount</label><input value={ntIn("loanAmount")} onChange={e => ntSet("loanAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Mortgage / loan amount" /></div>
@@ -9481,7 +9481,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🪪 Identity Theft Indicators</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · UAE cybercrime law</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "identity-theft") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document Type</label><input value={ntIn("documentType")} onChange={e => ntSet("documentType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. passport, Emirates ID" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Discrepancies</label><input value={ntIn("discrepancies")} onChange={e => ntSet("discrepancies", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Noted inconsistencies" /></div>
@@ -9509,7 +9509,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">👴 Elder Financial Abuse</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · UAE family law</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "elder-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Victim name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Age</label><input value={ntIn("age")} onChange={e => ntSet("age", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Victim age" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Account Changes</label><input value={ntIn("accountChanges")} onChange={e => ntSet("accountChanges", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Recent account changes" /></div>
@@ -9537,7 +9537,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔒 Ransomware Payment Response</div>
                   <div className="text-11 text-ink-2 mt-0.5">OFAC guidance · FATF R.15</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "ransomware-response") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Victim entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wallet Address</label><input value={ntIn("walletAddress")} onChange={e => ntSet("walletAddress", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Attacker wallet address" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Demand Amount</label><input value={ntIn("demandAmount")} onChange={e => ntSet("demandAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Ransom amount" /></div>
@@ -9565,7 +9565,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🕸 Fraud Network Mapper</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · Egmont FINT</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Case ID</label><input value={ntIn("caseId")} onChange={e => { if (superToolsTab !== "fraud-network") { setNt({}); setNtResult(null); } ntSet("caseId", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Internal case reference" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Known Actors</label><input value={ntIn("knownActors")} onChange={e => ntSet("knownActors", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Names / entities in network" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Connection Type</label><input value={ntIn("connectionType")} onChange={e => ntSet("connectionType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. family, business, co-signatory" /></div>
@@ -9593,7 +9593,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🎯 FATF Mutual Evaluation Prep</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Methodology 2022</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "fatf-evaluation-prep") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country being evaluated" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last Evaluation</label><input value={ntIn("lastEvaluation")} onChange={e => ntSet("lastEvaluation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last MER" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Focus Area</label><input value={ntIn("focusArea")} onChange={e => ntSet("focusArea", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. technical compliance, effectiveness" /></div>
@@ -9621,7 +9621,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔐 VARA AML Compliance Checker</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE VARA VASP Regs 2023</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "vara-compliance") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="VASP name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Licence Type</label><input value={ntIn("licenceType")} onChange={e => ntSet("licenceType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="VARA licence category" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">VASP Type</label><input value={ntIn("vasp")} onChange={e => ntSet("vasp", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. exchange, custodian" /></div>
@@ -9649,7 +9649,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏦 CBUAE Examination Readiness</div>
                   <div className="text-11 text-ink-2 mt-0.5">CBUAE Circular 2/2022</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "cbuae-exam") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, exchange, finance co." /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last Exam Date</label><input value={ntIn("lastExamDate")} onChange={e => ntSet("lastExamDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last CBUAE exam" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Open Findings</label><input value={ntIn("openFindings")} onChange={e => ntSet("openFindings", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Outstanding examination findings" /></div>
@@ -9677,7 +9677,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🇪🇺 EU AMLA Requirements Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">EU AMLA Reg 2024/1624</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "eu-amla") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, VASP" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="EU member state" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Profile</label><input value={ntIn("riskProfile")} onChange={e => ntSet("riskProfile", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity risk classification" /></div>
@@ -9705,7 +9705,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💎 MiCA Crypto Asset Compliance</div>
                   <div className="text-11 text-ink-2 mt-0.5">EU MiCA Reg 2023/1114</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Type</label><input value={ntIn("assetType")} onChange={e => { if (superToolsTab !== "mica-compliance") { setNt({}); setNtResult(null); } ntSet("assetType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. ART, EMT, other crypto-asset" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Issuer</label><input value={ntIn("issuer")} onChange={e => ntSet("issuer", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Token issuer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Whitepaper Status</label><input value={ntIn("whitepaperStatus")} onChange={e => ntSet("whitepaperStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Whitepaper published / approved" /></div>
@@ -9733,7 +9733,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🖥 DORA Operational Resilience</div>
                   <div className="text-11 text-ink-2 mt-0.5">EU DORA Reg 2022/2554</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "dora-resilience") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, investment firm" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">ICT Risk</label><input value={ntIn("ictRisk")} onChange={e => ntSet("ictRisk", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key ICT risks identified" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Incident History</label><input value={ntIn("incidentHistory")} onChange={e => ntSet("incidentHistory", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Recent ICT incidents" /></div>
@@ -9761,7 +9761,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔍 AML Framework Gap Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · UAE FDL 20/2018</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "aml-framework-gap") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, VASP, DNFBP" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Policy Age</label><input value={ntIn("policyAge")} onChange={e => ntSet("policyAge", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Age of current AML policy" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Training Status</label><input value={ntIn("trainingStatus")} onChange={e => ntSet("trainingStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Last training date / coverage" /></div>
@@ -9789,7 +9789,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📢 Regulatory Breach Notification</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL Art.17 · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Breach Type</label><input value={ntIn("breachType")} onChange={e => { if (superToolsTab !== "regulatory-breach-notice") { setNt({}); setNtResult(null); } ntSet("breachType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of breach" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Severity</label><input value={ntIn("severity")} onChange={e => ntSet("severity", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. critical, significant, minor" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Discovery Date</label><input value={ntIn("discoveryDate")} onChange={e => ntSet("discoveryDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="When breach was discovered" /></div>
@@ -9817,7 +9817,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔧 Regulatory Remediation Planner</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF MER guidance</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Finding Type</label><input value={ntIn("findingType")} onChange={e => { if (superToolsTab !== "remediation-planner") { setNt({}); setNtResult(null); } ntSet("findingType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Regulatory finding description" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Root Cause</label><input value={ntIn("rootCause")} onChange={e => ntSet("rootCause", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Identified root cause" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deadline</label><input value={ntIn("deadline")} onChange={e => ntSet("deadline", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remediation deadline" /></div>
@@ -9845,7 +9845,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🤝 MOU / Treaty Obligation Checker</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.40 · Egmont</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requesting Country</label><input value={ntIn("requestingCountry")} onChange={e => { if (superToolsTab !== "mou-treaty") { setNt({}); setNtResult(null); } ntSet("requestingCountry", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country making request" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Basis of Request</label><input value={ntIn("basisOfRequest")} onChange={e => ntSet("basisOfRequest", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Treaty / MOU reference" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Information Type</label><input value={ntIn("informationType")} onChange={e => ntSet("informationType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of information sought" /></div>
@@ -9873,7 +9873,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🇨🇭 FINMA AML Compliance (Swiss)</div>
                   <div className="text-11 text-ink-2 mt-0.5">FINMA AMLO-FINMA 2021</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "finma-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, securities dealer, VASP" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Base</label><input value={ntIn("clientBase")} onChange={e => ntSet("clientBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Client risk profile description" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Exposure</label><input value={ntIn("riskExposure")} onChange={e => ntSet("riskExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key risk categories" /></div>
@@ -9901,7 +9901,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🇸🇬 MAS AML Notice Compliance</div>
                   <div className="text-11 text-ink-2 mt-0.5">MAS Notice CMS-N02</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "mas-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. CMS licensee, bank" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last MAS Exam</label><input value={ntIn("lastMASExam")} onChange={e => ntSet("lastMASExam", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last examination" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Model</label><input value={ntIn("riskModel")} onChange={e => ntSet("riskModel", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Risk assessment model used" /></div>
@@ -9929,7 +9929,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🇬🇧 FCA ML Regs Compliance</div>
                   <div className="text-11 text-ink-2 mt-0.5">UK MLR 2017 · JMLSG</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "fca-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, payment firm" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Firm Type</label><input value={ntIn("firmType")} onChange={e => ntSet("firmType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FCA firm type / category" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Supervisory Body</label><input value={ntIn("supervisoryBody")} onChange={e => ntSet("supervisoryBody", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Supervisory authority" /></div>
@@ -9957,7 +9957,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🇩🇪 BaFin AML Compliance</div>
                   <div className="text-11 text-ink-2 mt-0.5">GwG (Germany) · AMLD6</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "bafin-compliance") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. credit institution, crypto custodian" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Obligation Level</label><input value={ntIn("obligationLevel")} onChange={e => ntSet("obligationLevel", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="General or enhanced obligations" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Management</label><input value={ntIn("riskMgmt")} onChange={e => ntSet("riskMgmt", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Risk management system status" /></div>
@@ -9985,7 +9985,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌍 Basel AML Index Risk Assessor</div>
                   <div className="text-11 text-ink-2 mt-0.5">Basel Institute 2024</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "basel-aml-index") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country to assess" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Index Score</label><input value={ntIn("indexScore")} onChange={e => ntSet("indexScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Basel AML Index score (0-10)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Key Risk</label><input value={ntIn("keyRisk")} onChange={e => ntSet("keyRisk", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Primary risk drivers" /></div>
@@ -10013,7 +10013,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📬 Egmont FIU Information Request</div>
                   <div className="text-11 text-ink-2 mt-0.5">Egmont Group Principles</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Request Type</label><input value={ntIn("requestType")} onChange={e => { if (superToolsTab !== "egmont-fiu") { setNt({}); setNtResult(null); } ntSet("requestType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. spontaneous, upon request" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requesting FIU</label><input value={ntIn("requestingFIU")} onChange={e => ntSet("requestingFIU", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FIU making the request" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={ntIn("subjectName")} onChange={e => ntSet("subjectName", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Person / entity of interest" /></div>
@@ -10041,7 +10041,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📋 Wolfsberg Principles Checker</div>
                   <div className="text-11 text-ink-2 mt-0.5">Wolfsberg AML Principles 2023</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Principle Area</label><input value={ntIn("principleArea")} onChange={e => { if (superToolsTab !== "wolfsberg-principles") { setNt({}); setNtResult(null); } ntSet("principleArea", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. correspondent banking, PEPs" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => ntSet("institutionType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Financial institution type" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gap Identified</label><input value={ntIn("gap")} onChange={e => ntSet("gap", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Specific gap or deficiency" /></div>
@@ -10069,7 +10069,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚖️ Palermo Convention Analysis</div>
                   <div className="text-11 text-ink-2 mt-0.5">UN CTOC 2000 · Art.6</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crime Type</label><input value={ntIn("crimeType")} onChange={e => { if (superToolsTab !== "palermo-convention") { setNt({}); setNtResult(null); } ntSet("crimeType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Predicate offence type" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Relevant jurisdiction(s)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Proceeds Estimate</label><input value={ntIn("proceedsEstimate")} onChange={e => ntSet("proceedsEstimate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated proceeds value" /></div>
@@ -10097,7 +10097,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌐 Vienna Convention Analysis</div>
                   <div className="text-11 text-ink-2 mt-0.5">UN 1988 Vienna Convention</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Substance Type</label><input value={ntIn("substanceType")} onChange={e => { if (superToolsTab !== "vienna-convention") { setNt({}); setNtResult(null); } ntSet("substanceType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Drug / precursor type" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Financial Pattern</label><input value={ntIn("financialPattern")} onChange={e => ntSet("financialPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Financial pattern observed" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={ntIn("jurisdictions")} onChange={e => ntSet("jurisdictions", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries involved" /></div>
@@ -10125,7 +10125,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚠️ FATF Grey/Black List Impact</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.19 · CBUAE guidance</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "fatf-grey-impact") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Listed country" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">List Status</label><input value={ntIn("listStatus")} onChange={e => ntSet("listStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Grey list / black list" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Business Exposure</label><input value={ntIn("businessExposure")} onChange={e => ntSet("businessExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Extent of business with country" /></div>
@@ -10153,7 +10153,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔐 Digital Identity Verifier</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID Guidance 2020</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">ID Type</label><input value={ntIn("idType")} onChange={e => { if (superToolsTab !== "digital-identity") { setNt({}); setNtResult(null); } ntSet("idType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. national ID, passport, eID" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Issuing Country</label><input value={ntIn("issuingCountry")} onChange={e => ntSet("issuingCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of document issuance" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Verification Method</label><input value={ntIn("verificationMethod")} onChange={e => ntSet("verificationMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. biometric, OCR, chip" /></div>
@@ -10181,7 +10181,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🤖 Synthetic Identity Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF guidance · FinCEN advisory</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "synthetic-identity") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / reference" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document Inconsistencies</label><input value={ntIn("documentInconsistencies")} onChange={e => ntSet("documentInconsistencies", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Noted inconsistencies" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Credit History</label><input value={ntIn("creditHistory")} onChange={e => ntSet("creditHistory", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Credit history anomalies" /></div>
@@ -10209,7 +10209,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🎭 Deepfake / AI Doc Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID · VARA</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Document Type</label><input value={ntIn("documentType")} onChange={e => { if (superToolsTab !== "deepfake-kyc") { setNt({}); setNtResult(null); } ntSet("documentType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. passport, selfie, video" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Metadata Flags</label><input value={ntIn("metadataFlags")} onChange={e => ntSet("metadataFlags", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Metadata anomalies found" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Biometric Result</label><input value={ntIn("biometricResult")} onChange={e => ntSet("biometricResult", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Liveness check result" /></div>
@@ -10237,7 +10237,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📰 Deep Adverse Media Analysis</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · Wolfsberg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "adverse-media-deep") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject jurisdiction(s)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Timeframe</label><input value={ntIn("timeframe")} onChange={e => ntSet("timeframe", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Search time window" /></div>
@@ -10265,7 +10265,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💼 Source of Wealth Substantiator</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · Wolfsberg FAQ</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "sow-substantiator") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared SoW</label><input value={ntIn("declaredSoW")} onChange={e => ntSet("declaredSoW", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Declared source of wealth" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Documents Provided</label><input value={ntIn("documentProvided")} onChange={e => ntSet("documentProvided", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Supporting documents submitted" /></div>
@@ -10293,7 +10293,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏢 Corporate Registry Crosscheck</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · UAE CCL</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "corporate-registry") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Company name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registered Jurisdiction</label><input value={ntIn("registeredJurisdiction")} onChange={e => ntSet("registeredJurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Incorporation jurisdiction" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registration Date</label><input value={ntIn("registrationDate")} onChange={e => ntSet("registrationDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of incorporation" /></div>
@@ -10321,7 +10321,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔍 Entity Resolution Engine</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · Wolfsberg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity 1</label><input value={ntIn("entity1")} onChange={e => { if (superToolsTab !== "entity-resolution") { setNt({}); setNtResult(null); } ntSet("entity1", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity 2</label><input value={ntIn("entity2")} onChange={e => ntSet("entity2", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Second entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Common Attributes</label><input value={ntIn("commonAttributes")} onChange={e => ntSet("commonAttributes", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Shared identifiers / addresses" /></div>
@@ -10349,7 +10349,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🎖 Politically Sensitive Person Mapper</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · Basel PEP guidance</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "politically-sensitive") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Position</label><input value={ntIn("position")} onChange={e => ntSet("position", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Political / public role" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of position" /></div>
@@ -10377,7 +10377,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌐 Dual Nationality Risk Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · CBUAE KYC</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "dual-nationality") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nationality 1</label><input value={ntIn("nationality1")} onChange={e => ntSet("nationality1", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First nationality" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nationality 2</label><input value={ntIn("nationality2")} onChange={e => ntSet("nationality2", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Second nationality" /></div>
@@ -10405,7 +10405,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💼 High-Risk Profession Screener</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF RBA · Wolfsberg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "high-risk-profession") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Profession</label><input value={ntIn("profession")} onChange={e => ntSet("profession", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Occupation / profession" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction of Work</label><input value={ntIn("jurisdictionOfWork")} onChange={e => ntSet("jurisdictionOfWork", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Work jurisdiction" /></div>
@@ -10433,7 +10433,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📋 UAE/Local KYC Requirements Guide</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE FDL 20/2018 · CRS · FATCA</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "local-kyc-requirements") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Obliged entity type" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Type</label><input value={ntIn("clientType")} onChange={e => ntSet("clientType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual / corporate / VASP" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Tier</label><input value={ntIn("riskTier")} onChange={e => ntSet("riskTier", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer risk tier" /></div>
@@ -10461,7 +10461,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📱 eKYC Risk Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID 2020 · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vendor</label><input value={ntIn("vendor")} onChange={e => { if (superToolsTab !== "ekyc-risk") { setNt({}); setNtResult(null); } ntSet("vendor", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="eKYC vendor name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Method Used</label><input value={ntIn("methodUsed")} onChange={e => ntSet("methodUsed", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Verification method" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Failure Rate</label><input value={ntIn("failureRate")} onChange={e => ntSet("failureRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="False acceptance / rejection rate" /></div>
@@ -10489,7 +10489,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">♻️ Perpetual KYC Trigger Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.10 · CBUAE EDD</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "perpetual-kyc") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last KYC Date</label><input value={ntIn("lastKycDate")} onChange={e => ntSet("lastKycDate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last KYC review" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trigger Event</label><input value={ntIn("triggerEvent")} onChange={e => ntSet("triggerEvent", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Event triggering review" /></div>
@@ -10517,7 +10517,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏛 Beneficial Ownership Calculator</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24/25 · UAE UBO Reg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "beneficial-ownership-calc") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Legal entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership Layers</label><input value={ntIn("ownershipLayers")} onChange={e => ntSet("ownershipLayers", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of ownership layers" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Percentage Threshold</label><input value={ntIn("percentageThreshold")} onChange={e => ntSet("percentageThreshold", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable threshold (e.g. 25%)" /></div>
@@ -10545,7 +10545,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔀 Corporate Complexity Scorer</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.24 · Wolfsberg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "corporate-complexity") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Layer Count</label><input value={ntIn("layerCount")} onChange={e => ntSet("layerCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of corporate layers" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction Count</label><input value={ntIn("jurisdictionCount")} onChange={e => ntSet("jurisdictionCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of jurisdictions" /></div>
@@ -10573,7 +10573,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚡ Transaction Velocity Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "velocity-analyzer") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Period</label><input value={ntIn("period")} onChange={e => ntSet("period", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Analysis period (e.g. 30 days)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Count</label><input value={ntIn("transactionCount")} onChange={e => ntSet("transactionCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of transactions" /></div>
@@ -10601,7 +10601,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">👥 Peer Group Anomaly Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE STR</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "peer-group-anomaly") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Peer Group</label><input value={ntIn("peerGroup")} onChange={e => ntSet("peerGroup", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Peer group description" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deviation %</label><input value={ntIn("deviationPercent")} onChange={e => ntSet("deviationPercent", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Deviation from peer average" /></div>
@@ -10629,7 +10629,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔄 Round-Trip Transaction Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · IMF guidance</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount</label><input value={ntIn("amount")} onChange={e => { if (superToolsTab !== "round-trip-detector") { setNt({}); setNtResult(null); } ntSet("amount", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction amount (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originating Account</label><input value={ntIn("originatingAccount")} onChange={e => ntSet("originatingAccount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Source account" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Account</label><input value={ntIn("destinationAccount")} onChange={e => ntSet("destinationAccount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="End beneficiary account" /></div>
@@ -10657,7 +10657,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌀 Funnel Account Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · UAE FIU</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "funnel-account") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Inbound Count</label><input value={ntIn("inboundCount")} onChange={e => ntSet("inboundCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of inbound transactions" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Outbound Count</label><input value={ntIn("outboundCount")} onChange={e => ntSet("outboundCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of outbound transactions" /></div>
@@ -10685,7 +10685,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">😴 Dormant Account Reactivation Alert</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "dormant-reactivation") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Dormancy Period</label><input value={ntIn("dormancyPeriod")} onChange={e => ntSet("dormancyPeriod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Period of inactivity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reactivation Amount</label><input value={ntIn("reactivationAmount")} onChange={e => ntSet("reactivationAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="First transaction amount" /></div>
@@ -10713,7 +10713,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💱 Currency Mismatch Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF TBML · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trading Pair</label><input value={ntIn("tradingPair")} onChange={e => { if (superToolsTab !== "currency-mismatch") { setNt({}); setNtResult(null); } ntSet("tradingPair", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Currency pair involved" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Declared Currency</label><input value={ntIn("declaredCurrency")} onChange={e => ntSet("declaredCurrency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Currency per trade documents" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Settlement Currency</label><input value={ntIn("settlementCurrency")} onChange={e => ntSet("settlementCurrency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Actual settlement currency" /></div>
@@ -10741,7 +10741,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏦 ACH / Direct Debit Fraud Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">NACHA · FATF R.3</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "ach-fraud") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Originator / account name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Return Rate</label><input value={ntIn("returnRate")} onChange={e => ntSet("returnRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ACH return rate %" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originating Bank</label><input value={ntIn("originatingBank")} onChange={e => ntSet("originatingBank", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Originating bank name" /></div>
@@ -10769,7 +10769,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📡 Wire Transfer Risk Scorer</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.16 · SWIFT</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Country</label><input value={ntIn("originCountry")} onChange={e => { if (superToolsTab !== "wire-transfer-risk") { setNt({}); setNtResult(null); } ntSet("originCountry", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sending country" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Destination Country</label><input value={ntIn("destinationCountry")} onChange={e => ntSet("destinationCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Receiving country" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Amount</label><input value={ntIn("amount")} onChange={e => ntSet("amount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Wire amount (USD)" /></div>
@@ -10797,7 +10797,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📈 High-Frequency Trading Abuse</div>
                   <div className="text-11 text-ink-2 mt-0.5">IOSCO · FATF R.3</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset</label><input value={ntIn("asset")} onChange={e => { if (superToolsTab !== "high-freq-trading") { setNt({}); setNtResult(null); } ntSet("asset", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Security / crypto asset" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Order Count</label><input value={ntIn("orderCount")} onChange={e => ntSet("orderCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Orders placed per day" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cancellation Rate</label><input value={ntIn("cancellationRate")} onChange={e => ntSet("cancellationRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Order cancellation rate %" /></div>
@@ -10825,7 +10825,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌐 Unusual Payment Routing Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF TBML · CBE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Route</label><input value={ntIn("paymentRoute")} onChange={e => { if (superToolsTab !== "payment-routing") { setNt({}); setNtResult(null); } ntSet("paymentRoute", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Describe routing path" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Countries</label><input value={ntIn("countries")} onChange={e => ntSet("countries", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transit countries" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Correspondents</label><input value={ntIn("correspondents")} onChange={e => ntSet("correspondents", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Correspondent banks used" /></div>
@@ -10853,7 +10853,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔁 Refund / Chargeback Arbitrage</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · payment schemes</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Merchant</label><input value={ntIn("merchant")} onChange={e => { if (superToolsTab !== "refund-arbitrage") { setNt({}); setNtResult(null); } ntSet("merchant", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Merchant name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Refund Volume</label><input value={ntIn("refundVolume")} onChange={e => ntSet("refundVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total refunds (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Chargeback Rate</label><input value={ntIn("chargebackRate")} onChange={e => ntSet("chargebackRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Chargeback rate %" /></div>
@@ -10881,7 +10881,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏦 Correspondent Banking Chain Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.13 · Wolfsberg CBR</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin Bank</label><input value={ntIn("originBank")} onChange={e => { if (superToolsTab !== "correspondent-chain") { setNt({}); setNtResult(null); } ntSet("originBank", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Originating bank" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Intermediaries</label><input value={ntIn("intermediaries")} onChange={e => ntSet("intermediaries", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Intermediate correspondent banks" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Final Bank</label><input value={ntIn("finalBank")} onChange={e => ntSet("finalBank", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Final receiving bank" /></div>
@@ -10909,7 +10909,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💸 Remittance Risk Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.14 · UAE exchange laws</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Corridor</label><input value={ntIn("corridor")} onChange={e => { if (superToolsTab !== "remittance-risk") { setNt({}); setNtResult(null); } ntSet("corridor", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remittance corridor (e.g. UAE-PK)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Volume</label><input value={ntIn("volume")} onChange={e => ntSet("volume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Monthly volume (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Provider</label><input value={ntIn("provider")} onChange={e => ntSet("provider", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Remittance service provider" /></div>
@@ -10937,7 +10937,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏧 ATM Pattern Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "atm-pattern") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account / customer name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Withdrawal Count</label><input value={ntIn("withdrawalCount")} onChange={e => ntSet("withdrawalCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ATM withdrawals per period" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Locations</label><input value={ntIn("locations")} onChange={e => ntSet("locations", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="ATM locations / geographic spread" /></div>
@@ -10965,7 +10965,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🎰 Casino Chip Washing Detector</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · UAE Gaming</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "casino-chip") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Patron name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Chip Volume</label><input value={ntIn("chipVolume")} onChange={e => ntSet("chipVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total chips purchased (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Wagered Amount</label><input value={ntIn("wageredAmount")} onChange={e => ntSet("wageredAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Amount actually wagered" /></div>
@@ -10993,7 +10993,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💎 Luxury Goods AML Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF DNFBP · MoE circular</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Goods Type</label><input value={ntIn("goodsType")} onChange={e => { if (superToolsTab !== "luxury-goods") { setNt({}); setNtResult(null); } ntSet("goodsType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. watches, jewellery, cars" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Value</label><input value={ntIn("value")} onChange={e => ntSet("value", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction value (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Payment Method</label><input value={ntIn("paymentMethod")} onChange={e => ntSet("paymentMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. cash, crypto, wire" /></div>
@@ -11021,7 +11021,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🎨 Art Market Provenance Checker</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Art Market 2021</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Artwork</label><input value={ntIn("artwork")} onChange={e => { if (superToolsTab !== "art-provenance") { setNt({}); setNtResult(null); } ntSet("artwork", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Artwork title / description" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Seller</label><input value={ntIn("seller")} onChange={e => ntSet("seller", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Seller / gallery name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Provenance Documentation</label><input value={ntIn("provenanceDoc")} onChange={e => ntSet("provenanceDoc", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Documentation status" /></div>
@@ -11049,7 +11049,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">✈️ Superyacht / Private Jet Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · OFAC</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Type</label><input value={ntIn("assetType")} onChange={e => { if (superToolsTab !== "superyacht-jet") { setNt({}); setNtResult(null); } ntSet("assetType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Superyacht / private jet" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registration Flag</label><input value={ntIn("registrationFlag")} onChange={e => ntSet("registrationFlag", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Flag state / registration country" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner Structure</label><input value={ntIn("ownerStructure")} onChange={e => ntSet("ownerStructure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Ownership structure description" /></div>
@@ -11077,7 +11077,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌾 Agricultural Commodities Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF TBML · UN FAO</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Commodity</label><input value={ntIn("commodity")} onChange={e => { if (superToolsTab !== "agri-commodities") { setNt({}); setNtResult(null); } ntSet("commodity", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. wheat, sugar, coffee" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Export Country</label><input value={ntIn("exportCountry")} onChange={e => ntSet("exportCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Exporting country" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Import Country</label><input value={ntIn("importCountry")} onChange={e => ntSet("importCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Importing country" /></div>
@@ -11105,7 +11105,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💠 Precious Stones / Diamonds Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · Kimberley Process</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Stone Type</label><input value={ntIn("stoneType")} onChange={e => { if (superToolsTab !== "precious-stones") { setNt({}); setNtResult(null); } ntSet("stoneType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. diamond, ruby, emerald" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Origin</label><input value={ntIn("origin")} onChange={e => ntSet("origin", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of origin" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Certificate Status</label><input value={ntIn("certificateStatus")} onChange={e => ntSet("certificateStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="KP / GIA certificate status" /></div>
@@ -11133,7 +11133,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🎮 Gaming / iGaming AML</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · UAE gaming laws</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => { if (superToolsTab !== "gaming-sector") { setNt({}); setNtResult(null); } ntSet("platform", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Gaming platform name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Player Volume</label><input value={ntIn("playerVolume")} onChange={e => ntSet("playerVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Active players / accounts" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deposit Method</label><input value={ntIn("depositMethod")} onChange={e => ntSet("depositMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Primary deposit method" /></div>
@@ -11161,7 +11161,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📱 FinTech / Payment Institution Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · PSD2 · UAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "fintech-risk") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. payment institution, e-money" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Status</label><input value={ntIn("regulatoryStatus")} onChange={e => ntSet("regulatoryStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Licence / registration status" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Product Offering</label><input value={ntIn("productOffering")} onChange={e => ntSet("productOffering", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Products / services offered" /></div>
@@ -11189,7 +11189,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📊 Fund Administration AML Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · IOSCO</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fund Type</label><input value={ntIn("fundType")} onChange={e => { if (superToolsTab !== "fund-administration") { setNt({}); setNtResult(null); } ntSet("fundType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. hedge fund, PE, UCITS" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AUM</label><input value={ntIn("aum")} onChange={e => ntSet("aum", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Assets under management (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Domicile jurisdiction" /></div>
@@ -11217,7 +11217,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💰 Private Equity AML Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · Wolfsberg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fund Name</label><input value={ntIn("fundName")} onChange={e => { if (superToolsTab !== "private-equity") { setNt({}); setNtResult(null); } ntSet("fundName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fund name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Strategy</label><input value={ntIn("strategy")} onChange={e => ntSet("strategy", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investment strategy" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Base</label><input value={ntIn("investorBase")} onChange={e => ntSet("investorBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="LP profile description" /></div>
@@ -11245,7 +11245,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏦 Hedge Fund Risk Profile</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · IOSCO</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Fund Name</label><input value={ntIn("fundName")} onChange={e => { if (superToolsTab !== "hedge-fund") { setNt({}); setNtResult(null); } ntSet("fundName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fund name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AUM</label><input value={ntIn("aum")} onChange={e => ntSet("aum", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Assets under management (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Strategy</label><input value={ntIn("strategy")} onChange={e => ntSet("strategy", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Trading strategy" /></div>
@@ -11273,7 +11273,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏠 Family Office Risk Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.22 · Wolfsberg</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Family Name</label><input value={ntIn("familyName")} onChange={e => { if (superToolsTab !== "family-office") { setNt({}); setNtResult(null); } ntSet("familyName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Family / office name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AUM</label><input value={ntIn("aum")} onChange={e => ntSet("aum", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Assets under management (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Domicile jurisdiction" /></div>
@@ -11301,7 +11301,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏙 UAE Free Zone Entity Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE Free Zone laws · FATF R.24</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={ntIn("entityName")} onChange={e => { if (superToolsTab !== "free-zone") { setNt({}); setNtResult(null); } ntSet("entityName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Free Zone</label><input value={ntIn("freeZone")} onChange={e => ntSet("freeZone", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Free zone name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Activity Type</label><input value={ntIn("activityType")} onChange={e => ntSet("activityType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Licensed activity" /></div>
@@ -11329,7 +11329,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🏛 Foundation / Endowment Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.8 · UAE foundation law</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Foundation Name</label><input value={ntIn("foundationName")} onChange={e => { if (superToolsTab !== "foundation-risk") { setNt({}); setNtResult(null); } ntSet("foundationName", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Foundation name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Purpose</label><input value={ntIn("purpose")} onChange={e => ntSet("purpose", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated purpose / objects" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Foundation jurisdiction" /></div>
@@ -11357,7 +11357,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌐 Crowdfunding / ICO Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.15 · VARA · SCA</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform Type</label><input value={ntIn("platformType")} onChange={e => { if (superToolsTab !== "crowdfunding") { setNt({}); setNtResult(null); } ntSet("platformType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. equity, debt, ICO" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Project Name</label><input value={ntIn("projectName")} onChange={e => ntSet("projectName", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Project / token name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Raised Amount</label><input value={ntIn("raisedAmount")} onChange={e => ntSet("raisedAmount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total raised (USD)" /></div>
@@ -11385,7 +11385,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💳 P2P Lending Platform Risk</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · SCA · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Platform</label><input value={ntIn("platform")} onChange={e => { if (superToolsTab !== "p2p-lending") { setNt({}); setNtResult(null); } ntSet("platform", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="P2P platform name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Loan Volume</label><input value={ntIn("loanVolume")} onChange={e => ntSet("loanVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total loan volume (USD)" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Borrower Geography</label><input value={ntIn("borrowerGeography")} onChange={e => ntSet("borrowerGeography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Borrower countries" /></div>
@@ -11413,7 +11413,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌍 Geopolitical Risk Overlay</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.19 · UN sanctions</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => { if (superToolsTab !== "geopolitical-risk") { setNt({}); setNtResult(null); } ntSet("country", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of concern" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sanction</label><input value={ntIn("sanction")} onChange={e => ntSet("sanction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable sanctions regimes" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Conflict Level</label><input value={ntIn("conflictLevel")} onChange={e => ntSet("conflictLevel", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Conflict / instability level" /></div>
@@ -11441,7 +11441,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🕸 Network Centrality Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.20 · Egmont</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "network-centrality") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Central node / entity" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Network Size</label><input value={ntIn("networkSize")} onChange={e => ntSet("networkSize", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total nodes in network" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Connection Type</label><input value={ntIn("connectionType")} onChange={e => ntSet("connectionType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. financial, corporate, family" /></div>
@@ -11469,7 +11469,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💵 Follow the Money Tracer</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · Egmont FINT</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Case ID</label><input value={ntIn("caseId")} onChange={e => { if (superToolsTab !== "follow-the-money") { setNt({}); setNtResult(null); } ntSet("caseId", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investigation case reference" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Starting Entity</label><input value={ntIn("startingEntity")} onChange={e => ntSet("startingEntity", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin of funds" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ending Destination</label><input value={ntIn("endingDestination")} onChange={e => ntSet("endingDestination", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Final destination" /></div>
@@ -11497,7 +11497,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔗 Causal Chain Builder</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.3 · case analysis</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Predicate Offence</label><input value={ntIn("predicateOffence")} onChange={e => { if (superToolsTab !== "causal-chain") { setNt({}); setNtResult(null); } ntSet("predicateOffence", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Underlying crime" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Financial Mechanism</label><input value={ntIn("financialMechanism")} onChange={e => ntSet("financialMechanism", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How proceeds were generated" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Layering Method</label><input value={ntIn("layeringMethod")} onChange={e => ntSet("layeringMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Layering techniques used" /></div>
@@ -11525,7 +11525,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚖️ Evidence Strength Assessor</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.29 · UAE CPL</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Type</label><input value={ntIn("evidenceType")} onChange={e => { if (superToolsTab !== "evidence-assessment") { setNt({}); setNtResult(null); } ntSet("evidenceType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. documentary, witness, digital" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Source</label><input value={ntIn("source")} onChange={e => ntSet("source", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Evidence source" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Corroboration</label><input value={ntIn("corroboration")} onChange={e => ntSet("corroboration", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corroborating evidence available" /></div>
@@ -11553,7 +11553,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">📜 Witness Statement Analyser</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE CPL · FATF R.29</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Statement Summary</label><input value={ntIn("statementSummary")} onChange={e => { if (superToolsTab !== "witness-statement") { setNt({}); setNtResult(null); } ntSet("statementSummary", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key statement points" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Consistency Check</label><input value={ntIn("consistencyCheck")} onChange={e => ntSet("consistencyCheck", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Internal consistency assessment" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Corroborating Evidence</label><input value={ntIn("corroboratingEvidence")} onChange={e => ntSet("corroboratingEvidence", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Supporting evidence" /></div>
@@ -11581,7 +11581,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔍 OSINT Investigation Guide</div>
                   <div className="text-11 text-ink-2 mt-0.5">Egmont FINT · FATF R.29</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject</label><input value={ntIn("subject")} onChange={e => { if (superToolsTab !== "open-source-intel") { setNt({}); setNtResult(null); } ntSet("subject", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investigation subject" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject jurisdiction" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Target Platforms</label><input value={ntIn("targetPlatforms")} onChange={e => ntSet("targetPlatforms", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="OSINT platforms to search" /></div>
@@ -11609,7 +11609,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚖️ Court Order / Production Order Guide</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE CPL Art.199 · FATF R.29</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Target Entity</label><input value={ntIn("targetEntity")} onChange={e => { if (superToolsTab !== "court-order-drafter") { setNt({}); setNtResult(null); } ntSet("targetEntity", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Entity subject to order" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Sought Information</label><input value={ntIn("soughtInformation")} onChange={e => ntSet("soughtInformation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Information / documents sought" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Court jurisdiction" /></div>
@@ -11637,7 +11637,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🚔 Law Enforcement Liaison Guide</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.29/31 · UAE FIU</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Agency</label><input value={ntIn("agency")} onChange={e => { if (superToolsTab !== "law-enforcement-liaison") { setNt({}); setNtResult(null); } ntSet("agency", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Law enforcement agency" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Request Type</label><input value={ntIn("requestType")} onChange={e => ntSet("requestType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of request / referral" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Information</label><input value={ntIn("information")} onChange={e => ntSet("information", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Information to be shared" /></div>
@@ -11665,7 +11665,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🌐 Mutual Legal Assistance (MLA) Guide</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.37/40 · MLAT treaties</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requesting Country</label><input value={ntIn("requestingCountry")} onChange={e => { if (superToolsTab !== "mutual-legal-assistance") { setNt({}); setNtResult(null); } ntSet("requestingCountry", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country making MLA request" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Requested Country</label><input value={ntIn("requestedCountry")} onChange={e => ntSet("requestedCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country receiving request" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Crime Type</label><input value={ntIn("crimeType")} onChange={e => ntSet("crimeType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Predicate offence" /></div>
@@ -11693,7 +11693,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">💰 Asset Recovery Strategy</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF R.38 · StAR Initiative</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Type</label><input value={ntIn("assetType")} onChange={e => { if (superToolsTab !== "asset-recovery") { setNt({}); setNtResult(null); } ntSet("assetType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of asset to recover" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Asset location jurisdiction" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Value</label><input value={ntIn("estimatedValue")} onChange={e => ntSet("estimatedValue", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Asset value (USD)" /></div>
@@ -11721,7 +11721,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">⚖️ Civil / Criminal Forfeiture Analysis</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE AML law Art.19 · FATF R.4</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Asset Description</label><input value={ntIn("assetDescription")} onChange={e => { if (superToolsTab !== "forfeiture-analysis") { setNt({}); setNtResult(null); } ntSet("assetDescription", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Asset to be forfeited" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Link to Crime</label><input value={ntIn("linkToCrime")} onChange={e => ntSet("linkToCrime", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Crime-asset nexus" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Forfeiture jurisdiction" /></div>
@@ -11749,7 +11749,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🔔 Whistleblower Protection Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree Law · FATF</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Report Type</label><input value={ntIn("reportType")} onChange={e => { if (superToolsTab !== "whistleblower-protect") { setNt({}); setNtResult(null); } ntSet("reportType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Nature of report" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporter Exposure</label><input value={ntIn("reporterExposure")} onChange={e => ntSet("reporterExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Whistleblower exposure level" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Channel Used</label><input value={ntIn("channelUsed")} onChange={e => ntSet("channelUsed", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Reporting channel" /></div>
@@ -11777,7 +11777,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🤖 AML RegTech Assessment</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Digital ID · MAS TRM</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Tool Type</label><input value={ntIn("toolType")} onChange={e => { if (superToolsTab !== "regtech-assessment") { setNt({}); setNtResult(null); } ntSet("toolType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. transaction monitoring, KYC, sanctions" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Vendor</label><input value={ntIn("vendor")} onChange={e => ntSet("vendor", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Technology vendor name" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Data Inputs</label><input value={ntIn("dataInputs")} onChange={e => ntSet("dataInputs", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Required data inputs" /></div>
@@ -11805,7 +11805,7 @@ export default function MlroAdvisorPage() {
                   <div className="text-13 font-semibold text-ink-0">🚀 AML Innovation / Technology Roadmap</div>
                   <div className="text-11 text-ink-2 mt-0.5">FATF Fintech guidance · CBUAE</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Size</label><input value={ntIn("institutionSize")} onChange={e => { if (superToolsTab !== "aml-innovation") { setNt({}); setNtResult(null); } ntSet("institutionSize", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. large bank, mid-tier, VASP" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Current Tech</label><input value={ntIn("currentTech")} onChange={e => ntSet("currentTech", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Current AML technology stack" /></div>
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gaps</label><input value={ntIn("gaps")} onChange={e => ntSet("gaps", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Identified technology gaps" /></div>

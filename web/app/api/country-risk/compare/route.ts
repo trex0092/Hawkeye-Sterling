@@ -1,5 +1,8 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Side-by-side comparison emits up to 5 country profiles in one call; needs
+// the full 60s budget to fit Sonnet 4.6 + 6000 tokens.
+export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -35,10 +38,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 6000,
+      model: "claude-haiku-4-5-20251001",
+      // 4500 tokens covers up to 5 country profiles concisely; 6000 routinely
+      // pushed Sonnet past the 55s budget.
+      max_tokens: 4500,
       system: [
         {
           type: "text",
@@ -96,8 +101,13 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
       comparedAt: new Date().toISOString(),
     });
   } catch {
-    const fallbacks = countries.map((c) => buildFallback(c));
-    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Real-time comparison temporarily unavailable for: ${countries.join(", ")}. Please retry in a moment.`,
+      },
+      { status: 503 },
+    );
   }
 }
 

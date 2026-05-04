@@ -105,7 +105,7 @@ export default function OwnershipPage() {
           Entity Information
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
               Entity Name <span className="text-red">*</span>
@@ -137,7 +137,7 @@ export default function OwnershipPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
           <div>
             <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
               Directors / Officers
@@ -180,7 +180,7 @@ export default function OwnershipPage() {
       {result && shellCfg && (
         <div className="flex flex-col gap-5">
           {/* Summary stats */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 flex flex-col gap-1">
               <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">UBO Identified</div>
               <div
@@ -375,7 +375,7 @@ export default function OwnershipPage() {
           )}
 
           {/* Red flags + UBO gaps — side by side */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {result.redFlags.length > 0 && (
               <div className="bg-red/5 border border-red/20 rounded-xl p-5">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-red mb-3">Red Flags</div>

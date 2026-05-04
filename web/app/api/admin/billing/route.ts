@@ -21,13 +21,12 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { getStore } from "@netlify/blobs";
 import {
-  BILLING_STORE,
   type BillingMetric,
   type UsageBucket,
   monthKey,
   bucketKey,
+  getBillingStore,
 } from "@/lib/server/billing";
 
 export const runtime = "nodejs";
@@ -49,7 +48,6 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const monthParam = url.searchParams.get("month") ?? monthKey();
   const allTenants = url.searchParams.get("all") === "1";
 
-  const store = getStore(BILLING_STORE);
   const buckets: UsageBucket[] = [];
   const totals: Record<BillingMetric, number> = {
     screensRun: 0,
@@ -61,37 +59,44 @@ async function handleGet(req: Request): Promise<NextResponse> {
     soc2_exports: 0,
   };
 
-  if (allTenants) {
-    // List all tenant usage for the month — production should restrict this to admin tokens.
-    try {
-      const list = await store.list({ prefix: `usage/` });
-      for (const item of list.blobs) {
-        if (!item.key.endsWith(`${monthParam}.json`)) continue;
-        try {
-          const raw = await store.get(item.key, { type: "text" });
-          if (raw) {
-            const b = JSON.parse(raw) as UsageBucket;
-            buckets.push(b);
-            for (const [m, n] of Object.entries(b.counters)) {
-              totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
+  // Initialising the Blobs store throws synchronously when the platform did
+  // not auto-inject Blobs context AND we lack explicit siteID/token env vars.
+  // Treat that as "no usage data yet" and return empty counters rather than
+  // letting the route 500.
+  try {
+    const store = getBillingStore();
+    if (allTenants) {
+      // List all tenant usage for the month — production should restrict this to admin tokens.
+      try {
+        const list = await store.list({ prefix: `usage/` });
+        for (const item of list.blobs) {
+          if (!item.key.endsWith(`${monthParam}.json`)) continue;
+          try {
+            const raw = await store.get(item.key, { type: "text" });
+            if (raw) {
+              const b = JSON.parse(raw) as UsageBucket;
+              buckets.push(b);
+              for (const [m, n] of Object.entries(b.counters)) {
+                totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
+              }
             }
-          }
-        } catch { /* ignore malformed bucket */ }
-      }
-    } catch { /* list failed; return empty */ }
-  } else {
-    // Single-tenant view.
-    try {
-      const raw = await store.get(bucketKey(tenantFilter, monthParam), { type: "text" });
-      if (raw) {
-        const b = JSON.parse(raw) as UsageBucket;
-        buckets.push(b);
-        for (const [m, n] of Object.entries(b.counters)) {
-          totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
+          } catch { /* ignore malformed bucket */ }
         }
-      }
-    } catch { /* ignore */ }
-  }
+      } catch { /* list failed; return empty */ }
+    } else {
+      // Single-tenant view.
+      try {
+        const raw = await store.get(bucketKey(tenantFilter, monthParam), { type: "text" });
+        if (raw) {
+          const b = JSON.parse(raw) as UsageBucket;
+          buckets.push(b);
+          for (const [m, n] of Object.entries(b.counters)) {
+            totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
+          }
+        }
+      } catch { /* ignore */ }
+    }
+  } catch { /* getBillingStore() threw — return empty counters */ }
 
   const report: BillingReport = {
     tenant: allTenants ? null : tenantFilter,

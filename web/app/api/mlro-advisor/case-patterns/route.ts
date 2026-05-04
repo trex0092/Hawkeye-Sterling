@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const cases = body?.cases ?? [];
 
   if (!apiKey || cases.length < 2) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "mlro-advisor/case-patterns temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const casesSummary = cases
@@ -106,6 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { AlertBell } from "./AlertBell";
+import { InstallAppButton } from "./InstallAppButton";
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
@@ -90,8 +90,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
       { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
-      { label: "🌍 Country Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk" },
-      { label: "🗺️ Geographic Heatmap", href: "/intel/heatmap", hint: "Country risk exposure · FATF lists" },
+      { label: "🌍 Country Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · heatmap" },
       { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live risk events · portfolio impact · regional map" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
       { label: "⚔️ Weaponized Brain", href: "/weaponized-brain", hint: "Multi-mode AI reasoning · counterfactual · steelman" },
@@ -179,7 +178,13 @@ export function Header() {
               onClick={() => {
                 if (!moreOpen && moreButtonRef.current) {
                   const rect = moreButtonRef.current.getBoundingClientRect();
-                  setDropdownPos({ left: rect.left, top: rect.bottom + 4 });
+                  // On mobile (<768px), anchor to left edge of viewport so
+                  // the dropdown never overflows off-screen.
+                  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+                  setDropdownPos({
+                    left: isMobile ? 8 : rect.left,
+                    top: rect.bottom + 4,
+                  });
                 }
                 setMoreOpen((v) => !v);
               }}
@@ -200,7 +205,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[900px] bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-4 grid grid-cols-5 gap-4"
+                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[900px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (
@@ -235,7 +240,7 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <AlertBell />
+          <InstallAppButton />
           <a
             href="/profile"
             title="My profile & password"

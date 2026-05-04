@@ -1,5 +1,8 @@
 "use client";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 export interface PdfSection {
   type: "header" | "subheader" | "paragraph" | "table" | "keyvalue" | "divider" | "badge";
   content?: string;
@@ -21,526 +24,138 @@ export interface PdfExportOptions {
   confidential?: boolean;
 }
 
-const TONE_HEX: Record<string, string> = {
-  red: "#c4185f",
-  amber: "#b9650f",
-  green: "#5e7752",
-  neutral: "#3d5a7a",
-};
-
-const TONE_BG: Record<string, string> = {
-  red: "rgba(196,24,95,0.08)",
-  amber: "rgba(185,101,15,0.08)",
-  green: "rgba(94,119,82,0.08)",
-  neutral: "rgba(61,90,122,0.08)",
-};
-
-function escHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function renderSection(s: PdfSection, idx: number): string {
-  switch (s.type) {
-    case "header":
-      return `<div class="hs-section-header">${escHtml(s.content ?? "")}</div>`;
-
-    case "subheader":
-      return `
-        <div class="hs-subheader">
-          <span class="hs-sub-num">${String(idx).padStart(2, "0")}</span>
-          <span class="hs-sub-text">${escHtml(s.content ?? "")}</span>
-        </div>`;
-
-    case "paragraph":
-      return `<p class="hs-para">${escHtml(s.content ?? "").replace(/\n/g, "<br>")}</p>`;
-
-    case "divider":
-      return `<div class="hs-rule"></div>`;
-
-    case "badge": {
-      const tone = s.tone ?? "neutral";
-      const color = TONE_HEX[tone];
-      const bg = TONE_BG[tone];
-      return `<div class="hs-badge" style="color:${color};background:${bg};border-color:${color}">${escHtml(s.content ?? "")}</div>`;
-    }
-
-    case "keyvalue":
-      return `
-        <div class="hs-kv-grid">
-          ${(s.pairs ?? []).map((p) => `
-            <div class="hs-kv-row">
-              <span class="hs-kv-label">${escHtml(p.label)}</span>
-              <span class="hs-kv-value">${escHtml(String(p.value))}</span>
-            </div>`).join("")}
-        </div>`;
-
-    case "table":
-      if (!s.rows || !s.columns) return "";
-      return `
-        <div class="hs-table-wrap">
-          <table class="hs-table">
-            <thead>
-              <tr>${s.columns.map((c) => `<th>${escHtml(c)}</th>`).join("")}</tr>
-            </thead>
-            <tbody>
-              ${s.rows.map((row) => `<tr>${row.map((cell) => `<td>${escHtml(cell)}</td>`).join("")}</tr>`).join("")}
-            </tbody>
-          </table>
-        </div>`;
-
-    default:
-      return "";
-  }
-}
-
-function buildHtml(options: PdfExportOptions): string {
-  const now = new Date();
-  const dateStr = now.toLocaleString("en-GB", { timeZone: "Asia/Dubai", hour12: false }) + " GST";
-  const institution = options.institution ?? "Hawkeye Sterling DPMS";
-
-  let sectionIdx = 0;
-  const bodyHtml = options.sections
-    .map((s) => {
-      if (s.type === "subheader") sectionIdx++;
-      return renderSection(s, sectionIdx);
-    })
-    .join("\n");
-
-  const classificationLabel = options.confidential ? "CONFIDENTIAL" : "INTERNAL";
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escHtml(options.title)} — Hawkeye Sterling</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --paper:   #f6f1e6;
-    --paper-2: #efe9da;
-    --ink:     #1a1614;
-    --ink-2:   #4a443e;
-    --ink-3:   #8a8478;
-    --pink:    #d61e6f;
-    --pink-2:  #a01250;
-    --hair:    rgba(26,22,20,0.15);
-    --serif:   'Cormorant Garamond', Georgia, serif;
-    --sans:    'Inter', 'Helvetica Neue', sans-serif;
-    --mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html, body {
-    background: var(--paper-2);
-    font-family: var(--serif);
-    color: var(--ink);
-  }
-
-  /* ── Screen wrapper ── */
-  .hs-sheet {
-    width: 794px;
-    min-height: 1123px;
-    background: var(--paper);
-    margin: 40px auto;
-    box-shadow: 0 0 0 1px rgba(26,22,20,0.08), 0 30px 60px -30px rgba(0,0,0,0.22);
-    padding: 64px 56px 72px;
-    position: relative;
-  }
-
-  /* ── Cover header ── */
-  .hs-cover-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 40px;
-    padding-bottom: 22px;
-    border-bottom: 0.5px solid var(--hair);
-  }
-  .hs-lockup-name {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 500;
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    color: var(--ink);
-    line-height: 1.2;
-  }
-  .hs-lockup-tag {
-    font-family: var(--sans);
-    font-size: 8px;
-    font-weight: 600;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin-top: 3px;
-  }
-  .hs-class-stamp {
-    border: 1px solid var(--pink);
-    padding: 6px 12px;
-    transform: rotate(-2deg);
-    background: rgba(214,30,111,0.06);
-    text-align: center;
-  }
-  .hs-class-stamp-label {
-    font-family: var(--sans);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    color: var(--pink);
-  }
-  .hs-class-stamp-sub {
-    font-family: var(--sans);
-    font-size: 7px;
-    font-weight: 500;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin-top: 2px;
-  }
-
-  /* ── Cover title ── */
-  .hs-cover-title {
-    margin-bottom: 28px;
-  }
-  .hs-cover-title h1 {
-    font-family: var(--serif);
-    font-size: 42px;
-    font-weight: 400;
-    font-style: italic;
-    letter-spacing: -0.01em;
-    line-height: 1.05;
-    color: var(--ink);
-  }
-  .hs-cover-title h1 .hs-dropcap {
-    color: var(--pink);
-    font-size: 56px;
-    line-height: 0.85;
-    vertical-align: -0.05em;
-    margin-right: 1px;
-  }
-  .hs-cover-title p {
-    font-family: var(--sans);
-    font-size: 10px;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    color: var(--ink-2);
-    margin-top: 10px;
-    max-width: 440px;
-    line-height: 1.5;
-  }
-
-  /* ── Meta strip ── */
-  .hs-meta-strip {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0 18px;
-    margin-bottom: 32px;
-    padding-bottom: 22px;
-    border-bottom: 0.5px solid var(--hair);
-  }
-  .hs-meta-item {
-    border-left: 0.5px solid var(--hair);
-    padding-left: 12px;
-  }
-  .hs-meta-value {
-    font-family: var(--serif);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink);
-    line-height: 1.3;
-  }
-  .hs-meta-label {
-    font-family: var(--sans);
-    font-size: 8px;
-    font-weight: 600;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin-top: 3px;
-  }
-
-  /* ── Double rule ── */
-  .hs-doublerule {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin: 24px 0;
-  }
-  .hs-doublerule span {
-    display: block;
-    height: 0.5px;
-    background: var(--ink);
-  }
-  .hs-doublerule span:last-child {
-    height: 1.5px;
-  }
-
-  /* ── Section header ── */
-  .hs-section-header {
-    font-family: var(--serif);
-    font-size: 26px;
-    font-weight: 500;
-    font-style: italic;
-    color: var(--ink);
-    letter-spacing: -0.01em;
-    margin: 28px 0 16px;
-    padding-bottom: 10px;
-    border-bottom: 0.5px solid var(--hair);
-  }
-
-  /* ── Subheader ── */
-  .hs-subheader {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    margin: 22px 0 10px;
-  }
-  .hs-sub-num {
-    font-family: var(--serif);
-    font-size: 34px;
-    font-weight: 500;
-    font-style: italic;
-    color: var(--pink);
-    line-height: 1;
-    min-width: 36px;
-  }
-  .hs-sub-text {
-    font-family: var(--sans);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--ink-2);
-  }
-
-  /* ── Paragraph ── */
-  .hs-para {
-    font-family: var(--serif);
-    font-size: 13.5px;
-    font-weight: 400;
-    line-height: 1.6;
-    color: var(--ink-2);
-    margin: 0 0 10px;
-    max-width: 600px;
-  }
-
-  /* ── Divider ── */
-  .hs-rule {
-    height: 0.5px;
-    background: var(--hair);
-    margin: 18px 0;
-  }
-
-  /* ── Badge ── */
-  .hs-badge {
-    display: inline-block;
-    font-family: var(--sans);
-    font-size: 8.5px;
-    font-weight: 700;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    padding: 5px 12px;
-    border: 1px solid;
-    border-radius: 2px;
-    margin: 8px 0 14px;
-  }
-
-  /* ── Key-value grid ── */
-  .hs-kv-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 10px 0 14px;
-    border: 0.5px solid var(--hair);
-  }
-  .hs-kv-row {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 0;
-    border-bottom: 0.5px solid var(--hair);
-  }
-  .hs-kv-row:last-child { border-bottom: none; }
-  .hs-kv-label {
-    font-family: var(--sans);
-    font-size: 8.5px;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    padding: 10px 14px 10px 16px;
-    border-right: 0.5px solid var(--hair);
-    background: rgba(26,22,20,0.02);
-  }
-  .hs-kv-value {
-    font-family: var(--serif);
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--ink);
-    padding: 8px 14px;
-    line-height: 1.5;
-  }
-
-  /* ── Table ── */
-  .hs-table-wrap {
-    overflow-x: auto;
-    margin: 10px 0 14px;
-  }
-  .hs-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--sans);
-    font-size: 9px;
-  }
-  .hs-table thead tr {
-    background: rgba(26,22,20,0.05);
-  }
-  .hs-table th {
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    padding: 8px 10px;
-    border: 0.5px solid var(--hair);
-    text-align: left;
-    white-space: nowrap;
-  }
-  .hs-table td {
-    padding: 7px 10px;
-    border: 0.5px solid var(--hair);
-    color: var(--ink-2);
-    line-height: 1.4;
-    vertical-align: top;
-  }
-  .hs-table tbody tr:nth-child(even) td {
-    background: rgba(26,22,20,0.015);
-  }
-
-  /* ── Footer ── */
-  .hs-doc-footer {
-    margin-top: 48px;
-    padding-top: 16px;
-    border-top: 0.5px solid var(--hair);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-  .hs-footer-left {
-    font-family: var(--sans);
-    font-size: 7.5px;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    line-height: 1.6;
-  }
-  .hs-footer-right {
-    font-family: var(--mono);
-    font-size: 8px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    color: var(--ink-3);
-    text-align: right;
-    line-height: 1.6;
-  }
-
-  /* ── Print ── */
-  @media print {
-    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    html, body { background: white !important; margin: 0 !important; }
-    .hs-sheet {
-      width: 100%;
-      min-height: auto;
-      margin: 0;
-      box-shadow: none;
-      padding: 18mm 16mm 20mm;
-    }
-    .hs-subheader, .hs-kv-grid, .hs-table-wrap, .hs-para { break-inside: avoid; }
-    .hs-table tr { break-inside: avoid; }
-  }
-  @page { size: A4 portrait; margin: 12mm; }
-</style>
-</head>
-<body>
-<div class="hs-sheet">
-
-  <!-- Cover header -->
-  <div class="hs-cover-header">
-    <div>
-      <div class="hs-lockup-name">Hawkeye Sterling</div>
-      <div class="hs-lockup-tag">AML Compliance Platform · UAE</div>
-    </div>
-    <div class="hs-class-stamp">
-      <div class="hs-class-stamp-label">${escHtml(classificationLabel)}</div>
-      <div class="hs-class-stamp-sub">MLRO USE ONLY</div>
-    </div>
-  </div>
-
-  <!-- Title -->
-  <div class="hs-cover-title">
-    <h1><span class="hs-dropcap">${escHtml(options.title.charAt(0))}</span>${escHtml(options.title.slice(1))}</h1>
-    ${options.subtitle ? `<p>${escHtml(options.subtitle)}</p>` : ""}
-  </div>
-
-  <!-- Meta strip -->
-  <div class="hs-meta-strip">
-    <div class="hs-meta-item">
-      <div class="hs-meta-value">${escHtml(institution)}</div>
-      <div class="hs-meta-label">Institution</div>
-    </div>
-    <div class="hs-meta-item">
-      <div class="hs-meta-value">${escHtml(options.reportRef)}</div>
-      <div class="hs-meta-label">Report Reference</div>
-    </div>
-    <div class="hs-meta-item">
-      <div class="hs-meta-value">${escHtml(dateStr)}</div>
-      <div class="hs-meta-label">Generated</div>
-    </div>
-  </div>
-
-  <div class="hs-doublerule"><span></span><span></span></div>
-
-  <!-- Body sections -->
-  ${bodyHtml}
-
-  <!-- Document footer -->
-  <div class="hs-doc-footer">
-    <div class="hs-footer-left">
-      ${options.moduleName ? `${escHtml(options.moduleName)}<br>` : ""}
-      ${options.regulatoryBasis ? escHtml(options.regulatoryBasis) : ""}
-    </div>
-    <div class="hs-footer-right">
-      ${escHtml(options.reportRef)}<br>
-      Hawkeye Sterling · Precision Screening · UAE
-    </div>
-  </div>
-
-</div>
-</body>
-</html>`;
-}
-
 export function exportToPdf(options: PdfExportOptions): void {
-  const html = buildHtml(options);
-  const w = window.open("", "_blank", "width=900,height=900");
-  if (!w) {
-    alert("Pop-up blocked — please allow pop-ups for this site and try again.");
-    return;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // Header band
+  doc.setFillColor(15, 15, 20); // dark bg
+  doc.rect(0, 0, 210, 28, "F");
+
+  // Title
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(options.title, 14, 12);
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(180, 180, 180);
+  doc.text(`${options.moduleName} · ${options.institution ?? "Hawkeye Sterling DPMS"}`, 14, 20);
+
+  // Confidential stamp if needed
+  if (options.confidential) {
+    doc.setTextColor(220, 50, 50);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("CONFIDENTIAL — MLRO USE ONLY", 210 - 14, 20, { align: "right" });
   }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.addEventListener("load", () => {
-    w.focus();
-    // Small delay lets Google Fonts finish loading before the print dialog opens.
-    setTimeout(() => w.print(), 800);
-  });
+
+  // Metadata bar
+  doc.setFillColor(30, 30, 35);
+  doc.rect(0, 28, 210, 10, "F");
+  doc.setTextColor(140, 140, 150);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "normal");
+  const meta = [
+    `Ref: ${options.reportRef}`,
+    `Generated: ${new Date().toLocaleString("en-GB", { timeZone: "Asia/Dubai" })} GST`,
+    options.generatedBy ? `By: ${options.generatedBy}` : "",
+  ].filter(Boolean).join("   |   ");
+  doc.text(meta, 14, 34.5);
+
+  let y = 46;
+
+  // Render sections
+  for (const section of options.sections) {
+    if (y > 265) { doc.addPage(); y = 20; }
+
+    if (section.type === "header") {
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 30, 40);
+      doc.text(section.content ?? "", 14, y);
+      y += 7;
+    } else if (section.type === "subheader") {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(80, 80, 100);
+      doc.text((section.content ?? "").toUpperCase(), 14, y);
+      doc.setDrawColor(200, 200, 210);
+      doc.line(14, y + 1.5, 196, y + 1.5);
+      y += 7;
+    } else if (section.type === "paragraph") {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 60);
+      const lines = doc.splitTextToSize(section.content ?? "", 182);
+      doc.text(lines, 14, y);
+      y += lines.length * 5 + 3;
+    } else if (section.type === "divider") {
+      doc.setDrawColor(220, 220, 230);
+      doc.line(14, y, 196, y);
+      y += 5;
+    } else if (section.type === "badge") {
+      const colors: Record<string, [number, number, number]> = {
+        red: [220, 50, 50], amber: [245, 158, 11], green: [34, 197, 94], neutral: [100, 100, 120],
+      };
+      const rgb = colors[section.tone ?? "neutral"] ?? ([100, 100, 120] as [number, number, number]);
+      const [r, g, b] = rgb;
+      doc.setFillColor(r, g, b);
+      doc.roundedRect(14, y - 4, 40, 7, 1.5, 1.5, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text((section.content ?? "").toUpperCase(), 34, y, { align: "center" });
+      doc.setTextColor(50, 50, 60);
+      y += 9;
+    } else if (section.type === "keyvalue") {
+      for (const pair of section.pairs ?? []) {
+        if (y > 265) { doc.addPage(); y = 20; }
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(80, 80, 100);
+        doc.text(pair.label, 14, y);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(30, 30, 40);
+        const valLines = doc.splitTextToSize(String(pair.value), 130);
+        doc.text(valLines, 70, y);
+        y += valLines.length * 5 + 1;
+      }
+      y += 3;
+    } else if (section.type === "table" && section.rows && section.columns) {
+      autoTable(doc, {
+        startY: y,
+        head: [section.columns],
+        body: section.rows,
+        margin: { left: 14, right: 14 },
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [30, 30, 40], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [248, 248, 252] },
+        didDrawPage: () => { y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5; },
+      });
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+    }
+  }
+
+  // Footer on all pages
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFillColor(245, 245, 248);
+    doc.rect(0, 284, 210, 13, "F");
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120, 120, 140);
+    doc.text("This document is confidential and intended solely for regulatory compliance purposes.", 14, 289.5);
+    if (options.regulatoryBasis) {
+      doc.text(options.regulatoryBasis, 14, 293.5);
+    }
+    doc.text(`Page ${i} of ${pageCount}`, 196, 291.5, { align: "right" });
+  }
+
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  doc.save(`${options.reportRef}-${dd}-${mm}-${yyyy}.pdf`);
 }

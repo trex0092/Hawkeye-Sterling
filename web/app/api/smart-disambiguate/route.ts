@@ -144,7 +144,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "smart-disambiguate temporarily unavailable - please retry." }, { status: 503 });
   }
 
   // Process max 20 hits
@@ -190,6 +190,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "smart-disambiguate temporarily unavailable - please retry." }, { status: 503 });
   }
 }

@@ -367,7 +367,7 @@ export default function EmployeesPage() {
             </div>
 
             {/* Row 1 */}
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <div>
                 <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Employee Name *</label>
                 <input value={form.name} onChange={set("name")} placeholder="Full legal name"
@@ -386,7 +386,7 @@ export default function EmployeesPage() {
             </div>
 
             {/* Row 2 — Emirates ID */}
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <div>
                 <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Emirates ID</label>
                 <input value={form.emiratesId} onChange={set("emiratesId")} placeholder="784-XXXX-XXXXXXX-X"
@@ -405,7 +405,7 @@ export default function EmployeesPage() {
             </div>
 
             {/* Row 3 — Passport */}
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <div>
                 <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Passport Number</label>
                 <input value={form.passport} onChange={set("passport")} placeholder="e.g. AX123456"
@@ -424,7 +424,7 @@ export default function EmployeesPage() {
             </div>
 
             {/* Row 4 — Email */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <div className="col-span-1">
                 <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Email Address *</label>
                 <input value={form.email} onChange={set("email")} placeholder="name@company.ae" type="email"
@@ -657,17 +657,17 @@ export default function EmployeesPage() {
                       {expanded && editingId === emp.id && (
                         <tr className={i < filtered.length - 1 ? "border-b border-hair" : ""}>
                           <td colSpan={11} className="px-4 py-3 bg-bg-1">
-                            <div className="grid grid-cols-3 gap-3 mb-2">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
                               <div><label className="block text-10 text-ink-3 mb-0.5">Name</label><input value={editForm.name} onChange={setEmp("name")} className="w-full text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Nationality</label><input value={editForm.nationality} onChange={setEmp("nationality")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Designation</label><input value={editForm.designation} onChange={setEmp("designation")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
                             </div>
-                            <div className="grid grid-cols-3 gap-3 mb-2">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
                               <div><label className="block text-10 text-ink-3 mb-0.5">Emirates ID</label><input value={editForm.emiratesId} onChange={setEmp("emiratesId")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">EID Expiry (dd/mm/yyyy)</label><input value={editForm.emiratesIdExpiry} onChange={setEmp("emiratesIdExpiry")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Date of Birth (dd/mm/yyyy)</label><input value={editForm.dateOfBirth} onChange={setEmp("dateOfBirth")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                             </div>
-                            <div className="grid grid-cols-3 gap-3 mb-2">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
                               <div><label className="block text-10 text-ink-3 mb-0.5">Passport</label><input value={editForm.passport} onChange={setEmp("passport")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">PP Expiry (dd/mm/yyyy)</label><input value={editForm.passportExpiry} onChange={setEmp("passportExpiry")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Email</label><input value={editForm.email} onChange={setEmp("email")} type="email" className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
@@ -696,7 +696,7 @@ export default function EmployeesPage() {
                       {expanded && editingId !== emp.id && (
                         <tr className={i < filtered.length - 1 ? "border-b border-hair" : ""}>
                           <td colSpan={11} className="px-4 py-3 bg-bg-1">
-                            <div className="grid grid-cols-4 gap-4 text-11">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-11">
                               <div>
                                 <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Date of Birth</div>
                                 <div className="font-mono text-ink-1">{fmtDMY(emp.dateOfBirth) || "—"}</div>

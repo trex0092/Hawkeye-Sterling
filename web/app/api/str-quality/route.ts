@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-import { NextResponse } from "next/server";
+export const maxDuration = 60;import { NextResponse } from "next/server";
 
 export interface StrQualityResult {
   qualityScore: number;
@@ -61,9 +61,10 @@ export async function POST(req: Request) {
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 });
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(55_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
           "You are a UAE AML/CFT compliance expert specialising in goAML STR quality assessment. Evaluate STR narratives for UAE FIU/goAML submission readiness. Return valid JSON only matching the StrQualityResult interface.",
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
         ],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 });
     const data = (await response.json()) as {
       content: Array<{ type: string; text: string }>;
     };
@@ -94,6 +95,6 @@ export async function POST(req: Request) {
     ) as StrQualityResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 });
   }
 }

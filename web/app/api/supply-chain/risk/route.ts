@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 export interface SupplierRisk {
@@ -235,12 +235,12 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 4000,
       system: [
         {
@@ -285,6 +285,6 @@ Perform a comprehensive supply chain risk assessment covering: geographic concen
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SupplyChainRiskResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 });
   }
 }

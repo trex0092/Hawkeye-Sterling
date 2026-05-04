@@ -1255,7 +1255,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               </div>
 
               <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Client Profile</div>
-              <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
                 <div>
                   <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Full Name *</label>
                   <input
@@ -1403,7 +1403,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
                   </div>
 
                   {(disambigResult.disambiguationStrategy || disambigResult.clientRiskProfile) && (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {disambigResult.disambiguationStrategy && (
                         <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
                           <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disambiguation Strategy</div>
@@ -2312,7 +2312,7 @@ function LiveReasoningTab({
       </p>
 
       {/* Posture strip */}
-      <div className="grid grid-cols-2 gap-2 mb-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3 sm:grid-cols-3">
         <PostureCell
           label="Composite"
           value={

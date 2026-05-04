@@ -1,5 +1,8 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Netlify Pro plan permits up to 60s per sync function. Country risk needs
+// the room — Sonnet 4.6 with 3000 tokens routinely takes 30–45s.
+export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -106,7 +109,12 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ...FALLBACK, country });
+  if (!apiKey) {
+    return NextResponse.json(
+      { ok: false, error: "Country risk unavailable — ANTHROPIC_API_KEY not configured on server." },
+      { status: 503 },
+    );
+  }
 
   const depth = body.analysisDepth ?? "quick";
   const detailInstruction =
@@ -114,11 +122,26 @@ export async function POST(req: Request) {
       ? "Provide comprehensive analysis with detailed context for each dimension, full regulatory obligations list, and at least 5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
+  // We extended this route to maxDuration=60. Construct an Anthropic client
+  // with a matching per-instance timeout (the default 22s would fire before
+  // our budget runs out and force fallback even on slowly-completing
+  // jurisdictions like Iran/Russia which routinely take 25-40s).
+  const sdkTimeoutMs = depth === "full" ? 55_000 : 30_000;
+
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, sdkTimeoutMs);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: depth === "full" ? 3000 : 2000,
+      // Quick mode (default) uses Haiku for sub-Lambda-timeout latency;
+      // full mode keeps Sonnet for richer analysis. Token budgets need to be
+      // generous enough that high-risk jurisdictions (Iran/Russia/etc) can
+      // emit a complete JSON object — too low a ceiling truncates mid-object,
+      // JSON.parse fails, and the catch surfaces a misleading "service
+      // unavailable" 503 even though the API call itself succeeded.
+      // Both modes now use Haiku 4.5 — Sonnet 4.6 with 4000 tokens for full
+      // mode reliably exceeded Netlify's 30s edge gateway "Inactivity Timeout"
+      // and 504-ed. Haiku at 2500–4000 tokens fits inside the window.
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: depth === "full" ? 4000 : 2500,
       system: [
         {
           type: "text",
@@ -201,6 +224,16 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ ...FALLBACK, country });
+    // Honest 503 instead of dressing up the UAE FALLBACK with the requested
+    // country name — that was misleading users with UAE risk scores labelled
+    // as their chosen country. Frontend already handles non-2xx by showing
+    // the error message in the red toast.
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Real-time analysis temporarily unavailable for ${country}. Please retry in a moment.`,
+      },
+      { status: 503 },
+    );
   }
 }

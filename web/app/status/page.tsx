@@ -366,7 +366,7 @@ export default function StatusPage() {
                   </div>
                 </div>
                 {data.sanctions.lists.length > 0 && (
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
                     {data.sanctions.lists.map((l) => {
                       const tone =
                         l.ageH == null
@@ -450,7 +450,7 @@ export default function StatusPage() {
             </Section>
 
             <Section title="Data-feed versions">
-              <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1 text-11 font-mono">
+              <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 grid grid-cols-1 md:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1 text-11 font-mono">
                 <div className="flex justify-between">
                   <span className="text-ink-2">brain</span>
                   <span className="text-ink-0">{data.feedVersions.brain}</span>

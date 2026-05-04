@@ -374,7 +374,7 @@ export default function AdverseMediaLookbackPage() {
           <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
             Log new finding
           </div>
-          <div className="grid grid-cols-3 gap-3 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
             <input value={draft.subject} onChange={set("subject")}
               placeholder="Subject name" className={inputCls} />
             <input value={draft.headline} onChange={set("headline")}
@@ -382,7 +382,7 @@ export default function AdverseMediaLookbackPage() {
             <input value={draft.source} onChange={set("source")}
               placeholder="Source (e.g. Reuters)" className={inputCls} />
           </div>
-          <div className="grid grid-cols-4 gap-3 mb-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
             <input value={draft.articleDate} onChange={set("articleDate")}
               placeholder="Article date dd/mm/yyyy" className={inputCls} />
             <select value={draft.category} onChange={set("category")} className={inputCls}>
@@ -652,12 +652,12 @@ export default function AdverseMediaLookbackPage() {
                   editingId === e.id ? (
                     <tr key={e.id} className={i < visible.length - 1 ? "border-b border-hair" : ""}>
                       <td colSpan={8} className="px-3 py-2">
-                        <div className="grid grid-cols-4 gap-3 mb-1.5">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-1.5">
                           <input value={editDraft.subject} onChange={setE("subject")} placeholder="Subject" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" />
                           <input value={editDraft.headline} onChange={setE("headline")} placeholder="Headline" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 col-span-2" />
                           <input value={editDraft.source} onChange={setE("source")} placeholder="Source" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
                         </div>
-                        <div className="grid grid-cols-4 gap-3 mb-1.5">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-1.5">
                           <input value={editDraft.articleDate} onChange={setE("articleDate")} placeholder="dd/mm/yyyy" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
                           <select value={editDraft.category} onChange={setE("category")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
                             {Object.entries(CAT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

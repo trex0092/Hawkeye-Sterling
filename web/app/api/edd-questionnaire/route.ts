@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 
 export interface EddQuestion {
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.
@@ -110,6 +110,7 @@ Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the cus
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(55_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -117,7 +118,7 @@ Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the cus
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 2000,
         system: systemPrompt,
         messages: [{
@@ -130,7 +131,7 @@ Generate the EDD questionnaire.`,
       }),
     });
 
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
 
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
@@ -138,6 +139,6 @@ Generate the EDD questionnaire.`,
     const result = JSON.parse(cleaned) as EddQuestionnaire;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
   }
 }

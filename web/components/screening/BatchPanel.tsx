@@ -583,7 +583,7 @@ export function BatchPanel() {
                 </button>
               </div>
             )}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {nameVars.variants.length > 0 && (
                 <div>
                   <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Variants</div>

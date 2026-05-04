@@ -192,7 +192,7 @@ export default function FpOptimizerPage() {
           {analysisResult && (
             <>
               {/* FP/TP Donut — CSS */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border border-hair-2 rounded-lg p-5 bg-bg-1 flex items-center gap-4">
                   <div
                     className="w-16 h-16 rounded-full shrink-0"
@@ -244,7 +244,7 @@ export default function FpOptimizerPage() {
                 <div className="font-mono text-11 uppercase tracking-wide text-ink-3 mb-3">
                   FP Patterns Identified
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {analysisResult.patterns.map((pattern: FpPattern, i) => (
                     <div key={i} className="border border-hair-2 rounded-lg p-4 bg-bg-1">
                       <div className="flex items-start justify-between mb-2 gap-2">
@@ -341,7 +341,7 @@ export default function FpOptimizerPage() {
             <div className="font-mono text-11 uppercase tracking-wide text-ink-3 mb-4">
               New Screening Hit — FP Prediction
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="block text-11 font-mono text-ink-3 mb-1">Subject Name</label>
                 <input
@@ -449,7 +449,7 @@ export default function FpOptimizerPage() {
               </div>
 
               {/* Risk/Mitigating factors */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-red-500/20 rounded-lg p-4 bg-bg-1">
                   <div className="font-mono text-10 uppercase tracking-wide text-red-400 mb-2">Risk Factors</div>
                   <ul className="space-y-1">
@@ -518,7 +518,7 @@ export default function FpOptimizerPage() {
       {/* ── TAB 3: Performance Trends ── */}
       {tab === "trends" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="border border-hair-2 rounded-lg p-4 bg-bg-1 text-center">
               <div className="text-32 font-semibold text-green-400">847</div>
               <div className="text-11 font-mono uppercase text-ink-3 tracking-wide">Decisions logged</div>

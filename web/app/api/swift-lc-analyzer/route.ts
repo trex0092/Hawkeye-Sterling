@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 
 export interface SwiftLcResult {
@@ -123,14 +123,15 @@ export async function POST(req: Request) {
   if (!body.swiftMessage?.trim()) return NextResponse.json({ ok: false, error: "swiftMessage required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "swift-lc-analyzer temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(55_000),
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a trade finance TBML specialist with expertise in SWIFT MT700/710/720 field-by-field analysis, FATF trade-based money laundering guidance, documentary credit structures, and world commodity price benchmarking. Analyse SWIFT messages and LC terms for TBML indicators including vague goods descriptions, over/under-invoicing, suspicious routing, amendment patterns, and beneficiary/applicant risk. Apply ICC UCP 600 standards and FATF 2021 trade finance risk guidance. Reference specific SWIFT field numbers in your analysis. Respond ONLY with valid JSON matching the SwiftLcResult interface — no markdown fences.`,
         messages: [{
@@ -147,12 +148,12 @@ Analyse this SWIFT/LC for TBML indicators. Return complete SwiftLcResult JSON.`,
         }],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "swift-lc-analyzer temporarily unavailable - please retry." }, { status: 503 });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SwiftLcResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "swift-lc-analyzer temporarily unavailable - please retry." }, { status: 503 });
   }
 }

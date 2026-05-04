@@ -90,7 +90,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "pep-network temporarily unavailable - please retry." }, { status: 503 });
   }
 
   let body: Body;
@@ -123,6 +123,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,

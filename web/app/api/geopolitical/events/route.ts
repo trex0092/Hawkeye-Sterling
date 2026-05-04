@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 export interface GeopoliticalEvent {
@@ -195,12 +195,12 @@ const FALLBACK_EVENTS: GeopoliticalEvent[] = [
 
 export async function GET() {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, events: FALLBACK_EVENTS });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 3000,
       system: [
         {
@@ -246,6 +246,6 @@ Include a mix of: 2-3 critical events, 5-6 high events, 3-4 medium events. Make 
     ) as { ok: boolean; events: GeopoliticalEvent[] };
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ ok: true, events: FALLBACK_EVENTS });
+    return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
   }
 }

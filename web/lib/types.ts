@@ -232,7 +232,15 @@ export type FilterKey =
   | "pep"
   | "sla"
   | "a24"
+  | "mine"
   | "closed";
+
+export interface SavedFilterSet {
+  id: string;
+  label: string;
+  keys: FilterKey[];
+  createdAt: string;
+}
 
 export interface QueueFilter {
   key: FilterKey;

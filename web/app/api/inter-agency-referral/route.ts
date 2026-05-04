@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 
 export interface InterAgencyReferralResult {
@@ -113,14 +113,15 @@ export async function POST(req: Request) {
   if (!body.caseDescription?.trim()) return NextResponse.json({ ok: false, error: "caseDescription required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(55_000),
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE law enforcement referral specialist with expertise in UAE Public Prosecution (PPO) and CID liaison procedures, FIU reporting via goAML, inter-agency notification requirements, MLAT procedures, and Egmont Group information sharing. Draft comprehensive inter-agency referral packages including cover letters, facts summaries, evidence lists, legal basis statements, and parallel notification requirements. Always include tipping off warnings (FDL 10/2025 Art.20) and evidence preservation steps. Respond ONLY with valid JSON matching the InterAgencyReferralResult interface — no markdown fences.`,
         messages: [{
@@ -137,12 +138,12 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
         }],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as InterAgencyReferralResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
   }
 }

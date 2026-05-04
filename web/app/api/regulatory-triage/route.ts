@@ -56,7 +56,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, results: [] });
+    return NextResponse.json(
+      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
+      { status: 503 },
+    );
   }
 
   const compact = items.map((i) => ({
@@ -84,11 +87,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       }),
     });
   } catch {
-    return NextResponse.json({ ok: true, results: [] });
+    return NextResponse.json(
+      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
+      { status: 503 },
+    );
   }
 
   if (!anthropicRes.ok) {
-    return NextResponse.json({ ok: true, results: [] });
+    return NextResponse.json(
+      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
+      { status: 503 },
+    );
   }
 
   let results: TriageResult[];
@@ -97,11 +106,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = data.content.find((b) => b.type === "text")?.text ?? "[]";
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      return NextResponse.json({ ok: true, results: [] });
+      return NextResponse.json(
+      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
+      { status: 503 },
+    );
     }
     results = JSON.parse(jsonMatch[0]) as TriageResult[];
   } catch {
-    return NextResponse.json({ ok: true, results: [] });
+    return NextResponse.json(
+      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
+      { status: 503 },
+    );
   }
 
   return NextResponse.json({ ok: true, results });

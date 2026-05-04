@@ -506,7 +506,7 @@ function JurisdictionIntelPanel() {
 
             <div>
               <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-2">Sanctions Exposure</div>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {(["uae", "un", "ofac", "eu", "uk"] as const).map((regime) => (
                   <div key={regime} className="bg-bg-1 rounded p-2">
                     <div className="text-9 font-mono font-bold uppercase text-ink-3 mb-1">{regime.toUpperCase()}</div>

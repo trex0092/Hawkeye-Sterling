@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 interface SubjectInput {
@@ -63,10 +63,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 3000,
       system: [
         {
@@ -124,6 +124,6 @@ Analyse and prioritise these subjects for AML re-screening urgency. Flag immedia
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PrioritizeResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 });
   }
 }

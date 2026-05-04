@@ -225,7 +225,7 @@ export default function SanctionsEvasionPage() {
             Entity <em className="italic text-brand">assessment</em>
           </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Entity Name */}
             <div className="flex flex-col">
               <label className="block font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">

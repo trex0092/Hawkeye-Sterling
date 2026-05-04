@@ -1,6 +1,26 @@
-import { getStore } from "@netlify/blobs";
+import { getStore as getNetlifyStore } from "@netlify/blobs";
 
 const BILLING_STORE = "hawkeye-billing";
+
+// `@netlify/plugin-nextjs` does not auto-inject Blobs context into Next.js API
+// routes in this monorepo layout — `getNetlifyStore(BILLING_STORE)` throws
+// `MissingBlobsEnvironmentError` and bubbles a 500 unless we pass siteID +
+// token explicitly. Mirror the pattern from `web/lib/server/store.ts`.
+function buildBillingStoreOptions(): Parameters<typeof getNetlifyStore>[0] {
+  const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+  const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
+    process.env["NETLIFY_API_TOKEN"] ??
+    process.env["NETLIFY_AUTH_TOKEN"];
+  if (siteID && token) {
+    return { name: BILLING_STORE, siteID, token, consistency: "strong" };
+  }
+  return { name: BILLING_STORE };
+}
+
+export function getBillingStore(): ReturnType<typeof getNetlifyStore> {
+  return getNetlifyStore(buildBillingStoreOptions());
+}
 
 export type BillingMetric =
   | "screensRun"
@@ -32,7 +52,7 @@ export async function incrementUsage(
   by = 1,
 ): Promise<void> {
   try {
-    const store = getStore(BILLING_STORE);
+    const store = getBillingStore();
     const month = monthKey();
     const key = bucketKey(tenant, month);
     let bucket: UsageBucket;

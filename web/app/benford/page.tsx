@@ -214,7 +214,7 @@ export default function BenfordPage() {
               </div>
 
               {/* Statistics grid */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-bg-1 border border-hair-2 rounded p-3 text-center">
                   <div className="text-18 font-mono font-semibold text-ink-0">{result.n.toLocaleString()}</div>
                   <div className="text-10 text-ink-3 uppercase tracking-wide-3">Sample size</div>

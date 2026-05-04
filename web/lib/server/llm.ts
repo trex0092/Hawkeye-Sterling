@@ -59,11 +59,23 @@ function redactSystem(
 
 // ── Guarded client ────────────────────────────────────────────────────────────
 
+// Default for routes on Netlify's standard Lambda budget (~26 s ceiling on
+// Pro). Routes that opt into `export const maxDuration = 60` can pass a
+// larger `timeoutMs` to getAnthropicClient and get up to ~55 s of budget.
+const DEFAULT_ANTHROPIC_TIMEOUT_MS = 22_000;
+
 export class AnthropicGuard {
   private inner: Anthropic;
 
-  constructor(apiKey: string) {
-    this.inner = new Anthropic({ apiKey });
+  constructor(apiKey: string, timeoutMs: number = DEFAULT_ANTHROPIC_TIMEOUT_MS) {
+    this.inner = new Anthropic({
+      apiKey,
+      timeout: timeoutMs,
+      // No automatic retries: a slow first attempt + a retry can blow even
+      // a 60 s Lambda budget. Routes that need retries should implement
+      // their own logic with explicit per-call timeouts.
+      maxRetries: 0,
+    });
   }
 
   /** Proxy `messages` namespace with PII redaction on the way in, rehydration on the way out. */
@@ -90,14 +102,15 @@ export class AnthropicGuard {
         const response = await inner.messages.create(safe, requestOptions);
 
         // Rehydrate response text blocks
-        const rehydratedContent = response.content.map((block: { type: string; text?: string; [k: string]: unknown }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rehydratedContent = (response.content as any[]).map((block: any) => {
           if (block.type === "text" && typeof block.text === "string") {
             return { ...block, text: rehydrate(block.text, map) };
           }
           return block;
         });
 
-        return { ...response, content: rehydratedContent };
+        return { ...response, content: rehydratedContent } as Anthropic.Message;
       },
     };
   }
@@ -106,7 +119,12 @@ export class AnthropicGuard {
 /**
  * Returns a PII-guarded Anthropic client with the same interface as `new Anthropic({ apiKey })`.
  * Swap every `new Anthropic({ apiKey })` call for `getAnthropicClient(apiKey)`.
+ *
+ * @param apiKey   - Anthropic API key.
+ * @param timeoutMs - Optional per-client request timeout. Defaults to 22 s for
+ *                   routes on the standard Netlify Lambda budget. Routes that
+ *                   set `export const maxDuration = 60` should pass ~55_000.
  */
-export function getAnthropicClient(apiKey: string): AnthropicGuard {
-  return new AnthropicGuard(apiKey);
+export function getAnthropicClient(apiKey: string, timeoutMs?: number): AnthropicGuard {
+  return new AnthropicGuard(apiKey, timeoutMs);
 }

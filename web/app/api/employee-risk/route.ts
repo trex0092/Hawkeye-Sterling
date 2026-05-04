@@ -72,11 +72,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -98,7 +99,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: true, ...FALLBACK });
+      return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 });
     }
 
     const data = (await res.json()) as { content?: { type: string; text: string }[] };
@@ -107,6 +108,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     const parsed = JSON.parse(stripped) as EmployeeRiskResult;
     return NextResponse.json({ ok: true, ...parsed });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 }

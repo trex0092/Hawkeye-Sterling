@@ -306,7 +306,7 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
                   placeholder="1985-04-12"
                 />
               )}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FieldText
                   label="Jurisdiction (ISO-2)"
                   value={draft.subject.jurisdiction ?? ""}
@@ -348,7 +348,7 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
               <div className="text-10 font-mono text-ink-3">
                 {draft.narrative.length} / 4000 characters
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FieldNumber
                   label="Amount (AED, optional)"
                   value={typeof draft.amountAed === "number" ? draft.amountAed : ""}

@@ -507,7 +507,7 @@ export default function ApiDocsPage() {
       </div>
 
       {/* ── Endpoint group cards ──────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
         {ENDPOINT_GROUPS.map((g) => {
           const c = COLOR_MAP[g.color] ?? COLOR_DEFAULT;
           return (

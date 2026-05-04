@@ -92,7 +92,7 @@ export function BrainWhatIf({ result }: { result: SuperBrainResult }) {
           )}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <Toggle k="dropSanctions" label="Drop sanctions hits" />
         <Toggle k="dropPep" label="Drop PEP classification" />
         <Toggle k="dropAdverseMedia" label="Drop adverse-media" />

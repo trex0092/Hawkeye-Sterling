@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
+export const maxDuration = 60;
 import { NextResponse } from "next/server";
 
 export interface RegExamResult {
@@ -136,14 +136,15 @@ export async function POST(req: Request) {
   if (!body.examArea?.trim()) return NextResponse.json({ ok: false, error: "examArea required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "regulatory-exam-prep temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(55_000),
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a CBUAE examination specialist with expertise in UAE AML/CFT inspection methodology, typical CBUAE examination questions, and model answers for regulated financial institutions. Generate realistic examination preparation materials including likely questions, model answers, documentation requirements, common findings, and best practices. Base questions on UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Model answers should reflect what an inspector expects to hear — specific, procedure-oriented, legally grounded. Respond ONLY with valid JSON matching the RegExamResult interface — no markdown fences.`,
         messages: [{
@@ -156,12 +157,12 @@ Generate comprehensive regulatory examination preparation materials for this top
         }],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "regulatory-exam-prep temporarily unavailable - please retry." }, { status: 503 });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RegExamResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "regulatory-exam-prep temporarily unavailable - please retry." }, { status: 503 });
   }
 }

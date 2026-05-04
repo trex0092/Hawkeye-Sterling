@@ -91,7 +91,7 @@ export function WatchlistHealthBadges() {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mt-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mt-5">
       {lists.length === 0 && !error && (
         <div className="col-span-full text-11 text-ink-3">Loading watchlist health…</div>
       )}

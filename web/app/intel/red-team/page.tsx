@@ -41,11 +41,16 @@ function saveResults(map: Record<string, ResultRow>): void {
 
 async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
   try {
-    const res = await fetch("/api/mlro-advisor", {
+    // Hit the fast Haiku route — the full executor → advisor → challenger
+    // pipeline takes 60-90s and consistently exceeds Netlify's Function
+    // timeout (~26s), turning every probe into HTTP 504. The single-pass
+    // Haiku 4.5 path returns in 2-6s and is more than capable of refusing
+    // an obvious injection / charter-violation prompt.
+    const res = await fetch("/api/mlro-advisor-quick", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ question: p.prompt, subjectName: "Red-Team Probe", redTeamMode: true }),
-      signal: AbortSignal.timeout(30_000),
+      body: JSON.stringify({ question: p.prompt, redTeamMode: true }),
+      signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) {
       return {
@@ -255,7 +260,7 @@ export default function RedTeamPage() {
       </div>
 
       <div className="mt-6 text-11 text-ink-3 font-mono">
-        Endpoint: POST /api/mlro-advisor · 30s timeout · 200ms throttle on
+        Endpoint: POST /api/mlro-advisor-quick · 20s timeout · 200ms throttle on
         Run-all · results persist to localStorage["hawkeye.red-team.v1"].
       </div>
     </ModuleLayout>

@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-import { NextResponse } from "next/server";
+export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 export interface MlScenarioResult {
   scenarioTitle: string;
@@ -65,12 +65,12 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ml-scenario temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       system: [
         {
@@ -92,11 +92,11 @@ export async function POST(req: Request) {
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!jsonMatch) return NextResponse.json({ ok: false, error: "ml-scenario temporarily unavailable - please retry." }, { status: 503 });
 
     const parsed = JSON.parse(jsonMatch[0]) as MlScenarioResult;
     return NextResponse.json({ ok: true, ...parsed });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "ml-scenario temporarily unavailable - please retry." }, { status: 503 });
   }
 }

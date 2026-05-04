@@ -152,7 +152,7 @@ function parseOpenedDate(s: string): Date {
 
 const SANCTIONS_KEYWORDS = /ofac|sdn|un\b|eu\b|ofsi|eocn|sanction|cahra/i;
 
-function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
+function applyFilter(subjects: Subject[], filter: FilterKey, operatorName?: string): Subject[] {
   const now = Date.now();
   switch (filter) {
     case "critical":
@@ -177,12 +177,29 @@ function applyFilter(subjects: Subject[], filter: FilterKey): Subject[] {
           : parseOpenedDate(s.openedAgo).getTime();
         return now - ms <= 24 * 60 * 60 * 1000;
       });
+    case "mine":
+      return subjects.filter(
+        (s) => s.status !== "cleared" && (operatorName ? s.assignedTo === operatorName : false),
+      );
     case "closed":
       return subjects.filter((s) => s.status === "cleared");
     case "all":
     default:
       return subjects.filter((s) => s.status !== "cleared");
   }
+}
+
+function applyFilters(subjects: Subject[], filters: FilterKey[], operatorName?: string): Subject[] {
+  if (filters.length === 0) return applyFilter(subjects, "all", operatorName);
+  if (filters.length === 1) return applyFilter(subjects, filters[0]!, operatorName);
+  const seen = new Set<string>();
+  const result: Subject[] = [];
+  for (const f of filters) {
+    for (const s of applyFilter(subjects, f, operatorName)) {
+      if (!seen.has(s.id)) { seen.add(s.id); result.push(s); }
+    }
+  }
+  return result;
 }
 
 function sortSubjects(
@@ -471,7 +488,7 @@ function loadSubjects(): Subject[] {
   }
 }
 
-function computeDynamicFilters(subjects: Subject[]): QueueFilter[] {
+function computeDynamicFilters(subjects: Subject[], operatorName?: string): QueueFilter[] {
   const now = Date.now();
   return QUEUE_FILTERS.map((f) => {
     let count: number;
@@ -511,6 +528,11 @@ function computeDynamicFilters(subjects: Subject[]): QueueFilter[] {
           return now - ms <= 24 * 60 * 60 * 1000;
         }).length;
         break;
+      case "mine":
+        count = subjects.filter(
+          (s) => s.status !== "cleared" && (operatorName ? s.assignedTo === operatorName : false),
+        ).length;
+        break;
       case "closed":
         count = subjects.filter((s) => s.status === "cleared").length;
         break;
@@ -524,7 +546,8 @@ function computeDynamicFilters(subjects: Subject[]): QueueFilter[] {
 export default function ScreeningPage() {
   const [subjects, setSubjects] = useState<Subject[]>(SUBJECTS);
   const [hydrated, setHydrated] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [activeFilters, setActiveFilters] = useState<FilterKey[]>(["all"]);
+  const [operatorName, setOperatorName] = useState<string>("");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(
     SUBJECTS[0]?.id ?? null,
@@ -590,6 +613,22 @@ export default function ScreeningPage() {
     setSubjects(loaded);
     setSelectedId((prev) => prev ?? loaded[0]?.id ?? null);
     setHydrated(true);
+    try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); } catch {}
+  }, []);
+
+  useEffect(() => {
+    const sync = () => {
+      try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); } catch {}
+    };
+    window.addEventListener("hawkeye:operator-updated", sync);
+    return () => window.removeEventListener("hawkeye:operator-updated", sync);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    try {
+      const loaded = loadSubjects();
+      setSubjects(loaded);
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
@@ -611,7 +650,7 @@ export default function ScreeningPage() {
 
   const deferredQuery = useDeferredValue(query);
 
-  const dynamicFilters = useMemo(() => computeDynamicFilters(subjects), [subjects]);
+  const dynamicFilters = useMemo(() => computeDynamicFilters(subjects, operatorName), [subjects, operatorName]);
 
   const filtered = useMemo(() => {
     // NL search overrides normal filtering pipeline
@@ -622,8 +661,9 @@ export default function ScreeningPage() {
     // timestamp passes. Showing them under "Closed" lets the analyst
     // still find them — that view is intentionally inclusive.
     const now = Date.now();
-    let list = applyFilter(subjects, activeFilter).filter((s) => {
-      if (activeFilter === "closed") return true;
+    const showClosed = activeFilters.includes("closed");
+    let list = applyFilters(subjects, activeFilters, operatorName).filter((s) => {
+      if (showClosed) return true;
       if (!s.snoozedUntil) return true;
       return Date.parse(s.snoozedUntil) <= now;
     });
@@ -673,7 +713,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilter, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter, nlMatchIds]);
+  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter, nlMatchIds]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -713,7 +753,7 @@ export default function ScreeningPage() {
 
   const applySavedSearch = useCallback((s: SavedSearch) => {
     setQuery(s.query ?? "");
-    setActiveFilter((s.filter ?? "all") as FilterKey);
+    setActiveFilters([(s.filter ?? "all") as FilterKey]);
     setStatusFilter((s.statusFilter ?? "all") as Subject["status"] | "all");
     setMinRisk(s.minRisk ?? 0);
     setAppliedSearchId(s.id);
@@ -1220,17 +1260,17 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
-      <div
-        className="grid min-h-[calc(100vh-84px)]"
-        style={{ gridTemplateColumns: "220px 1fr 480px" }}
-      >
-        <Sidebar
-          filters={dynamicFilters}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
+      <div className="grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_480px]">
+        <div className="hidden md:block">
+          <Sidebar
+            filters={dynamicFilters}
+            activeFilters={activeFilters}
+            onFiltersChange={setActiveFilters}
+            onRefresh={handleRefresh}
+          />
+        </div>
 
-        <main className="px-10 py-8 overflow-y-auto">
+        <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           <ScreeningHero
             inQueue={subjects.filter((s) => s.status !== "cleared").length}
             critical={criticalCount}
@@ -1362,7 +1402,7 @@ export default function ScreeningPage() {
 
           <div className="mb-3">
             <SavedSearchBar
-              active={{ query, filter: activeFilter, statusFilter, minRisk }}
+              active={{ query, filter: activeFilters[0] ?? "all", statusFilter, minRisk }}
               appliedId={appliedSearchId}
               onApply={applySavedSearch}
             />
@@ -1431,38 +1471,40 @@ export default function ScreeningPage() {
           />
         </main>
 
-        {(() => {
-          if (compareIds.size === 2) {
-            const [idA, idB] = [...compareIds];
-            const subA = idA !== undefined ? subjects.find((s) => s.id === idA) : undefined;
-            const subB = idB !== undefined ? subjects.find((s) => s.id === idB) : undefined;
-            if (subA && subB) {
+        <div className="hidden lg:block">
+          {(() => {
+            if (compareIds.size === 2) {
+              const [idA, idB] = [...compareIds];
+              const subA = idA !== undefined ? subjects.find((s) => s.id === idA) : undefined;
+              const subB = idB !== undefined ? subjects.find((s) => s.id === idB) : undefined;
+              if (subA && subB) {
+                return (
+                  <ComparePanel
+                    subjectA={subA}
+                    subjectB={subB}
+                    onClose={() => setCompareIds(new Set())}
+                    onSelect={(id) => { setSelectedId(id); setCompareIds(new Set()); }}
+                  />
+                );
+              }
+            }
+            if (selected && !formOpen) {
               return (
-                <ComparePanel
-                  subjectA={subA}
-                  subjectB={subB}
-                  onClose={() => setCompareIds(new Set())}
-                  onSelect={(id) => { setSelectedId(id); setCompareIds(new Set()); }}
+                <SubjectDetailPanel
+                  subject={selected}
+                  onUpdate={handleUpdateSubject}
+                  allSubjects={subjects}
+                  onSelectSubject={setSelectedId}
                 />
               );
             }
-          }
-          if (selected && !formOpen) {
             return (
-              <SubjectDetailPanel
-                subject={selected}
-                onUpdate={handleUpdateSubject}
-                allSubjects={subjects}
-                onSelectSubject={setSelectedId}
-              />
+              <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
+                <ActivityFeed />
+              </aside>
             );
-          }
-          return (
-            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
-              <ActivityFeed />
-            </aside>
-          );
-        })()}
+          })()}
+        </div>
       </div>
 
       <BulkImportDialog
@@ -1583,7 +1625,7 @@ export default function ScreeningPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-5 gap-3 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                   {[
                     { label: "Total", value: v.totalItems ?? 0 },
                     { label: "Adverse", value: v.adverseItems ?? 0 },

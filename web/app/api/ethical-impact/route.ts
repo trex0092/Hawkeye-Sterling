@@ -94,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "ethical-impact temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
@@ -141,6 +141,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "ai.ethical-impact-assessment.error", msg);
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "ethical-impact temporarily unavailable - please retry." }, { status: 503 });
   }
 }

@@ -105,7 +105,7 @@ export function CrossRegimeConflictCard({ data }: Props): JSX.Element | null {
       </div>
 
       {lists.length > 0 && (
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
           {lists.map((s) => (
             <div
               key={s.regimeId}

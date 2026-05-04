@@ -24,8 +24,8 @@ export function CasesSidebar({
       <SidebarSection title="Case status">
         <SidebarFilterList
           items={filters}
-          activeKey={activeFilter}
-          onSelect={onFilterChange}
+          activeKeys={[activeFilter]}
+          onSelect={(key) => onFilterChange(key as CaseFilterKey)}
         />
       </SidebarSection>
 

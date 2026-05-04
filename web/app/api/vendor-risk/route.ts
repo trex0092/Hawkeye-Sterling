@@ -76,7 +76,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, result: FALLBACK_RESULT });
+    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const userContent = `Assess the supply-chain risk for the following supplier:
@@ -90,6 +90,7 @@ DGD (Dubai Good Delivery) Listed: ${supplier.dgdListed ? "Yes" : "No"}
 Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"}`;
 
   const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
     method: "POST",
     headers: {
       "x-api-key": apiKey,
@@ -105,7 +106,7 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
   });
 
   if (!claudeRes.ok) {
-    return NextResponse.json({ ok: true, result: FALLBACK_RESULT });
+    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 
   interface ClaudeContent { type: string; text?: string }
@@ -121,7 +122,7 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
       .trim();
     result = JSON.parse(cleaned) as VendorRiskResult;
   } catch {
-    return NextResponse.json({ ok: true, result: FALLBACK_RESULT });
+    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {

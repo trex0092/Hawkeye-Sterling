@@ -189,7 +189,7 @@ export default function CryptoRiskPage() {
             </div>
 
             {(result.taintedTransactions != null || result.firstSeen) && (
-              <div className={`${cardCls} grid grid-cols-2 gap-3 text-12`}>
+              <div className={`${cardCls} grid grid-cols-1 md:grid-cols-2 gap-3 text-12`}>
                 {result.taintedTransactions != null && (
                   <div>
                     <div className="text-ink-3 mb-0.5">Tainted Transactions</div>
@@ -232,7 +232,7 @@ export default function CryptoRiskPage() {
                     <div className="flex flex-wrap gap-1.5">{threat.typologies.map((t, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{t}</span>)}</div>
                   )}
                   {threat.sanctionsNexus && <div className="text-11 text-red">{threat.sanctionsNexus}</div>}
-                  <div className="grid grid-cols-2 gap-2 text-10 font-mono text-ink-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-10 font-mono text-ink-3">
                     {threat.fatfR15Exposure && <div>{threat.fatfR15Exposure}</div>}
                     {threat.varaUaeRelevance && <div>{threat.varaUaeRelevance}</div>}
                   </div>

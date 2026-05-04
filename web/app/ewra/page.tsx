@@ -701,7 +701,7 @@ export default function EwraPage() {
         {/* Approval metadata */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
           <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Board approval</div>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div>
               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Unit</label>
               <input value={state.unit}
@@ -750,7 +750,7 @@ export default function EwraPage() {
                     Residual: {RISK_LABEL[res]}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <div className="text-10 text-ink-3 font-mono uppercase tracking-wide-2 mb-1">
                       Inherent risk — {RISK_LABEL[d.inherent]}

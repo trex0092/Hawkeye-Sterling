@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-04-30T13:30:08+00:00",
+  "generatedAt": "2026-05-03T11:37:42+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-04-30T13:30:08+00:00",
+    "generatedAt": "2026-05-03T11:37:42+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -1283,7 +1283,7 @@
         "scenarios": 69,
         "typologies": 73,
         "redFlags": 45,
-        "redFlagsExtended": 93,
+        "redFlagsExtended": 201,
         "adverseMediaCategories": 13,
         "metaCognition": 103
       },
@@ -1307,11 +1307,39 @@
     "crossReferences": {
       "redFlagsByTypology": [
         {
+          "typology": "tbml",
+          "count": 15
+        },
+        {
+          "typology": "vasp",
+          "count": 12
+        },
+        {
+          "typology": "onboarding_evasion",
+          "count": 12
+        },
+        {
           "typology": "banking",
           "count": 11
         },
         {
-          "typology": "tbml",
+          "typology": "source_of_wealth_inconsistency",
+          "count": 10
+        },
+        {
+          "typology": "profile_mismatch",
+          "count": 10
+        },
+        {
+          "typology": "behavioural_pattern",
+          "count": 10
+        },
+        {
+          "typology": "identity_proof_anomaly",
+          "count": 9
+        },
+        {
+          "typology": "velocity_pass_through",
           "count": 9
         },
         {
@@ -1319,11 +1347,23 @@
           "count": 8
         },
         {
+          "typology": "structuring",
+          "count": 7
+        },
+        {
+          "typology": "geographic_corridor",
+          "count": 7
+        },
+        {
+          "typology": "screening_evasion",
+          "count": 7
+        },
+        {
           "typology": "bec_fraud",
           "count": 6
         },
         {
-          "typology": "vasp",
+          "typology": "timing_calendar",
           "count": 6
         },
         {
@@ -1335,56 +1375,16 @@
           "count": 5
         },
         {
+          "typology": "insurance_wrap",
+          "count": 5
+        },
+        {
           "typology": "dpms_refinery",
           "count": 4
         },
         {
           "typology": "ai_governance_breach",
           "count": 4
-        },
-        {
-          "typology": "insurance",
-          "count": 3
-        },
-        {
-          "typology": "carbon_market_fraud",
-          "count": 3
-        },
-        {
-          "typology": "insider_threat",
-          "count": 3
-        },
-        {
-          "typology": "ai_synthetic_media_fraud",
-          "count": 3
-        },
-        {
-          "typology": "real_estate_cash",
-          "count": 3
-        },
-        {
-          "typology": "insurance_wrap",
-          "count": 3
-        },
-        {
-          "typology": "npo_diversion",
-          "count": 2
-        },
-        {
-          "typology": "gambling",
-          "count": 2
-        },
-        {
-          "typology": "art_dealer",
-          "count": 2
-        },
-        {
-          "typology": "market_manipulation",
-          "count": 2
-        },
-        {
-          "typology": "governance",
-          "count": 2
         }
       ],
       "jurisdictionsByRegion": [
@@ -1469,9 +1469,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 20,
       "regulatoryRecords": 581,
-      "taxonomyRecords": 480,
+      "taxonomyRecords": 588,
       "skillsRecords": 893,
-      "totalRecords": 1954
+      "totalRecords": 2062
     }
   }
 }

@@ -826,7 +826,7 @@ export default function EnforcementPage() {
                       onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
                       placeholder="Title"
                     />
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <input
                         className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
                         value={editDraft.authority}
@@ -994,7 +994,7 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Authority</label>
           <input
