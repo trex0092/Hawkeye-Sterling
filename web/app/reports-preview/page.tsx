@@ -3,17 +3,9 @@
 import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-function ddmmyyyy(d = new Date()): string {
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
-function gstNow(d = new Date()): string {
-  return d.toLocaleString("en-GB", { timeZone: "Asia/Dubai", hour12: false }) + " GST";
-}
-
-const TODAY = ddmmyyyy();
-const NOW   = gstNow();
+// Sample dates — fixed so no SSR/hydration mismatch.
+const TODAY = "04/05/2026";
+const NOW   = "04/05/2026 10:32:41 GST";
 
 // ── shared PDF chrome ─────────────────────────────────────────────────────────
 
@@ -73,7 +65,10 @@ function RSub({ children }: { children: React.ReactNode }) {
   );
 }
 function RBadge({ label, tone }: { label: string; tone: "red" | "amber" | "green" | "neutral" }) {
-  const cls = tone === "red" ? "bg-red-600" : tone === "amber" ? "bg-amber-500" : tone === "green" ? "bg-green-600" : "bg-gray-500";
+  const cls =
+    tone === "red" ? "bg-red-600" :
+    tone === "amber" ? "bg-amber-500" :
+    tone === "green" ? "bg-green-600" : "bg-gray-500";
   return (
     <span className={`${cls} text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide`}>
       {label}
@@ -116,9 +111,7 @@ function RTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
     </div>
   );
 }
-function RDivider() {
-  return <div className="border-t border-gray-100" />;
-}
+function RDivider() { return <div className="border-t border-gray-100" />; }
 function RPara({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] text-[#323244] leading-relaxed">{children}</p>;
 }
@@ -130,7 +123,7 @@ function EwraPreview() {
     <ReportShell
       title="EWRA / BWRA Board Report"
       module="Module 23 · Risk Assessment"
-      ref={`EWRA-${new Date().getFullYear()}-BOARD`}
+      ref="EWRA-2026-BOARD"
       basis="UAE FDL 10/2025 Art.4 · FATF R.1 · CBUAE AML Standards"
     >
       <RHeader>Enterprise-Wide Risk Assessment — Board Report</RHeader>
@@ -139,7 +132,7 @@ function EwraPreview() {
       <RPara>
         The enterprise risk assessment for the current period identifies elevated exposure across
         three primary dimensions: customer risk (score 72), geographic risk (score 68), and
-        products & services risk (score 61). Residual risk remains above appetite in the DPMS
+        products &amp; services risk (score 61). Residual risk remains above appetite in the DPMS
         and cross-border wire categories. Immediate board attention is required on the UAE-Iran
         nexus and virtual asset onboarding controls.
       </RPara>
@@ -148,11 +141,11 @@ function EwraPreview() {
       <RTable
         columns={["Dimension", "Inherent", "Controls", "Notes"]}
         rows={[
-          ["Customer Risk",          "78", "72", "PEP and HNW segment driving inherent score"],
-          ["Geographic Risk",        "74", "68", "UAE-Iran corridor · FATF greylist jurisdictions"],
-          ["Products & Services",    "65", "61", "DPMS · virtual assets · cross-border wire"],
-          ["Channels",               "52", "48", "Digital onboarding gap — biometric not deployed"],
-          ["Delivery Mechanisms",    "45", "42", "Correspondent relationships — 3 pending EDD"],
+          ["Customer Risk",       "78", "72", "PEP and HNW segment driving inherent score"],
+          ["Geographic Risk",     "74", "68", "UAE-Iran corridor · FATF greylist jurisdictions"],
+          ["Products & Services", "65", "61", "DPMS · virtual assets · cross-border wire"],
+          ["Channels",            "52", "48", "Digital onboarding gap — biometric not deployed"],
+          ["Delivery Mechanisms", "45", "42", "Correspondent relationships — 3 pending EDD"],
         ]}
       />
       <RDivider />
@@ -164,8 +157,7 @@ function EwraPreview() {
       <RSub>Regulatory Context</RSub>
       <RPara>
         UAE FDL No.10/2025 Art.4 requires annual enterprise-wide risk assessments. This report
-        satisfies the CBUAE AML Standards §2 board sign-off obligation. Next assessment due:{" "}
-        {`${String(new Date().getDate()).padStart(2,"0")}/${String(new Date().getMonth()+1).padStart(2,"0")}/${new Date().getFullYear()+1}`}.
+        satisfies the CBUAE AML Standards §2 board sign-off obligation. Next assessment due: 04/05/2027.
       </RPara>
     </ReportShell>
   );
@@ -176,28 +168,28 @@ function StrPreview() {
     <ReportShell
       title="Suspicious Transaction Report — Draft"
       module="STR Workbench"
-      ref={`STR-DRAFT-${TODAY.replace(/\//g, "")}`}
+      ref="STR-DRAFT-04-05-2026"
       basis="UAE FDL 10/2025 Art.14 · CBUAE AML Standards §8 · FATF R.20"
     >
       <RHeader>Suspicious Transaction Report — Draft</RHeader>
       <RBadge label="Risk Score 84 / 100" tone="red" />
       <RSub>Report Details</RSub>
       <RKV pairs={[
-        { label: "Subject",               value: "Mohammed Al-Rashidi" },
-        { label: "Jurisdiction",          value: "UAE · AE-DU" },
-        { label: "Composite Risk Score",  value: "84 / 100" },
-        { label: "Date Prepared",         value: TODAY },
-        { label: "Reporting Officer",     value: "L. Fernanda — CO/MLRO" },
+        { label: "Subject",              value: "Mohammed Al-Rashidi" },
+        { label: "Jurisdiction",         value: "UAE · AE-DU" },
+        { label: "Composite Risk Score", value: "84 / 100" },
+        { label: "Date Prepared",        value: TODAY },
+        { label: "Reporting Officer",    value: "L. Fernanda — CO/MLRO" },
       ]} />
       <RDivider />
       <RSub>Narrative</RSub>
       <RPara>
         The subject conducted 14 cash transactions totalling AED 1,240,000 over a 22-day period,
         all structured below the AED 100,000 CTR threshold. Transactions show no plausible business
-        rationale given the declared occupation (self-employed, retail). Three deposits were
-        followed within 24 hours by international wire transfers to a correspondent account in
-        Türkiye flagged on the EOCN. Adverse media identified two articles linking the subject to
-        a Dubai-based hawala network (2023). MLRO recommends STR filing under CBUAE AML §8.
+        rationale given the declared occupation (self-employed, retail). Three deposits were followed
+        within 24 hours by international wire transfers to a correspondent account in Türkiye flagged
+        on the EOCN. Adverse media identified two articles linking the subject to a Dubai-based hawala
+        network (2023). MLRO recommends STR filing under CBUAE AML §8.
       </RPara>
       <RDivider />
       <RSub>Supporting Transactions</RSub>
@@ -226,17 +218,17 @@ function GapPreview() {
     <ReportShell
       title="Governance Gap Analysis"
       module="Management Oversight"
-      ref={`GAP-${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`}
+      ref="GAP-2026-05"
       basis="UAE FDL 10/2025 Art.20 · CBUAE AML Standards §6"
     >
       <RHeader>Governance Gap Analysis Report</RHeader>
       <RBadge label="Grade C" tone="amber" />
       <RSub>Overall Assessment</RSub>
       <RKV pairs={[
-        { label: "Institution",       value: "Hawkeye Sterling DPMS" },
-        { label: "Overall Grade",     value: "C — Partial Compliance" },
-        { label: "Assessment Date",   value: TODAY },
-        { label: "Assessed By",       value: "L. Fernanda — CO/MLRO" },
+        { label: "Institution",     value: "Hawkeye Sterling DPMS" },
+        { label: "Overall Grade",   value: "C — Partial Compliance" },
+        { label: "Assessment Date", value: TODAY },
+        { label: "Assessed By",     value: "L. Fernanda — CO/MLRO" },
       ]} />
       <RPara>
         The institution demonstrates adequate foundational controls but has material gaps in three
@@ -248,11 +240,11 @@ function GapPreview() {
       <RTable
         columns={["Area", "Finding", "Severity", "Regulatory Ref"]}
         rows={[
-          ["Independent Audit",  "No third-party AML audit in past 24 months",        "CRITICAL", "FDL Art.20"],
-          ["Training",           "3 staff overdue by >6 months on AML certification",  "HIGH",     "CBUAE §6.4"],
-          ["Board Oversight",    "Board AML report not tabled in last two meetings",   "HIGH",     "FDL Art.4"],
-          ["STR Timeliness",     "2 STRs filed outside prescribed 30-day window",      "MEDIUM",   "FDL Art.14"],
-          ["CDD Refresh",        "14% of customers overdue for periodic CDD review",   "MEDIUM",   "FATF R.10"],
+          ["Independent Audit", "No third-party AML audit in past 24 months",       "CRITICAL", "FDL Art.20"],
+          ["Training",          "3 staff overdue by 6+ months on AML certification", "HIGH",     "CBUAE §6.4"],
+          ["Board Oversight",   "Board AML report not tabled in last two meetings",  "HIGH",     "FDL Art.4"],
+          ["STR Timeliness",    "2 STRs filed outside prescribed 30-day window",     "MEDIUM",   "FDL Art.14"],
+          ["CDD Refresh",       "14% of customers overdue for periodic CDD review",  "MEDIUM",   "FATF R.10"],
         ]}
       />
       <RDivider />
@@ -260,10 +252,10 @@ function GapPreview() {
       <RTable
         columns={["Priority", "Action", "Owner", "Deadline"]}
         rows={[
-          ["CRITICAL", "Commission independent AML audit",          "Board",   "30/06/2026"],
-          ["HIGH",     "Complete overdue training for 3 staff",     "HR/MLRO", "15/05/2026"],
-          ["HIGH",     "Table AML report at next board meeting",    "MLRO",    "30/05/2026"],
-          ["MEDIUM",   "Remediate 14% CDD refresh backlog",        "CO",      "30/07/2026"],
+          ["CRITICAL", "Commission independent AML audit",       "Board",   "30/06/2026"],
+          ["HIGH",     "Complete overdue training for 3 staff",  "HR/MLRO", "15/05/2026"],
+          ["HIGH",     "Table AML report at next board meeting", "MLRO",    "30/05/2026"],
+          ["MEDIUM",   "Remediate 14% CDD refresh backlog",     "CO",      "30/07/2026"],
         ]}
       />
     </ReportShell>
@@ -275,20 +267,20 @@ function ScreeningPreview() {
     <ReportShell
       title="Customer Screening Report"
       module="Name Screening"
-      ref={`SCR-${TODAY.replace(/\//g,"")}-001`}
+      ref="SCR-04052026-001"
       basis="UAE FDL 10/2025 Art.9 · FATF R.10 · CBUAE AML Standards §4"
     >
       <RHeader>Customer Screening Report</RHeader>
       <RBadge label="EDD Required" tone="red" />
       <RSub>Subject Details</RSub>
       <RKV pairs={[
-        { label: "Subject Name",      value: "Nikolai Volkov" },
-        { label: "Entity Type",       value: "Individual · UBO" },
-        { label: "Citizenship",       value: "RU — Russian Federation" },
-        { label: "Composite Score",   value: "78 / 100" },
-        { label: "CDD Posture",       value: "EDD — Enhanced Due Diligence" },
-        { label: "Screened On",       value: TODAY },
-        { label: "Disposition",       value: "ESCALATE — Senior Approval Required" },
+        { label: "Subject Name",    value: "Nikolai Volkov" },
+        { label: "Entity Type",     value: "Individual · UBO" },
+        { label: "Citizenship",     value: "RU — Russian Federation" },
+        { label: "Composite Score", value: "78 / 100" },
+        { label: "CDD Posture",     value: "EDD — Enhanced Due Diligence" },
+        { label: "Screened On",     value: TODAY },
+        { label: "Disposition",     value: "ESCALATE — Senior Approval Required" },
       ]} />
       <RDivider />
       <RSub>Findings</RSub>
@@ -301,11 +293,11 @@ function ScreeningPreview() {
       <RTable
         columns={["List", "Result", "Match %", "Date Checked"]}
         rows={[
-          ["OFAC SDN",       "HIT",   "94%", TODAY],
-          ["UN Consolidated","HIT",   "87%", TODAY],
-          ["EU Consolidated","CLEAR", "—",   TODAY],
-          ["UAE EOCN",       "CLEAR", "—",   TODAY],
-          ["UK OFSI",        "HIT",   "91%", TODAY],
+          ["OFAC SDN",        "HIT",   "94%", TODAY],
+          ["UN Consolidated", "HIT",   "87%", TODAY],
+          ["EU Consolidated", "CLEAR", "—",   TODAY],
+          ["UAE EOCN",        "CLEAR", "—",   TODAY],
+          ["UK OFSI",         "HIT",   "91%", TODAY],
         ]}
       />
       <RDivider />
@@ -322,7 +314,7 @@ function MlroMemoPreview() {
     <ReportShell
       title="MLRO Internal Memorandum"
       module="MLRO Office"
-      ref={`MLRO-MEMO-${TODAY.replace(/\//g,"")}`}
+      ref="MLRO-MEMO-04052026"
       basis="UAE FDL 10/2025 Art.14 · FATF R.20 · CBUAE AML Standards §8"
     >
       <RHeader>MLRO Internal Memorandum</RHeader>
@@ -346,9 +338,9 @@ function MlroMemoPreview() {
       <RDivider />
       <RSub>Recommendation</RSub>
       <RPara>
-        MLRO recommends: (1) Immediate freeze of any pending transactions pending senior
-        management review. (2) File STR within 30 days per CBUAE AML Standards §8 if relationship
-        was established. (3) Do not establish relationship without written board-level approval.
+        MLRO recommends: (1) Immediate freeze of any pending transactions pending senior management
+        review. (2) File STR within 30 days per CBUAE AML Standards §8 if relationship was
+        established. (3) Do not establish relationship without written board-level approval.
         (4) Retain all screening evidence for 10 years per FDL Art.24.
       </RPara>
       <RDivider />
@@ -365,18 +357,17 @@ function BatchPreview() {
     <ReportShell
       title="Batch Screening Audit Report"
       module="Batch Screening Engine"
-      ref={`HWK-BATCH-${TODAY.replace(/\//g,"")}`}
+      ref="HWK-BATCH-04052026"
       basis="UAE FDL 10/2025 Art.9 · FATF R.10 · CBUAE AML Standards §4"
     >
       <RHeader>Batch Screening Audit Report</RHeader>
-      {/* stats bar */}
       <div className="grid grid-cols-5 gap-2">
         {[
-          { label: "Total Screened", value: "247", tone: "text-[#1e1e28]" },
-          { label: "Critical Hits",  value: "8",   tone: "text-red-600" },
-          { label: "High Risk",      value: "23",  tone: "text-orange-500" },
-          { label: "Clear",          value: "201", tone: "text-green-600" },
-          { label: "Duration",       value: "4.2s", tone: "text-[#1e1e28]" },
+          { label: "Total Screened", value: "247",  tone: "text-[#1e1e28]"  },
+          { label: "Critical Hits",  value: "8",    tone: "text-red-600"    },
+          { label: "High Risk",      value: "23",   tone: "text-orange-500" },
+          { label: "Clear",          value: "201",  tone: "text-green-600"  },
+          { label: "Duration",       value: "4.2s", tone: "text-[#1e1e28]"  },
         ].map((s) => (
           <div key={s.label} className="bg-[#f5f5f8] rounded p-2 text-center">
             <div className={`text-[16px] font-bold font-mono ${s.tone}`}>{s.value}</div>
@@ -408,7 +399,7 @@ function EvidencePackPreview() {
     <ReportShell
       title="MLRO Advisor Evidence Pack"
       module="MLRO Advisor — Multi-Modal AI"
-      ref={`EVIDENCE-${TODAY.replace(/\//g,"")}-001`}
+      ref="EVIDENCE-04052026-001"
       basis="UAE FDL 10/2025 · FATF R.1–40 · CBUAE AML Standards"
     >
       <RHeader>MLRO Advisor Evidence Pack</RHeader>
@@ -435,10 +426,10 @@ function EvidencePackPreview() {
       <RTable
         columns={["Step", "Actor", "Model", "Summary"]}
         rows={[
-          ["1", "Executor",  "claude-sonnet-4-6", "Sanctions list cross-reference — OFAC SDN hit confirmed"],
-          ["2", "Executor",  "claude-sonnet-4-6", "PEP classification — Tier 2 · Former Deputy Minister"],
-          ["3", "Advisor",   "claude-opus-4-7",   "Adverse media synthesis — 3 articles · high relevance"],
-          ["4", "Advisor",   "claude-opus-4-7",   "FATF R.20 threshold assessment — STR filing required"],
+          ["1", "Executor", "claude-sonnet-4-6", "Sanctions list cross-reference — OFAC SDN hit confirmed"],
+          ["2", "Executor", "claude-sonnet-4-6", "PEP classification — Tier 2 · Former Deputy Minister"],
+          ["3", "Advisor",  "claude-opus-4-7",   "Adverse media synthesis — 3 articles · high relevance"],
+          ["4", "Advisor",  "claude-opus-4-7",   "FATF R.20 threshold assessment — STR filing required"],
         ]}
       />
       <RDivider />
@@ -453,48 +444,13 @@ function EvidencePackPreview() {
 // ── Tab config ────────────────────────────────────────────────────────────────
 
 const REPORTS = [
-  {
-    id: "ewra",
-    label: "EWRA Board Report",
-    tag: "EWRA-YYYY-BOARD.pdf",
-    component: <EwraPreview />,
-  },
-  {
-    id: "str",
-    label: "STR Draft",
-    tag: "STR-DRAFT-DD-MM-YYYY.pdf",
-    component: <StrPreview />,
-  },
-  {
-    id: "gap",
-    label: "Governance Gap",
-    tag: "GAP-YYYY-MM.pdf",
-    component: <GapPreview />,
-  },
-  {
-    id: "screening",
-    label: "Customer Screening",
-    tag: "SCR-DD-MM-YYYY.pdf",
-    component: <ScreeningPreview />,
-  },
-  {
-    id: "memo",
-    label: "MLRO Memo",
-    tag: "MLRO-MEMO-DD-MM-YYYY.pdf",
-    component: <MlroMemoPreview />,
-  },
-  {
-    id: "batch",
-    label: "Batch Audit",
-    tag: "HWK-BATCH-DD-MM-YYYY.pdf",
-    component: <BatchPreview />,
-  },
-  {
-    id: "evidence",
-    label: "Evidence Pack",
-    tag: "EVIDENCE-DD-MM-YYYY.pdf",
-    component: <EvidencePackPreview />,
-  },
+  { id: "ewra",      label: "EWRA Board Report",    tag: "EWRA-2026-BOARD.pdf",         Preview: EwraPreview      },
+  { id: "str",       label: "STR Draft",            tag: "STR-DRAFT-DD-MM-YYYY.pdf",    Preview: StrPreview       },
+  { id: "gap",       label: "Governance Gap",       tag: "GAP-YYYY-MM.pdf",             Preview: GapPreview       },
+  { id: "screening", label: "Customer Screening",   tag: "SCR-DD-MM-YYYY.pdf",          Preview: ScreeningPreview },
+  { id: "memo",      label: "MLRO Memo",            tag: "MLRO-MEMO-DD-MM-YYYY.pdf",    Preview: MlroMemoPreview  },
+  { id: "batch",     label: "Batch Audit",          tag: "HWK-BATCH-DD-MM-YYYY.pdf",    Preview: BatchPreview     },
+  { id: "evidence",  label: "Evidence Pack",        tag: "EVIDENCE-DD-MM-YYYY.pdf",     Preview: EvidencePackPreview },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -502,12 +458,12 @@ const REPORTS = [
 export default function ReportsPreviewPage() {
   const [active, setActive] = useState("ewra");
   const current = REPORTS.find((r) => r.id === active) ?? REPORTS[0]!;
+  const { Preview } = current;
 
   return (
     <>
       <Header />
       <div className="min-h-[calc(100vh-84px)] bg-bg px-4 py-8 md:px-10">
-        {/* hero */}
         <div className="mb-6">
           <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
             MODULE 00
@@ -520,13 +476,13 @@ export default function ReportsPreviewPage() {
           </h1>
           <p className="text-ink-1 text-13 max-w-[60ch]">
             Every PDF report the platform generates — rendered live so you can review layout,
-            content, and formatting before downloading. All dates are{" "}
+            content, and formatting. All dates use{" "}
             <span className="font-mono text-brand">dd/mm/yyyy</span>.
           </p>
         </div>
 
         {/* tab strip */}
-        <div className="flex gap-1 flex-wrap mb-6 border-b border-hair pb-0">
+        <div className="flex gap-1 flex-wrap mb-6 border-b border-hair">
           {REPORTS.map((r) => (
             <button
               key={r.id}
@@ -552,7 +508,7 @@ export default function ReportsPreviewPage() {
 
         {/* preview */}
         <div className="overflow-x-auto pb-8">
-          {current.component}
+          <Preview />
         </div>
       </div>
     </>
