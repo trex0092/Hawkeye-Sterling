@@ -58,8 +58,8 @@ export function ModuleLayout<K extends string = string>({
               <SidebarSection title={filtersTitle}>
                 <SidebarFilterList
                   items={filters}
-                  activeKey={activeFilter}
-                  onSelect={onFilterChange}
+                  activeKeys={[activeFilter]}
+                  onSelect={(key) => onFilterChange(key)}
                 />
               </SidebarSection>
             )}

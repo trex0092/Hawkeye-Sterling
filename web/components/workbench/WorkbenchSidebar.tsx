@@ -36,8 +36,8 @@ export function WorkbenchSidebar({
       <SidebarSection title="Faculties">
         <SidebarFilterList
           items={filters}
-          activeKey={activeFilter}
-          onSelect={onFilterChange}
+          activeKeys={[activeFilter]}
+          onSelect={(key) => onFilterChange(key as FacultyFilterKey)}
         />
       </SidebarSection>
     </SidebarShell>
