@@ -59,11 +59,23 @@ function redactSystem(
 
 // ── Guarded client ────────────────────────────────────────────────────────────
 
+// Netlify sync function ceiling is ~26 s. Cap every Anthropic call below that
+// so a slow upstream surfaces as an SDK error (which existing route catches
+// already turn into a graceful FALLBACK) instead of a Lambda 504.
+const ANTHROPIC_REQUEST_TIMEOUT_MS = 22_000;
+
 export class AnthropicGuard {
   private inner: Anthropic;
 
   constructor(apiKey: string) {
-    this.inner = new Anthropic({ apiKey });
+    this.inner = new Anthropic({
+      apiKey,
+      timeout: ANTHROPIC_REQUEST_TIMEOUT_MS,
+      // SDK default is 2 retries — under our Lambda ceiling that means a single
+      // slow first attempt blows the whole 26 s budget. Cap at 1 retry so the
+      // worst case is ~22 s + a fast fail.
+      maxRetries: 1,
+    });
   }
 
   /** Proxy `messages` namespace with PII redaction on the way in, rehydration on the way out. */
