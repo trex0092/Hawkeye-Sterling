@@ -236,7 +236,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -272,6 +272,6 @@ Conduct a comprehensive sanctions evasion risk assessment. Identify all evasion 
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SanctionsEvasionResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 });
   }
 }

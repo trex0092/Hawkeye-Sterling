@@ -122,7 +122,7 @@ export async function POST(req: Request) {
   } catch { /* non-blocking */ }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ewra-report temporarily unavailable - please retry." }, { status: 503 });
 
   const dimensionText = body.dimensions
     ?.map((d) => `${d.dimension}: inherent ${d.inherent}/5, controls ${d.controls}/5${d.notes ? `, notes: ${d.notes}` : ""}`)
@@ -185,6 +185,6 @@ Generate the board EWRA report.`,
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "ewra-report temporarily unavailable - please retry." }, { status: 503 });
   }
 }

@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -124,6 +124,6 @@ Generate a comprehensive, tailored EDD checklist with specific documents to obta
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EddChecklistResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 });
   }
 }

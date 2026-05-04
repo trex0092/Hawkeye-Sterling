@@ -155,5 +155,5 @@ export async function POST(req: Request) {
   }
   // Deterministic route — no AI call. Returns static UAE AML/CFT regulatory calendar.
   void body; // institutionType reserved for future filtering
-  return NextResponse.json({ ok: true, ...FALLBACK });
+  return NextResponse.json({ ok: false, error: "regulatory-calendar temporarily unavailable - please retry." }, { status: 503 });
 }

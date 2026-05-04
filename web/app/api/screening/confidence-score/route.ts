@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "screening/confidence-score temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -119,6 +119,6 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
     ) as ConfidenceScoreResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "screening/confidence-score temporarily unavailable - please retry." }, { status: 503 });
   }
 }

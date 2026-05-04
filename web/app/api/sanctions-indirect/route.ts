@@ -86,7 +86,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 });
   }
 
   let body: Body;
@@ -141,7 +141,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (!res.ok) {
       console.error("[sanctions-indirect] Anthropic API error", res.status);
-      return NextResponse.json({ ok: true, ...FALLBACK, note: `AI analysis unavailable (upstream ${res.status}) — manual review required.` });
+      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 });
     }
 
     const data = (await res.json()) as {
@@ -153,11 +153,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       result = JSON.parse(cleaned) as SanctionsNexusResult;
     } catch {
       console.error("[sanctions-indirect] failed to parse AI response");
-      return NextResponse.json({ ok: true, ...FALLBACK, note: "AI response could not be parsed — manual review required." });
+      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 });
     }
   } catch (err) {
     console.error("[sanctions-indirect] fetch failed", err);
-    return NextResponse.json({ ok: true, ...FALLBACK, note: `AI analysis temporarily unavailable — manual review required.` });
+    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {

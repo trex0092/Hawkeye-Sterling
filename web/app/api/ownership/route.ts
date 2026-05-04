@@ -125,7 +125,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ownership temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -173,6 +173,6 @@ Map the ownership structure, identify UBOs, assess shell company risk and jurisd
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as OwnershipResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "ownership temporarily unavailable - please retry." }, { status: 503 });
   }
 }

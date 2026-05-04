@@ -84,7 +84,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const systemPrompt = `You are a UAE TBML (Trade-Based Money Laundering) specialist with deep expertise in gold/precious metals trade finance, DPMS/LBMA standards, OECD CAHRA 5-step due diligence, and FATF typologies.
@@ -146,7 +146,7 @@ Perform TBML risk analysis.`,
       }),
     });
 
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 });
 
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
@@ -154,6 +154,6 @@ Perform TBML risk analysis.`,
     const result = JSON.parse(cleaned) as TbmlAnalysis;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 });
   }
 }

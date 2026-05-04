@@ -41,7 +41,7 @@ const GAP_FALLBACK = {
 export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+    return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   let body: unknown;
@@ -68,11 +68,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       }),
     });
   } catch {
-    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+    return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   if (!anthropicRes.ok) {
-    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+    return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   let result: GapAnalysisResult;
@@ -81,11 +81,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = data.content.find((b) => b.type === "text")?.text ?? "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+      return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 });
     }
     result = JSON.parse(jsonMatch[0]) as GapAnalysisResult;
   } catch {
-    return NextResponse.json({ ok: true, ...GAP_FALLBACK });
+    return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 });
   }
 
   return NextResponse.json({ ok: true, result });

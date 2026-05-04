@@ -58,11 +58,11 @@ export async function POST(req: Request) {
   const cases = body.cases ?? [];
 
   if (cases.length < 2) {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -127,6 +127,6 @@ Identify all statistically significant or operationally relevant patterns across
     ) as PatternDetectResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 });
   }
 }

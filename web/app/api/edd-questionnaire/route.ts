@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.
@@ -131,7 +131,7 @@ Generate the EDD questionnaire.`,
       }),
     });
 
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
 
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
@@ -139,6 +139,6 @@ Generate the EDD questionnaire.`,
     const result = JSON.parse(cleaned) as EddQuestionnaire;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
   }
 }

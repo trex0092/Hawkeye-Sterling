@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 });
   }
 
   const systemPrompt = `You are a senior UAE AML/CFT analyst specialising in DPMS, gold trading, and transaction monitoring. You receive raw transaction narratives or monitoring alert text and produce a structured AML analysis.
@@ -104,7 +104,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
       }),
     });
 
-    if (!response.ok) return NextResponse.json({ ok: true, ...FALLBACK });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 });
 
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
@@ -112,6 +112,6 @@ Respond ONLY with valid JSON — no markdown, no explanation:
     const result = JSON.parse(cleaned) as TransactionAnalysis;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 });
   }
 }

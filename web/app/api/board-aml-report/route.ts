@@ -126,7 +126,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -157,6 +157,6 @@ Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAm
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as BoardAmlReportResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 });
   }
 }

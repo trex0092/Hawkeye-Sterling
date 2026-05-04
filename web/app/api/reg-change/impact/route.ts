@@ -168,7 +168,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ...FALLBACK, regulation: body.regulation ?? FALLBACK.regulation });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -227,6 +227,6 @@ Produce a comprehensive impact assessment for how this regulation affects this s
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ImpactAssessmentResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ ...FALLBACK, regulation: body.regulation ?? FALLBACK.regulation });
+    return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 });
   }
 }

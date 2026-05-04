@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   if (!body.initialFunds?.trim()) return NextResponse.json({ ok: false, error: "initialFunds required" }, { status: 400 });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, ...FALLBACK });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 });
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -137,6 +137,6 @@ Trace these funds through money laundering stages and assess asset recovery pote
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AssetTracerResult;
     return NextResponse.json({ ok: true, ...result });
   } catch {
-    return NextResponse.json({ ok: true, ...FALLBACK });
+    return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 });
   }
 }

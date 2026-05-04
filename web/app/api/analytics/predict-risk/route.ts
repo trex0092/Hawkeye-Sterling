@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 
   try {
@@ -139,6 +139,6 @@ Predict the risk trajectory. Identify which categories are accelerating. Suggest
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PredictRiskResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 });
   }
 }

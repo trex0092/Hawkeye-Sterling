@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(FALLBACK);
+  if (!apiKey) return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 });
 
   const sourcesText = body.sources
     .map(
@@ -134,6 +134,6 @@ Synthesise all source intelligence into a coherent subject profile. Identify cor
     ) as OsintSynthesisResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(FALLBACK);
+    return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 });
   }
 }
