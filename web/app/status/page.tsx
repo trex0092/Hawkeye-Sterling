@@ -183,6 +183,7 @@ export default function StatusPage() {
   return (
     <ModuleLayout asanaModule="status" asanaLabel="Status">
         <ModuleHero
+          moduleNumber={46}
           eyebrow="MODULE 07 · LIVE ENDPOINT HEALTH"
           title="System"
           titleEm="status."

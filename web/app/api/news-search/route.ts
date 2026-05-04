@@ -3,6 +3,7 @@ import { enforce } from "@/lib/server/enforce";
 import {
   classifyAdverseKeywords,
   adverseKeywordGroupCounts,
+  type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 // Import from concrete modules rather than the index.js barrel. Pulling
@@ -14,6 +15,18 @@ import { variantsOf } from "../../../../dist/src/brain/translit.js";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+// Module-level safety net — see /api/compliance-qa for rationale.
+const REJECTION_GUARD_KEY = "__hsNewsSearchRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) return;
+    console.error("[news-search] unhandled rejection", msg);
+  });
+}
 
 // Free, no-key news crawl via Google News RSS.
 // Optional upgrade path: set NEWSAPI_KEY for higher-quality coverage.
@@ -390,12 +403,9 @@ export async function GET(req: Request): Promise<NextResponse> {
         "clear" as Article["severity"],
       );
     const allKw = parsed.flatMap((a) =>
-      a.keywordGroups.map((g) => ({ group: g, groupLabel: g, term: "", offset: 0 })),
+      a.keywordGroups.map((g) => ({ group: g as AdverseKeywordGroup, groupLabel: g, term: "", offset: 0 })),
     );
-    const groupCounts = adverseKeywordGroupCounts(
-      // @ts-expect-error — shape matches; we rebuild labels below
-      allKw,
-    );
+    const groupCounts = adverseKeywordGroupCounts(allKw);
     const esgDomains = Array.from(new Set(parsed.flatMap((a) => a.esgCategories)));
     const langCoverage = Array.from(new Set(parsed.map((a) => a.lang))).sort();
     const payload: NewsResponse = {

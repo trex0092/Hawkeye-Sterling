@@ -7,6 +7,18 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+// Module-level safety net — see /api/compliance-qa for rationale.
+const REJECTION_GUARD_KEY = "__hsScreeningReportRejectionGuard";
+const guardHost = globalThis as unknown as Record<string, boolean | undefined>;
+if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
+  guardHost[REJECTION_GUARD_KEY] = true;
+  process.on("unhandledRejection", (reason: unknown) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    if (msg.includes("AbortError") || msg.includes("aborted")) return;
+    console.error("[screening-report] unhandled rejection", msg);
+  });
+}
+
 // MLRO triage inbox — "00 · Master Inbox". All form submissions land here
 // first; MLRO routes them to downstream Projects 01–19.
 // Route: ASANA_SCREENING_PROJECT_GID → 01 · Screening — Sanctions & Watchlists
@@ -85,6 +97,10 @@ interface ApiResponse {
   taskUrl?: string;
   error?: string;
   detail?: string;
+  asanaSkipped?: boolean;
+  asanaNote?: string;
+  reportName?: string;
+  reportNotes?: string;
 }
 
 function respond(status: number, body: ApiResponse): NextResponse {
@@ -391,14 +407,7 @@ function buildTaskNotes(b: ReportBody): string {
 
 async function handleScreeningReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
-  if (!token) {
-    return respond(503, {
-      ok: false,
-      error: "asana not configured",
-      detail:
-        "Set ASANA_TOKEN (Personal Access Token) in Netlify env vars for the hawkeye-sterling site.",
-    });
-  }
+  const asanaEnabled = !!token;
 
   let body: ReportBody;
   try {
@@ -412,6 +421,16 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
 
   const name = buildTaskName(body);
   const notes = buildTaskNotes(body);
+
+  if (!asanaEnabled) {
+    return respond(200, {
+      ok: true,
+      asanaSkipped: true,
+      asanaNote: "ASANA_TOKEN not configured — report generated but not filed to MLRO inbox. Set ASANA_TOKEN in Netlify env to enable automatic filing.",
+      reportName: name,
+      reportNotes: notes,
+    });
+  }
 
   // Bound the Asana call so a hung api.asana.com doesn't exhaust the
   // serverless function budget (Netlify hard-limits at 26s for background
@@ -484,10 +503,12 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
           : asanaRes.status === 401 || asanaRes.status === 403
             ? 503
             : 422;
-      return respond(mappedStatus, {
-        ok: false,
-        error: "asana rejected the task",
-        detail: msg,
+      return respond(200, {
+        ok: true,
+        asanaSkipped: true,
+        asanaNote: `Asana filing failed (${msg}) — report generated successfully.`,
+        reportName: name,
+        reportNotes: notes,
       });
     }
     // Fire an outbound webhook in parallel. Delivery is fire-and-forget —
@@ -516,10 +537,14 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
     });
   } catch (err) {
-    return respond(500, {
-      ok: false,
-      error: "asana request failed",
-      detail: err instanceof Error ? err.message : String(err),
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[screening-report] asana request failed", detail);
+    return respond(200, {
+      ok: true,
+      asanaSkipped: true,
+      asanaNote: `Asana request failed: ${detail} — report generated successfully.`,
+      reportName: name,
+      reportNotes: notes,
     });
   }
 }

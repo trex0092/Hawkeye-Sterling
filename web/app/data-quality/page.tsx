@@ -5,6 +5,31 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 
+interface RemediationItem {
+  subject: string;
+  priority: "critical" | "high" | "medium" | "low";
+  reason: string;
+  requiredActions: string[];
+  regulatoryRisk: string;
+  deadline: string;
+}
+
+interface DataQualityPlan {
+  ok: boolean;
+  remediationPlan: RemediationItem[];
+  criticalCount: number;
+  portfolioRisk: string;
+  topGaps: string[];
+  regulatoryExposure: string;
+}
+
+const PRIORITY_TONE: Record<RemediationItem["priority"], string> = {
+  critical: "bg-red-dim text-red",
+  high: "bg-red-dim text-red",
+  medium: "bg-amber-dim text-amber",
+  low: "bg-green-dim text-green",
+};
+
 // Data Quality — per-subject completeness score. Which required CDD
 // fields are missing, which ID documents expired, which subjects
 // haven't been re-screened in >90 days. Drives the remediation
@@ -20,6 +45,8 @@ const REQUIRED_FIELDS = [
 
 export default function DataQualityPage() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
+  const [plan, setPlan] = useState<DataQualityPlan | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
 
   useEffect(() => {
     setCases(loadCases());
@@ -58,9 +85,36 @@ export default function DataQualityPage() {
       ? 0
       : Math.round(rows.reduce((a, r) => a + r.score, 0) / rows.length);
 
+  const generatePlan = async () => {
+    if (planLoading || rows.length === 0) return;
+    setPlanLoading(true);
+    try {
+      const payload = rows.map((r) => ({
+        subject: r.c.subject ?? "",
+        score: r.score,
+        missing: r.missing,
+        screeningOverdue: r.screeningOverdue,
+        daysSinceScreen: r.daysSinceScreen,
+        status: r.c.status ?? "",
+      }));
+      const res = await fetch("/api/data-quality-fix", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ rows: payload }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as DataQualityPlan;
+        setPlan(data);
+      }
+    } catch { /* non-fatal */ } finally {
+      setPlanLoading(false);
+    }
+  };
+
   return (
     <ModuleLayout asanaModule="data-quality" asanaLabel="Data Quality">
         <ModuleHero
+          moduleNumber={16}
           eyebrow="Module 19 · Per-subject completeness"
           title="Data"
           titleEm="quality."
@@ -179,7 +233,84 @@ export default function DataQualityPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-6 bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+          <div className="mt-6">
+            {/* AI Remediation Plan button */}
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                type="button"
+                disabled={planLoading || rows.length === 0}
+                onClick={() => void generatePlan()}
+                className="text-12 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+              >
+                {planLoading ? "Generating plan…" : "AI Remediation Plan"}
+              </button>
+              {plan && (
+                <span className="text-11 text-ink-3">{plan.remediationPlan.length} subjects prioritised</span>
+              )}
+            </div>
+
+            {/* Plan panel */}
+            {plan && (
+              <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-4 space-y-3">
+                {/* Portfolio risk */}
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">Portfolio risk</div>
+                  <p className={`text-12 font-medium ${plan.criticalCount > 0 ? "text-red" : "text-ink-1"}`}>
+                    {plan.portfolioRisk}
+                  </p>
+                </div>
+                {/* Regulatory exposure */}
+                {plan.regulatoryExposure && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">Regulatory exposure</div>
+                    <p className="text-11 font-mono text-ink-2">{plan.regulatoryExposure}</p>
+                  </div>
+                )}
+                {/* Top gaps */}
+                {plan.topGaps.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">Common gaps</div>
+                    <div className="flex flex-wrap gap-1">
+                      {plan.topGaps.map((g, idx) => (
+                        <span key={idx} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">{g}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Remediation plan list */}
+                {plan.remediationPlan.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Prioritised remediation</div>
+                    <div className="space-y-2">
+                      {plan.remediationPlan.map((item, idx) => (
+                        <div key={idx} className="border border-hair rounded p-3">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="text-12 font-semibold text-ink-0">{item.subject}</span>
+                            <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${PRIORITY_TONE[item.priority]}`}>
+                              {item.priority}
+                            </span>
+                            <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-bg-2 text-ink-2">{item.deadline}</span>
+                          </div>
+                          <p className="text-11 text-ink-1 mb-1">{item.reason}</p>
+                          {item.requiredActions.length > 0 && (
+                            <ul className="list-disc list-inside space-y-0.5">
+                              {item.requiredActions.map((action, aIdx) => (
+                                <li key={aIdx} className="text-10 text-ink-2">{action}</li>
+                              ))}
+                            </ul>
+                          )}
+                          {item.regulatoryRisk && (
+                            <p className="text-10 font-mono text-ink-3 mt-1">{item.regulatoryRisk}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
             <table className="w-full text-12">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>
@@ -214,7 +345,19 @@ export default function DataQualityPage() {
                       <td className="px-3 py-2 font-mono text-11 text-ink-2">
                         {r.c.id}
                       </td>
-                      <td className="px-3 py-2 text-ink-0">{r.c.subject}</td>
+                      <td className="px-3 py-2 text-ink-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {r.c.subject}
+                          {plan && (() => {
+                            const item = plan.remediationPlan.find((p) => p.subject === r.c.subject);
+                            return item ? (
+                              <span className={`inline-flex items-center px-1 py-px rounded-sm font-mono text-10 font-semibold uppercase ${PRIORITY_TONE[item.priority]}`}>
+                                {item.priority}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
+                      </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           <div className="w-24 h-1.5 bg-bg-2 rounded-sm overflow-hidden">
@@ -270,6 +413,7 @@ export default function DataQualityPage() {
                   ))}
               </tbody>
             </table>
+          </div>
           </div>
         )}
     </ModuleLayout>

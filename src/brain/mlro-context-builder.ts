@@ -7,6 +7,7 @@
 import type { EvidenceItem } from './evidence.js';
 import { isCahra } from './cahra.js';
 import type { AuditEntry } from './audit-chain.js';
+import { classifyPepRole, type PepClassification } from './pep-classifier.js';
 
 export interface RawCaseInput {
   caseId: string;
@@ -32,6 +33,11 @@ export interface CaseSignals {
   hasCahra: boolean;
   hasCrypto: boolean;
   hasPep: boolean;
+  /** Per-role classifications produced by `classifyPepRole`. Filtered to
+   *  exclude `type === 'not_pep'`. Empty when no role matched a PEP rule.
+   *  Carries tier + type + salience + matchedRule so downstream consumers
+   *  can drive EDD regime + review cadence (RCA family/associate too). */
+  pepClassifications: readonly PepClassification[];
   hasCash: boolean;
   structuring: boolean;
   eocnConfirmed: boolean;
@@ -61,7 +67,6 @@ export interface BuiltContext {
   derivedFlags: string[];  // human-readable flag notes
 }
 
-const PEP_TITLES = /\b(president|vice[- ]president|prime minister|deputy prime minister|king|queen|emir|sultan|sheikh|crown prince|minister|deputy minister|governor|mayor|senator|member of parliament|MP|chief justice|supreme court|general|admiral|air marshal|chief of police|inspector general|ambassador|high commissioner|central bank|sovereign wealth|politburo|party (general )?secretary)\b/i;
 const STRUCTURING_RX = /\b(structur|split|broken into|below threshold)\b/i;
 const EOCN_CONFIRMED_RX = /\b(confirmed[_ ](match|sanctions|designation))\b/i;
 const EOCN_PARTIAL_RX = /\b(partial[_ ](name[_ ])?match|pnmr)\b/i;
@@ -72,12 +77,23 @@ const TIPPING_OFF_RX = /\b(tell the customer|notify the subject|before we (file|
 const AUDIT_RX = /\b(audit|lookback|sample review|thematic review)\b/i;
 
 export function buildContext(raw: RawCaseInput): BuiltContext {
+  // Real PEP classification (tier + type + salience + RCA family/associate)
+  // via the dedicated classifier rather than the previous binary regex.
+  // Each role gets one classification; `not_pep` results are filtered out
+  // so the resulting array has only true PEP signals. Charter P8: callers
+  // must source role strings from a verifiable primary source — the
+  // classifier itself never asserts PEP status from training data.
+  const pepClassifications: PepClassification[] = (raw.roles ?? [])
+    .map((r) => classifyPepRole(r))
+    .filter((p) => p.type !== 'not_pep');
+
   const signals: CaseSignals = {
     sector: detectSector(raw),
     hasCahra: isCahra(raw.nationalityIso2 ?? '') || isCahra(raw.countryOfIncorporationIso2 ?? '') ||
               (raw.transactions ?? []).some((t) => t.counterpartyCountryIso2 && isCahra(t.counterpartyCountryIso2)),
     hasCrypto: (raw.wallets?.length ?? 0) > 0 || (raw.transactions ?? []).some((t) => t.channel === 'crypto'),
-    hasPep: (raw.roles ?? []).some((r) => PEP_TITLES.test(r)),
+    hasPep: pepClassifications.length > 0,
+    pepClassifications,
     hasCash: (raw.transactions ?? []).some((t) => t.channel === 'cash'),
     structuring: (raw.transactions ?? []).filter((t) => (t.amountAed ?? 0) >= 45000 && (t.amountAed ?? 0) < 55000).length >= 3,
     eocnConfirmed: false,

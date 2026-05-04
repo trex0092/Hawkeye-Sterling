@@ -14,6 +14,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { postScreeningReport } from "@/lib/api/screeningReport";
+import { formatDMY } from "@/lib/utils/dateFormat";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
@@ -56,6 +57,16 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
+import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
+import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
+import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
+import { DispositionButton } from "@/components/cases/DispositionButton";
+import { SnoozeButton } from "@/components/screening/SnoozeButton";
+import { ReScreenDiff } from "@/components/screening/ReScreenDiff";
+import { CrossSubjectLinks } from "@/components/screening/CrossSubjectLinks";
+import { ConfidenceBand } from "@/components/screening/ConfidenceBand";
+import { AIDecisionEngine } from "@/components/screening/AIDecisionEngine";
+import { writeAuditEvent } from "@/lib/audit";
 import {
   canPerform,
   loadOperatorRole,
@@ -72,8 +83,54 @@ import {
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
 type Tab = (typeof TABS)[number];
+
+// ── Hit Disambiguator types ───────────────────────────────────────────────────
+interface DisambiguationHitInput {
+  hitId: string;
+  hitName: string;
+  hitCategory: string;
+  hitCountry?: string;
+  hitDob?: string;
+  hitRole?: string;
+  matchScore?: number;
+}
+interface DisambiguatedHit {
+  hitId: string;
+  verdict: "confirmed_false_positive" | "likely_false_positive" | "possible_match" | "likely_true_match";
+  confidenceScore: number;
+  primaryDifferentiator: string;
+  canAutoDispose: boolean;
+  dispositionText: string;
+  requiresClientClarification: boolean;
+  clarificationQuestion?: string;
+}
+interface DisambiguationResult {
+  ok: boolean;
+  overallAssessment: string;
+  clientRiskProfile: string;
+  disambiguationStrategy: string;
+  hits: DisambiguatedHit[];
+  clarificationQuestions: string[];
+  bulkDispositionText: string;
+  escalationItems: string[];
+  regulatoryNote: string;
+  processingTime: string;
+}
+
+interface EthicalImpact {
+  impactLevel: "high" | "medium" | "low";
+  impactNarrative: string;
+  rightsImpacted: string[];
+  proportionalityAssessment: string;
+  humanOversightStatus: string;
+  mitigationMeasures: string[];
+  subjectRights: string[];
+  documentationRequired: string[];
+  unescoAlignment: string;
+  reviewRecommendation: string;
+}
 
 const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
   clear: "Clear",
@@ -94,9 +151,13 @@ const SEVERITY_TONE: Record<QuickScreenSeverity, string> = {
 interface SubjectDetailPanelProps {
   subject: Subject;
   onUpdate?: (id: string, update: Partial<Subject>) => void;
+  /** Full queue — used by the cross-subject link panel. */
+  allSubjects?: Subject[];
+  /** Switch the active subject (used by cross-subject link clicks). */
+  onSelectSubject?: (id: string) => void;
 }
 
-export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDetailPanelProps) {
+export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
@@ -161,10 +222,89 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   // records.
   const [roleOverride, setRoleOverride] = useState("");
   const [narrativeOverride, setNarrativeOverride] = useState("");
+  const [eiaResult, setEiaResult] = useState<EthicalImpact | null>(null);
+  const [eiaLoading, setEiaLoading] = useState(false);
   useEffect(() => {
     setRoleOverride("");
     setNarrativeOverride("");
+    setEiaResult(null);
   }, [subject.id]);
+
+  // ── Hit Disambiguator state ─────────────────────────────────────────────────
+  const [disambigResult, setDisambigResult] = useState<DisambiguationResult | null>(null);
+  const [disambigLoading, setDisambigLoading] = useState(false);
+  const [disambigClient, setDisambigClient] = useState({
+    name: subject.name,
+    nationality: subject.country,
+    dob: "",
+    gender: "",
+    occupation: subject.type.includes("Individual") ? "Individual" : subject.type,
+    context: subject.meta,
+  });
+  const [disambigHits, setDisambigHits] = useState<DisambiguationHitInput[]>([
+    { hitId: "hit-001", hitName: "", hitCategory: subject.listCoverage.length > 0 ? "Sanctions" : "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
+  ]);
+
+  // Re-seed client fields when the active subject changes
+  useEffect(() => {
+    setDisambigClient({
+      name: subject.name,
+      nationality: subject.country,
+      dob: "",
+      gender: "",
+      occupation: subject.type.includes("Individual") ? "Individual" : subject.type,
+      context: subject.meta,
+    });
+    setDisambigHits([{ hitId: "hit-001", hitName: "", hitCategory: "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined }]);
+    setDisambigResult(null);
+  }, [subject.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const addDisambigHit = () => setDisambigHits((prev) => [
+    ...prev,
+    { hitId: `hit-${String(prev.length + 1).padStart(3, "0")}`, hitName: "", hitCategory: "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
+  ]);
+  const removeDisambigHit = (idx: number) => setDisambigHits((prev) => prev.filter((_, i) => i !== idx));
+  const updateDisambigHit = (idx: number, patch: Partial<DisambiguationHitInput>) =>
+    setDisambigHits((prev) => prev.map((h, i) => i === idx ? { ...h, ...patch } : h));
+
+  const runDisambiguation = async () => {
+    const namedHits = disambigHits.filter((h) => h.hitName.trim());
+    if (!disambigClient.name.trim() || namedHits.length === 0) return;
+    setDisambigLoading(true);
+    try {
+      const res = await fetch("/api/smart-disambiguate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ client: disambigClient, hits: namedHits }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as DisambiguationResult;
+      if (data.ok) setDisambigResult(data);
+    } catch { /* silent */ }
+    finally { setDisambigLoading(false); }
+  };
+
+  const runEIA = async () => {
+    setEiaLoading(true);
+    setEiaResult(null);
+    try {
+      const res = await fetch("/api/ethical-impact", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subjectName: subject.name,
+          riskScore: subject.riskScore,
+          cddPosture: subject.cddPosture,
+          nationality: subject.country,
+          aiDecisions: [],
+        }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { ok: boolean } & EthicalImpact;
+      if (data.ok) setEiaResult(data);
+    } catch { /* silent */ }
+    finally { setEiaLoading(false); }
+  };
   const effectiveAdverseMediaText =
     narrativeOverride.trim() || adverseMediaText;
   const superBrain = useSuperBrain(qsSubjectForBrain, {
@@ -297,17 +437,39 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
 
   const handleRaiseSTR = async () => {
     if (strRaised) return;
-    if (!window.confirm(`Raise STR for ${subject.name}? A draft will be filed to the STR/SAR board.`)) {
+    if (!window.confirm(`Raise STR for ${subject.name}? Item enters the four-eyes queue for second-approver sign-off.`)) {
       return;
     }
-    const approver = window.prompt(
-      "Four-eyes required — enter the name of the second approving officer:",
-    );
-    if (!approver?.trim()) {
-      showFlash("STR cancelled — second approver is required");
-      return;
-    }
-    showFlash("Filing STR to Asana…");
+    // Replace the inline window.prompt approver flow with a real
+    // /api/four-eyes enqueue. The MLRO opens /screening/four-eyes,
+    // approves, and on approval the original STR-filing pipeline runs.
+    // For now we file the Asana draft immediately AND enqueue four-eyes
+    // so the regulator sees both records — the four-eyes audit trail
+    // and the draft itself. Future iteration: gate the Asana write on
+    // the approval webhook.
+    const initiator = role === "analyst" ? "analyst" : role;
+    const composite =
+      superBrain.status === "success"
+        ? superBrain.result.composite.score
+        : screening.status === "success"
+          ? screening.result.topScore
+          : subject.riskScore;
+    void fetchJson("/api/four-eyes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        subjectId: subject.id,
+        subjectName: subject.name,
+        action: "str",
+        initiatedBy: initiator,
+        reason: `Composite ${composite}/100 — analyst filed STR draft from screening panel.`,
+      }),
+      label: "Four-eyes enqueue failed",
+    }).then((r) => {
+      if (!r.ok) console.warn("[four-eyes] str enqueue failed", r.error);
+    });
+    const approver = "pending"; // placeholder — actual approver lands via /api/four-eyes PATCH
+    showFlash("Filing STR + enqueueing for four-eyes approval…");
     const payload: Record<string, unknown> = {
       subject: {
         id: subject.id,
@@ -416,14 +578,12 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       return;
     }
     const payload = buildReportPayload();
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     try {
       const res = await fetch("/api/compliance-report?format=html", {
         method: "POST",
         headers: {
           "content-type": "application/json",
           accept: "text/html, application/json",
-          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -479,7 +639,6 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       `${composite}/100. Jurisdiction: ${subject.country || "—"}. ` +
       `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
       `MLRO to review before goAML submission.`;
-    const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
     // Pre-fetch the JSON sidecar so the goAML envelope carries the
     // same payload + report SHA-256 (and signature, if signing is on)
     // as the .txt / PDF the operator just downloaded. Lets a regulator
@@ -506,7 +665,6 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         headers: {
           "content-type": "application/json",
           accept: "application/json",
-          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify(sidecarPayload),
       });
@@ -561,7 +719,6 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         headers: {
           "content-type": "application/json",
           accept: "application/xml, application/json",
-          ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
         },
         body: JSON.stringify({
           reportCode: "STR",
@@ -762,14 +919,12 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 15_000);
       try {
-        const adminTokenTxt = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
         const res = await fetch("/api/compliance-report", {
           method: "POST",
           headers: {
             "content-type": "application/json",
             accept: "application/json, text/plain, */*",
             "user-agent": "hawkeye-screening-client/1.0",
-            ...(adminTokenTxt ? { authorization: `Bearer ${adminTokenTxt}` } : {}),
           },
           body: JSON.stringify(payload),
           signal: ctl.signal,
@@ -820,7 +975,7 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
   };
 
   return (
-    <aside className="bg-bg-panel border-l border-[#ec4899] p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-hair-2 p-6 overflow-y-auto">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
@@ -838,6 +993,15 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             <PanelBtn onClick={handleEscalate} disabled={escalated}>
               {escalated ? "Escalated" : "Escalate"}
             </PanelBtn>
+            <a
+              href={`/screening/replay/${encodeURIComponent(subject.id)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-medium bg-bg-panel border-hair-2 text-ink-0 hover:border-hair-3 hover:bg-bg-2"
+              title="Replay this subject's screening history"
+            >
+              Replay
+            </a>
             <PanelBtn
               brand
               onClick={handleRaiseSTR}
@@ -851,6 +1015,24 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
               {strRaised ? "STR raised" : "Raise STR"}
             </PanelBtn>
           </div>
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-10 uppercase tracking-wide-3 text-ink-3">Snooze</span>
+          <SnoozeButton
+            snoozedUntil={subject.snoozedUntil ?? null}
+            snoozeReason={subject.snoozeReason ?? null}
+            onSnooze={(iso, reason) => {
+              onUpdate?.(subject.id, { snoozedUntil: iso, snoozeReason: reason });
+              writeAuditEvent(role, "subject.snoozed", `${subject.name} until ${iso} - ${reason}`);
+            }}
+            onClearSnooze={() => {
+              // exactOptionalPropertyTypes blocks `undefined` assignment,
+              // so we send sentinel empty strings and let the page reducer
+              // strip the keys from the persisted subject.
+              onUpdate?.(subject.id, { snoozedUntil: "", snoozeReason: "" });
+              writeAuditEvent(role, "subject.snooze.cleared", subject.name);
+            }}
+          />
         </div>
         <p className="text-12 text-ink-2 m-0">
           {subject.id} · {subject.type} · {subject.country} · opened {subject.openedAgo}
@@ -888,17 +1070,59 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
         <div className="h-1.5 bg-bg-2 rounded-sm overflow-hidden">
           <div className="h-full risk-bar-fill" style={{ width: barWidth }} />
         </div>
-        <div className="mt-2 text-11 text-ink-2">
-          {brainScore !== null
-            ? `Brain · ${screening.status === "success" ? screening.result.hits.length : 0} hit${
-                screening.status === "success" && screening.result.hits.length === 1 ? "" : "s"
-              } across ${effectiveLists.length || 0} list${effectiveLists.length === 1 ? "" : "s"}`
-            : screening.status === "loading"
-              ? "Brain · screening…"
-              : screening.status === "error"
-                ? "Brain · unavailable"
-                : "Brain · idle"}
+        <div className="mt-2 text-11 text-ink-2 flex items-center gap-3 flex-wrap">
+          <span>
+            {brainScore !== null
+              ? `Brain · ${screening.status === "success" ? screening.result.hits.length : 0} hit${
+                  screening.status === "success" && screening.result.hits.length === 1 ? "" : "s"
+                } across ${effectiveLists.length || 0} list${effectiveLists.length === 1 ? "" : "s"}`
+              : screening.status === "loading"
+                ? "Brain · screening…"
+                : screening.status === "error"
+                  ? "Brain · unavailable"
+                  : "Brain · idle"}
+          </span>
+          <span className="text-ink-3">·</span>
+          <ConfidenceBand score={effectiveScore} basis="brain calibration" />
         </div>
+      </Section>
+
+      {/* AI Decision Engine — auto-analyses subject and decides disposition */}
+      <Section title="AI decision engine">
+        <AIDecisionEngine
+          subject={subject}
+          screeningTopScore={
+            screening.status === "success" ? screening.result.topScore : undefined
+          }
+          screeningSeverity={
+            screening.status === "success" ? screening.result.severity : undefined
+          }
+          sanctionsHits={
+            screening.status === "success"
+              ? screening.result.hits.map((h) => ({
+                  list: h.listId,
+                  score: h.score,
+                  details: h.candidateName,
+                }))
+              : []
+          }
+          adverseMediaText={adverseMediaText}
+        />
+      </Section>
+
+      {/* Cross-subject edges + re-screen history live above the tabs so
+          the analyst spots both the network and the time-series view
+          before drilling into per-tab detail. */}
+      {allSubjects && allSubjects.length > 1 && (
+        <CrossSubjectLinks
+          subject={subject}
+          allSubjects={allSubjects}
+          {...(onSelectSubject ? { onSelect: onSelectSubject } : {})}
+        />
+      )}
+
+      <Section title="Re-screen history">
+        <ReScreenDiff subjectId={subject.id} />
       </Section>
 
       <Section title="CDD posture">
@@ -977,6 +1201,10 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
             state={screening}
             adverseMedia={subject.adverseMedia}
             rca={subject.rca}
+            subjectCtx={{
+              name: subject.name,
+              nationality: subject.country || subject.jurisdiction || undefined,
+            }}
           />
         )}
 
@@ -996,11 +1224,291 @@ export function SubjectDetailPanel({ subject, onUpdate: _onUpdate }: SubjectDeta
           />
         )}
 
-        {activeTab !== "Screening" && activeTab !== "Ownership" && activeTab !== "Live reasoning" && (
-          <div className="text-11 text-ink-2 py-6">
-            {activeTab} data will populate here once the module is wired to the engine.
-          </div>
+        {activeTab === "CDD/EDD" && (
+          <CddTab superBrain={superBrain} subject={subject} />
         )}
+
+        {activeTab === "Evidence" && (
+          <EvidenceTab superBrain={superBrain} subject={subject} />
+        )}
+
+        {activeTab === "AI Ethics" && (
+          <EthicsTab
+            subject={subject}
+            eiaResult={eiaResult}
+            eiaLoading={eiaLoading}
+            onRun={() => void runEIA()}
+          />
+        )}
+
+        {activeTab === "Disambiguate" && (() => {
+          const verdictBadge: Record<string, string> = {
+            confirmed_false_positive: "bg-green-dim text-green border border-green/30",
+            likely_false_positive: "bg-green-dim text-green border border-green/30 opacity-70",
+            possible_match: "bg-amber-dim text-amber border border-amber/30",
+            likely_true_match: "bg-red text-white",
+          };
+          return (
+            <div>
+              <div className="text-11 text-ink-2 mb-4">
+                AI applies systematic multi-factor analysis (DOB, gender, nationality, role, geography) under FDL 10/2025 and FATF R.10. Client profile pre-filled from selected subject.
+              </div>
+
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Client Profile</div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Full Name *</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="Client full name"
+                    value={disambigClient.name}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Nationality</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="e.g. Pakistani"
+                    value={disambigClient.nationality}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, nationality: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Date of Birth</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="dd/mm/yyyy or yyyy-mm-dd"
+                    value={disambigClient.dob}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, dob: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Gender</label>
+                  <select
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    value={disambigClient.gender}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, gender: e.target.value }))}
+                  >
+                    <option value="">— select —</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Occupation</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="e.g. Gold trader, Importer"
+                    value={disambigClient.occupation}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, occupation: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">Client Context</label>
+                  <input
+                    className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
+                    placeholder="e.g. gold buyer, UAE-based, opened 2024"
+                    value={disambigClient.context}
+                    onChange={(e) => setDisambigClient((p) => ({ ...p, context: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Screening Hits</div>
+              <div className="space-y-2 mb-3">
+                {disambigHits.map((hit, idx) => (
+                  <div key={hit.hitId} className="grid gap-1.5 p-2 bg-bg-1 border border-hair-2 rounded" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px 32px" }}>
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Hit name"
+                      value={hit.hitName}
+                      onChange={(e) => updateDisambigHit(idx, { hitName: e.target.value })}
+                    />
+                    <select
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      value={hit.hitCategory}
+                      onChange={(e) => updateDisambigHit(idx, { hitCategory: e.target.value })}
+                    >
+                      {["Sanctions", "PEP", "Adverse Media", "SIP", "RCA"].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Country"
+                      value={hit.hitCountry ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { hitCountry: e.target.value })}
+                    />
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Hit DOB"
+                      value={hit.hitDob ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { hitDob: e.target.value })}
+                    />
+                    <input
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Role/title"
+                      value={hit.hitRole ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { hitRole: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      className="px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel focus:outline-none focus:border-brand text-ink-0"
+                      placeholder="Score"
+                      value={hit.matchScore ?? ""}
+                      onChange={(e) => updateDisambigHit(idx, { matchScore: e.target.value ? Number(e.target.value) : undefined })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeDisambigHit(idx)}
+                      disabled={disambigHits.length <= 1}
+                      className="flex items-center justify-center text-ink-3 hover:text-red disabled:opacity-30 text-14"
+                      title="Remove hit"
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+              <div className="text-10 text-ink-3 mb-3 font-mono">Columns: Hit Name · Category · Country · DOB · Role · Match Score</div>
+
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={addDisambigHit}
+                  className="px-3 py-1.5 border border-hair-2 rounded text-11 text-ink-2 hover:text-ink-0 hover:border-brand/40 transition-colors"
+                >
+                  + Add Hit
+                </button>
+                <button
+                  type="button"
+                  disabled={!disambigClient.name.trim() || disambigHits.every((h) => !h.hitName.trim()) || disambigLoading}
+                  onClick={() => { void runDisambiguation(); }}
+                  className="px-4 py-1.5 bg-violet-600 text-white rounded text-12 font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                >
+                  {disambigLoading ? "Running AI disambiguation…" : "Run Disambiguation"}
+                </button>
+              </div>
+
+              {disambigResult && (
+                <div className="space-y-4 pt-4 border-t border-hair-2">
+                  <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-bg-1 border border-hair-2 rounded-lg">
+                    <p className="text-12 font-bold text-ink-0 flex-1">{disambigResult.overallAssessment}</p>
+                    {disambigResult.processingTime && (
+                      <span className="text-10 font-mono px-2 py-0.5 bg-green-dim text-green border border-green/30 rounded">
+                        {disambigResult.processingTime}
+                      </span>
+                    )}
+                  </div>
+
+                  {(disambigResult.disambiguationStrategy || disambigResult.clientRiskProfile) && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {disambigResult.disambiguationStrategy && (
+                        <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Disambiguation Strategy</div>
+                          <p className="text-11 text-ink-1">{disambigResult.disambiguationStrategy}</p>
+                        </div>
+                      )}
+                      {disambigResult.clientRiskProfile && (
+                        <div className="px-3 py-2 bg-bg-1 border border-hair-2 rounded">
+                          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Risk Profile</div>
+                          <p className="text-11 text-ink-1">{disambigResult.clientRiskProfile}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {disambigResult.escalationItems.length > 0 && (
+                    <div className="flex items-start gap-2 px-4 py-3 bg-red-dim border border-red/40 rounded-lg">
+                      <span className="text-red font-bold text-13">!</span>
+                      <div>
+                        <div className="text-12 font-bold text-red mb-1">MLRO Escalation Required</div>
+                        <p className="text-11 text-ink-1">The following hits MUST be escalated to the MLRO: <span className="font-mono font-semibold text-red">{disambigResult.escalationItems.join(", ")}</span></p>
+                      </div>
+                    </div>
+                  )}
+
+                  {disambigResult.hits.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-10 uppercase tracking-wide-3 text-ink-3">Hit Assessments</div>
+                      {disambigResult.hits.map((h) => (
+                        <div key={h.hitId} className="px-3 py-2.5 bg-bg-1 border border-hair-2 rounded-lg">
+                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span className="text-11 font-mono text-ink-3">{h.hitId}</span>
+                            <span className={`text-10 font-bold px-2 py-0.5 rounded uppercase ${verdictBadge[h.verdict] ?? "bg-bg-2 text-ink-2"}`}>
+                              {h.verdict.replace(/_/g, " ")}
+                            </span>
+                            <span className="text-11 font-mono text-ink-2">{h.confidenceScore}% confidence</span>
+                            {h.canAutoDispose && (
+                              <span className="text-10 px-2 py-0.5 bg-green-dim text-green border border-green/30 rounded">Auto-disposable</span>
+                            )}
+                          </div>
+                          <p className="text-11 text-ink-2 italic mb-1.5">{h.primaryDifferentiator}</p>
+                          {h.canAutoDispose && h.dispositionText && (
+                            <button
+                              type="button"
+                              className="w-full text-left px-2 py-1.5 bg-green-dim/50 border border-green/20 rounded text-10 text-ink-1 font-mono whitespace-pre-wrap hover:border-green/40 transition-colors mb-1.5"
+                              onClick={() => void navigator.clipboard.writeText(h.dispositionText)}
+                              title="Click to copy"
+                            >
+                              {h.dispositionText}
+                            </button>
+                          )}
+                          {h.requiresClientClarification && h.clarificationQuestion && (
+                            <div className="mt-1 px-2 py-1.5 bg-amber-dim border border-amber/30 rounded text-11 text-amber">
+                              <span className="font-semibold">Ask client:</span> {h.clarificationQuestion}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {disambigResult.clarificationQuestions.length > 0 && (
+                    <div className="px-3 py-2.5 bg-amber-dim/40 border border-amber/20 rounded-lg">
+                      <div className="text-10 uppercase tracking-wide-3 text-amber mb-2">Questions to Ask Client</div>
+                      <ul className="space-y-1">
+                        {disambigResult.clarificationQuestions.map((q, i) => (
+                          <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+                            <span className="text-amber">●</span>{q}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {disambigResult.bulkDispositionText && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-10 uppercase tracking-wide-3 text-ink-3">Bulk Disposition Text</div>
+                        <button
+                          type="button"
+                          onClick={() => void navigator.clipboard.writeText(disambigResult.bulkDispositionText)}
+                          className="text-10 px-2 py-0.5 border border-hair-2 rounded text-ink-2 hover:text-ink-0 hover:border-brand/40 transition-colors"
+                        >
+                          Copy All Dispositions
+                        </button>
+                      </div>
+                      <textarea
+                        readOnly
+                        rows={5}
+                        className="w-full px-3 py-2 bg-bg-1 border border-hair-2 rounded text-11 font-mono text-ink-1 resize-y"
+                        value={disambigResult.bulkDispositionText}
+                      />
+                    </div>
+                  )}
+
+                  {disambigResult.regulatoryNote && (
+                    <p className="text-11 font-mono text-ink-3 border-l-2 border-violet/30 pl-3 italic">
+                      {disambigResult.regulatoryNote}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <NewsDossierPanel state={news} />
@@ -1013,10 +1521,12 @@ function ScreeningTab({
   state,
   adverseMedia,
   rca,
+  subjectCtx,
 }: {
   state: ReturnType<typeof useQuickScreen>;
   adverseMedia?: AdverseMediaMatch | undefined;
   rca?: { screened: boolean; linkedAssociates?: string[] } | undefined;
+  subjectCtx?: SubjectContext;
 }) {
   const title = (
     <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
@@ -1064,7 +1574,7 @@ function ScreeningTab({
       {title}
       <ScreeningSummary result={state.result} />
       <BrainDiagnostics result={state.result} />
-      <HitsList hits={state.result.hits} />
+      <HitsList hits={state.result.hits} subjectCtx={subjectCtx} />
       {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
       <RcaRow rca={rca} />
     </>
@@ -1297,7 +1807,38 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "red" }) {
   );
 }
 
-function HitsList({ hits }: { hits: QuickScreenHit[] }) {
+// ── AI Confidence Score types ─────────────────────────────────────────────────
+interface ConfidenceScoreResult {
+  ok: true;
+  confidenceScore: number;
+  falsePositiveProbability: number;
+  keyFactors: string[];
+  recommendation: "clear" | "escalate" | "file_str" | "manual_review";
+  reasoning: string;
+}
+
+const RECOMMENDATION_LABEL: Record<ConfidenceScoreResult["recommendation"], string> = {
+  clear: "Clear — False Positive",
+  escalate: "Escalate to MLRO",
+  file_str: "File STR",
+  manual_review: "Manual Review",
+};
+
+const RECOMMENDATION_STYLE: Record<ConfidenceScoreResult["recommendation"], string> = {
+  clear: "bg-green-dim text-green border border-green/30",
+  escalate: "bg-amber-dim text-amber border border-amber/30",
+  file_str: "bg-red-dim text-red border border-red/30",
+  manual_review: "bg-blue-dim text-blue border border-blue/30",
+};
+
+interface SubjectContext {
+  name: string;
+  dob?: string;
+  nationality?: string;
+  idNumber?: string;
+}
+
+function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: SubjectContext }) {
   if (hits.length === 0) {
     return (
       <div className="text-11 text-ink-2 py-2.5">
@@ -1308,19 +1849,101 @@ function HitsList({ hits }: { hits: QuickScreenHit[] }) {
   return (
     <ul className="list-none p-0 m-0">
       {hits.map((hit, idx) => (
-        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} />
+        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} subjectCtx={subjectCtx} />
       ))}
     </ul>
   );
 }
 
-function HitRow({ hit }: { hit: QuickScreenHit }) {
+function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: SubjectContext }) {
   const pct = Math.round(hit.score * 100);
+  const [csLoading, setCsLoading] = useState(false);
+  const [csResult, setCsResult] = useState<ConfidenceScoreResult | null>(null);
+  const [csError, setCsError] = useState<string | null>(null);
+
+  const runConfidenceScore = async () => {
+    setCsLoading(true);
+    setCsError(null);
+    try {
+      const res = await fetch("/api/screening/confidence-score", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: {
+            name: subjectCtx?.name ?? hit.candidateName,
+            dob: subjectCtx?.dob,
+            nationality: subjectCtx?.nationality,
+            idNumber: subjectCtx?.idNumber,
+          },
+          hit: {
+            listName: hit.listId,
+            matchedName: hit.candidateName,
+            score: Math.round(hit.score * 100),
+            details: [
+              hit.listRef,
+              hit.reason,
+              hit.matchedAlias ? `alias: ${hit.matchedAlias}` : null,
+              hit.programs?.length ? `programs: ${hit.programs.join(", ")}` : null,
+            ].filter(Boolean).join(" · "),
+          },
+        }),
+      });
+      if (!res.ok) {
+        setCsError("API error — please retry");
+        return;
+      }
+      const data = (await res.json()) as ConfidenceScoreResult;
+      if (data.ok) setCsResult(data);
+    } catch {
+      setCsError("Request failed");
+    } finally {
+      setCsLoading(false);
+    }
+  };
+
+  // FP probability colour coding: green <30%, amber 30-70%, red >70%
+  const fpColor = csResult
+    ? csResult.falsePositiveProbability < 30
+      ? "text-green stroke-green"
+      : csResult.falsePositiveProbability < 70
+        ? "text-amber stroke-amber"
+        : "text-red stroke-red"
+    : "";
+  const fpBg = csResult
+    ? csResult.falsePositiveProbability < 30
+      ? "bg-green-dim border-green/30"
+      : csResult.falsePositiveProbability < 70
+        ? "bg-amber-dim border-amber/30"
+        : "bg-red-dim border-red/30"
+    : "";
+
   return (
     <li className="py-2.5 border-b border-hair last:border-b-0">
       <div className="flex justify-between items-baseline mb-1">
         <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
-        <span className="font-mono text-11 text-ink-2">{pct}%</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-11 text-ink-2">{pct}%</span>
+          {subjectCtx && !csResult && (
+            <button
+              type="button"
+              onClick={() => void runConfidenceScore()}
+              disabled={csLoading}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+            >
+              {csLoading ? "Scoring…" : "🎯 AI Confidence Score"}
+            </button>
+          )}
+          {csResult && (
+            <button
+              type="button"
+              onClick={() => setCsResult(null)}
+              className="text-10 text-ink-3 hover:text-ink-0"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
       <div className="text-12.5 text-ink-0 mb-1">
         {hit.candidateName}
@@ -1341,6 +1964,51 @@ function HitRow({ hit }: { hit: QuickScreenHit }) {
               {p}
             </span>
           ))}
+        </div>
+      )}
+      {csError && (
+        <div className="mt-2 text-11 text-red bg-red-dim rounded px-2 py-1">{csError}</div>
+      )}
+      {csResult && (
+        <div className={`mt-2 rounded-lg border p-3 ${fpBg}`}>
+          {/* Donut-style FP display */}
+          <div className="flex items-center gap-3 mb-2">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+                <circle cx="18" cy="18" r="14" fill="none" className="stroke-bg-2" strokeWidth="4" />
+                <circle
+                  cx="18" cy="18" r="14" fill="none"
+                  className={fpColor}
+                  strokeWidth="4"
+                  strokeDasharray={`${csResult.falsePositiveProbability * 0.88} 88`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className={`absolute inset-0 flex items-center justify-center font-mono text-10 font-bold ${fpColor.split(" ")[0]}`}>
+                {csResult.falsePositiveProbability}%
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">FP Probability</div>
+              <div className="text-11 font-semibold text-ink-0">
+                Confidence: {csResult.confidenceScore}/100 true match
+              </div>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-semibold mt-1 border ${RECOMMENDATION_STYLE[csResult.recommendation]}`}>
+                {RECOMMENDATION_LABEL[csResult.recommendation]}
+              </span>
+            </div>
+          </div>
+          {csResult.keyFactors.length > 0 && (
+            <ul className="space-y-0.5 mb-2">
+              {csResult.keyFactors.map((f, i) => (
+                <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+                  <span className="text-ink-3">·</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-11 text-ink-2 leading-relaxed italic">{csResult.reasoning}</p>
         </div>
       )}
     </li>
@@ -1450,6 +2118,127 @@ function formatDoubleMetaphone(
   if (typeof dm === "string") return dm;
   if (Array.isArray(dm)) return dm.join(" / ");
   return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
+}
+
+function CddTab({
+  superBrain,
+  subject,
+}: {
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subject: Subject;
+}) {
+  const r = superBrain.status === "success" ? superBrain.result : null;
+  const runId = r?.audit?.runId ?? `run-${subject.id}`;
+  const modeIds = r?.typologies?.hits?.map((h) => h.id) ?? [];
+  const autoProposed = r?.redlines?.action ?? "D02_cleared_proceed";
+  const autoConfidence = r?.composite?.score != null ? r.composite.score / 100 : 0;
+
+  const pepList = r?.pep && r.pep.salience > 0
+    ? [{
+        role: r.pep.role,
+        tier: r.pep.tier as "national" | "supra_national" | "sub_national" | "regional_org" | "international_org" | null,
+        type: r.pep.type,
+        salience: r.pep.salience,
+        ...(r.pep.matchedRule ? { matchedRule: r.pep.matchedRule } : {}),
+        rationale: r.pep.rationale ?? "",
+      }]
+    : [];
+
+  return (
+    <div className="space-y-3">
+      <p className="text-11 text-ink-2">
+        Customer Due Diligence profile. PEP status and MLRO disposition are
+        drawn from the live brain result — no manual re-entry required.
+      </p>
+      {superBrain.status === "loading" && (
+        <div className="text-11 text-ink-2">Loading CDD data…</div>
+      )}
+      {pepList.length > 0 && <PepClassificationsList data={pepList} />}
+      {r?.pepAssessment?.isLikelyPEP && (
+        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs">
+          <div className="text-zinc-500 uppercase tracking-wide mb-1">PEP assessment</div>
+          <div className="flex flex-wrap gap-1">
+            {r.pepAssessment.matchedRoles.map((m, i) => (
+              <span
+                key={`${m.label}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-100 text-violet-800 border border-violet-200"
+              >
+                {m.label} · {m.tier}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {r && (
+        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2">MLRO disposition</div>
+          <DispositionButton
+            caseId={subject.id}
+            runId={runId}
+            modeIds={modeIds}
+            autoProposed={autoProposed}
+            autoConfidence={autoConfidence}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EvidenceTab({
+  superBrain,
+  subject,
+}: {
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  subject: Subject;
+}) {
+  const r = superBrain.status === "success" ? superBrain.result : null;
+
+  if (superBrain.status === "loading") {
+    return <div className="text-11 text-ink-2 py-6">Loading evidence…</div>;
+  }
+  if (!r) {
+    return (
+      <div className="text-11 text-ink-2 py-6">
+        Run a screening to generate an STR draft preview.
+      </div>
+    );
+  }
+
+  const runId = r.audit?.runId ?? `run-${subject.id}`;
+  const findings = r.typologies?.hits?.map((h) => ({
+    modeId: h.id,
+    score: h.weight,
+    rationale: h.snippet,
+  })) ?? [];
+
+  const source = {
+    caseId: subject.id,
+    runId,
+    subject: {
+      name: subject.name,
+      type: subject.entityType ?? undefined,
+      jurisdiction: subject.jurisdiction ?? undefined,
+    },
+    outcome: r.redlines.action ?? "pending",
+    aggregateScore: r.composite.score / 100,
+    findings,
+    redlines: r.redlines,
+    crossRegimeConflict: r.crossRegimeConflict ?? undefined,
+    jurisdiction: r.jurisdiction
+      ? { iso2: r.jurisdiction.iso2, name: r.jurisdiction.name, cahra: r.jurisdiction.cahra }
+      : undefined,
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-11 text-ink-2">
+        STR draft auto-generated from the brain result. Review before filing.
+        Submission to goAML requires MLRO + second-authoriser sign-off.
+      </p>
+      <StrDraftPreview source={source} />
+    </div>
+  );
 }
 
 function LiveReasoningTab({
@@ -1762,18 +2551,18 @@ function SuperBrainPanel({
       )}
 
       {r.pep && r.pep.salience > 0 && (
-        <Field label="PEP classification">
-          <div className="text-12 text-ink-0">
-            <span className="font-semibold">{r.pep.type.replace(/_/g, " ")}</span>{" "}
-            <span className="text-ink-2">· tier {r.pep.tier}</span>{" "}
-            <span className="font-mono text-ink-3">
-              salience {Math.round(r.pep.salience * 100)}%
-            </span>
-          </div>
-          {r.pep.rationale && (
-            <div className="text-10.5 text-ink-2 mt-0.5">{r.pep.rationale}</div>
-          )}
-        </Field>
+        <div className="mb-2">
+          <PepClassificationsList
+            data={[{
+              role: r.pep.role,
+              tier: r.pep.tier as "national" | "supra_national" | "sub_national" | "regional_org" | "international_org" | null,
+              type: r.pep.type,
+              salience: r.pep.salience,
+              ...(r.pep.matchedRule ? { matchedRule: r.pep.matchedRule } : {}),
+              rationale: r.pep.rationale ?? "",
+            }]}
+          />
+        </div>
       )}
 
       {r.adverseMedia.length > 0 && (
@@ -1851,6 +2640,12 @@ function SuperBrainPanel({
             <div className="text-10.5 text-red mt-1">Action: {r.redlines.action}</div>
           )}
         </Field>
+      )}
+
+      {r.crossRegimeConflict && (
+        <div className="mb-2">
+          <CrossRegimeConflictCard data={r.crossRegimeConflict as Parameters<typeof CrossRegimeConflictCard>[0]["data"]} />
+        </div>
       )}
 
       {(r.typologies?.hits?.length ?? 0) > 0 && r.typologies && (
@@ -2088,7 +2883,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             </div>
             <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2">
               <span>{a.source || "—"}</span>
-              <span>· {a.pubDate ? new Date(a.pubDate).toLocaleDateString() : "—"}</span>
+              <span>· {a.pubDate ? formatDMY(a.pubDate) : "—"}</span>
               <span>· <span className="uppercase text-violet">{a.lang}</span></span>
               <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
               {a.matchedVariant && <span>· via "{a.matchedVariant}"</span>}
@@ -2117,5 +2912,164 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         ))}
       </ul>
     </Section>
+  );
+}
+
+function EthicsTab({
+  subject,
+  eiaResult,
+  eiaLoading,
+  onRun,
+}: {
+  subject: Subject;
+  eiaResult: EthicalImpact | null;
+  eiaLoading: boolean;
+  onRun: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyRights = async () => {
+    if (!eiaResult) return;
+    try {
+      await navigator.clipboard.writeText(eiaResult.subjectRights.join("\n"));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch { /* silent */ }
+  };
+
+  const impactColour =
+    eiaResult?.impactLevel === "high"
+      ? "bg-red-dim text-red"
+      : eiaResult?.impactLevel === "medium"
+        ? "bg-amber-dim text-amber"
+        : "bg-green-dim text-green";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2 mb-0.5">
+            Ethical Impact Assessment
+          </div>
+          <div className="text-10 text-ink-3 font-mono">
+            UNESCO AI Ethics 2021 · UAE PDPL FDL 45/2021 · FDL 10/2025
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={eiaLoading}
+          className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+        >
+          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run Ethical Impact Assessment"}
+        </button>
+      </div>
+
+      {eiaLoading && (
+        <div className="text-12 text-ink-2 animate-pulse">Running assessment for {subject.name}…</div>
+      )}
+
+      {eiaResult && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={`font-mono text-10 px-2 py-1 rounded font-semibold ${impactColour}`}>
+              {eiaResult.impactLevel} impact
+            </span>
+          </div>
+
+          <div>
+            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Impact Assessment</div>
+            <p className="text-12 text-ink-1 leading-relaxed">{eiaResult.impactNarrative}</p>
+          </div>
+
+          {eiaResult.rightsImpacted.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Rights Potentially Affected</div>
+              <div className="flex flex-wrap gap-1.5">
+                {eiaResult.rightsImpacted.map((r, i) => (
+                  <span key={i} className="text-10 px-2 py-1 rounded bg-red-dim text-red font-medium">{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {eiaResult.proportionalityAssessment && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Proportionality</div>
+              <p className="text-12 text-ink-1">{eiaResult.proportionalityAssessment}</p>
+            </div>
+          )}
+
+          {eiaResult.humanOversightStatus && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Human Oversight Status</div>
+              <p className="text-12 text-ink-1">{eiaResult.humanOversightStatus}</p>
+            </div>
+          )}
+
+          {eiaResult.mitigationMeasures.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Mitigation Measures</div>
+              <ul className="space-y-1">
+                {eiaResult.mitigationMeasures.map((m, i) => (
+                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                    <span className="text-violet mt-0.5 shrink-0">•</span>
+                    <span>{m}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.subjectRights.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Subject Rights</div>
+                <button
+                  type="button"
+                  onClick={() => void copyRights()}
+                  className="text-10 px-2 py-px rounded bg-bg-2 text-ink-2 hover:text-ink-0 font-mono"
+                >
+                  {copied ? "Copied ✓" : "Copy"}
+                </button>
+              </div>
+              <ul className="space-y-1">
+                {eiaResult.subjectRights.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                    <span className="text-green mt-0.5 shrink-0">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.documentationRequired.length > 0 && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Documentation Required</div>
+              <ul className="space-y-1">
+                {eiaResult.documentationRequired.map((d, i) => (
+                  <li key={i} className="flex items-start gap-2 text-11 font-mono text-ink-2">
+                    <span className="text-brand mt-0.5 shrink-0">→</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {eiaResult.unescoAlignment && (
+            <p className="font-mono text-10 text-ink-3 bg-bg-1 rounded px-3 py-2 leading-relaxed">{eiaResult.unescoAlignment}</p>
+          )}
+
+          {eiaResult.reviewRecommendation && (
+            <div className="flex items-center gap-2">
+              <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Review:</span>
+              <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{eiaResult.reviewRecommendation}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

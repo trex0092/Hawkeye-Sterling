@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { CDDPosture } from "@/lib/types";
+import { CryptoWalletField } from "@/components/screening/CryptoWalletField";
+import { VesselAircraftFields } from "@/components/screening/VesselAircraftFields";
 
 const RELATIONSHIP_TYPES_INDIVIDUAL = [
   "UBO", "Customer", "Correspondent", "Counterparty", "Director", "Authorised Signatory",
@@ -21,29 +23,44 @@ const RISK_CATEGORIES = [
 ];
 
 export interface ScreeningFormData {
-  entityType: "individual" | "organisation";
+  /** vessel + aircraft route to entity-specific candidate corpora;
+   *  "other" catches trusts / SPVs that don't fit cleanly. */
+  entityType: "individual" | "organisation" | "vessel" | "aircraft" | "other";
   name: string;
   alternateNames: string[];
-  enableTransposition: boolean;
   caseId: string;
   group: string;
+  /** Binary gender — matches the male/female presentation on
+   *  government-issued ID documents that the screening pipeline
+   *  matches against. */
   gender?: "male" | "female";
   dob?: string; // "dd/mm/yyyy"
   placeOfBirth?: string;
   countryLocation?: string;
   citizenship?: string;
   registeredCountry?: string;
+  /** License / register identifier for organisations — trade licence,
+   *  IMO, LEI, registration #, etc. Required on the organisation tab,
+   *  unused on the individual tab. */
+  licenseRegister?: string;
   identification?: {
     number?: string;
     issuerCountry?: string;
     idType?: string;
   };
-  checkTypes: { worldCheck: boolean; passport: boolean; rca: boolean };
+  checkTypes: { worldCheck: boolean; passport: boolean; rca: boolean; adverseMedia: boolean };
   ongoingScreening: boolean;
   relationshipType?: string;
   cddPosture?: CDDPosture;
   riskCategory?: string;
   notes?: string;
+  /** Crypto wallets fed into /api/crypto-risk during onboarding. */
+  walletAddresses?: string[];
+  /** Vessel-specific (visible only when entityType=vessel). */
+  vesselImo?: string;
+  vesselMmsi?: string;
+  /** Aircraft tail / ICAO 24-bit (visible only when entityType=aircraft). */
+  aircraftTail?: string;
 }
 
 interface NewScreeningFormProps {
@@ -57,13 +74,28 @@ const EMPTY_FORM = (caseId: string): ScreeningFormData => ({
   entityType: "individual",
   name: "",
   alternateNames: [],
-  enableTransposition: false,
   caseId,
   group: "",
-  checkTypes: { worldCheck: true, passport: false, rca: true },
+  checkTypes: { worldCheck: true, passport: false, rca: true, adverseMedia: true },
   ongoingScreening: true,
   cddPosture: "CDD",
 });
+
+// dd/mm/yyyy aware sanity check — the regex by itself happily accepts
+// 31/02/2000 and 32/13/9999 because it only counts digits. Round-trip
+// through Date and confirm the parsed parts agree to reject impossible
+// calendar dates.
+function isRealDate(dd: number, mm: number, yyyy: number): boolean {
+  if (yyyy < 1900 || yyyy > new Date().getFullYear()) return false;
+  if (mm < 1 || mm > 12) return false;
+  if (dd < 1 || dd > 31) return false;
+  const d = new Date(yyyy, mm - 1, dd);
+  return (
+    d.getFullYear() === yyyy &&
+    d.getMonth() === mm - 1 &&
+    d.getDate() === dd
+  );
+}
 
 
 export function NewScreeningForm({
@@ -87,7 +119,21 @@ export function NewScreeningForm({
       .map((x) => x.trim())
       .filter(Boolean);
     if (parts.length === 0) return;
-    patch({ alternateNames: [...form.alternateNames, ...parts] });
+    // Dedupe case-insensitively against existing aliases AND against
+    // duplicates within the same paste so "John; john; JOHN" lands once.
+    const existing = new Set(form.alternateNames.map((a) => a.toLowerCase()));
+    const fresh: string[] = [];
+    for (const p of parts) {
+      const k = p.toLowerCase();
+      if (existing.has(k)) continue;
+      existing.add(k);
+      fresh.push(p);
+    }
+    if (fresh.length === 0) {
+      setAltInput("");
+      return;
+    }
+    patch({ alternateNames: [...form.alternateNames, ...fresh] });
     setAltInput("");
   };
 
@@ -97,16 +143,19 @@ export function NewScreeningForm({
     });
 
   const validateAndSubmit = (action: "screen" | "save") => {
-    // DOB validation
+    // DOB validation — regex confirms the shape, isRealDate confirms
+    // the calendar date actually exists (catches 31/02 etc.).
     if (form.entityType === "individual" && form.dob) {
       const m = form.dob.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
       if (!m) {
         setDobError("Enter date of birth as dd/mm/yyyy.");
         return;
       }
+      const dd = parseInt(m[1]!, 10);
+      const mm = parseInt(m[2]!, 10);
       const yr = parseInt(m[3]!, 10);
-      if (yr < 1900 || yr > new Date().getFullYear()) {
-        setDobError("Enter a valid birth year.");
+      if (!isRealDate(dd, mm, yr)) {
+        setDobError("Enter a real date of birth (dd/mm/yyyy, 1900-now).");
         return;
       }
     }
@@ -148,6 +197,18 @@ export function NewScreeningForm({
             icon="🏛"
             label="Organisation"
           />
+          <EntityTypeRow
+            active={form.entityType === "vessel"}
+            onClick={() => patch({ entityType: "vessel" })}
+            icon="🚢"
+            label="Vessel"
+          />
+          <EntityTypeRow
+            active={form.entityType === "aircraft"}
+            onClick={() => patch({ entityType: "aircraft" })}
+            icon="✈"
+            label="Aircraft"
+          />
         </SettingsGroup>
 
         <SettingsGroup label="Optional checks">
@@ -172,6 +233,14 @@ export function NewScreeningForm({
             detail="Twice daily · audit trail logged"
             on={form.ongoingScreening}
             onToggle={() => patch({ ongoingScreening: !form.ongoingScreening })}
+          />
+          <CoverageRow
+            label="Adverse media"
+            detail="Taranis AI · 38 outlets · 50+ langs"
+            on={form.checkTypes.adverseMedia}
+            onToggle={() =>
+              patch({ checkTypes: { ...form.checkTypes, adverseMedia: !form.checkTypes.adverseMedia } })
+            }
           />
         </SettingsGroup>
 
@@ -216,7 +285,20 @@ export function NewScreeningForm({
           <Field label="Relationship type">
             <select
               value={form.relationshipType ?? ""}
-              onChange={(e) => { if (e.target.value) patch({ relationshipType: e.target.value }); else patch({}); }}
+              onChange={(e) => {
+                const v = e.target.value;
+                // Selecting the placeholder must clear the field, not no-op.
+                // exactOptionalPropertyTypes forbids assigning undefined, so
+                // strip the key explicitly when v is empty.
+                if (v) {
+                  patch({ relationshipType: v });
+                } else {
+                  setForm((f) => {
+                    const { relationshipType: _drop, ...rest } = f;
+                    return rest as ScreeningFormData;
+                  });
+                }
+              }}
               className={inputCls}
             >
               <option value="">Select…</option>
@@ -227,54 +309,57 @@ export function NewScreeningForm({
           </Field>
         </div>
 
-        <Field label="Alternate name(s)">
-          <div className="flex gap-2">
-            <input
-              value={altInput}
-              onChange={(e) => setAltInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === ";") {
-                  e.preventDefault();
-                  addAlias();
-                }
-              }}
-              placeholder="Press Enter or ; to add"
-              className={inputCls}
-            />
-          </div>
-          {form.alternateNames.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {form.alternateNames.map((a, i) => (
-                <span
-                  key={`${a}-${i}`}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-bg-2 text-ink-1 text-11"
-                >
-                  {a}
-                  <button
-                    type="button"
-                    onClick={() => removeAlias(i)}
-                    className="text-ink-3 hover:text-ink-0"
-                    aria-label={`Remove ${a}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
+        {/* Alternate names + License/Register share a row on the
+            organisation tab; on the individual tab Alternate names
+            spans full width as before. */}
+        <div className={form.entityType === "organisation" ? "grid grid-cols-2 gap-4" : ""}>
+          <Field label="Alternate name(s)">
+            <div className="flex gap-2">
+              <input
+                value={altInput}
+                onChange={(e) => setAltInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ";") {
+                    e.preventDefault();
+                    addAlias();
+                  }
+                }}
+                placeholder="Press Enter or ; to add"
+                className={inputCls}
+              />
             </div>
+            {form.alternateNames.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {form.alternateNames.map((a, i) => (
+                  <span
+                    key={`${a}-${i}`}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-bg-2 text-ink-1 text-11"
+                  >
+                    {a}
+                    <button
+                      type="button"
+                      onClick={() => removeAlias(i)}
+                      className="text-ink-3 hover:text-ink-0"
+                      aria-label={`Remove ${a}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </Field>
+          {form.entityType === "organisation" && (
+            <Field label="License / Register *">
+              <input
+                value={form.licenseRegister ?? ""}
+                onChange={(e) => patch({ licenseRegister: e.target.value })}
+                placeholder="Trade licence / IMO / LEI / registration #"
+                className={inputCls}
+              />
+            </Field>
           )}
-        </Field>
-
-        {form.entityType === "individual" && (
-          <label className="flex items-center gap-2 mb-4 text-12 text-ink-1 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.enableTransposition}
-              onChange={(e) => patch({ enableTransposition: e.target.checked })}
-              className="accent-brand"
-            />
-            Enable name transposition screening
-          </label>
-        )}
+        </div>
 
         <div className="grid grid-cols-3 gap-4">
           <Field label="Case ID">
@@ -293,42 +378,52 @@ export function NewScreeningForm({
               className={inputCls}
             />
           </Field>
-          <Field label="Risk category">
-            <select
-              value={form.riskCategory ?? ""}
-              onChange={(e) => { if (e.target.value) patch({ riskCategory: e.target.value }); else patch({}); }}
-              className={inputCls}
-            >
-              <option value="">None</option>
-              {RISK_CATEGORIES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </Field>
+          {/* Last cell of the Case-ID row swaps based on entity type:
+              - Individual: Risk category dropdown
+              - Organisation: Registered country (consolidated up here for
+                compactness) */}
+          {form.entityType === "individual" ? (
+            <Field label="Risk category">
+              <select
+                value={form.riskCategory ?? ""}
+                onChange={(e) => {
+                  // Selecting the placeholder must clear the field, not
+                  // no-op. exactOptionalPropertyTypes forbids assigning
+                  // undefined, so strip the key explicitly when v is empty.
+                  const v = e.target.value;
+                  if (v) {
+                    patch({ riskCategory: v });
+                  } else {
+                    setForm((f) => {
+                      const { riskCategory: _drop, ...rest } = f;
+                      return rest as ScreeningFormData;
+                    });
+                  }
+                }}
+                className={inputCls}
+              >
+                <option value="">None</option>
+                {RISK_CATEGORIES.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </Field>
+          ) : (
+            <Field label="Registered country *">
+              <input
+                value={form.registeredCountry ?? ""}
+                onChange={(e) => patch({ registeredCountry: e.target.value })}
+                placeholder="Country of registration"
+                className={inputCls}
+              />
+            </Field>
+          )}
         </div>
 
         {form.entityType === "individual" ? (
           <>
-            <Field label="Gender">
-              <div className="flex gap-5 py-1">
-                {(["male", "female"] as const).map((g) => (
-                  <label
-                    key={g}
-                    className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="gender"
-                      checked={form.gender === g}
-                      onChange={() => patch({ gender: g })}
-                      className="accent-brand"
-                    />
-                    {g === "male" ? "Male" : "Female"}
-                  </label>
-                ))}
-              </div>
-            </Field>
-
+            {/* DOB + Place of birth come first — sanctions-list disambig
+                relies on DOB before any other identity attribute. */}
             <div className="grid grid-cols-2 gap-4">
               <Field label="Date of birth">
                 <input
@@ -371,18 +466,65 @@ export function NewScreeningForm({
                 />
               </Field>
             </div>
+
+            {/* Gender — Male / Female only, matching the binary
+                presentation on government-issued ID documents that
+                screening matches against. */}
+            <Field label="Gender">
+              <div className="flex flex-wrap gap-x-5 gap-y-2 py-1">
+                {([
+                  { value: "male", label: "Male" },
+                  { value: "female", label: "Female" },
+                ] as const).map((g) => (
+                  <label
+                    key={g.value}
+                    className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="gender"
+                      checked={form.gender === g.value}
+                      onChange={() => patch({ gender: g.value })}
+                      className="accent-brand"
+                    />
+                    {g.label}
+                  </label>
+                ))}
+              </div>
+            </Field>
           </>
-        ) : (
-          <Field label="Registered country">
-            <input
-              value={form.registeredCountry ?? ""}
-              onChange={(e) => patch({ registeredCountry: e.target.value })}
-              placeholder="Country of registration"
-              className={inputCls}
+        ) : null /* organisation has Registered country in the Case-ID row above */}
+
+        {/* Vessel + aircraft IMO/MMSI/tail-number block — only shown when
+            the matching entity type is selected. Routes to brain's
+            entity-specific candidate corpora during screening. */}
+        {(form.entityType === "vessel" || form.entityType === "aircraft") && (
+          <div className="mb-4">
+            <VesselAircraftFields
+              entityType={form.entityType}
+              imo={form.vesselImo}
+              mmsi={form.vesselMmsi}
+              tail={form.aircraftTail}
+              patch={patch}
             />
-          </Field>
+          </div>
         )}
 
+        {/* Crypto wallets — fed into /api/crypto-risk on blur. Available
+            for every entity type since vessels and aircraft can also be
+            paid via crypto. */}
+        <Field label="Crypto wallets (optional)">
+          <CryptoWalletField
+            wallets={form.walletAddresses ?? []}
+            onChange={(w) => patch({ walletAddresses: w })}
+          />
+        </Field>
+
+        {/* Identification document + Notes are individual-only inputs.
+            Organisations use License / Register (in the Alternate
+            names row) and skip free-text notes. */}
+        {form.entityType === "individual" && (
+        <>
         <details className="border border-hair-2 rounded mb-4">
           <summary className="px-3 py-2 text-12 font-semibold cursor-pointer select-none">
             Identification document
@@ -435,6 +577,8 @@ export function NewScreeningForm({
             className={`${inputCls} resize-none`}
           />
         </Field>
+        </>
+        )}
 
         <div className="flex items-center justify-between pt-4 border-t border-hair-2">
           <div className="flex gap-2">

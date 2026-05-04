@@ -1,34 +1,86 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import type { CalendarEvent, RegCalendarLiveResult } from "@/app/api/regulatory-calendar-live/route";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+type FeedUrgency = "critical" | "high" | "medium" | "low";
 
 interface LiveItem {
   id: string;
   title: string;
   url: string;
   pubDate: string;
+  publishedAt?: string;
   source: string;
   category: string;
   tone: "green" | "amber" | "red";
   snippet?: string;
+  summary?: string;
+  urgency?: FeedUrgency;
+  urgencyReason?: string;
 }
 
-const TONE_CLASSES: Record<LiveItem["tone"], string> = {
-  red:   "border-l-red bg-red-dim/30",
-  amber: "border-l-amber bg-amber-dim/20",
-  green: "border-l-green bg-green-dim/20",
-};
-const TONE_BADGE: Record<LiveItem["tone"], string> = {
-  red:   "bg-red-dim text-red",
-  amber: "bg-amber-dim text-amber",
-  green: "bg-green-dim text-green",
+interface FeedResult {
+  ok: true;
+  items: LiveItem[];
+  sources: string[];
+  fetchedAt: string;
+  errors: string[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Style maps
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TONE_DOT: Record<LiveItem["tone"], string> = {
+  red: "bg-red",
+  amber: "bg-amber",
+  green: "bg-green",
 };
 
-// Regulatory Library — searchable reference for FDL 10/2025, CR 134/2025,
-// MoE circulars, FATF Recs, LBMA guidance, Cabinet Resolutions, and goAML
-// schema. Every entry the brain cites somewhere in the app appears here
-// with a click-through to the authoritative source.
+const TONE_BORDER: Record<LiveItem["tone"], string> = {
+  red: "border-l-red bg-red/5",
+  amber: "border-l-amber bg-amber/5",
+  green: "border-l-green bg-green/5",
+};
+
+const FEED_URGENCY_BADGE: Record<FeedUrgency, string> = {
+  critical: "bg-red text-white",
+  high: "bg-amber text-white",
+  medium: "bg-blue-dim text-blue",
+  low: "bg-bg-2 text-ink-3",
+};
+
+const URGENCY_CARD: Record<CalendarEvent["urgency"], string> = {
+  overdue: "border-red bg-red/8 border",
+  critical: "border-amber bg-amber/8 border",
+  upcoming: "border-hair-2 bg-bg-panel border",
+  planned: "border-hair-2 bg-bg-panel border",
+};
+
+const URGENCY_BADGE: Record<CalendarEvent["urgency"], string> = {
+  overdue: "bg-red text-white",
+  critical: "bg-amber text-white",
+  upcoming: "bg-violet-dim text-violet",
+  planned: "bg-bg-2 text-ink-2",
+};
+
+const CAT_BADGE: Record<CalendarEvent["category"], string> = {
+  filing: "bg-blue-dim text-blue",
+  review: "bg-violet-dim text-violet",
+  audit: "bg-orange-dim text-orange",
+  training: "bg-green-dim text-green",
+  reporting: "bg-red-dim text-red",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Regulatory Reference Library
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface RegEntry {
   code: string;
@@ -149,7 +201,6 @@ const LIBRARY: RegEntry[] = [
       "5-step framework: management systems, risk identification, response, independent audit, public reporting. Annex II lists the specific Conflict-Affected and High-Risk Area (CAHRA) red flags.",
     tags: ["OECD", "CAHRA", "supply-chain"],
   },
-  // ── Additional FATF Recommendations ────────────────────────────────────────
   {
     code: "FATF R.1",
     title: "FATF Recommendation 1 — Risk-Based Approach",
@@ -231,7 +282,6 @@ const LIBRARY: RegEntry[] = [
       "Countries must provide the widest possible range of international co-operation. FIU-to-FIU information exchange (Egmont Group); law-enforcement co-operation; mutual legal assistance. Dual criminality cannot be used as a sole basis for refusing cooperation in ML/TF cases.",
     tags: ["FATF", "FIU", "international"],
   },
-  // ── UAE Cabinet / CBUAE / MoE ───────────────────────────────────────────────
   {
     code: "CD 58/2020",
     title: "Cabinet Decision No. 58 of 2020 — Beneficial Ownership Register",
@@ -304,7 +354,6 @@ const LIBRARY: RegEntry[] = [
       "The Emirates Official Cargoes Network requires an annual responsible-sourcing declaration covering all upstream smelters and refiners. Deadline: 31 March each year. Declaration must be supported by LBMA / RJC Chain-of-Custody certificates.",
     tags: ["UAE", "CAHRA", "EOCN", "supply-chain", "DPMS"],
   },
-  // ── International / Multilateral ───────────────────────────────────────────
   {
     code: "UNSCR 1267",
     title: "UN Security Council Resolution 1267/1989/2253 — ISIL / Al-Qaeda Consolidated",
@@ -404,7 +453,6 @@ const LIBRARY: RegEntry[] = [
       "International certification scheme for rough diamonds. Participants certify that rough diamonds are conflict-free. KP Certificate required for all rough diamond imports/exports. Note: KPCS does not cover polished diamonds or jewellery; separate provenance documentation needed.",
     tags: ["DPMS", "supply-chain", "gold"],
   },
-  // ── AI Governance ──────────────────────────────────────────────────────────
   {
     code: "EU AI Act",
     title: "EU AI Act — Regulation (EU) 2024/1689 on Artificial Intelligence",
@@ -472,25 +520,443 @@ const LIBRARY: RegEntry[] = [
 
 const ALL_TAGS = Array.from(new Set(LIBRARY.flatMap((e) => e.tags)));
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Feed panel sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FeedItem({ item }: { item: LiveItem }) {
+  const [expanded, setExpanded] = useState(false);
+  const text = item.summary ?? item.snippet ?? "";
+  const dateStr = item.publishedAt ?? item.pubDate ?? "";
+  const displayDate = dateStr
+    ? (() => {
+        try {
+          return new Date(dateStr).toLocaleDateString("en-AE", {
+            day: "2-digit", month: "short", year: "numeric",
+          });
+        } catch {
+          return dateStr;
+        }
+      })()
+    : "";
+
+  return (
+    <div className={`border border-l-2 rounded-lg px-4 py-3 ${TONE_BORDER[item.tone]}`}>
+      <div className="flex items-start gap-2.5">
+        <span className={`mt-1.5 shrink-0 w-2 h-2 rounded-full ${TONE_DOT[item.tone]}`} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div className="flex-1 min-w-0">
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-12 font-medium text-ink-0 leading-snug hover:text-brand no-underline hover:underline"
+                >
+                  {item.title}
+                </a>
+              ) : (
+                <span className="text-12 font-medium text-ink-0 leading-snug">{item.title}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {item.urgency && (
+                <span
+                  className={`font-mono text-10 px-1.5 py-px rounded-sm font-semibold uppercase tracking-wide-2 ${FEED_URGENCY_BADGE[item.urgency]}`}
+                  title={item.urgencyReason}
+                >
+                  {item.urgency}
+                </span>
+              )}
+              <span className="font-mono text-10 px-1.5 py-px rounded-sm bg-bg-2 text-ink-2">
+                {item.category}
+              </span>
+              <span className="font-mono text-10 text-ink-3">{item.source}</span>
+            </div>
+          </div>
+
+          {text && (
+            <div className="mt-1">
+              <p className={`text-11 text-ink-2 m-0 leading-relaxed ${expanded ? "" : "line-clamp-2"}`}>
+                {text}
+              </p>
+              {text.length > 120 && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((x) => !x)}
+                  className="font-mono text-10 text-brand hover:underline mt-0.5"
+                >
+                  {expanded ? "show less" : "show more"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {displayDate && (
+            <div className="font-mono text-10 text-ink-3 mt-1">{displayDate}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const URGENCY_FILTER_LABELS: Array<FeedUrgency | "all"> = ["all", "critical", "high", "medium", "low"];
+
+function FeedPanel({
+  items,
+  status,
+  fetchedAt,
+  onRefresh,
+  classifyStatus,
+}: {
+  items: LiveItem[];
+  status: "idle" | "loading" | "ok" | "error";
+  fetchedAt: string | null;
+  onRefresh: () => void;
+  classifyStatus?: "idle" | "loading" | "ok" | "error";
+}) {
+  const [urgencyFilter, setUrgencyFilter] = useState<FeedUrgency | "all">("all");
+
+  const criticalCount = items.filter((i) => i.urgency === "critical").length;
+
+  const filteredItems =
+    urgencyFilter === "all" ? items : items.filter((i) => i.urgency === urgencyFilter);
+
+  return (
+    <div className="flex flex-col min-h-0">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h2 className="text-10 uppercase tracking-wide-4 font-semibold text-ink-2 m-0">
+          Regulatory feed
+        </h2>
+        <div className="flex items-center gap-3">
+          {status === "loading" && (
+            <span className="font-mono text-10 text-ink-3 animate-pulse">fetching…</span>
+          )}
+          {classifyStatus === "loading" && (
+            <span className="font-mono text-10 text-ink-3 animate-pulse">classifying…</span>
+          )}
+          {status === "ok" && fetchedAt && (
+            <span className="font-mono text-10 text-ink-3">
+              refreshed {new Date(fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
+          {status === "error" && (
+            <span className="font-mono text-10 text-red">feed unavailable</span>
+          )}
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={status === "loading"}
+            className="font-mono text-10 px-2 py-0.5 rounded border border-hair-2 text-ink-2 hover:bg-bg-2 disabled:opacity-40"
+          >
+            refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Critical banner */}
+      {criticalCount > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-red/10 border border-red/30">
+          <span className="text-red font-semibold text-11">
+            🔴 {criticalCount} critical item{criticalCount !== 1 ? "s" : ""}
+          </span>
+          <span className="text-11 text-red/80">— immediate review required</span>
+        </div>
+      )}
+
+      {/* Urgency filter bar */}
+      {(status === "ok" || status === "error") && items.some((i) => i.urgency) && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {URGENCY_FILTER_LABELS.map((u) => {
+            const count = u === "all" ? items.length : items.filter((i) => i.urgency === u).length;
+            const active = urgencyFilter === u;
+            const cls =
+              u === "critical"
+                ? active ? "bg-red text-white border-red" : "bg-red/10 text-red border-red/30 hover:bg-red/20"
+                : u === "high"
+                ? active ? "bg-amber text-white border-amber" : "bg-amber/10 text-amber border-amber/30 hover:bg-amber/20"
+                : u === "medium"
+                ? active ? "bg-blue text-white border-blue" : "bg-blue-dim text-blue border-blue/30 hover:bg-blue/10"
+                : u === "low"
+                ? active ? "bg-bg-2 text-ink-0 border-hair-2" : "bg-bg-1 text-ink-3 border-hair-2 hover:bg-bg-2"
+                : active ? "bg-brand text-white border-brand" : "bg-bg-1 text-ink-2 border-hair-2 hover:bg-bg-2";
+            return (
+              <button
+                key={u}
+                type="button"
+                onClick={() => setUrgencyFilter(u)}
+                className={`font-mono text-10 px-2 py-0.5 rounded border capitalize transition-colors ${cls}`}
+              >
+                {u === "all" ? `All (${count})` : `${u} (${count})`}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {status === "loading" && (
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 rounded-lg bg-bg-panel border border-hair-2 animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {(status === "ok" || status === "error") && (
+        <div className="space-y-1.5 overflow-y-auto max-h-[600px] pr-1">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => <FeedItem key={item.id} item={item} />)
+          ) : (
+            <div className="text-12 text-ink-2 py-6 text-center border border-hair-2 rounded-lg">
+              {urgencyFilter === "all" ? "No items available." : `No ${urgencyFilter} items.`}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar panel sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CalendarCard({ event }: { event: CalendarEvent }) {
+  const daysLabel =
+    event.daysUntil < 0
+      ? `${Math.abs(event.daysUntil)}d OVERDUE`
+      : event.daysUntil === 0
+        ? "TODAY"
+        : `${event.daysUntil}d`;
+
+  const deadlineDisplay = (() => {
+    try {
+      return new Date(event.deadline + "T00:00:00Z").toLocaleDateString("en-AE", {
+        day: "2-digit", month: "short", year: "numeric",
+      });
+    } catch {
+      return event.deadline;
+    }
+  })();
+
+  return (
+    <div className={`rounded-lg p-4 ${URGENCY_CARD[event.urgency]}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className={`font-mono text-10 px-1.5 py-px rounded-sm font-semibold ${URGENCY_BADGE[event.urgency]}`}>
+              {daysLabel}
+            </span>
+            <span className={`font-mono text-10 px-1.5 py-px rounded-sm ${CAT_BADGE[event.category]}`}>
+              {event.category}
+            </span>
+          </div>
+          <h3 className="text-12 font-semibold text-ink-0 m-0 leading-snug">{event.title}</h3>
+          <div className="font-mono text-10 text-ink-3 mt-0.5">
+            {event.authority} · {deadlineDisplay}
+          </div>
+        </div>
+      </div>
+      <p className="text-11 text-ink-2 m-0 mt-2 leading-relaxed">{event.description}</p>
+      <div className="font-mono text-10 text-ink-3 mt-2 border-t border-hair pt-2">
+        Ref: {event.regulatoryRef}
+      </div>
+    </div>
+  );
+}
+
+function CalendarPanel({
+  data,
+  status,
+}: {
+  data: RegCalendarLiveResult | null;
+  status: "idle" | "loading" | "ok" | "error";
+}) {
+  const overdue = data?.events.filter((e) => e.urgency === "overdue") ?? [];
+  const critical = data?.events.filter((e) => e.urgency === "critical") ?? [];
+  const upcoming = data?.events.filter((e) => e.urgency === "upcoming") ?? [];
+  const planned = data?.events.filter((e) => e.urgency === "planned") ?? [];
+
+  return (
+    <div className="flex flex-col min-h-0">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-10 uppercase tracking-wide-4 font-semibold text-ink-2 m-0">
+          Compliance calendar
+        </h2>
+        {status === "loading" && (
+          <span className="font-mono text-10 text-ink-3 animate-pulse">loading…</span>
+        )}
+      </div>
+
+      {status === "loading" && (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 rounded-lg bg-bg-panel border border-hair-2 animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {status === "ok" && data && (
+        <div className="space-y-4 overflow-y-auto max-h-[600px] pr-1">
+          {overdue.length > 0 && (
+            <div>
+              <div className="font-mono text-10 uppercase tracking-wide-4 text-red font-semibold mb-2">
+                Overdue ({overdue.length})
+              </div>
+              <div className="space-y-2">
+                {overdue.map((e) => <CalendarCard key={e.id} event={e} />)}
+              </div>
+            </div>
+          )}
+
+          {critical.length > 0 && (
+            <div>
+              <div className="font-mono text-10 uppercase tracking-wide-4 text-amber font-semibold mb-2">
+                Critical — due within 14 days ({critical.length})
+              </div>
+              <div className="space-y-2">
+                {critical.map((e) => <CalendarCard key={e.id} event={e} />)}
+              </div>
+            </div>
+          )}
+
+          {upcoming.length > 0 && (
+            <div>
+              <div className="font-mono text-10 uppercase tracking-wide-4 text-ink-2 font-semibold mb-2">
+                Upcoming — next 60 days ({upcoming.length})
+              </div>
+              <div className="space-y-2">
+                {upcoming.map((e) => <CalendarCard key={e.id} event={e} />)}
+              </div>
+            </div>
+          )}
+
+          {planned.length > 0 && (
+            <div>
+              <div className="font-mono text-10 uppercase tracking-wide-4 text-ink-3 font-semibold mb-2">
+                Planned ({planned.length})
+              </div>
+              <div className="space-y-2">
+                {planned.map((e) => <CalendarCard key={e.id} event={e} />)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="text-12 text-red py-6 text-center border border-hair-2 rounded-lg">
+          Calendar unavailable.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main page
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function RegulatoryPage() {
-  const [query, setQuery] = useState("");
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [liveItems, setLiveItems] = useState<LiveItem[]>([]);
-  const [liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  // Feed state
+  const [feedItems, setFeedItems] = useState<LiveItem[]>([]);
+  const [feedStatus, setFeedStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLiveStatus("loading");
-    fetch("/api/regulatory-feed")
+  // Urgency classification state
+  const [classifyStatus, setClassifyStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+
+  // Calendar state
+  const [calData, setCalData] = useState<RegCalendarLiveResult | null>(null);
+  const [calStatus, setCalStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+
+  // Library filter state
+  const [query, setQuery] = useState("");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  // Auto-refresh timer ref
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const classifyItems = useCallback((items: LiveItem[]) => {
+    if (items.length === 0) return;
+    setClassifyStatus("loading");
+    fetch("/api/regulatory/classify-urgency", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((i) => ({
+          title: i.title,
+          summary: i.summary ?? i.snippet ?? "",
+          date: i.publishedAt ?? i.pubDate ?? "",
+          source: i.source,
+        })),
+      }),
+    })
       .then((r) => r.json())
-      .then((data) => {
-        setLiveItems(data.items ?? []);
-        setFetchedAt(data.fetchedAt ?? null);
-        setLiveStatus("ok");
+      .then((data: { ok: boolean; classified?: Array<{ urgency: FeedUrgency; reason: string }> }) => {
+        if (data.ok && data.classified) {
+          setFeedItems((prev) =>
+            prev.map((item, i) => ({
+              ...item,
+              urgency: data.classified![i]?.urgency ?? undefined,
+              urgencyReason: data.classified![i]?.reason ?? undefined,
+            })),
+          );
+          setClassifyStatus("ok");
+        } else {
+          setClassifyStatus("error");
+        }
       })
-      .catch(() => setLiveStatus("error"));
+      .catch(() => setClassifyStatus("error"));
   }, []);
 
+  const loadFeed = useCallback(() => {
+    setFeedStatus("loading");
+    setClassifyStatus("idle");
+    fetch("/api/regulatory-feed")
+      .then((r) => r.json())
+      .then((data: FeedResult) => {
+        const items = data.items ?? [];
+        setFeedItems(items);
+        setFetchedAt(data.fetchedAt ?? null);
+        setFeedStatus("ok");
+        classifyItems(items);
+      })
+      .catch(() => setFeedStatus("error"));
+  }, [classifyItems]);
+
+  const loadCalendar = useCallback(() => {
+    setCalStatus("loading");
+    fetch("/api/regulatory-calendar-live")
+      .then((r) => r.json())
+      .then((data: RegCalendarLiveResult) => {
+        setCalData(data);
+        setCalStatus("ok");
+      })
+      .catch(() => setCalStatus("error"));
+  }, []);
+
+  useEffect(() => {
+    loadFeed();
+    loadCalendar();
+    // Auto-refresh feed every 5 minutes
+    refreshTimerRef.current = setInterval(loadFeed, 5 * 60_000);
+    return () => {
+      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+    };
+  }, [loadFeed, loadCalendar]);
+
+  // KPIs computed from feed + calendar
+  const redCount = feedItems.filter((i) => i.tone === "red").length;
+  const amberCount = feedItems.filter((i) => i.tone === "amber").length;
+  const upcomingDeadlines = calData
+    ? calData.events.filter((e) => e.urgency === "upcoming" || e.urgency === "critical").length
+    : 0;
+  const overdueCount = calData?.overdueCount ?? 0;
+
+  // Library filtering
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return LIBRARY.filter((e) => {
@@ -501,90 +967,60 @@ export default function RegulatoryPage() {
     });
   }, [query, activeTag]);
 
+  const kpis = [
+    { value: String(feedItems.length), label: "Live items" },
+    { value: String(redCount), label: "Red alerts", tone: redCount > 0 ? ("red" as const) : undefined },
+    { value: String(amberCount), label: "Amber alerts", tone: amberCount > 0 ? ("amber" as const) : undefined },
+    { value: String(overdueCount), label: "Overdue", tone: overdueCount > 0 ? ("red" as const) : undefined },
+    { value: String(upcomingDeadlines), label: "Upcoming deadlines" },
+  ];
+
   return (
     <ModuleLayout asanaModule="regulatory" asanaLabel="Regulatory">
-        <ModuleHero
-          eyebrow="Module 11 · Regulatory Reference"
-          title="Regulatory"
-          titleEm="library."
-          intro={
-            <>
-              <strong>Every citation the brain makes, in one searchable reference.</strong>{" "}
-              FDL / CR / MoE / FATF / LBMA / OECD — keyword search across title,
-              citation, and summary; click a tag to narrow by framework.
-            </>
-          }
-        />
+      <ModuleHero
+        moduleNumber={31}
+        eyebrow="Module 11 · Regulatory Intelligence"
+        title="Regulatory"
+        titleEm="library."
+        kpis={kpis}
+        intro={
+          <>
+            <strong>Every citation the brain makes, in one searchable reference.</strong>{" "}
+            FDL / CR / MoE / FATF / LBMA / OECD — keyword search across title,
+            citation, and summary; click a tag to narrow by framework.{" "}
+            <strong>Primary UAE DPMS regulatory bodies:</strong>{" "}
+            FATF (global standards), CBUAE (licensed financial institutions), MoE (DPMS/DNFBPs),
+            LBMA (responsible gold guidance), and EOCN (targeted financial sanctions &amp; conflict minerals).
+            Live feed auto-refreshes every 5 minutes. Calendar deadlines computed from today's date.
+          </>
+        }
+      />
 
-        {/* ── Live regulatory feed ── */}
-        <section className="mt-6 mb-8">
-          <div className="flex items-baseline justify-between mb-2">
-            <h2 className="text-10 uppercase tracking-wide-4 font-semibold text-ink-2 m-0">
-              Live regulatory updates
-            </h2>
-            {liveStatus === "loading" && (
-              <span className="font-mono text-10 text-ink-3 animate-pulse">fetching…</span>
-            )}
-            {liveStatus === "ok" && fetchedAt && (
-              <span className="font-mono text-10 text-ink-3">
-                updated {new Date(fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
-            {liveStatus === "error" && (
-              <span className="font-mono text-10 text-red">feed unavailable</span>
-            )}
-          </div>
+      {/* ── Live feed + Calendar panels — side by side on desktop ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
+        {/* Feed panel */}
+        <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
+          <FeedPanel
+            items={feedItems}
+            status={feedStatus}
+            fetchedAt={fetchedAt}
+            onRefresh={loadFeed}
+            classifyStatus={classifyStatus}
+          />
+        </div>
 
-          {liveStatus === "loading" && (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 rounded-lg bg-bg-panel border border-hair-2 animate-pulse" />
-              ))}
-            </div>
-          )}
+        {/* Calendar panel */}
+        <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
+          <CalendarPanel data={calData} status={calStatus} />
+        </div>
+      </div>
 
-          {liveStatus === "ok" && liveItems.length > 0 && (
-            <div className="space-y-1.5">
-              {liveItems.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`block border border-hair-2 border-l-2 rounded-lg px-4 py-3 hover:opacity-80 transition-opacity no-underline ${TONE_CLASSES[item.tone]}`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="text-12 font-medium text-ink-0 leading-snug">
-                      {item.title}
-                    </span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 ${TONE_BADGE[item.tone]}`}>
-                        {item.category}
-                      </span>
-                      <span className="font-mono text-10 text-ink-3">{item.source}</span>
-                    </div>
-                  </div>
-                  {item.snippet && (
-                    <p className="text-11 text-ink-2 m-0 mt-1 leading-relaxed line-clamp-2">
-                      {item.snippet}
-                    </p>
-                  )}
-                  {item.pubDate && (
-                    <div className="font-mono text-10 text-ink-3 mt-1">{item.pubDate}</div>
-                  )}
-                </a>
-              ))}
-            </div>
-          )}
-
-          {liveStatus === "ok" && liveItems.length === 0 && (
-            <div className="text-12 text-ink-2 py-4 text-center border border-hair-2 rounded-lg">
-              No live items available right now.
-            </div>
-          )}
-        </section>
-
-        <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mt-6 mb-4">
+      {/* ── Regulatory Reference Library ── */}
+      <div className="mb-4">
+        <h2 className="text-10 uppercase tracking-wide-4 font-semibold text-ink-2 m-0 mb-4">
+          Regulatory reference library
+        </h2>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 mb-4">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -596,9 +1032,7 @@ export default function RegulatoryPage() {
               type="button"
               onClick={() => setActiveTag(null)}
               className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 ${
-                activeTag === null
-                  ? "bg-brand text-white"
-                  : "bg-bg-2 text-ink-2 hover:bg-bg-1"
+                activeTag === null ? "bg-brand text-white" : "bg-bg-2 text-ink-2 hover:bg-bg-1"
               }`}
             >
               all
@@ -609,9 +1043,7 @@ export default function RegulatoryPage() {
                 type="button"
                 onClick={() => setActiveTag(activeTag === t ? null : t)}
                 className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10 ${
-                  activeTag === t
-                    ? "bg-brand text-white"
-                    : "bg-bg-2 text-ink-2 hover:bg-bg-1"
+                  activeTag === t ? "bg-brand text-white" : "bg-bg-2 text-ink-2 hover:bg-bg-1"
                 }`}
               >
                 {t}
@@ -625,16 +1057,12 @@ export default function RegulatoryPage() {
             <div key={e.code} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
               <div className="flex items-baseline justify-between gap-3 mb-1">
                 <h3 className="text-13 font-semibold text-ink-0 m-0">{e.title}</h3>
-                <span className="font-mono text-10 text-ink-3 shrink-0">
-                  {e.code}
-                </span>
+                <span className="font-mono text-10 text-ink-3 shrink-0">{e.code}</span>
               </div>
               <div className="font-mono text-10 text-ink-3 mb-2">
                 {e.authority} · {e.citation}
               </div>
-              <p className="text-11.5 text-ink-1 leading-relaxed m-0">
-                {e.summary}
-              </p>
+              <p className="text-11.5 text-ink-1 leading-relaxed m-0">{e.summary}</p>
               <div className="flex flex-wrap gap-1 mt-2">
                 {e.tags.map((t) => (
                   <span
@@ -648,11 +1076,10 @@ export default function RegulatoryPage() {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="text-12 text-ink-2 py-8 text-center">
-              No entries match.
-            </div>
+            <div className="text-12 text-ink-2 py-8 text-center">No entries match.</div>
           )}
         </div>
+      </div>
     </ModuleLayout>
   );
 }

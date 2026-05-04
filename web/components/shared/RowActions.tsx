@@ -29,12 +29,10 @@ interface RowActionsProps {
   deleteConfirmMessage?: string;
 }
 
-// Deliberately tiny: 18×18 hit target, 11px glyph, low default opacity.
-// Surfaces on hover, never dominates the row.
 const BTN =
-  "w-[18px] h-[18px] rounded-sm flex items-center justify-center text-11 leading-none text-ink-3/60 transition-all hover:scale-110";
-const EDIT_HOVER = "hover:bg-bg-2 hover:text-ink-0";
-const DELETE_HOVER = "hover:bg-red-dim hover:text-red";
+  "w-[18px] h-[18px] rounded-sm flex items-center justify-center text-11 leading-none transition-all hover:scale-110";
+const EDIT_CLS = "text-blue-400 hover:bg-blue/10 hover:text-blue-500";
+const DELETE_CLS = "text-red hover:bg-red-dim hover:text-red";
 
 export function RowActions({
   onEdit,
@@ -65,7 +63,7 @@ export function RowActions({
           aria-label={`Edit ${label}`}
           title="Edit"
           onClick={handleEdit}
-          className={`${BTN} ${EDIT_HOVER}`}
+          className={`${BTN} ${EDIT_CLS}`}
         >
           ✎
         </button>
@@ -75,7 +73,7 @@ export function RowActions({
         aria-label={`Delete ${label}`}
         title="Delete"
         onClick={handleDelete}
-        className={`${BTN} ${DELETE_HOVER}`}
+        className={`${BTN} ${DELETE_CLS}`}
       >
         ×
       </button>

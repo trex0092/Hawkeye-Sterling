@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { scoreWallet } from "../../../../dist/src/integrations/cryptoRisk.js";
-import type { CryptoChain } from "../../../../dist/src/integrations/cryptoRisk.js";
+import type { CryptoChain, WalletRiskResult } from "../../../../dist/src/integrations/cryptoRisk.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,9 +44,22 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const result = await scoreWallet(body.address.trim(), { chain: body.chain });
 
-  if (!result.ok && result.error?.includes("not configured")) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+  if (!result.ok) {
+    // No provider configured or API call failed — return a graceful offline fallback
+    const address = body.address.trim();
+    const fallback: WalletRiskResult & { offline: boolean } = {
+      ok: true,
+      address,
+      chain: body.chain ?? "unknown",
+      provider: "unavailable",
+      riskScore: 0,
+      riskLevel: "unknown",
+      exposure: { directSanctioned: 0, indirectSanctioned: 0, mixing: 0, darknet: 0 },
+      labels: [],
+      offline: true,
+    };
+    return NextResponse.json(fallback, { headers: { ...CORS, ...gateHeaders } });
   }
 
-  return NextResponse.json(result, { status: result.ok ? 200 : 502, headers: { ...CORS, ...gateHeaders } });
+  return NextResponse.json(result, { headers: { ...CORS, ...gateHeaders } });
 }

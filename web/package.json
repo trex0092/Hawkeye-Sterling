@@ -8,9 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:reports": "tsx scripts/test-compliance-report.ts"
+    "test:reports": "tsx scripts/test-compliance-report.ts",
+    "check:pii-guard": "bash -c 'if grep -rn \"new Anthropic\" app --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | grep -v \"//\"; then echo \"PII GUARD BYPASS DETECTED: use getAnthropicClient() from @/lib/server/llm\" && exit 1; fi'"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
     "@netlify/blobs": "^10.7.4",
     "@netlify/functions": "^5.2.0",
     "@types/swagger-ui-react": "^5.18.0",

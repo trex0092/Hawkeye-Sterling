@@ -28,6 +28,7 @@ import {
   saveCases,
 } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
+import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
   saveOperatorRole,
@@ -37,11 +38,22 @@ import {
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
+import { exportStrDraft } from "@/lib/pdf/exporters";
+import type { PatternDetectResult, DetectedPattern } from "@/app/api/str-cases/pattern-detect/route";
 
 type FlashTone = "success" | "error";
 interface Flash {
   tone: FlashTone;
   msg: string;
+}
+
+interface MlroBriefing {
+  summary: string;
+  priorityCases: Array<{ id: string; reason: string }>;
+  duplicateRisk: string | null;
+  actionItems: string[];
+  regulatoryDeadlines: string[];
+  mlroSignoff: string;
 }
 
 interface CaseRow {
@@ -141,6 +153,8 @@ export default function StrCasesPage() {
   // reload erased every filing, and the /cases module never saw them.
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
+  // goAML export modal — prefilled from the row clicked.
+  const [goamlPrefill, setGoamlPrefill] = useState<CasePrefill | null>(null);
   const [editCaseDraft, setEditCaseDraft] = useState({ title: "", subject: "", status: "" });
   useEffect(() => {
     if (!canPerform(role, "str_read")) return;
@@ -194,6 +208,13 @@ export default function StrCasesPage() {
   const [noTippingOff, setNoTippingOff] = useState(true);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [briefing, setBriefing] = useState<MlroBriefing | null>(null);
+  const [briefingLoading, setBriefingLoading] = useState(false);
+
+  // Cross-case pattern detection
+  const [patternResult, setPatternResult] = useState<PatternDetectResult | null>(null);
+  const [patternLoading, setPatternLoading] = useState(false);
+  const [patternExpanded, setPatternExpanded] = useState(false);
 
   const open = cases.filter(
     (c) => c.status !== "Submitted" && c.status !== "Closed",
@@ -228,6 +249,47 @@ export default function StrCasesPage() {
     if (typeof window !== "undefined") {
       window.setTimeout(() => setFlash(null), 3500);
     }
+  };
+
+  const generateBriefing = async () => {
+    setBriefingLoading(true);
+    try {
+      const res = await fetch("/api/str-briefing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cases }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean; briefing: MlroBriefing };
+      if (data.ok) setBriefing(data.briefing);
+    } catch { /* silent */ }
+    finally { setBriefingLoading(false); }
+  };
+
+  const runPatternDetection = async () => {
+    setPatternLoading(true);
+    try {
+      const res = await fetch("/api/str-cases/pattern-detect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          cases: cases.map((c) => ({
+            id: c.id,
+            subject: c.subject,
+            amount: c.amountAed,
+            jurisdiction: "",
+            typology: c.reportKind,
+            status: c.status,
+            date: c.openedAt,
+          })),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as PatternDetectResult;
+      setPatternResult(data);
+      setPatternExpanded(true);
+    } catch { /* silent */ }
+    finally { setPatternLoading(false); }
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -332,6 +394,9 @@ export default function StrCasesPage() {
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 05
+      </div>
       <ModuleHeader
             title="STR Case"
             titleEm="Management"
@@ -341,15 +406,172 @@ export default function StrCasesPage() {
               label: "FDL Art. 26–27 · File without delay",
               tone: "critical",
             }}
-            actions={<Btn variant="ghost">+ New case</Btn>}
+            actions={
+              <div className="flex items-center gap-2">
+                <Btn variant="ghost" onClick={() => void generateBriefing()} disabled={briefingLoading || cases.length === 0}>
+                  {briefingLoading ? "Generating…" : "AI Briefing"}
+                </Btn>
+                <Btn
+                  variant="ghost"
+                  onClick={() => {
+                    const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
+                    exportStrDraft({
+                      subject: open[0]?.subject ?? "Multiple subjects",
+                      narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
+                      transactions: [],
+                      composite: 75,
+                      jurisdiction: "AE",
+                    });
+                  }}
+                >
+                  ↓ Export PDF
+                </Btn>
+                <Btn variant="ghost">+ New case</Btn>
+              </div>
+            }
       />
 
-      <KpiGrid cols={4}>
+      <KpiGrid cols={5}>
             <Kpi value={cases.length} label="Total" tone="brand" />
             <Kpi value={open} label="Open" tone="amber" />
             <Kpi value={submitted} label="Submitted" tone="green" />
             <Kpi value={overdue} label="Overdue" tone="red" />
+            <Kpi
+              value={patternResult ? `⚠️ ${patternResult.patterns.length}` : "—"}
+              label="Patterns detected"
+              tone={patternResult && patternResult.patterns.length > 0 ? "red" : undefined}
+            />
       </KpiGrid>
+
+      {briefing && (
+        <div className="mt-4 mb-2 bg-bg-panel border border-brand/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">MLRO Daily Briefing</span>
+            <button type="button" onClick={() => setBriefing(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+          </div>
+          <p className="text-12 text-ink-1 leading-relaxed">{briefing.summary}</p>
+          {briefing.duplicateRisk && (
+            <div className="text-11 font-semibold text-amber">Duplicate risk: {briefing.duplicateRisk}</div>
+          )}
+          {briefing.priorityCases.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Priority cases</div>
+              <ul className="space-y-0.5">
+                {briefing.priorityCases.map((pc) => (
+                  <li key={pc.id} className="text-11 text-ink-1"><span className="font-mono text-brand-deep">{pc.id}</span> — {pc.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {briefing.actionItems.length > 0 && (
+            <ul className="text-11 text-ink-2 list-disc list-inside space-y-0.5">
+              {briefing.actionItems.map((item, i) => <li key={i}>{item}</li>)}
+            </ul>
+          )}
+          {briefing.regulatoryDeadlines.length > 0 && (
+            <div className="text-10 font-mono text-red">{briefing.regulatoryDeadlines.join(" · ")}</div>
+          )}
+          {briefing.mlroSignoff && (
+            <div className="text-11 italic text-ink-3">{briefing.mlroSignoff}</div>
+          )}
+        </div>
+      )}
+
+      {/* Pattern Detection banner */}
+      <div className="mt-4 mb-2 bg-bg-panel border border-hair-2 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-1">
+              🔍 Pattern Detection
+            </span>
+            <span className="ml-2 text-11 text-ink-3">
+              Cross-case analysis · structuring · linked subjects · jurisdiction clustering
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {patternResult && !patternLoading && (
+              <button
+                type="button"
+                onClick={() => setPatternExpanded((v) => !v)}
+                className="text-11 text-ink-3 hover:text-ink-1"
+              >
+                {patternExpanded ? "Hide ▲" : `Show ${patternResult.patterns.length} pattern(s) ▾`}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void runPatternDetection()}
+              disabled={patternLoading || cases.length === 0}
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors"
+            >
+              {patternLoading ? "Analysing…" : "Run Cross-Case Analysis"}
+            </button>
+          </div>
+        </div>
+
+        {patternExpanded && patternResult && (
+          <div className="mt-3 border-t border-hair-2 pt-3">
+            {patternResult.summary && (
+              <p className="text-12 text-ink-1 leading-relaxed mb-3">{patternResult.summary}</p>
+            )}
+            {patternResult.patterns.length === 0 ? (
+              <p className="text-11 text-ink-3 italic">No significant patterns detected across current cases.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {patternResult.patterns.map((p: DetectedPattern, i) => {
+                  const sevCls =
+                    p.severity === "critical"
+                      ? "bg-red-dim text-red border-red/20"
+                      : p.severity === "high"
+                      ? "bg-amber-dim text-amber border-amber/20"
+                      : p.severity === "medium"
+                      ? "bg-blue-dim text-blue border-blue/20"
+                      : "bg-bg-2 text-ink-2 border-hair-2";
+                  const sevBadgeCls =
+                    p.severity === "critical"
+                      ? "bg-red/15 text-red"
+                      : p.severity === "high"
+                      ? "bg-amber/15 text-amber"
+                      : p.severity === "medium"
+                      ? "bg-blue/15 text-blue"
+                      : "bg-bg-2 text-ink-3";
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-lg border p-3 flex flex-col gap-1.5 ${sevCls}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${sevBadgeCls}`}
+                        >
+                          {p.severity}
+                        </span>
+                        <span className="font-mono text-10 text-ink-2 uppercase">
+                          {p.type.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <p className="text-12 text-ink-0 leading-snug">{p.description}</p>
+                      {p.caseIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {p.caseIds.map((id) => (
+                            <span
+                              key={id}
+                              className="font-mono text-10 bg-bg-0/50 text-ink-2 px-1.5 py-px rounded"
+                            >
+                              {id}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="text-10 font-mono text-ink-3 mt-0.5">{p.regulatoryRef}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <Card>
             <form onSubmit={openCase}>
@@ -360,20 +582,25 @@ export default function StrCasesPage() {
                 const row = "grid gap-3 mb-2";
                 return (
                   <>
-                    <div className={`${row} grid-cols-2`}>
+                    <div className={`${row} grid-cols-3`}>
                       <div><label className={lCls}>Case title</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short case descriptor" className={iCls} /></div>
                       <div><label className={lCls}>Report kind</label><SingleSelect options={STR_REPORT_KINDS} value={reportKind} onChange={setReportKind} /></div>
-                    </div>
-                    <div className={`${row} grid-cols-2`}>
                       <div><label className={lCls}>Subject / entity</label><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Customer, counterparty, or entity" className={iCls} /></div>
-                      <div><label className={lCls}>Subject country</label><input value={subjectCountry} onChange={(e) => setSubjectCountry(e.target.value)} placeholder="e.g. UAE, IN, RU" className={iCls} /></div>
                     </div>
                     <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>Subject country</label><input value={subjectCountry} onChange={(e) => setSubjectCountry(e.target.value)} placeholder="e.g. UAE, IN, RU" className={iCls} /></div>
                       <div><label className={lCls}>Transaction amount <span className="normal-case font-normal">(AED, USD, EUR)</span></label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                       <div><label className={lCls}>Detected on</label><DateParts value={detectedOn} onChange={setDetectedOn} className={iCls} /></div>
-                      <div><label className={lCls}>Filing deadline <span className="normal-case font-normal">FDL Art. 26–27</span></label><DateParts value={deadline} onChange={setDeadline} className={iCls} /></div>
                     </div>
-                    <div className="mb-2"><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
+                    <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>Filing deadline <span className="normal-case font-normal">FDL Art. 26–27</span></label><DateParts value={deadline} onChange={setDeadline} className={iCls} /></div>
+                      <div><label className={lCls}>goAML reference</label><input value={goamlRef} onChange={(e) => setGoamlRef(e.target.value)} placeholder="e.g. RPT-2026-0001" className={iCls} /></div>
+                      <div><label className={lCls}>MLRO (preparer)</label><input value={mlro} onChange={(e) => setMlro(e.target.value)} placeholder="MLRO name" className={iCls} /></div>
+                    </div>
+                    <div className={`${row} grid-cols-2`}>
+                      <div><label className={lCls}>Four-eyes approver</label><input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Second approver" className={iCls} /></div>
+                      <div><label className={lCls}>Red-flag category</label><MultiSelect groups={STR_RED_FLAGS} placeholder="Select red-flag category…" value={redFlags} onChange={setRedFlags} /></div>
+                    </div>
                     <div className="mb-2"><label className={lCls}>Suspicion narrative</label><textarea value={narrative} onChange={(e) => setNarrative(e.target.value)} placeholder="Who, what, when, where, why it is suspicious. Do NOT tip off the subject (FDL Art. 29)." className={taCls} /></div>
                     {entityOptions.length > 1 && (
                       <div className="mb-2">
@@ -392,11 +619,6 @@ export default function StrCasesPage() {
                         </select>
                       </div>
                     )}
-                    <div className={`${row} grid-cols-3`}>
-                      <div><label className={lCls}>goAML reference</label><input value={goamlRef} onChange={(e) => setGoamlRef(e.target.value)} placeholder="e.g. RPT-2026-0001" className={iCls} /></div>
-                      <div><label className={lCls}>MLRO (preparer)</label><input value={mlro} onChange={(e) => setMlro(e.target.value)} placeholder="MLRO name" className={iCls} /></div>
-                      <div><label className={lCls}>Four-eyes approver</label><input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Second approver" className={iCls} /></div>
-                    </div>
                   </>
                 );
               })()}
@@ -583,18 +805,34 @@ export default function StrCasesPage() {
                         })()}
                       </td>
                       <td className="px-2 py-2 text-right">
-                        <RowActions
-                          label={`case ${c.id}`}
-                          onEdit={() => {
-                            setEditingCaseId(c.id);
-                            setEditCaseDraft({ title: c.title, subject: c.subject, status: c.status });
-                          }}
-                          onDelete={() => {
-                            deleteCase(c.id);
-                            setCases((prev) => prev.filter((x) => x.id !== c.id));
-                          }}
-                          deleteConfirmMessage={`Delete case ${c.id}? Audit-trail entries remain in the sealed chain; only the register row is removed.`}
-                        />
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setGoamlPrefill({
+                              id: c.id,
+                              subject: c.subject,
+                              reportKind: c.reportKind,
+                              amountAed: c.amountAed,
+                            })}
+                            aria-label={`Export case ${c.id} to goAML`}
+                            title="Export to goAML"
+                            className="w-[18px] h-[18px] rounded-sm flex items-center justify-center text-11 leading-none text-ink-3/60 hover:bg-brand-dim hover:text-brand-deep transition-all hover:scale-110 font-mono"
+                          >
+                            ⇪
+                          </button>
+                          <RowActions
+                            label={`case ${c.id}`}
+                            onEdit={() => {
+                              setEditingCaseId(c.id);
+                              setEditCaseDraft({ title: c.title, subject: c.subject, status: c.status });
+                            }}
+                            onDelete={() => {
+                              deleteCase(c.id);
+                              setCases((prev) => prev.filter((x) => x.id !== c.id));
+                            }}
+                            deleteConfirmMessage={`Delete case ${c.id}? Audit-trail entries remain in the sealed chain; only the register row is removed.`}
+                          />
+                        </div>
                       </td>
                     </tr>
                     )
@@ -603,6 +841,11 @@ export default function StrCasesPage() {
               </table>
             </div>
       )}
+      <GoamlExportModal
+        open={goamlPrefill != null}
+        onClose={() => setGoamlPrefill(null)}
+        prefill={goamlPrefill ?? undefined}
+      />
     </ModuleLayout>
   );
 }

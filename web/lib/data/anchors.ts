@@ -94,3 +94,16 @@ export function anchorById(id: string): RegulatoryAnchor | undefined {
 export function anchorsByFamily(family: AnchorFamily): RegulatoryAnchor[] {
   return ANCHORS.filter((a) => a.family === family);
 }
+
+const ID_BY_CITATION: Record<string, string> = (() => {
+  const m: Record<string, string> = {};
+  for (const a of ANCHORS) m[a.citation] = a.id;
+  return m;
+})();
+
+/** Resolve an anchor id from a regulator citation string (e.g. "FATF R.10").
+ *  Returns undefined if unknown — callers must drop unresolved citations
+ *  rather than ship an opaque "anchor-?" reference. */
+export function anchorIdForCitation(citation: string): string | undefined {
+  return ID_BY_CITATION[citation];
+}

@@ -6,6 +6,7 @@ import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { RowActions } from "@/components/shared/RowActions";
+import { formatDMY as fmtDate, formatDMYTime as fmtDateTime } from "@/lib/utils/dateFormat";
 
 type Cadence = "daily" | "twice-daily" | "weekly" | "monthly";
 type MonitorStatus = "active" | "paused" | "overdue";
@@ -100,20 +101,6 @@ const TIER_TONE: Record<string, string> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtDateTime(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-function fmtDate(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
-
 function computeNextDue(lastRun: string, cadence: Cadence): string {
   if (!lastRun) return "—";
   const m = lastRun.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
@@ -174,6 +161,31 @@ interface ScreenResult {
   topScore: number;
 }
 
+interface MonitorAlert {
+  subjectId: string;
+  subjectName: string;
+  alertType: "overdue_escalation" | "cadence_mismatch" | "pattern_detected" | "tier_upgrade_recommended" | "immediate_review_required";
+  severity: "critical" | "high" | "medium";
+  description: string;
+  recommendedAction: string;
+  regulatoryBasis: string;
+}
+
+interface CadenceRecommendation {
+  subjectId: string;
+  currentCadence: string;
+  recommendedCadence: string;
+  reason: string;
+}
+
+interface MonitorAlertsResult {
+  alerts: MonitorAlert[];
+  portfolioHealth: "healthy" | "attention_required" | "critical";
+  immediateEscalations: string[];
+  cadenceRecommendations: CadenceRecommendation[];
+  summary: string;
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function OngoingMonitorPage() {
@@ -186,6 +198,10 @@ export default function OngoingMonitorPage() {
   const [lastResults, setLastResults] = useState<Record<string, ScreenResult>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<{ name: string; caseId: string; tier: MonitoredSubject["tier"]; cadence: Cadence; enrolledBy: string; notes: string }>(BLANK);
+
+  // AI pattern scan state
+  const [monitorAlerts, setMonitorAlerts] = useState<MonitorAlertsResult | null>(null);
+  const [monitorAlertsLoading, setMonitorAlertsLoading] = useState(false);
 
   // Enrichment state
   const [enrichName, setEnrichName] = useState("");
@@ -200,10 +216,7 @@ export default function OngoingMonitorPage() {
     setSubjects(load());
     (async () => {
       try {
-        const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
-        const res = await fetch("/api/ongoing", {
-          headers: { ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
-        });
+        const res = await fetch("/api/ongoing");
         if (!res.ok) return;
         const data = (await res.json()) as {
           ok: boolean;
@@ -267,10 +280,9 @@ export default function OngoingMonitorPage() {
     save(next); setSubjects(next); setDraft(BLANK);
     writeAuditEvent(draft.enrolledBy || "analyst", "ongoing.enrolled", `${subject.name} — ${subject.cadence} cadence`);
     try {
-      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       await fetch("/api/ongoing", {
         method: "POST",
-        headers: { "content-type": "application/json", ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: subject.id, name: subject.name, ...(subject.caseId ? { caseId: subject.caseId } : {}), cadence: subject.cadence }),
       });
     } catch { /* non-fatal */ }
@@ -287,10 +299,8 @@ export default function OngoingMonitorPage() {
     const next = subjects.filter((s) => s.id !== id);
     save(next); setSubjects(next);
     try {
-      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
-        headers: { ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}) },
       });
     } catch { /* non-fatal */ }
   };
@@ -338,6 +348,30 @@ export default function OngoingMonitorPage() {
     finally { setEnrichLoading(false); }
   };
 
+  const runAiMonitor = async () => {
+    setMonitorAlertsLoading(true);
+    try {
+      const payload = subjects.map((s) => ({
+        id: s.id,
+        name: s.name,
+        tier: s.tier,
+        cadence: s.cadence,
+        status: s.status,
+        lastRun: s.lastRun,
+        nextDue: s.nextDue,
+        notes: s.notes,
+      }));
+      const res = await fetch("/api/ongoing-monitor-ai", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjects: payload }),
+      });
+      const data = (await res.json()) as MonitorAlertsResult;
+      setMonitorAlerts(data);
+    } catch { /* non-fatal */ }
+    finally { setMonitorAlertsLoading(false); }
+  };
+
   const active = subjects.filter((s) => s.status === "active").length;
   const paused = subjects.filter((s) => s.status === "paused").length;
   const overdue = subjects.filter((s) => s.status === "overdue").length;
@@ -345,6 +379,7 @@ export default function OngoingMonitorPage() {
   return (
     <ModuleLayout asanaModule="ongoing-monitor" asanaLabel="Ongoing Monitor">
       <ModuleHero
+        moduleNumber={9}
         eyebrow="Module 24 · Continuous Monitoring"
         title="Ongoing"
         titleEm="monitoring."
@@ -376,14 +411,45 @@ export default function OngoingMonitorPage() {
       {/* ── Monitoring section ──────────────────────────────────────────────── */}
       {section === "monitoring" && (
         <>
+          {/* AI Pattern Scan */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <button
+              type="button"
+              onClick={() => { void runAiMonitor(); }}
+              disabled={monitorAlertsLoading || subjects.length === 0}
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
+            >
+              {monitorAlertsLoading ? "Scanning…" : "AI Pattern Scan"}
+            </button>
+          </div>
+
+          {monitorAlerts && (
+            <div className={`mb-4 rounded-lg border p-4 ${monitorAlerts.portfolioHealth === "critical" ? "bg-red-dim border-red/30" : monitorAlerts.portfolioHealth === "attention_required" ? "bg-amber-dim border-amber/30" : "bg-green-dim border-green/30"}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`font-mono text-10 font-semibold px-2 py-px rounded uppercase ${monitorAlerts.portfolioHealth === "critical" ? "bg-red text-white" : monitorAlerts.portfolioHealth === "attention_required" ? "bg-amber-dim text-amber border border-amber/40" : "bg-green-dim text-green border border-green/40"}`}>
+                  {monitorAlerts.portfolioHealth.replace("_", " ")}
+                </span>
+                <span className="text-12 text-ink-1">{monitorAlerts.summary}</span>
+              </div>
+              {monitorAlerts.immediateEscalations.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className="text-10 text-ink-3 font-semibold uppercase tracking-wide-3">Escalate now:</span>
+                  {monitorAlerts.immediateEscalations.map((name) => (
+                    <span key={name} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red">{name}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-0">
             <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Enrol subject</div>
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="grid grid-cols-3 gap-3 mb-2">
               <input value={draft.name} onChange={set("name")} placeholder="Subject name" className={inputCls} />
               <input value={draft.caseId} onChange={set("caseId")} placeholder="Case ID (optional)" className={inputCls} />
               <input value={draft.enrolledBy} onChange={set("enrolledBy")} placeholder="Enrolled by" className={inputCls} />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <select value={draft.tier} onChange={set("tier")} className={inputCls}>
                 <option value="high">High risk</option>
                 <option value="medium">Medium risk</option>
@@ -420,7 +486,7 @@ export default function OngoingMonitorPage() {
                   editingId === s.id ? (
                     <tr key={s.id} className={i < subjects.length - 1 ? "border-b border-hair" : ""}>
                       <td colSpan={9} className="px-3 py-2">
-                        <div className="grid grid-cols-5 gap-2 mb-1.5">
+                        <div className="grid grid-cols-5 gap-3 mb-1.5">
                           <input value={editDraft.name} onChange={setE("name")} placeholder="Subject name" className="text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0 col-span-2" />
                           <input value={editDraft.caseId} onChange={setE("caseId")} placeholder="Case ID" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
                           <select value={editDraft.tier} onChange={setE("tier")} className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0">
@@ -452,6 +518,17 @@ export default function OngoingMonitorPage() {
                           className="ml-2 align-middle"
                         />
                       )}
+                      {monitorAlerts && (() => {
+                        const alert = monitorAlerts.alerts.find((a) => a.subjectId === s.id);
+                        if (!alert) return null;
+                        const sevCls = alert.severity === "critical" ? "bg-red text-white" : alert.severity === "high" ? "bg-red-dim text-red" : "bg-amber-dim text-amber";
+                        return (
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className={`font-mono text-9 px-1.5 py-px rounded uppercase ${sevCls}`}>{alert.severity}</span>
+                            <span className="text-10 text-ink-2">{alert.description}</span>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.caseId || "—"}</td>
                     <td className="px-3 py-2">

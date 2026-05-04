@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { pushBellEvent } from "@/lib/bell-events";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleHeader,
@@ -91,11 +92,50 @@ function loadTxs(): TxRow[] {
   }
 }
 
+interface TmExplanation {
+  explanation: string;
+  disposition: "dismiss" | "monitor" | "escalate" | "report";
+  dispositionReason: string;
+  regulatoryBasis: string;
+  typologies: string[];
+}
+
+type TypologyKind =
+  | "structuring"
+  | "layering"
+  | "smurfing"
+  | "trade-based ML"
+  | "funnel account"
+  | "crypto conversion"
+  | "none";
+
+interface TxTypologyTag {
+  typology: TypologyKind;
+  confidence: number;
+  redFlags: string[];
+  fatfReference: string;
+}
+
+const TYPOLOGY_COLORS: Record<TypologyKind, string> = {
+  structuring: "bg-red-dim text-red border border-red/30",
+  smurfing: "bg-red-dim text-red border border-red/30",
+  layering: "bg-amber-dim text-amber border border-amber/30",
+  "trade-based ML": "bg-blue-dim text-blue border border-blue/30",
+  "funnel account": "bg-blue-dim text-blue border border-blue/30",
+  "crypto conversion": "bg-blue-dim text-blue border border-blue/30",
+  none: "bg-bg-2 text-ink-3 border border-hair-2",
+};
+
 export default function TransactionMonitorPage() {
   const [txs, setTxs] = useState<TxRow[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const counterpartyRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const [explanations, setExplanations] = useState<Record<string, TmExplanation>>({});
+  const [explaining, setExplaining] = useState<Record<string, boolean>>({});
+  const [typologyTags, setTypologyTags] = useState<Record<string, TxTypologyTag>>({});
+  const [tagging, setTagging] = useState(false);
+  const [tagSummary, setTagSummary] = useState<{ text: string; highRiskCount: number } | null>(null);
 
   useEffect(() => {
     setTxs(loadTxs());
@@ -128,6 +168,64 @@ export default function TransactionMonitorPage() {
 
   const openTxReport = (t: TxRow): void => setReportTx(t);
   const closeTxReport = (): void => setReportTx(null);
+
+  const explainTx = async (t: TxRow) => {
+    setExplaining((prev) => ({ ...prev, [t.id]: true }));
+    try {
+      const res = await fetch("/api/tm-explain", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transaction: t }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
+      if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
+    } catch { /* silent */ }
+    finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
+  };
+
+  const autoTagTypologies = async () => {
+    if (txs.length === 0) return;
+    setTagging(true);
+    try {
+      const payload = txs.map((t) => ({
+        id: t.id,
+        amount: t.amount,
+        currency: t.currency,
+        fromAccount: t.counterparty,
+        toAccount: "",
+        date: t.occurredOn,
+        description: t.notes,
+        channel: t.channel,
+        direction: t.direction,
+        behaviouralFlags: t.behaviouralFlags,
+        counterpartyCountry: t.counterpartyCountry,
+      }));
+      const res = await fetch("/api/transaction-monitor/typology-tag", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transactions: payload }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as {
+        tagged: (TxTypologyTag & { id: string })[];
+        highRiskCount: number;
+        summary: string;
+      };
+      const tagMap: Record<string, TxTypologyTag> = {};
+      for (const t of data.tagged ?? []) {
+        tagMap[t.id] = {
+          typology: t.typology,
+          confidence: t.confidence,
+          redFlags: t.redFlags,
+          fatfReference: t.fatfReference,
+        };
+      }
+      setTypologyTags(tagMap);
+      setTagSummary({ text: data.summary, highRiskCount: data.highRiskCount });
+    } catch { /* silent */ }
+    finally { setTagging(false); }
+  };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
   const alerts = txs.filter((t) => t.behaviouralFlags.length > 0).length;
@@ -181,6 +279,19 @@ export default function TransactionMonitorPage() {
       loggedAt: new Date().toISOString(),
     };
     setTxs((prev) => [row, ...prev]);
+    // Push bell event when behavioural flags fire or amount ≥ DPMS threshold
+    if (row.behaviouralFlags.length > 0 || parsedAmount >= 55000) {
+      const isReportable = parsedAmount >= 55000;
+      pushBellEvent({
+        id: `tm-${row.id}`,
+        listId: isReportable ? "ofac_sdn" : "eu_consolidated",
+        listLabel: isReportable ? "Transaction Monitor · DPMS ≥ 55k" : "Transaction Monitor · Flags",
+        matchedEntry: `${row.counterparty || "Unknown"} — ${row.ref}`,
+        sourceRef: row.ref,
+        severity: isReportable ? "critical" : "high",
+        detectedAt: row.loggedAt,
+      });
+    }
     flashFor(
       row.behaviouralFlags.length > 0
         ? "Transaction logged — behavioural flags fired"
@@ -225,6 +336,9 @@ export default function TransactionMonitorPage() {
 
   return (
     <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
+      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+        MODULE 04
+      </div>
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"
@@ -234,6 +348,9 @@ export default function TransactionMonitorPage() {
               <>
                 <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
                   {running ? "Running scan…" : "Run daily scan"}
+                </Btn>
+                <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
+                  {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
                 </Btn>
                 <Btn variant="primary" onClick={focusForm}>
                   + Add transaction
@@ -248,6 +365,70 @@ export default function TransactionMonitorPage() {
             <Kpi value={reportable} label="Reportable (DPMS ≥ 55k)" tone="red" />
       </KpiGrid>
 
+      {tagSummary && (
+        <div className="mt-4 mb-2 bg-bg-panel border border-hair-2 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-mono text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
+              Typology Summary
+            </div>
+            <div className="flex items-center gap-3">
+              {tagSummary.highRiskCount > 0 && (
+                <span className="font-mono text-11 font-bold px-2 py-px rounded bg-red-dim text-red">
+                  {tagSummary.highRiskCount} high-risk
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setTagSummary(null)}
+                className="text-10 text-ink-3 hover:text-ink-1 underline"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          {tagSummary.text && (
+            <p className="text-12 text-ink-1 leading-relaxed mb-3">{tagSummary.text}</p>
+          )}
+          {(() => {
+            const counts: Partial<Record<TypologyKind, number>> = {};
+            for (const tag of Object.values(typologyTags)) {
+              if (tag.typology !== "none") {
+                counts[tag.typology] = (counts[tag.typology] ?? 0) + 1;
+              }
+            }
+            const entries = Object.entries(counts) as [TypologyKind, number][];
+            if (entries.length === 0) return (
+              <p className="text-12 text-ink-3 italic">No ML typologies detected.</p>
+            );
+            const max = Math.max(...entries.map(([, v]) => v));
+            return (
+              <div className="space-y-1.5">
+                {entries.map(([typ, count]) => (
+                  <div key={typ} className="flex items-center gap-3">
+                    <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded w-36 text-center shrink-0 ${TYPOLOGY_COLORS[typ]}`}>
+                      {typ}
+                    </span>
+                    <div className="flex-1 bg-bg-2 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          typ === "structuring" || typ === "smurfing"
+                            ? "bg-red"
+                            : typ === "layering"
+                            ? "bg-amber"
+                            : "bg-blue"
+                        }`}
+                        style={{ width: `${Math.round((count / max) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-11 text-ink-2 w-6 text-right shrink-0">{count}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       <Card>
             <form ref={formRef} onSubmit={log}>
               {(() => {
@@ -257,25 +438,25 @@ export default function TransactionMonitorPage() {
                 const row = "grid gap-3 mb-2";
                 return (
                   <>
-                    <div className={`${row} grid-cols-2`}>
+                    <div className={`${row}`} style={{ gridTemplateColumns: "180px 1fr 140px" }}>
                       <div><label className={lCls}>Transaction reference</label><input value={ref} onChange={(e) => setRef(e.target.value)} className={iCls} /></div>
                       <div><label className={lCls}>Counterparty</label><input ref={counterpartyRef} value={counterparty} onChange={(e) => setCounterparty(e.target.value)} placeholder="Customer / entity name" className={iCls} /></div>
+                      <div><label className={lCls}>Amount</label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                     </div>
                     <div className={`${row} grid-cols-3`}>
-                      <div><label className={lCls}>Amount</label><input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={iCls} /></div>
                       <div><label className={lCls}>Currency <span className="normal-case font-normal">(original)</span></label><input value={currency} onChange={(e) => setCurrency(e.target.value)} className={iCls} /></div>
                       <div><label className={lCls}>Occurred on</label><DateParts value={occurredOn} onChange={setOccurredOn} className={iCls} /></div>
+                      <div><label className={lCls}>Channel</label><SingleSelect options={TM_CHANNELS} value={channel} onChange={setChannel} /></div>
                     </div>
                     <div className={`${row} grid-cols-3`}>
-                      <div><label className={lCls}>Channel</label><SingleSelect options={TM_CHANNELS} value={channel} onChange={setChannel} /></div>
                       <div><label className={lCls}>Direction</label><SingleSelect options={TM_DIRECTIONS} value={direction} onChange={setDirection} /></div>
                       <div><label className={lCls}>Counterparty country</label><input value={counterpartyCountry} onChange={(e) => setCounterpartyCountry(e.target.value)} placeholder="e.g. UAE, IN, CH" className={iCls} /></div>
-                    </div>
-                    <div className={`${row} grid-cols-2`}>
                       <div><label className={lCls}>Payment method / rails</label><input value={paymentRails} onChange={(e) => setPaymentRails(e.target.value)} placeholder="e.g. Emirates NBD, Al Etihad, cash drop" className={iCls} /></div>
-                      <div><label className={lCls}>Source of funds declared</label><input value={sourceOfFunds} onChange={(e) => setSourceOfFunds(e.target.value)} placeholder="e.g. salary, business revenue, inheritance" className={iCls} /></div>
                     </div>
-                    <div className="mb-2"><label className={lCls}>Behavioural flags</label><MultiSelect groups={TM_BEHAVIOURAL_FLAGS} placeholder="Select behavioural flag…" value={behaviouralFlags} onChange={setBehaviouralFlags} /></div>
+                    <div className={`${row} grid-cols-3`}>
+                      <div><label className={lCls}>Source of funds declared</label><input value={sourceOfFunds} onChange={(e) => setSourceOfFunds(e.target.value)} placeholder="e.g. salary, business revenue, inheritance" className={iCls} /></div>
+                      <div><label className={lCls}>Behavioural flags</label><MultiSelect groups={TM_BEHAVIOURAL_FLAGS} placeholder="Select behavioural flag…" value={behaviouralFlags} onChange={setBehaviouralFlags} /></div>
+                    </div>
                     <div className="mb-2"><label className={lCls}>Analyst notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Behavioural context, observed pattern, linked STR reference…" className={taCls} /></div>
                   </>
                 );
@@ -333,6 +514,10 @@ export default function TransactionMonitorPage() {
                       Flags
                     </th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                      Typology
+                    </th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">AI</th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Logged
                     </th>
                     <th className="w-[40px]" aria-label="Actions" />
@@ -371,6 +556,32 @@ export default function TransactionMonitorPage() {
                           </span>
                         )}
                       </td>
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                        {(() => {
+                          const tag = typologyTags[t.id];
+                          if (!tag) return <span className="text-ink-3 font-mono text-10">—</span>;
+                          const colorCls = TYPOLOGY_COLORS[tag.typology];
+                          const tooltipText = `${tag.fatfReference} · confidence ${tag.confidence}%${tag.redFlags.length > 0 ? ` · ${tag.redFlags.join("; ")}` : ""}`;
+                          return (
+                            <span
+                              title={tooltipText}
+                              className={`inline-flex items-center px-1.5 py-px rounded font-mono text-10 font-semibold cursor-help ${colorCls}`}
+                            >
+                              {tag.typology}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => void explainTx(t)}
+                          disabled={explaining[t.id] === true}
+                          className="text-9 font-mono px-1.5 py-px rounded border border-brand/40 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
+                        >
+                          {explaining[t.id] === true ? "…" : "Explain"}
+                        </button>
+                      </td>
                       <td className="px-3 py-2 font-mono text-10 text-ink-3">
                         {new Date(t.loggedAt).toLocaleString()}
                       </td>
@@ -390,6 +601,28 @@ export default function TransactionMonitorPage() {
                   ))}
                 </tbody>
               </table>
+              {Object.keys(explanations).length > 0 && (
+                <div className="border-t border-hair-2 divide-y divide-hair">
+                  {txs.filter((t) => explanations[t.id]).map((t) => {
+                    const ex = explanations[t.id] as TmExplanation;
+                    const dispCls = ex.disposition === "report" ? "bg-red text-white" : ex.disposition === "escalate" ? "bg-red-dim text-red" : ex.disposition === "monitor" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                    return (
+                      <div key={t.id} className="px-4 py-3 bg-bg-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-10 text-ink-3">{t.ref}</span>
+                          <span className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded ${dispCls}`}>{ex.disposition}</span>
+                          {ex.typologies.map((typ) => (
+                            <span key={typ} className="font-mono text-9 px-1.5 py-px rounded bg-bg-2 text-ink-2">{typ}</span>
+                          ))}
+                        </div>
+                        <p className="text-11 text-ink-1 leading-snug mb-1">{ex.explanation}</p>
+                        <div className="text-10 text-ink-3 italic">{ex.dispositionReason}</div>
+                        {ex.regulatoryBasis && <div className="text-9 font-mono text-ink-4 mt-0.5">{ex.regulatoryBasis}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
       )}
       <PaymentScreen />

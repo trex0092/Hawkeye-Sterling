@@ -34,11 +34,12 @@ function projectGidForModule(module: string): string {
   const inbox = process.env["ASANA_PROJECT_GID"] ?? MASTER_INBOX_GID;
   switch (module) {
     // 01 · Screening — Sanctions & Adverse Media
-    // Primary nav: Screening, Batch · Governance: AM Lookback
+    // Primary nav: Screening, Batch · Governance: AM Lookback · Live Adverse Media
     case "screening":
     case "batch":
     case "adverse-media-lookback":
     case "adverse-media":
+    case "adverse-media-live":
       return process.env["ASANA_SCREENING_PROJECT_GID"] ?? inbox;
 
     // 02 · Central MLRO Daily Digest
@@ -57,9 +58,10 @@ function projectGidForModule(module: string): string {
       return process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? inbox;
 
     // 05 · STR/SAR/CTR/PMR GoAML Filings
-    // Primary nav: STR/SAR, Cases (case-management & filings)
+    // Primary nav: STR/SAR, Cases (case-management & filings), goAML Submission wizard
     case "str-cases":
     case "cases":
+    case "goaml-submission":
       return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
 
     // 06 · FFR Incidents & Asset Freezes
@@ -68,7 +70,7 @@ function projectGidForModule(module: string): string {
       return process.env["ASANA_FFR_PROJECT_GID"] ?? inbox;
 
     // 07 · CDD/SDD/EDD/KYC — Customer Due Diligence
-    // Enrichment: GLEIF, Domain Intel, Crypto Risk
+    // Enrichment: GLEIF, Domain Intel, Crypto Risk, Entity Graph
     // Operations: Client portal, UBO declaration, Supplier DD, CDD Review
     case "gleif":
     case "domain-intel":
@@ -77,6 +79,7 @@ function projectGidForModule(module: string): string {
     case "client-portal":
     case "ubo-declaration":
     case "cdd-review":
+    case "entity-graph":
       return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
 
     // 08 · Transaction Monitoring
@@ -110,10 +113,12 @@ function projectGidForModule(module: string): string {
       return process.env["ASANA_TRAINING_PROJECT_GID"] ?? inbox;
 
     // 13 · Compliance Governance
-    // Governance: EWRA, Oversight, Enforcement (regulatory deadlines & sign-off)
+    // Governance: EWRA, Oversight, Enforcement, Responsible AI, Eval KPIs
     case "ewra":
     case "oversight":
     case "enforcement":
+    case "responsible-ai":
+    case "eval-kpi":
       return process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? inbox;
 
     // 14 · Routines — Scheduled
@@ -123,13 +128,16 @@ function projectGidForModule(module: string): string {
 
     // 15 · MLRO Workbench
     // Primary nav: MLRO Advisor, Intel
-    // Intelligence: Workbench, Investigation, Brain, OSINT
+    // Intelligence: Workbench, Investigation, Brain, OSINT, Heatmap, Telemetry, Red-Team
     case "mlro-advisor":
     case "workbench":
     case "investigation":
     case "weaponized-brain":
     case "intel":
     case "osint":
+    case "heatmap":
+    case "telemetry":
+    case "red-team":
       return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
 
     // 16 · Supply Chain, ESG & LBMA Gold
@@ -143,7 +151,20 @@ function projectGidForModule(module: string): string {
     case "eocn":
       return process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? inbox;
 
-    // Everything else (api-docs, status, …) lands in 00 · Master Inbox.
+    // 18 · Regulator Portal Handoff
+    // Governance: Inspection Room
+    case "inspection-room":
+      return process.env["ASANA_REGULATOR_PROJECT_GID"] ?? inbox;
+
+    // 07 · CDD/KYC — Onboarding Wizard
+    case "onboarding":
+      return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
+
+    // 05 · STR/SAR — legacy goAML export
+    case "goaml":
+      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
+
+    // Everything else (status, …) lands in 00 · Master Inbox.
     default:
       return inbox;
   }
@@ -155,6 +176,7 @@ const MODULE_LABELS: Record<string, string> = {
   batch:                    "Batch Screen",
   "adverse-media-lookback": "Adverse Media Lookback",
   "adverse-media":          "Adverse Media",
+  "adverse-media-live":     "Live Adverse Media Feed",
   // 02 · MLRO Daily Digest
   analytics:                "Analytics",
   rmi:                      "Risk & Management Information",
@@ -169,10 +191,12 @@ const MODULE_LABELS: Record<string, string> = {
   "sar-qa":                 "SAR Quality Assurance",
   cases:                    "Cases",
   enforcement:              "Enforcement",
+  "goaml-submission":       "goAML STR Submission",
   // 06 · FFR
   benford:                  "Benford Analysis",
   // 07 · CDD/KYC
   gleif:                    "GLEIF / LEI",
+  "entity-graph":           "Entity Graph & UBO Intelligence",
   "domain-intel":           "Domain Intel",
   "crypto-risk":            "Crypto Risk",
   "vendor-dd":              "Vendor Due Diligence",
@@ -195,6 +219,8 @@ const MODULE_LABELS: Record<string, string> = {
   // 13 · Compliance Governance
   ewra:                     "Enterprise-Wide Risk Assessment",
   "api-docs":               "API Documentation",
+  "responsible-ai":         "Responsible AI Governance",
+  "eval-kpi":               "Eval KPIs & Performance Metrics",
   // 14 · Routines
   "ongoing-monitor":        "Ongoing Monitor",
   // 15 · MLRO Workbench
@@ -202,10 +228,19 @@ const MODULE_LABELS: Record<string, string> = {
   "mlro-advisor":           "MLRO Advisor",
   investigation:            "Investigation",
   "weaponized-brain":       "Weaponized Brain",
+  heatmap:                  "Geographic Heatmap",
+  telemetry:                "Mode Telemetry",
+  "red-team":               "Red-Team Prompt Tests",
   // 16 · Supply Chain
   "vessel-check":           "Vessel Check",
   // 17 · Export Control
   eocn:                     "EOCN Trade Compliance",
+  // 18 · Regulator Portal
+  "inspection-room":        "Inspection Room",
+  // 07 · CDD — Onboarding
+  onboarding:               "Onboarding Wizard",
+  // 05 · STR/SAR
+  goaml:                    "goAML Export",
 };
 
 // Project board label — shown in the Asana task notes.
@@ -214,6 +249,7 @@ const PROJECT_BOARD: Record<string, string> = {
   batch:                    "01 · Screening — Sanctions & Adverse Media",
   "adverse-media-lookback": "01 · Screening — Sanctions & Adverse Media",
   "adverse-media":          "01 · Screening — Sanctions & Adverse Media",
+  "adverse-media-live":     "01 · Screening — Sanctions & Adverse Media",
   analytics:                "02 · Central MLRO Daily Digest",
   rmi:                      "02 · Central MLRO Daily Digest",
   oversight:                "02 · Central MLRO Daily Digest",
@@ -224,8 +260,10 @@ const PROJECT_BOARD: Record<string, string> = {
   "sar-qa":                 "05 · STR/SAR/CTR/PMR GoAML Filings",
   cases:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
   enforcement:              "05 · STR/SAR/CTR/PMR GoAML Filings",
+  "goaml-submission":       "05 · STR/SAR/CTR/PMR GoAML Filings",
   benford:                  "06 · FFR Incidents & Asset Freezes",
   gleif:                    "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "entity-graph":           "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
   "domain-intel":           "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
   "crypto-risk":            "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
   "vendor-dd":              "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
@@ -242,13 +280,21 @@ const PROJECT_BOARD: Record<string, string> = {
   training:                 "12 · Training",
   ewra:                     "13 · Compliance Governance",
   "api-docs":               "13 · Compliance Governance",
+  "responsible-ai":         "13 · Compliance Governance",
+  "eval-kpi":               "13 · Compliance Governance",
   "ongoing-monitor":        "14 · Routines — Scheduled",
   workbench:                "15 · MLRO Workbench",
   "mlro-advisor":           "15 · MLRO Workbench",
   investigation:            "15 · MLRO Workbench",
   "weaponized-brain":       "15 · MLRO Workbench",
+  heatmap:                  "15 · MLRO Workbench",
+  telemetry:                "15 · MLRO Workbench",
+  "red-team":               "15 · MLRO Workbench",
   "vessel-check":           "16 · Supply Chain, ESG & LBMA Gold",
   eocn:                     "17 · Export Control & Dual-Use",
+  "inspection-room":        "18 · Regulator Portal Handoff",
+  onboarding:               "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  goaml:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
 };
 
 interface Body {

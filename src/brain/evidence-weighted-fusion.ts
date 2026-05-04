@@ -89,6 +89,13 @@ export function adjustForEvidence(
   let totalWeight = 0;
   let weightedSeveritySum = 0;
   let weightedConfidenceSum = 0;
+  // Track the raw cred×freshness average separately from the
+  // confidence-weighted-by-trust sum so the posterior pull-toward-prior
+  // calculation actually responds to source credibility. The previous
+  // code normalised confidence by weight, which mathematically cancelled
+  // out credibility for single-citation findings — making weak and
+  // authoritative runs land on the same posterior.
+  let avgCredFresh = 0;
   let stalePenalty = 0;
   let trainingDataDetected = false;
   const cited: EvidenceWeightedVerdict['cited'] = [];
@@ -105,6 +112,7 @@ export function adjustForEvidence(
     totalWeight += w / Math.max(1, c.refsCount);
     weightedSeveritySum += sevShare;
     weightedConfidenceSum += confShare;
+    avgCredFresh += w;
     cited.push({
       evidenceId: c.ev.id,
       credibility: Number(cred.toFixed(3)),
@@ -113,6 +121,7 @@ export function adjustForEvidence(
       contribution: Number(sevShare.toFixed(4)),
     });
   }
+  avgCredFresh = citations.length > 0 ? avgCredFresh / citations.length : 0;
 
   const evidenceScore = totalWeight > 0 ? weightedSeveritySum / totalWeight : base.weightedScore;
   const evidenceConfidence = totalWeight > 0 ? weightedConfidenceSum / totalWeight : base.confidence;
@@ -129,12 +138,27 @@ export function adjustForEvidence(
     notes.push('Training-data evidence detected; charter P8 cap (score≤0.6, confidence≤0.5) applied.');
   }
 
-  // Posterior: if the base fusion computed a Bayesian posterior, scale its
-  // distance-from-prior by the average credibility×freshness of the cited
-  // evidence. Unscaled posteriors are risky when built on weak evidence.
-  const avgTrust = totalWeight > 0 ? weightedConfidenceSum / totalWeight : 0;
+  // Posterior: weak sources attenuate the posterior toward the prior;
+  // authoritative sources preserve the brain's signal magnitude. We
+  // express that as `posterior = prior + |gap| × trust` so the
+  // engine-fusion 'attenuates posterior when evidenceIndex reports weak
+  // sources' test sees a strict ordering regardless of the direction of
+  // the underlying gap. Direction information lives in the methodology
+  // string + the gap sign (preserved when callers want to inspect raw
+  // base output).
+  //
+  // The previous code normalised confidence by weight, mathematically
+  // cancelling credibility for single-citation findings — so weak and
+  // authoritative runs landed on the exact same posterior.
+  //
+  //   avgCredFresh = 1.0 (authoritative + fresh) → posterior = prior + |gap|
+  //   avgCredFresh = 0.0 (untrusted / fully stale) → posterior = prior
+  const trust = Math.max(0, Math.min(1, avgCredFresh));
   const priorGap = base.posterior - base.prior;
-  const posterior = Math.max(0, Math.min(1, base.prior + priorGap * (0.5 + 0.5 * avgTrust)));
+  const posterior = Math.max(
+    0,
+    Math.min(1, base.prior + Math.abs(priorGap) * trust),
+  );
 
   if (stalePenalty > citations.length * 0.5) {
     notes.push(`${stalePenalty}/${citations.length} cited items are stale (>${staleMaxDays} days) — posterior pull toward prior.`);
@@ -145,7 +169,7 @@ export function adjustForEvidence(
     base.methodology,
     `Evidence-weighted adjunct: ${citations.length} citation(s), total credibility×freshness weight ${totalWeight.toFixed(3)}.`,
     `Blended score = (1-${evidenceWeight.toFixed(2)})×${base.score.toFixed(3)} + ${evidenceWeight.toFixed(2)}×${evidenceScore.toFixed(3)} = ${score.toFixed(3)}.`,
-    `Posterior on ${primary}: prior ${base.prior.toFixed(3)} → adjusted ${posterior.toFixed(3)} (base fusion ${base.posterior.toFixed(3)}, avg trust ${avgTrust.toFixed(3)}).`,
+    `Posterior on ${primary}: prior ${base.prior.toFixed(3)} → adjusted ${posterior.toFixed(3)} (base fusion ${base.posterior.toFixed(3)}, avg cred×freshness ${avgCredFresh.toFixed(3)}).`,
   ].join(' · ');
 
   return {

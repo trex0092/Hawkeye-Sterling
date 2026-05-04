@@ -219,13 +219,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }
 
-  // Shared input gate — Regulatory Q&A is broader than the MLRO
-  // Advisor (FATF / Wolfsberg / OECD generic questions are legitimate),
-  // so we set allowGeneral=true. Empty / oversize / prompt-injection
-  // are still refused.
+  // Shared input gate — refuses empty / oversize / prompt-injection
+  // inputs. Topic-scope filtering is off across all advisor surfaces.
   const gateResult = gateMlroQuestion(body.query ?? "", {
     maxChars: 2000,
-    allowGeneral: true,
   });
   if (!gateResult.ok) {
     return NextResponse.json(
@@ -250,8 +247,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     const apiKey = process.env["ANTHROPIC_API_KEY"];
     if (!apiKey) {
       return NextResponse.json(
-        { ok: false, error: "ANTHROPIC_API_KEY not configured" },
-        { status: 503, headers: { ...CORS, ...gateHeaders } },
+        {
+          ok: true,
+          query: body.query.trim(),
+          answer: "AI advisor not available — ANTHROPIC_API_KEY not configured. Please consult your compliance documentation or a qualified compliance officer for this question.",
+          citations: [],
+          passedQualityGate: false,
+          source: "fallback",
+          note: "API key not configured — AI answer unavailable.",
+        },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
       );
     }
     const fastResult = await runHaikuQuick(body.query.trim(), body.context ?? [], apiKey);
@@ -310,10 +315,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     const reason = ragNotConfigured
-      ? "Regulatory Q&A requires either COMPLIANCE_RAG_URL (external RAG service) " +
-        "or ANTHROPIC_API_KEY (built-in advisor fallback). Neither is configured."
+      ? "Regulatory Q&A requires either COMPLIANCE_RAG_URL (external RAG service) or ANTHROPIC_API_KEY (built-in advisor fallback). Neither is configured."
       : `RAG service failed (${result.error ?? "unknown"}) and no ANTHROPIC_API_KEY is set for fallback.`;
-    return NextResponse.json({ ok: false, error: reason }, { status: 503, headers: { ...CORS, ...gateHeaders } });
+    return NextResponse.json(
+      {
+        ok: true,
+        query: body.query.trim(),
+        answer: "AI advisor not available — " + reason + " Please consult your compliance documentation or a qualified compliance officer.",
+        citations: [],
+        passedQualityGate: false,
+        source: "fallback",
+        note: reason,
+      },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
   const preamble = buildContextPreamble(body.context ?? []);
@@ -418,8 +433,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[compliance-qa] advisor fallback threw", err);
     const detail = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { ok: false, error: `Advisor fallback unavailable: ${detail}` },
-      { status: 503, headers: { ...CORS, ...gateHeaders } },
+      {
+        ok: true,
+        query: body.query.trim(),
+        answer: "Advisor service temporarily unavailable. Please consult your compliance documentation or a qualified compliance officer for this question.",
+        citations: [],
+        passedQualityGate: false,
+        source: "fallback",
+        note: `Advisor fallback unavailable: ${detail}`,
+      },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
     );
   }
 }

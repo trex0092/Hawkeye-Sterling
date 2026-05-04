@@ -3,12 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
 import {
   exportAuditCsv,
   loadAuditEntries,
   verifyChain,
   type AuditEntry,
 } from "@/lib/audit";
+
+interface AuditAnomalyItem {
+  eventIds: string[];
+  pattern: string;
+  severity: "critical" | "high" | "medium";
+  description: string;
+  recommendation: string;
+}
+
+interface AuditAnomaly {
+  anomalies: AuditAnomalyItem[];
+  riskScore: number;
+}
 
 const ACTION_TONE: Record<string, string> = {
   "subject.added":       "bg-blue-dim text-blue",
@@ -43,6 +57,8 @@ export default function AuditTrailPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [query, setQuery] = useState("");
   const [chainStatus, setChainStatus] = useState<{ ok: boolean; brokenAt?: number } | null>(null);
+  const [anomaly, setAnomaly] = useState<AuditAnomaly | null>(null);
+  const [anomalyLoading, setAnomalyLoading] = useState(false);
 
   useEffect(() => {
     const loaded = loadAuditEntries();
@@ -69,6 +85,32 @@ export default function AuditTrailPage() {
     downloadBlob(JSON.stringify(entries, null, 2), `hawkeye-audit-${Date.now()}.json`, "application/json");
   };
 
+  const runAnomalyScan = async () => {
+    setAnomalyLoading(true);
+    try {
+      const sliced = entries.slice(-200);
+      const payload = sliced.map((e) => ({
+        id: e.id,
+        timestamp: e.timestamp,
+        actor: e.actor,
+        action: e.action,
+        target: e.target,
+        ip: undefined as string | undefined,
+      }));
+      const res = await fetch("/api/audit-trail/anomaly-detect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ events: payload }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as AuditAnomaly;
+        setAnomaly(data);
+      }
+    } catch { /* non-fatal */ } finally {
+      setAnomalyLoading(false);
+    }
+  };
+
   const handleClear = () => {
     if (!window.confirm("Clear ALL audit entries? This cannot be undone.")) return;
     window.localStorage.removeItem("hawkeye.audit-trail.v1");
@@ -76,12 +118,48 @@ export default function AuditTrailPage() {
     setChainStatus({ ok: true });
   };
 
+  // Build a set of anomalous event IDs for row highlighting
+  const anomalousEventIds = useMemo(() => {
+    if (!anomaly) return new Set<string>();
+    const ids = new Set<string>();
+    for (const a of anomaly.anomalies) {
+      for (const id of a.eventIds) ids.add(id);
+    }
+    return ids;
+  }, [anomaly]);
+
+  // Map event ID → worst severity for border colour
+  const eventSeverity = useMemo(() => {
+    const map = new Map<string, "critical" | "high" | "medium">();
+    if (!anomaly) return map;
+    const order: Record<"critical" | "high" | "medium", number> = { critical: 3, high: 2, medium: 1 };
+    for (const a of anomaly.anomalies) {
+      for (const id of a.eventIds) {
+        const existing = map.get(id);
+        if (!existing || order[a.severity] > order[existing]) {
+          map.set(id, a.severity);
+        }
+      }
+    }
+    return map;
+  }, [anomaly]);
+
+  const riskLevel = anomaly
+    ? anomaly.riskScore >= 76 ? "critical"
+    : anomaly.riskScore >= 51 ? "high"
+    : anomaly.riskScore >= 21 ? "elevated"
+    : "normal"
+    : null;
+
   return (
     <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
       <div>
         <div className="mb-8">
+          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+            MODULE 28
+          </div>
           <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
-            MODULE 05 · IMMUTABLE RECORD
+            IMMUTABLE RECORD
           </div>
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
             Audit <em className="italic text-brand">trail.</em>
@@ -94,7 +172,7 @@ export default function AuditTrailPage() {
         </div>
 
         {/* KPI bar */}
-        <div className="flex items-center gap-6 mb-4 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
+        <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
           <div className="text-center">
             <div className="text-20 font-bold tabular-nums text-ink-0">{entries.length}</div>
             <div className="text-10 text-ink-3 uppercase tracking-wide-3">Total entries</div>
@@ -116,6 +194,23 @@ export default function AuditTrailPage() {
             placeholder="Filter by actor, action, or target…"
             className="w-60 text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 focus:outline-none focus:border-brand"
           />
+          <button
+            type="button"
+            onClick={() => void runAnomalyScan()}
+            disabled={anomalyLoading || entries.length === 0}
+            className="text-11 font-semibold px-3 py-1.5 rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
+          >
+            {anomalyLoading ? "Scanning…" : "🔍 Run Anomaly Detection"}
+          </button>
+          {anomaly && (
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 bg-bg-1 hover:bg-bg-panel text-ink-1"
+            >
+              Export Anomaly Report
+            </button>
+          )}
           <button
             type="button"
             onClick={handleExportCsv}
@@ -140,6 +235,86 @@ export default function AuditTrailPage() {
             </button>
           )}
         </div>
+
+        {/* Anomaly Summary Panel */}
+        {anomaly && (
+          <div className="mb-4 bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-4">
+            <div className="flex items-center gap-4">
+              {/* Risk score as a large number */}
+              <div className="text-center shrink-0">
+                <div className={`text-40 font-bold tabular-nums leading-none ${
+                  riskLevel === "critical" ? "text-red"
+                  : riskLevel === "high" ? "text-red"
+                  : riskLevel === "elevated" ? "text-amber"
+                  : "text-green"
+                }`}>
+                  {anomaly.riskScore}
+                </div>
+                <div className="text-10 text-ink-3 uppercase tracking-wide-3 mt-1">Risk Score</div>
+              </div>
+              <div className="w-px h-12 bg-hair-2 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2">Anomaly Level</span>
+                  <span className={`px-2 py-0.5 rounded font-mono text-11 font-bold uppercase ${
+                    riskLevel === "critical" ? "bg-red-dim text-red"
+                    : riskLevel === "high" ? "bg-red-dim text-red"
+                    : riskLevel === "elevated" ? "bg-amber-dim text-amber"
+                    : "bg-green-dim text-green"
+                  }`}>
+                    {riskLevel ?? "normal"}
+                  </span>
+                  <span className="font-mono text-11 text-ink-3">
+                    {anomaly.anomalies.length} pattern{anomaly.anomalies.length !== 1 ? "s" : ""} detected
+                    {anomalousEventIds.size > 0 && ` · ${anomalousEventIds.size} flagged events`}
+                  </span>
+                </div>
+                {anomaly.anomalies.length === 0 && (
+                  <p className="text-12 text-ink-2 italic">No anomalous patterns detected in the analysed events.</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setAnomaly(null)}
+                className="text-11 text-ink-3 hover:text-ink-1 underline shrink-0"
+              >
+                Clear
+              </button>
+            </div>
+
+            {anomaly.anomalies.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Detected Patterns</div>
+                <div className="space-y-2">
+                  {anomaly.anomalies.map((a, i) => (
+                    <div
+                      key={i}
+                      className={`border rounded p-3 bg-bg-1 border-l-4 ${
+                        a.severity === "critical" ? "border-l-red border-hair-2"
+                        : a.severity === "high" ? "border-l-red border-hair-2"
+                        : "border-l-amber border-hair-2"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-12 text-ink-0">{a.pattern}</span>
+                        <span className={`px-1.5 py-px rounded font-mono text-10 font-semibold uppercase ${
+                          a.severity === "critical" ? "bg-red-dim text-red"
+                          : a.severity === "high" ? "bg-red-dim text-red"
+                          : "bg-amber-dim text-amber"
+                        }`}>{a.severity}</span>
+                        {a.eventIds.length > 0 && (
+                          <span className="font-mono text-10 text-ink-3">{a.eventIds.length} event{a.eventIds.length !== 1 ? "s" : ""}</span>
+                        )}
+                      </div>
+                      <p className="text-12 text-ink-1 mb-1.5">{a.description}</p>
+                      <p className="text-11 text-ink-2 italic">{a.recommendation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
           <table className="w-full border-collapse text-12.5">
@@ -166,7 +341,7 @@ export default function AuditTrailPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-12 text-ink-2">
+                  <td colSpan={6} className="px-6 py-10 text-center text-12 text-ink-2">
                     {entries.length === 0
                       ? "Audit chain is empty. Entries are written automatically when screenings are added, STRs filed, and cases opened."
                       : "No entries match your filter."}
@@ -175,13 +350,17 @@ export default function AuditTrailPage() {
               ) : (
                 [...filtered].reverse().map((entry, idx) => {
                   const isLast = idx === filtered.length - 1;
+                  const sev = eventSeverity.get(entry.id);
+                  const isAnomalous = anomalousEventIds.has(entry.id);
+                  const leftBorderCls = isAnomalous
+                    ? sev === "critical" || sev === "high"
+                      ? "border-l-4 border-l-red"
+                      : "border-l-4 border-l-amber"
+                    : "";
                   return (
-                    <tr key={entry.id} className="hover:bg-bg-1">
-                      <td className={`px-4 py-2.5 font-mono text-10 text-ink-2 ${isLast ? "" : "border-b border-hair"}`}>
-                        {new Date(entry.timestamp).toLocaleString("en-GB", {
-                          day: "2-digit", month: "2-digit", year: "numeric",
-                          hour: "2-digit", minute: "2-digit", second: "2-digit",
-                        })}
+                    <tr key={entry.id} className={`hover:bg-bg-1 ${isAnomalous ? "bg-red-dim/30" : ""}`}>
+                      <td className={`px-4 py-2.5 font-mono text-10 text-ink-2 ${leftBorderCls} ${isLast ? "" : "border-b border-hair"}`}>
+                        {formatDMYTimeSec(entry.timestamp)}
                       </td>
                       <td className={`px-4 py-2.5 text-12 text-ink-0 ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.actor}

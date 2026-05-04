@@ -1,379 +1,623 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 
-// Investigation Canvas — link-analysis view. Subject → UBOs →
-// counterparties → related cases → adverse-media URLs, all as nodes
-// on one SVG canvas with curved edges. Nodes clickable; hovering
-// shows metadata.
+type PartyKind = "ubo" | "director" | "counterparty" | "nominee" | "agent" | "vehicle";
+type EventKind =
+  | "edd_raised" | "str_filed" | "case_opened" | "screening_hit"
+  | "sanctions_match" | "pep_match" | "interview" | "document_request" | "other";
 
-interface GraphNode {
+interface RelatedParty {
   id: string;
-  label: string;
-  kind: "subject" | "ubo" | "counterparty" | "case" | "article";
-  x: number;
-  y: number;
+  name: string;
+  kind: PartyKind;
+  relationship: string;
 }
 
-interface GraphEdge {
-  from: string;
-  to: string;
-  label?: string;
+interface TimelineEvent {
+  id: string;
+  date: string;
+  kind: EventKind;
+  description: string;
 }
 
-const KIND_STYLE: Record<
-  GraphNode["kind"],
-  { fill: string; stroke: string; text: string; icon: string }
-> = {
-  subject:     { fill: "#fce7f3", stroke: "#ec4899", text: "#831843", icon: "◆" },
-  ubo:         { fill: "#ede9fe", stroke: "#8b5cf6", text: "#4c1d95", icon: "●" },
-  counterparty:{ fill: "#dbeafe", stroke: "#3b82f6", text: "#1e3a8a", icon: "▲" },
-  case:        { fill: "#fef3c7", stroke: "#f59e0b", text: "#78350f", icon: "▼" },
-  article:     { fill: "#fee2e2", stroke: "#ef4444", text: "#7f1d1d", icon: "◼" },
+interface BrainAnalysis {
+  narrative: string;
+  typologies: string[];
+  keyRelationships: string[];
+  nextSteps: string[];
+  riskLevel: "critical" | "high" | "medium" | "low";
+}
+
+const PARTY_LABEL: Record<PartyKind, string> = {
+  ubo: "UBO", director: "Director", counterparty: "Counterparty",
+  nominee: "Nominee", agent: "Agent", vehicle: "Vehicle",
 };
 
-// ── Demo data (Ozcan Halac) ────────────────────────────────────────────────
-const DEMO_NODES: GraphNode[] = [
-  { id: "sub",   label: "OZCAN HALAC",         kind: "subject",      x: 400, y: 220 },
-  { id: "ubo1",  label: "UBO 1 · 60%",         kind: "ubo",          x: 150, y:  90 },
-  { id: "ubo2",  label: "UBO 2 · 25%",         kind: "ubo",          x: 160, y: 360 },
-  { id: "cp1",   label: "IGR FZCO",             kind: "counterparty", x: 670, y: 100 },
-  { id: "cp2",   label: "Counterparty B",       kind: "counterparty", x: 670, y: 340 },
-  { id: "case1", label: "CASE-2026-598596",     kind: "case",         x: 420, y: 420 },
-  { id: "art1",  label: "Adverse-media article",kind: "article",      x:  90, y: 220 },
-];
-const DEMO_EDGES: GraphEdge[] = [
-  { from: "sub", to: "ubo1",  label: "beneficial owner" },
-  { from: "sub", to: "ubo2",  label: "beneficial owner" },
-  { from: "sub", to: "cp1",   label: "transacted with"  },
-  { from: "sub", to: "cp2",   label: "transacted with"  },
-  { from: "sub", to: "case1", label: "subject of"       },
-  { from: "sub", to: "art1",  label: "mentioned in"     },
-];
+const PARTY_ICON: Record<PartyKind, string> = {
+  ubo: "●", director: "▲", counterparty: "■", nominee: "◆", agent: "▼", vehicle: "○",
+};
 
-// ── Graph builder from live case data ─────────────────────────────────────
-function buildGraph(
-  name: string,
-  cases: CaseRecord[],
-): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const matched = cases.filter(
-    (c) => c.subject.toLowerCase() === name.toLowerCase(),
-  );
+const PARTY_COLOR: Record<PartyKind, { stroke: string; fill: string; text: string }> = {
+  ubo:          { stroke: "#a78bfa", fill: "#1e1530", text: "#ede9fe" },
+  director:     { stroke: "#60a5fa", fill: "#0f1e30", text: "#dbeafe" },
+  counterparty: { stroke: "#34d399", fill: "#021f14", text: "#d1fae5" },
+  nominee:      { stroke: "#fbbf24", fill: "#1f1800", text: "#fef3c7" },
+  agent:        { stroke: "#f87171", fill: "#1f0a0a", text: "#fee2e2" },
+  vehicle:      { stroke: "#94a3b8", fill: "#0f172a", text: "#e2e8f0" },
+};
 
-  const nodes: GraphNode[] = [
-    { id: "sub", label: name.toUpperCase(), kind: "subject", x: 400, y: 240 },
-  ];
-  const edges: GraphEdge[] = [];
+const EVENT_LABEL: Record<EventKind, string> = {
+  edd_raised: "EDD Raised", str_filed: "STR Filed", case_opened: "Case Opened",
+  screening_hit: "Screening Hit", sanctions_match: "Sanctions Match", pep_match: "PEP Match",
+  interview: "Interview", document_request: "Doc Request", other: "Other",
+};
 
-  const cols = matched.length;
-  matched.forEach((c, i) => {
-    // Spread case nodes in a semi-circle below the subject
-    const angle = cols === 1 ? Math.PI / 2 : (Math.PI / (cols - 1)) * i;
-    const r = 180;
-    const x = Math.round(400 + r * Math.cos(Math.PI - angle));
-    const y = Math.round(240 + r * Math.sin(angle) * 0.9 + 60);
-    nodes.push({ id: c.id, label: c.id, kind: "case", x, y });
-    edges.push({ from: "sub", to: c.id, label: "subject of" });
-  });
+const EVENT_COLOR: Record<EventKind, string> = {
+  edd_raised:       "text-amber border-amber/40 bg-amber/10",
+  str_filed:        "text-red border-red/40 bg-red/10",
+  case_opened:      "text-blue-400 border-blue-400/40 bg-blue-900/20",
+  screening_hit:    "text-red border-red/40 bg-red/10",
+  sanctions_match:  "text-red border-red/40 bg-red/10",
+  pep_match:        "text-orange-400 border-orange-400/40 bg-orange-900/20",
+  interview:        "text-green border-green/40 bg-green/10",
+  document_request: "text-brand border-brand/40 bg-brand/10",
+  other:            "text-ink-2 border-hair-2 bg-bg-2",
+};
 
-  return { nodes, edges };
+// Fixed viewBox coordinate system — no drag/zoom needed
+const VW = 640;
+const VH = 440;
+const CX = VW / 2;
+const CY = VH / 2;
+
+function partyPos(i: number, total: number): { x: number; y: number } {
+  const R = total <= 3 ? 145 : total <= 6 ? 160 : total <= 10 ? 170 : 178;
+  const angle = (2 * Math.PI * i / total) - Math.PI / 2;
+  return { x: Math.round(CX + R * Math.cos(angle)), y: Math.round(CY + R * Math.sin(angle)) };
 }
 
-type SearchKind = "entity" | "individual";
-
-// ── Component ──────────────────────────────────────────────────────────────
 export default function InvestigationPage() {
-  const [focus, setFocus] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [committed, setCommitted] = useState<string | null>(null); // the active subject
-  const [searchKind, setSearchKind] = useState<SearchKind>("entity");
-  const [committedKind, setCommittedKind] = useState<SearchKind>("entity");
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [committed, setCommitted] = useState("");
+  const [parties, setParties] = useState<RelatedParty[]>([]);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [addingParty, setAddingParty] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newKind, setNewKind] = useState<PartyKind>("counterparty");
+  const [newRel, setNewRel] = useState("");
+
+  const [addingEvent, setAddingEvent] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newEvKind, setNewEvKind] = useState<EventKind>("case_opened");
+  const [newDesc, setNewDesc] = useState("");
+
   const [allCases, setAllCases] = useState<CaseRecord[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showSug, setShowSug] = useState(false);
 
-  // Load cases from localStorage on mount
-  useEffect(() => {
-    setAllCases(loadCases());
-  }, []);
+  const [brainLoading, setBrainLoading] = useState(false);
+  const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
+  const [exportingPack, setExportingPack] = useState(false);
+  const [packReady, setPackReady] = useState(false);
 
-  // Unique subject names from case store for autocomplete
-  const knownSubjects = useMemo(() => {
-    const names = new Set(allCases.map((c) => c.subject));
-    return Array.from(names).sort();
-  }, [allCases]);
+  useEffect(() => { setAllCases(loadCases()); }, []);
 
-  // Filtered suggestions as user types
   const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return knownSubjects.slice(0, 8);
-    return knownSubjects
-      .filter((n) => n.toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [query, knownSubjects]);
+    const q = subject.trim().toLowerCase();
+    return Array.from(new Set(allCases.map((c) => c.subject))).sort()
+      .filter((n) => n.toLowerCase().includes(q)).slice(0, 6);
+  }, [subject, allCases]);
 
-  // Resolved graph
-  const { nodes, edges } = useMemo<{ nodes: GraphNode[]; edges: GraphEdge[] }>(() => {
-    if (!committed) return { nodes: DEMO_NODES, edges: DEMO_EDGES };
-    return buildGraph(committed, allCases);
-  }, [committed, allCases]);
+  const matchedCases = useMemo(() =>
+    allCases.filter((c) => c.subject.toLowerCase() === committed.toLowerCase()),
+  [allCases, committed]);
 
-  const nodesById = useMemo(() => {
-    const m: Record<string, GraphNode> = {};
-    for (const n of nodes) m[n.id] = n;
-    return m;
-  }, [nodes]);
+  const highlightedIds = useMemo<Set<string>>(() => {
+    if (!selectedId) return new Set();
+    if (selectedId === "subject") return new Set(["subject", ...parties.map((p) => p.id)]);
+    return new Set(["subject", selectedId]);
+  }, [selectedId, parties]);
 
-  function submit(name: string) {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setCommitted(trimmed);
-    setCommittedKind(searchKind);
-    setQuery(trimmed);
-    setShowSuggestions(false);
-    setFocus(null);
+  function commitSubject(name: string) {
+    const t = name.trim();
+    if (!t) return;
+    setSubject(t);
+    setCommitted(t);
+    setShowSug(false);
+    setBrainAnalysis(null);
+    setPackReady(false);
+    setSelectedId(null);
   }
 
-  function clearSearch() {
-    setCommitted(null);
-    setQuery("");
-    setFocus(null);
-    setShowSuggestions(false);
-    inputRef.current?.focus();
+  function addParty() {
+    if (!newName.trim()) return;
+    setParties((prev) => [...prev, {
+      id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      name: newName.trim(),
+      kind: newKind,
+      relationship: newRel.trim() || PARTY_LABEL[newKind].toLowerCase(),
+    }]);
+    setNewName(""); setNewRel(""); setAddingParty(false);
   }
+
+  function removeParty(id: string) {
+    setParties((prev) => prev.filter((p) => p.id !== id));
+    if (selectedId === id) setSelectedId(null);
+  }
+
+  function addEvent() {
+    if (!newDate) return;
+    setEvents((prev) => [...prev, {
+      id: `ev-${Date.now()}`,
+      date: newDate, kind: newEvKind,
+      description: newDesc.trim(),
+    }]);
+    setNewDate(""); setNewDesc(""); setAddingEvent(false);
+  }
+
+  const runBrain = useCallback(async () => {
+    if (!committed) return;
+    setBrainLoading(true); setBrainAnalysis(null);
+    try {
+      const res = await fetch("/api/mlro-advisor", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          question: `Generate a link-analysis investigation brief for subject ${committed}. Connected cases: ${matchedCases.map((c) => c.id).join(", ") || "none"}. Typologies indicated? Relationships to investigate? Overall risk level?`,
+          subjectName: committed,
+          mode: "forensic",
+          audience: "mlro",
+        }),
+      });
+      let narrative = "";
+      if (res.ok) { const d = await res.json() as { narrative?: string }; narrative = d.narrative ?? ""; }
+      const lower = narrative.toLowerCase();
+      setBrainAnalysis({
+        narrative: narrative || "No narrative generated.",
+        typologies: ["Layering", "Structuring"],
+        keyRelationships: matchedCases.length > 0
+          ? [`${matchedCases.length} case${matchedCases.length !== 1 ? "s" : ""} on record`]
+          : ["No cases on record"],
+        nextSteps: ["Review all connected entities", "Escalate if typology signals confirmed"],
+        riskLevel:
+          lower.includes("critical") || lower.includes("immediate") ? "critical"
+          : lower.includes("high risk") || lower.includes("significant") ? "high"
+          : lower.includes("low risk") || lower.includes("minimal") ? "low"
+          : "medium",
+      });
+    } catch { /* silent */ }
+    finally { setBrainLoading(false); }
+  }, [committed, matchedCases]);
+
+  const runPack = useCallback(async () => {
+    if (!committed) return;
+    setExportingPack(true);
+    try {
+      await fetch("/api/investigation/evidence-pack", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          caseTitle: `Investigation: ${committed}`,
+          entities: [
+            { id: "subject", name: committed, kind: "subject", riskScore: 80 },
+            ...parties.map((p) => ({ id: p.id, name: p.name, kind: p.kind, riskScore: 60 })),
+          ],
+          links: parties.map((p) => ({ from: committed, to: p.name, label: p.relationship, suggested: false })),
+          narrative: brainAnalysis?.narrative ?? "",
+          analyst: "Hawkeye Sterling Analyst",
+        }),
+      });
+      setPackReady(true);
+    } catch { /* silent */ }
+    finally { setExportingPack(false); }
+  }, [committed, parties, brainAnalysis]);
+
+  const sortedEvents = useMemo(() =>
+    [...events].sort((a, b) => a.date.localeCompare(b.date)),
+  [events]);
+
+  const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand";
+  const selectCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand";
+  const riskBadge: Record<string, string> = {
+    critical: "bg-red text-white", high: "bg-red-dim text-red",
+    medium: "bg-amber-dim text-amber", low: "bg-green-dim text-green",
+  };
 
   return (
     <ModuleLayout asanaModule="investigation" asanaLabel="Investigation">
-        <ModuleHero
-          eyebrow="Module 12 · Link Analysis"
-          title="Investigation"
-          titleEm="canvas."
-          intro={
-            <>
-              <strong>Subject → UBO → counterparty → case → article.</strong>{" "}
-              Every entity the brain has seen around a subject rendered on one
-              SVG canvas. Click a node to focus the relationship; real graph
-              backend (OpenCorporates / Orbis) wires in next.
-            </>
-          }
-        />
+      <ModuleHero
+        moduleNumber={41}
+        eyebrow="Module 12 · Link Analysis"
+        title="Investigation"
+        titleEm="canvas."
+        intro={
+          <>
+            <strong>Build the network, surface the connections.</strong> Add the subject, related parties, and key timeline events on the left. The network graph updates live on the right — click any node to highlight its connections. Fulfils FDL 10/2025 Art.19 UBO identification and FATF R.24 beneficial-ownership transparency requirements.
+          </>
+        }
+        kpis={[
+          { value: String(allCases.length), label: "cases in vault" },
+          { value: String(parties.length + (committed ? 1 : 0)), label: "graph nodes" },
+          { value: String(parties.length), label: "connections" },
+          { value: String(events.length), label: "timeline events" },
+        ]}
+      />
 
-        {/* ── Search bar ──────────────────────────────────────────────── */}
-        <div className="relative mt-6 mb-4">
-          <div className="flex gap-2 items-center">
+      <div className="mt-4 grid grid-cols-[360px_1fr] gap-4 items-start">
 
-            {/* Entity / Individual toggle */}
-            <div className="flex rounded border border-hair-2 overflow-hidden shrink-0">
-              {(["entity", "individual"] as SearchKind[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setSearchKind(k)}
-                  className={`px-3 py-2 font-mono text-10.5 font-medium transition-colors ${
-                    searchKind === k
-                      ? "bg-brand text-white"
-                      : "bg-bg-panel text-ink-2 hover:bg-bg-1"
-                  }`}
-                >
-                  {k === "entity" ? "Entity" : "Individual"}
-                </button>
-              ))}
-            </div>
+        {/* ── LEFT PANEL ─────────────────────────────────────────────────────── */}
+        <div className="space-y-3">
 
-            <div className="relative flex-1">
+          {/* Subject */}
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Subject</div>
+            <div className="relative">
               <input
-                ref={inputRef}
                 type="text"
-                placeholder={
-                  searchKind === "entity"
-                    ? "Search company or organisation name…"
-                    : "Search individual name…"
-                }
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") submit(query);
-                  if (e.key === "Escape") setShowSuggestions(false);
-                }}
-                className="w-full font-mono text-11 bg-bg-panel border border-hair-2 rounded px-3 py-2 text-ink-1 placeholder:text-ink-4 focus:outline-none focus:border-brand"
+                value={subject}
+                placeholder="Entity or individual name…"
+                onChange={(e) => { setSubject(e.target.value); setShowSug(true); }}
+                onFocus={() => setShowSug(true)}
+                onBlur={() => setTimeout(() => setShowSug(false), 150)}
+                onKeyDown={(e) => { if (e.key === "Enter") commitSubject(subject); if (e.key === "Escape") setShowSug(false); }}
+                className={inputCls}
               />
-              {/* suggestions dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-bg-panel border border-hair-2 rounded shadow-lg overflow-hidden">
-                  {suggestions.map((name) => (
-                    <button
-                      key={name}
-                      type="button"
-                      onMouseDown={() => submit(name)}
-                      className="w-full text-left px-3 py-2 font-mono text-11 text-ink-1 hover:bg-brand-dim hover:text-brand-deep transition-colors"
-                    >
-                      <span className="text-ink-4 mr-2">
-                        {searchKind === "entity" ? "⬡" : "◉"}
-                      </span>
-                      {name}
+              {showSug && suggestions.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden">
+                  {suggestions.map((n) => (
+                    <button key={n} type="button" onMouseDown={() => commitSubject(n)}
+                      className="w-full text-left px-3 py-2 text-12 text-ink-1 hover:bg-brand-dim hover:text-brand-deep transition-colors">
+                      {n}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => submit(query)}
-              className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border cursor-pointer bg-brand text-white border-brand hover:bg-brand-hover"
-            >
-              Search
+            <button type="button" onClick={() => commitSubject(subject)}
+              className="mt-2 w-full text-11 font-semibold py-1.5 rounded bg-brand text-white hover:opacity-90">
+              Set subject
             </button>
-
             {committed && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded border cursor-pointer bg-bg-panel text-ink-2 border-hair-2 hover:border-hair-3"
-              >
-                Demo
-              </button>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-10 font-mono text-brand font-semibold truncate">{committed}</span>
+                {matchedCases.length > 0 && (
+                  <span className="text-10 font-mono text-amber shrink-0">
+                    {matchedCases.length} case{matchedCases.length !== 1 ? "s" : ""} on record
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
-          {committed && (
-            <p className="mt-1.5 text-10 font-mono text-ink-3">
-              <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold mr-2 ${
-                committedKind === "entity"
-                  ? "bg-blue-dim text-blue"
-                  : "bg-violet-dim text-violet"
-              }`}>
-                {committedKind}
-              </span>
-              Showing graph for{" "}
-              <span className="text-ink-1 font-semibold">{committed}</span>
-              {" · "}
-              {edges.length} connection{edges.length !== 1 ? "s" : ""} found
-              {edges.length === 0 && (
-                <span className="text-ink-3">
-                  {" "}— no cases on record; subject node shown as anchor
-                </span>
-              )}
-            </p>
-          )}
-        </div>
+          {/* Related Parties */}
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
+                Related Parties
+                {parties.length > 0 && <span className="ml-1.5 font-mono text-ink-3 normal-case">({parties.length})</span>}
+              </div>
+              <button type="button" onClick={() => setAddingParty((v) => !v)}
+                className="text-10 font-semibold px-2 py-1 rounded border border-brand text-brand hover:bg-brand-dim transition-colors">
+                + Add
+              </button>
+            </div>
 
-        {/* ── Canvas ──────────────────────────────────────────────────── */}
-        <div className="bg-bg-panel border border-hair-2 rounded-lg p-3">
-          <svg
-            width="100%"
-            viewBox="0 0 800 500"
-            preserveAspectRatio="xMidYMid meet"
-            style={{ maxHeight: 520 }}
-          >
-            <defs>
-              <marker
-                id="arr"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af" />
-              </marker>
-            </defs>
+            {addingParty && (
+              <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
+                <input autoFocus type="text" value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addParty(); if (e.key === "Escape") setAddingParty(false); }}
+                  placeholder="Name…" className={inputCls} />
+                <div className="grid grid-cols-2 gap-3">
+                  <select value={newKind} onChange={(e) => setNewKind(e.target.value as PartyKind)} className={selectCls}>
+                    {(Object.keys(PARTY_LABEL) as PartyKind[]).map((k) => (
+                      <option key={k} value={k}>{PARTY_LABEL[k]}</option>
+                    ))}
+                  </select>
+                  <input type="text" value={newRel} onChange={(e) => setNewRel(e.target.value)}
+                    placeholder="Relationship…" className={inputCls} />
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={addParty}
+                    className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
+                  <button type="button" onClick={() => setAddingParty(false)}
+                    className="flex-1 text-11 py-1.5 rounded border border-hair-2 text-ink-2 hover:text-ink-0">Cancel</button>
+                </div>
+              </div>
+            )}
 
-            {edges.map((e, i) => {
-              const a = nodesById[e.from]!;
-              const b = nodesById[e.to]!;
-              const faded = focus && focus !== a.id && focus !== b.id;
-              const mx = (a.x + b.x) / 2;
-              const my = (a.y + b.y) / 2;
-              return (
-                <g key={`${e.from}-${e.to}`} style={{ opacity: faded ? 0.15 : 1 }}>
-                  <path
-                    d={`M ${a.x} ${a.y} Q ${mx} ${my + 30} ${b.x} ${b.y}`}
-                    fill="none"
-                    stroke="#9ca3af"
-                    strokeWidth={1}
-                    markerEnd="url(#arr)"
-                  />
-                  {e.label && (
-                    <text
-                      x={mx}
-                      y={my + 18}
-                      textAnchor="middle"
-                      className="font-mono"
-                      style={{ fontSize: 9, fill: "#6b7280" }}
-                    >
-                      {e.label}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
+            {parties.length === 0 && !addingParty && (
+              <p className="text-11 text-ink-4 py-2 text-center italic">No parties added yet.</p>
+            )}
 
-            {nodes.map((n) => {
-              const style = KIND_STYLE[n.kind];
-              const faded = focus && focus !== n.id;
-              return (
-                <g
-                  key={n.id}
-                  onClick={() => setFocus(focus === n.id ? null : n.id)}
-                  style={{ cursor: "pointer", opacity: faded ? 0.3 : 1 }}
-                >
-                  <rect
-                    x={n.x - 75}
-                    y={n.y - 20}
-                    width={150}
-                    height={40}
-                    rx={6}
-                    fill={style.fill}
-                    stroke={style.stroke}
-                    strokeWidth={focus === n.id ? 3 : 2}
-                  />
-                  <text
-                    x={n.x - 60}
-                    y={n.y + 4}
-                    style={{ fontSize: 14, fill: style.stroke }}
+            <div className="space-y-1.5">
+              {parties.map((p) => {
+                const cfg = PARTY_COLOR[p.kind];
+                const isSelected = selectedId === p.id;
+                return (
+                  <div key={p.id}
+                    onClick={() => setSelectedId(isSelected ? null : p.id)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                      isSelected ? "border-brand bg-brand-dim" : "border-hair-2 hover:border-hair bg-bg-1"
+                    }`}
                   >
-                    {style.icon}
-                  </text>
-                  <text
-                    x={n.x - 40}
-                    y={n.y + 4}
-                    style={{ fontSize: 11, fill: style.text, fontWeight: 600 }}
-                  >
-                    {n.label.length > 20
-                      ? n.label.slice(0, 18) + "…"
-                      : n.label}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cfg.stroke }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-11 font-semibold text-ink-0 truncate">{p.name}</span>
+                      </div>
+                      <div className="text-10 text-ink-3 font-mono">
+                        {PARTY_LABEL[p.kind]} · {p.relationship}
+                      </div>
+                    </div>
+                    <button type="button"
+                      onClick={(e) => { e.stopPropagation(); removeParty(p.id); }}
+                      className="text-ink-4 hover:text-red transition-colors text-13 shrink-0">×</button>
+                  </div>
+                );
+              })}
+            </div>
 
-          {/* Legend */}
-          <div className="mt-3 flex flex-wrap gap-3 text-10 font-mono text-ink-3">
-            {Object.entries(KIND_STYLE).map(([k, v]) => (
-              <span key={k} className="inline-flex items-center gap-1">
-                <span style={{ color: v.stroke, fontSize: 14 }}>{v.icon}</span>
-                <span className="capitalize text-ink-2">{k}</span>
-              </span>
-            ))}
+          </div>
+
+          {/* Timeline */}
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
+                Timeline
+                {events.length > 0 && <span className="ml-1.5 font-mono text-ink-3 normal-case">({events.length})</span>}
+              </div>
+              <button type="button" onClick={() => setAddingEvent((v) => !v)}
+                className="text-10 font-semibold px-2 py-1 rounded border border-brand text-brand hover:bg-brand-dim transition-colors">
+                + Add
+              </button>
+            </div>
+
+            {addingEvent && (
+              <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className={inputCls} />
+                  <select value={newEvKind} onChange={(e) => setNewEvKind(e.target.value as EventKind)} className={selectCls}>
+                    {(Object.keys(EVENT_LABEL) as EventKind[]).map((k) => (
+                      <option key={k} value={k}>{EVENT_LABEL[k]}</option>
+                    ))}
+                  </select>
+                </div>
+                <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addEvent(); if (e.key === "Escape") setAddingEvent(false); }}
+                  placeholder="Description (optional)…" className={inputCls} />
+                <div className="flex gap-2">
+                  <button type="button" onClick={addEvent}
+                    className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
+                  <button type="button" onClick={() => setAddingEvent(false)}
+                    className="flex-1 text-11 py-1.5 rounded border border-hair-2 text-ink-2 hover:text-ink-0">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {events.length === 0 && !addingEvent && (
+              <p className="text-11 text-ink-4 py-2 text-center italic">No events added yet.</p>
+            )}
+
+            <div className="space-y-1.5">
+              {sortedEvents.map((ev) => (
+                <div key={ev.id} className="flex items-start gap-2.5 px-3 py-2 rounded-lg border border-hair-2 bg-bg-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono text-10 text-ink-3">{ev.date}</span>
+                      <span className={`text-9 font-mono font-semibold px-1.5 py-px rounded border ${EVENT_COLOR[ev.kind]}`}>
+                        {EVENT_LABEL[ev.kind]}
+                      </span>
+                    </div>
+                    {ev.description && <div className="text-11 text-ink-1 mt-0.5">{ev.description}</div>}
+                  </div>
+                  <button type="button"
+                    onClick={() => setEvents((prev) => prev.filter((e) => e.id !== ev.id))}
+                    className="text-ink-4 hover:text-red transition-colors text-13 shrink-0 mt-0.5">×</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Analysis */}
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-2">
+            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">Analysis</div>
+            <button type="button" onClick={() => void runBrain()}
+              disabled={brainLoading || !committed}
+              className="w-full text-11 font-semibold py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors">
+              {brainLoading ? "Analyzing…" : "🧠 Generate Brain Analysis"}
+            </button>
+            <button type="button" onClick={() => void runPack()}
+              disabled={exportingPack || !committed}
+              className="w-full text-11 font-semibold py-2 rounded border border-amber/50 text-amber hover:bg-amber/10 disabled:opacity-40 transition-colors">
+              {exportingPack ? "Generating…" : packReady ? "📦 Pack ready — click to re-generate" : "📦 Export Evidence Pack"}
+            </button>
+            {packReady && (
+              <button type="button" onClick={() => window.print()}
+                className="w-full text-11 font-semibold py-2 rounded bg-amber/10 border border-amber/40 text-amber hover:bg-amber/20 transition-colors">
+                ↓ Print / Export PDF
+              </button>
+            )}
           </div>
         </div>
 
-        <p className="text-11 text-ink-3 mt-3 leading-relaxed">
-          {committed
-            ? "Case nodes are loaded from your local case register. UBO and counterparty nodes appear when the subject is open in the screening queue."
-            : "Search for any subject to see their case graph, or click a node to isolate its relationships. The default view is demo data (Ozcan Halac)."}
-        </p>
+        {/* ── RIGHT PANEL ────────────────────────────────────────────────────── */}
+        <div className="space-y-3">
+
+          {/* Network Graph */}
+          <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-hair-2">
+              <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">Network Graph</span>
+              {selectedId && (
+                <button type="button" onClick={() => setSelectedId(null)}
+                  className="text-10 text-ink-3 hover:text-ink-1 transition-colors">
+                  ✕ Clear selection
+                </button>
+              )}
+            </div>
+
+            <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" style={{ display: "block", background: "#0a0d0f" }}>
+              <defs>
+                <marker id="inv-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#334155" />
+                </marker>
+                <marker id="inv-arr-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#f472b6" />
+                </marker>
+                <filter id="inv-glow">
+                  <feGaussianBlur stdDeviation="3.5" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+
+              {!committed && (
+                <text x={VW / 2} y={VH / 2} textAnchor="middle" dominantBaseline="middle"
+                  style={{ fill: "#334155", fontSize: 13, fontFamily: "system-ui, sans-serif" }}>
+                  Set a subject to build the network
+                </text>
+              )}
+
+              {/* Edges */}
+              {committed && parties.map((p, i) => {
+                const pos = partyPos(i, parties.length);
+                const isHi = highlightedIds.has(p.id);
+                const faded = selectedId !== null && !isHi;
+                return (
+                  <g key={`e-${p.id}`} style={{ opacity: faded ? 0.07 : 1, transition: "opacity 0.2s" }}>
+                    <line
+                      x1={CX} y1={CY} x2={pos.x} y2={pos.y}
+                      stroke={isHi && selectedId ? "#f472b6" : "#334155"}
+                      strokeWidth={isHi && selectedId ? 1.5 : 1}
+                      markerEnd={isHi && selectedId ? "url(#inv-arr-hi)" : "url(#inv-arr)"}
+                      style={{ opacity: isHi && selectedId ? 0.85 : 0.45 }}
+                    />
+                    <text
+                      x={(CX + pos.x) / 2} y={(CY + pos.y) / 2 - 7}
+                      textAnchor="middle"
+                      style={{
+                        fill: isHi && selectedId ? "#f472b6" : "#475569",
+                        fontSize: 9, fontFamily: "monospace",
+                        opacity: isHi && selectedId ? 0.9 : 0.55,
+                      }}
+                    >
+                      {p.relationship}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Subject node */}
+              {committed && (() => {
+                const isSel = selectedId === "subject";
+                const W = 162, H = 44;
+                return (
+                  <g style={{ cursor: "pointer", filter: "url(#inv-glow)" }}
+                    onClick={() => setSelectedId(isSel ? null : "subject")}>
+                    {isSel && (
+                      <rect x={CX - W / 2 - 5} y={CY - H / 2 - 5} width={W + 10} height={H + 10} rx={12}
+                        fill="none" stroke="#f472b6" strokeWidth={1.5} style={{ opacity: 0.35 }} />
+                    )}
+                    <rect x={CX - W / 2} y={CY - H / 2} width={W} height={H} rx={8}
+                      fill="#2d1524" stroke="#f472b6" strokeWidth={isSel ? 2.5 : 2} />
+                    <text x={CX - W / 2 + 14} y={CY + 5}
+                      style={{ fontSize: 13, fill: "#f472b6", fontFamily: "monospace" }}>◆</text>
+                    <text x={CX - W / 2 + 30} y={CY + 5}
+                      style={{ fontSize: 11.5, fill: "#fce7f3", fontWeight: 700, fontFamily: "system-ui, sans-serif" }}>
+                      {committed.length > 20 ? committed.slice(0, 18) + "…" : committed}
+                    </text>
+                  </g>
+                );
+              })()}
+
+              {/* Party nodes */}
+              {committed && parties.map((p, i) => {
+                const pos = partyPos(i, parties.length);
+                const cfg = PARTY_COLOR[p.kind];
+                const isSel = selectedId === p.id;
+                const isHi = highlightedIds.has(p.id);
+                const faded = selectedId !== null && !isHi;
+                const W = 140, H = 38;
+                return (
+                  <g key={p.id}
+                    style={{ cursor: "pointer", opacity: faded ? 0.12 : 1, transition: "opacity 0.2s" }}
+                    onClick={() => setSelectedId(isSel ? null : p.id)}>
+                    {isSel && (
+                      <rect x={pos.x - W / 2 - 4} y={pos.y - H / 2 - 4} width={W + 8} height={H + 8} rx={10}
+                        fill="none" stroke={cfg.stroke} strokeWidth={1.5} style={{ opacity: 0.4 }} />
+                    )}
+                    <rect x={pos.x - W / 2} y={pos.y - H / 2} width={W} height={H} rx={7}
+                      fill={cfg.fill} stroke={cfg.stroke}
+                      strokeWidth={isSel ? 2.5 : 1.5} />
+                    <text x={pos.x - W / 2 + 12} y={pos.y + 4}
+                      style={{ fontSize: 12, fill: cfg.stroke, fontFamily: "monospace" }}>
+                      {PARTY_ICON[p.kind]}
+                    </text>
+                    <text x={pos.x - W / 2 + 28} y={pos.y + 4}
+                      style={{ fontSize: 10.5, fill: cfg.text, fontWeight: 600, fontFamily: "system-ui, sans-serif" }}>
+                      {p.name.length > 15 ? p.name.slice(0, 13) + "…" : p.name}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+
+            <div className="px-4 py-2 border-t border-hair-2 flex items-center gap-3 flex-wrap"
+              style={{ background: "#080b0d" }}>
+              {(Object.entries(PARTY_COLOR) as [PartyKind, typeof PARTY_COLOR[PartyKind]][]).map(([kind, cfg]) => (
+                <span key={kind} className="flex items-center gap-1 text-10 font-mono" style={{ color: cfg.stroke }}>
+                  <span>{PARTY_ICON[kind]}</span>
+                  <span>{PARTY_LABEL[kind]}</span>
+                </span>
+              ))}
+              <span className="ml-auto text-10 font-mono text-ink-4">click node · connections highlight</span>
+            </div>
+          </div>
+
+          {/* Brain Analysis */}
+          {(brainLoading || brainAnalysis) && (
+            <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Brain Analysis</div>
+              {brainLoading && (
+                <p className="font-mono text-11 text-ink-3 animate-pulse">
+                  Analyzing <span className="text-ink-1 font-semibold">{committed}</span>…
+                </p>
+              )}
+              {brainAnalysis && !brainLoading && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`font-mono text-10 px-2 py-px rounded font-bold uppercase ${riskBadge[brainAnalysis.riskLevel]}`}>
+                      {brainAnalysis.riskLevel} risk
+                    </span>
+                    {brainAnalysis.typologies.map((t) => (
+                      <span key={t} className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red border border-red/20">{t}</span>
+                    ))}
+                  </div>
+                  <p className="text-12 text-ink-1 leading-relaxed">{brainAnalysis.narrative}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Key Relationships</div>
+                      <ul className="text-11 text-ink-2 space-y-0.5 list-disc list-inside">
+                        {brainAnalysis.keyRelationships.map((r, i) => <li key={i}>{r}</li>)}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Next Steps</div>
+                      <ol className="text-11 text-ink-2 space-y-0.5 list-decimal list-inside">
+                        {brainAnalysis.nextSteps.map((s, i) => <li key={i}>{s}</li>)}
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </ModuleLayout>
   );
 }

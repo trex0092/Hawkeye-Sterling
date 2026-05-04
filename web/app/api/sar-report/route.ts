@@ -96,12 +96,7 @@ interface Body {
 
 async function handleSarReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
-  if (!token) {
-    return NextResponse.json(
-      { ok: false, error: "ASANA_TOKEN not set" },
-      { status: 503 },
-    );
-  }
+  const asanaEnabled = !!token;
 
   let body: Body;
   try {
@@ -308,6 +303,23 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
   );
   lines.push("Source: Hawkeye Sterling — https://hawkeye-sterling.netlify.app");
 
+  // Asana filing — if ASANA_TOKEN not set, return the report without filing
+  if (!asanaEnabled) {
+    return NextResponse.json({
+      ok: true,
+      filingType: body.filingType,
+      asanaSkipped: true,
+      asanaNote: "ASANA_TOKEN not configured — report generated but not filed to MLRO inbox. Set ASANA_TOKEN in Netlify env to enable automatic filing.",
+      reportText: lines.join("\n"),
+      goaml: {
+        internalReference: internalRef,
+        validated: goamlValidationWarnings.length === 0,
+        validationWarnings: goamlValidationWarnings,
+        xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
+      },
+    });
+  }
+
   // Wrap the Asana call in try-catch so a network failure returns a clean
   // JSON error instead of letting Next.js surface an unformatted 500.
   let taskRes: Response;
@@ -335,33 +347,34 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     });
     asanaPayload = (await taskRes.json().catch(() => null)) as typeof asanaPayload;
   } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana request failed",
-        detail: err instanceof Error ? err.message : String(err),
+    return NextResponse.json({
+      ok: true,
+      filingType: body.filingType,
+      asanaSkipped: true,
+      asanaNote: `Asana request failed: ${err instanceof Error ? err.message : String(err)}. Report generated successfully.`,
+      reportText: lines.join("\n"),
+      goaml: {
+        internalReference: internalRef,
+        validated: goamlValidationWarnings.length === 0,
+        validationWarnings: goamlValidationWarnings,
+        xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
-      { status: 502 },
-    );
+    });
   }
   if (!taskRes.ok || !asanaPayload?.data?.gid) {
-    // Asana returns 4xx on validation failures (bad GID, bad token,
-    // missing scope) and 5xx on their-side incidents. Mirror that in
-    // our status code so monitoring/alerting gets the right signal:
-    // 502 Bad Gateway for an upstream outage, 503 for a misconfig on
-    // our side. 4xx responses from Asana surface as 422 (we passed a
-    // bad payload) so clients know not to retry.
-    const upstreamStatus = taskRes.status;
-    const mappedStatus =
-      upstreamStatus >= 500 ? 502 : upstreamStatus === 401 || upstreamStatus === 403 ? 503 : 422;
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "asana rejected the filing",
-        detail: asanaPayload?.errors?.[0]?.message ?? `HTTP ${upstreamStatus}`,
+    return NextResponse.json({
+      ok: true,
+      filingType: body.filingType,
+      asanaSkipped: true,
+      asanaNote: `Asana rejected the filing (HTTP ${taskRes.status}): ${asanaPayload?.errors?.[0]?.message ?? "unknown error"}. Report generated successfully.`,
+      reportText: lines.join("\n"),
+      goaml: {
+        internalReference: internalRef,
+        validated: goamlValidationWarnings.length === 0,
+        validationWarnings: goamlValidationWarnings,
+        xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
-      { status: mappedStatus },
-    );
+    });
   }
 
   void postWebhook({

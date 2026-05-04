@@ -747,6 +747,7 @@ export default function EnforcementPage() {
   return (
     <ModuleLayout asanaModule="enforcement" asanaLabel="Enforcement">
         <ModuleHero
+          moduleNumber={25}
           eyebrow="Module 18 · Regulatory calendar"
           title="Enforcement"
           titleEm="tracker."
@@ -755,10 +756,27 @@ export default function EnforcementPage() {
               <strong>Every regulator-mandated deadline in one place.</strong>{" "}
               MoE annual reports, FIU quarterly reconciliations, LBMA Step-4
               audits, internal EDD sweeps — sorted by due date, colour-coded
-              by urgency.
+              by urgency. Overdue items require MLRO escalation under FDL 10/2025 Art.15.
             </>
           }
+          kpis={[
+            {
+              value: String(sorted.filter((d) => daysUntil(d.due) < 0).length),
+              label: "overdue",
+              tone: sorted.some((d) => daysUntil(d.due) < 0) ? "red" : undefined,
+            },
+            {
+              value: String(sorted.filter((d) => daysUntil(d.due) >= 0 && daysUntil(d.due) <= 30).length),
+              label: "due in 30 days",
+              tone: sorted.some((d) => daysUntil(d.due) >= 0 && daysUntil(d.due) <= 30) ? "amber" : undefined,
+            },
+            { value: String(sorted.length), label: "total deadlines" },
+          ]}
         />
+
+        <div className="mt-4 flex justify-end">
+          <AddDeadlineForm onAdd={onAdd} />
+        </div>
 
         {overlay.deletedIds.length > 0 && (
           <div className="mt-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">
@@ -808,7 +826,7 @@ export default function EnforcementPage() {
                       onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
                       placeholder="Title"
                     />
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-3">
                       <input
                         className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
                         value={editDraft.authority}
@@ -880,7 +898,6 @@ export default function EnforcementPage() {
           })}
         </div>
 
-        <AddDeadlineForm onAdd={onAdd} />
     </ModuleLayout>
   );
 }
@@ -931,15 +948,13 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
 
   if (!open) {
     return (
-      <div className="mt-8 flex justify-center">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="font-mono text-11 uppercase tracking-wide-3 px-4 py-2 rounded-lg border border-brand-line bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
-        >
-          + Add a deadline
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="font-mono text-11 uppercase tracking-wide-3 px-4 py-2 rounded-lg border border-brand-line bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
+      >
+        + Add a deadline
+      </button>
     );
   }
 
@@ -950,7 +965,7 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
   return (
     <form
       onSubmit={submit}
-      className="mt-8 bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3"
+      className="bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3 w-80"
     >
       <div className="flex items-baseline justify-between mb-1">
         <h4 className="text-12 font-semibold text-ink-0 m-0">
@@ -979,7 +994,7 @@ function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Authority</label>
           <input

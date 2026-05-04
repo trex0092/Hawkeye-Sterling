@@ -41,7 +41,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Name search mode
   if (body.query?.trim()) {
-    const results = await searchGleif(body.query.trim(), body.limit ?? 20);
+    let results: Awaited<ReturnType<typeof searchGleif>>;
+    try {
+      results = await searchGleif(body.query.trim(), body.limit ?? 20);
+    } catch (err) {
+      console.error("[gleif] searchGleif failed", err);
+      return NextResponse.json(
+        { ok: true, results: [], note: "GLEIF search unavailable — manual lookup required." },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
+      );
+    }
     return NextResponse.json({ ok: true, results }, { status: 200, headers: { ...CORS, ...gateHeaders } });
   }
 
@@ -50,11 +59,23 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "lei or query is required" }, { status: 400, headers: CORS });
   }
 
-  const result = await lookupLei(body.lei.trim(), { maxDepth: body.maxDepth ?? 3 });
-
-  if (!result.ok && result.error?.includes("not configured")) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 503, headers: CORS });
+  let result: Awaited<ReturnType<typeof lookupLei>>;
+  try {
+    result = await lookupLei(body.lei.trim(), { maxDepth: body.maxDepth ?? 3 });
+  } catch (err) {
+    console.error("[gleif] lookupLei failed", err);
+    return NextResponse.json(
+      { ok: true, lei: body.lei.trim(), entity: null, ownershipChain: [], note: "GLEIF lookup unavailable — manual review required." },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
-  return NextResponse.json(result, { status: result.ok ? 200 : 502, headers: { ...CORS, ...gateHeaders } });
+  if (!result.ok && result.error?.includes("not configured")) {
+    return NextResponse.json(
+      { ok: true, lei: body.lei.trim(), entity: null, ownershipChain: [], note: "GLEIF service not configured — manual review required." },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
+  }
+
+  return NextResponse.json(result, { status: 200, headers: { ...CORS, ...gateHeaders } });
 }

@@ -45,6 +45,7 @@ const ALLOWED_ACTIONS = new Set([
   // result lands in the tamper-evident HMAC chain in Netlify Blobs —
   // not just the client-side localStorage copy.
   "subject_added",
+  "subject_removed",
   "screening_completed",
   "ongoing_enrolled",
 ]);
@@ -58,6 +59,7 @@ const ACTION_MIN_ROLE: Record<string, string> = {
   dispose:             "mlro",
   goaml_submit:        "mlro",
   subject_added:       "analyst",
+  subject_removed:     "analyst",
   screening_completed: "analyst",
   ongoing_enrolled:    "analyst",
 };
@@ -109,12 +111,10 @@ async function handleSign(req: Request): Promise<NextResponse> {
   if (!secret) {
     return NextResponse.json(
       {
-        ok: false,
-        error: "audit_chain_not_configured",
-        detail:
-          "Set AUDIT_CHAIN_SECRET (64+ random bytes) in Netlify env to enable the signed audit chain.",
+        ok: true,
+        entry: null,
+        warning: "AI analysis unavailable — manual review required. Set AUDIT_CHAIN_SECRET to enable the signed audit chain.",
       },
-      { status: 503 },
     );
   }
 

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
+import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
+import { exportEwraBoardReport } from "@/lib/pdf/exporters";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
 // Required annually under FDL 10/2025 Art.4 and FATF R.1.
@@ -23,9 +26,12 @@ interface EwraState {
   approvedBy: string;
   nextReview: string; // dd/mm/yyyy
   boardMinutes: string;
+  unit: string;
 }
 
 const STORAGE = "hawkeye.ewra.v1";
+const HISTORY_STORAGE = "hawkeye.ewra.history.v1";
+const MAX_HISTORY = 5;
 
 const DEFAULT_DIMENSIONS: RiskDimension[] = [
   {
@@ -84,6 +90,7 @@ const DEFAULT_STATE: EwraState = {
   approvedBy: "",
   nextReview: "",
   boardMinutes: "",
+  unit: "",
 };
 
 function load(): EwraState {
@@ -96,6 +103,39 @@ function load(): EwraState {
 
 function save(s: EwraState) {
   try { window.localStorage.setItem(STORAGE, JSON.stringify(s)); } catch { /* */ }
+}
+
+interface EwraSnapshot {
+  id: string;
+  timestamp: string; // ISO
+  overallResidual: number;
+  overallInherent: number;
+  keyChanges: string[];
+  dimensions: Array<{ id: string; dimension: string; inherent: number; controls: number }>;
+}
+
+function loadHistory(): EwraSnapshot[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(HISTORY_STORAGE);
+    return raw ? (JSON.parse(raw) as EwraSnapshot[]) : [];
+  } catch { return []; }
+}
+
+function saveSnapshot(s: EwraState, overallInherent: number, overallResidual: number, keyChanges: string[]) {
+  try {
+    const history = loadHistory();
+    const snap: EwraSnapshot = {
+      id: `ewra-snap-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      overallResidual,
+      overallInherent,
+      keyChanges,
+      dimensions: s.dimensions.map((d) => ({ id: d.id, dimension: d.dimension, inherent: d.inherent, controls: d.controls })),
+    };
+    const next = [snap, ...history].slice(0, MAX_HISTORY);
+    window.localStorage.setItem(HISTORY_STORAGE, JSON.stringify(next));
+  } catch { /* */ }
 }
 
 function residual(d: RiskDimension): number {
@@ -129,12 +169,93 @@ function ScoreSelector({ value, onChange }: { value: number; onChange: (n: numbe
   );
 }
 
+const RISK_OVERALL: Record<number, EwraBoardReportResult["overallRisk"]> = {
+  1: "low", 2: "low", 3: "medium", 4: "high", 5: "critical",
+};
+
 export default function EwraPage() {
   const [state, setState] = useState<EwraState>(DEFAULT_STATE);
+  const [boardReport, setBoardReport] = useState<EwraBoardReportResult | null>(null);
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardError, setBoardError] = useState<string | null>(null);
+  const [boardOpen, setBoardOpen] = useState(false);
 
-  useEffect(() => { setState(load()); }, []);
+  // Threat intel state
+  const [threatIntel, setThreatIntel] = useState<ThreatIntelResult | null>(null);
+  const [threatLoading, setThreatLoading] = useState(false);
+  const [threatError, setThreatError] = useState<string | null>(null);
+  const [threatOpen, setThreatOpen] = useState(false);
+
+  // Version history state
+  const [history, setHistory] = useState<EwraSnapshot[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  useEffect(() => { setState(load()); setHistory(loadHistory()); }, []);
 
   const update = (updated: EwraState) => { setState(updated); save(updated); };
+
+  const runThreatIntel = async () => {
+    setThreatLoading(true);
+    setThreatError(null);
+    try {
+      const res = await fetch("/api/ewra/threat-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sector: "Precious Metals / DPMS",
+          jurisdiction: state.unit ? `UAE — ${state.unit}` : "UAE",
+          reportingPeriod: state.lastApproved
+            ? state.lastApproved
+            : new Date().getFullYear().toString(),
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string } & ThreatIntelResult;
+      if (!data.ok) { setThreatError(data.error ?? "Threat intel generation failed"); return; }
+      setThreatIntel(data);
+      setThreatOpen(true);
+    } catch {
+      setThreatError("Network error — try again");
+    } finally {
+      setThreatLoading(false);
+    }
+  };
+
+  const captureSnapshot = (keyChanges: string[] = []) => {
+    const inh = Math.round(state.dimensions.reduce((a, d) => a + d.inherent, 0) / state.dimensions.length);
+    const res = Math.round(state.dimensions.reduce((a, d) => a + residual(d), 0) / state.dimensions.length);
+    saveSnapshot(state, inh, res, keyChanges);
+    setHistory(loadHistory());
+  };
+
+  const runBoardReport = async () => {
+    setBoardLoading(true);
+    setBoardError(null);
+    try {
+      const res = await fetch("/api/ewra-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          dimensions: state.dimensions.map((d) => ({
+            dimension: d.dimension,
+            inherent: d.inherent,
+            controls: d.controls,
+            notes: d.notes,
+          })),
+          institutionName: "Hawkeye Sterling DPMS",
+          reportingPeriod: new Date().getFullYear().toString(),
+          context: `Last approved: ${state.lastApproved || "not recorded"}. Approved by: ${state.approvedBy || "pending"}. Board minutes ref: ${state.boardMinutes || "none"}.`,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string } & EwraBoardReportResult;
+      if (!data.ok) { setBoardError(data.error ?? "Report generation failed"); return; }
+      setBoardReport(data);
+      setBoardOpen(true);
+    } catch {
+      setBoardError("Network error — try again");
+    } finally {
+      setBoardLoading(false);
+    }
+  };
 
   const updateDim = (id: string, patch: Partial<RiskDimension>) => {
     update({
@@ -154,6 +275,7 @@ export default function EwraPage() {
   return (
     <ModuleLayout asanaModule="ewra" asanaLabel="Enterprise-Wide Risk Assessment">
         <ModuleHero
+          moduleNumber={20}
           eyebrow="Module 23 · Risk Assessment"
           title="EWRA / BWRA"
           titleEm="dashboard."
@@ -184,10 +306,408 @@ export default function EwraPage() {
           ]}
         />
 
+        {/* AI Board Report button */}
+        <div className="mt-5 flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => { void runBoardReport(); }}
+            disabled={boardLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
+          >
+            {boardLoading ? (
+              <>
+                <span className="animate-spin font-mono">◌</span>
+                Generating…
+              </>
+            ) : (
+              <>
+                <span>✦</span>
+                Generate AI Board Report
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => { void runThreatIntel(); }}
+            disabled={threatLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 bg-bg-panel text-ink-1 text-12 font-semibold hover:bg-bg-2 disabled:opacity-50 transition-colors"
+          >
+            {threatLoading ? (
+              <>
+                <span className="animate-spin font-mono">◌</span>
+                Loading…
+              </>
+            ) : (
+              <>
+                <span>🌐</span>
+                Inject Threat Intelligence
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => { captureSnapshot(["Manual snapshot"]); setHistoryOpen(true); }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 bg-bg-panel text-ink-2 text-12 font-medium hover:bg-bg-2 transition-colors"
+          >
+            <span>🕓</span>
+            Save Snapshot
+          </button>
+          {boardReport && !boardOpen && (
+            <button
+              type="button"
+              onClick={() => setBoardOpen(true)}
+              className="text-11 text-brand underline font-medium"
+            >
+              View last report ↗
+            </button>
+          )}
+          {threatIntel && !threatOpen && (
+            <button
+              type="button"
+              onClick={() => setThreatOpen(true)}
+              className="text-11 text-ink-1 underline font-medium"
+            >
+              View threat intel ↗
+            </button>
+          )}
+          {boardError && (
+            <span className="text-11 text-red">{boardError}</span>
+          )}
+          {threatError && (
+            <span className="text-11 text-red">{threatError}</span>
+          )}
+        </div>
+
+        {/* Board Report Panel */}
+        {boardOpen && boardReport && (
+          <div className="mt-4 bg-bg-panel border border-brand/30 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2 bg-brand-dim">
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand">✦ AI Board Report · FDL 10/2025 Art.4</div>
+                <div className="text-13 font-bold text-ink-0 mt-0.5">Enterprise-Wide Risk Assessment — Board Narrative</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded-sm font-mono text-11 font-bold uppercase ${
+                  boardReport.overallRisk === "critical" ? "bg-red text-white" :
+                  boardReport.overallRisk === "high" ? "bg-red-dim text-red" :
+                  boardReport.overallRisk === "medium" ? "bg-amber-dim text-amber" :
+                  "bg-green-dim text-green"
+                }`}>
+                  {boardReport.overallRisk} risk
+                </span>
+                <button type="button" onClick={() => setBoardOpen(false)} className="text-ink-3 hover:text-ink-0 text-16 px-1">✕</button>
+              </div>
+            </div>
+
+            <div className="px-5 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Executive Summary */}
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Executive Summary</div>
+                <p className="text-12 text-ink-1 leading-relaxed whitespace-pre-wrap">{boardReport.executiveSummary}</p>
+              </div>
+
+              {/* Key Findings */}
+              {boardReport.keyFindings?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Key Findings</div>
+                  <ul className="space-y-1.5">
+                    {boardReport.keyFindings.map((f, i) => (
+                      <li key={i} className="flex gap-2 text-12 text-ink-1">
+                        <span className="text-brand font-mono shrink-0">•</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Dimension Narratives */}
+              {boardReport.dimensionNarratives?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Dimension Narratives</div>
+                  <div className="space-y-3">
+                    {boardReport.dimensionNarratives.map((dn, i) => (
+                      <div key={i} className="border border-hair-2 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-12 font-semibold text-ink-0">{dn.dimension}</div>
+                          <div className="flex gap-2">
+                            <span className="text-10 font-mono px-1.5 py-px rounded bg-bg-2 text-ink-2">Inherent: {dn.inherentRisk}</span>
+                            <span className="text-10 font-mono px-1.5 py-px rounded bg-bg-2 text-ink-2">Residual: {dn.residualRisk}</span>
+                          </div>
+                        </div>
+                        <p className="text-11 text-ink-1 mb-2">{dn.narrative}</p>
+                        {dn.controlGaps?.length > 0 && (
+                          <div className="text-10 text-red font-semibold mb-1">Control gaps:</div>
+                        )}
+                        {dn.controlGaps?.map((g, j) => (
+                          <div key={j} className="text-11 text-red ml-2">• {g}</div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Board Recommendations */}
+              {boardReport.boardRecommendations?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Board Recommendations</div>
+                  <ol className="space-y-1.5 list-decimal pl-5">
+                    {boardReport.boardRecommendations.map((r, i) => (
+                      <li key={i} className="text-12 text-ink-1">{r}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Regulatory Context */}
+              {boardReport.regulatoryContext && (
+                <div className="bg-bg-1 border border-hair-2 rounded p-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">Regulatory Context</div>
+                  <p className="text-11 text-ink-2 leading-relaxed">{boardReport.regulatoryContext}</p>
+                </div>
+              )}
+
+              {/* Approval Statement */}
+              {boardReport.approvalStatement && (
+                <div className="bg-brand-dim border border-brand/20 rounded p-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-1.5">Approval Statement</div>
+                  <p className="text-11 text-ink-1 leading-relaxed">{boardReport.approvalStatement}</p>
+                </div>
+              )}
+
+              {/* Next Steps */}
+              {boardReport.nextSteps?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Next Steps</div>
+                  <ul className="space-y-1">
+                    {boardReport.nextSteps.map((s, i) => (
+                      <li key={i} className="flex gap-2 text-12 text-ink-1">
+                        <span className="font-mono text-10 text-brand shrink-0 mt-0.5">{i + 1}.</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-hair-2 bg-bg-panel flex justify-between items-center">
+              <span className="text-10 text-ink-3 font-mono">Draft narrative — MLRO review required before Board presentation</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => exportEwraBoardReport(boardReport, state.dimensions)}
+                  className="text-11 font-mono text-brand hover:text-brand/80"
+                >
+                  ↓ Export PDF
+                </button>
+                <button
+                type="button"
+                onClick={() => {
+                  const text = [
+                    `EWRA BOARD REPORT — ${new Date().toLocaleDateString("en-GB")}`,
+                    `Overall Risk: ${boardReport.overallRisk.toUpperCase()}`,
+                    "",
+                    "EXECUTIVE SUMMARY",
+                    boardReport.executiveSummary,
+                    "",
+                    "BOARD RECOMMENDATIONS",
+                    ...(boardReport.boardRecommendations?.map((r, i) => `${i + 1}. ${r}`) ?? []),
+                    "",
+                    boardReport.approvalStatement,
+                  ].join("\n");
+                  void navigator.clipboard.writeText(text);
+                }}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
+              >
+                Copy to clipboard
+              </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Threat Intel Panel */}
+        {threatOpen && threatIntel && (
+          <div className="mt-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2 bg-bg-1">
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">🌐 Threat Intelligence · Auto-Inject</div>
+                <div className="text-13 font-bold text-ink-0 mt-0.5">Current ML/TF Typologies & Regulatory Changes</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-10 font-mono text-ink-3">
+                  {new Date(threatIntel.generatedAt).toLocaleString("en-GB")}
+                </span>
+                <button type="button" onClick={() => setThreatOpen(false)} className="text-ink-3 hover:text-ink-0 text-16 px-1">✕</button>
+              </div>
+            </div>
+
+            <div className="px-5 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Active Typologies */}
+              {threatIntel.typologies?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Active ML/TF Typologies</div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {threatIntel.typologies.map((t, i) => (
+                      <div key={i} className="border border-hair-2 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-12 font-semibold text-ink-0">{t.name}</span>
+                          <span className={`inline-flex items-center gap-0.5 px-1.5 py-px rounded font-mono text-10 font-bold ml-auto ${
+                            t.trend === "rising" ? "bg-red-dim text-red" :
+                            t.trend === "stable" ? "bg-amber-dim text-amber" :
+                            "bg-green-dim text-green"
+                          }`}>
+                            {t.trend === "rising" ? "↑" : t.trend === "stable" ? "→" : "↓"} {t.trend}
+                          </span>
+                        </div>
+                        <p className="text-11 text-ink-2 mb-1.5">{t.description}</p>
+                        {t.fatfRef && (
+                          <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-bg-2 text-ink-3">{t.fatfRef}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Regulatory Changes Timeline */}
+              {threatIntel.regulatoryChanges?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Regulatory Changes (last 90 days)</div>
+                  <div className="relative pl-5">
+                    <div className="absolute left-1.5 top-1 bottom-1 w-px bg-hair-2" />
+                    {threatIntel.regulatoryChanges.map((rc, i) => (
+                      <div key={i} className="relative mb-4 last:mb-0">
+                        <div className="absolute -left-3.5 top-1 w-2 h-2 rounded-full bg-brand" />
+                        <div className="font-mono text-10 text-brand mb-0.5">{rc.effectiveDate}</div>
+                        <div className="text-12 font-semibold text-ink-0 mb-0.5">{rc.change}</div>
+                        <div className="text-11 text-ink-2">{rc.impact}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Score Adjustment Suggestions */}
+              {threatIntel.scoreAdjustments?.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Recommended Score Adjustments</div>
+                  <div className="space-y-2">
+                    {threatIntel.scoreAdjustments.map((adj, i) => {
+                      const dim = state.dimensions.find((d) =>
+                        d.dimension.toLowerCase().includes(adj.dimension.toLowerCase()) ||
+                        adj.dimension.toLowerCase().includes(d.dimension.toLowerCase())
+                      );
+                      const alreadyApplied = dim ? dim.inherent === adj.suggestedScore : false;
+                      return (
+                        <div key={i} className="border border-hair-2 rounded-lg p-3 flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-12 font-semibold text-ink-0">{adj.dimension}</span>
+                              <span className="font-mono text-10 text-ink-3">
+                                {adj.currentScore} → <span className={adj.suggestedScore > adj.currentScore ? "text-red font-bold" : "text-green font-bold"}>{adj.suggestedScore}</span>
+                              </span>
+                            </div>
+                            <p className="text-11 text-ink-2">{adj.reason}</p>
+                          </div>
+                          {dim && !alreadyApplied && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const patch = { inherent: adj.suggestedScore };
+                                updateDim(dim.id, patch);
+                              }}
+                              className="shrink-0 text-11 font-semibold px-3 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                            >
+                              Apply
+                            </button>
+                          )}
+                          {alreadyApplied && (
+                            <span className="shrink-0 text-11 font-mono text-green px-3 py-1">Applied ✓</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Version History */}
+        <div className="mt-4 bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-2 transition-colors"
+          >
+            <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
+              🕓 Version History ({history.length} snapshot{history.length !== 1 ? "s" : ""})
+            </span>
+            <span className="text-ink-3 font-mono text-12">{historyOpen ? "▾" : "▸"}</span>
+          </button>
+          {historyOpen && (
+            <div className="border-t border-hair-2 divide-y divide-hair">
+              {history.length === 0 && (
+                <div className="px-4 py-4 text-12 text-ink-3 text-center">
+                  No snapshots yet. Click "Save Snapshot" to capture the current state.
+                </div>
+              )}
+              {history.map((snap, i) => (
+                <div key={snap.id} className="px-4 py-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="font-mono text-10 text-ink-3">{new Date(snap.timestamp).toLocaleString("en-GB")}</span>
+                    {i === 0 && <span className="text-10 font-mono bg-brand-dim text-brand px-1.5 py-px rounded">latest</span>}
+                    <div className="ml-auto flex items-center gap-3 text-11 font-mono">
+                      <span className={`px-1.5 py-px rounded text-10 font-semibold ${
+                        snap.overallInherent >= 4 ? "bg-red-dim text-red" :
+                        snap.overallInherent === 3 ? "bg-amber-dim text-amber" :
+                        "bg-green-dim text-green"
+                      }`}>
+                        Inherent {RISK_LABEL[snap.overallInherent] ?? snap.overallInherent}
+                      </span>
+                      <span className={`px-1.5 py-px rounded text-10 font-semibold ${
+                        snap.overallResidual >= 4 ? "bg-red-dim text-red" :
+                        snap.overallResidual === 3 ? "bg-amber-dim text-amber" :
+                        "bg-green-dim text-green"
+                      }`}>
+                        Residual {RISK_LABEL[snap.overallResidual] ?? snap.overallResidual}
+                      </span>
+                    </div>
+                  </div>
+                  {snap.keyChanges.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {snap.keyChanges.map((c, j) => (
+                        <span key={j} className="text-10 text-ink-3 bg-bg-1 px-1.5 py-px rounded font-mono">{c}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {snap.dimensions.map((d) => (
+                      <span key={d.id} className="text-10 font-mono text-ink-3">
+                        {d.dimension}: I={d.inherent} C={d.controls}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Approval metadata */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
           <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Board approval</div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-5 gap-3">
+            <div>
+              <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Unit</label>
+              <input value={state.unit}
+                onChange={(e) => update({ ...state, unit: e.target.value })}
+                placeholder="e.g. AML Compliance" className={inputCls} />
+            </div>
             <div>
               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Last Approved</label>
               <input value={state.lastApproved}
@@ -230,7 +750,7 @@ export default function EwraPage() {
                     Residual: {RISK_LABEL[res]}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
                     <div className="text-10 text-ink-3 font-mono uppercase tracking-wide-2 mb-1">
                       Inherent risk — {RISK_LABEL[d.inherent]}

@@ -3,6 +3,26 @@
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
+interface ClientRisk {
+  ok: boolean;
+  overallRisk: "critical" | "high" | "medium" | "low";
+  riskNarrative: string;
+  jurisdictionalRisk: string;
+  ownershipRisk: string;
+  pepExposure: {
+    detected: boolean;
+    pepNames: string[];
+    mitigants: string;
+  };
+  cddRequirements: string[];
+  eddRequired: boolean;
+  eddReason: string;
+  enhancedMeasures: string[];
+  recommendedAction: "onboard_standard" | "onboard_with_edd" | "refer_to_mlro" | "reject" | "pending_docs";
+  regulatoryBasis: string;
+  riskRating: string;
+}
+
 // Client Portal — entity-only onboarding. No individual top-level clients.
 // Shareholders (UBOs, directors, nominees) are sub-records per FDL 10/2025
 // Art.10 (CDD) and Cabinet Decision 58/2020 (UBO identification).
@@ -236,10 +256,69 @@ function ShareholderCard({
   );
 }
 
+const RISK_BADGE: Record<string, string> = {
+  critical: "bg-red-dim text-red",
+  high: "bg-red-dim text-red",
+  medium: "bg-amber-dim text-amber",
+  low: "bg-green-dim text-green",
+};
+
+const ACTION_BADGE: Record<string, string> = {
+  reject: "bg-red-dim text-red",
+  refer_to_mlro: "bg-amber-dim text-amber",
+  onboard_with_edd: "bg-amber-dim text-amber",
+  onboard_standard: "bg-green-dim text-green",
+  pending_docs: "bg-brand-dim text-brand",
+};
+
+const ACTION_LABEL: Record<string, string> = {
+  reject: "Reject",
+  refer_to_mlro: "Refer to MLRO",
+  onboard_with_edd: "Onboard with EDD",
+  onboard_standard: "Onboard Standard",
+  pending_docs: "Pending Docs",
+};
+
 export default function ClientPortalPage() {
   const [entity, setEntity] = useState<EntityForm>(BLANK_ENTITY);
   const [shareholders, setShareholders] = useState<Shareholder[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [clientRisk, setClientRisk] = useState<ClientRisk | null>(null);
+  const [clientRiskLoading, setClientRiskLoading] = useState(false);
+
+  const canRunRisk = entity.name.trim().length > 0 && shareholders.length > 0;
+
+  async function runClientRiskAssessment() {
+    if (!canRunRisk || clientRiskLoading) return;
+    setClientRiskLoading(true);
+    try {
+      const res = await fetch("/api/client-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          entity,
+          shareholders: shareholders.map((s) => ({
+            designation: s.designation,
+            name: s.name,
+            sharesPct: s.sharesPct,
+            kind: s.kind,
+            nationality: s.nationality,
+            pepStatus: s.pepStatus,
+            emiratesId: s.emiratesId,
+            idNumber: s.idNumber,
+          })),
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as ClientRisk;
+        setClientRisk(data);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setClientRiskLoading(false);
+    }
+  }
 
   const setE = (k: keyof EntityForm) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -297,6 +376,7 @@ export default function ClientPortalPage() {
     <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal">
       <div>
         <ModuleHero
+          moduleNumber={12}
           eyebrow="Module 13 · Self-service KYC"
           title="Client"
           titleEm="portal."
@@ -318,39 +398,33 @@ export default function ClientPortalPage() {
             <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
               Entity
             </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Registered entity name *</label>
-                  <input required value={entity.name} onChange={setE("name")}
-                    placeholder="e.g. Acme Trading FZ-LLC" className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Alternate names / transliterations</label>
-                  <input value={entity.alternateNames} onChange={setE("alternateNames")}
-                    placeholder="Semi-colon separated" className={inputCls} />
-                </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls}>Registered entity name *</label>
+                <input required value={entity.name} onChange={setE("name")}
+                  placeholder="e.g. Acme Trading FZ-LLC" className={inputCls} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Country of incorporation</label>
-                  <input value={entity.countryOfIncorporation}
-                    onChange={setE("countryOfIncorporation")} placeholder="e.g. UAE, TR, CH" className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Trade licence / Registration number</label>
-                  <input value={entity.tradeLicence} onChange={setE("tradeLicence")} className={inputCls} />
-                </div>
+              <div>
+                <label className={labelCls}>Alternate names / transliterations</label>
+                <input value={entity.alternateNames} onChange={setE("alternateNames")}
+                  placeholder="Semi-colon separated" className={inputCls} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Contact email</label>
-                  <input type="email" value={entity.email} onChange={setE("email")} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Contact phone</label>
-                  <input value={entity.phone} onChange={setE("phone")} className={inputCls} />
-                </div>
+              <div>
+                <label className={labelCls}>Country of incorporation</label>
+                <input value={entity.countryOfIncorporation}
+                  onChange={setE("countryOfIncorporation")} placeholder="e.g. UAE, TR, CH" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Trade licence / Registration number</label>
+                <input value={entity.tradeLicence} onChange={setE("tradeLicence")} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Contact email</label>
+                <input type="email" value={entity.email} onChange={setE("email")} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Contact phone</label>
+                <input value={entity.phone} onChange={setE("phone")} className={inputCls} />
               </div>
             </div>
           </div>
@@ -406,12 +480,135 @@ export default function ClientPortalPage() {
               UBO information is shared with MoE / MOEC as required by Cabinet
               Decision 58/2020.
             </p>
-            <button type="submit" disabled={!entity.name || !sharesValid}
-              className="whitespace-nowrap text-12 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-              Submit for screening
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={runClientRiskAssessment}
+                disabled={!canRunRisk || clientRiskLoading}
+                className="whitespace-nowrap text-12 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors"
+              >
+                {clientRiskLoading ? "Assessing…" : "Get AI Risk Assessment"}
+              </button>
+              <button type="submit" disabled={!entity.name || !sharesValid}
+                className="whitespace-nowrap text-12 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                Submit for screening
+              </button>
+            </div>
           </div>
         </form>
+
+        {/* ── AI Risk Assessment panel ─────────────────────────────── */}
+        {clientRisk && (
+          <div className="mt-4 bg-bg-panel border border-hair-2 rounded-lg p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">AI Risk Assessment</span>
+              <button type="button" onClick={() => setClientRisk(null)} className="text-ink-3 hover:text-ink-1 text-11">✕ Dismiss</button>
+            </div>
+
+            {/* Overall risk + rating */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${RISK_BADGE[clientRisk.overallRisk] ?? "bg-bg-2 text-ink-2"}`}>
+                {clientRisk.overallRisk} risk
+              </span>
+              {clientRisk.riskRating && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded bg-bg-2 text-ink-1 text-11 font-mono">
+                  Rating: {clientRisk.riskRating}
+                </span>
+              )}
+              {clientRisk.recommendedAction && (
+                <span className={`inline-flex items-center px-2.5 py-1 rounded text-11 font-semibold ${ACTION_BADGE[clientRisk.recommendedAction] ?? "bg-bg-2 text-ink-2"}`}>
+                  {ACTION_LABEL[clientRisk.recommendedAction] ?? clientRisk.recommendedAction}
+                </span>
+              )}
+            </div>
+
+            {/* Risk narrative */}
+            {clientRisk.riskNarrative && (
+              <p className="text-12 text-ink-1 leading-relaxed">{clientRisk.riskNarrative}</p>
+            )}
+
+            {/* EDD required */}
+            {clientRisk.eddRequired && (
+              <div className="flex items-start gap-2 bg-red-dim rounded p-3">
+                <span className="text-11 font-semibold text-red uppercase tracking-wide-2 shrink-0">EDD Required</span>
+                {clientRisk.eddReason && (
+                  <span className="text-11 text-red leading-snug">{clientRisk.eddReason}</span>
+                )}
+              </div>
+            )}
+
+            {/* PEP exposure */}
+            {clientRisk.pepExposure.detected && (
+              <div className="space-y-1">
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-red">PEP Exposure Detected</div>
+                {clientRisk.pepExposure.pepNames.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {clientRisk.pepExposure.pepNames.map((n) => (
+                      <span key={n} className="px-2 py-0.5 rounded bg-red-dim text-red text-11 font-mono">{n}</span>
+                    ))}
+                  </div>
+                )}
+                {clientRisk.pepExposure.mitigants && (
+                  <p className="text-11 text-ink-2 leading-snug">{clientRisk.pepExposure.mitigants}</p>
+                )}
+              </div>
+            )}
+
+            {/* Jurisdictional risk */}
+            {clientRisk.jurisdictionalRisk && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Jurisdictional Risk</div>
+                <p className="text-12 text-ink-1 leading-relaxed">{clientRisk.jurisdictionalRisk}</p>
+              </div>
+            )}
+
+            {/* Ownership risk */}
+            {clientRisk.ownershipRisk && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Ownership & Control Risk</div>
+                <p className="text-12 text-ink-1 leading-relaxed">{clientRisk.ownershipRisk}</p>
+              </div>
+            )}
+
+            {/* CDD requirements */}
+            {clientRisk.cddRequirements.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">CDD Requirements</div>
+                <ul className="space-y-1">
+                  {clientRisk.cddRequirements.map((req) => (
+                    <li key={req} className="flex items-start gap-2 text-12 text-ink-1">
+                      <span className="text-brand mt-0.5 shrink-0">☐</span>
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Enhanced measures */}
+            {clientRisk.enhancedMeasures.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-amber mb-2">Enhanced Measures</div>
+                <ul className="space-y-1">
+                  {clientRisk.enhancedMeasures.map((m) => (
+                    <li key={m} className="flex items-start gap-2 text-12 text-amber">
+                      <span className="shrink-0">→</span>
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Regulatory basis */}
+            {clientRisk.regulatoryBasis && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Regulatory Basis</div>
+                <p className="font-mono text-11 text-ink-2 leading-relaxed">{clientRisk.regulatoryBasis}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </ModuleLayout>
   );

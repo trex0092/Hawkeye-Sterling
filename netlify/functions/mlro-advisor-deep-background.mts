@@ -114,8 +114,8 @@ export default async (req: Request): Promise<Response> => {
     );
   }
   const INJECTION_RX = [
-    /ignore\s+(?:all\s+|previous\s+|your\s+)?(?:prior\s+)?instructions?/i,
-    /disregard\s+(?:all\s+|previous\s+|your\s+)?instructions?/i,
+    /ignore\s+(?:(?:all|any|previous|prior|your|the|above|earlier)\s+)*instructions?/i,
+    /disregard\s+(?:(?:all|any|previous|prior|your|the|above|earlier)\s+)*instructions?/i,
     /forget\s+(?:everything|your\s+(?:instructions|prompt|rules))/i,
     /(?:you\s+are\s+now|act\s+as|pretend\s+to\s+be)\s+(?:a\s+)?(?:different|free|unrestricted|jailbroken|dan)/i,
     /\bsystem\s*[:>]\s*you\s+are/i,

@@ -4,6 +4,49 @@ import React, { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 
+interface CriticalExpiry {
+  name: string;
+  issue: string;
+  urgency: "immediate" | "this_week" | "this_month";
+  action: string;
+}
+
+interface ScreeningAlert {
+  name: string;
+  reason: string;
+  action: string;
+}
+
+interface EmployeeRisk {
+  ok: boolean;
+  portfolioStatus: "critical" | "attention_required" | "compliant";
+  summary: string;
+  criticalExpiries: CriticalExpiry[];
+  screeningAlerts: ScreeningAlert[];
+  highRiskNationalities: string[];
+  multiEntityRisk: string[];
+  immediateActions: string[];
+  regulatoryNote: string;
+}
+
+const PORTFOLIO_BADGE: Record<string, string> = {
+  critical: "bg-red-dim text-red",
+  attention_required: "bg-amber-dim text-amber",
+  compliant: "bg-green-dim text-green",
+};
+
+const PORTFOLIO_LABEL: Record<string, string> = {
+  critical: "Critical",
+  attention_required: "Attention Required",
+  compliant: "Compliant",
+};
+
+const URGENCY_BADGE: Record<string, string> = {
+  immediate: "bg-red-dim text-red",
+  this_week: "bg-amber-dim text-amber",
+  this_month: "bg-brand-dim text-brand",
+};
+
 const BUSINESS_UNITS = [
   "ZOE Precious Metals and Jewelery FZE",
   "Naples Jewellery Trading L.L.C",
@@ -123,6 +166,38 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(BLANK_FORM);
+  const [empRisk, setEmpRisk] = useState<EmployeeRisk | null>(null);
+  const [empRiskLoading, setEmpRiskLoading] = useState(false);
+
+  async function runEmployeeRiskScan() {
+    if (employees.length === 0 || empRiskLoading) return;
+    setEmpRiskLoading(true);
+    try {
+      const mapped = employees.map((e) => ({
+        name: e.name,
+        designation: e.designation,
+        nationality: e.nationality,
+        emiratesIdExpiry: e.emiratesIdExpiry,
+        passportExpiry: e.passportExpiry,
+        dateOfJoining: e.dateOfJoining,
+        businessUnits: e.businessUnits as string[],
+        email: e.email,
+      }));
+      const res = await fetch("/api/employee-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ employees: mapped, today: new Date().toISOString().slice(0, 10) }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as EmployeeRisk;
+        setEmpRisk(data);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setEmpRiskLoading(false);
+    }
+  }
 
   useEffect(() => {
     setEmployees(load());
@@ -233,6 +308,7 @@ export default function EmployeesPage() {
   return (
     <ModuleLayout asanaModule="employees" asanaLabel="Employees">
         <ModuleHero
+          moduleNumber={17}
           eyebrow="Module 16 · HR registry"
           title="Employee"
           titleEm="information."
@@ -266,6 +342,14 @@ export default function EmployeesPage() {
             placeholder="Search employees…"
             className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 w-56"
           />
+          <button
+            type="button"
+            onClick={runEmployeeRiskScan}
+            disabled={employees.length === 0 || empRiskLoading}
+            className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors"
+          >
+            {empRiskLoading ? "Scanning…" : "AI Risk Scan"}
+          </button>
           <button
             type="button"
             onClick={() => setAdding((v) => !v)}
@@ -386,6 +470,114 @@ export default function EmployeesPage() {
           </div>
         )}
 
+        {/* AI Risk Panel */}
+        {empRisk && (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5 mb-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">AI Employee Risk Scan</span>
+              <button type="button" onClick={() => setEmpRisk(null)} className="text-ink-3 hover:text-ink-1 text-11">✕ Dismiss</button>
+            </div>
+
+            {/* Portfolio status + summary */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${PORTFOLIO_BADGE[empRisk.portfolioStatus] ?? "bg-bg-2 text-ink-2"}`}>
+                {PORTFOLIO_LABEL[empRisk.portfolioStatus] ?? empRisk.portfolioStatus}
+              </span>
+              {empRisk.summary && (
+                <span className="text-12 text-ink-1 leading-snug">{empRisk.summary}</span>
+              )}
+            </div>
+
+            {/* Immediate actions */}
+            {empRisk.immediateActions.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-1">Immediate Actions</div>
+                <ul className="space-y-1">
+                  {empRisk.immediateActions.map((a) => (
+                    <li key={a} className="flex items-start gap-2 text-12 text-red">
+                      <span className="shrink-0">•</span>
+                      {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Critical expiries */}
+            {empRisk.criticalExpiries.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Critical Expiries</div>
+                <div className="space-y-2">
+                  {empRisk.criticalExpiries.map((item) => (
+                    <div key={`${item.name}-${item.issue}`} className="flex items-start gap-2 bg-bg-1 rounded p-2">
+                      <div className="flex-1 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-12 font-semibold text-ink-0">{item.name}</span>
+                          <span className={`text-10 font-mono font-semibold uppercase px-1.5 py-px rounded ${URGENCY_BADGE[item.urgency] ?? "bg-bg-2 text-ink-2"}`}>
+                            {item.urgency.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="text-11 text-ink-2">{item.issue}</div>
+                        <div className="text-11 text-ink-3 italic">{item.action}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Screening alerts */}
+            {empRisk.screeningAlerts.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Screening Alerts</div>
+                <div className="space-y-2">
+                  {empRisk.screeningAlerts.map((alert) => (
+                    <div key={`${alert.name}-${alert.reason}`} className="flex items-start gap-2 bg-amber-dim rounded p-2">
+                      <div className="flex-1 space-y-0.5">
+                        <div className="text-12 font-semibold text-ink-0">{alert.name}</div>
+                        <div className="text-11 text-amber">{alert.reason}</div>
+                        <div className="text-11 text-ink-3 italic">{alert.action}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* High risk nationalities */}
+            {empRisk.highRiskNationalities.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">High-Risk Nationalities</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {empRisk.highRiskNationalities.map((n) => (
+                    <span key={n} className="px-2 py-0.5 rounded bg-amber-dim text-amber text-11 font-mono">{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Multi-entity risk */}
+            {empRisk.multiEntityRisk.length > 0 && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Multi-Entity Risk</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {empRisk.multiEntityRisk.map((n) => (
+                    <span key={n} className="px-2 py-0.5 rounded bg-amber-dim text-amber text-11 font-mono">{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Regulatory note */}
+            {empRisk.regulatoryNote && (
+              <div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Regulatory Note</div>
+                <p className="font-mono text-11 text-ink-2 leading-relaxed">{empRisk.regulatoryNote}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
           <table className="w-full text-12">
@@ -465,17 +657,17 @@ export default function EmployeesPage() {
                       {expanded && editingId === emp.id && (
                         <tr className={i < filtered.length - 1 ? "border-b border-hair" : ""}>
                           <td colSpan={11} className="px-4 py-3 bg-bg-1">
-                            <div className="grid grid-cols-3 gap-2 mb-2">
+                            <div className="grid grid-cols-3 gap-3 mb-2">
                               <div><label className="block text-10 text-ink-3 mb-0.5">Name</label><input value={editForm.name} onChange={setEmp("name")} className="w-full text-12 px-2 py-1 rounded border border-brand bg-bg-0 text-ink-0" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Nationality</label><input value={editForm.nationality} onChange={setEmp("nationality")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Designation</label><input value={editForm.designation} onChange={setEmp("designation")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 mb-2">
+                            <div className="grid grid-cols-3 gap-3 mb-2">
                               <div><label className="block text-10 text-ink-3 mb-0.5">Emirates ID</label><input value={editForm.emiratesId} onChange={setEmp("emiratesId")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">EID Expiry (dd/mm/yyyy)</label><input value={editForm.emiratesIdExpiry} onChange={setEmp("emiratesIdExpiry")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Date of Birth (dd/mm/yyyy)</label><input value={editForm.dateOfBirth} onChange={setEmp("dateOfBirth")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 mb-2">
+                            <div className="grid grid-cols-3 gap-3 mb-2">
                               <div><label className="block text-10 text-ink-3 mb-0.5">Passport</label><input value={editForm.passport} onChange={setEmp("passport")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">PP Expiry (dd/mm/yyyy)</label><input value={editForm.passportExpiry} onChange={setEmp("passportExpiry")} className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 font-mono" /></div>
                               <div><label className="block text-10 text-ink-3 mb-0.5">Email</label><input value={editForm.email} onChange={setEmp("email")} type="email" className="w-full text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" /></div>

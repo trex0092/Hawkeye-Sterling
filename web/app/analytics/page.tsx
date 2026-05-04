@@ -7,6 +7,61 @@ import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 import { loadAuditEntries } from "@/lib/audit";
 
+interface InsightItem {
+  finding: string;
+  implication: string;
+  action: string;
+  urgency: "immediate" | "this_month" | "quarterly";
+}
+
+interface NationalityDistributionEntry {
+  nationality: string;
+  count: number;
+  avgRiskScore: number;
+  flag: string;
+}
+
+interface BiasMonitor {
+  biasRisk: "elevated" | "moderate" | "low";
+  biasNarrative: string;
+  nationalityDistribution: NationalityDistributionEntry[];
+  potentialBiasIndicators: string[];
+  falsePositiveRisk: string;
+  recommendedActions: string[];
+  unescoAlignment: string;
+  monitoringFrequency: string;
+}
+
+interface AnalyticsInsights {
+  headline: string;
+  riskTrend: "deteriorating" | "stable" | "improving";
+  insights: InsightItem[];
+  regulatoryExposure: string;
+  boardTalkingPoints: string[];
+  benchmarkComment: string;
+}
+
+interface RiskPeriod {
+  period: string;
+  predictedScore: number;
+  confidence: "high" | "medium" | "low";
+}
+
+interface RiskIntervention {
+  action: string;
+  expectedImpact: string;
+  urgency: "immediate" | "short-term" | "medium-term";
+}
+
+interface PredictRiskResult {
+  ok: true;
+  forecast: "Stable" | "Elevated" | "Critical Trajectory";
+  riskTrajectory: RiskPeriod[];
+  acceleratingRisks: string[];
+  interventions: RiskIntervention[];
+  summary: string;
+}
+
 interface Analytics {
   ok: true;
   generatedAt: string;
@@ -85,6 +140,13 @@ export default function AnalyticsPage() {
   const [auditCount, setAuditCount] = useState(0);
   const [fourEyesCount, setFourEyesCount] = useState(0);
   const [fourEyesTotal, setFourEyesTotal] = useState(0);
+  const [aiInsights, setAiInsights] = useState<AnalyticsInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [biasMonitor, setBiasMonitor] = useState<BiasMonitor | null>(null);
+  const [biasLoading, setBiasLoading] = useState(false);
+  const [predictRisk, setPredictRisk] = useState<PredictRiskResult | null>(null);
+  const [predictLoading, setPredictLoading] = useState(false);
+  const [predictTimeframe, setPredictTimeframe] = useState<"30" | "60" | "90">("90");
   const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -188,6 +250,85 @@ export default function AnalyticsPage() {
 
   const weekly = useMemo(() => weeklySeries(screeningsTotal, 12), [screeningsTotal]);
 
+  const generateInsights = async () => {
+    setInsightsLoading(true);
+    setAiInsights(null);
+    try {
+      const pepCount = cases.filter((c) => /PEP/i.test(c.meta)).length;
+      const res = await fetch("/api/analytics-insights", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          kpis: {
+            totalScreenings: screeningsTotal,
+            criticalHits: data?.quality.trueMatchCount ?? 0,
+            strFiled: strsThisMonth,
+            pepCount,
+            sanctionsHits: data?.quality.trueMatchCount ?? 0,
+            avgRiskScore: undefined,
+            eddCount: criticalClearances,
+            overdueReviews: 0,
+          },
+          period: formatPeriod(now),
+        }),
+      });
+      if (!res.ok) return;
+      const result = await res.json() as { ok: boolean } & AnalyticsInsights;
+      if (result.ok) setAiInsights(result);
+    } catch { /* silent */ }
+    finally { setInsightsLoading(false); }
+  };
+
+  const runBiasMonitor = async () => {
+    setBiasLoading(true);
+    setBiasMonitor(null);
+    try {
+      const subjects = cases.map((c) => ({
+        name: c.subject,
+        riskScore: 0,
+        status: c.status,
+      }));
+      const res = await fetch("/api/ai-bias-monitor", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjects }),
+      });
+      if (!res.ok) return;
+      const result = (await res.json()) as { ok: boolean } & BiasMonitor;
+      if (result.ok) setBiasMonitor(result);
+    } catch { /* silent */ }
+    finally { setBiasLoading(false); }
+  };
+
+  const runPredictRisk = async () => {
+    setPredictLoading(true);
+    setPredictRisk(null);
+    try {
+      const pepCount = cases.filter((c) => /PEP/i.test(c.meta)).length;
+      const avgRisk = data?.quality.falsePositiveRate
+        ? Math.round(data.quality.falsePositiveRate * 100 + pepCount * 2)
+        : undefined;
+      const res = await fetch("/api/analytics/predict-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          historicalData: {
+            strFilingsThisMonth: strsThisMonth,
+            avgRiskScore: avgRisk,
+            screeningHits: data?.quality.trueMatchCount,
+            eddCases: criticalClearances,
+            slaBreaches: data?.quality.falsePositiveCount,
+          },
+          timeframe: predictTimeframe,
+        }),
+      });
+      if (!res.ok) return;
+      const result = (await res.json()) as PredictRiskResult;
+      if (result.ok) setPredictRisk(result);
+    } catch { /* silent */ }
+    finally { setPredictLoading(false); }
+  };
+
   const handleExportPdf = () => {
     if (typeof window === "undefined") return;
     window.print();
@@ -200,6 +341,9 @@ export default function AnalyticsPage() {
           {/* Cover band */}
           <div className="flex items-start justify-between border-b-2 border-ink-0 pb-4 mb-6 print:mb-4">
             <div>
+              <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+                MODULE 40
+              </div>
               <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">
                 Analytics · MLRO Performance Digest
               </div>
@@ -215,18 +359,300 @@ export default function AnalyticsPage() {
                 )}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 print:hidden"
-            >
-              Export PDF
-            </button>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                type="button"
+                onClick={() => void generateInsights()}
+                disabled={insightsLoading}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
+              >
+                {insightsLoading ? "Generating…" : "Generate AI Insights"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void runBiasMonitor()}
+                disabled={biasLoading}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+              >
+                {biasLoading ? "Analysing…" : "AI Bias Monitor"}
+              </button>
+              <select
+                value={predictTimeframe}
+                onChange={(e) => setPredictTimeframe(e.target.value as "30" | "60" | "90")}
+                className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-1 focus:outline-none focus:border-brand"
+              >
+                <option value="30">30 days</option>
+                <option value="60">60 days</option>
+                <option value="90">90 days</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => void runPredictRisk()}
+                disabled={predictLoading}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-orange/50 bg-orange-dim text-orange hover:bg-orange/20 disabled:opacity-40 whitespace-nowrap"
+              >
+                {predictLoading ? "Predicting…" : "🔮 Predict Risk Trajectory"}
+              </button>
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+              >
+                Export PDF
+              </button>
+            </div>
           </div>
 
           {err && (
             <div className="mb-4 bg-red-dim text-red rounded px-3 py-2 text-12">
               {err}
+            </div>
+          )}
+
+          {aiInsights && (
+            <div className="mb-6 bg-bg-panel border border-brand/20 rounded-xl p-5 space-y-4 print:hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-brand-deep">AI Insights</span>
+                  {aiInsights.riskTrend === "improving" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-green-dim text-green font-semibold">improving</span>
+                  )}
+                  {aiInsights.riskTrend === "stable" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-amber-dim text-amber font-semibold">stable</span>
+                  )}
+                  {aiInsights.riskTrend === "deteriorating" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">deteriorating</span>
+                  )}
+                </div>
+                <button type="button" onClick={() => setAiInsights(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+              </div>
+              <p className="text-14 font-semibold text-ink-0 leading-snug">{aiInsights.headline}</p>
+              {aiInsights.insights.length > 0 && (
+                <div className="space-y-2">
+                  {aiInsights.insights.map((ins, i) => {
+                    const urgCls = ins.urgency === "immediate"
+                      ? "bg-red text-white"
+                      : ins.urgency === "this_month"
+                        ? "bg-amber-dim text-amber"
+                        : "bg-bg-2 text-ink-2";
+                    return (
+                      <div key={i} className="bg-bg-1 rounded-lg p-3 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${urgCls}`}>{ins.urgency.replace("_", " ")}</span>
+                          <span className="text-12 font-semibold text-ink-0">{ins.finding}</span>
+                        </div>
+                        <p className="text-11 text-ink-2">{ins.implication}</p>
+                        <p className="text-11 text-brand-deep font-medium">{ins.action}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {aiInsights.boardTalkingPoints.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Board Talking Points</div>
+                  <ul className="space-y-1">
+                    {aiInsights.boardTalkingPoints.map((pt, i) => (
+                      <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                        <span className="text-brand mt-0.5 shrink-0">•</span>
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {aiInsights.benchmarkComment && (
+                <p className="text-11 text-ink-3 italic">{aiInsights.benchmarkComment}</p>
+              )}
+              {aiInsights.regulatoryExposure && (
+                <p className="font-mono text-10 text-ink-3">{aiInsights.regulatoryExposure}</p>
+              )}
+            </div>
+          )}
+
+          {biasMonitor && (
+            <div className="mb-6 bg-bg-panel border border-violet/20 rounded-xl p-5 space-y-4 print:hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-violet">AI Bias Monitor</span>
+                  <span className="text-10 font-mono text-ink-3">UNESCO Principle 3 · Fairness &amp; Non-Discrimination</span>
+                  {biasMonitor.biasRisk === "elevated" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-red-dim text-red font-semibold">elevated risk</span>
+                  )}
+                  {biasMonitor.biasRisk === "moderate" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-amber-dim text-amber font-semibold">moderate risk</span>
+                  )}
+                  {biasMonitor.biasRisk === "low" && (
+                    <span className="font-mono text-10 px-2 py-px rounded bg-green-dim text-green font-semibold">low risk</span>
+                  )}
+                </div>
+                <button type="button" onClick={() => setBiasMonitor(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+              </div>
+              <p className="text-13 text-ink-1 leading-snug">{biasMonitor.biasNarrative}</p>
+
+              {biasMonitor.nationalityDistribution.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Nationality Distribution</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-11 font-mono border-collapse">
+                      <thead>
+                        <tr className="text-left text-ink-3 border-b border-hair">
+                          <th className="pb-1 pr-4 font-medium">Nationality</th>
+                          <th className="pb-1 pr-4 font-medium text-right">Count</th>
+                          <th className="pb-1 pr-4 font-medium text-right">Avg Risk</th>
+                          <th className="pb-1 font-medium">Assessment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {biasMonitor.nationalityDistribution.map((row, i) => (
+                          <tr key={i} className="border-b border-hair/50">
+                            <td className="py-1 pr-4 text-ink-0">{row.nationality}</td>
+                            <td className="py-1 pr-4 text-right text-ink-1">{row.count}</td>
+                            <td className="py-1 pr-4 text-right text-ink-1">{row.avgRiskScore.toFixed(0)}</td>
+                            <td className="py-1 text-ink-2 text-10">{row.flag}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {biasMonitor.potentialBiasIndicators.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Potential Bias Indicators</div>
+                  <div className="flex flex-wrap gap-2">
+                    {biasMonitor.potentialBiasIndicators.map((ind, i) => (
+                      <span key={i} className="text-10 px-2 py-1 rounded bg-amber-dim text-amber font-medium">{ind}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {biasMonitor.falsePositiveRisk && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">False Positive Risk</div>
+                  <p className="text-12 text-ink-1">{biasMonitor.falsePositiveRisk}</p>
+                </div>
+              )}
+
+              {biasMonitor.recommendedActions.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Recommended Actions</div>
+                  <ul className="space-y-1">
+                    {biasMonitor.recommendedActions.map((action, i) => (
+                      <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                        <span className="text-violet mt-0.5 shrink-0">•</span>
+                        <span>{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {biasMonitor.unescoAlignment && (
+                <p className="font-mono text-10 text-ink-3 bg-bg-1 rounded px-3 py-2">{biasMonitor.unescoAlignment}</p>
+              )}
+
+              <div className="flex items-center gap-2">
+                <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Monitoring Frequency:</span>
+                <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{biasMonitor.monitoringFrequency}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Predict Risk Trajectory Panel */}
+          {predictRisk && (
+            <div className="mb-6 bg-bg-panel border border-orange/20 rounded-xl p-5 space-y-4 print:hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-11 font-semibold uppercase tracking-wide-3 text-orange">🔮 Risk Trajectory Forecast</span>
+                  <span className={`font-mono text-10 px-2.5 py-px rounded font-semibold ${
+                    predictRisk.forecast === "Stable"
+                      ? "bg-green-dim text-green"
+                      : predictRisk.forecast === "Elevated"
+                        ? "bg-amber-dim text-amber"
+                        : "bg-red-dim text-red"
+                  }`}>
+                    {predictRisk.forecast}
+                  </span>
+                  <span className="font-mono text-10 text-ink-3">{predictTimeframe}-day forecast</span>
+                </div>
+                <button type="button" onClick={() => setPredictRisk(null)} className="text-11 text-ink-3 hover:text-ink-1">×</button>
+              </div>
+
+              {/* Summary */}
+              <p className="text-13 text-ink-1 leading-snug">{predictRisk.summary}</p>
+
+              {/* Trajectory bars */}
+              {predictRisk.riskTrajectory.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-3">Predicted Risk Score by Period</div>
+                  <div className="space-y-2">
+                    {predictRisk.riskTrajectory.map((p, i) => {
+                      const confCls = p.confidence === "high" ? "text-green" : p.confidence === "medium" ? "text-amber" : "text-ink-3";
+                      const barColor = p.predictedScore >= 75 ? "bg-red" : p.predictedScore >= 50 ? "bg-amber" : "bg-green";
+                      return (
+                        <div key={i} className="grid grid-cols-[80px_1fr_80px_60px] items-center gap-3">
+                          <span className="font-mono text-11 text-ink-2 text-right">{p.period}</span>
+                          <div className="h-3 bg-bg-2 rounded-sm overflow-hidden">
+                            <div
+                              className={`h-full rounded-sm ${barColor} transition-all duration-500`}
+                              style={{ width: `${Math.min(p.predictedScore, 100)}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-12 font-semibold text-ink-0 text-right">{p.predictedScore}/100</span>
+                          <span className={`font-mono text-10 ${confCls}`}>{p.confidence} conf.</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Accelerating risks */}
+              {predictRisk.acceleratingRisks.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Accelerating Risks</div>
+                  <div className="flex flex-wrap gap-2">
+                    {predictRisk.acceleratingRisks.map((risk, i) => (
+                      <span key={i} className="text-11 px-2.5 py-1 rounded bg-red-dim text-red font-medium border border-red/20">{risk}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Intervention cards */}
+              {predictRisk.interventions.length > 0 && (
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-3">Proactive Interventions</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {predictRisk.interventions.map((inv, i) => {
+                      const urgCls = inv.urgency === "immediate"
+                        ? "bg-red text-white"
+                        : inv.urgency === "short-term"
+                          ? "bg-amber-dim text-amber"
+                          : "bg-bg-2 text-ink-2";
+                      const impactCls = "bg-green-dim text-green";
+                      return (
+                        <div key={i} className="bg-bg-1 rounded-lg p-3 space-y-2 border border-hair">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`font-mono text-9 px-1.5 py-px rounded uppercase shrink-0 ${urgCls}`}>
+                              {inv.urgency.replace("-", " ")}
+                            </span>
+                            <span className="text-10 font-semibold text-ink-0">Intervention {i + 1}</span>
+                          </div>
+                          <p className="text-12 text-ink-0 font-medium leading-snug">{inv.action}</p>
+                          <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-10 font-semibold ${impactCls}`}>
+                            {inv.expectedImpact}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

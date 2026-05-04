@@ -126,6 +126,85 @@ describe('fusion — conflict detection + outcome', () => {
   });
 });
 
+describe('fusion — log-linear LR pooling (LR^q) + per-LR per-evidence weighting', () => {
+  it('damps a strong raw LR more aggressively for low-quality evidence than for high-quality', () => {
+    const idx = new Map<string, EvidenceItem>([
+      ['weak:e', {
+        id: 'weak:e', kind: 'social_media', title: 't',
+        observedAt: new Date().toISOString(), languageIso: 'en',
+        credibility: 'weak',
+      }],
+      ['auth:e', {
+        id: 'auth:e', kind: 'sanctions_list', title: 't',
+        observedAt: new Date().toISOString(), languageIso: 'en',
+        credibility: 'authoritative',
+      }],
+    ]);
+    const sameRawLR = { positiveGivenHypothesis: 0.95, positiveGivenNot: 0.05 };
+    const weak = fuseFindings(
+      [f({ modeId: 'w', score: 0.9, confidence: 0.9, evidence: ['weak:e'],
+        likelihoodRatios: [{ evidenceId: 'weak:e', ...sameRawLR }] })],
+      { evidenceIndex: idx, prior: 0.1 },
+    );
+    const auth = fuseFindings(
+      [f({ modeId: 'a', score: 0.9, confidence: 0.9, evidence: ['auth:e'],
+        likelihoodRatios: [{ evidenceId: 'auth:e', ...sameRawLR }] })],
+      { evidenceIndex: idx, prior: 0.1 },
+    );
+    expect(auth.posterior).toBeGreaterThan(weak.posterior);
+    // Log-linear pooling implies at q=0 the LR collapses to ~1, neutral.
+    // Weak credibility ('weak' → 0.3) yields meaningfully smaller posterior.
+    const authStep = auth.bayesTrace?.steps[0];
+    const weakStep = weak.bayesTrace?.steps[0];
+    expect(authStep?.weightedLR).toBeGreaterThan(weakStep?.weightedLR ?? 0);
+  });
+
+  it('surfaces rawLR, effectiveWeight, and weightedLR per BayesTrace step (Charter P6)', () => {
+    const idx = new Map<string, EvidenceItem>([
+      ['ev1', {
+        id: 'ev1', kind: 'regulator_press_release', title: 't',
+        observedAt: new Date().toISOString(), languageIso: 'en',
+        credibility: 'authoritative',
+      }],
+    ]);
+    const r = fuseFindings(
+      [f({ modeId: 'm', score: 0.8, confidence: 0.9, evidence: ['ev1'],
+        likelihoodRatios: [{ evidenceId: 'ev1', positiveGivenHypothesis: 0.9, positiveGivenNot: 0.1 }] })],
+      { evidenceIndex: idx, prior: 0.1 },
+    );
+    const step = r.bayesTrace?.steps[0];
+    expect(step).toBeDefined();
+    expect(step!.rawLR).toBeGreaterThan(1);
+    expect(step!.effectiveWeight).toBeGreaterThan(0);
+    expect(step!.effectiveWeight).toBeLessThanOrEqual(1);
+    expect(step!.weightedLR).toBeDefined();
+    // weightedLR = rawLR ^ effectiveWeight (within float tolerance).
+    const expected = Math.pow(step!.rawLR!, step!.effectiveWeight!);
+    expect(Math.abs(step!.weightedLR! - expected)).toBeLessThan(1e-6);
+  });
+
+  it('weight=0 evidence collapses LR to neutral (does not move posterior)', () => {
+    // training_data has freshnessFactor === 0 by Charter P8, so weight === 0.
+    const idx = new Map<string, EvidenceItem>([
+      ['td:1', {
+        id: 'td:1', kind: 'training_data', title: 't',
+        observedAt: new Date().toISOString(), languageIso: 'en',
+        credibility: 'authoritative',
+      }],
+    ]);
+    const r = fuseFindings(
+      [f({ modeId: 'm', score: 0.99, confidence: 0.99, evidence: ['td:1'],
+        likelihoodRatios: [{ evidenceId: 'td:1', positiveGivenHypothesis: 0.99, positiveGivenNot: 0.01 }] })],
+      { evidenceIndex: idx, prior: 0.1 },
+    );
+    // Posterior should remain near the prior because the LR was driven to 1.0.
+    expect(Math.abs(r.posterior - r.prior)).toBeLessThan(0.05);
+    const step = r.bayesTrace?.steps[0];
+    expect(step?.effectiveWeight).toBe(0);
+    expect(step?.weightedLR).toBe(1);
+  });
+});
+
 describe('fusion — cognitive firepower', () => {
   it('reports per-faculty activation across every registered faculty', () => {
     const findings: Finding[] = [

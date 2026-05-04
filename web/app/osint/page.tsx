@@ -9,6 +9,31 @@ interface SherlockResult { ok: boolean; username: string; profiles: SherlockProf
 interface SocialProfile { platform: string; url: string; score: number }
 interface SocialResult { ok: boolean; person: string; profiles: SocialProfile[]; error?: string }
 
+interface OsintSynthesis {
+  threatScore: number;
+  threatLevel: "critical" | "high" | "medium" | "low" | "clear";
+  subjectType: string;
+  keyFindings: string[];
+  redFlags: string[];
+  jurisdictionExposure: string[];
+  sanctionsRelevance: string;
+  adverseMediaIndicators: string[];
+  recommendedNextSteps: string[];
+  complianceNarrative: string;
+}
+
+interface IntelSynthesis {
+  ok: boolean;
+  profile: string;
+  corroborating: string[];
+  contradicting: string[];
+  confidenceScore: number;
+  intelligenceGaps: string[];
+  threatLevel: "none" | "low" | "medium" | "high" | "critical";
+  assessment: string;
+  recommendedActions: string[];
+}
+
 type Mode = "domain" | "username";
 
 const MODE_HINT: Record<Mode, string> = {
@@ -27,6 +52,11 @@ export default function OsintPage() {
   const [socialResult, setSocialResult] = useState<SocialResult | null>(null);
   const [error, setError] = useState("");
   const [scannedAt, setScannedAt] = useState("");
+  const [synthesis, setSynthesis] = useState<OsintSynthesis | null>(null);
+  const [synthLoading, setSynthLoading] = useState(false);
+  const [intelSynthesis, setIntelSynthesis] = useState<IntelSynthesis | null>(null);
+  const [intelSynthLoading, setIntelSynthLoading] = useState(false);
+  const [intelSources, setIntelSources] = useState("");
 
   const run = async () => {
     const t = target.trim();
@@ -73,11 +103,88 @@ export default function OsintPage() {
     }
   };
 
+  const runSynthesis = async () => {
+    setSynthLoading(true);
+    setSynthesis(null);
+    try {
+      const res = await fetch("/api/osint-synthesis", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          target,
+          mode,
+          ...(domainResult ? { domain: { emails: domainResult.emails, hosts: domainResult.hosts, ips: domainResult.ips } } : {}),
+          ...(sherlockResult ? { sherlock: { username: sherlockResult.username, profiles: sherlockResult.profiles, totalFound: sherlockResult.totalFound } } : {}),
+          ...(socialResult ? { social: { person: socialResult.person, profiles: socialResult.profiles } } : {}),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { ok: boolean } & OsintSynthesis;
+      if (data.ok) setSynthesis(data);
+    } catch { /* silent */ }
+    finally { setSynthLoading(false); }
+  };
+
+  const runIntelSynthesis = async () => {
+    setIntelSynthLoading(true);
+    setIntelSynthesis(null);
+    try {
+      // Build sources from existing scan results + manual sources text
+      const sources: Array<{ source: string; content: string; date?: string }> = [];
+      if (domainResult) {
+        sources.push({
+          source: "theHarvester Domain Scan",
+          content: `Emails: ${domainResult.emails.join(", ") || "none"}. Hosts: ${domainResult.hosts.join(", ") || "none"}. IPs: ${domainResult.ips.join(", ") || "none"}.`,
+          date: scannedAt || undefined,
+        });
+      }
+      if (sherlockResult) {
+        const found = sherlockResult.profiles.filter((p) => p.exists);
+        sources.push({
+          source: "Sherlock Username Search",
+          content: `${sherlockResult.totalFound} profiles found for username "${sherlockResult.username}": ${found.map((p) => p.site).join(", ") || "none"}.`,
+          date: scannedAt || undefined,
+        });
+      }
+      if (socialResult) {
+        sources.push({
+          source: "Social Analyzer",
+          content: `Person "${socialResult.person}" — platforms: ${socialResult.profiles.map((p) => `${p.platform} (${Math.round(p.score * 100)}%)`).join(", ") || "none"}.`,
+          date: scannedAt || undefined,
+        });
+      }
+      // Append manually entered source snippets
+      if (intelSources.trim()) {
+        const lines = intelSources.trim().split(/\n+/);
+        lines.forEach((line, i) => {
+          if (line.trim()) {
+            sources.push({ source: `Manual Source ${i + 1}`, content: line.trim() });
+          }
+        });
+      }
+      if (sources.length === 0) return;
+      const res = await fetch("/api/osint/synthesize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subject: target,
+          sources,
+          subjectType: mode === "domain" ? "corporate" : "individual",
+        }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as IntelSynthesis;
+      if (data.ok) setIntelSynthesis(data);
+    } catch { /* silent */ }
+    finally { setIntelSynthLoading(false); }
+  };
+
   const hasResults = domainResult || sherlockResult || socialResult;
 
   return (
     <ModuleLayout asanaModule="osint" asanaLabel="OSINT Intelligence">
       <ModuleHero
+        moduleNumber={34}
         eyebrow="Enrichment · Open Source Intelligence"
         title="OSINT"
         titleEm="Intelligence."
@@ -183,6 +290,195 @@ export default function OsintPage() {
           {sherlockResult && !sherlockResult.profiles.filter((p) => p.exists).length && !socialResult?.profiles.length && (
             <p className="text-13 text-ink-3">No profiles found for this username.</p>
           )}
+        </div>
+      )}
+
+      {hasResults && (
+        <div className="mt-4">
+          <button type="button" onClick={() => void runSynthesis()} disabled={synthLoading}
+            className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+            {synthLoading ? "Synthesizing…" : "AI Threat Synthesis"}
+          </button>
+          {synthesis && (() => {
+            const lvlCls = synthesis.threatLevel === "critical" ? "bg-red text-white" : synthesis.threatLevel === "high" ? "bg-red-dim text-red" : synthesis.threatLevel === "medium" ? "bg-amber-dim text-amber" : synthesis.threatLevel === "low" ? "bg-blue-dim text-blue" : "bg-green-dim text-green";
+            return (
+              <div className="mt-3 bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${lvlCls}`}>{synthesis.threatLevel}</span>
+                  <span className="font-mono text-11 text-ink-2">Threat score: {synthesis.threatScore}/100</span>
+                </div>
+                <p className="text-12 text-ink-0 leading-relaxed">{synthesis.complianceNarrative}</p>
+                {synthesis.redFlags.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-red mb-1">Red flags</div>
+                    <ul className="text-11 text-ink-1 list-disc list-inside space-y-0.5">{synthesis.redFlags.map((f, i) => <li key={i}>{f}</li>)}</ul>
+                  </div>
+                )}
+                {synthesis.keyFindings.length > 0 && (
+                  <ul className="text-11 text-ink-2 list-disc list-inside space-y-0.5">{synthesis.keyFindings.map((f, i) => <li key={i}>{f}</li>)}</ul>
+                )}
+                {synthesis.jurisdictionExposure.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">{synthesis.jurisdictionExposure.map((j, i) => <span key={i} className="font-mono text-10 px-1.5 py-px rounded bg-brand-dim text-brand-deep">{j}</span>)}</div>
+                )}
+                {synthesis.recommendedNextSteps.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Next steps</div>
+                    <ol className="text-11 text-ink-1 list-decimal list-inside space-y-0.5">{synthesis.recommendedNextSteps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Multi-Source Intelligence Synthesis */}
+      {hasResults && (
+        <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl p-5 space-y-4">
+          <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+            Multi-Source Intelligence Synthesis
+          </div>
+          <p className="text-11 text-ink-3">
+            Optionally add additional intelligence snippets (one per line) to supplement the scan results, then synthesise.
+          </p>
+          <textarea
+            value={intelSources}
+            onChange={(e) => setIntelSources(e.target.value)}
+            placeholder={"Paste additional intelligence snippets here (one per line):\nSubject seen in Dubai property registry under alias X.\nAdverse media: linked to money laundering probe 2023."}
+            rows={4}
+            className="w-full bg-bg-input border border-hair-2 rounded px-3 py-2 text-12 text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand resize-y font-mono"
+          />
+          <button
+            type="button"
+            onClick={() => void runIntelSynthesis()}
+            disabled={intelSynthLoading}
+            className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {intelSynthLoading ? "Synthesizing…" : "🧠 Synthesize Intelligence"}
+          </button>
+
+          {intelSynthesis && (() => {
+            const threatColors: Record<string, string> = {
+              critical: "bg-red text-white border-red",
+              high: "bg-red-dim text-red border-red/40",
+              medium: "bg-amber-dim text-amber border-amber/40",
+              low: "bg-blue-dim text-blue border-blue/40",
+              none: "bg-green-dim text-green border-green/40",
+            };
+            const tierColor = threatColors[intelSynthesis.threatLevel] ?? "bg-bg-2 text-ink-2 border-hair-2";
+            const score = intelSynthesis.confidenceScore;
+            const circumference = 2 * Math.PI * 22; // r=22
+            const offset = circumference - (score / 100) * circumference;
+            return (
+              <div className="mt-2 space-y-5 print:space-y-4">
+                {/* Threat level + confidence row */}
+                <div className="flex items-center gap-6 flex-wrap">
+                  {/* Threat level badge */}
+                  <div className={`px-5 py-2.5 rounded-lg border text-14 font-bold uppercase tracking-wide ${tierColor}`}>
+                    {intelSynthesis.threatLevel} Threat
+                  </div>
+                  {/* Confidence score circular display */}
+                  <div className="flex items-center gap-3">
+                    <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90">
+                      <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor" strokeWidth="5" className="text-hair-2" />
+                      <circle
+                        cx="28" cy="28" r="22" fill="none"
+                        stroke="currentColor" strokeWidth="5"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        className={score >= 70 ? "text-green" : score >= 40 ? "text-amber" : "text-red"}
+                      />
+                    </svg>
+                    <div>
+                      <div className="text-20 font-mono font-bold text-ink-0 leading-none">{score}</div>
+                      <div className="text-10 uppercase tracking-wide-3 text-ink-3">Confidence</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile */}
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Profile</div>
+                  <p className="text-12 text-ink-0 leading-relaxed">{intelSynthesis.profile}</p>
+                </div>
+
+                {/* Corroborating signals */}
+                {intelSynthesis.corroborating.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-green mb-2">Corroborating Signals</div>
+                    <ul className="space-y-1">
+                      {intelSynthesis.corroborating.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                          <span className="text-green mt-px shrink-0">✓</span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Contradicting signals */}
+                {intelSynthesis.contradicting.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-red mb-2">Contradicting Signals</div>
+                    <ul className="space-y-1">
+                      {intelSynthesis.contradicting.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                          <span className="text-red mt-px shrink-0">✗</span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Intelligence gaps */}
+                {intelSynthesis.intelligenceGaps.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-amber mb-2">Intelligence Gaps</div>
+                    <ul className="space-y-1">
+                      {intelSynthesis.intelligenceGaps.map((g, i) => (
+                        <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
+                          <span className="text-amber mt-px shrink-0">⚠</span>
+                          <span>{g}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Assessment */}
+                <div>
+                  <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Intelligence Assessment</div>
+                  <p className="text-12 text-ink-1 leading-relaxed">{intelSynthesis.assessment}</p>
+                </div>
+
+                {/* Recommended actions */}
+                {intelSynthesis.recommendedActions.length > 0 && (
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Recommended Actions</div>
+                    <ol className="space-y-1.5 list-decimal list-inside">
+                      {intelSynthesis.recommendedActions.map((a, i) => (
+                        <li key={i} className="text-12 text-ink-1">{a}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Export */}
+                <div className="pt-2 border-t border-hair-2">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+                  >
+                    Export Intelligence Report
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </ModuleLayout>

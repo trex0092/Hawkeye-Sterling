@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
@@ -82,6 +82,9 @@ export default function WorkbenchPage() {
   );
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
+  const runAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { runAbortRef.current?.abort(); }, []);
+
   // Subject screening state
   const [subjectName, setSubjectName] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -156,6 +159,10 @@ export default function WorkbenchPage() {
     const name = subjectName.trim();
     if (!name) return;
 
+    runAbortRef.current?.abort();
+    const ac = new AbortController();
+    runAbortRef.current = ac;
+
     setIsRunning(true);
     setBrainError(null);
     setBrainResult(null);
@@ -183,14 +190,18 @@ export default function WorkbenchPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subject: { name } }),
+        signal: ac.signal,
       });
+      if (ac.signal.aborted) return;
       const data = (await res.json()) as BrainResult & { error?: string };
+      if (ac.signal.aborted) return;
       if (!res.ok || !data.ok) {
         setBrainError(data.error ?? `HTTP ${res.status}`);
       } else {
         setBrainResult(data);
       }
     } catch (err) {
+      if (ac.signal.aborted) return;
       setBrainError(err instanceof Error ? err.message : "Network error");
     } finally {
       setIsRunning(false);
@@ -225,6 +236,9 @@ export default function WorkbenchPage() {
         <main className="px-10 py-8 overflow-y-auto">
           {/* Unified hero */}
           <div className="mb-6">
+            <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+              MODULE 43
+            </div>
             <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
               MODULE 03 · WORKBENCH BRAIN
             </div>

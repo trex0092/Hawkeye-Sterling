@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { formatDMY } from "@/lib/utils/dateFormat";
 
 type Capacity =
   | "subject"
@@ -68,16 +69,15 @@ export default function CorrectionsPage() {
     <ModuleLayout asanaModule="corrections" asanaLabel="Corrections">
       <div>
         <ModuleHero
-          eyebrow="Public-facing form"
+          moduleNumber={19}
+          eyebrow="Module · Data Subject Rights · FDL Art.30"
           title="Record correction"
           titleEm="request."
           intro={
             <>
-              Dispute or request correction of a watchlist or adverse-media
-              record that mentions you. Reviewed within 30 days of receipt.
-              Appeals can be escalated via{" "}
-              <code>/api/corrections/&lt;id&gt;</code> using the receipt ID
-              you&apos;ll receive on submission.
+              <strong>Dispute or request correction of a watchlist or adverse-media record.</strong>{" "}
+              Reviewed within 30 calendar days of receipt per FDL 10/2025 Art.30 and GDPR Art.16 (Rectification).
+              You will receive a receipt ID to track status and escalate if needed.
             </>
           }
         />
@@ -98,42 +98,14 @@ export default function CorrectionsPage() {
             <div className="text-12 text-ink-0 mb-1">
               Response due by:{" "}
               <span className="font-mono">
-                {new Date(receipt.dueBy).toLocaleDateString()}
+                {formatDMY(receipt.dueBy)}
               </span>
             </div>
             <div className="text-11 text-ink-2 mt-2">{receipt.message}</div>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Row label="Subject name on the record *">
-                <input
-                  required
-                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
-                  value={form.subjectName}
-                  onChange={update("subjectName")}
-                />
-              </Row>
-              <div className="grid grid-cols-2 gap-3">
-                <Row label="List ID">
-                  <input
-                    className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
-                    placeholder="OFAC-SDN"
-                    value={form.listId}
-                    onChange={update("listId")}
-                  />
-                </Row>
-                <Row label="List reference">
-                  <input
-                    className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0 font-mono"
-                    placeholder="OFAC-12345"
-                    value={form.listRef}
-                    onChange={update("listRef")}
-                  />
-                </Row>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Row label="Your name *">
                 <input
                   required
@@ -151,20 +123,20 @@ export default function CorrectionsPage() {
                   onChange={update("requesterEmail")}
                 />
               </Row>
+              <Row label="Filing as *">
+                <select
+                  required
+                  className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
+                  value={form.requesterCapacity}
+                  onChange={update("requesterCapacity")}
+                >
+                  <option value="subject">The subject of the record</option>
+                  <option value="legal_representative">Legal representative</option>
+                  <option value="data_controller">Data controller</option>
+                  <option value="other">Other</option>
+                </select>
+              </Row>
             </div>
-            <Row label="Filing as *">
-              <select
-                required
-                className="w-full rounded border border-hair-2 bg-bg-panel px-3 py-2 text-13 text-ink-0"
-                value={form.requesterCapacity}
-                onChange={update("requesterCapacity")}
-              >
-                <option value="subject">The subject of the record</option>
-                <option value="legal_representative">Legal representative</option>
-                <option value="data_controller">Data controller</option>
-                <option value="other">Other</option>
-              </select>
-            </Row>
             <Row label="Claim / rationale *">
               <textarea
                 required

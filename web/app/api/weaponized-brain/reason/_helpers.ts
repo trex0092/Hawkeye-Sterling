@@ -43,6 +43,7 @@ export interface ReasonInput {
   };
   roleText?: string;
   narrative?: string;
+  adverseMediaText?: string;
 }
 
 export interface CitedModule {
@@ -179,9 +180,9 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   // 5 · Redlines
   const tE = performance.now();
   const redlineKeywords = fullText.toLowerCase();
-  const firedRedlineIds = REDLINES.filter((r) =>
+  const firedRedlineIds = REDLINES.filter((r: any) =>
     redlineKeywordsMatch(redlineKeywords, r.id, r.precondition ?? r.label ?? ""),
-  ).map((r) => r.id);
+  ).map((r: any) => r.id);
   const redlines = evaluateRedlines(firedRedlineIds);
   for (const r of redlines.fired) {
     cited.push({ kind: "redline", id: r.id, label: r.label, detail: `${r.action} · ${r.regulatoryAnchor}` });
@@ -194,15 +195,15 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
 
   // 6 · Doctrines
   const tF = performance.now();
-  const doctrineHits = DOCTRINES.filter((d) => doctrineApplies(d, body.subject, jurisdiction)).slice(0, 6);
+  const doctrineHits = DOCTRINES.filter((d: any) => doctrineApplies(d, body.subject, jurisdiction)).slice(0, 6);
   for (const d of doctrineHits) {
     cited.push({ kind: "doctrine", id: d.id, label: d.title, detail: d.authority });
   }
   if (doctrineHits.length > 0) {
     steps.push({
       step: "Doctrines in scope",
-      cited: doctrineHits.map((d) => d.id),
-      finding: `${doctrineHits.length} doctrine(s) apply: ${doctrineHits.map((d) => d.title).join("; ")}.`,
+      cited: doctrineHits.map((d: any) => d.id),
+      finding: `${doctrineHits.length} doctrine(s) apply: ${doctrineHits.map((d: any) => d.title).join("; ")}.`,
     });
     if (jurisdiction?.cahra) firedModeIds.add("oecd_ddg_annex");
     if ((body.subject.sector ?? "").toLowerCase().includes("gold")) firedModeIds.add("lbma_rgg_five_step");
@@ -213,15 +214,15 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   // 7 · Meta-cognition
   const tG = performance.now();
   const metaCtx = `${fullText} ${redlines.fired.length > 0 ? "redline" : ""} ${pep ? "pep" : ""} ${jurisdiction?.cahra ? "cahra" : ""}`.toLowerCase();
-  const metaHits = META_COGNITION.filter((m) => metaCognitionApplies(m, metaCtx)).slice(0, 6);
+  const metaHits = META_COGNITION.filter((m: any) => metaCognitionApplies(m, metaCtx)).slice(0, 6);
   for (const m of metaHits) {
     cited.push({ kind: "meta-cognition", id: m.id, label: m.label, detail: m.directive });
   }
   if (metaHits.length > 0) {
     steps.push({
       step: "Meta-cognition activation",
-      cited: metaHits.map((m) => m.id),
-      finding: `${metaHits.length} primitive(s) active: ${metaHits.map((m) => m.label).join("; ")}.`,
+      cited: metaHits.map((m: any) => m.id),
+      finding: `${metaHits.length} primitive(s) active: ${metaHits.map((m: any) => m.label).join("; ")}.`,
     });
   }
   // Always-on meta-cognition modes per charter.
@@ -290,7 +291,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
     pep,
     adverseMedia,
     typologies: {
-      hits: rawTypologyHits.slice(0, 12).map((h) => ({
+      hits: rawTypologyHits.slice(0, 12).map((h: any) => ({
         id: h.typology.id, name: h.typology.name, family: h.typology.family,
         weight: h.typology.weight, snippet: h.snippet,
       })),
@@ -312,7 +313,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
       composite: round(tComposite),
       total: round(total),
     },
-    firedModeIds: [...firedModeIds].filter((id) => REASONING_MODES.some((m) => m.id === id)),
+    firedModeIds: [...firedModeIds].filter((id: any) => REASONING_MODES.some((m: any) => m.id === id)),
   };
 }
 
@@ -410,7 +411,7 @@ export function generateSteelman(result: ReasoningResult): SteelmanArgument[] {
   }
   if (result.redlines.fired.length > 0) {
     out.push({
-      finding: `${result.redlines.fired.length} redline(s) fired: ${result.redlines.fired.map((r) => r.label).join(", ")}`,
+      finding: `${result.redlines.fired.length} redline(s) fired: ${result.redlines.fired.map((r: any) => r.label).join(", ")}`,
       counterArgument:
         "Keyword bleeding — narrative contains the redline trigger string in a quoted news headline, " +
         "client disclosure, or counter-evidence context, not as a finding of fact.",
@@ -477,7 +478,7 @@ export interface ModeCoverage {
 
 export function generateModeCoverage(firedModeIds: string[]): ModeCoverage {
   const fired = firedModeIds
-    .map((id) => REASONING_MODES.find((m) => m.id === id))
+    .map((id: any) => REASONING_MODES.find((m: any) => m.id === id))
     .filter((m): m is NonNullable<typeof m> => m !== undefined);
   const byFaculty = new Map<string, ModeCoverage["byFaculty"][number]["modes"]>();
   for (const m of fired) {
@@ -505,8 +506,11 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
   const now = new Date().toISOString();
   const subjectName = input.subject.name;
   const entityType = input.subject.entityType ?? "individual";
-  const jurisdiction = result.jurisdiction?.name ?? input.subject.jurisdiction ?? "—";
-  const sector = input.subject.sector ?? "—";
+  const jurisdictionRaw = result.jurisdiction?.name ?? input.subject.jurisdiction;
+  const jurisdiction = jurisdictionRaw ?? "— [SUPPLEMENT: enter subject's country before filing]";
+  const sectorRaw = input.subject.sector;
+  const sector = sectorRaw ?? "— [SUPPLEMENT: enter sector/business activity before filing]";
+  const narrativeEmpty = !(input.narrative ?? "").trim() && !(input.adverseMediaText ?? "").trim();
 
   const trigger = [
     result.screen.hits.length > 0 ? `${result.screen.hits.length} watchlist candidate hit(s) (top score ${result.screen.topScore}, severity ${result.screen.severity})` : null,
@@ -517,11 +521,14 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
     result.jurisdiction?.cahra ? `CAHRA-domiciled (${result.jurisdiction.name})` : null,
   ].filter(Boolean).join("; ") || "Composite-score threshold breach";
 
-  const activitySummary = (input.narrative ?? "").trim().slice(0, 1200) || "(no narrative supplied — facts to be supplemented from primary records before filing)";
+  const activitySummary = (input.narrative ?? "").trim().slice(0, 1200) ||
+    (narrativeEmpty
+      ? "[NARRATIVE NOT PROVIDED] — The Brain Inspector was run without adverse-media / OSINT text. Composite score reflects name-match and jurisdiction screening only. Paste transaction records, adverse media, or OSINT into the narrative field and re-run for a complete assessment. Supplement with primary records from the case file before filing with goAML."
+      : "(no narrative supplied — facts to be supplemented from primary records before filing)");
 
   const redFlags = [
-    ...result.redlines.fired.map((r) => `REDLINE · ${r.label} (${r.action.toUpperCase()})`),
-    ...result.adverseMedia.map((a) => `ADVERSE MEDIA · ${a.categoryId.replace(/_/g, " ")} — keyword "${a.keyword}"`),
+    ...result.redlines.fired.map((r: any) => `REDLINE · ${r.label} (${r.action.toUpperCase()})`),
+    ...result.adverseMedia.map((a: any) => `ADVERSE MEDIA · ${a.categoryId.replace(/_/g, " ")} — keyword "${a.keyword}"`),
     ...result.typologies.hits.slice(0, 5).map((t) => `TYPOLOGY · ${t.name} (${t.family}) — "${t.snippet.slice(0, 140)}"`),
   ];
   if (redFlags.length === 0) redFlags.push("(no discrete red flags fired — composite score reflects accumulated weaker signals)");
@@ -609,7 +616,7 @@ function resolveJurisdiction(input?: string): {
   const byName = jurisdictionByName(raw);
   const iso2Guess = raw.length === 2 ? raw.toUpperCase() : byName?.iso2 ?? raw.toUpperCase();
   const regimes = (() => {
-    try { return regimesForJurisdiction(iso2Guess).map((r) => r.id ?? String(r)); }
+    try { return regimesForJurisdiction(iso2Guess).map((r: any) => r.id ?? String(r)); }
     catch { return []; }
   })();
   return {

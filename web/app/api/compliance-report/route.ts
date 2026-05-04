@@ -247,202 +247,361 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${safeTitle}</title>
   <style>
-    :root {
-      --bg: #0c0c0e;
-      --card: #121215;
-      --border: #1e1e24;
-      --brand: #ec4899;
-      --brand-dim: rgba(236,72,153,.12);
-      --ink0: #f2f2f5;
-      --ink1: #c8c8d0;
-      --ink2: #888894;
-      --ink3: #52525e;
-      --green: #22c55e;
-      --green-dim: rgba(34,197,94,.12);
-      --red: #ef4444;
-      --red-dim: rgba(239,68,68,.12);
-      --amber: #f59e0b;
-      --amber-dim: rgba(245,158,11,.12);
+    /* ── HAWKEYE STERLING · COMPLIANCE REPORT ─────────────────
+       Premium audit-grade typography. Paper-first design:
+       the on-screen view mirrors the printed PDF so the
+       "Save as PDF" preview is the canonical artefact. */
+    :root{
+      /* legacy var names retained so inline color={var(--inkN)}
+         in the HTML body still resolves after the redesign. */
+      --bg:#ffffff;
+      --paper:#ffffff;
+      --card:#fafafa;
+      --border:#e6e6e6;
+      --hairline:#e6e6e6;
+      --hairline-strong:#cfcfcf;
+      --rule:#0a0a0a;
+      --brand:#a3134f;
+      --brand-dim:rgba(163,19,79,.06);
+      --ink0:#0a0a0a;
+      --ink1:#262626;
+      --ink2:#5a5a5a;
+      --ink3:#9a9a9a;
+      --green:#0e7c3a;
+      --green-dim:rgba(14,124,58,.08);
+      --red:#b42318;
+      --red-dim:rgba(180,35,24,.08);
+      --amber:#b54708;
+      --amber-dim:rgba(181,71,8,.08);
+      --serif:Georgia,'Iowan Old Style','Charter','Times New Roman',ui-serif,serif;
+      --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{background:var(--bg);color:var(--ink1);font-family:"Courier New",ui-monospace,monospace;font-size:12px;line-height:1.6}
-    body{padding:32px 40px;max-width:900px;margin:0 auto}
+    html,body{
+      background:var(--paper);color:var(--ink1);
+      font-family:var(--sans);font-size:10.5pt;line-height:1.55;
+      font-feature-settings:"kern","liga";
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    body{padding:18mm 14mm;max-width:920px;margin:0 auto}
 
-    /* toolbar */
-    .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:28px}
-    .toolbar button{font:inherit;padding:7px 16px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--ink1);cursor:pointer;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
-    .toolbar button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
-    .toolbar button:hover{opacity:.85}
+    /* toolbar — screen only */
+    .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:14mm}
+    .toolbar button{
+      font:600 9.5pt/1 var(--sans);
+      padding:9px 18px;border-radius:2px;
+      border:1px solid var(--hairline-strong);background:#fff;
+      color:var(--ink0);cursor:pointer;
+      letter-spacing:.1em;text-transform:uppercase;
+    }
+    .toolbar button.primary{background:var(--ink0);color:#fff;border-color:var(--ink0)}
+    .toolbar button:hover{opacity:.82}
 
-    /* header */
-    .report-header{border:1px solid var(--border);border-top:3px solid var(--brand);border-radius:6px;background:var(--card);padding:24px 28px;margin-bottom:20px}
-    .report-header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-    .logo{font-size:18px;font-weight:700;color:var(--ink0);letter-spacing:.06em}
-    .logo span{color:var(--brand)}
-    .report-id{font-size:10px;color:var(--ink3);text-align:right;line-height:1.8}
-    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 32px}
-    .meta-row{display:flex;gap:8px}
-    .meta-label{color:var(--ink3);min-width:140px;flex-shrink:0}
-    .meta-value{color:var(--ink1)}
+    /* ── report header ────────────────────────────────────── */
+    .report-header{
+      border:none;border-radius:0;background:none;padding:0;
+      border-top:2px solid var(--brand);
+      padding-top:14px;margin-bottom:20px;
+    }
+    .report-header-top{
+      display:grid;grid-template-columns:1fr auto;gap:24px;
+      align-items:flex-end;
+      padding-bottom:14px;
+      border-bottom:1px solid var(--hairline);
+      margin-bottom:14px;
+    }
+    .logo{
+      font:700 22pt/1 var(--serif);
+      color:var(--ink0);letter-spacing:-.005em;
+    }
+    .logo span{color:var(--brand);font-weight:400;font-style:italic}
+    .report-id{
+      text-align:right;
+      font:500 8.5pt/1.65 var(--mono);
+      color:var(--ink2);letter-spacing:.02em;
+    }
+    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 40px}
+    .meta-row{display:grid;grid-template-columns:128px 1fr;gap:14px;align-items:baseline}
+    .meta-label{
+      color:var(--ink3);min-width:0;flex-shrink:0;
+      font:600 7.5pt/1.5 var(--sans);
+      text-transform:uppercase;letter-spacing:.12em;
+    }
+    .meta-value{color:var(--ink0);font:500 10pt/1.5 var(--sans)}
 
-    /* subject */
-    .subject-block{background:var(--brand-dim);border:1px solid var(--brand);border-radius:6px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start}
-    .subject-name{font-size:18px;font-weight:700;color:var(--ink0);letter-spacing:.02em;margin-bottom:4px}
-    .subject-meta{color:var(--ink2);font-size:11px}
-    .sev-badge{padding:6px 14px;border-radius:4px;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid;align-self:flex-start}
+    /* ── subject strip ────────────────────────────────────── */
+    .subject-block{
+      display:grid;grid-template-columns:1fr auto;gap:28px;
+      align-items:center;
+      padding:14px 0 16px;margin:0 0 22px;
+      border-top:1px solid var(--hairline);
+      border-bottom:1px solid var(--hairline);
+      background:none;border-radius:0;
+    }
+    .subject-name{
+      font:600 19pt/1.2 var(--serif);
+      color:var(--ink0);letter-spacing:-.005em;margin-bottom:5px;
+    }
+    .subject-meta{
+      color:var(--ink2);
+      font:500 9pt/1.55 var(--sans);letter-spacing:.02em;
+    }
+    .subject-block > div:last-child{
+      text-align:right;
+      border-left:1px solid var(--hairline);
+      padding-left:28px;align-self:stretch;
+      display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
+    }
+    .sev-badge{
+      display:inline-block;
+      padding:3px 11px;
+      border:1px solid currentColor;border-radius:2px;
+      font:700 8pt/1 var(--sans);
+      letter-spacing:.18em;text-transform:uppercase;
+      align-self:flex-end;
+    }
+    .score-display{
+      font:600 28pt/1 var(--serif);
+      margin-top:8px;letter-spacing:-.015em;
+      font-variant-numeric:tabular-nums;
+    }
+    .score-suffix{
+      font:500 11pt/1 var(--sans);
+      color:var(--ink3);margin-left:1px;letter-spacing:0;
+    }
+    .score-caption{
+      margin-top:3px;
+      font:600 7.5pt/1 var(--sans);
+      color:var(--ink3);
+      text-transform:uppercase;letter-spacing:.12em;
+    }
 
-    /* sections */
-    .section{margin-bottom:20px}
-    .section-title{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--brand);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+    /* ── sections ─────────────────────────────────────────── */
+    .section{margin-bottom:22px;page-break-inside:avoid}
+    .section-title{
+      font:700 7.5pt/1 var(--sans);
+      color:var(--brand);
+      letter-spacing:.2em;text-transform:uppercase;
+      padding-bottom:7px;margin-bottom:12px;
+      border-bottom:1px solid var(--hairline);
+    }
 
-    /* screening matrix table */
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    th{text-align:left;color:var(--ink3);font-weight:600;letter-spacing:.08em;font-size:9px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border)}
-    td{padding:7px 10px;border-bottom:1px solid var(--border)}
-    tr:last-child td{border-bottom:none}
-    tr:hover td{background:rgba(255,255,255,.02)}
+    /* ── tables ───────────────────────────────────────────── */
+    table{width:100%;border-collapse:collapse;font-size:9.5pt}
+    thead th{
+      text-align:left;
+      color:var(--ink3);
+      font:700 7pt/1 var(--sans);
+      letter-spacing:.16em;text-transform:uppercase;
+      padding:0 10px 7px;
+      border-bottom:1px solid var(--ink0);
+    }
+    thead th:nth-child(3),thead th:nth-child(4){text-align:right}
+    tbody td{
+      padding:8px 10px;
+      border-bottom:1px solid var(--hairline);
+      color:var(--ink1);
+      font-size:9.5pt;
+    }
+    tbody td:nth-child(1){color:var(--ink0);font-weight:500}
+    tbody td:nth-child(3),tbody td:nth-child(4){text-align:right;font-variant-numeric:tabular-nums}
+    tbody tr:last-child td{border-bottom:1px solid var(--ink0)}
     .muted{color:var(--ink3)}
-    .mono{font-family:"Courier New",monospace}
+    .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+    .status-tag{
+      font:700 8pt/1 var(--sans);
+      letter-spacing:.16em;text-transform:uppercase;
+    }
 
-    /* risk bar */
-    .risk-bar-wrap{background:var(--border);border-radius:2px;height:6px;margin-top:8px;overflow:hidden}
-    .risk-bar{height:100%;border-radius:2px;transition:width .3s}
+    /* ── risk score row ───────────────────────────────────── */
+    .risk-bar-wrap{background:var(--hairline);border-radius:0;height:3px;margin-top:8px;overflow:hidden}
+    .risk-bar{height:100%}
 
-    /* jurisdiction */
-    .jur-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px}
+    /* ── jurisdiction grid ────────────────────────────────── */
+    .jur-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 40px}
+    .jur-grid .meta-row{grid-template-columns:128px 1fr}
 
-    /* chips */
-    .chip{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
-    .chip-red{background:var(--red-dim);color:var(--red)}
-    .chip-amber{background:var(--amber-dim);color:var(--amber)}
-    .chip-green{background:var(--green-dim);color:var(--green)}
-    .chip-brand{background:var(--brand-dim);color:var(--brand)}
+    /* ── chips ────────────────────────────────────────────── */
+    .chip{
+      display:inline-block;padding:1px 7px;border-radius:2px;
+      font:700 7.5pt/1.5 var(--sans);
+      letter-spacing:.1em;text-transform:uppercase;
+      border:1px solid;
+    }
+    .chip-red{color:var(--red);background:var(--red-dim);border-color:rgba(180,35,24,.28)}
+    .chip-amber{color:var(--amber);background:var(--amber-dim);border-color:rgba(181,71,8,.28)}
+    .chip-green{color:var(--green);background:var(--green-dim);border-color:rgba(14,124,58,.28)}
+    .chip-brand{color:var(--brand);background:var(--brand-dim);border-color:rgba(163,19,79,.28)}
 
-    /* adverse media list */
-    .am-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+    /* ── adverse media ────────────────────────────────────── */
+    .am-list{list-style:none;display:flex;flex-direction:column;gap:6px}
     .am-list li{display:flex;align-items:center;gap:8px}
 
-    /* adverse-media findings & evidence — full block (was previously
-       only emitted in the .txt; now in the PDF too so the regulator
-       reads the same evidence on either artefact). */
-    .am-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
-    .am-metric{border:1px solid var(--border);border-radius:5px;background:var(--card);padding:8px 10px}
-    .am-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:3px}
-    .am-metric-value{font-size:14px;font-weight:700;color:var(--ink0)}
-    .am-block{margin:10px 0;padding:10px 12px;border:1px solid var(--border);border-left:2px solid var(--brand);border-radius:4px;background:var(--card)}
-    .am-block-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:6px;font-weight:600}
-    .am-bullets{list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--ink1);line-height:1.5}
-    .am-bullets li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-    .am-bullets.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px}
-    .am-posture{margin-top:10px;padding:8px 10px;border:1px dashed var(--border);border-radius:4px;font-size:10.5px;color:var(--ink2);line-height:1.5;background:var(--bg)}
-    .am-posture strong{color:var(--ink1)}
+    .am-metrics{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+      margin-bottom:14px;
+      border-top:1px solid var(--ink0);
+      border-bottom:1px solid var(--ink0);
+    }
+    .am-metric{padding:10px 14px;border-right:1px solid var(--hairline)}
+    .am-metric:last-child{border-right:none}
+    .am-metric-label{
+      font:700 7pt/1 var(--sans);
+      text-transform:uppercase;letter-spacing:.16em;
+      color:var(--ink3);margin-bottom:6px;
+    }
+    .am-metric-value{
+      font:600 15pt/1.05 var(--serif);
+      color:var(--ink0);font-variant-numeric:tabular-nums;
+    }
 
-    /* news dossier — clickable article cards */
-    .news-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-    .news-item{border:1px solid var(--border);border-left:2px solid var(--brand);border-radius:4px;background:var(--bg);padding:7px 10px}
-    .news-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:9.5px;color:var(--ink3);margin-bottom:3px}
-    .news-source{font-weight:600;color:var(--ink2)}
-    .news-title{font-size:11px;font-weight:600;color:var(--ink0);line-height:1.4;margin-bottom:3px}
-    .news-snippet{font-size:10px;color:var(--ink2);line-height:1.45;margin-top:3px}
-    .news-link{font-size:9.5px;color:var(--brand);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-decoration:none;word-break:break-all;display:inline-block;margin-top:3px}
+    .am-block{
+      margin:12px 0;padding:2px 0 4px 14px;
+      border:none;border-left:2px solid var(--brand);
+      border-radius:0;background:none;
+    }
+    .am-block-title{
+      font:700 7.5pt/1 var(--sans);
+      text-transform:uppercase;letter-spacing:.16em;
+      color:var(--ink2);margin-bottom:8px;
+    }
+    .am-bullets{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:9.5pt;color:var(--ink1);line-height:1.55}
+    .am-bullets li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .am-bullets.mono{font-family:var(--mono);font-size:9pt}
+
+    .am-posture{
+      margin-top:14px;padding:10px 14px;
+      border:1px solid var(--hairline);border-radius:0;
+      font:9pt/1.55 var(--sans);color:var(--ink2);
+      background:var(--brand-dim);
+    }
+    .am-posture strong{color:var(--ink0);font-weight:600}
+
+    /* ── news dossier ─────────────────────────────────────── */
+    .news-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+    .news-item{
+      padding:6px 0 8px 14px;
+      border:none;border-left:2px solid var(--hairline);
+      border-radius:0;background:none;
+    }
+    .news-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:8pt;color:var(--ink3);margin-bottom:4px}
+    .news-source{font-weight:700;color:var(--ink1);text-transform:uppercase;letter-spacing:.08em}
+    .news-title{font:600 10.5pt/1.4 var(--serif);color:var(--ink0);margin-bottom:3px;letter-spacing:-.005em}
+    .news-snippet{font-size:9pt;color:var(--ink2);line-height:1.55;margin-top:4px}
+    .news-link{font:8.5pt/1.5 var(--mono);color:var(--brand);text-decoration:none;word-break:break-all;display:inline-block;margin-top:4px}
     .news-link:hover{text-decoration:underline}
 
-    /* recommendation */
-    .rec-line{padding:5px 0;border-bottom:1px solid var(--border);color:var(--ink0);font-size:11px}
+    /* ── recommendation ───────────────────────────────────── */
+    .rec-block{padding:2px 0 2px 14px;border-left:2px solid var(--brand)}
+    .rec-line{
+      padding:7px 0;border-bottom:1px dotted var(--hairline);
+      color:var(--ink0);font-size:10pt;line-height:1.5;
+    }
     .rec-line:last-child{border-bottom:none}
 
-    /* decision checkboxes */
-    .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .checkbox-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:4px;background:var(--card)}
-    .checkbox-box{width:14px;height:14px;border:1.5px solid var(--ink3);border-radius:2px;flex-shrink:0}
-    .checkbox-label{font-size:11px;color:var(--ink1)}
-
-    /* signature */
-    .sig-block{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .sig-line{border-bottom:1px solid var(--ink3);margin-top:24px;margin-bottom:4px}
-    .sig-label{font-size:10px;color:var(--ink3)}
-
-    /* legal list */
-    .reg-list{list-style:none;display:flex;flex-direction:column;gap:4px}
-    .reg-list li{font-size:10.5px;color:var(--ink2);padding-left:12px;position:relative}
-    .reg-list li::before{content:"—";position:absolute;left:0;color:var(--ink3)}
-
-    /* footer */
-    .footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--ink3)}
-
-    /* audit-trail panel — hashes / signatures / provenance, rendered
-       visually in the PDF. Same fields the .txt export carries in
-       monospace; the PDF surfaces them as a styled grid so the .txt
-       and PDF are distinct presentations of the same data, not
-       bundled. */
-    .audit-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:6px 18px;
-      padding:12px 14px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:5px;
-      margin-bottom:10px;
+    /* ── decision checkboxes ──────────────────────────────── */
+    .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+    .checkbox-item{
+      display:flex;align-items:center;gap:10px;
+      padding:11px 14px;
+      border:1px solid var(--hairline);border-radius:0;background:none;
     }
-    .audit-row{display:flex;justify-content:space-between;gap:12px;font-size:10.5px;line-height:1.5}
-    .audit-label{color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;font-size:9.5px;flex-shrink:0}
+    .checkbox-box{width:11px;height:11px;border:1px solid var(--ink2);border-radius:0;flex-shrink:0}
+    .checkbox-label{font:500 9.5pt/1.4 var(--sans);color:var(--ink0)}
+
+    /* ── signature block ──────────────────────────────────── */
+    .sig-block{margin-top:24px;padding-top:0;border-top:none;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+    .sig-line{border-bottom:1px solid var(--ink0);margin-top:36px;margin-bottom:6px;height:0}
+    .sig-label{font:600 7.5pt/1 var(--sans);color:var(--ink3);text-transform:uppercase;letter-spacing:.14em}
+
+    /* ── reg framework list ───────────────────────────────── */
+    .reg-list{
+      list-style:none;display:block;
+      column-count:2;column-gap:32px;column-rule:1px solid var(--hairline);
+    }
+    .reg-list li{
+      font:9pt/1.55 var(--sans);color:var(--ink1);
+      padding-left:12px;position:relative;
+      break-inside:avoid;margin-bottom:5px;
+    }
+    .reg-list li::before{
+      content:"";position:absolute;left:0;top:.7em;
+      width:6px;height:1px;background:var(--brand);
+    }
+
+    /* ── audit trail ──────────────────────────────────────── */
+    .audit-grid{
+      display:grid;grid-template-columns:1fr 1fr;gap:7px 28px;
+      padding:14px 16px;background:var(--brand-dim);
+      border:1px solid var(--hairline);border-radius:0;margin-bottom:10px;
+    }
+    .audit-row{display:flex;justify-content:space-between;gap:12px;font-size:9pt;line-height:1.5}
+    .audit-label{color:var(--ink3);text-transform:uppercase;letter-spacing:.12em;font:700 7.5pt/1.5 var(--sans);flex-shrink:0;padding-top:1px}
     .audit-value{
-      color:var(--ink1);
-      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-      font-size:10px;
-      text-align:right;
-      word-break:break-all;
-      max-width:60%;
+      color:var(--ink0);font-family:var(--mono);
+      font-size:9pt;text-align:right;word-break:break-all;max-width:62%;
+      font-variant-numeric:tabular-nums;
     }
     .audit-signatures{
-      padding:12px 14px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:5px;
-      margin-bottom:10px;
+      padding:14px 16px;background:#fafafa;
+      border:1px solid var(--hairline);border-radius:0;margin-bottom:10px;
     }
-    .audit-sig-title{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:6px}
-    .audit-sig{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border)}
+    .audit-sig-title{font:700 7.5pt/1 var(--sans);text-transform:uppercase;letter-spacing:.16em;color:var(--ink3);margin-bottom:10px}
+    .audit-sig{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dotted var(--hairline)}
     .audit-sig:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
-    .audit-sig-label{font-size:10.5px;font-weight:600;color:var(--brand)}
-    .audit-sig-fp{font-size:9.5px;color:var(--ink3);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-    .audit-sig-hex{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:9px;color:var(--ink1);word-break:break-all}
-    .audit-note{font-size:10px;color:var(--ink3);line-height:1.5;margin-top:6px}
+    .audit-sig-label{font:700 9.5pt/1 var(--sans);color:var(--brand);letter-spacing:.04em}
+    .audit-sig-fp{font:8.5pt/1.5 var(--mono);color:var(--ink3)}
+    .audit-sig-hex{font:8.5pt/1.45 var(--mono);color:var(--ink1);word-break:break-all}
+    .audit-note{font:8.5pt/1.5 var(--sans);color:var(--ink3);margin-top:8px;font-style:italic}
 
-    /* print overrides — white background for paper, page numbers,
-       running brand header so every page carries the report id. */
-    @media print {
-      :root{--bg:#fff;--card:#f8f8f8;--border:#ddd;--ink0:#000;--ink1:#222;--ink2:#555;--ink3:#888;--brand:#c0156a;--brand-dim:rgba(192,21,106,.08)}
-      body{background:#fff;color:#222;padding:16px 20px}
+    /* ── footer ───────────────────────────────────────────── */
+    .footer{
+      margin-top:28px;padding-top:12px;
+      border-top:1px solid var(--hairline);
+      display:flex;justify-content:space-between;
+      font:600 7.5pt/1 var(--sans);
+      color:var(--ink3);
+      text-transform:uppercase;letter-spacing:.14em;
+    }
+
+    /* ── print: edge-to-edge, page-margin chrome ──────────── */
+    @media print{
+      html,body{background:#fff}
+      body{padding:0;max-width:none;margin:0}
       .toolbar{display:none}
-      .audit-grid,.audit-signatures{background:#fff;border-color:#ddd}
-      .canonical a{color:#222;text-decoration:underline}
+      a,a:visited{color:inherit;text-decoration:none}
+      .news-link{color:var(--brand);text-decoration:underline}
+      .canonical a{color:var(--ink0);text-decoration:underline}
       @page{
-        margin:18mm 16mm;
+        margin:14mm 12mm 16mm 12mm;
         @top-left{
-          content:"HAWKEYE STERLING — confidential";
-          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          content:"HAWKEYE STERLING · CONFIDENTIAL";
+          font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+          font-size:7.5pt;font-weight:600;
+          letter-spacing:.18em;color:#9a9a9a;
         }
         @top-right{
           content:"${e(reportId)}";
-          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
-        }
-        @bottom-right{
-          content:"page " counter(page) " of " counter(pages);
-          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          font-family:ui-monospace,Menlo,Consolas,monospace;
+          font-size:7.5pt;font-weight:500;
+          letter-spacing:.04em;color:#9a9a9a;
         }
         @bottom-left{
-          content:"10-year retention · FDL 10/2025";
-          font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-          font-size:9px;color:#888;
+          content:"FDL 10/2025 · 10-year retention";
+          font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+          font-size:7.5pt;font-weight:600;
+          letter-spacing:.16em;color:#9a9a9a;
+        }
+        @bottom-right{
+          content:"Page " counter(page) " / " counter(pages);
+          font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+          font-size:7.5pt;font-weight:600;
+          letter-spacing:.08em;color:#9a9a9a;
         }
       }
-      /* avoid splitting key blocks across pages */
-      .section,.subject-block,.report-header{page-break-inside:avoid}
+      .section,.subject-block,.report-header,.am-block,.checkbox-item,.news-item{page-break-inside:avoid}
     }
   </style>
 </head>
@@ -485,11 +644,11 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       ${s.aliases?.length ? `<div class="subject-meta" style="margin-top:4px">Aliases: ${s.aliases.map(a => e(a)).join(" · ")}</div>` : ""}
     </div>
     <div>
-      <div class="sev-badge" style="color:${sevColor};border-color:${sevColor};background:${sevColor}1a">
+      <div class="sev-badge" style="color:${sevColor};border-color:${sevColor}">
         ${e(sev.toUpperCase())}
       </div>
-      <div style="text-align:right;margin-top:6px;font-size:20px;font-weight:700;color:${sevColor}">${composite}<span style="font-size:11px;color:var(--ink3)">/100</span></div>
-      <div style="text-align:right;margin-top:2px;font-size:9px;color:var(--ink3)">composite (sanctions: ${r.topScore})</div>
+      <div class="score-display" style="color:${sevColor}">${composite}<span class="score-suffix">/100</span></div>
+      <div class="score-caption">composite · sanctions vector ${r.topScore}/100</div>
     </div>
   </div>
 
@@ -666,9 +825,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <!-- RECOMMENDATION -->
   <div class="section">
     <div class="section-title">Recommendation (System)</div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:5px;padding:14px 16px">
-      ${recRows}
-    </div>
+    <div class="rec-block">${recRows}</div>
   </div>
 
   <!-- MLRO DECISION -->
@@ -753,10 +910,16 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     report = buildComplianceReport(body);
   } catch (err) {
     console.error("compliance-report failed to build", err);
-    return NextResponse.json(
-      { ok: false, error: "report generation failed" },
-      { status: 500, headers: gateHeaders },
-    );
+    // Return a minimal valid report rather than a 500 so the MLRO can still
+    // download something actionable and the UI does not show a broken state.
+    report = [
+      `HAWKEYE STERLING — COMPLIANCE REPORT`,
+      `Subject: ${body.subject.name}`,
+      `Generated: ${new Date().toUTCString()}`,
+      ``,
+      `NOTE: Full report generation encountered an error. Please review manually.`,
+      `Error: ${err instanceof Error ? err.message : String(err)}`,
+    ].join("\n");
   }
 
   // Structured JSON sidecar — same provenance and hashes as the text

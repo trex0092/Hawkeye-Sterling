@@ -17,6 +17,16 @@ interface Supplier {
   flags: string[];
 }
 
+interface VendorRisk {
+  riskScore: number;
+  riskLevel: "critical" | "high" | "medium" | "low";
+  eddRequired: boolean;
+  findings: string[];
+  redFlags: string[];
+  recommendation: string;
+  regulatoryBasis: string;
+}
+
 const STORAGE_KEY = "hawkeye.vendor-dd.v1";
 
 function today(): string {
@@ -87,10 +97,29 @@ export default function SupplierDdPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<FormState>(EMPTY_FORM);
+  const [riskMap, setRiskMap] = useState<Record<string, VendorRisk>>({});
+  const [riskLoading, setRiskLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setSuppliers(load());
   }, []);
+
+  const runVendorRisk = async (v: Supplier) => {
+    setRiskLoading((prev) => ({ ...prev, [v.id]: true }));
+    try {
+      const res = await fetch("/api/vendor-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ supplier: v }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { ok: boolean; result: VendorRisk };
+        setRiskMap((prev) => ({ ...prev, [v.id]: data.result }));
+      }
+    } finally {
+      setRiskLoading((prev) => ({ ...prev, [v.id]: false }));
+    }
+  };
 
   const update = (next: Supplier[]) => { setSuppliers(next); save(next); };
   const remove = (id: string) => update(suppliers.filter((v) => v.id !== id));
@@ -143,6 +172,7 @@ export default function SupplierDdPage() {
   return (
     <ModuleLayout asanaModule="vendor-dd" asanaLabel="Vendor Due Diligence">
       <ModuleHero
+        moduleNumber={14}
         eyebrow="Module 20 · Supply-chain DD"
         title="Supplier"
         titleEm="due diligence."
@@ -176,66 +206,70 @@ export default function SupplierDdPage() {
       {showForm && (
         <div className="mb-5 bg-bg-panel border border-hair-2 rounded-lg p-4">
           <div className="text-11 uppercase tracking-wide-4 text-ink-3 mb-3 font-semibold">New supplier</div>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="col-span-2">
-              <label className="block text-10 text-ink-3 mb-1">Supplier name *</label>
-              <input
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                placeholder="e.g. Valcambi SA"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-10 text-ink-3 mb-1">Jurisdiction (ISO-2)</label>
-              <input
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                placeholder="AE"
-                maxLength={3}
-                value={form.jurisdiction}
-                onChange={(e) => setForm((f) => ({ ...f, jurisdiction: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-10 text-ink-3 mb-1">Tier</label>
-              <select
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
-                value={form.tier}
-                onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value as Supplier["tier"] }))}
-              >
-                <option value="critical">Critical (annual review)</option>
-                <option value="significant">Significant (18-month review)</option>
-                <option value="standard">Standard (24-month review)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-10 text-ink-3 mb-1">Last review date</label>
-              <IsoDateInput
-                className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
-                value={form.lastReview}
-                onChange={(iso) => setForm((f) => ({ ...f, lastReview: iso }))}
-              />
-            </div>
-            <div className="flex items-center gap-5 pt-4">
-              <div className="flex items-center gap-2">
+          <div className="space-y-3 mb-3">
+            <div className="grid grid-cols-4 gap-3">
+              <div className="col-span-2">
+                <label className="block text-10 text-ink-3 mb-1">Supplier name *</label>
                 <input
-                  id="lbma-check"
-                  type="checkbox"
-                  className="accent-brand"
-                  checked={form.lbmaListed}
-                  onChange={(e) => setForm((f) => ({ ...f, lbmaListed: e.target.checked }))}
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
+                  placeholder="e.g. Valcambi SA"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 />
-                <label htmlFor="lbma-check" className="text-12 text-ink-1 cursor-pointer">LBMA Good Delivery listed</label>
               </div>
-              <div className="flex items-center gap-2">
+              <div>
+                <label className="block text-10 text-ink-3 mb-1">Jurisdiction (ISO-2)</label>
                 <input
-                  id="dgd-check"
-                  type="checkbox"
-                  className="accent-brand"
-                  checked={form.dgdListed}
-                  onChange={(e) => setForm((f) => ({ ...f, dgdListed: e.target.checked }))}
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
+                  placeholder="AE"
+                  maxLength={3}
+                  value={form.jurisdiction}
+                  onChange={(e) => setForm((f) => ({ ...f, jurisdiction: e.target.value }))}
                 />
-                <label htmlFor="dgd-check" className="text-12 text-ink-1 cursor-pointer">DGD (Dubai Good Delivery) listed</label>
+              </div>
+              <div>
+                <label className="block text-10 text-ink-3 mb-1">Tier</label>
+                <select
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                  value={form.tier}
+                  onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value as Supplier["tier"] }))}
+                >
+                  <option value="critical">Critical (annual review)</option>
+                  <option value="significant">Significant (18-month review)</option>
+                  <option value="standard">Standard (24-month review)</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-3 items-end">
+              <div>
+                <label className="block text-10 text-ink-3 mb-1">Last review date</label>
+                <IsoDateInput
+                  className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand"
+                  value={form.lastReview}
+                  onChange={(iso) => setForm((f) => ({ ...f, lastReview: iso }))}
+                />
+              </div>
+              <div className="col-span-3 flex items-center gap-6 pb-1">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="lbma-check"
+                    type="checkbox"
+                    className="accent-brand"
+                    checked={form.lbmaListed}
+                    onChange={(e) => setForm((f) => ({ ...f, lbmaListed: e.target.checked }))}
+                  />
+                  <label htmlFor="lbma-check" className="text-12 text-ink-1 cursor-pointer">LBMA Good Delivery listed</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="dgd-check"
+                    type="checkbox"
+                    className="accent-brand"
+                    checked={form.dgdListed}
+                    onChange={(e) => setForm((f) => ({ ...f, dgdListed: e.target.checked }))}
+                  />
+                  <label htmlFor="dgd-check" className="text-12 text-ink-1 cursor-pointer">DGD (Dubai Good Delivery) listed</label>
+                </div>
               </div>
             </div>
           </div>
@@ -263,7 +297,7 @@ export default function SupplierDdPage() {
           <div key={v.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
             {editingId === v.id ? (
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <input
                     className="text-12 px-2 py-1.5 rounded border border-brand bg-bg-0 text-ink-0 col-span-2"
                     value={editForm.name}
@@ -321,6 +355,10 @@ export default function SupplierDdPage() {
                     }`}>
                       {v.tier}
                     </span>
+                    <button type="button" onClick={() => void runVendorRisk(v)} disabled={riskLoading[v.id] === true}
+                      className="text-9 font-mono px-1.5 py-px rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+                      {riskLoading[v.id] === true ? "…" : "AI Risk"}
+                    </button>
                     <RowActions
                       label={v.name}
                       onEdit={() => startEdit(v)}
@@ -343,6 +381,22 @@ export default function SupplierDdPage() {
                     ))}
                   </div>
                 )}
+                {riskMap[v.id] && (() => {
+                  const r = riskMap[v.id] as VendorRisk;
+                  const lvlCls = r.riskLevel === "critical" ? "bg-red text-white" : r.riskLevel === "high" ? "bg-red-dim text-red" : r.riskLevel === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="mt-3 p-3 rounded-lg border border-hair-2 bg-bg-1 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-mono text-10 font-bold px-2 py-px rounded uppercase ${lvlCls}`}>{r.riskLevel}</span>
+                        <span className="font-mono text-10 text-ink-2">{r.riskScore}/100</span>
+                        {r.eddRequired && <span className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red font-semibold">EDD REQUIRED</span>}
+                      </div>
+                      {r.redFlags.length > 0 && <div className="text-10 text-red">Red flags: {r.redFlags.join(" · ")}</div>}
+                      <div className="text-11 text-ink-1 italic">{r.recommendation}</div>
+                      {r.regulatoryBasis && <div className="text-9 font-mono text-ink-3">{r.regulatoryBasis}</div>}
+                    </div>
+                  );
+                })()}
               </>
             )}
           </div>

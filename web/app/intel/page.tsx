@@ -58,6 +58,7 @@ const SOURCE_BADGE: Record<string, string> = {
   "UAE PDPL": "bg-violet-dim text-violet",
   "UAE Digital": "bg-blue-dim text-blue",
   "MoET / DPMS": "bg-violet-dim text-violet",
+  "Mining":      "bg-amber-dim text-amber",
 };
 
 function sourceBadgeClass(source: string): string {
@@ -66,6 +67,43 @@ function sourceBadgeClass(source: string): string {
 
 // ── Regulatory Feed Panel ────────────────────────────────────────────────────
 
+interface TriageEntry {
+  relevance: number;
+  impact: "high" | "medium" | "low";
+  actionRequired: string;
+  deadline?: string;
+}
+
+async function fetchTriage(items: RegulatoryItem[]): Promise<Record<string, TriageEntry>> {
+  const compact = items.slice(0, 20).map((i) => ({
+    id: i.id,
+    title: i.title,
+    summary: i.snippet ?? "",
+    tone: i.tone,
+    source: i.source,
+  }));
+
+  const res = await fetch("/api/regulatory-triage", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ items: compact }),
+  });
+
+  if (!res.ok) throw new Error(`Triage API error: ${res.status}`);
+  const data = await res.json() as {
+    ok: boolean;
+    results: Array<{ id: string; relevance: number; impact: "high" | "medium" | "low"; actionRequired: string; deadline: string }>;
+    error?: string;
+  };
+  if (!data.ok) throw new Error(data.error ?? "Unknown error");
+
+  const map: Record<string, TriageEntry> = {};
+  for (const r of data.results ?? []) {
+    map[r.id] = { relevance: r.relevance, impact: r.impact, actionRequired: r.actionRequired, deadline: r.deadline || undefined };
+  }
+  return map;
+}
+
 function RegulatoryFeedPanel() {
   const [items, setItems] = useState<RegulatoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +111,21 @@ function RegulatoryFeedPanel() {
   const [sources, setSources] = useState<string[]>([]);
   const [filterCat, setFilterCat] = useState<string>("all");
   const [filterTone, setFilterTone] = useState<string>("all");
+  const [triageMap, setTriageMap] = useState<Record<string, TriageEntry>>({});
+  const [triageLoading, setTriageLoading] = useState(false);
+
+  const runTriage = async (feedItems: RegulatoryItem[]) => {
+    if (feedItems.length === 0) return;
+    setTriageLoading(true);
+    try {
+      const map = await fetchTriage(feedItems);
+      setTriageMap(map);
+    } catch (err) {
+      console.error("Triage failed:", err);
+    } finally {
+      setTriageLoading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,18 +134,20 @@ function RegulatoryFeedPanel() {
       if (!res.ok) return;
       const data = await res.json() as { ok: boolean; items: RegulatoryItem[]; sources: string[]; fetchedAt: string };
       if (!data.ok) return;
-      setItems(data.items ?? []);
+      const loadedItems = data.items ?? [];
+      setItems(loadedItems);
       setSources(data.sources ?? []);
       setFetchedAt(data.fetchedAt ?? "");
+      void runTriage(loadedItems);
     } catch { /* silently ignore */ }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
 
-  // Auto-refresh every 30 minutes
+  // Auto-refresh every 5 minutes
   useEffect(() => {
-    const id = setInterval(() => { void load(); }, 30 * 60_000);
+    const id = setInterval(() => { void load(); }, 5 * 60_000);
     return () => clearInterval(id);
   }, [load]);
 
@@ -122,6 +177,14 @@ function RegulatoryFeedPanel() {
               synced {new Date(fetchedAt).toLocaleTimeString("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => void runTriage(items)}
+            disabled={triageLoading || items.length === 0}
+            className="text-10 font-mono px-2 py-0.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand-dim/70 disabled:opacity-40"
+          >
+            {triageLoading ? "Triaging…" : "Triage with AI"}
+          </button>
           <button
             type="button"
             onClick={() => void load()}
@@ -184,6 +247,22 @@ function RegulatoryFeedPanel() {
                 <div className="flex flex-wrap items-baseline gap-2 mb-0.5">
                   <span className="text-12 font-medium text-ink-0 group-hover:text-brand leading-snug">{item.title}</span>
                 </div>
+                {/* Triage chips */}
+                {triageMap[item.id] && (() => {
+                  const t = triageMap[item.id] as TriageEntry;
+                  const relevanceCls = t.relevance >= 70 ? "bg-green-dim text-green" : t.relevance >= 40 ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
+                  const impactCls = t.impact === "high" ? "bg-red-dim text-red" : t.impact === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                      <span className={`font-mono text-9 px-1.5 py-px rounded-sm font-semibold ${relevanceCls}`}>rel: {t.relevance}</span>
+                      <span className={`font-mono text-9 px-1.5 py-px rounded-sm font-semibold uppercase ${impactCls}`}>{t.impact}</span>
+                      <span className="text-10 text-ink-3 italic leading-snug">{t.actionRequired}</span>
+                      {t.deadline && (
+                        <span className="font-mono text-9 px-1.5 py-px rounded-sm bg-bg-2 text-ink-2">{t.deadline}</span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {item.snippet && (
                   <div className="text-10.5 text-ink-3 leading-snug mb-1">{item.snippet}</div>
                 )}
@@ -323,35 +402,215 @@ function AdverseMediaPanel() {
   );
 }
 
+// ── Jurisdiction Intelligence Panel ─────────────────────────────────────────
+
+interface SanctionsExposure { uae: string; un: string; ofac: string; eu: string; uk: string; }
+interface JurisdictionIntel {
+  ok: boolean;
+  countryName: string;
+  overallRisk: "critical" | "high" | "medium" | "low";
+  fatfStatus: string;
+  fatfDetail: string;
+  sanctionsExposure: SanctionsExposure;
+  cahraStatus: string;
+  keyRisks: string[];
+  dpmsSpecificRisks: string[];
+  typologiesPrevalent: string[];
+  cddImplications: string;
+  transactionRisks: string;
+  recentDevelopments: string;
+  uaeRegulatoryRequirement: string;
+  riskMitigation: string[];
+}
+
+const JRISK_TONE: Record<string, string> = {
+  critical: "bg-red text-white",
+  high: "bg-red-dim text-red",
+  medium: "bg-amber-dim text-amber",
+  low: "bg-green-dim text-green",
+};
+
+function JurisdictionIntelPanel() {
+  const [country, setCountry] = useState("");
+  const [context, setContext] = useState("");
+  const [intel, setIntel] = useState<JurisdictionIntel | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const run = async () => {
+    if (!country.trim()) return;
+    setLoading(true);
+    setIntel(null);
+    try {
+      const res = await fetch("/api/jurisdiction-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ country: country.trim(), context: context.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json() as JurisdictionIntel;
+        if (data.ok) setIntel(data);
+      }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  };
+
+  const inputCls = "text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand";
+
+  return (
+    <div className="border border-hair-2 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-bg-panel border-b border-hair">
+        <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Jurisdiction Intelligence</span>
+        <span className="text-10 text-ink-3 font-mono">Beats World-Check 3-tier ratings</span>
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Country</label>
+            <input value={country} onChange={(e) => setCountry(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void run()}
+              placeholder="e.g. Iran, Sudan, DRC, Russia…" className={`${inputCls} w-full`} />
+          </div>
+          <div className="flex-1">
+            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Context (optional)</label>
+            <input value={context} onChange={(e) => setContext(e.target.value)}
+              placeholder="e.g. gold supplier, client nationality, wire destination"
+              className={`${inputCls} w-full`} />
+          </div>
+          <button type="button" onClick={() => void run()} disabled={loading || !country.trim()}
+            className="text-11 font-semibold px-4 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 whitespace-nowrap">
+            {loading ? "Analyzing…" : "Analyze Jurisdiction"}
+          </button>
+        </div>
+
+        {intel && (
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-15 font-bold text-ink-0">{intel.countryName}</span>
+              <span className={`font-mono text-10 font-bold px-2 py-px rounded uppercase ${JRISK_TONE[intel.overallRisk] ?? ""}`}>
+                {intel.overallRisk} risk
+              </span>
+              <span className={`font-mono text-10 px-2 py-px rounded ${
+                intel.fatfStatus.toLowerCase().includes("grey") ? "bg-amber-dim text-amber" :
+                intel.fatfStatus.toLowerCase().includes("black") ? "bg-red text-white" : "bg-green-dim text-green"
+              }`}>{intel.fatfStatus}</span>
+            </div>
+
+            {intel.fatfDetail && <p className="text-12 text-ink-1">{intel.fatfDetail}</p>}
+
+            {intel.cahraStatus && (
+              <div className="flex items-center gap-2">
+                <span className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">CAHRA:</span>
+                <span className={`text-11 font-mono ${intel.cahraStatus.toLowerCase().includes("conflict") || intel.cahraStatus.toLowerCase().includes("high") ? "text-red" : "text-ink-1"}`}>{intel.cahraStatus}</span>
+              </div>
+            )}
+
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-2">Sanctions Exposure</div>
+              <div className="grid grid-cols-5 gap-2">
+                {(["uae", "un", "ofac", "eu", "uk"] as const).map((regime) => (
+                  <div key={regime} className="bg-bg-1 rounded p-2">
+                    <div className="text-9 font-mono font-bold uppercase text-ink-3 mb-1">{regime.toUpperCase()}</div>
+                    <div className="text-10 text-ink-1">{intel.sanctionsExposure[regime] || "—"}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {intel.keyRisks.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">Key Risks</div>
+                <div className="flex flex-wrap gap-1">
+                  {intel.keyRisks.map((r, i) => <span key={i} className="text-10 px-2 py-px rounded bg-red-dim text-red">{r}</span>)}
+                </div>
+              </div>
+            )}
+
+            {intel.dpmsSpecificRisks.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">DPMS-Specific Risks</div>
+                <div className="flex flex-wrap gap-1">
+                  {intel.dpmsSpecificRisks.map((r, i) => <span key={i} className="text-10 px-2 py-px rounded bg-amber-dim text-amber">{r}</span>)}
+                </div>
+              </div>
+            )}
+
+            {intel.typologiesPrevalent.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">Prevalent Typologies</div>
+                <div className="flex flex-wrap gap-1">
+                  {intel.typologiesPrevalent.map((t, i) => <span key={i} className="text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{t}</span>)}
+                </div>
+              </div>
+            )}
+
+            {intel.cddImplications && (
+              <div className="border border-brand/30 rounded-lg p-3 bg-bg-panel">
+                <div className="text-10 uppercase tracking-wide-3 text-brand-deep font-semibold mb-1">CDD Implications</div>
+                <p className="text-12 text-ink-0">{intel.cddImplications}</p>
+              </div>
+            )}
+
+            {intel.uaeRegulatoryRequirement && (
+              <div className="border-l-2 border-red/50 pl-3">
+                <div className="text-10 uppercase tracking-wide-3 text-red font-semibold mb-1">UAE Regulatory Requirement</div>
+                <p className="text-12 font-semibold text-ink-0">{intel.uaeRegulatoryRequirement}</p>
+              </div>
+            )}
+
+            {intel.transactionRisks && <p className="text-11 text-ink-2 italic">{intel.transactionRisks}</p>}
+
+            {intel.recentDevelopments && (
+              <p className="text-11 text-ink-1 border-t border-hair pt-2"><strong>Recent developments:</strong> {intel.recentDevelopments}</p>
+            )}
+
+            {intel.riskMitigation.length > 0 && (
+              <div>
+                <div className="text-10 uppercase tracking-wide-3 text-green font-semibold mb-1">Risk Mitigation</div>
+                <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
+                  {intel.riskMitigation.map((m, i) => <li key={i}>{m}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function IntelPage() {
   return (
     <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence">
       <ModuleHero
+        moduleNumber={8}
         eyebrow="Module 10 · Intelligence & Regulatory Feed"
         title="Intel"
         titleEm="feed."
         intro={
           <>
-            <strong>Two live panels.</strong> The UAE Regulatory Feed polls
+            <strong>Three live panels.</strong> The UAE Regulatory Feed polls
             MoET, UAE IEC, CBUAE, UAEFIU, FATF and Google News every 30 minutes
             for circulars, enforcement actions and guidance updates.
             The adverse-media panel sweeps any named subject across 7 language
             feeds and surfaces HIGH / CRITICAL items first.
+            Jurisdiction Intelligence delivers deep FATF/sanctions/CAHRA briefs
+            that go far beyond World-Check 3-tier country ratings.
           </>
         }
         kpis={[
           { value: "4", label: "live government sources" },
-          { value: "14", label: "Google News queries" },
+          { value: "30", label: "live news queries" },
           { value: "7", label: "adverse-media languages" },
-          { value: "30m", label: "regulatory refresh cadence" },
+          { value: "5m", label: "live refresh cadence" },
         ]}
       />
 
       <div className="mt-6 space-y-6">
         <RegulatoryFeedPanel />
         <AdverseMediaPanel />
+        <JurisdictionIntelPanel />
       </div>
     </ModuleLayout>
   );

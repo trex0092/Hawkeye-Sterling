@@ -12,6 +12,7 @@ import { jurisdictionByName } from "../../../../dist/src/brain/jurisdictions-ful
 import { isCahra } from "../../../../dist/src/brain/cahra.js";
 import { regimesForJurisdiction } from "../../../../dist/src/brain/sanction-regimes.js";
 import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../dist/src/brain/cross-regime-conflict.js";
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
 import { expandAliases } from "../../../../dist/src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../dist/src/brain/matching.js";
@@ -152,7 +153,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
-  if (!body?.subject?.name || body.subject.name.length > 500) {
+  if (!body?.subject?.name?.trim() || body.subject.name.length > 500) {
     return NextResponse.json(
       { ok: false, error: "subject.name required (max 500 chars)" },
       { status: 400, headers: gateHeaders },
@@ -230,6 +231,51 @@ export async function POST(req: Request): Promise<NextResponse> {
       .filter((t) => t.length >= 3);
     const redlines = evaluateRedlines(redlineKeywords);
 
+    // 5b · Cross-regime conflict detection. Builds per-regime designation
+    // status from the quickScreen hits across the six core authoritative
+    // lists, then runs the dedicated detector. Surfaces split-regime cases
+    // (e.g. UN designates, OFAC clean — apply most-restrictive-regime rule)
+    // that the composite formula alone could not auto-escalate. The
+    // recommendedAction is informational here; super-brain doesn't
+    // override its own composite outcome based on it (the MLRO Advisor +
+    // disposition flow consume `crossRegimeConflict` to escalate).
+    const REGIME_LIST_IDS = [
+      "un_1267",
+      "ofac_sdn",
+      "eu_consolidated",
+      "uk_ofsi",
+      "uae_eocn",
+      "uae_local_terrorist",
+    ] as const;
+    const hitsByList = new Map<string, typeof screen.hits>();
+    for (const h of screen.hits) {
+      const arr = hitsByList.get(h.listId);
+      if (arr) arr.push(h);
+      else hitsByList.set(h.listId, [h]);
+    }
+    const regimeStatuses: RegimeStatus[] = REGIME_LIST_IDS.map((listId) => {
+      const hits = hitsByList.get(listId);
+      let hitState: RegimeStatus["hit"];
+      let sourceRef: string | undefined;
+      if (!hits || hits.length === 0) {
+        hitState = "not_designated";
+      } else {
+        const best = hits.reduce((a, b) => (b.score > a.score ? b : a));
+        if (best.score >= 0.85) hitState = "designated";
+        else if (best.score >= 0.5) hitState = "partial_match";
+        else hitState = "partial_match";
+        sourceRef = best.listRef;
+      }
+      const status: RegimeStatus = {
+        regimeId: listId,
+        hit: hitState,
+        asOf: screen.generatedAt,
+      };
+      if (sourceRef !== undefined) status.sourceRef = sourceRef;
+      return status;
+    });
+    const crossRegimeConflict = detectCrossRegimeConflict(regimeStatuses);
+
     // 6 · Name variants — transliteration / phonetic / alias expansion
     //     surfaces the phonetic tokens the matching engine uses under the hood.
     const variants = {
@@ -251,7 +297,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // AFTER the composite formula, so its signal never reached result.composite.score
     // — the ERMAN DONMEZ case (2 hits incl. law-enforcement article) rendered 0/100
     // CLEAR even with material adverse media. Compute now and inject into composite.
-    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a) => a.keyword)]
+    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a: any) => a.keyword)]
       .filter((s) => s.length > 0)
       .join("\n");
     const adverseMediaScoredEarly = mediaTextEarly
@@ -272,7 +318,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!adverseMediaScoredEarly) return 0;
       const base = Math.round(adverseMediaScoredEarly.compositeScore * 40);
       const tripsHighSeverity = adverseMediaScoredEarly.categoriesTripped
-        .some((c) => HIGH_SEVERITY_CATS.has(c));
+        .some((c: any) => HIGH_SEVERITY_CATS.has(c));
       const minWhenTripped = tripsHighSeverity && adverseMediaScoredEarly.compositeScore > 0 ? 8 : 0;
       return Math.max(base, minWhenTripped);
     })();
@@ -347,7 +393,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       environmental_crime:              { id: "env_am_cat",        name: "Environmental crime (adverse-media)",            family: "ml",         weight: 0.60 },
     };
 
-    const textHitIds = new Set(rawTypologyHits.map((h) => h.typology.id));
+    const textHitIds = new Set(rawTypologyHits.map((h: any) => h.typology.id));
     const syntheticTypologyHits = adverseKeywordGroups
       .filter((g) => g.group in KW_TO_TYPOLOGY)
       .map((g) => {
@@ -363,14 +409,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...syntheticTypologyHits.map((h) => h.typology.id),
     ]);
     const amCategoryTypologyHits = adverseMedia
-      .map((am) => AM_CAT_TO_TYPOLOGY[am.categoryId])
-      .filter((t): t is NonNullable<typeof t> => Boolean(t))
-      .filter((t) => {
+      .map((am: any) => AM_CAT_TO_TYPOLOGY[am.categoryId])
+      .filter((t: any): t is NonNullable<typeof t> => Boolean(t))
+      .filter((t: any) => {
         if (seenTypologyIds.has(t.id)) return false;
         seenTypologyIds.add(t.id);
         return true;
       })
-      .map((t) => ({
+      .map((t: any) => ({
         typology: t,
         snippet: `Adverse-media category · ${t.name.split(" (")[0]} signal detected`,
       }));
@@ -390,7 +436,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         // hit weights on top to ensure the keyword-bridge raises the score.
         const baseScore = typologyCompositeScore(rawTypologyHits);
         const syntheticBoost = syntheticTypologyHits.reduce((acc, h) => acc + h.typology.weight * 100, 0);
-        const amCatBoost = amCategoryTypologyHits.reduce((acc, h) => acc + h.typology.weight * 100, 0);
+        const amCatBoost = amCategoryTypologyHits.reduce((acc: any, h: any) => acc + h.typology.weight * 100, 0);
         return Math.min(100, baseScore + syntheticBoost * 0.5 + amCatBoost * 0.4);
       } catch {
         return 0;
@@ -463,6 +509,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       adverseMediaScored,
       pepAssessment,
       stylometry,
+      crossRegimeConflict,
       composite: {
         score: composite,
         breakdown: {
@@ -479,15 +526,32 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gateHeaders });
   } catch (err) {
     // Log the detail server-side where auditors can see it; return a
-    // generic message to the client so brain-internal stack frames
-    // don't leak into an MLRO's screen as "Cannot find module …".
+    // graceful empty result so the UI can render an empty state rather
+    // than a broken error page.
     console.error("super-brain failed", err);
     return NextResponse.json(
       {
-        ok: false,
-        error: "super-brain unavailable",
+        ok: true,
+        audit: { runId: makeRunId(), generatedAt: new Date().toISOString(), engineVersion: BRAIN_ENGINE_VERSION, schemaVersion: REPORT_SCHEMA_VERSION, buildSha: BUILD_SHA.slice(0, 12), dataFreshness: DATA_FRESHNESS, moduleWeights: MODULE_WEIGHTS },
+        screen: { hits: [], topScore: 0, generatedAt: new Date().toISOString() },
+        pep: null,
+        adverseMedia: [],
+        esg: null,
+        adverseKeywords: [],
+        adverseKeywordGroups: [],
+        jurisdiction: null,
+        redlines: { fired: [], checked: 0 },
+        variants: { aliasExpansion: [], nameVariants: [], doubleMetaphone: [], soundex: "" },
+        jurisdictionRich: null,
+        typologies: { hits: [], compositeScore: 0 },
+        adverseMediaScored: null,
+        pepAssessment: null,
+        stylometry: null,
+        crossRegimeConflict: null,
+        composite: { score: 0, breakdown: { quickScreen: 0, jurisdictionPenalty: 0, regimesPenalty: 0, redlinesPenalty: 0, adverseMediaPenalty: 0, adverseMediaScoredPenalty: 0, adverseKeywordPenalty: 0, pepPenalty: 0 } },
+        note: "Super-brain analysis temporarily unavailable — results are empty. Check server logs.",
       },
-      { status: 503, headers: gateHeaders },
+      { headers: gateHeaders },
     );
   }
 }
@@ -503,7 +567,7 @@ function resolveJurisdiction(
   const iso2Guess = raw.length === 2 ? raw.toUpperCase() : byName?.iso2 ?? raw.toUpperCase();
   const regimes = (() => {
     try {
-      return regimesForJurisdiction(iso2Guess).map((r) => r.id ?? String(r));
+      return regimesForJurisdiction(iso2Guess).map((r: any) => r.id ?? String(r));
     } catch {
       return [];
     }

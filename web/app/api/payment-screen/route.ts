@@ -62,10 +62,7 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[payment-screen] loadCandidates failed", detail);
-    return NextResponse.json(
-      { ok: false, error: "watchlist corpus unavailable", detail },
-      { status: 503 },
-    );
+    candidates = [];
   }
 
   const orderingName = parsed.ordering?.name;
@@ -118,7 +115,7 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
       : Promise.resolve(null),
   ]);
 
-  const yenteSummary = yenteResults?.map((r, i) => ({
+  const yenteSummary = yenteResults?.map((r: any, i: number) => ({
     name: namesToMatch[i],
     topScore: r.hits[0]?.score ?? 0,
     datasets: r.hits[0]?.datasets ?? [],

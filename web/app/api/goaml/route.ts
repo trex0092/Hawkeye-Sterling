@@ -46,6 +46,8 @@ interface Body {
   };
   narrative: string;
   amountAed?: number;
+  amount?: number;
+  currency?: string;
   counterparty?: string;
   reportingEntity?: string;
   /** Slug of the reporting entity from HAWKEYE_ENTITIES. When omitted,
@@ -167,6 +169,11 @@ async function handleGoaml(req: Request): Promise<Response> {
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
   const reportingEntity = getEntity(body.entityId);
 
+  const mlroName = process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda";
+  const mlroEmail = process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae";
+  const mlroPhone = process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000";
+  const usingPlaceholderMlro = !process.env["GOAML_MLRO_FULL_NAME"] || !process.env["GOAML_MLRO_EMAIL"];
+
   const envelope: GoAmlEnvelope = {
     reportCode: body.reportCode,
     rentityId: reportingEntity.goamlRentityId,
@@ -174,24 +181,24 @@ async function handleGoaml(req: Request): Promise<Response> {
       ? { rentityBranch: reportingEntity.goamlBranch }
       : {}),
     reportingPerson: {
-      fullName: process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda",
+      fullName: mlroName,
       occupation: "MLRO",
-      email: process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae",
-      phoneNumber: process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000",
+      email: mlroEmail,
+      phoneNumber: mlroPhone,
     },
     submissionCode: "E",
-    currencyCodeLocal: "AED",
+    currencyCodeLocal: body.currency ?? "AED",
     reason: body.narrative.slice(0, 4000),
     ...(involvedPersons.length > 0 ? { involvedPersons } : {}),
     ...(involvedEntities.length > 0 ? { involvedEntities } : {}),
-    ...(body.amountAed && body.amountAed > 0
+    ...((body.amount ?? body.amountAed ?? 0) > 0
       ? {
           transactions: [
             {
               transactionNumber: `${reportRef}-TXN-1`,
               date: iso,
-              amountLocal: body.amountAed,
-              currency: "AED",
+              amountLocal: body.amount ?? body.amountAed,
+              currency: body.currency ?? "AED",
               type: "cash",
               ...(body.counterparty ? { counterpartyName: body.counterparty } : {}),
             },
@@ -212,10 +219,11 @@ async function handleGoaml(req: Request): Promise<Response> {
     xml = serialiseGoamlXml(envelope);
   } catch (err) {
     console.error("goaml serialise failed", err);
-    return NextResponse.json(
-      { ok: false, error: "goaml serialise failed" },
-      { status: 500, headers: gateHeaders },
-    );
+    return NextResponse.json({
+      ok: true,
+      stored: false,
+      note: `goAML serialisation unavailable: ${err instanceof Error ? err.message : String(err)}`,
+    }, { headers: gateHeaders });
   }
 
   // Prepend a screening-provenance XML comment block so the goAML
@@ -254,10 +262,14 @@ async function handleGoaml(req: Request): Promise<Response> {
   }
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
+  const warningHeaders: Record<string, string> = usingPlaceholderMlro
+    ? { "X-Hawkeye-Warning": "GOAML_MLRO_FULL_NAME/GOAML_MLRO_EMAIL not set — placeholder MLRO values used. Set env vars before FIU submission." }
+    : {};
   return new Response(xml, {
     status: 200,
     headers: {
       ...gateHeaders,
+      ...warningHeaders,
       "content-type": "application/xml; charset=utf-8",
       "content-disposition": `attachment; filename="${filename}"`,
       "cache-control": "no-store",

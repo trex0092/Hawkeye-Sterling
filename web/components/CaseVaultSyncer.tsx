@@ -39,10 +39,7 @@ export function CaseVaultSyncer(): null {
 
     const open = (): void => {
       if (closed) return;
-      const adminToken =
-        process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
       const params = new URLSearchParams({ since: lastSeen });
-      if (adminToken) params.set("token", adminToken);
       const url = `/api/cases/stream?${params.toString()}`;
       try {
         es = new EventSource(url, { withCredentials: false });
