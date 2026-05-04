@@ -235,6 +235,13 @@ export type FilterKey =
   | "mine"
   | "closed";
 
+export interface SavedFilterSet {
+  id: string;
+  label: string;
+  keys: FilterKey[];
+  createdAt: string;
+}
+
 export interface QueueFilter {
   key: FilterKey;
   label: string;

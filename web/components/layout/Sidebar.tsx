@@ -7,17 +7,10 @@ import {
   SidebarSection,
   SidebarShell,
 } from "./SidebarParts";
-import type { FilterKey, QueueFilter } from "@/lib/types";
+import type { FilterKey, QueueFilter, SavedFilterSet } from "@/lib/types";
 
 const PINNED_KEY = "hawkeye.pinned-filters";
 const SAVED_KEY  = "hawkeye.saved-filter-sets";
-
-export interface SavedFilterSet {
-  id: string;
-  label: string;
-  keys: FilterKey[];
-  createdAt: string;
-}
 
 interface SidebarProps {
   filters: QueueFilter[];

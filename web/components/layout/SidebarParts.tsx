@@ -9,8 +9,7 @@ import {
   CARD_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
-import type { SavedFilterSet } from "@/components/layout/Sidebar";
-import type { FilterKey } from "@/lib/types";
+import type { FilterKey, SavedFilterSet } from "@/lib/types";
 
 const OPERATOR_STORAGE_KEY = "hawkeye.operator";
 

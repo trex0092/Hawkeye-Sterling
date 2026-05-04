@@ -179,7 +179,7 @@ function applyFilter(subjects: Subject[], filter: FilterKey, operatorName?: stri
       });
     case "mine":
       return subjects.filter(
-        (s) => s.status !== "cleared" && operatorName ? s.assignedTo === operatorName : false,
+        (s) => s.status !== "cleared" && (operatorName ? s.assignedTo === operatorName : false),
       );
     case "closed":
       return subjects.filter((s) => s.status === "cleared");
@@ -530,7 +530,7 @@ function computeDynamicFilters(subjects: Subject[], operatorName?: string): Queu
         break;
       case "mine":
         count = subjects.filter(
-          (s) => s.status !== "cleared" && operatorName ? s.assignedTo === operatorName : false,
+          (s) => s.status !== "cleared" && (operatorName ? s.assignedTo === operatorName : false),
         ).length;
         break;
       case "closed":
