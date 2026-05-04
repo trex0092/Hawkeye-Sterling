@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
   const userMessage = `Here are the active STR/SAR cases for today's briefing:\n\n${JSON.stringify(cases, null, 2)}\n\nToday's date: ${new Date().toISOString().slice(0, 10)}`;
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
+      signal: AbortSignal.timeout(22_000),
     method: "POST",
     headers: {
       "x-api-key": apiKey,
