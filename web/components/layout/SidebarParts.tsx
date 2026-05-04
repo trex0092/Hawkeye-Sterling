@@ -296,7 +296,7 @@ export function SidebarFilterList<K extends string>({
                   {onTogglePin && (
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); onTogglePin(item.key as unknown as FilterKey); }}
+                      onClick={(e) => { e.stopPropagation(); onTogglePin(item.key); }}
                       title={isPinned ? "Unpin" : "Pin to top"}
                       className={`shrink-0 transition-opacity ${isPinned ? "opacity-100 text-brand" : "opacity-0 group-hover:opacity-60 text-ink-3 hover:text-ink-1"}`}
                     >
