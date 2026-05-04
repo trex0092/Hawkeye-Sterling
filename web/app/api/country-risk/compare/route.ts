@@ -1,5 +1,8 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Side-by-side comparison emits up to 5 country profiles in one call; needs
+// the full 60s budget to fit Sonnet 4.6 + 6000 tokens.
+export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -86,7 +89,7 @@ Countries: ${countries.join(", ")}
 For each country provide complete risk scoring, FATF status, sanctions profile (OFAC, EU, UN, UK), key risks, recent developments, regulatory obligations applicable to a UAE-based DNFBP, and recommendation. Keep summaries concise (2-3 sentences each) to fit the comparison format.`,
         },
       ],
-    });
+    }, { timeout: 50_000 });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "[]";
     const results = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult[];
@@ -96,8 +99,13 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
       comparedAt: new Date().toISOString(),
     });
   } catch {
-    const fallbacks = countries.map((c) => buildFallback(c));
-    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Real-time comparison temporarily unavailable for: ${countries.join(", ")}. Please retry in a moment.`,
+      },
+      { status: 503 },
+    );
   }
 }
 

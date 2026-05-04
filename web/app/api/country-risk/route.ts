@@ -1,5 +1,8 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Netlify Pro plan permits up to 60s per sync function. Country risk needs
+// the room — Sonnet 4.6 with 3000 tokens routinely takes 30–45s.
+export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -114,11 +117,9 @@ export async function POST(req: Request) {
       ? "Provide comprehensive analysis with detailed context for each dimension, full regulatory obligations list, and at least 5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
-  // Netlify sync function ceiling is ~26s; abort the Anthropic call before that
-  // so we return the FALLBACK with a 200 instead of letting the Lambda 504.
-  const controller = new AbortController();
-  const timeoutMs = depth === "full" ? 22000 : 18000;
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  // We extended this route to maxDuration=60. Override the SDK's global 22s
+  // default with a per-call ceiling that fits inside that budget.
+  const requestTimeoutMs = depth === "full" ? 50_000 : 25_000;
 
   try {
     const client = getAnthropicClient(apiKey);
@@ -203,14 +204,22 @@ Analysis depth: ${depth}
 Provide a complete country risk intelligence assessment covering AML/CFT risk, FATF status, sanctions exposure (OFAC, EU, UN, UK), political stability, TF risk, and all regulatory obligations that would apply to a UAE-based DNFBP (gold trader/refinery) engaging with counterparties in or from this country.`,
         },
       ],
-    }, { signal: controller.signal });
+    }, { timeout: requestTimeoutMs });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult;
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ ...FALLBACK, country });
-  } finally {
-    clearTimeout(timer);
+    // Honest 503 instead of dressing up the UAE FALLBACK with the requested
+    // country name — that was misleading users with UAE risk scores labelled
+    // as their chosen country. Frontend already handles non-2xx by showing
+    // the error message in the red toast.
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Real-time analysis temporarily unavailable for ${country}. Please retry in a moment.`,
+      },
+      { status: 503 },
+    );
   }
 }
