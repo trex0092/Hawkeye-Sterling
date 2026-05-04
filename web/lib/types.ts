@@ -232,6 +232,7 @@ export type FilterKey =
   | "pep"
   | "sla"
   | "a24"
+  | "mine"
   | "closed";
 
 export interface QueueFilter {

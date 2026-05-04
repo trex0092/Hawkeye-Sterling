@@ -8,6 +8,7 @@ export const QUEUE_FILTERS: QueueFilter[] = [
   { key: "pep", label: "PEP exposure", count: "00" },
   { key: "sla", label: "SLA breaching", count: "00" },
   { key: "a24", label: "A-24h approver", count: "00" },
+  { key: "mine", label: "My cases", count: "00" },
   { key: "closed", label: "Closed today", count: "00" },
 ];
 
