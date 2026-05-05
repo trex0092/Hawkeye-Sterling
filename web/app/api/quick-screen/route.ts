@@ -8,6 +8,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -109,7 +110,29 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const result = quickScreen(subject, candidates, body.options ?? {});
-    return respond(200, { ok: true, ...result }, gateHeaders);
+    // Augment with OpenSanctions live results when local matcher returns
+    // few/no hits — adds a free additional signal layer beyond the bundled
+    // watchlists. Best-effort: failure here doesn't 5xx the screening.
+    let openSanctionsResults: Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>> = [];
+    if (result.hits.length < 3 && subject.name.length >= 3) {
+      try {
+        openSanctionsResults = await LIVE_OPENSANCTIONS_ADAPTER.lookup(
+          subject.name,
+          subject.jurisdiction ?? undefined,
+        );
+      } catch { /* best-effort */ }
+    }
+    return respond(
+      200,
+      {
+        ok: true,
+        ...result,
+        ...(openSanctionsResults.length > 0
+          ? { openSanctionsAugmentation: openSanctionsResults.slice(0, 10) }
+          : {}),
+      } as QuickScreenResponse,
+      gateHeaders,
+    );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     return respond(

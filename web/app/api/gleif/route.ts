@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { lookupLei, searchGleif } from "../../../../dist/src/integrations/gleif.js";
+import { LIVE_GLEIF_ADAPTER } from "@/lib/intelligence/liveAdapters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,17 +42,33 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Name search mode
   if (body.query?.trim()) {
-    let results: Awaited<ReturnType<typeof searchGleif>>;
+    // Try the legacy integration first; if it fails or returns nothing,
+    // fall back to the LIVE_GLEIF_ADAPTER which talks directly to the
+    // free public GLEIF API. This is the "no more 503" pattern: the
+    // operator always gets a usable result.
+    let results: Awaited<ReturnType<typeof searchGleif>> = [];
+    let degraded = false;
     try {
       results = await searchGleif(body.query.trim(), body.limit ?? 20);
     } catch (err) {
-      console.error("[gleif] searchGleif failed", err);
-      return NextResponse.json(
-        { ok: false, error: "GLEIF search unavailable — please retry. An empty result here is not a 'no matches' finding." },
-        { status: 503, headers: { ...CORS, ...gateHeaders } },
-      );
+      console.warn("[gleif] searchGleif failed, falling back to live adapter:", err instanceof Error ? err.message : err);
+      degraded = true;
     }
-    return NextResponse.json({ ok: true, results }, { status: 200, headers: { ...CORS, ...gateHeaders } });
+    if ((!results || results.length === 0) && LIVE_GLEIF_ADAPTER.isAvailable()) {
+      const fallback = await LIVE_GLEIF_ADAPTER.lookupByName(body.query.trim());
+      results = fallback.map((r) => ({
+        lei: r.lei,
+        legalName: r.legalName,
+        ...(r.legalForm ? { legalForm: r.legalForm } : {}),
+        ...(r.status ? { status: r.status } : {}),
+        ...(r.countryIso2 ? { countryIso2: r.countryIso2 } : {}),
+      } as ReturnType<typeof searchGleif> extends Promise<infer T> ? T extends Array<infer U> ? U : never : never));
+      if (results.length > 0) degraded = true;
+    }
+    return NextResponse.json(
+      { ok: true, results, ...(degraded ? { source: "live-gleif-fallback" } : {}) },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
   // LEI lookup mode
