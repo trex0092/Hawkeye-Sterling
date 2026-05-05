@@ -236,9 +236,9 @@ export default function GeopoliticalPage() {
             type="button"
             onClick={() => { void fetchEvents(); }}
             disabled={loading}
-            className="px-3 py-1 text-11 font-mono bg-bg-2 border border-hair-2 rounded hover:border-brand text-ink-1 hover:text-ink-0 transition-colors disabled:opacity-50"
+            className="px-2 py-0.5 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
           >
-            {loading ? "⟳ Refreshing…" : "⟳ Refresh"}
+            ↻
           </button>
         </div>
       </div>

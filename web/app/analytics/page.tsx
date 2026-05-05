@@ -366,7 +366,7 @@ export default function AnalyticsPage() {
                 disabled={insightsLoading}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
               >
-                {insightsLoading ? "Generating…" : "Generate AI Insights"}
+                {insightsLoading ? "Generating…" : "✦AI"}
               </button>
               <button
                 type="button"
@@ -374,7 +374,7 @@ export default function AnalyticsPage() {
                 disabled={biasLoading}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
               >
-                {biasLoading ? "Analysing…" : "AI Bias Monitor"}
+                {biasLoading ? "Analysing…" : "✦AI"}
               </button>
               <select
                 value={predictTimeframe}

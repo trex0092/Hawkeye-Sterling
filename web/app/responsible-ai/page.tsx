@@ -1446,7 +1446,7 @@ export default function ResponsibleAIPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           <span className="text-14">✦</span>
-          {assessmentLoading ? "Running assessment…" : "Run AI Ethics Assessment"}
+          {assessmentLoading ? "Running assessment…" : "✦AI"}
         </button>
         {assessmentError && (
           <p className="mt-2 text-11 text-red">Assessment failed: {assessmentError}</p>

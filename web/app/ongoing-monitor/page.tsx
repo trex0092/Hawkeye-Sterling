@@ -419,7 +419,7 @@ export default function OngoingMonitorPage() {
               disabled={monitorAlertsLoading || subjects.length === 0}
               className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
             >
-              {monitorAlertsLoading ? "Scanning…" : "AI Pattern Scan"}
+              {monitorAlertsLoading ? "Scanning…" : "✦AI"}
             </button>
           </div>
 

@@ -3629,9 +3629,10 @@ export default function MlroAdvisorPage() {
                             type="button"
                             onClick={() => downloadEvidencePack(buildEvidencePackEntry(entry))}
                             title="Download a regulator-ready PDF evidence pack with reasoning trail and charter hash"
-                            className="text-11 px-2.5 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:border-brand hover:text-brand transition-colors"
+                            className="text-11 px-2.5 py-1 rounded border font-semibold transition-colors"
+                            style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                           >
-                            Evidence Pack (PDF)
+                            PDF
                           </button>
                           <button
                             type="button"

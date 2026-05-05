@@ -1136,7 +1136,7 @@ export default function ShipmentsPage() {
             onClick={() => void runTbmlScan(visible)}
             className="self-start text-11 font-semibold px-4 py-2 rounded border border-amber/60 text-amber bg-amber-dim hover:bg-amber/20 transition-colors disabled:opacity-50"
           >
-            {tbmlLoading ? "Scanning…" : "AI TBML Scan"}
+            {tbmlLoading ? "Scanning…" : "✦AI"}
           </button>
           {tbml && (
             <button

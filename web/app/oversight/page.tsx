@@ -8,7 +8,7 @@ import { formatDMY } from "@/lib/utils/dateFormat";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
 import type { BoardPackResult } from "@/app/api/oversight/board-pack/route";
-import { exportGapAnalysis } from "@/lib/pdf/exporters";
+import { openReportWindow } from "@/lib/reportOpen";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -1114,7 +1114,7 @@ export default function OversightPage() {
             disabled={gapLoading}
             className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
           >
-            {gapLoading ? "◌ Analysing…" : "✦ Run AI Gap Analysis"}
+            {gapLoading ? "◌ Analysing…" : "✦AI"}
           </button>
           {gapOpen && gapResult && (
             <button type="button" onClick={() => setGapOpen(false)} className="text-11 text-ink-2 hover:text-ink-0">
@@ -1240,10 +1240,11 @@ export default function OversightPage() {
             <div className="border-t border-hair-2 pt-3 flex justify-end">
               <button
                 type="button"
-                onClick={() => exportGapAnalysis(gapResult, "Hawkeye Sterling DPMS")}
-                className="text-11 font-mono text-brand hover:text-brand/80"
+                onClick={() => openReportWindow("/api/gap-report", { gapResult, institution: "Hawkeye Sterling DPMS" })}
+                className="text-11 font-mono"
+                style={{ color: "#7c3aed", fontWeight: 600 }}
               >
-                ↓ Export PDF
+                PDF
               </button>
             </div>
           </div>
@@ -1818,9 +1819,10 @@ export default function OversightPage() {
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="text-11 font-mono text-brand hover:text-brand/80"
+                    className="text-11 font-mono"
+                    style={{ color: "#7c3aed", fontWeight: 600 }}
                   >
-                    ↓ Export PDF
+                    PDF
                   </button>
                 </div>
 

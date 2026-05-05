@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { exportToPdf } from "@/lib/pdf/exportPdf";
+import { openReportWindow } from "@/lib/reportOpen";
 
 interface NameVariants {
   ok: boolean;
@@ -191,62 +191,21 @@ function toCsv(results: RowResult[]): string {
 }
 
 function exportPdf(results: RowResult[], summary: Summary) {
-  const now = new Date();
-  const reportId = `HWK-BATCH-${now.getUTCFullYear()}${String(now.getUTCMonth()+1).padStart(2,"0")}${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}`;
-
-  const sevTone = (sev: string): "red" | "amber" | "green" | "neutral" => {
-    if (sev === "critical" || sev === "high" || sev === "error") return "red";
-    if (sev === "medium") return "amber";
-    if (sev === "low" || sev === "clear") return "green";
-    return "neutral";
-  };
-
-  exportToPdf({
-    title: "Batch Screening Audit Report",
-    moduleName: "Batch Screening · FDL 10/2025 Art.9",
-    reportRef: reportId,
-    institution: "Hawkeye Sterling DPMS",
-    regulatoryBasis: "UAE FDL 10/2025 · Cabinet Res 134/2025 · MoE Resolution 3/2025",
-    confidential: true,
-    sections: [
-      { type: "header", content: "Population Summary" },
-      {
-        type: "keyvalue",
-        pairs: [
-          { label: "Total Subjects", value: String(summary.total) },
-          { label: "Duration", value: `${(summary.totalDurationMs / 1000).toFixed(1)}s` },
-          { label: "Critical", value: String(summary.critical), tone: summary.critical > 0 ? "red" : "green" },
-          { label: "High", value: String(summary.high), tone: summary.high > 0 ? "red" : "green" },
-          { label: "Medium", value: String(summary.medium), tone: summary.medium > 0 ? "amber" : "green" },
-          { label: "Low / Clear", value: `${summary.low} / ${summary.clear}`, tone: "green" },
-          { label: "Errors", value: String(summary.errors), tone: summary.errors > 0 ? "red" : "neutral" },
-          { label: "Duplicates", value: String(summary.duplicates) },
-        ],
-      },
-      { type: "divider" },
-      { type: "header", content: "Screening Results" },
-      {
-        type: "table",
-        columns: ["Name", "Type", "Jurisdiction", "Severity", "Score", "Hits", "Lists", "Keywords", "Error"],
-        rows: results.map((r) => [
-          r.name + (r.isDuplicate ? " [DUP]" : ""),
-          r.entityType ?? "—",
-          r.jurisdiction ?? "—",
-          r.severity.toUpperCase(),
-          String(r.topScore),
-          String(r.hitCount),
-          r.listCoverage.slice(0, 3).join(", ") || "—",
-          r.keywordGroups.slice(0, 3).join(", ") || "—",
-          r.error ?? "—",
-        ]),
-      },
-      { type: "divider" },
-      {
-        type: "badge",
-        content: summary.critical > 0 || summary.high > 0 ? "ESCALATION REQUIRED" : "CLEAR",
-        tone: summary.critical > 0 || summary.high > 0 ? "red" : "green",
-      },
-    ],
+  openReportWindow("/api/batch-report", {
+    totalScreened: summary.total,
+    criticalHits: summary.critical,
+    highRisk: summary.high,
+    clear: summary.clear,
+    durationMs: summary.totalDurationMs,
+    listCoverage: "UN sanctions, OFAC SDN, EU Consolidated, Interpol Red Notices, PEP databases (World-Check, Dow Jones), UAE local watchlists, adverse media (proprietary NLP).",
+    results: results.slice(0, 50).map((r, i) => ({
+      id: String(i + 1).padStart(3, "0"),
+      subject: r.name + (r.isDuplicate ? " [DUP]" : ""),
+      score: r.topScore,
+      severity: r.severity,
+      disposition: r.severity === "clear" ? "CLEAR" : r.severity === "critical" || r.severity === "high" ? "ESCALATE" : "REVIEW",
+      date: new Date().toLocaleDateString("en-GB"),
+    })),
   });
 }
 
@@ -700,7 +659,7 @@ export function BatchPanel() {
             {summary.duplicates > 0 && <SummaryStat label="Duplicates" value={summary.duplicates} tone="text-amber" />}
             <div className="ml-auto flex gap-2 items-end">
               <button onClick={downloadCsv} className="px-3 py-1.5 bg-brand text-white rounded text-11 font-semibold hover:bg-brand-hover">CSV</button>
-              <button onClick={downloadPdf} className="px-3 py-1.5 bg-bg-0/20 text-bg-0 border border-bg-0/30 rounded text-11 font-semibold hover:bg-bg-0/30">PDF audit</button>
+              <button onClick={downloadPdf} className="px-3 py-1.5 rounded text-11 font-semibold" style={{ color: "#7c3aed", border: "1px solid #7c3aed", background: "rgba(124,58,237,0.07)" }}>PDF</button>
             </div>
           </div>
           {chartData.length > 0 && (
@@ -733,7 +692,7 @@ export function BatchPanel() {
           <span className="ml-auto text-11 text-ink-3">{sortedFiltered.length} row{sortedFiltered.length === 1 ? "" : "s"}</span>
           <button type="button" onClick={() => void runPriorityRanking(results)} disabled={rankLoading || results.length === 0}
             className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
-            {rankLoading ? "Ranking…" : "AI Priority Ranking"}
+            {rankLoading ? "Ranking…" : "✦AI"}
           </button>
         </div>
       )}
