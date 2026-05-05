@@ -7,6 +7,7 @@ import {
 } from "@/lib/reports/complianceReport";
 import { buildHtmlDoc, hsPage, hsFinis } from "@/lib/reportHtml";
 import { disposition, inferIndustryHints, type DispositionResult } from "@/lib/intelligence/dispositionEngine";
+import { inferIndustrySegment } from "@/lib/intelligence/industryRisk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -166,6 +167,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     crossRegimeSplit: Boolean((sb as { crossRegimeConflict?: { split?: boolean } } | null | undefined)?.crossRegimeConflict?.split),
     entityType: s.entityType as "individual" | "organisation" | "vessel" | "aircraft" | "other" | undefined,
     industryHints: inferIndustryHints(s.name, s.aliases ?? []),
+    industrySegment: inferIndustrySegment(s.name, s.aliases ?? []),
     ...((sb as { newsDossier?: { articleCount?: number } } | null | undefined)?.newsDossier?.articleCount !== undefined
       ? { totalAdverseCount: (sb as { newsDossier?: { articleCount?: number } } | null | undefined)!.newsDossier!.articleCount }
       : {}),
@@ -522,6 +524,50 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const label = "SUBJECT SCREENING DOSSIER";
 
   // ── page 3: Intelligence Pack — typologies, predicates, interview script ──
+  // Geographic risk profile
+  const intelGeography = `
+    <div class="scr-sh">Geographic risk profile</div>
+    <div style="font-size:9.5px;line-height:1.5">
+      <strong>${e(intel.geography.subject.name)} (${e(intel.geography.subject.iso2)})</strong> —
+      inherent risk <span class="mono">${intel.geography.subject.inherentRisk}/100</span>;
+      tiers: ${intel.geography.subject.tiers.map((t) => `<span class="scr-am-chip">${e(t.replace(/_/g, " "))}</span>`).join("")}
+      ${intel.geography.subject.activeRegimes.length > 0
+        ? `<br><strong>Active regimes:</strong> ${intel.geography.subject.activeRegimes.map((r) => e(r)).join(", ")}`
+        : ""}
+      ${intel.geography.subject.notes.length > 0
+        ? `<ul style="padding-left:14px;margin:4px 0">${intel.geography.subject.notes.map((n) => `<li>${e(n)}</li>`).join("")}</ul>`
+        : ""}
+    </div>`;
+
+  // Industry / sector risk
+  const intelIndustry = `
+    <div class="scr-sh">Industry / sector inherent risk</div>
+    <div style="font-size:9.5px;line-height:1.5">
+      <strong>${e(intel.industry.label)}</strong> — inherent risk <span class="mono">${intel.industry.inherentRisk}/100</span>.
+      ${e(intel.industry.rationale)}
+      ${intel.industry.typologyReferences.length > 0
+        ? `<br><strong>References:</strong> ${intel.industry.typologyReferences.map((r) => e(r)).join(" · ")}`
+        : ""}
+    </div>`;
+
+  // Network analysis
+  const intelNetwork = intel.network && intel.network.flaggedCount > 0
+    ? `<div class="scr-sh">Network / RCA contagion</div>
+       <div style="font-size:9.5px">
+         Network contagion score <span class="mono">${intel.network.score}/100</span> from ${intel.network.flaggedCount} flagged related part${intel.network.flaggedCount === 1 ? "y" : "ies"}.
+         ${intel.network.topContributors.length > 0
+           ? `<ul style="padding-left:14px;margin:4px 0">${intel.network.topContributors.map((c) => `<li><strong>${e(c.partyName)}</strong> (${e(c.partyKind.replace(/_/g, " "))}) — +${c.contribution} pts · ${e(c.reason)}</li>`).join("")}</ul>`
+           : ""}
+       </div>` : "";
+
+  // Temporal analysis
+  const intelTemporal = intel.temporal
+    ? `<div class="scr-sh">Temporal / velocity analysis</div>
+       <div style="font-size:9.5px">
+         Velocity <span class="mono">${intel.temporal.velocity}/100</span> · decayed-severity <span class="scr-am-chip">${e(intel.temporal.decayedSeverity.toUpperCase())}</span>
+         · last 30d: ${intel.temporal.eventsLast30d} · last 90d: ${intel.temporal.eventsLast90d} · last 365d: ${intel.temporal.eventsLast365d}
+       </div>` : "";
+
   const intelTypologies = intel.typologies.length > 0
     ? `<div class="scr-sh">Typology fingerprints (FATF / Egmont)</div>
        <table class="scr-tbl">
@@ -536,6 +582,24 @@ function renderHtmlReport(text: string, input: ReportInput): string {
              </tr>`).join("")}
          </tbody>
        </table>` : "";
+
+  // MLRO playbooks per fired typology
+  const intelPlaybooks = intel.playbooks.length > 0
+    ? `<div class="scr-sh">MLRO playbooks (per fired typology)</div>
+       ${intel.playbooks.map((pb) => `
+         <div style="border:0.5px solid var(--hair);padding:8px 10px;margin:6px 0">
+           <div style="font:700 8px/1.2 var(--sans);text-transform:uppercase;letter-spacing:0.1em;color:var(--pink);margin-bottom:4px">${e(pb.typologyId.replace(/_/g, " "))}</div>
+           <p style="font-size:9px;margin:0 0 6px;color:var(--ink)">${e(pb.summary)}</p>
+           <div style="font:700 7px/1 var(--sans);color:var(--ink-3);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px">Immediate</div>
+           <ul style="padding-left:14px;margin:2px 0;font-size:8.5px">${pb.immediate.map((i) => `<li>${e(i)}</li>`).join("")}</ul>
+           <div style="font:700 7px/1 var(--sans);color:var(--ink-3);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px">Secondary verification</div>
+           <ul style="padding-left:14px;margin:2px 0;font-size:8.5px">${pb.secondary.map((i) => `<li>${e(i)}</li>`).join("")}</ul>
+           <div style="font:700 7px/1 var(--sans);color:var(--ink-3);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px">Escalation triggers</div>
+           <ul style="padding-left:14px;margin:2px 0;font-size:8.5px">${pb.escalationTriggers.map((i) => `<li>${e(i)}</li>`).join("")}</ul>
+           <div style="font:700 7px/1 var(--sans);color:var(--pink);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px">Red lines (refuse the relationship)</div>
+           <ul style="padding-left:14px;margin:2px 0;font-size:8.5px">${pb.redLines.map((i) => `<li>${e(i)}</li>`).join("")}</ul>
+           <div style="font:7px/1.4 var(--mono);color:var(--ink-3);margin-top:6px">${pb.citations.map((c) => e(c)).join(" · ")}</div>
+         </div>`).join("")}` : "";
 
   const intelPredicates = intel.predicateOffences.length > 0
     ? `<div class="scr-sh">FATF predicate offences implied</div>
@@ -596,7 +660,12 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       were applied above the raw composite ${composite}/100.
     </p>
     ${intelEscalations}
+    ${intelGeography}
+    ${intelIndustry}
+    ${intelNetwork}
+    ${intelTemporal}
     ${intelTypologies}
+    ${intelPlaybooks}
     ${intelPredicates}
     ${intelAnomalies}
     ${intelEvidence}
