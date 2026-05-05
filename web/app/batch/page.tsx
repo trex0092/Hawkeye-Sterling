@@ -13,7 +13,6 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { exportToPdf } from "@/lib/pdf/exportPdf";
 
 interface RowResult {
   name: string;
@@ -141,57 +140,9 @@ function toCsv(results: RowResult[]): string {
   return [header, ...rows].join("\r\n");
 }
 
-function exportPdf(results: RowResult[], summary: Summary) {
-  const now = new Date();
-  const reportId = `HWK-BATCH-${now.getUTCFullYear()}${String(now.getUTCMonth()+1).padStart(2,"0")}${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}`;
-
-  exportToPdf({
-    title: "Batch Screening Audit Report",
-    moduleName: "Batch Screening · FDL 10/2025 Art.9",
-    reportRef: reportId,
-    institution: "Hawkeye Sterling DPMS",
-    regulatoryBasis: "UAE FDL 10/2025 · Cabinet Res 134/2025 · MoE Resolution 3/2025",
-    confidential: true,
-    sections: [
-      { type: "header", content: "Population Summary" },
-      {
-        type: "keyvalue",
-        pairs: [
-          { label: "Total Subjects", value: String(summary.total) },
-          { label: "Duration", value: `${(summary.totalDurationMs / 1000).toFixed(1)}s` },
-          { label: "Critical", value: String(summary.critical), tone: summary.critical > 0 ? "red" : "green" },
-          { label: "High", value: String(summary.high), tone: summary.high > 0 ? "red" : "green" },
-          { label: "Medium", value: String(summary.medium), tone: summary.medium > 0 ? "amber" : "green" },
-          { label: "Low / Clear", value: `${summary.low} / ${summary.clear}`, tone: "green" },
-          { label: "Errors", value: String(summary.errors), tone: summary.errors > 0 ? "red" : "neutral" },
-          { label: "Duplicates", value: String(summary.duplicates) },
-        ],
-      },
-      { type: "divider" },
-      { type: "header", content: "Screening Results" },
-      {
-        type: "table",
-        columns: ["Name", "Type", "Jurisdiction", "Severity", "Score", "Hits", "Lists", "Keywords", "Error"],
-        rows: results.map((r) => [
-          r.name + (r.isDuplicate ? " [DUP]" : ""),
-          r.entityType ?? "—",
-          r.jurisdiction ?? "—",
-          r.severity.toUpperCase(),
-          String(r.topScore),
-          String(r.hitCount),
-          r.listCoverage.slice(0, 3).join(", ") || "—",
-          r.keywordGroups.slice(0, 3).join(", ") || "—",
-          r.error ?? "—",
-        ]),
-      },
-      { type: "divider" },
-      {
-        type: "badge",
-        content: summary.critical > 0 || summary.high > 0 ? "ESCALATION REQUIRED" : "CLEAR",
-        tone: summary.critical > 0 || summary.high > 0 ? "red" : "green",
-      },
-    ],
-  });
+async function exportPdf(results: RowResult[], summary: Summary) {
+  const { exportBatchPdf } = await import("@/lib/pdf/batchPdf");
+  await exportBatchPdf(results, summary);
 }
 
 const SEVERITY_CLS: Record<string, string> = {
