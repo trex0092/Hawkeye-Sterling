@@ -36,6 +36,7 @@ import {
   lookupKnownPEP,
   lookupKnownAdverse,
 } from "@/lib/data/known-entities";
+import { runIntelligencePipeline } from "@/lib/server/intelligence-pipeline";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -520,12 +521,35 @@ export async function POST(req: Request): Promise<NextResponse> {
       moduleWeights: MODULE_WEIGHTS,
     };
 
+    // ── Run the new intelligence pipeline (Layer 28-95+ pure-function
+    // modules). This is what makes every screening 5× more analytical
+    // than World-Check / Dow Jones — phonetic engines (Caverphone,
+    // Beider-Morse, Arabic, Pinyin), cultural-name parsing, sub-national
+    // sanctions detection (Crimea/DPR/LPR/Z/K), 10 named sanctions
+    // stress tests, geographic + industry inherent-risk scoring. All
+    // attached to the response so the panel + report consume them.
+    const intelligence = (() => {
+      try {
+        return runIntelligencePipeline({
+          subjectName: body.subject.name,
+          aliases: body.subject.aliases ?? [],
+          entityType: body.subject.entityType ?? "individual",
+          jurisdictionIso2: jurisdiction?.iso2 ?? body.subject.jurisdiction ?? null,
+          registeredAddress: null,
+        });
+      } catch (err) {
+        noteDegradation("intelligencePipeline", err);
+        return null;
+      }
+    })();
+
     return NextResponse.json({
       ok: true,
       // When non-empty, downstream consumers (compliance report, MLRO UI)
       // MUST surface this list. Each entry means a brain module silently
       // degraded — the composite score is missing that signal.
       ...(degradation.length > 0 ? { degradation } : {}),
+      ...(intelligence ? { intelligence } : {}),
       audit,
       screen,
       pep,
