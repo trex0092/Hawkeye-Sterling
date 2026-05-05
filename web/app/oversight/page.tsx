@@ -1114,7 +1114,7 @@ export default function OversightPage() {
             disabled={gapLoading}
             className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
           >
-            {gapLoading ? "◌ Analysing…" : "✦ Run AI Gap Analysis"}
+            {gapLoading ? "◌ Analysing…" : "✦AI Gap Analysis"}
           </button>
           {gapOpen && gapResult && (
             <button type="button" onClick={() => setGapOpen(false)} className="text-11 text-ink-2 hover:text-ink-0">

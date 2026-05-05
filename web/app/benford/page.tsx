@@ -322,7 +322,7 @@ export default function BenfordPage() {
           <div className="mt-4">
             <button type="button" onClick={() => void interpretResult(result)} disabled={interpLoading}
               className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-              {interpLoading ? "Interpreting…" : "AI Forensic Interpretation"}
+              {interpLoading ? "Interpreting…" : "✦AI Forensic Interpretation"}
             </button>
             {aiInterp && (() => {
               const verdictCls = aiInterp.verdict === "refer_to_mlro" ? "bg-red text-white" : aiInterp.verdict === "enhanced_review" ? "bg-red-dim text-red" : aiInterp.verdict === "monitor" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";

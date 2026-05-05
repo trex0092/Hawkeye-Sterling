@@ -357,7 +357,7 @@ export default function SupplierDdPage() {
                     </span>
                     <button type="button" onClick={() => void runVendorRisk(v)} disabled={riskLoading[v.id] === true}
                       className="text-9 font-mono px-1.5 py-px rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
-                      {riskLoading[v.id] === true ? "…" : "AI Risk"}
+                      {riskLoading[v.id] === true ? "…" : "✦AI Risk"}
                     </button>
                     <RowActions
                       label={v.name}

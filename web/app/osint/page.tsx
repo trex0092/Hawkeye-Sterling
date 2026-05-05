@@ -297,7 +297,7 @@ export default function OsintPage() {
         <div className="mt-4">
           <button type="button" onClick={() => void runSynthesis()} disabled={synthLoading}
             className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-            {synthLoading ? "Synthesizing…" : "AI Threat Synthesis"}
+            {synthLoading ? "Synthesizing…" : "✦AI Threat Synthesis"}
           </button>
           {synthesis && (() => {
             const lvlCls = synthesis.threatLevel === "critical" ? "bg-red text-white" : synthesis.threatLevel === "high" ? "bg-red-dim text-red" : synthesis.threatLevel === "medium" ? "bg-amber-dim text-amber" : synthesis.threatLevel === "low" ? "bg-blue-dim text-blue" : "bg-green-dim text-green";

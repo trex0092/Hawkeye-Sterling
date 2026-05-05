@@ -217,7 +217,7 @@ export default function CryptoRiskPage() {
           <div className="mt-4">
             <button type="button" onClick={() => void analyzeWalletThreat(result)} disabled={threatLoading}
               className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-              {threatLoading ? "Analyzing…" : "AI Blockchain Threat Analysis"}
+              {threatLoading ? "Analyzing…" : "✦AI Blockchain Threat Analysis"}
             </button>
             {threat && (() => {
               const vCls = threat.complianceVerdict === "block" ? "bg-red text-white" : threat.complianceVerdict === "escalate" ? "bg-red-dim text-red" : threat.complianceVerdict === "enhanced_kyc" ? "bg-amber-dim text-amber" : threat.complianceVerdict === "monitor" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";

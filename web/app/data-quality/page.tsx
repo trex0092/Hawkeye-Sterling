@@ -242,7 +242,7 @@ export default function DataQualityPage() {
                 onClick={() => void generatePlan()}
                 className="text-12 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
               >
-                {planLoading ? "Generating plan…" : "AI Remediation Plan"}
+                {planLoading ? "Generating plan…" : "✦AI Remediation Plan"}
               </button>
               {plan && (
                 <span className="text-11 text-ink-3">{plan.remediationPlan.length} subjects prioritised</span>

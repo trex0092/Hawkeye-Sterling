@@ -307,7 +307,7 @@ export default function GoAmlExportPage() {
             <div className="mt-3">
               <button type="button" onClick={() => void validateNarrativeAI()} disabled={aiValidating || !draft.narrative.trim()}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
-                {aiValidating ? "Validating…" : "AI Validate Narrative"}
+                {aiValidating ? "Validating…" : "✦AI Validate Narrative"}
               </button>
               {aiValidation && (
                 <div className="mt-3 border border-hair-2 rounded-lg p-3 space-y-2 bg-bg-1">

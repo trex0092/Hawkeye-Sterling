@@ -411,7 +411,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
                 disabled={aiLoading}
                 className="px-3 py-1.5 rounded bg-bg-panel border border-brand text-brand text-11 font-mono font-semibold hover:bg-brand/10 transition-colors disabled:opacity-40"
               >
-                {aiLoading ? "Analysing…" : "AI Recommend Role"}
+                {aiLoading ? "Analysing…" : "✦AI Recommend Role"}
               </button>
             </div>
             {aiError && <div className="text-red text-12">{aiError}</div>}
