@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
-  const reportId = `EWRA-${yyyy}-BOARD`;
+  const reportId = `EWRA-${dd}-${mm}-${yyyy}`;
   const regs = "FDL 10/2025 ART.4 · FATF R.1 · CBUAE AML STANDARDS §2";
 
   const risk = (boardReport.overallRisk ?? "high").toUpperCase();

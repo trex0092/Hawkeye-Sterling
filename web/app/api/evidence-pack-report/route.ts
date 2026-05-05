@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
-  const reportId = `EVID-${yyyy}-${mm}-${dd}`;
+  const reportId = `EVID-${dd}-${mm}-${yyyy}`;
   const regs = "FDL 10/2025 ART.14 · CBUAE AML STANDARDS §8 · FATF R.20";
 
   const cover: CoverData = {
