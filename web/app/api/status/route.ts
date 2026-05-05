@@ -234,11 +234,20 @@ async function checkGoogleNews(): Promise<Check> {
 
 // GDELT Project API — primary live-news source for adverse media auto-detection.
 // Free, no API key. A canary probe queries the artlist endpoint with a 1-record
-// limit to confirm the API is reachable and returning JSON.
+// limit to confirm the API is reachable.
+//
+// GDELT's public endpoint is famously inconsistent: it returns 200/empty body,
+// or text/plain "Please try again later", or HTML maintenance pages quite
+// regularly even while serving traffic for the actual queries the app makes.
+// Treating those as "down" gave a flapping red banner on the status page.
+// Strategy: only mark DOWN on a hard network failure (timeout, DNS, TLS, 5xx).
+// HTTP 200 with any body — JSON, text, or empty — is "operational" because
+// the API is reachable; the actual adverse-media route handles per-query
+// failure modes via its own degraded-verdict path.
 async function checkGdelt(): Promise<Check> {
   const r = await time(async () => {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 6_000);
+    const t = setTimeout(() => controller.abort(), 8_000);
     try {
       const params = new URLSearchParams({
         query: "compliance",
@@ -251,19 +260,29 @@ async function checkGdelt(): Promise<Check> {
         `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`,
         {
           signal: controller.signal,
-          headers: { "user-agent": "HawkeyeSterling/2.0 health-check", accept: "application/json" },
+          headers: {
+            "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/2.0 health-check)",
+            accept: "application/json, text/plain, */*",
+          },
         },
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { articles?: unknown[] };
-      if (!data || typeof data !== "object") throw new Error("unexpected response shape");
-      return true;
+      if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
+      // Drain the body so the connection is reused; we don't care about shape
+      // here — reachability is the SLI.
+      await res.text().catch(() => "");
+      if (res.status === 429) return { degraded: true as const, note: "GDELT rate-limited (429)" };
+      if (res.status >= 400) return { degraded: true as const, note: `GDELT HTTP ${res.status}` };
+      return { degraded: false as const };
     } finally {
       clearTimeout(t);
     }
   });
   if (!r.ok) {
+    // Hard network failure — unreachable, timed out, or 5xx.
     return { name: "gdelt-live-feed", status: "down", latencyMs: r.latencyMs, note: r.error };
+  }
+  if (r.value.degraded) {
+    return { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.value.note };
   }
   return { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs };
 }

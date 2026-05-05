@@ -57,23 +57,85 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const subject = body.subject.trim();
 
-  const taranisResult = await searchAdverseMedia(subject, {
-    ...(body.dateFrom !== undefined ? { dateFrom: body.dateFrom } : {}),
-    ...(body.dateTo !== undefined ? { dateTo: body.dateTo } : {}),
-    limit: body.limit ?? 50,
-    minRelevance: body.minRelevance ?? 0,
-  });
+  // Bound the upstream call so a hung Taranis can't burn the whole 30s
+  // function budget. Any timeout or thrown error short-circuits to the
+  // GDELT live-feed fallback below — never a silent CLEAR verdict.
+  const TARANIS_TIMEOUT_MS = 18_000;
+  const taranisResult = await Promise.race([
+    searchAdverseMedia(subject, {
+      ...(body.dateFrom !== undefined ? { dateFrom: body.dateFrom } : {}),
+      ...(body.dateTo !== undefined ? { dateTo: body.dateTo } : {}),
+      limit: body.limit ?? 50,
+      minRelevance: body.minRelevance ?? 0,
+    }),
+    new Promise<{ ok: false; error: string }>((resolve) =>
+      setTimeout(
+        () => resolve({ ok: false, error: `Taranis request exceeded ${TARANIS_TIMEOUT_MS}ms` }),
+        TARANIS_TIMEOUT_MS,
+      ),
+    ),
+  ]).catch((err) => ({ ok: false as const, error: err instanceof Error ? err.message : String(err) }));
 
   if (!taranisResult.ok) {
-    if (!taranisResult.error?.includes("not configured")) {
-      console.error("[adverse-media] Taranis error:", taranisResult.error);
-      // Taranis upstream failure — fall back to live GDELT fetch + Claude analysis
+    const taranisErr = taranisResult.error ?? "unknown";
+    const isConfigError = taranisErr.includes("not configured");
+    if (!isConfigError) console.error("[adverse-media] Taranis error:", taranisErr);
+    // Taranis unavailable (or not configured) — fall back to live GDELT fetch.
+    // liveAdverseMedia throws when ANTHROPIC_API_KEY is also missing; catch that
+    // and return a properly-typed degraded verdict so the caller never sees a
+    // silent CLEAR or an unhandled 500.
+    try {
       const verdict = await liveAdverseMedia(subject);
-      return NextResponse.json({ ok: true, totalCount: verdict.totalItems, adverseCount: verdict.adverseItems, highRelevanceCount: verdict.criticalCount + verdict.highCount, verdict, note: "Taranis unavailable — GDELT live feed used" }, { status: 200, headers: { ...CORS, ...gateHeaders } });
+      return NextResponse.json(
+        {
+          ok: true,
+          totalCount: verdict.totalItems,
+          adverseCount: verdict.adverseItems,
+          highRelevanceCount: verdict.criticalCount + verdict.highCount,
+          verdict,
+          ...(isConfigError ? {} : { note: "Taranis unavailable — GDELT live feed used" }),
+        },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
+      );
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error("[adverse-media] both Taranis and GDELT/Claude unavailable:", detail);
+      const now = new Date().toISOString();
+      const degraded = {
+        subject,
+        riskTier: "unknown" as const,
+        riskDetail: `Adverse media unavailable — neither Taranis nor live GDELT/Claude path is reachable (${detail}). Manual MLRO review required.`,
+        totalItems: 0,
+        adverseItems: 0,
+        criticalCount: 0,
+        highCount: 0,
+        mediumCount: 0,
+        lowCount: 0,
+        sarRecommended: false,
+        sarBasis: "Cannot determine — adverse-media pipeline unavailable",
+        confidenceTier: "low" as const,
+        confidenceBasis: detail,
+        counterfactual: "Restore Taranis or set ANTHROPIC_API_KEY and re-run",
+        investigationLines: ["Perform manual adverse-media search via Google, Reuters, Bloomberg"],
+        findings: [],
+        fatfRecommendations: ["R.10", "R.20"],
+        categoryBreakdown: [],
+        analysedAt: now,
+        modesCited: [],
+      };
+      return NextResponse.json(
+        {
+          ok: true,
+          totalCount: 0,
+          adverseCount: 0,
+          highRelevanceCount: 0,
+          verdict: degraded,
+          degraded: true,
+          degradedReason: detail,
+        },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
+      );
     }
-    // Taranis not configured — fetch live articles from GDELT and analyse with Claude
-    const verdict = await liveAdverseMedia(subject);
-    return NextResponse.json({ ok: true, totalCount: verdict.totalItems, adverseCount: verdict.adverseItems, highRelevanceCount: verdict.criticalCount + verdict.highCount, verdict }, { status: 200, headers: { ...CORS, ...gateHeaders } });
   }
 
   // Run the weaponized analyser — full MLRO-grade intelligence pipeline
@@ -288,7 +350,54 @@ Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
     ],
   });
 
-  const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+  const text = response.content[0]?.type === "text" ? response.content[0].text : "";
   const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  return JSON.parse(clean) as ReturnType<typeof analyseAdverseMediaResult>;
+  // Claude can occasionally return prose that doesn't parse — pull the
+  // outermost {…} block as a recovery, then surface a degraded verdict
+  // (NOT a silent CLEAR) if that still fails.
+  const tryParse = (raw: string): ReturnType<typeof analyseAdverseMediaResult> | null => {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as ReturnType<typeof analyseAdverseMediaResult>;
+    } catch {
+      return null;
+    }
+  };
+  const parsed = tryParse(clean) ?? (() => {
+    const m = clean.match(/\{[\s\S]*\}/);
+    return m ? tryParse(m[0]) : null;
+  })();
+  if (parsed) return parsed;
+
+  console.warn(`[adverse-media] Claude returned non-JSON for "${subject}" — surfacing degraded verdict`);
+  const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
+    gdeltSource: boolean;
+    gdeltArticleCount: number;
+    claudeParseFailed: boolean;
+  } = {
+    subject,
+    riskTier: "unknown",
+    riskDetail: `Adverse media analysis incomplete — Claude returned a non-JSON response (${items.length} GDELT articles fetched). Manual MLRO review required.`,
+    totalItems: items.length,
+    adverseItems: 0,
+    criticalCount: 0,
+    highCount: 0,
+    mediumCount: 0,
+    lowCount: 0,
+    sarRecommended: false,
+    sarBasis: "Cannot determine — Claude response could not be parsed",
+    confidenceTier: "low",
+    confidenceBasis: `Parser fallback; Claude raw length ${text.length} chars`,
+    counterfactual: "Re-run the request — Claude responses are stochastic; the next call usually parses cleanly",
+    investigationLines: ["Perform manual adverse-media review of the GDELT articles fetched for this subject"],
+    findings: [],
+    fatfRecommendations: ["R.10", "R.20"],
+    categoryBreakdown: [],
+    analysedAt: now,
+    modesCited: [],
+    gdeltSource: true,
+    gdeltArticleCount: items.length,
+    claudeParseFailed: true,
+  };
+  return degraded;
 }

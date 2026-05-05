@@ -332,8 +332,50 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       : screening.status === "success"
         ? screening.result.topScore
         : null;
-  const brainSeverity =
-    screening.status === "success" ? screening.result.severity : null;
+  // MLRO POLICY: the displayed severity badge must reflect ALL fired signals,
+  // not just the sanctions vector. screening.result.severity comes from
+  // quickScreen and is "clear" when no sanctions hit — so a PEP / adverse-
+  // media / redline fire would otherwise paint the badge "Clear" while the
+  // CDD card simultaneously shows EDD/zero-tolerance. Compute an effective
+  // severity here using the same band rules the compliance report applies.
+  const brainSeverity = (() => {
+    if (screening.status !== "success") return null;
+    const sanctionsHits = screening.result.hits.length;
+    const sb = superBrain.status === "success" ? superBrain.result : null;
+    const amCompositeScore: number = sb?.adverseMediaScored?.compositeScore ?? -1;
+    const amCount =
+      (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
+    const pepFired = Boolean(
+      (sb?.pep?.salience ?? 0) > 0 ||
+        sb?.pepAssessment?.isLikelyPEP ||
+        subject.pep,
+    );
+    const redlinesFired = sb?.redlines?.fired?.length ?? 0;
+    const cahra = sb?.jurisdiction?.cahra ?? false;
+
+    const score = brainScore ?? screening.result.topScore;
+    const order = ["clear", "low", "medium", "high", "critical"] as const;
+    let band: typeof order[number] =
+      score >= 80 ? "critical"
+      : score >= 60 ? "high"
+      : score >= 40 ? "medium"
+      : score >= 20 ? "low"
+      : "clear";
+    const escalateTo = (t: typeof order[number]): void => {
+      if (order.indexOf(t) > order.indexOf(band)) band = t;
+    };
+    if (sanctionsHits >= 1) escalateTo("high");
+    if (sanctionsHits >= 2) escalateTo("critical");
+    if (amCompositeScore >= 0.7) escalateTo("critical");
+    else if (amCompositeScore >= 0.1) escalateTo("high");
+    else if (amCompositeScore > 0) escalateTo("medium");
+    else if (amCount >= 4) escalateTo("high");
+    else if (amCount > 0) escalateTo("medium");
+    if (pepFired) escalateTo("high");
+    if (redlinesFired > 0) escalateTo("critical");
+    if (cahra) escalateTo("medium");
+    return band;
+  })();
   const effectiveScore = brainScore ?? subject.riskScore;
   const barWidth = `${Math.min(effectiveScore, 100)}%`;
 
