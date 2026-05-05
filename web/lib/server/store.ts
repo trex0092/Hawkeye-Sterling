@@ -63,19 +63,29 @@ export function getStore(): MinimalStore {
   if (cached) return cached;
   try {
     const ns = getNetlifyStore(buildStoreOptions());
-    const markFallback = (op: string, err: unknown) => {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.warn(`[store] ${op} failed (${detail}) — degrading to in-memory store for this process.`);
-      cached = buildMemoryStore();
-      usingInMemoryFallback = true;
-    };
+    // IMPORTANT — do NOT flip `usingInMemoryFallback` based on per-operation
+    // failures. A single failing read (transient network blip, key-not-found
+    // edge case in @netlify/blobs) used to permanently degrade the entire
+    // function instance, which surfaced as "storage degraded" on /status
+    // even though Blobs was actually healthy. Per-op errors are now passed
+    // through to the wrappers (getJson / setJson / del / listKeys) which
+    // already log loudly and return null/empty. usingInMemoryFallback is
+    // ONLY set when getNetlifyStore() itself throws on init.
+    const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
     cached = {
       get: async (key) => {
         try {
           const v = await ns.get(key);
           return typeof v === "string" ? v : v == null ? null : String(v);
         } catch (err) {
-          markFallback("get", err);
+          // On Netlify, log + propagate. Off Netlify (dev), fall back to
+          // in-memory so local routes still work without a Blobs binding.
+          if (onNetlify) throw err;
+          console.warn(`[store] get(${key}) failed in dev — using in-memory:`, err instanceof Error ? err.message : err);
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           return cached!.get(key);
         }
       },
@@ -83,7 +93,11 @@ export function getStore(): MinimalStore {
         try {
           await ns.set(key, data);
         } catch (err) {
-          markFallback("set", err);
+          if (onNetlify) throw err;
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           await cached!.set(key, data);
         }
       },
@@ -91,7 +105,11 @@ export function getStore(): MinimalStore {
         try {
           await ns.delete(key);
         } catch (err) {
-          markFallback("delete", err);
+          if (onNetlify) throw err;
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           await cached!.delete(key);
         }
       },
@@ -100,7 +118,11 @@ export function getStore(): MinimalStore {
           const r = await ns.list({ ...(opts?.prefix ? { prefix: opts.prefix } : {}) });
           return { blobs: r.blobs.map((b) => ({ key: b.key })) };
         } catch (err) {
-          markFallback("list", err);
+          if (onNetlify) throw err;
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           return cached!.list(opts);
         }
       },
