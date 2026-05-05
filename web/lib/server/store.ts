@@ -35,16 +35,24 @@ let cached: MinimalStore | null = null;
 let usingInMemoryFallback = false;
 
 function buildStoreOptions(): Parameters<typeof getNetlifyStore>[0] {
-  // Prefer Netlify's auto-injected Blobs context (present when the Lambda is
-  // invoked by the @netlify/plugin-nextjs runtime with auto-binding on).
-  // Fall back to explicit siteID + token so deployments where the plugin
-  // does not inject context (monorepos, custom builds, background functions)
-  // still land on the real store instead of the in-memory fallback.
+  // On Netlify's own runtime the plugin (@netlify/plugin-nextjs) auto-injects
+  // NETLIFY_BLOBS_CONTEXT so getNetlifyStore({ name }) works without any
+  // explicit credentials. Passing a custom NETLIFY_BLOBS_TOKEN that is NOT a
+  // proper Netlify PAT bypasses the auto-injection and causes every Blobs
+  // operation to return 401, which triggers the in-memory fallback and makes
+  // the status page show "storage degraded". Therefore: on Netlify's own
+  // infrastructure (NETLIFY=true), always trust the auto-injected context.
+  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
+  if (onNetlify) {
+    return { name: "hawkeye-sterling" };
+  }
+  // Outside of Netlify (local dev with a real PAT, CI, etc.) fall back to
+  // explicit credentials so the same store is accessible.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
-    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"] ??
+    process.env["NETLIFY_BLOBS_TOKEN"];
   if (siteID && token) {
     return { name: "hawkeye-sterling", siteID, token, consistency: "strong" };
   }
