@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
-  const reportId = `GAP-${yyyy}-${mm}-${dd}`;
+  const reportId = `GAP-${dd}-${mm}-${yyyy}`;
   const regs = "FDL 10/2025 · CBUAE GOVERNANCE STANDARDS · FATF R.1";
 
   const grade = gapResult.overallGrade ?? "C";
