@@ -27,6 +27,7 @@ import { activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
 import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
+import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -190,6 +191,26 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (subject.name.length >= 3) {
       try {
         newsArticles = await searchAllNews(subject.name, { limit: 50 });
+      } catch { /* best-effort */ }
+
+      // LLM-prompt adverse-media check — uses Claude's recall for
+      // niche cases that keyword-search vendors miss (short-seller
+      // reports, foreign-language press, recently-reported lawsuits).
+      // Best-effort: silent failure when ANTHROPIC_API_KEY absent.
+      try {
+        const llmAdapter = llmAdverseMediaAdapter({
+          jurisdiction: subject.jurisdiction,
+          entityType: subject.entityType,
+        });
+        if (llmAdapter.isAvailable()) {
+          const llmArticles = await llmAdapter.search(subject.name, { limit: 15 });
+          if (llmArticles.length > 0) {
+            newsArticles = {
+              articles: [...llmArticles, ...newsArticles.articles],
+              providersUsed: [...newsArticles.providersUsed, "claude-adverse-media"],
+            };
+          }
+        }
       } catch { /* best-effort */ }
     }
 
