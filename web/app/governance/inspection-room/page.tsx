@@ -272,9 +272,9 @@ export default function InspectionRoomPage() {
         <button
           type="button"
           onClick={refresh}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand"
+          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70"
         >
-          Refresh
+          ↻
         </button>
         <span className="text-11 text-ink-3 font-mono ml-auto">
           generated {generatedAt}

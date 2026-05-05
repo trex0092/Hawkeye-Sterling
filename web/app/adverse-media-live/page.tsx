@@ -150,9 +150,9 @@ function RegulatoryFeedPanel() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="text-10 font-mono px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1 hover:bg-bg-1 disabled:opacity-40"
+            className="text-12 font-mono px-2 py-0.5 rounded border border-green/40 bg-green-dim text-green hover:bg-green-dim/70 disabled:opacity-40"
           >
-            {loading ? "Fetching…" : "↻ Refresh"}
+            ↻
           </button>
         </div>
       </div>
