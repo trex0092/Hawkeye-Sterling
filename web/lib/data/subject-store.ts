@@ -3,6 +3,8 @@
 import type {
   EddChecklistItem,
   EvidenceEntry,
+  HitResolution,
+  HitResolutionVerdict,
   SubjectDetail,
   TimelineEvent,
   UboEntry,
@@ -79,4 +81,16 @@ export function appendSubjectEvidence(
   });
 }
 
-export type { EddChecklistItem, EvidenceEntry, SubjectDetail, TimelineEvent, UboEntry };
+export function loadHitResolution(subjectId: string, hitRef: string): HitResolution | null {
+  const detail = loadSubjectDetail(subjectId);
+  return detail.hitResolutions?.find((r) => r.hitRef === hitRef) ?? null;
+}
+
+export function saveHitResolution(subjectId: string, resolution: HitResolution): void {
+  const detail = loadSubjectDetail(subjectId);
+  const existing = detail.hitResolutions ?? [];
+  const updated = existing.filter((r) => r.hitRef !== resolution.hitRef);
+  saveSubjectDetail({ ...detail, hitResolutions: [...updated, resolution] });
+}
+
+export type { EddChecklistItem, EvidenceEntry, HitResolution, HitResolutionVerdict, SubjectDetail, TimelineEvent, UboEntry };

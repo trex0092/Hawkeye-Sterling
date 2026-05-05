@@ -57,18 +57,32 @@ export async function POST(req: Request): Promise<NextResponse> {
       { headers: gateHeaders },
     );
   } catch (err) {
-    console.error("[weaponized-brain/reason]", err instanceof Error ? err.message : err);
+    // Reasoning pipeline crashed. Return degraded:true with a score that
+    // unambiguously triggers REVIEW_REQUIRED (≥60) in every downstream consumer.
+    // Score 50 was previously ambiguous — some dispositions mapped it to
+    // PROCEED_STANDARD, letting a subject pass on a crashed analysis.
+    const detail = err instanceof Error ? err.message.slice(0, 200) : String(err);
+    console.error("[weaponized-brain/reason] Pipeline crashed:", detail);
     return NextResponse.json(
       {
         ok: true,
         degraded: true,
+        degradedReason: detail,
         subject: body.subject,
         severity: "high",
-        score: 50,
+        // Score 75 → unambiguous REVIEW_REQUIRED in all disposition maps.
+        // MLRO must manually clear before any onboarding decision.
+        score: 75,
+        composite: { score: 75, breakdown: {} },
         verdict: "REVIEW_REQUIRED",
-        narrative: "Weaponized brain reasoning temporarily unavailable. Manual compliance review required under UAE FDL 20/2018.",
+        disposition: {
+          code: "REVIEW_REQUIRED",
+          label: "Manual review required",
+          rationale: "Weaponized brain reasoning unavailable — scoring engine crashed. MLRO must manually clear before any onboarding or clearance decision. Do not treat as CLEAR.",
+        },
+        narrative: "⚠ Weaponized brain reasoning temporarily unavailable. Manual compliance review required under UAE FDL 20/2018 Art.14 and FDL 10/2025 Art.19. Do not onboard or clear this subject without MLRO sign-off.",
         counterfactuals: [],
-        steelman: { argument: "Manual review required", confidence: 0 },
+        steelman: { argument: "Manual review required — engine unavailable", confidence: 0 },
         modeCoverage: [],
         firedModeIds: [],
       },

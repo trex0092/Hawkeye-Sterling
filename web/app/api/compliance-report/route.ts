@@ -81,6 +81,9 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const safeTitle = escapeHtml(`Hawkeye Sterling — ${s.name}`);
 
   const amCount = (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
+  // Severity-weighted adverse-media score from the structured scorer (0..1).
+  // Falls back to count-based classification when unavailable.
+  const amCompositeScore: number = sb?.adverseMediaScored?.compositeScore ?? -1;
   const pepTier = sb?.pep && sb.pep.salience > 0 ? sb.pep.tier : null;
 
   const year  = now.getUTCFullYear();
@@ -88,7 +91,8 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const day   = String(now.getUTCDate()).padStart(2, "0");
   const hh    = String(now.getUTCHours()).padStart(2, "0");
   const mm    = String(now.getUTCMinutes()).padStart(2, "0");
-  const reportType = r.hits.length > 0 ? "SANCTIONS" : pepTier ? "PEP" : amCount > 0 ? "AM" : "STANDARD";
+  const hasAdverseMedia = amCompositeScore > 0 || amCount > 0;
+  const reportType = r.hits.length > 0 ? "SANCTIONS" : pepTier ? "PEP" : hasAdverseMedia ? "AM" : "STANDARD";
   const reportId = `HWK-SCR-${day}-${month}-${year}-${reportType}-${hh}${mm}`;
 
   // Screening matrix rows
@@ -109,9 +113,40 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const pepResult = pepTier ? "POSSIBLE PEP — VERIFY" : "NEGATIVE";
   const pepRc = pepTier ? "#f97316" : "#22c55e";
 
-  const amScore = amCount > 0 ? (amCount >= 4 ? "HIGH" : "LOW") : "—";
-  const amResult = amCount >= 4 ? "POSITIVE — extensive" : amCount >= 1 ? "Limited signal" : "NEGATIVE";
-  const amRc = amCount >= 4 ? "#ef4444" : amCount >= 1 ? "#f59e0b" : "#22c55e";
+  // Use the severity-weighted structured score when available (0..1 compositeScore).
+  // Fall back to a count-based proxy only when the scorer did not run.
+  // This prevents "LIMITED SIGNAL" labels on single terrorism/sanctions hits.
+  const amScore: string = (() => {
+    if (amCompositeScore >= 0) {
+      if (amCompositeScore >= 0.7) return "CRITICAL";
+      if (amCompositeScore >= 0.4) return "HIGH";
+      if (amCompositeScore >= 0.1) return "MEDIUM";
+      if (amCompositeScore > 0)   return "LOW";
+      return "—";
+    }
+    // Count-based fallback
+    return amCount >= 4 ? "HIGH" : amCount >= 1 ? "LOW" : "—";
+  })();
+  const amResult: string = (() => {
+    if (amCompositeScore >= 0) {
+      if (amCompositeScore >= 0.7) return "POSITIVE — critical findings";
+      if (amCompositeScore >= 0.4) return "POSITIVE — significant adverse media";
+      if (amCompositeScore >= 0.1) return "POSITIVE — moderate signal";
+      if (amCompositeScore > 0)   return "POSITIVE — limited signal";
+      return "NEGATIVE";
+    }
+    return amCount >= 4 ? "POSITIVE — extensive" : amCount >= 1 ? "POSITIVE — limited signal" : "NEGATIVE";
+  })();
+  const amRc: string = (() => {
+    if (amCompositeScore >= 0) {
+      if (amCompositeScore >= 0.7) return "#ef4444"; // critical red
+      if (amCompositeScore >= 0.4) return "#f97316"; // high orange
+      if (amCompositeScore >= 0.1) return "#f59e0b"; // medium amber
+      if (amCompositeScore > 0)   return "#3b82f6"; // low blue
+      return "#22c55e"; // clear green
+    }
+    return amCount >= 4 ? "#ef4444" : amCount >= 1 ? "#f59e0b" : "#22c55e";
+  })();
 
 
 
@@ -121,7 +156,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     rec = "FREEZE — freeze in-flight funds and pending transactions, file FFR via goAML within 5 business days, notify EOCN, refuse the relationship, and escalate to CEO and Board Chair.";
   } else if (sev === "high") {
     rec = "Escalate to MLRO, open Enhanced Due Diligence, and defer clearance pending analyst review of source-of-wealth and source-of-funds.";
-  } else if (amCount > 0) {
+  } else if (hasAdverseMedia) {
     rec = "Defer clearance pending (a) live-news corroboration, (b) analyst review of underlying reporting, and (c) enrolment in ongoing screening at thrice-daily cadence.";
   } else {
     rec = "Proceed with standard CDD. Subject enrolled in ongoing screening (thrice-daily — 08:30 / 15:00 / 17:30 Dubai) and any delta will be filed to the MLRO automatically.";

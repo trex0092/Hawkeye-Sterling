@@ -19,7 +19,7 @@ async function safe<T>(label: string, fn: () => Promise<T> | T, fallback: T): Pr
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 15;
+export const maxDuration = 20;
 
 const STARTED_AT = new Date().toISOString();
 
@@ -232,6 +232,42 @@ async function checkGoogleNews(): Promise<Check> {
   return { name: "news-feed", status: "operational", latencyMs: r.latencyMs };
 }
 
+// GDELT Project API — primary live-news source for adverse media auto-detection.
+// Free, no API key. A canary probe queries the artlist endpoint with a 1-record
+// limit to confirm the API is reachable and returning JSON.
+async function checkGdelt(): Promise<Check> {
+  const r = await time(async () => {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 6_000);
+    try {
+      const params = new URLSearchParams({
+        query: "compliance",
+        mode: "artlist",
+        maxrecords: "1",
+        format: "json",
+        sort: "DateDesc",
+      });
+      const res = await fetch(
+        `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`,
+        {
+          signal: controller.signal,
+          headers: { "user-agent": "HawkeyeSterling/2.0 health-check", accept: "application/json" },
+        },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { articles?: unknown[] };
+      if (!data || typeof data !== "object") throw new Error("unexpected response shape");
+      return true;
+    } finally {
+      clearTimeout(t);
+    }
+  });
+  if (!r.ok) {
+    return { name: "gdelt-live-feed", status: "down", latencyMs: r.latencyMs, note: r.error };
+  }
+  return { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs };
+}
+
 // ─── Brain soul ────────────────────────────────────────────────────────────
 // The brain is the soul of the tool. Every status response includes a live
 // self-assessment: amplification level, charter integrity hashes, and
@@ -433,7 +469,11 @@ const COMPLIANCE_MAP: Record<string, Array<{ fn: string; sev: "critical" | "majo
     { fn: "STR / SAR task creation",                          sev: "minor"    },
   ],
   "news-feed": [
-    { fn: "Real-time adverse media feed (Google / GDELT)",    sev: "minor"    },
+    { fn: "Real-time Google News RSS feed (multi-locale)",    sev: "minor"    },
+  ],
+  "gdelt-live-feed": [
+    { fn: "Adverse media auto-detection (GDELT 10-year lookback, Art.19)", sev: "major" },
+    { fn: "Weaponized Brain live news feed — auto-OSINT on every run",     sev: "major" },
   ],
 };
 
@@ -566,16 +606,17 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
     }
     if (!blobsMod) return null;
     const { getStore } = blobsMod;
-    // Mirror the explicit-credential pattern from lib/server/store.ts so this
-    // check works even when Netlify's auto-injected blob context is absent
-    // (monorepo builds, custom runtimes, background function instances).
+    // On Netlify's runtime, trust the auto-injected NETLIFY_BLOBS_CONTEXT.
+    // Providing explicit credentials overrides the injection and causes 401s
+    // when NETLIFY_BLOBS_TOKEN is a custom (non-PAT) value.
+    const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
     const blobSiteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
     const blobToken =
-      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"];
+      process.env["NETLIFY_AUTH_TOKEN"] ??
+      process.env["NETLIFY_BLOBS_TOKEN"];
     const reportsOpts =
-      blobSiteId && blobToken
+      !onNetlify && blobSiteId && blobToken
         ? { name: "hawkeye-list-reports", siteID: blobSiteId, token: blobToken, consistency: "strong" as const }
         : { name: "hawkeye-list-reports" };
     const reports = getStore(reportsOpts);
@@ -720,6 +761,7 @@ export async function GET(): Promise<NextResponse> {
     storage,
     asana,
     googleNews,
+    gdelt,
     sanctions,
     incidents,
     brainSoul,
@@ -731,6 +773,7 @@ export async function GET(): Promise<NextResponse> {
     Promise.resolve(checkStorage()),
     checkAsana(),
     checkGoogleNews(),
+    checkGdelt(),
     checkSanctionsFreshness(),
     incidentHistory(),
     safe("brain-soul", checkBrainSoul, {
@@ -752,7 +795,7 @@ export async function GET(): Promise<NextResponse> {
     weaponizedBrain,
     storage,
   ]));
-  const externalChecks: Check[] = annotateLatencyAnomalies(enrichWithLatencyStats([asana, googleNews]));
+  const externalChecks: Check[] = annotateLatencyAnomalies(enrichWithLatencyStats([asana, googleNews, gdelt]));
 
   // Derive banner status from core services only. sanctions-freshness is a
   // data-quality check shown in its own dedicated UI section; including it
@@ -835,6 +878,7 @@ export async function GET(): Promise<NextResponse> {
       { id: "storage", label: "Netlify Blobs" },
       { id: "asana", label: "Asana" },
       { id: "news-feed", label: "Google News RSS" },
+      { id: "gdelt-live-feed", label: "GDELT Live Feed" },
       { id: "sanctions-freshness", label: "Sanctions lists" },
     ],
     edges: [
@@ -844,6 +888,8 @@ export async function GET(): Promise<NextResponse> {
       { from: "super-brain", to: "storage" },
       { from: "screening", to: "sanctions-freshness" },
       { from: "super-brain", to: "news-feed" },
+      { from: "adverse-media", to: "gdelt-live-feed" },
+      { from: "weaponized-brain", to: "gdelt-live-feed" },
       { from: "screening", to: "asana" },
     ],
   };

@@ -464,6 +464,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
   const [roleText, setRoleText] = useState(initialValues?.roleText ?? "");
   const [narrative, setNarrative] = useState(initialValues?.narrative ?? "");
   const [running, setRunning] = useState(false);
+  const [fetchingLiveNews, setFetchingLiveNews] = useState(false);
   const [result, setResult] = useState<ReasonResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -485,8 +486,44 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
       return;
     }
     setRunning(true);
+    setFetchingLiveNews(false);
     setError(null);
     setResult(null);
+
+    // Auto-fetch live news from GDELT (10-year Art.19 window, no API key).
+    // This runs unconditionally so the Brain always sees real current articles,
+    // not stale training data. Manual narrative is appended after auto-fetched text.
+    let autoFetched = "";
+    try {
+      setFetchingLiveNews(true);
+      const liveRes = await fetch("/api/adverse-media-live", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: name.trim(), entityType }),
+      });
+      if (liveRes.ok) {
+        const liveData = (await liveRes.json()) as {
+          ok?: boolean;
+          totalHits?: number;
+          articles?: Array<{ title: string; source: string; publishedAt: string; categories: string[] }>;
+          summary?: string;
+        };
+        if (liveData.ok && liveData.articles && liveData.articles.length > 0) {
+          const lines = liveData.articles
+            .slice(0, 20)
+            .map((a) => `[${a.publishedAt.slice(0, 10)}] ${a.source}: "${a.title}" [${a.categories.join(", ")}]`);
+          autoFetched = `LIVE GDELT FEED — ${liveData.totalHits} article(s) retrieved (FDL Art.19 10-year lookback):\n${lines.join("\n")}`;
+          if (liveData.summary) autoFetched += `\n\nSUMMARY: ${liveData.summary}`;
+        }
+      }
+    } catch {
+      // Non-fatal — proceed with manual narrative only
+    } finally {
+      setFetchingLiveNews(false);
+    }
+
+    const combinedNarrative = [autoFetched, narrative.trim()].filter(Boolean).join("\n\n");
+
     try {
       const res = await fetch("/api/weaponized-brain/reason", {
         method: "POST",
@@ -503,7 +540,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
             sector: sector.trim() || undefined,
           },
           roleText: roleText.trim() || undefined,
-          adverseMediaText: narrative.trim() || undefined,
+          adverseMediaText: combinedNarrative || undefined,
         }),
       });
       const data = (await res.json()) as ReasonResponse;
@@ -589,19 +626,22 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
               value={narrative}
               onChange={(e) => setNarrative(e.target.value)}
               rows={6}
-              placeholder="Paste OSINT, transaction patterns, news headlines, account narrative…"
+              placeholder="Optional — add your own OSINT notes, transaction patterns, or account narrative here. Live news is auto-fetched from GDELT on every run."
               className="w-full px-2 py-1.5 border border-hair-2 rounded text-12 bg-bg-1 font-mono"
             />
           </Field>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center flex-wrap">
             <button
               type="button"
               onClick={run}
               disabled={running}
               className="px-4 py-2 bg-brand text-bg-0 rounded text-12 font-semibold uppercase tracking-wide-3 disabled:opacity-50"
             >
-              {running ? "Reasoning…" : "Fire the brain"}
+              {fetchingLiveNews ? "Fetching live intelligence…" : running ? "Reasoning…" : "Fire the brain"}
             </button>
+            {fetchingLiveNews && (
+              <span className="text-10 text-ink-3 font-mono animate-pulse">↻ GDELT live feed · Art.19 10-year lookback</span>
+            )}
             {error && <span className="text-11 text-red">{error}</span>}
           </div>
         </div>
@@ -617,7 +657,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
                 <div className="font-semibold text-ink-2">⚠ For accurate scoring — fill ALL fields:</div>
                 <div>• <strong>Jurisdiction</strong> — ISO-2 code or country name (e.g. "RU", "Russia", "TR", "AE")</div>
                 <div>• <strong>Sector</strong> — business activity (e.g. "gold refinery", "VASP", "real estate")</div>
-                <div>• <strong>Narrative</strong> — paste adverse media, OSINT, or transaction text here. <em>An empty narrative field produces 0 adverse-media score regardless of subject profile.</em></div>
+                <div>• <strong>Live intelligence</strong> — GDELT (10-year Art.19 lookback) is auto-fetched on every run. Add your own OSINT notes in the narrative box to combine with live data.</div>
                 <div className="mt-1 pt-1 border-t border-hair text-ink-3">The composite score shown here reflects ONLY what you input — it is independent of any screening-panel score for the same subject.</div>
               </div>
             </div>

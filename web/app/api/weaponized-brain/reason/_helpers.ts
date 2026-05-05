@@ -102,6 +102,13 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   const cited: CitedModule[] = [];
   const steps: ReasoningStep[] = [];
   const narrative = (body.narrative ?? "").slice(0, 20_000);
+  // Combine user-supplied narrative with auto-fetched adverseMediaText (GDELT
+  // live feed, manual OSINT, or screening-tool evidence). Both fields carry
+  // adverse-media signal; classifying only `narrative` silently zeros the score
+  // when the Brain auto-fetches live news into adverseMediaText.
+  const adverseMediaInput = [narrative, (body.adverseMediaText ?? "").slice(0, 20_000)]
+    .filter(Boolean)
+    .join("\n");
 
   // 1 · Watchlist screen
   const tA = performance.now();
@@ -159,9 +166,11 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   const tPep = performance.now() - tC;
 
   // 4 · Adverse-media + typology fingerprinting
+  // Use the merged adverseMediaInput (narrative + adverseMediaText) so auto-fetched
+  // GDELT articles contribute to adverse-media scoring, not just manually pasted text.
   const tD = performance.now();
-  const fullText = [narrative, body.subject.name, ...(body.subject.aliases ?? []), pepRoleText].join(" ");
-  const adverseMedia = narrative ? classifyAdverseMedia(narrative) : [];
+  const fullText = [adverseMediaInput, body.subject.name, ...(body.subject.aliases ?? []), pepRoleText].join(" ");
+  const adverseMedia = adverseMediaInput.trim() ? classifyAdverseMedia(adverseMediaInput) : [];
   const rawTypologyHits = (() => { try { return matchTypologies(fullText); } catch { return []; } })();
   const typologyScore = (() => { try { return typologyCompositeScore(rawTypologyHits); } catch { return 0; } })();
   for (const hit of rawTypologyHits.slice(0, 8)) {

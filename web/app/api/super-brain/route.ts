@@ -289,23 +289,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     const jurisdictionPenalty = jurisdiction?.cahra ? 15 : 0;
     const regimesPenalty = Math.min((jurisdiction?.regimes.length ?? 0) * 3, 12);
     const redlinesPenalty = redlines.fired.length * 10;
-    const adverseMediaPenalty = Math.min(adverseMedia.length * 8, 30);
     const pepPenalty = pep && pep.salience > 0 ? Math.round(pep.salience * 20) : 0;
 
-    // Structured adverse-media score: classifyAdverseMedia() over freeText +
-    // evidence array, weighted by category severity. Was previously computed
-    // AFTER the composite formula, so its signal never reached result.composite.score
-    // — the ERMAN DONMEZ case (2 hits incl. law-enforcement article) rendered 0/100
-    // CLEAR even with material adverse media. Compute now and inject into composite.
+    // Structured adverse-media score: severity-weighted (0..40), floor-clamped
+    // at 8 when any high-severity category (TF/PF/sanctions/corruption) trips.
+    // Uses the FULL mediaText (adverseMediaText + adverseMedia keywords) so
+    // auto-fetched GDELT articles contribute to the structured score.
+    // NOTE: We use adverseMediaScoredPenalty ONLY (not the raw count-based
+    // adverseMediaPenalty) to avoid double-counting the same adverse signal and
+    // inflating the composite by up to 70 pts for a single arrest article.
     const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a: any) => a.keyword)]
       .filter((s) => s.length > 0)
       .join("\n");
     const adverseMediaScoredEarly = mediaTextEarly
       ? (() => { try { return scoreAdverseMedia(mediaTextEarly, []); } catch { return null; } })()
       : null;
-    // Map composite (0..1) into a 0..40 penalty, clamped. Floor it at 8 when
-    // any high-severity category (TF/PF/sanctions/corruption) trips, so a
-    // single law-enforcement / arrest article cannot render CLEAR.
     const HIGH_SEVERITY_CATS = new Set([
       "terrorist_financing",
       "proliferation_financing",
@@ -314,6 +312,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       "drug_trafficking",
       "human_trafficking_modern_slavery",
     ]);
+    // Severity-weighted penalty (0..40) with a floor of 8 for high-severity hits.
     const adverseMediaScoredPenalty = (() => {
       if (!adverseMediaScoredEarly) return 0;
       const base = Math.round(adverseMediaScoredEarly.compositeScore * 40);
@@ -322,6 +321,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       const minWhenTripped = tripsHighSeverity && adverseMediaScoredEarly.compositeScore > 0 ? 8 : 0;
       return Math.max(base, minWhenTripped);
     })();
+    // Simple count-based backup: only used when the structured scorer produced
+    // nothing (scoreAdverseMedia threw). Capped at 30 to keep it below the
+    // structured ceiling of 40.
+    const adverseMediaPenalty = adverseMediaScoredEarly
+      ? 0 // structured scorer ran — don't double-count
+      : Math.min(adverseMedia.length * 8, 30);
 
     const composite = Math.max(
       0,
@@ -331,8 +336,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           jurisdictionPenalty +
           regimesPenalty +
           redlinesPenalty +
-          adverseMediaPenalty +
-          adverseMediaScoredPenalty +
+          adverseMediaPenalty +      // 0 when structured scorer ran
+          adverseMediaScoredPenalty + // primary; severity-weighted
           adverseKeywordPenalty +
           pepPenalty,
       ),
@@ -525,13 +530,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
     }, { headers: gateHeaders });
   } catch (err) {
-    // Log the detail server-side where auditors can see it; return a
-    // graceful empty result so the UI can render an empty state rather
-    // than a broken error page.
-    console.error("super-brain failed", err);
+    // Brain pipeline crashed — DO NOT return score:0 (CLEAR). A CLEAR
+    // disposition on a crashed analysis would let a sanctioned entity
+    // through. Instead: return degraded:true with score:75 (REVIEW_REQUIRED)
+    // so the MLRO must manually clear before onboarding proceeds.
+    const detail = err instanceof Error ? err.message.slice(0, 200) : String(err);
+    console.error("[super-brain] Pipeline crashed:", detail);
     return NextResponse.json(
       {
         ok: true,
+        degraded: true,
+        degradedReason: detail,
         audit: { runId: makeRunId(), generatedAt: new Date().toISOString(), engineVersion: BRAIN_ENGINE_VERSION, schemaVersion: REPORT_SCHEMA_VERSION, buildSha: BUILD_SHA.slice(0, 12), dataFreshness: DATA_FRESHNESS, moduleWeights: MODULE_WEIGHTS },
         screen: { hits: [], topScore: 0, generatedAt: new Date().toISOString() },
         pep: null,
@@ -548,8 +557,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         pepAssessment: null,
         stylometry: null,
         crossRegimeConflict: null,
-        composite: { score: 0, breakdown: { quickScreen: 0, jurisdictionPenalty: 0, regimesPenalty: 0, redlinesPenalty: 0, adverseMediaPenalty: 0, adverseMediaScoredPenalty: 0, adverseKeywordPenalty: 0, pepPenalty: 0 } },
-        note: "Super-brain analysis temporarily unavailable — results are empty. Check server logs.",
+        // Score 75 → REVIEW_REQUIRED — MLRO must manually clear.
+        // Never return 0 (CLEAR) when the pipeline crashed.
+        composite: { score: 75, breakdown: { quickScreen: 0, jurisdictionPenalty: 0, regimesPenalty: 0, redlinesPenalty: 0, adverseMediaPenalty: 0, adverseMediaScoredPenalty: 0, adverseKeywordPenalty: 0, pepPenalty: 0 } },
+        note: "⚠ Super-brain analysis unavailable — scoring engine crashed. MLRO manual review required before any onboarding or clearance decision. Do not use this result as a CLEAR verdict.",
       },
       { headers: gateHeaders },
     );

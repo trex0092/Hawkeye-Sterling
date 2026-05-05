@@ -94,14 +94,19 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   }
 
   const { getStore } = blobsMod;
+  // On Netlify's own runtime, trust the auto-injected NETLIFY_BLOBS_CONTEXT.
+  // Using explicit NETLIFY_BLOBS_TOKEN (a custom non-PAT value) overrides the
+  // injection and causes every read to 401 → silent fallback to the 50-entry
+  // demo fixture — real OFAC/UN/EU/UAE designees are never screened.
+  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
-    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"] ??
+    process.env["NETLIFY_BLOBS_TOKEN"];
 
   const storeOpts =
-    siteID && token
+    !onNetlify && siteID && token
       ? ({ name: "hawkeye-lists", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
       : ({ name: "hawkeye-lists" } as Parameters<typeof getStore>[0]);
 
@@ -152,6 +157,14 @@ export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
     const live = await loadFromBlobs();
 
     if (!live || live.length === 0) {
+      // Blobs not yet populated (fresh deploy, cron hasn't run) or load failed.
+      // Log prominently — using the static seed corpus means real OFAC/UN/EU/UAE
+      // designees added after the last build will NOT be screened.
+      console.warn(
+        "[candidates-loader] Live sanctions lists unavailable — screening against static seed corpus " +
+        `(${STATIC_CANDIDATES.length} entries). Newly designated entities since last build will NOT be matched. ` +
+        "Ensure refresh-lists cron has run and Netlify Blobs is bound.",
+      );
       _cached = STATIC_CANDIDATES;
       _cachedAt = now;
       return _cached;
@@ -166,8 +179,14 @@ export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
     _cached = [...live, ...extras];
     _cachedAt = now;
     return _cached;
-  } catch {
-    // Any unexpected error — fall back silently.
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    const staleSec = _cachedAt > 0 ? Math.round((Date.now() - _cachedAt) / 1000) : null;
+    console.error(
+      `[candidates-loader] Unexpected error loading candidates: ${detail}. ` +
+      `Returning static seed corpus (${STATIC_CANDIDATES.length} entries). ` +
+      (staleSec !== null ? `Cache is ${staleSec}s old.` : "Cache was never populated."),
+    );
     return STATIC_CANDIDATES;
   }
 }
