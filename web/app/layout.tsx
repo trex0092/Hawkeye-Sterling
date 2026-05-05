@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
 import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Hawkeye Sterling",
@@ -49,10 +50,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body className="flex flex-col min-h-screen">
         <CaseVaultSyncer />
         <ServiceWorkerRegistrar />
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+        <SiteFooter />
       </body>
     </html>
   );

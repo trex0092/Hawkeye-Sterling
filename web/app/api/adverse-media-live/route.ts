@@ -207,10 +207,10 @@ async function enrichWithClaude(
   articles: AdverseMediaLiveResult["articles"],
   riskScore: number,
   riskRating: string,
-): Promise<{ summary: string; articlesWithCategories: AdverseMediaLiveResult["articles"] }> {
+): Promise<{ summary: string; articlesWithCategories: AdverseMediaLiveResult["articles"]; enriched: boolean }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || articles.length === 0) {
-    return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles };
+    return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles, enriched: false };
   }
 
   const client = getAnthropicClient(apiKey, 55_000);
@@ -268,11 +268,18 @@ Generate the JSON response.`;
     return {
       summary: parsed.summary ?? buildFallbackSummary(subjectName, articles, riskScore, riskRating),
       articlesWithCategories: enrichedArticles,
+      enriched: true,
     };
-  } catch {
+  } catch (err) {
+    // Claude enrichment failed — return regex-inferred categories only.
+    // Mark enriched:false so callers can surface a degradation note to operators:
+    // regex categories are shallow (keyword presence) and may misclassify articles
+    // where adverse keywords appear in a denying/counter context.
+    console.warn("[adverse-media-live] Claude enrichment failed, using regex categories:", err instanceof Error ? err.message : String(err));
     return {
       summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating),
       articlesWithCategories: articles,
+      enriched: false,
     };
   }
 }
@@ -381,7 +388,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const riskRating = scoreToRating(riskScore);
 
   // Optionally enrich with Claude
-  const { summary, articlesWithCategories } = await enrichWithClaude(
+  const { summary, articlesWithCategories, enriched } = await enrichWithClaude(
     subjectName,
     body.entityType,
     articles,
@@ -389,7 +396,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
-  const result: AdverseMediaLiveResult = {
+  const result: AdverseMediaLiveResult & { enriched?: boolean; enrichmentNote?: string } = {
     ok: true,
     subject: subjectName,
     totalHits,
@@ -398,6 +405,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     articles: articlesWithCategories,
     summary,
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
+    enriched,
+    ...(enriched === false
+      ? { enrichmentNote: "Claude enrichment unavailable — article categories are regex-inferred only. Review findings manually for nuance." }
+      : {}),
   };
 
   return NextResponse.json(result);
