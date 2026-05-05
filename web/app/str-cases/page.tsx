@@ -409,7 +409,7 @@ export default function StrCasesPage() {
             actions={
               <div className="flex items-center gap-2">
                 <Btn variant="ghost" onClick={() => void generateBriefing()} disabled={briefingLoading || cases.length === 0}>
-                  {briefingLoading ? "Generating…" : "✦AI Briefing"}
+                  {briefingLoading ? "Generating…" : "✦AI"}
                 </Btn>
                 <Btn
                   variant="ghost"

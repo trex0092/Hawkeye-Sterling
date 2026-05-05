@@ -692,7 +692,7 @@ export function BatchPanel() {
           <span className="ml-auto text-11 text-ink-3">{sortedFiltered.length} row{sortedFiltered.length === 1 ? "" : "s"}</span>
           <button type="button" onClick={() => void runPriorityRanking(results)} disabled={rankLoading || results.length === 0}
             className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
-            {rankLoading ? "Ranking…" : "✦AI Priority Ranking"}
+            {rankLoading ? "Ranking…" : "✦AI"}
           </button>
         </div>
       )}

@@ -348,7 +348,7 @@ export default function EmployeesPage() {
             disabled={employees.length === 0 || empRiskLoading}
             className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors"
           >
-            {empRiskLoading ? "Scanning…" : "✦AI Risk Scan"}
+            {empRiskLoading ? "Scanning…" : "✦AI"}
           </button>
           <button
             type="button"

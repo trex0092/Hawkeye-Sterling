@@ -194,7 +194,7 @@ export default function SarQaPage() {
         <div className="mt-4 flex justify-end">
           <button type="button" onClick={() => void runAiQa()} disabled={aiScoreLoading || cases.length === 0}
             className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40">
-            {aiScoreLoading ? "Scoring…" : "✦AI Quality Review"}
+            {aiScoreLoading ? "Scoring…" : "✦AI"}
           </button>
         </div>
 

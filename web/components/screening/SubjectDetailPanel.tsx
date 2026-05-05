@@ -1936,7 +1936,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
               disabled={csLoading}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
             >
-              {csLoading ? "Scoring…" : "✦AI Confidence Score"}
+              {csLoading ? "Scoring…" : "✦AI"}
             </button>
           )}
           {csResult && (

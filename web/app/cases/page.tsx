@@ -191,7 +191,7 @@ export default function CasesPage() {
               <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
               <button type="button" onClick={() => void runBatchTriage()} disabled={triageLoading || cases.length === 0}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
-                {triageLoading ? "Triaging…" : `✦AI Triage (${Math.min(cases.length, 10)})`}
+                {triageLoading ? "Triaging…" : "✦AI"}
               </button>
             </div>
           </div>

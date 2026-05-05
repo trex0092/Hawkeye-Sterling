@@ -187,7 +187,7 @@ function RegulatoryFeedPanel() {
               disabled={triageLoading || items.length === 0}
               className="text-10 font-mono px-2 py-0.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand-dim/70 disabled:opacity-40"
             >
-              {triageLoading ? "Triaging…" : "✦AI Triage"}
+              {triageLoading ? "Triaging…" : "✦AI"}
             </button>
             {triageError && (
               <span className="text-9 font-mono text-red-400">{triageError}</span>
