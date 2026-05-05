@@ -2361,6 +2361,285 @@ function alephAdapter(): NewsAdapter {
   };
 }
 
+// ── Mention.com — premium social/web monitoring ─────────────────────
+function mentionAdapter(): NewsAdapter {
+  const key = process.env["MENTION_API_KEY"];
+  const accountId = process.env["MENTION_ACCOUNT_ID"];
+  const alertId = process.env["MENTION_ALERT_ID"];
+  if (!key || !accountId || !alertId) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.mention.com/api/accounts/${accountId}/alerts/${alertId}/mentions?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { mentions?: Array<{ title?: string; url?: string; published_at?: string; description?: string; source_name?: string; tone?: number }> };
+        return (json.mentions ?? []).filter((m) => m.title && m.url).map((m) => ({
+          source: "mention.com", outlet: m.source_name ?? "mention", title: m.title!, url: m.url!,
+          publishedAt: m.published_at ?? new Date().toISOString(),
+          ...(m.description ? { snippet: m.description } : {}),
+          ...(typeof m.tone === "number" ? { sentiment: m.tone } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[mention.com] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── BuzzSumo — premium content/influencer intelligence ──────────────
+function buzzSumoAdapter(): NewsAdapter {
+  const key = process.env["BUZZSUMO_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, num_results: String(opts?.limit ?? 25), api_key: key });
+        const res = await abortable(
+          fetch(`https://api.buzzsumo.com/search/articles.json?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; published_date?: number; domain_name?: string }> };
+        return (json.results ?? []).filter((r) => r.title && r.url).map((r) => ({
+          source: "buzzsumo", outlet: r.domain_name ?? "buzzsumo", title: r.title!, url: r.url!,
+          publishedAt: r.published_date ? new Date(r.published_date * 1000).toISOString() : new Date().toISOString(),
+        } as NewsArticle));
+      } catch (err) { console.warn("[buzzsumo] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Onclusive (formerly Critical Mention + Bulletin Intelligence) ───
+function onclusiveAdapter(): NewsAdapter {
+  const key = process.env["ONCLUSIVE_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = { keyword: `"${subjectName}"`, limit: opts?.limit ?? 25, sort: "publishDate desc" };
+        const res = await abortable(
+          fetch("https://api.onclusive.com/v2/coverage/search", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ headline?: string; url?: string; publishDate?: string; abstract?: string; outletName?: string; sentimentScore?: number }> };
+        return (json.items ?? []).filter((i) => i.headline && i.url).map((i) => ({
+          source: "onclusive", outlet: i.outletName ?? "onclusive", title: i.headline!, url: i.url!,
+          publishedAt: i.publishDate ?? new Date().toISOString(),
+          ...(i.abstract ? { snippet: i.abstract } : {}),
+          ...(typeof i.sentimentScore === "number" ? { sentiment: i.sentimentScore } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[onclusive] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── NewsRiver — premium news API (RapidAPI) ─────────────────────────
+function newsRiverAdapter(): NewsAdapter {
+  const key = process.env["NEWSRIVER_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ query: `text:"${subjectName}"`, sortBy: "discoveredAt", sortOrder: "DESC", limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.newsriver.io/v2/search?${params.toString()}`, {
+            headers: { Authorization: key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as Array<{ title?: string; url?: string; discoverDate?: string; description?: string; website?: { name?: string } }>;
+        return (Array.isArray(json) ? json : []).filter((a) => a.title && a.url).map((a) => ({
+          source: "newsriver", outlet: a.website?.name ?? "newsriver", title: a.title!, url: a.url!,
+          publishedAt: a.discoverDate ?? new Date().toISOString(),
+          ...(a.description ? { snippet: a.description } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[newsriver] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Brand24 — premium social listening ──────────────────────────────
+function brand24Adapter(): NewsAdapter {
+  const key = process.env["BRAND24_API_KEY"];
+  const projectId = process.env["BRAND24_PROJECT_ID"];
+  if (!key || !projectId) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ keywords: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.brand24.com/v3/projects/${projectId}/mentions?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; created?: string; snippet?: string; source?: string; sentiment?: number }> };
+        return (json.results ?? []).filter((r) => r.title && r.url).map((r) => ({
+          source: "brand24", outlet: r.source ?? "brand24", title: r.title!, url: r.url!,
+          publishedAt: r.created ?? new Date().toISOString(),
+          ...(r.snippet ? { snippet: r.snippet } : {}),
+          ...(typeof r.sentiment === "number" ? { sentiment: r.sentiment } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[brand24] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── RANE Worldview (Stratfor successor) — premium geopolitical risk ─
+function raneAdapter(): NewsAdapter {
+  const key = process.env["RANE_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.ranenetwork.com/v1/insights/search?${params.toString()}`, {
+            headers: { "x-api-key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ title?: string; url?: string; publishedAt?: string; summary?: string; analyst?: string; severity?: string }> };
+        return (json.items ?? []).filter((i) => i.title && i.url).map((i) => ({
+          source: "rane", outlet: i.analyst ?? "ranenetwork.com", title: i.title!, url: i.url!,
+          publishedAt: i.publishedAt ?? new Date().toISOString(),
+          ...(i.summary ? { snippet: i.summary } : {}),
+          ...(i.severity === "high" ? { sentiment: -0.7 } : i.severity === "moderate" ? { sentiment: -0.3 } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[rane] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Verisk Maplecroft — premium country / political risk ───────────
+function maplecroftAdapter(): NewsAdapter {
+  const key = process.env["MAPLECROFT_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.maplecroft.com/v2/risk-alerts/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { alerts?: Array<{ headline?: string; url?: string; publishedAt?: string; summary?: string; country?: string; riskScore?: number }> };
+        return (json.alerts ?? []).filter((a) => a.headline && a.url).map((a) => ({
+          source: "maplecroft", outlet: a.country ?? "maplecroft", title: a.headline!, url: a.url!,
+          publishedAt: a.publishedAt ?? new Date().toISOString(),
+          ...(a.summary ? { snippet: a.summary } : {}),
+          ...(typeof a.riskScore === "number" ? { sentiment: -a.riskScore / 10 } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[maplecroft] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Janes Defence Intelligence — premium ────────────────────────────
+function janesAdapter(): NewsAdapter {
+  const key = process.env["JANES_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, max: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.janes.com/v2/content/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ title?: string; url?: string; publishedDate?: string; abstract?: string; section?: string }> };
+        return (json.items ?? []).filter((i) => i.title && i.url).map((i) => ({
+          source: "janes", outlet: i.section ?? "janes", title: i.title!, url: i.url!,
+          publishedAt: i.publishedDate ?? new Date().toISOString(),
+          ...(i.abstract ? { snippet: i.abstract } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[janes] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Mastodon search — free (toggle, public-instance fan-out) ────────
+function mastodonAdapter(): NewsAdapter {
+  const instance = process.env["MASTODON_INSTANCE"]; // e.g. "mastodon.social"
+  if (!instance) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, type: "statuses", limit: String(opts?.limit ?? 25), resolve: "true" });
+        const headers: Record<string, string> = { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" };
+        const tok = process.env["MASTODON_ACCESS_TOKEN"];
+        if (tok) headers.Authorization = `Bearer ${tok}`;
+        const res = await abortable(
+          fetch(`https://${instance}/api/v2/search?${params.toString()}`, { headers }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { statuses?: Array<{ url?: string; content?: string; created_at?: string; account?: { acct?: string } }> };
+        return (json.statuses ?? []).filter((s) => s.url && s.content).map((s) => {
+          const text = s.content!.replace(/<[^>]+>/g, "").trim();
+          return {
+            source: "mastodon",
+            outlet: s.account?.acct ? `@${s.account.acct}` : instance,
+            title: text.slice(0, 120),
+            url: s.url!,
+            publishedAt: s.created_at ?? new Date().toISOString(),
+            snippet: text.slice(0, 240),
+          } as NewsArticle;
+        });
+      } catch (err) { console.warn("[mastodon] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Bing Web Search — broader than Bing News, key-gated ─────────────
+function bingWebAdapter(): NewsAdapter {
+  const key = process.env["BING_WEB_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}" sanctions OR fraud OR "money laundering" OR corruption OR investigation`,
+          count: String(opts?.limit ?? 25),
+          mkt: "en-US",
+          freshness: "Month",
+        });
+        const res = await abortable(
+          fetch(`https://api.bing.microsoft.com/v7.0/search?${params.toString()}`, {
+            headers: { "Ocp-Apim-Subscription-Key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { webPages?: { value?: Array<{ name?: string; url?: string; dateLastCrawled?: string; snippet?: string; siteName?: string }> } };
+        return (json.webPages?.value ?? []).filter((v) => v.name && v.url).map((v) => ({
+          source: "bing-web", outlet: v.siteName ?? "bing", title: v.name!, url: v.url!,
+          publishedAt: v.dateLastCrawled ?? new Date().toISOString(),
+          ...(v.snippet ? { snippet: v.snippet } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[bing-web] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -2426,6 +2705,16 @@ export function activeNewsAdapters(): NewsAdapter[] {
     lexologyAdapter(),
     proPublicaAdapter(),
     alephAdapter(),
+    mentionAdapter(),
+    buzzSumoAdapter(),
+    onclusiveAdapter(),
+    newsRiverAdapter(),
+    brand24Adapter(),
+    raneAdapter(),
+    maplecroftAdapter(),
+    janesAdapter(),
+    mastodonAdapter(),
+    bingWebAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -2489,6 +2778,16 @@ export function activeNewsProviders(): string[] {
     ["LEXOLOGY_API_KEY", "lexology"],
     ["PROPUBLICA_API_KEY", "propublica"],
     ["ALEPH_API_KEY", "occrp-aleph"],
+    ["MENTION_API_KEY", "mention.com"],
+    ["BUZZSUMO_API_KEY", "buzzsumo"],
+    ["ONCLUSIVE_API_KEY", "onclusive"],
+    ["NEWSRIVER_API_KEY", "newsriver"],
+    ["BRAND24_API_KEY", "brand24"],
+    ["RANE_API_KEY", "rane"],
+    ["MAPLECROFT_API_KEY", "maplecroft"],
+    ["JANES_API_KEY", "janes"],
+    ["MASTODON_INSTANCE", "mastodon"],
+    ["BING_WEB_API_KEY", "bing-web"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }
