@@ -847,6 +847,934 @@ function tiingoAdapter(): NewsAdapter {
   };
 }
 
+// ── AP News API — premium ──────────────────────────────────────────────
+function apNewsAdapter(): NewsAdapter {
+  const key = process.env["AP_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          page_size: String(opts?.limit ?? 25),
+          sort: "date",
+          apikey: key,
+        });
+        const res = await abortable(
+          fetch(`https://api.ap.org/media/v/content/search?${params.toString()}`, {
+            headers: { accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: { items?: Array<{ item?: { headline?: string; firstcreated?: string; uri?: string; description_summary?: string } }> };
+        };
+        return (json.data?.items ?? [])
+          .map((i) => i.item)
+          .filter((it): it is NonNullable<typeof it> => !!it?.headline && !!it.uri)
+          .map((it) => ({
+            source: "ap",
+            outlet: "apnews.com",
+            title: it.headline!,
+            url: it.uri!,
+            publishedAt: it.firstcreated ?? new Date().toISOString(),
+            ...(it.description_summary ? { snippet: it.description_summary } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[ap] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── BBC News (via key-gated proxy / Trusted Partner) ──────────────────
+function bbcNewsAdapter(): NewsAdapter {
+  const key = process.env["BBC_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          size: String(opts?.limit ?? 25),
+          api_key: key,
+        });
+        const res = await abortable(
+          fetch(`https://api.bbc.co.uk/news/search?${params.toString()}`, {
+            headers: { accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ headline?: string; url?: string; firstPublished?: string; summary?: string }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.headline && r.url)
+          .map((r) => ({
+            source: "bbc",
+            outlet: "bbc.co.uk",
+            title: r.headline!,
+            url: r.url!,
+            publishedAt: r.firstPublished ?? new Date().toISOString(),
+            ...(r.summary ? { snippet: r.summary } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[bbc] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── NewsData.io — free key tier ────────────────────────────────────────
+function newsDataAdapter(): NewsAdapter {
+  const key = process.env["NEWSDATA_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          apikey: key,
+          q: `"${subjectName}"`,
+          language: "en",
+          size: String(Math.min(50, opts?.limit ?? 25)),
+        });
+        const res = await abortable(
+          fetch(`https://newsdata.io/api/1/news?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ title?: string; link?: string; pubDate?: string; description?: string; source_id?: string }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.title && r.link)
+          .map((r) => ({
+            source: "newsdata",
+            outlet: r.source_id ?? "newsdata.io",
+            title: r.title!,
+            url: r.link!,
+            publishedAt: r.pubDate ?? new Date().toISOString(),
+            ...(r.description ? { snippet: r.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[newsdata] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── WorldNewsAPI — free key tier ───────────────────────────────────────
+function worldNewsAdapter(): NewsAdapter {
+  const key = process.env["WORLDNEWS_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          text: `"${subjectName}"`,
+          number: String(opts?.limit ?? 25),
+          "api-key": key,
+          "language": "en",
+          "sort": "publish-time",
+          "sort-direction": "desc",
+        });
+        const res = await abortable(
+          fetch(`https://api.worldnewsapi.com/search-news?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          news?: Array<{ title?: string; url?: string; publish_date?: string; text?: string; source_country?: string; sentiment?: number }>;
+        };
+        return (json.news ?? [])
+          .filter((n) => n.title && n.url)
+          .map((n) => ({
+            source: "worldnews",
+            outlet: n.source_country ?? "worldnewsapi",
+            title: n.title!,
+            url: n.url!,
+            publishedAt: n.publish_date ?? new Date().toISOString(),
+            ...(n.text ? { snippet: n.text.slice(0, 240) } : {}),
+            ...(typeof n.sentiment === "number" ? { sentiment: n.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[worldnews] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── AlphaVantage News & Sentiment — free key tier ─────────────────────
+function alphaVantageAdapter(): NewsAdapter {
+  const key = process.env["ALPHAVANTAGE_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          function: "NEWS_SENTIMENT",
+          tickers: subjectName,
+          limit: String(opts?.limit ?? 25),
+          apikey: key,
+        });
+        const res = await abortable(
+          fetch(`https://www.alphavantage.co/query?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          feed?: Array<{ title?: string; url?: string; time_published?: string; summary?: string; source?: string; overall_sentiment_score?: number }>;
+        };
+        return (json.feed ?? [])
+          .filter((f) => f.title && f.url)
+          .map((f) => ({
+            source: "alphavantage",
+            outlet: f.source ?? "alphavantage",
+            title: f.title!,
+            url: f.url!,
+            publishedAt: f.time_published ? toIso(f.time_published) : new Date().toISOString(),
+            ...(f.summary ? { snippet: f.summary } : {}),
+            ...(typeof f.overall_sentiment_score === "number" ? { sentiment: f.overall_sentiment_score } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[alphavantage] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// AlphaVantage publishes time as "20240501T120000"
+function toIso(av: string): string {
+  const m = av.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/);
+  return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z` : av;
+}
+
+// ── SerpAPI Google News — premium ──────────────────────────────────────
+function serpApiAdapter(): NewsAdapter {
+  const key = process.env["SERPAPI_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          engine: "google_news",
+          q: `"${subjectName}"`,
+          num: String(opts?.limit ?? 25),
+          api_key: key,
+        });
+        const res = await abortable(
+          fetch(`https://serpapi.com/search.json?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          news_results?: Array<{ title?: string; link?: string; date?: string; snippet?: string; source?: { name?: string } }>;
+        };
+        return (json.news_results ?? [])
+          .filter((n) => n.title && n.link)
+          .map((n) => ({
+            source: "serpapi-googlenews",
+            outlet: n.source?.name ?? "google-news",
+            title: n.title!,
+            url: n.link!,
+            publishedAt: n.date ?? new Date().toISOString(),
+            ...(n.snippet ? { snippet: n.snippet } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[serpapi] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Diffbot Knowledge Graph — premium ─────────────────────────────────
+function diffbotAdapter(): NewsAdapter {
+  const key = process.env["DIFFBOT_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const query = `type:Article text:"${subjectName}" sortBy:date`;
+        const params = new URLSearchParams({
+          token: key,
+          query,
+          size: String(opts?.limit ?? 25),
+        });
+        const res = await abortable(
+          fetch(`https://kg.diffbot.com/kg/v3/dql?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: Array<{ title?: string; pageUrl?: string; date?: { str?: string }; text?: string; siteName?: string; sentiment?: number }>;
+        };
+        return (json.data ?? [])
+          .filter((d) => d.title && d.pageUrl)
+          .map((d) => ({
+            source: "diffbot",
+            outlet: d.siteName ?? "diffbot",
+            title: d.title!,
+            url: d.pageUrl!,
+            publishedAt: d.date?.str ?? new Date().toISOString(),
+            ...(d.text ? { snippet: d.text.slice(0, 240) } : {}),
+            ...(typeof d.sentiment === "number" ? { sentiment: d.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[diffbot] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Meltwater — premium (enterprise) ──────────────────────────────────
+function meltwaterAdapter(): NewsAdapter {
+  const key = process.env["MELTWATER_API_KEY"];
+  const userKey = process.env["MELTWATER_USER_KEY"];
+  if (!key || !userKey) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          query: { search: { keyword: `"${subjectName}"` } },
+          tz: "UTC",
+          page_size: opts?.limit ?? 25,
+        };
+        const res = await abortable(
+          fetch("https://api.meltwater.com/v3/search/articles", {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${key}`,
+              "x-user-key": userKey,
+              "content-type": "application/json",
+              accept: "application/json",
+            },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          articles?: Array<{ headline?: string; url?: string; publish_date?: string; opening_text?: string; source?: { name?: string }; sentiment?: { value?: number } }>;
+        };
+        return (json.articles ?? [])
+          .filter((a) => a.headline && a.url)
+          .map((a) => ({
+            source: "meltwater",
+            outlet: a.source?.name ?? "meltwater",
+            title: a.headline!,
+            url: a.url!,
+            publishedAt: a.publish_date ?? new Date().toISOString(),
+            ...(a.opening_text ? { snippet: a.opening_text } : {}),
+            ...(typeof a.sentiment?.value === "number" ? { sentiment: a.sentiment.value } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[meltwater] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Signal AI — premium (enterprise reputation/risk monitoring) ───────
+function signalAiAdapter(): NewsAdapter {
+  const key = process.env["SIGNALAI_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = { query: subjectName, size: opts?.limit ?? 25 };
+        const res = await abortable(
+          fetch("https://api.signal-ai.com/v1/articles/search", {
+            method: "POST",
+            headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ title?: string; url?: string; publishedAt?: string; summary?: string; outlet?: { name?: string }; sentiment?: number }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.title && r.url)
+          .map((r) => ({
+            source: "signal-ai",
+            outlet: r.outlet?.name ?? "signal-ai",
+            title: r.title!,
+            url: r.url!,
+            publishedAt: r.publishedAt ?? new Date().toISOString(),
+            ...(r.summary ? { snippet: r.summary } : {}),
+            ...(typeof r.sentiment === "number" ? { sentiment: r.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[signal-ai] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Dow Jones Factiva (DNA platform) — premium ────────────────────────
+function factivaAdapter(): NewsAdapter {
+  const userId = process.env["FACTIVA_USER_ID"];
+  const password = process.env["FACTIVA_PASSWORD"];
+  const clientId = process.env["FACTIVA_CLIENT_ID"];
+  if (!userId || !password || !clientId) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          query: { searchString: `"${subjectName}"`, languageCodes: ["en"] },
+          formatting: { isReturnHeadline: true, isReturnSnippet: true, sortOrder: "PublicationDateChronological" },
+          paging: { offset: 0, limit: opts?.limit ?? 25 },
+        };
+        const res = await abortable(
+          fetch("https://api.dowjones.com/content/search", {
+            method: "POST",
+            headers: {
+              "X-API-VERSION": "3.0",
+              "user-id": userId,
+              password,
+              "client-id": clientId,
+              "content-type": "application/json",
+              accept: "application/json",
+            },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: Array<{ attributes?: { headline?: { main?: string }; webUrl?: string; publicationDate?: string; snippet?: { content?: string }; sourceName?: string } }>;
+        };
+        return (json.data ?? [])
+          .map((d) => d.attributes)
+          .filter((a): a is NonNullable<typeof a> => !!a?.headline?.main && !!a.webUrl)
+          .map((a) => ({
+            source: "factiva",
+            outlet: a.sourceName ?? "factiva",
+            title: a.headline!.main!,
+            url: a.webUrl!,
+            publishedAt: a.publicationDate ?? new Date().toISOString(),
+            ...(a.snippet?.content ? { snippet: a.snippet.content } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[factiva] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── LexisNexis Newsdesk — premium ─────────────────────────────────────
+function lexisNexisNewsdeskAdapter(): NewsAdapter {
+  const key = process.env["LEXISNEXIS_NEWSDESK_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          query: `"${subjectName}"`,
+          limit: String(opts?.limit ?? 25),
+          sort: "publishedAt:desc",
+        });
+        const res = await abortable(
+          fetch(`https://api.newsdesk.lexisnexis.com/v1/articles?${params.toString()}`, {
+            headers: { authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          articles?: Array<{ title?: string; url?: string; publishedAt?: string; excerpt?: string; sourceName?: string; sentiment?: number }>;
+        };
+        return (json.articles ?? [])
+          .filter((a) => a.title && a.url)
+          .map((a) => ({
+            source: "lexisnexis-newsdesk",
+            outlet: a.sourceName ?? "lexisnexis",
+            title: a.title!,
+            url: a.url!,
+            publishedAt: a.publishedAt ?? new Date().toISOString(),
+            ...(a.excerpt ? { snippet: a.excerpt } : {}),
+            ...(typeof a.sentiment === "number" ? { sentiment: a.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[lexisnexis-newsdesk] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Cision PR Newswire — premium ─────────────────────────────────────
+function cisionAdapter(): NewsAdapter {
+  const key = process.env["CISION_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          pageSize: String(opts?.limit ?? 25),
+          sort: "date_desc",
+        });
+        const res = await abortable(
+          fetch(`https://api.cision.com/v1/articles?${params.toString()}`, {
+            headers: { "x-api-key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          items?: Array<{ headline?: string; url?: string; publishDate?: string; teaser?: string; outlet?: string; toneScore?: number }>;
+        };
+        return (json.items ?? [])
+          .filter((i) => i.headline && i.url)
+          .map((i) => ({
+            source: "cision",
+            outlet: i.outlet ?? "cision",
+            title: i.headline!,
+            url: i.url!,
+            publishedAt: i.publishDate ?? new Date().toISOString(),
+            ...(i.teaser ? { snippet: i.teaser } : {}),
+            ...(typeof i.toneScore === "number" ? { sentiment: i.toneScore } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[cision] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── AlphaSense — premium financial intelligence ───────────────────────
+function alphaSenseAdapter(): NewsAdapter {
+  const key = process.env["ALPHASENSE_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = { query: subjectName, size: opts?.limit ?? 25, contentType: "news" };
+        const res = await abortable(
+          fetch("https://api.alpha-sense.com/v1/search", {
+            method: "POST",
+            headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ title?: string; url?: string; publishedAt?: string; summary?: string; source?: string; sentiment?: number }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.title && r.url)
+          .map((r) => ({
+            source: "alphasense",
+            outlet: r.source ?? "alphasense",
+            title: r.title!,
+            url: r.url!,
+            publishedAt: r.publishedAt ?? new Date().toISOString(),
+            ...(r.summary ? { snippet: r.summary } : {}),
+            ...(typeof r.sentiment === "number" ? { sentiment: r.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[alphasense] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Quid (NetBase Quid) — premium narrative intelligence ──────────────
+function quidAdapter(): NewsAdapter {
+  const key = process.env["QUID_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = { query: { keyword: subjectName }, size: opts?.limit ?? 25, sort: "newest" };
+        const res = await abortable(
+          fetch("https://api.quid.com/v3/news/search", {
+            method: "POST",
+            headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          documents?: Array<{ title?: string; url?: string; publishedAt?: string; description?: string; source?: { name?: string }; sentiment?: number }>;
+        };
+        return (json.documents ?? [])
+          .filter((d) => d.title && d.url)
+          .map((d) => ({
+            source: "quid",
+            outlet: d.source?.name ?? "quid",
+            title: d.title!,
+            url: d.url!,
+            publishedAt: d.publishedAt ?? new Date().toISOString(),
+            ...(d.description ? { snippet: d.description } : {}),
+            ...(typeof d.sentiment === "number" ? { sentiment: d.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[quid] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Brandwatch — premium consumer/risk intelligence ───────────────────
+function brandwatchAdapter(): NewsAdapter {
+  const key = process.env["BRANDWATCH_API_KEY"];
+  const projectId = process.env["BRANDWATCH_PROJECT_ID"];
+  if (!key || !projectId) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          queryString: `"${subjectName}"`,
+          pageSize: String(opts?.limit ?? 25),
+          orderBy: "date",
+          orderDirection: "desc",
+        });
+        const res = await abortable(
+          fetch(`https://api.brandwatch.com/projects/${projectId}/data/mentions?${params.toString()}`, {
+            headers: { authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ title?: string; url?: string; date?: string; snippet?: string; pageType?: string; sentiment?: string }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.title && r.url)
+          .map((r) => ({
+            source: "brandwatch",
+            outlet: r.pageType ?? "brandwatch",
+            title: r.title!,
+            url: r.url!,
+            publishedAt: r.date ?? new Date().toISOString(),
+            ...(r.snippet ? { snippet: r.snippet } : {}),
+            ...(r.sentiment === "positive" ? { sentiment: 0.5 } : r.sentiment === "negative" ? { sentiment: -0.5 } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[brandwatch] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Talkwalker — premium social/news listening ────────────────────────
+function talkwalkerAdapter(): NewsAdapter {
+  const key = process.env["TALKWALKER_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = { query: `"${subjectName}"`, size: opts?.limit ?? 25, sort_by: "date", sort_order: "desc" };
+        const res = await abortable(
+          fetch("https://api.talkwalker.com/api/v1/search", {
+            method: "POST",
+            headers: { "x-tw-api-key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          result?: { documents?: Array<{ title?: string; url?: string; published?: string; content?: string; source_name?: string; sentiment?: number }> };
+        };
+        return (json.result?.documents ?? [])
+          .filter((d) => d.title && d.url)
+          .map((d) => ({
+            source: "talkwalker",
+            outlet: d.source_name ?? "talkwalker",
+            title: d.title!,
+            url: d.url!,
+            publishedAt: d.published ?? new Date().toISOString(),
+            ...(d.content ? { snippet: d.content.slice(0, 240) } : {}),
+            ...(typeof d.sentiment === "number" ? { sentiment: d.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[talkwalker] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Dataminr — premium real-time alerts ───────────────────────────────
+function dataminrAdapter(): NewsAdapter {
+  const cidEnv = process.env["DATAMINR_CLIENT_ID"];
+  const csEnv = process.env["DATAMINR_CLIENT_SECRET"];
+  if (!cidEnv || !csEnv) return NULL_NEWS_ADAPTER;
+  const clientId: string = cidEnv;
+  const clientSecret: string = csEnv;
+  let cachedToken: { token: string; expiresAt: number } | null = null;
+  async function getToken(): Promise<string | null> {
+    if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) return cachedToken.token;
+    try {
+      const res = await abortable(
+        fetch("https://gateway.dataminr.com/auth/2/token", {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ grant_type: "api_key", client_id: clientId, client_secret: clientSecret }).toString(),
+        }),
+      );
+      if (!res.ok) return null;
+      const j = (await res.json()) as { dmaToken?: string; expire?: number };
+      if (!j.dmaToken) return null;
+      cachedToken = { token: j.dmaToken, expiresAt: (j.expire ?? Date.now() / 1000 + 600) * 1000 };
+      return cachedToken.token;
+    } catch {
+      return null;
+    }
+  }
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      const token = await getToken();
+      if (!token) return [];
+      try {
+        const params = new URLSearchParams({ query: `"${subjectName}"`, num: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://gateway.dataminr.com/api/3/alerts?${params.toString()}`, {
+            headers: { authorization: `Dmauth ${token}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: { alerts?: Array<{ caption?: string; expandAlertURL?: string; eventTime?: number; categories?: Array<{ name?: string }>; source?: { displayName?: string } }> };
+        };
+        return (json.data?.alerts ?? [])
+          .filter((a) => a.caption && a.expandAlertURL)
+          .map((a) => ({
+            source: "dataminr",
+            outlet: a.source?.displayName ?? "dataminr",
+            title: a.caption!,
+            url: a.expandAlertURL!,
+            publishedAt: a.eventTime ? new Date(a.eventTime).toISOString() : new Date().toISOString(),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[dataminr] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Zignal Labs — premium narrative-risk monitoring ───────────────────
+function zignalAdapter(): NewsAdapter {
+  const key = process.env["ZIGNAL_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = { search: `"${subjectName}"`, size: opts?.limit ?? 25, sort: { time: "desc" } };
+        const res = await abortable(
+          fetch("https://api.zignallabs.com/v1/stories/search", {
+            method: "POST",
+            headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          hits?: Array<{ title?: string; link?: string; published_at?: string; summary?: string; outlet?: { name?: string }; sentiment?: number }>;
+        };
+        return (json.hits ?? [])
+          .filter((h) => h.title && h.link)
+          .map((h) => ({
+            source: "zignal",
+            outlet: h.outlet?.name ?? "zignal",
+            title: h.title!,
+            url: h.link!,
+            publishedAt: h.published_at ?? new Date().toISOString(),
+            ...(h.summary ? { snippet: h.summary } : {}),
+            ...(typeof h.sentiment === "number" ? { sentiment: h.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[zignal] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── ContextualWeb (RapidAPI) — free / paid tiers ──────────────────────
+function contextualWebAdapter(): NewsAdapter {
+  const key = process.env["CONTEXTUALWEB_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          pageNumber: "1",
+          pageSize: String(opts?.limit ?? 25),
+          autoCorrect: "true",
+          fromPublishedDate: "",
+          toPublishedDate: "",
+        });
+        const res = await abortable(
+          fetch(`https://contextualwebsearch-websearch-v1.p.rapidapi.com/api/Search/NewsSearchAPI?${params.toString()}`, {
+            headers: { "x-rapidapi-key": key, "x-rapidapi-host": "contextualwebsearch-websearch-v1.p.rapidapi.com" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          value?: Array<{ title?: string; url?: string; datePublished?: string; description?: string; provider?: { name?: string } }>;
+        };
+        return (json.value ?? [])
+          .filter((v) => v.title && v.url)
+          .map((v) => ({
+            source: "contextualweb",
+            outlet: v.provider?.name ?? "contextualweb",
+            title: v.title!,
+            url: v.url!,
+            publishedAt: v.datePublished ?? new Date().toISOString(),
+            ...(v.description ? { snippet: v.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[contextualweb] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Cryptopanic — free crypto-focused news ────────────────────────────
+function cryptopanicAdapter(): NewsAdapter {
+  const key = process.env["CRYPTOPANIC_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, _opts) => {
+      void _opts;
+      try {
+        const params = new URLSearchParams({
+          auth_token: key,
+          currencies: subjectName,
+          public: "true",
+        });
+        const res = await abortable(
+          fetch(`https://cryptopanic.com/api/v1/posts/?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ title?: string; url?: string; published_at?: string; source?: { title?: string; domain?: string } }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.title && r.url)
+          .map((r) => ({
+            source: "cryptopanic",
+            outlet: r.source?.domain ?? r.source?.title ?? "cryptopanic",
+            title: r.title!,
+            url: r.url!,
+            publishedAt: r.published_at ?? new Date().toISOString(),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[cryptopanic] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── MediaCloud — free academic / open news index ──────────────────────
+function mediaCloudAdapter(): NewsAdapter {
+  const key = process.env["MEDIACLOUD_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          rows: String(opts?.limit ?? 25),
+          sort: "publish_date_desc",
+          key,
+        });
+        const res = await abortable(
+          fetch(`https://api.mediacloud.org/api/v2/stories_public/list?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as Array<{
+          stories_id?: number; title?: string; url?: string; publish_date?: string; media_name?: string;
+        }>;
+        return (Array.isArray(json) ? json : [])
+          .filter((s) => s.title && s.url)
+          .map((s) => ({
+            source: "mediacloud",
+            outlet: s.media_name ?? "mediacloud",
+            title: s.title!,
+            url: s.url!,
+            publishedAt: s.publish_date ?? new Date().toISOString(),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[mediacloud] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Reuters Connect (REST, separate from RDP password grant) ──────────
+function reutersConnectAdapter(): NewsAdapter {
+  const key = process.env["REUTERS_CONNECT_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          query: subjectName,
+          limit: String(opts?.limit ?? 25),
+          sort: "date_desc",
+        });
+        const res = await abortable(
+          fetch(`https://api.reutersconnect.com/content/v1/search?${params.toString()}`, {
+            headers: { authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          items?: Array<{ headline?: string; webUrl?: string; firstCreated?: string; description?: string; sourceName?: string }>;
+        };
+        return (json.items ?? [])
+          .filter((i) => i.headline && i.webUrl)
+          .map((i) => ({
+            source: "reuters-connect",
+            outlet: i.sourceName ?? "reuters",
+            title: i.headline!,
+            url: i.webUrl!,
+            publishedAt: i.firstCreated ?? new Date().toISOString(),
+            ...(i.description ? { snippet: i.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[reuters-connect] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -873,6 +1801,28 @@ export function activeNewsAdapters(): NewsAdapter[] {
     eventRegistryAdapter(),
     polygonAdapter(),
     tiingoAdapter(),
+    apNewsAdapter(),
+    bbcNewsAdapter(),
+    newsDataAdapter(),
+    worldNewsAdapter(),
+    alphaVantageAdapter(),
+    serpApiAdapter(),
+    diffbotAdapter(),
+    meltwaterAdapter(),
+    signalAiAdapter(),
+    factivaAdapter(),
+    lexisNexisNewsdeskAdapter(),
+    cisionAdapter(),
+    alphaSenseAdapter(),
+    quidAdapter(),
+    brandwatchAdapter(),
+    talkwalkerAdapter(),
+    dataminrAdapter(),
+    zignalAdapter(),
+    contextualWebAdapter(),
+    cryptopanicAdapter(),
+    mediaCloudAdapter(),
+    reutersConnectAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -897,6 +1847,28 @@ export function activeNewsProviders(): string[] {
     ["EVENTREGISTRY_API_KEY", "eventregistry"],
     ["POLYGON_API_KEY", "polygon"],
     ["TIINGO_API_KEY", "tiingo"],
+    ["AP_API_KEY", "ap"],
+    ["BBC_API_KEY", "bbc"],
+    ["NEWSDATA_API_KEY", "newsdata"],
+    ["WORLDNEWS_API_KEY", "worldnews"],
+    ["ALPHAVANTAGE_API_KEY", "alphavantage"],
+    ["SERPAPI_API_KEY", "serpapi-googlenews"],
+    ["DIFFBOT_API_KEY", "diffbot"],
+    ["MELTWATER_API_KEY", "meltwater"],
+    ["SIGNALAI_API_KEY", "signal-ai"],
+    ["FACTIVA_USER_ID", "factiva"],
+    ["LEXISNEXIS_NEWSDESK_API_KEY", "lexisnexis-newsdesk"],
+    ["CISION_API_KEY", "cision"],
+    ["ALPHASENSE_API_KEY", "alphasense"],
+    ["QUID_API_KEY", "quid"],
+    ["BRANDWATCH_API_KEY", "brandwatch"],
+    ["TALKWALKER_API_KEY", "talkwalker"],
+    ["DATAMINR_CLIENT_ID", "dataminr"],
+    ["ZIGNAL_API_KEY", "zignal"],
+    ["CONTEXTUALWEB_API_KEY", "contextualweb"],
+    ["CRYPTOPANIC_API_KEY", "cryptopanic"],
+    ["MEDIACLOUD_API_KEY", "mediacloud"],
+    ["REUTERS_CONNECT_API_KEY", "reuters-connect"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }

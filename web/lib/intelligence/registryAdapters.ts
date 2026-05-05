@@ -319,6 +319,264 @@ function pitchbookAdapter(): RegistryAdapter {
   };
 }
 
+// ── Dun & Bradstreet — premium ────────────────────────────────────────
+function dunBradstreetAdapter(): RegistryAdapter {
+  const key = process.env["DNB_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          searchTerm: subjectName,
+          pageSize: String(opts?.limit ?? 25),
+          ...(opts?.jurisdiction ? { countryISOAlpha2Code: opts.jurisdiction.toUpperCase() } : {}),
+        });
+        const res = await abortable(
+          fetch(`https://plus.dnb.com/v1/search/companyList?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          searchCandidates?: Array<{ organization?: { duns?: string; primaryName?: string; primaryAddress?: { addressCountry?: { isoAlpha2Code?: string } }; dunsControlStatus?: { operatingStatus?: { description?: string } }; registrationNumbers?: Array<{ registrationNumber?: string }> } }>;
+        };
+        return (json.searchCandidates ?? [])
+          .map((c) => c.organization)
+          .filter((o): o is NonNullable<typeof o> => !!o?.primaryName)
+          .map((o) => ({
+            source: "dnb",
+            name: o.primaryName!,
+            ...(o.primaryAddress?.addressCountry?.isoAlpha2Code ? { jurisdiction: o.primaryAddress.addressCountry.isoAlpha2Code } : {}),
+            ...(o.duns ? { registrationNumber: `DUNS-${o.duns}` } : (o.registrationNumbers?.[0]?.registrationNumber ? { registrationNumber: o.registrationNumbers[0].registrationNumber } : {})),
+            ...(o.dunsControlStatus?.operatingStatus?.description ? { status: o.dunsControlStatus.operatingStatus.description } : {}),
+            ...(o.duns ? { url: `https://www.dnb.com/business-directory/company-profiles.${o.duns}.html` } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[dnb] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Bureau van Dijk Orbis (Moody's) — premium ─────────────────────────
+function bvdOrbisAdapter(): RegistryAdapter {
+  const key = process.env["BVD_ORBIS_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          WHERE: [{ MATCH: { Criteria: "MatchOnNameOnly", Query: subjectName } }],
+          SELECT: ["NAME", "COUNTRY", "BVDID", "STATUSDATE", "STATUS", "INCORPORATIONDATE"],
+          PAGE_SIZE: opts?.limit ?? 25,
+        };
+        const res = await abortable(
+          fetch("https://api.bvdinfo.com/api/orbis/Companies/data", {
+            method: "POST",
+            headers: { ApiToken: key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          Data?: Array<{ NAME?: string; COUNTRY?: string; BVDID?: string; STATUS?: string; INCORPORATIONDATE?: string }>;
+        };
+        return (json.Data ?? [])
+          .filter((d) => d.NAME)
+          .map((d) => ({
+            source: "bvd-orbis",
+            name: d.NAME!,
+            ...(d.COUNTRY ? { jurisdiction: d.COUNTRY } : {}),
+            ...(d.BVDID ? { registrationNumber: d.BVDID } : {}),
+            ...(d.STATUS ? { status: d.STATUS } : {}),
+            ...(d.INCORPORATIONDATE ? { incorporationDate: d.INCORPORATIONDATE } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[bvd-orbis] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Kyckr — premium official-source registry aggregator ──────────────
+function kyckrAdapter(): RegistryAdapter {
+  const key = process.env["KYCKR_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: subjectName,
+          ...(opts?.jurisdiction ? { country: opts.jurisdiction } : {}),
+          limit: String(opts?.limit ?? 25),
+        });
+        const res = await abortable(
+          fetch(`https://api.kyckr.com/v2/companies/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ name?: string; country?: string; companyNumber?: string; status?: string; incorporationDate?: string; registryUrl?: string }>;
+        };
+        return (json.results ?? [])
+          .filter((r) => r.name)
+          .map((r) => ({
+            source: "kyckr",
+            name: r.name!,
+            ...(r.country ? { jurisdiction: r.country } : {}),
+            ...(r.companyNumber ? { registrationNumber: r.companyNumber } : {}),
+            ...(r.status ? { status: r.status } : {}),
+            ...(r.incorporationDate ? { incorporationDate: r.incorporationDate } : {}),
+            ...(r.registryUrl ? { url: r.registryUrl } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[kyckr] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── ZoomInfo — premium B2B intelligence ──────────────────────────────
+function zoomInfoAdapter(): RegistryAdapter {
+  const key = process.env["ZOOMINFO_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          companyName: subjectName,
+          rpp: opts?.limit ?? 25,
+          ...(opts?.jurisdiction ? { country: opts.jurisdiction } : {}),
+        };
+        const res = await abortable(
+          fetch("https://api.zoominfo.com/search/company", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: Array<{ name?: string; country?: string; id?: number; foundedYear?: number; companyStatus?: string; website?: string }>;
+        };
+        return (json.data ?? [])
+          .filter((d) => d.name)
+          .map((d) => ({
+            source: "zoominfo",
+            name: d.name!,
+            ...(d.country ? { jurisdiction: d.country } : {}),
+            ...(d.id ? { registrationNumber: `ZI-${d.id}` } : {}),
+            ...(d.companyStatus ? { status: d.companyStatus } : {}),
+            ...(d.foundedYear ? { incorporationDate: String(d.foundedYear) } : {}),
+            ...(d.website ? { url: d.website } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[zoominfo] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── S&P Capital IQ — premium financials ──────────────────────────────
+function capitalIqAdapter(): RegistryAdapter {
+  const key = process.env["CAPITALIQ_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          inputRequests: [{
+            function: "GDSPV",
+            identifier: subjectName,
+            mnemonic: "IQ_COMPANY_NAME",
+            ...(opts?.jurisdiction ? { properties: { country: opts.jurisdiction } } : {}),
+          }],
+        };
+        const res = await abortable(
+          fetch("https://api-ciq.marketintelligence.spglobal.com/gdsapi/rest/v3/clientservice.json", {
+            method: "POST",
+            headers: { Authorization: `Basic ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          GDSSDKResponse?: Array<{ Headers?: string[]; Rows?: Array<{ Row?: string[] }>; Properties?: { country?: string } }>;
+        };
+        const responses = json.GDSSDKResponse ?? [];
+        const records: RegistryRecord[] = [];
+        for (const r of responses) {
+          for (const row of r.Rows ?? []) {
+            const nm = row.Row?.[0];
+            if (!nm) continue;
+            records.push({
+              source: "capitaliq",
+              name: nm,
+              ...(r.Properties?.country ? { jurisdiction: r.Properties.country } : {}),
+            });
+          }
+        }
+        return records;
+      } catch (err) {
+        console.warn("[capitaliq] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── LexisNexis Diligence (RDC successor) — premium ────────────────────
+function lexisNexisDiligenceAdapter(): RegistryAdapter {
+  const key = process.env["LEXISNEXIS_DILIGENCE_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          searchTerm: subjectName,
+          ...(opts?.jurisdiction ? { country: opts.jurisdiction } : {}),
+          maxResults: opts?.limit ?? 25,
+        };
+        const res = await abortable(
+          fetch("https://api.diligence.lexisnexis.com/v1/entities/search", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          entities?: Array<{ name?: string; country?: string; entityId?: string; status?: string; incorporationDate?: string }>;
+        };
+        return (json.entities ?? [])
+          .filter((e) => e.name)
+          .map((e) => ({
+            source: "lexisnexis-diligence",
+            name: e.name!,
+            ...(e.country ? { jurisdiction: e.country } : {}),
+            ...(e.entityId ? { registrationNumber: e.entityId } : {}),
+            ...(e.status ? { status: e.status } : {}),
+            ...(e.incorporationDate ? { incorporationDate: e.incorporationDate } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[lexisnexis-diligence] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeRegistryAdapters(): RegistryAdapter[] {
   return [
@@ -328,6 +586,12 @@ export function activeRegistryAdapters(): RegistryAdapter[] {
     icijOffshoreLeaksAdapter(),
     crunchbaseAdapter(),
     pitchbookAdapter(),
+    dunBradstreetAdapter(),
+    bvdOrbisAdapter(),
+    kyckrAdapter(),
+    zoomInfoAdapter(),
+    capitalIqAdapter(),
+    lexisNexisDiligenceAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -339,6 +603,12 @@ export function activeRegistryProviders(): string[] {
     ["ICIJ_OFFSHORE_LEAKS_ENABLED", "icij-offshore-leaks"],
     ["CRUNCHBASE_API_KEY", "crunchbase"],
     ["PITCHBOOK_API_KEY", "pitchbook"],
+    ["DNB_API_KEY", "dnb"],
+    ["BVD_ORBIS_API_KEY", "bvd-orbis"],
+    ["KYCKR_API_KEY", "kyckr"],
+    ["ZOOMINFO_API_KEY", "zoominfo"],
+    ["CAPITALIQ_API_KEY", "capitaliq"],
+    ["LEXISNEXIS_DILIGENCE_API_KEY", "lexisnexis-diligence"],
   ];
   return keys
     .filter(([envKey]) => {

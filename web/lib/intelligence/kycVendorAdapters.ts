@@ -309,6 +309,342 @@ function idnowAdapter(): KycVendorAdapter {
   };
 }
 
+// ── Socure — premium identity / risk ──────────────────────────────────
+function socureAdapter(): KycVendorAdapter {
+  const key = process.env["SOCURE_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const [first, ...rest] = req.subjectName.split(/\s+/);
+        const body = {
+          modules: ["kyc", "watchlist"],
+          firstName: first ?? req.subjectName,
+          surName: rest.join(" "),
+          email: req.email,
+          mobileNumber: req.phone,
+          country: req.countryCode,
+        };
+        const res = await abortable(
+          fetch("https://api.socure.com/api/3.0/EmailAuthScore", {
+            method: "POST",
+            headers: { Authorization: `SocureApiKey ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "socure", error: `lookup failed (${res.status})` };
+        const json = (await res.json()) as { referenceId?: string; kyc?: { decision?: { value?: string } } };
+        const decision = json.kyc?.decision?.value;
+        const status = decision === "accept" ? "approved" : decision === "reject" ? "declined" : "review";
+        return { ok: true, provider: "socure", sessionId: json.referenceId, status };
+      } catch (err) {
+        return { ok: false, provider: "socure", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── Alloy — premium identity orchestration ────────────────────────────
+function alloyAdapter(): KycVendorAdapter {
+  const apiToken = process.env["ALLOY_API_TOKEN"];
+  const apiSecret = process.env["ALLOY_API_SECRET"];
+  if (!apiToken || !apiSecret) return NULL_KYC_ADAPTER;
+  const auth = Buffer.from(`${apiToken}:${apiSecret}`).toString("base64");
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const [first, ...rest] = req.subjectName.split(/\s+/);
+        const body = {
+          name_first: first ?? req.subjectName,
+          name_last: rest.join(" "),
+          email_address: req.email,
+          phone_number: req.phone,
+          country_code: req.countryCode,
+        };
+        const res = await abortable(
+          fetch("https://sandbox.alloy.co/v1/evaluations", {
+            method: "POST",
+            headers: { Authorization: `Basic ${auth}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "alloy", error: `evaluation failed (${res.status})` };
+        const json = (await res.json()) as { evaluation_token?: string; summary?: { outcome?: string } };
+        const out = json.summary?.outcome;
+        const status = out === "Approved" ? "approved" : out === "Denied" ? "declined" : "review";
+        return { ok: true, provider: "alloy", sessionId: json.evaluation_token, status };
+      } catch (err) {
+        return { ok: false, provider: "alloy", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── ComplyCube — KYC/IDV ──────────────────────────────────────────────
+function complyCubeAdapter(): KycVendorAdapter {
+  const key = process.env["COMPLYCUBE_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const [first, ...rest] = req.subjectName.split(/\s+/);
+        const clientRes = await abortable(
+          fetch("https://api.complycube.com/v1/clients", {
+            method: "POST",
+            headers: { Authorization: key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify({ type: "person", personDetails: { firstName: first ?? req.subjectName, lastName: rest.join(" ") }, email: req.email }),
+          }),
+        );
+        if (!clientRes.ok) return { ok: false, provider: "complycube", error: `client create failed (${clientRes.status})` };
+        const client = (await clientRes.json()) as { id?: string };
+        if (!client.id) return { ok: false, provider: "complycube", error: "no client id" };
+        const tokRes = await abortable(
+          fetch("https://api.complycube.com/v1/tokens", {
+            method: "POST",
+            headers: { Authorization: key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify({ clientId: client.id, referrer: "*://*/*" }),
+          }),
+        );
+        const tok = tokRes.ok ? ((await tokRes.json()) as { token?: string }) : { token: undefined };
+        return { ok: true, provider: "complycube", sessionId: client.id, redirectUrl: tok.token ? `https://app.complycube.com/sdk/${tok.token}` : undefined, status: "pending" };
+      } catch (err) {
+        return { ok: false, provider: "complycube", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── GBG (formerly Acuant) ID3global ──────────────────────────────────
+function gbgAdapter(): KycVendorAdapter {
+  const key = process.env["GBG_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const [first, ...rest] = req.subjectName.split(/\s+/);
+        const body = {
+          ProfileIDVersion: { Version: 0, ProfileID: process.env["GBG_PROFILE_ID"] ?? "" },
+          InputData: {
+            Personal: { PersonalDetails: { Forename: first ?? req.subjectName, Surname: rest.join(" ") } },
+            ContactDetails: { Email: req.email, MobileTelephone: req.phone },
+            CurrentAddress: { Country: req.countryCode },
+          },
+        };
+        const res = await abortable(
+          fetch("https://pilot.id3global.com/ID3gWS/ID3global.svc/json/AuthenticateSP", {
+            method: "POST",
+            headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "gbg", error: `authenticate failed (${res.status})` };
+        const json = (await res.json()) as { AuthenticationID?: string; BandText?: string };
+        const status = json.BandText === "PASS" ? "approved" : json.BandText === "REFER" ? "review" : json.BandText === "ALERT" ? "declined" : "pending";
+        return { ok: true, provider: "gbg", sessionId: json.AuthenticationID, status };
+      } catch (err) {
+        return { ok: false, provider: "gbg", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── AU10TIX — premium IDV ────────────────────────────────────────────
+function au10tixAdapter(): KycVendorAdapter {
+  const key = process.env["AU10TIX_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const body = {
+          fullName: req.subjectName,
+          email: req.email,
+          phone: req.phone,
+          country: req.countryCode,
+        };
+        const res = await abortable(
+          fetch("https://eus-api.au10tixservices.com/v1/sessions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "au10tix", error: `session failed (${res.status})` };
+        const json = (await res.json()) as { sessionId?: string; redirectUrl?: string };
+        return { ok: true, provider: "au10tix", sessionId: json.sessionId, redirectUrl: json.redirectUrl, status: "pending" };
+      } catch (err) {
+        return { ok: false, provider: "au10tix", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── Mitek MiPass / MobileVerify ──────────────────────────────────────
+function mitekAdapter(): KycVendorAdapter {
+  const key = process.env["MITEK_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const body = {
+          customerReference: `hs-${Date.now()}`,
+          subject: { fullName: req.subjectName, email: req.email, country: req.countryCode },
+        };
+        const res = await abortable(
+          fetch("https://api.mitekservices.com/v2/verification", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "mitek", error: `verification failed (${res.status})` };
+        const json = (await res.json()) as { verificationId?: string; redirectUrl?: string };
+        return { ok: true, provider: "mitek", sessionId: json.verificationId, redirectUrl: json.redirectUrl, status: "pending" };
+      } catch (err) {
+        return { ok: false, provider: "mitek", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── Yoti ─────────────────────────────────────────────────────────────
+function yotiAdapter(): KycVendorAdapter {
+  const sdkId = process.env["YOTI_SDK_ID"];
+  const key = process.env["YOTI_API_KEY"];
+  if (!sdkId || !key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const body = {
+          session_deadline: new Date(Date.now() + 86_400_000).toISOString(),
+          resources_ttl: 86_400,
+          ...(req.email ? { user_tracking_id: req.email } : {}),
+          notifications: process.env["YOTI_CALLBACK_URL"] ? { endpoint: process.env["YOTI_CALLBACK_URL"], topics: ["RESOURCE_UPDATE"] } : undefined,
+          requested_checks: [{ type: "ID_DOCUMENT_AUTHENTICITY" }, { type: "ID_DOCUMENT_FACE_MATCH" }],
+        };
+        const res = await abortable(
+          fetch(`https://api.yoti.com/idverify/v1/sessions?sdkId=${sdkId}`, {
+            method: "POST",
+            headers: { "X-Yoti-Auth-Digest": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "yoti", error: `session failed (${res.status})` };
+        const json = (await res.json()) as { session_id?: string; client_session_token?: string };
+        return { ok: true, provider: "yoti", sessionId: json.session_id, redirectUrl: json.client_session_token ? `https://api.yoti.com/idverify/v1/web/index.html?sessionID=${json.session_id}&sessionToken=${json.client_session_token}` : undefined, status: "pending" };
+      } catch (err) {
+        return { ok: false, provider: "yoti", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── Stripe Identity ──────────────────────────────────────────────────
+function stripeIdentityAdapter(): KycVendorAdapter {
+  const key = process.env["STRIPE_SECRET_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const params = new URLSearchParams({
+          type: "document",
+          "metadata[reference]": `hs-${Date.now()}`,
+          ...(req.email ? { "metadata[email]": req.email } : {}),
+        });
+        const res = await abortable(
+          fetch("https://api.stripe.com/v1/identity/verification_sessions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/x-www-form-urlencoded" },
+            body: params.toString(),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "stripe-identity", error: `session failed (${res.status})` };
+        const json = (await res.json()) as { id?: string; url?: string; status?: string; client_secret?: string };
+        const status = json.status === "verified" ? "approved" : json.status === "canceled" ? "declined" : "pending";
+        return { ok: true, provider: "stripe-identity", sessionId: json.id, redirectUrl: json.url, status };
+      } catch (err) {
+        return { ok: false, provider: "stripe-identity", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── Plaid Identity Verification ──────────────────────────────────────
+function plaidIdentityAdapter(): KycVendorAdapter {
+  const clientId = process.env["PLAID_CLIENT_ID"];
+  const secret = process.env["PLAID_SECRET"];
+  if (!clientId || !secret) return NULL_KYC_ADAPTER;
+  const env = process.env["PLAID_ENV"] ?? "production";
+  const base = env === "sandbox" ? "https://sandbox.plaid.com" : env === "development" ? "https://development.plaid.com" : "https://production.plaid.com";
+  const templateId = process.env["PLAID_IDV_TEMPLATE_ID"];
+  if (!templateId) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const body = {
+          client_id: clientId,
+          secret,
+          is_shareable: true,
+          template_id: templateId,
+          gave_consent: true,
+          user: { client_user_id: `hs-${Date.now()}`, email_address: req.email, phone_number: req.phone },
+        };
+        const res = await abortable(
+          fetch(`${base}/identity_verification/create`, {
+            method: "POST",
+            headers: { "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "plaid-identity", error: `create failed (${res.status})` };
+        const json = (await res.json()) as { id?: string; status?: string; shareable_url?: string };
+        const status = json.status === "success" ? "approved" : json.status === "failed" ? "declined" : "pending";
+        return { ok: true, provider: "plaid-identity", sessionId: json.id, redirectUrl: json.shareable_url, status };
+      } catch (err) {
+        return { ok: false, provider: "plaid-identity", error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  };
+}
+
+// ── ID.me ────────────────────────────────────────────────────────────
+function idMeAdapter(): KycVendorAdapter {
+  const clientId = process.env["IDME_CLIENT_ID"];
+  const clientSecret = process.env["IDME_CLIENT_SECRET"];
+  const redirectUri = process.env["IDME_REDIRECT_URI"];
+  if (!clientId || !clientSecret || !redirectUri) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (_req) => {
+      void _req;
+      // ID.me uses an OAuth flow rather than a server-to-server check; we
+      // build the redirect URL the operator UI hands the subject.
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: "code",
+        scope: "openid",
+        state: `hs-${Date.now()}`,
+      });
+      return {
+        ok: true,
+        provider: "idme",
+        sessionId: params.get("state") ?? undefined,
+        redirectUrl: `https://api.id.me/oauth/authorize?${params.toString()}`,
+        status: "pending",
+      };
+    },
+  };
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeKycAdapters(): KycVendorAdapter[] {
   return [
@@ -320,6 +656,16 @@ export function activeKycAdapters(): KycVendorAdapter[] {
     sumsubAdapter(),
     shuftiProAdapter(),
     idnowAdapter(),
+    socureAdapter(),
+    alloyAdapter(),
+    complyCubeAdapter(),
+    gbgAdapter(),
+    au10tixAdapter(),
+    mitekAdapter(),
+    yotiAdapter(),
+    stripeIdentityAdapter(),
+    plaidIdentityAdapter(),
+    idMeAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -333,6 +679,16 @@ export function activeKycProviders(): string[] {
     ["SUMSUB_APP_TOKEN", "sumsub"],
     ["SHUFTIPRO_CLIENT_ID", "shuftipro"],
     ["IDNOW_COMPANY_ID", "idnow"],
+    ["SOCURE_API_KEY", "socure"],
+    ["ALLOY_API_TOKEN", "alloy"],
+    ["COMPLYCUBE_API_KEY", "complycube"],
+    ["GBG_API_KEY", "gbg"],
+    ["AU10TIX_API_KEY", "au10tix"],
+    ["MITEK_API_KEY", "mitek"],
+    ["YOTI_SDK_ID", "yoti"],
+    ["STRIPE_SECRET_KEY", "stripe-identity"],
+    ["PLAID_CLIENT_ID", "plaid-identity"],
+    ["IDME_CLIENT_ID", "idme"],
   ];
   return checks.filter(([k]) => process.env[k]).map(([, n]) => n);
 }
