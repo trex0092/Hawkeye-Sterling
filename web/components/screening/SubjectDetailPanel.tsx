@@ -1194,6 +1194,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               : []
           }
           adverseMediaText={adverseMediaText}
+          stressTests={
+            superBrain.status === "success"
+              ? superBrain.result.intelligence?.stressTests ?? []
+              : []
+          }
         />
       </Section>
 
