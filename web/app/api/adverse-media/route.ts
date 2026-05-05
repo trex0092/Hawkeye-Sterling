@@ -110,6 +110,13 @@ interface GdeltRawItem {
   tone?: number;
 }
 
+// Distinguishes "no articles found" (genuine CLEAR) from "fetch failed" (unknown).
+interface GdeltQueryResult {
+  items: GdeltRawItem[];
+  ok: boolean;        // false = network/timeout/HTTP error
+  error?: string;
+}
+
 function _gdeltFmt(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
@@ -121,7 +128,7 @@ function _parseSeen(s: string | undefined): string {
   return m ? `${m[1]}-${m[2]}-${m[3]}` : s.slice(0, 10);
 }
 
-async function _queryGdelt(subject: string): Promise<GdeltRawItem[]> {
+async function _queryGdelt(subject: string): Promise<GdeltQueryResult> {
   const now = new Date();
   const start = new Date(now);
   start.setUTCFullYear(start.getUTCFullYear() - 10); // FDL Art.19 10-year lookback
@@ -142,11 +149,14 @@ async function _queryGdelt(subject: string): Promise<GdeltRawItem[]> {
       signal: ctrl.signal,
       headers: { "user-agent": "HawkeyeSterling/2.0 adverse-media-live" },
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { items: [], ok: false, error: `GDELT HTTP ${res.status}` };
     const data = (await res.json()) as { articles?: GdeltRawItem[] };
-    return Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [];
-  } catch {
-    return [];
+    const items = Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [];
+    return { items, ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTimeout = ctrl.signal.aborted || msg.includes("abort");
+    return { items: [], ok: false, error: isTimeout ? "GDELT request timed out" : `GDELT fetch failed: ${msg}` };
   } finally {
     clearTimeout(timer);
   }
@@ -160,7 +170,42 @@ async function liveAdverseMedia(subject: string) {
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
   // 1. Pull live articles (GDELT, 10-year Art.19 window, no API key)
-  const items = await _queryGdelt(subject);
+  const gdeltResult = await _queryGdelt(subject);
+  const items = gdeltResult.items;
+
+  // If GDELT itself failed (timeout / HTTP error), we must NOT return CLEAR.
+  // Return an explicit degraded verdict so the operator knows the lookup was
+  // incomplete — the MLRO must perform a manual adverse-media check.
+  if (!gdeltResult.ok) {
+    console.warn(`[adverse-media] GDELT unavailable for "${subject}": ${gdeltResult.error}`);
+    const now = new Date().toISOString();
+    return {
+      subject,
+      riskTier: "unknown" as const,
+      riskDetail: `Adverse media search incomplete — GDELT live feed unavailable (${gdeltResult.error}). Manual MLRO review required.`,
+      totalItems: 0,
+      adverseItems: 0,
+      criticalCount: 0,
+      highCount: 0,
+      mediumCount: 0,
+      lowCount: 0,
+      sarRecommended: false,
+      sarBasis: "Cannot determine — live news feed unavailable",
+      confidenceTier: "low" as const,
+      confidenceBasis: "GDELT query failed; no articles analysed",
+      counterfactual: "Restore GDELT connectivity and re-run to get a reliable assessment",
+      investigationLines: ["Perform manual adverse-media search via Google, Reuters, Bloomberg"],
+      findings: [],
+      fatfRecommendations: ["R.10", "R.20"],
+      categoryBreakdown: [],
+      analysedAt: now,
+      modesCited: [],
+      gdeltSource: true,
+      gdeltArticleCount: 0,
+      gdeltFailed: true,
+      gdeltError: gdeltResult.error,
+    } as ReturnType<typeof analyseAdverseMediaResult>;
+  }
 
   const now = new Date().toISOString();
 
