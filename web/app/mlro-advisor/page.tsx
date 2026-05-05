@@ -3182,9 +3182,10 @@ export default function MlroAdvisorPage() {
                         regulatoryBasis: "UAE FDL 10/2025 · FATF Recommendations · CBUAE AML Standards",
                       });
                     }}
-                    className="text-11 text-ink-3 hover:text-brand border border-hair-2 hover:border-brand px-2.5 py-1 rounded transition-colors"
+                    className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
+                    style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                   >
-                    ↓ PDF Memo
+                    PDF
                   </button>
                   <button
                     type="button"

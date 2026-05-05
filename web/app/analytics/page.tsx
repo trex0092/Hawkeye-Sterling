@@ -396,9 +396,10 @@ export default function AnalyticsPage() {
               <button
                 type="button"
                 onClick={handleExportPdf}
-                className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
               >
-                Export PDF
+                PDF
               </button>
             </div>
           </div>

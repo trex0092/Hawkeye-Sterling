@@ -554,9 +554,10 @@ export default function CddReviewPage() {
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="text-10 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+                      className="text-10 font-mono px-2.5 py-1 rounded border font-semibold"
+                      style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                     >
-                      Export Checklist
+                      PDF
                     </button>
                   </div>
                 </div>

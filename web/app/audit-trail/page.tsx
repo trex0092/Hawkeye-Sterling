@@ -206,9 +206,10 @@ export default function AuditTrailPage() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 bg-bg-1 hover:bg-bg-panel text-ink-1"
+              className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+              style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
             >
-              Export Anomaly Report
+              PDF
             </button>
           )}
           <button
