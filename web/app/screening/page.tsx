@@ -7,6 +7,7 @@ import { ScreeningHero } from "@/components/screening/ScreeningHero";
 import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
 import { SubjectDetailPanel } from "@/components/screening/SubjectDetailPanel";
+import { ScreeningReasoningPanel, type ScreeningReasoning } from "@/components/screening/ScreeningReasoningPanel";
 import {
   NewScreeningForm,
   type ScreeningFormData,
@@ -569,6 +570,10 @@ export default function ScreeningPage() {
   const [rescreenLoading, setRescreenLoading] = useState(false);
   const [rescreenResult, setRescreenResult] = useState<BulkRescreenResult | null>(null);
   const [rescreenError, setRescreenError] = useState<string | null>(null);
+  // Latest reasoning from the most recent /api/quick-screen call —
+  // populated when an auto-screen completes; rendered as a full-width
+  // panel above the screening table.
+  const [latestReasoning, setLatestReasoning] = useState<{ subjectName: string; reasoning: ScreeningReasoning } | null>(null);
 
   // Adverse Media state
   const [amSubject, setAmSubject] = useState("");
@@ -942,7 +947,7 @@ export default function ScreeningPage() {
           };
           if (data.alternateNames.length > 0) subjectPayload.aliases = data.alternateNames;
           if (jurisdictionField.trim()) subjectPayload.jurisdiction = jurisdictionField.trim();
-          const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string }>(
+          const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string; reasoning?: ScreeningReasoning }>(
             "/api/quick-screen",
             {
               method: "POST",
@@ -951,6 +956,9 @@ export default function ScreeningPage() {
               label: "Auto-screen failed",
             },
           );
+          if (res.ok && res.data?.ok && res.data.reasoning) {
+            setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
+          }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
             setSubjects((prev) =>
               prev.map((s) =>
@@ -1379,6 +1387,13 @@ export default function ScreeningPage() {
             )}
           </div>
           {/* ─────────────────────────────────────────────────────────────── */}
+
+          {latestReasoning && (
+            <div className="mb-4">
+              <div className="text-11 text-ink-3 mb-1">Latest reasoning · <span className="text-ink-2 font-medium">{latestReasoning.subjectName}</span></div>
+              <ScreeningReasoningPanel reasoning={latestReasoning.reasoning} />
+            </div>
+          )}
 
           <ScreeningToolbar
             ref={searchInputRef}

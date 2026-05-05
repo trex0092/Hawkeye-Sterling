@@ -14,6 +14,17 @@ import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { searchCountrySanctions } from "@/lib/intelligence/countrySanctions";
 import { searchFreeAdapters } from "@/lib/intelligence/freeAlwaysOnAdapters";
+import {
+  buildScreeningReasoning,
+  buildConsensusInputsFromAugmentation,
+  buildCoverageGapReport,
+} from "@/lib/intelligence/screeningReasoning";
+import { activeNewsProviders } from "@/lib/intelligence/newsAdapters";
+import { activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
+import { activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
+import { activeKycProviders } from "@/lib/intelligence/kycVendorAdapters";
+import { activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
+import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -169,11 +180,57 @@ export async function POST(req: Request): Promise<NextResponse> {
         freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, 10);
       } catch { /* best-effort */ }
     }
+    // ── Reasoning layer ────────────────────────────────────────────────
+    // Multi-source consensus + contradiction + coverage gap + audit
+    // rationale. Pure-function — never fails the screening even if
+    // augmentation layers were partial.
+    const commercialProvider = activeCommercialProvider();
+    const coverage = buildCoverageGapReport({
+      newsProvidersConfigured: activeNewsProviders().length,
+      newsProvidersAvailable: 80, // approx vendor count in newsAdapters
+      sanctionsConfigured: activeCommercialProviders().length,
+      sanctionsAvailable: 18,
+      registryConfigured: activeRegistryProviders().length,
+      registryAvailable: 16,
+      countryRegistryConfigured: countryRegistryResults.jurisdictions.length,
+      countryRegistryAvailable: 40,
+      countrySanctionsConfigured: countrySanctionsResults.lists.length,
+      countrySanctionsAvailable: 11,
+      kycConfigured: activeKycProviders().length,
+      kycAvailable: 22,
+      onchainConfigured: activeOnChainProviders().length,
+      onchainAvailable: 8,
+      freeConfigured: activeFreeProviders().length,
+      freeAvailable: 6,
+    });
+    const { consensusInputs, contradictionItems } = buildConsensusInputsFromAugmentation({
+      hits: result.hits,
+      openSanctionsCount: openSanctionsResults.length,
+      commercialCount: commercialResults.length,
+      commercialProvider,
+      registryCount: registryResults.records.length,
+      registryProviders: registryResults.providersUsed,
+      countryRegistryCount: countryRegistryResults.records.length,
+      countryRegistryJurisdictions: countryRegistryResults.jurisdictions,
+      countrySanctionsCount: countrySanctionsResults.records.length,
+      countrySanctionsLists: countrySanctionsResults.lists,
+      freeProviders: freeAdapterResults.providersUsed,
+      freeCount: freeAdapterResults.records.length,
+    });
+    const reasoning = buildScreeningReasoning({
+      subject,
+      result,
+      consensusInputs,
+      contradictionItems,
+      coverage,
+    });
+
     return respond(
       200,
       {
         ok: true,
         ...result,
+        reasoning,
         ...(openSanctionsResults.length > 0
           ? { openSanctionsAugmentation: openSanctionsResults.slice(0, 10) }
           : {}),
