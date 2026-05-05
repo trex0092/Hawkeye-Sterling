@@ -231,10 +231,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const [narrativeOverride, setNarrativeOverride] = useState("");
   const [eiaResult, setEiaResult] = useState<EthicalImpact | null>(null);
   const [eiaLoading, setEiaLoading] = useState(false);
+  const [eiaError, setEiaError] = useState<string | null>(null);
   useEffect(() => {
     setRoleOverride("");
     setNarrativeOverride("");
     setEiaResult(null);
+    setEiaError(null);
   }, [subject.id]);
 
   // ── Hit Disambiguator state ─────────────────────────────────────────────────
@@ -294,6 +296,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const runEIA = async () => {
     setEiaLoading(true);
     setEiaResult(null);
+    setEiaError(null);
     try {
       const res = await fetch("/api/ethical-impact", {
         method: "POST",
@@ -305,12 +308,40 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           nationality: subject.country,
           aiDecisions: [],
         }),
+        signal: AbortSignal.timeout(45_000),
       });
-      if (!res.ok) return;
-      const data = (await res.json()) as { ok: boolean } & EthicalImpact;
-      if (data.ok) setEiaResult(data);
-    } catch { /* silent */ }
-    finally { setEiaLoading(false); }
+      // Parse the response body once — we may need its error message even on
+      // a non-OK status. Tolerate empty / non-JSON bodies (Lambda 502s).
+      const raw = await res.text().catch(() => "");
+      let payload: { ok?: boolean; error?: string; detail?: string } & Partial<EthicalImpact> = {};
+      if (raw) {
+        try { payload = JSON.parse(raw); } catch { /* leave empty */ }
+      }
+      if (!res.ok) {
+        const msg = payload.detail ?? payload.error ?? `Ethical Impact API returned HTTP ${res.status}`;
+        setEiaError(
+          res.status === 503
+            ? `${msg} — set ANTHROPIC_API_KEY on the deployment to enable EIA.`
+            : msg,
+        );
+        return;
+      }
+      if (payload.ok) {
+        setEiaResult(payload as EthicalImpact);
+      } else {
+        setEiaError(payload.error ?? "Ethical Impact returned ok:false");
+      }
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
+      setEiaError(
+        isTimeout
+          ? "Ethical Impact assessment timed out after 45s — please retry."
+          : `Ethical Impact request failed: ${detail}`,
+      );
+    } finally {
+      setEiaLoading(false);
+    }
   };
   const effectiveAdverseMediaText =
     narrativeOverride.trim() || adverseMediaText;
@@ -1235,12 +1266,15 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       )}
 
       <div className="mb-6">
-        <div className="flex gap-1 mb-4 border-b border-hair">
+        {/* Tab strip — horizontally scrollable when the panel is narrow so
+            no tab label is ever clipped. flex-wrap fallback keeps long
+            labels visible on wider viewports. */}
+        <div className="flex gap-1 mb-4 border-b border-hair overflow-x-auto flex-nowrap snap-x scrollbar-thin -mx-1 px-1">
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-2 text-12 font-medium bg-transparent border-none border-b-2 cursor-pointer ${
+              className={`shrink-0 snap-start px-3 py-2 text-12 font-medium bg-transparent border-none border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === tab
                   ? "text-ink-0 border-brand"
                   : "text-ink-2 border-transparent hover:text-ink-0"
@@ -1293,6 +1327,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             subject={subject}
             eiaResult={eiaResult}
             eiaLoading={eiaLoading}
+            eiaError={eiaError}
             onRun={() => void runEIA()}
           />
         )}
@@ -3357,11 +3392,13 @@ function EthicsTab({
   subject,
   eiaResult,
   eiaLoading,
+  eiaError,
   onRun,
 }: {
   subject: Subject;
   eiaResult: EthicalImpact | null;
   eiaLoading: boolean;
+  eiaError: string | null;
   onRun: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -3384,8 +3421,11 @@ function EthicsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      {/* Header stacks on narrow panels (flex-col) and only goes side-by-
+          side on wider viewports (sm:flex-row) — stops the EIA button from
+          overflowing the right-hand subject panel. */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
           <div className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2 mb-0.5">
             Ethical Impact Assessment
           </div>
@@ -3397,14 +3437,28 @@ function EthicsTab({
           type="button"
           onClick={onRun}
           disabled={eiaLoading}
-          className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+          className="self-start sm:self-auto shrink-0 text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40 whitespace-nowrap"
         >
-          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run Ethical Impact Assessment"}
+          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run EIA"}
         </button>
       </div>
 
       {eiaLoading && (
         <div className="text-12 text-ink-2 animate-pulse">Running assessment for {subject.name}…</div>
+      )}
+
+      {eiaError && !eiaLoading && (
+        <div className="rounded-lg border border-red/40 bg-red-dim/40 p-3">
+          <div className="text-11 font-semibold text-red mb-1">Ethical Impact Assessment failed</div>
+          <p className="text-11 text-ink-1 leading-relaxed">{eiaError}</p>
+          <button
+            type="button"
+            onClick={onRun}
+            className="mt-2 text-10 font-semibold px-2 py-1 rounded border border-red/40 text-red hover:bg-red/10"
+          >
+            Retry
+          </button>
+        </div>
       )}
 
       {eiaResult && (
