@@ -437,11 +437,221 @@ function nameScanAdapter(): CorporateRegistryAdapter {
   };
 }
 
+// ── LexisNexis Bridger Insight — premium ─────────────────────────────
+function bridgerInsightAdapter(): CorporateRegistryAdapter {
+  const key = process.env["BRIDGER_INSIGHT_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const body = { name, ...(jurisdiction ? { country: jurisdiction } : {}), maxResults: 25 };
+        const res = await abortable(
+          fetch("https://api.bridger.lexisnexis.com/v2/screen", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { matches?: Array<{ entityName?: string; country?: string; entityId?: string; status?: string }> };
+        return (json.matches ?? [])
+          .filter((m) => m.entityName)
+          .map((m) => ({
+            source: "bridger-insight",
+            jurisdiction: m.country ?? jurisdiction ?? "?",
+            legalName: m.entityName!,
+            ...(m.entityId ? { registrationNumber: m.entityId } : {}),
+            ...(m.status ? { status: m.status } : {}),
+          } satisfies CorporateRecord));
+      } catch (err) {
+        console.warn("[bridger-insight] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Sanctions.io — premium screening ─────────────────────────────────
+function sanctionsIoAdapter(): CorporateRegistryAdapter {
+  const key = process.env["SANCTIONS_IO_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const params = new URLSearchParams({ q: name, ...(jurisdiction ? { nationality: jurisdiction } : {}), limit: "25" });
+        const res = await abortable(
+          fetch(`https://api.sanctions.io/search/?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ name?: string; nationality?: string; source?: string; entity_id?: string; designation?: string }> };
+        return (json.results ?? [])
+          .filter((r) => r.name)
+          .map((r) => ({
+            source: "sanctions.io",
+            jurisdiction: r.nationality ?? jurisdiction ?? "?",
+            legalName: r.name!,
+            ...(r.entity_id ? { registrationNumber: r.entity_id } : {}),
+            ...(r.designation ? { status: r.designation } : r.source ? { status: r.source } : {}),
+          } satisfies CorporateRecord));
+      } catch (err) {
+        console.warn("[sanctions.io] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── OpenSanctions Pro — paid tier (same API, different rate limits) ─
+function openSanctionsProAdapter(): CorporateRegistryAdapter {
+  const key = process.env["OPENSANCTIONS_PRO_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const params = new URLSearchParams({ q: name, limit: "25", ...(jurisdiction ? { countries: jurisdiction.toLowerCase() } : {}) });
+        const res = await abortable(
+          fetch(`https://api.opensanctions.org/search/default?${params.toString()}`, {
+            headers: { Authorization: `ApiKey ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ caption?: string; properties?: { country?: string[]; idNumber?: string[]; status?: string[] } }> };
+        return (json.results ?? [])
+          .filter((r) => r.caption)
+          .map((r) => ({
+            source: "opensanctions-pro",
+            jurisdiction: r.properties?.country?.[0]?.toUpperCase() ?? jurisdiction ?? "?",
+            legalName: r.caption!,
+            ...(r.properties?.idNumber?.[0] ? { registrationNumber: r.properties.idNumber[0] } : {}),
+            ...(r.properties?.status?.[0] ? { status: r.properties.status[0] } : {}),
+          } satisfies CorporateRecord));
+      } catch (err) {
+        console.warn("[opensanctions-pro] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── SmartSearch — premium (UK market) ───────────────────────────────
+function smartSearchAdapter(): CorporateRegistryAdapter {
+  const key = process.env["SMARTSEARCH_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const body = { name, ...(jurisdiction ? { countryCode: jurisdiction } : {}), limit: 25 };
+        const res = await abortable(
+          fetch("https://api.smartsearch.com/v1/search/business", {
+            method: "POST",
+            headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ businessName?: string; countryCode?: string; companyNumber?: string; status?: string }> };
+        return (json.results ?? [])
+          .filter((r) => r.businessName)
+          .map((r) => ({
+            source: "smartsearch",
+            jurisdiction: r.countryCode ?? jurisdiction ?? "?",
+            legalName: r.businessName!,
+            ...(r.companyNumber ? { registrationNumber: r.companyNumber } : {}),
+            ...(r.status ? { status: r.status } : {}),
+          } satisfies CorporateRecord));
+      } catch (err) {
+        console.warn("[smartsearch] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Encompass — premium KYC orchestration ───────────────────────────
+function encompassAdapter(): CorporateRegistryAdapter {
+  const key = process.env["ENCOMPASS_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const body = { searchString: name, ...(jurisdiction ? { jurisdictionCode: jurisdiction } : {}), limit: 25 };
+        const res = await abortable(
+          fetch("https://api.encompasscorporation.com/v3/search", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { matches?: Array<{ name?: string; jurisdictionCode?: string; entityId?: string; status?: string; incorporationDate?: string }> };
+        return (json.matches ?? [])
+          .filter((m) => m.name)
+          .map((m) => ({
+            source: "encompass",
+            jurisdiction: m.jurisdictionCode ?? jurisdiction ?? "?",
+            legalName: m.name!,
+            ...(m.entityId ? { registrationNumber: m.entityId } : {}),
+            ...(m.status ? { status: m.status } : {}),
+            ...(m.incorporationDate ? { incorporatedAt: m.incorporationDate } : {}),
+          } satisfies CorporateRecord));
+      } catch (err) {
+        console.warn("[encompass] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Themis — premium ────────────────────────────────────────────────
+function themisAdapter(): CorporateRegistryAdapter {
+  const key = process.env["THEMIS_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const body = { query: name, ...(jurisdiction ? { country: jurisdiction } : {}) };
+        const res = await abortable(
+          fetch("https://api.themisservices.co.uk/v1/screening", {
+            method: "POST",
+            headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { hits?: Array<{ name?: string; country?: string; reference?: string; categories?: string[] }> };
+        return (json.hits ?? [])
+          .filter((h) => h.name)
+          .map((h) => ({
+            source: "themis",
+            jurisdiction: h.country ?? jurisdiction ?? "?",
+            legalName: h.name!,
+            ...(h.reference ? { registrationNumber: h.reference } : {}),
+            ...(h.categories?.length ? { status: h.categories.join(",") } : {}),
+          } satisfies CorporateRecord));
+      } catch (err) {
+        console.warn("[themis] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 /**
- * Returns the first available commercial adapter, in priority order:
- *   LSEG World-Check One > Dow Jones R&C > Sayari >
- *   ComplyAdvantage > Acuris RDC > Quantexa > Castellum.AI > Kompany >
- *   NameScan > NULL
+ * Returns the first available commercial adapter (priority order).
  */
 export function bestCommercialAdapter(): CorporateRegistryAdapter {
   const candidates = [
@@ -454,6 +664,12 @@ export function bestCommercialAdapter(): CorporateRegistryAdapter {
     castellumAiAdapter(),
     kompanyAdapter(),
     nameScanAdapter(),
+    bridgerInsightAdapter(),
+    sanctionsIoAdapter(),
+    openSanctionsProAdapter(),
+    smartSearchAdapter(),
+    encompassAdapter(),
+    themisAdapter(),
   ];
   for (const c of candidates) if (c.isAvailable()) return c;
   return NULL_CORPORATE_ADAPTER;
@@ -461,7 +677,9 @@ export function bestCommercialAdapter(): CorporateRegistryAdapter {
 
 export type CommercialProvider =
   | "lseg-world-check" | "dowjones-rc" | "sayari" | "complyadvantage"
-  | "acuris-rdc" | "quantexa" | "castellum" | "kompany" | "namescan" | "none";
+  | "acuris-rdc" | "quantexa" | "castellum" | "kompany" | "namescan"
+  | "bridger-insight" | "sanctions.io" | "opensanctions-pro" | "smartsearch"
+  | "encompass" | "themis" | "none";
 
 export function activeCommercialProvider(): CommercialProvider {
   if (process.env["LSEG_WORLDCHECK_API_KEY"] && process.env["LSEG_WORLDCHECK_API_SECRET"]) return "lseg-world-check";
@@ -473,6 +691,12 @@ export function activeCommercialProvider(): CommercialProvider {
   if (process.env["CASTELLUM_API_KEY"]) return "castellum";
   if (process.env["KOMPANY_API_KEY"]) return "kompany";
   if (process.env["NAMESCAN_API_KEY"]) return "namescan";
+  if (process.env["BRIDGER_INSIGHT_API_KEY"]) return "bridger-insight";
+  if (process.env["SANCTIONS_IO_API_KEY"]) return "sanctions.io";
+  if (process.env["OPENSANCTIONS_PRO_API_KEY"]) return "opensanctions-pro";
+  if (process.env["SMARTSEARCH_API_KEY"]) return "smartsearch";
+  if (process.env["ENCOMPASS_API_KEY"]) return "encompass";
+  if (process.env["THEMIS_API_KEY"]) return "themis";
   return "none";
 }
 
@@ -487,6 +711,12 @@ export function activeCommercialProviders(): CommercialProvider[] {
     [!!process.env["CASTELLUM_API_KEY"], "castellum"],
     [!!process.env["KOMPANY_API_KEY"], "kompany"],
     [!!process.env["NAMESCAN_API_KEY"], "namescan"],
+    [!!process.env["BRIDGER_INSIGHT_API_KEY"], "bridger-insight"],
+    [!!process.env["SANCTIONS_IO_API_KEY"], "sanctions.io"],
+    [!!process.env["OPENSANCTIONS_PRO_API_KEY"], "opensanctions-pro"],
+    [!!process.env["SMARTSEARCH_API_KEY"], "smartsearch"],
+    [!!process.env["ENCOMPASS_API_KEY"], "encompass"],
+    [!!process.env["THEMIS_API_KEY"], "themis"],
   ];
   return all.filter(([on]) => on).map(([, n]) => n);
 }

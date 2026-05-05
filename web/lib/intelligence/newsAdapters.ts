@@ -1775,6 +1775,440 @@ function reutersConnectAdapter(): NewsAdapter {
   };
 }
 
+// ── Bing News Search (Azure Cognitive Services) ───────────────────────
+function bingNewsAdapter(): NewsAdapter {
+  const key = process.env["BING_NEWS_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          count: String(opts?.limit ?? 25),
+          sortBy: "Date",
+          mkt: "en-US",
+          freshness: "Month",
+        });
+        const res = await abortable(
+          fetch(`https://api.bing.microsoft.com/v7.0/news/search?${params.toString()}`, {
+            headers: { "Ocp-Apim-Subscription-Key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          value?: Array<{ name?: string; url?: string; datePublished?: string; description?: string; provider?: Array<{ name?: string }> }>;
+        };
+        return (json.value ?? [])
+          .filter((v) => v.name && v.url)
+          .map((v) => ({
+            source: "bing-news",
+            outlet: v.provider?.[0]?.name ?? "bing",
+            title: v.name!,
+            url: v.url!,
+            publishedAt: v.datePublished ?? new Date().toISOString(),
+            ...(v.description ? { snippet: v.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[bing-news] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Google News RSS — free, no key (toggle) ───────────────────────────
+function googleNewsRssAdapter(): NewsAdapter {
+  const enabled = process.env["GOOGLE_NEWS_RSS_ENABLED"];
+  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, hl: "en", gl: "US", ceid: "US:en" });
+        const res = await abortable(
+          fetch(`https://news.google.com/rss/search?${params.toString()}`, {
+            headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml" },
+          }),
+        );
+        if (!res.ok) return [];
+        const xml = await res.text();
+        const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+        const articles: NewsArticle[] = [];
+        for (const it of items.slice(0, opts?.limit ?? 25)) {
+          const title = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/.exec(it)?.[1]?.trim();
+          const link = /<link>([\s\S]*?)<\/link>/.exec(it)?.[1]?.trim();
+          const pub = /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim();
+          const src = /<source[^>]*>([\s\S]*?)<\/source>/.exec(it)?.[1]?.trim();
+          if (!title || !link) continue;
+          articles.push({
+            source: "google-news-rss",
+            outlet: src ?? "google-news",
+            title,
+            url: link,
+            publishedAt: pub ? new Date(pub).toISOString() : new Date().toISOString(),
+          });
+        }
+        return articles;
+      } catch (err) {
+        console.warn("[google-news-rss] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Hacker News (Algolia) — free, no key (toggle) ─────────────────────
+function hackerNewsAdapter(): NewsAdapter {
+  const enabled = process.env["HACKER_NEWS_ENABLED"];
+  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          query: subjectName,
+          tags: "story",
+          hitsPerPage: String(opts?.limit ?? 25),
+        });
+        const res = await abortable(
+          fetch(`https://hn.algolia.com/api/v1/search_by_date?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          hits?: Array<{ title?: string; url?: string; created_at?: string; story_text?: string; objectID?: string }>;
+        };
+        return (json.hits ?? [])
+          .filter((h) => h.title && (h.url || h.objectID))
+          .map((h) => ({
+            source: "hackernews",
+            outlet: "news.ycombinator.com",
+            title: h.title!,
+            url: h.url ?? `https://news.ycombinator.com/item?id=${h.objectID}`,
+            publishedAt: h.created_at ?? new Date().toISOString(),
+            ...(h.story_text ? { snippet: h.story_text.slice(0, 240) } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[hackernews] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Reddit — free w/ OAuth ───────────────────────────────────────────
+function redditAdapter(): NewsAdapter {
+  const cidEnv = process.env["REDDIT_CLIENT_ID"];
+  const csEnv = process.env["REDDIT_CLIENT_SECRET"];
+  if (!cidEnv || !csEnv) return NULL_NEWS_ADAPTER;
+  const clientId: string = cidEnv;
+  const clientSecret: string = csEnv;
+  let cachedToken: { token: string; expiresAt: number } | null = null;
+  async function getToken(): Promise<string | null> {
+    if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) return cachedToken.token;
+    try {
+      const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+      const res = await abortable(
+        fetch("https://www.reddit.com/api/v1/access_token", {
+          method: "POST",
+          headers: { Authorization: `Basic ${auth}`, "content-type": "application/x-www-form-urlencoded", "user-agent": "HawkeyeSterling/1.0" },
+          body: new URLSearchParams({ grant_type: "client_credentials" }).toString(),
+        }),
+      );
+      if (!res.ok) return null;
+      const j = (await res.json()) as { access_token?: string; expires_in?: number };
+      if (!j.access_token) return null;
+      cachedToken = { token: j.access_token, expiresAt: Date.now() + (j.expires_in ?? 3600) * 1000 };
+      return cachedToken.token;
+    } catch { return null; }
+  }
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      const token = await getToken();
+      if (!token) return [];
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, sort: "new", limit: String(opts?.limit ?? 25), restrict_sr: "false", type: "link" });
+        const res = await abortable(
+          fetch(`https://oauth.reddit.com/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${token}`, "user-agent": "HawkeyeSterling/1.0", accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: { children?: Array<{ data?: { title?: string; url?: string; created_utc?: number; selftext?: string; subreddit?: string; permalink?: string } }> };
+        };
+        return (json.data?.children ?? [])
+          .map((c) => c.data)
+          .filter((d): d is NonNullable<typeof d> => !!d?.title)
+          .map((d) => ({
+            source: "reddit",
+            outlet: d.subreddit ? `r/${d.subreddit}` : "reddit.com",
+            title: d.title!,
+            url: d.url ?? (d.permalink ? `https://reddit.com${d.permalink}` : ""),
+            publishedAt: d.created_utc ? new Date(d.created_utc * 1000).toISOString() : new Date().toISOString(),
+            ...(d.selftext ? { snippet: d.selftext.slice(0, 240) } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[reddit] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Benzinga News — premium ──────────────────────────────────────────
+function benzingaAdapter(): NewsAdapter {
+  const key = process.env["BENZINGA_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ token: key, tickers: subjectName, pageSize: String(opts?.limit ?? 25), sort: "created:desc" });
+        const res = await abortable(
+          fetch(`https://api.benzinga.com/api/v2/news?${params.toString()}`, { headers: { accept: "application/json" } }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as Array<{ title?: string; url?: string; created?: string; teaser?: string; channels?: Array<{ name?: string }> }>;
+        return (Array.isArray(json) ? json : [])
+          .filter((a) => a.title && a.url)
+          .map((a) => ({
+            source: "benzinga",
+            outlet: a.channels?.[0]?.name ?? "benzinga",
+            title: a.title!,
+            url: a.url!,
+            publishedAt: a.created ?? new Date().toISOString(),
+            ...(a.teaser ? { snippet: a.teaser } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[benzinga] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Seeking Alpha — premium ──────────────────────────────────────────
+function seekingAlphaAdapter(): NewsAdapter {
+  const key = process.env["SEEKINGALPHA_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ id: subjectName, size: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://seeking-alpha.p.rapidapi.com/news/v2/list-by-symbol?${params.toString()}`, {
+            headers: { "x-rapidapi-key": key, "x-rapidapi-host": "seeking-alpha.p.rapidapi.com" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: Array<{ id?: string; attributes?: { title?: string; publishOn?: string; summary?: string }; links?: { canonical?: string } }>;
+        };
+        return (json.data ?? [])
+          .filter((d) => d.attributes?.title && d.links?.canonical)
+          .map((d) => ({
+            source: "seekingalpha",
+            outlet: "seekingalpha.com",
+            title: d.attributes!.title!,
+            url: d.links!.canonical!,
+            publishedAt: d.attributes!.publishOn ?? new Date().toISOString(),
+            ...(d.attributes!.summary ? { snippet: d.attributes!.summary } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[seekingalpha] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Financial Times — premium ────────────────────────────────────────
+function ftAdapter(): NewsAdapter {
+  const key = process.env["FT_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          queryString: `"${subjectName}"`,
+          queryContext: { curations: ["ARTICLES"] },
+          resultContext: { maxResults: opts?.limit ?? 25, sortOrder: "DESC", sortField: "lastPublishDateTime", aspects: ["title", "lifecycle", "summary", "location"] },
+        };
+        const res = await abortable(
+          fetch("https://api.ft.com/content/search/v1", {
+            method: "POST",
+            headers: { "X-Api-Key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ results?: Array<{ title?: { title?: string }; location?: { uri?: string }; lifecycle?: { initialPublishDateTime?: string }; summary?: { excerpt?: string } }> }>;
+        };
+        const items = (json.results ?? []).flatMap((r) => r.results ?? []);
+        return items
+          .filter((i) => i.title?.title && i.location?.uri)
+          .map((i) => ({
+            source: "ft",
+            outlet: "ft.com",
+            title: i.title!.title!,
+            url: i.location!.uri!,
+            publishedAt: i.lifecycle?.initialPublishDateTime ?? new Date().toISOString(),
+            ...(i.summary?.excerpt ? { snippet: i.summary.excerpt } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[ft] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── The Economist (RSS-based, key-gated for caller-specific feed) ───
+function economistAdapter(): NewsAdapter {
+  const key = process.env["ECONOMIST_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.economist.com/v1/content/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          articles?: Array<{ headline?: string; url?: string; datePublished?: string; description?: string }>;
+        };
+        return (json.articles ?? [])
+          .filter((a) => a.headline && a.url)
+          .map((a) => ({
+            source: "economist",
+            outlet: "economist.com",
+            title: a.headline!,
+            url: a.url!,
+            publishedAt: a.datePublished ?? new Date().toISOString(),
+            ...(a.description ? { snippet: a.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[economist] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Yahoo Finance News — free key ────────────────────────────────────
+function yahooFinanceAdapter(): NewsAdapter {
+  const key = process.env["YAHOO_FINANCE_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ symbols: subjectName, count: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://yfapi.net/news/v2/list?${params.toString()}`, {
+            headers: { "x-api-key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          items?: { result?: Array<{ title?: string; link?: string; published_at?: string; summary?: string; publisher?: string }> };
+        };
+        return (json.items?.result ?? [])
+          .filter((r) => r.title && r.link)
+          .map((r) => ({
+            source: "yahoo-finance",
+            outlet: r.publisher ?? "yahoo",
+            title: r.title!,
+            url: r.link!,
+            publishedAt: r.published_at ?? new Date().toISOString(),
+            ...(r.summary ? { snippet: r.summary } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[yahoo-finance] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── StockNews API — premium ──────────────────────────────────────────
+function stockNewsAdapter(): NewsAdapter {
+  const key = process.env["STOCKNEWS_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ tickers: subjectName, items: String(opts?.limit ?? 25), token: key, sortby: "trending" });
+        const res = await abortable(
+          fetch(`https://stocknewsapi.com/api/v1?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: Array<{ title?: string; news_url?: string; date?: string; text?: string; source_name?: string; sentiment?: string }>;
+        };
+        return (json.data ?? [])
+          .filter((d) => d.title && d.news_url)
+          .map((d) => ({
+            source: "stocknews",
+            outlet: d.source_name ?? "stocknews",
+            title: d.title!,
+            url: d.news_url!,
+            publishedAt: d.date ?? new Date().toISOString(),
+            ...(d.text ? { snippet: d.text } : {}),
+            ...(d.sentiment === "Positive" ? { sentiment: 0.5 } : d.sentiment === "Negative" ? { sentiment: -0.5 } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[stocknews] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── TheNewsAPI.com (different from NewsAPI.org) ─────────────────────
+function theNewsApiAdapter(): NewsAdapter {
+  const key = process.env["THENEWSAPI_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ api_token: key, search: `"${subjectName}"`, limit: String(opts?.limit ?? 25), language: "en", sort: "published_at" });
+        const res = await abortable(
+          fetch(`https://api.thenewsapi.com/v1/news/all?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          data?: Array<{ uuid?: string; title?: string; url?: string; published_at?: string; description?: string; source?: string }>;
+        };
+        return (json.data ?? [])
+          .filter((d) => d.title && d.url)
+          .map((d) => ({
+            source: "thenewsapi",
+            outlet: d.source ?? "thenewsapi",
+            title: d.title!,
+            url: d.url!,
+            publishedAt: d.published_at ?? new Date().toISOString(),
+            ...(d.description ? { snippet: d.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[thenewsapi] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -1823,6 +2257,17 @@ export function activeNewsAdapters(): NewsAdapter[] {
     cryptopanicAdapter(),
     mediaCloudAdapter(),
     reutersConnectAdapter(),
+    bingNewsAdapter(),
+    googleNewsRssAdapter(),
+    hackerNewsAdapter(),
+    redditAdapter(),
+    benzingaAdapter(),
+    seekingAlphaAdapter(),
+    ftAdapter(),
+    economistAdapter(),
+    yahooFinanceAdapter(),
+    stockNewsAdapter(),
+    theNewsApiAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -1869,6 +2314,17 @@ export function activeNewsProviders(): string[] {
     ["CRYPTOPANIC_API_KEY", "cryptopanic"],
     ["MEDIACLOUD_API_KEY", "mediacloud"],
     ["REUTERS_CONNECT_API_KEY", "reuters-connect"],
+    ["BING_NEWS_API_KEY", "bing-news"],
+    ["GOOGLE_NEWS_RSS_ENABLED", "google-news-rss"],
+    ["HACKER_NEWS_ENABLED", "hackernews"],
+    ["REDDIT_CLIENT_ID", "reddit"],
+    ["BENZINGA_API_KEY", "benzinga"],
+    ["SEEKINGALPHA_API_KEY", "seekingalpha"],
+    ["FT_API_KEY", "ft"],
+    ["ECONOMIST_API_KEY", "economist"],
+    ["YAHOO_FINANCE_API_KEY", "yahoo-finance"],
+    ["STOCKNEWS_API_KEY", "stocknews"],
+    ["THENEWSAPI_API_KEY", "thenewsapi"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }
